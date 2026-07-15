@@ -14,7 +14,7 @@ Mở `index.html` bằng trình duyệt là xong — **không cần build, khôn
 ## Cấu trúc
 
 ```
-mugi-flow/
+demo-flow/
 ├── index.html      ← toàn bộ 8 màn + JS router + hiệu ứng
 ├── tailwind.css    ← Tailwind đã compile (21KB, không cần CDN)
 ├── assets/         ← 21 ảnh thật lấy từ file gốc
