@@ -47,6 +47,11 @@
   img.lazy { opacity: 0; transition: opacity .5s ease; }
   img.lazy.loaded { opacity: 1; }
 
+  /* ── Carousel kéo trái/phải ── */
+  .drag-x { cursor: grab; }
+  .drag-x.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+  .drag-x.dragging img { pointer-events: none; }
+
   /* ── Nền mờ theo token ──
      Tailwind KHÔNG áp được modifier /95 lên màu var(), nên tự viết.
      Dòng background đầu = fallback đặc cho trình duyệt cũ. */
@@ -79,6 +84,8 @@
   /* accordion cấp 1 trong sheet */
   .facc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s cubic-bezier(.22,1,.36,1); }
   .facc.open .facc-body { grid-template-rows: 1fr; }
+  .acc .acc-ico-minus { display: none; } .acc .acc-ico-plus { display: block; }
+  .acc.open .acc-ico-minus { display: block; } .acc.open .acc-ico-plus { display: none; }
   .facc .facc-ico { display: none; } .facc .facc-ico-plus { display: block; }
   .facc.open .facc-ico { display: block; } .facc.open .facc-ico-plus { display: none; }
 
@@ -181,17 +188,17 @@
 const A = 'assets/';
 
 const PRODUCTS = [
-  // giá bán / % giảm / giá gốc — lấy từ Listing của PLP-Mobile-02-ByBrand (2541:175787)
-  { img:'p1.png',  brand:'Versace Jeans Couture', name:'Dép quai ngang Dive họa tiết Burberry Check', price:'1,890,000đ',  off:'-30%', was:'2,700,000đ' },
-  { img:'p2.png',  brand:'Versace Jeans Couture', name:'Dép quai ngang Dive họa tiết Burberry Check', price:'3,200,000đ',  off:'-20%', was:'4,000,000đ' },
-  { img:'p3.png',  brand:'Gucci',                 name:'Giày sneaker Ace thêu logo Gucci',            price:'25,000,000đ', off:'-29%', was:'35,000,000đ' },
-  { img:'p4.png',  brand:'Prada',                 name:'Túi xách tote Prada Nylon',                    price:'18,500,000đ', off:'-26%', was:'25,000,000đ' },
-  { img:'p5.png',  brand:'Chanel',                name:'Ví cầm tay Chanel Classic',                    price:'40,000,000đ', off:'-20%', was:'50,000,000đ' },
-  { img:'p6.png',  brand:'Dior',                  name:"Giày cao gót Dior J'Adior",                    price:'30,000,000đ', off:'-25%', was:'40,000,000đ' },
-  { img:'p7.png',  brand:'Balenciaga',            name:'Giày thể thao Triple S',                       price:'22,000,000đ', off:'-21%', was:'28,000,000đ' },
-  { img:'p8.png',  brand:'Versace',               name:'Áo thun Medusa Logo Versace',                  price:'8,000,000đ',  off:'-33%', was:'12,000,000đ' },
-  { img:'p9.png',  brand:'Fendi',                 name:'Túi xách Fendi Baguette',                      price:'35,000,000đ', off:'-22%', was:'45,000,000đ' },
-  { img:'p10.png', brand:'Saint Laurent',         name:'Áo khoác da Saint Laurent',                    price:'50,000,000đ', off:'-29%', was:'70,000,000đ' },
+  // Xen kẽ: chẵn = có giảm (giá đỏ + badge + giá gốc), lẻ = nguyên giá (giá đen)
+  { img:'p1.png',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫' },
+  { img:'p2.png',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', price:'15.611.000 ₫' },
+  { img:'p3.png',  brand:'Versace', name:'Túi đeo vai da Emblème',                     price:'50.957.000 ₫', off:'-15%', was:'59.949.000 ₫' },
+  { img:'p4.png',  brand:'Versace', name:'Giày cao gót da nappa Gianni 90',            price:'45.066.000 ₫' },
+  { img:'p5.png',  brand:'Versace', name:'Giày loafer da Manu',                        price:'35.248.000 ₫', off:'-30%', was:'50.354.000 ₫' },
+  { img:'p6.png',  brand:'Versace', name:'Giày thể thao da lộn Greca Court',           price:'27.393.000 ₫' },
+  { img:'p7.png',  brand:'Versace', name:'Túi đeo vai da Vivian East/West cỡ nhỏ',     price:'70.593.000 ₫', off:'-25%', was:'94.124.000 ₫' },
+  { img:'p8.png',  brand:'Versace', name:'Túi da Lou mini',                            price:'45.066.000 ₫' },
+  { img:'p9.png',  brand:'Versace', name:'Túi tote Rivière mini',                      price:'50.957.000 ₫', off:'-10%', was:'56.619.000 ₫' },
+  { img:'p10.png', brand:'Versace', name:'Thắt lưng da mặt khóa Medusa',               price:'17.575.000 ₫' },
 ];
 
 /* Card sản phẩm — Card-item của Figma (2541:175787)
@@ -201,7 +208,7 @@ function productCard(p, i, { w = '', badge = '' } = {}) {
   return `
   <div class="bg-card flex flex-col cursor-pointer group ${w}" data-product="${i}">
     <div class="relative w-full overflow-hidden bg-secondary" style="aspect-ratio:189/252">
-      <img src="${A}${p.img}" alt="${p.name}" class="absolute inset-0 w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
+      <img src="${A}${p.img}" alt="${p.name}" class="absolute inset-0 w-full h-full object-cover lazy">
       ${badge ? `<span class="absolute top-2 left-2 bg-primary text-primary-foreground text-[12px] font-medium leading-4 px-1 tracking-wide">${badge}</span>` : ''}
       <button class="wish absolute top-2 right-2 w-7 h-7 rounded-full glass-85 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity press">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 13.5S2 10 2 6.2A3.2 3.2 0 0 1 8 4.5a3.2 3.2 0 0 1 6 1.7C14 10 8 13.5 8 13.5Z" stroke="var(--general-primary)" stroke-width="1.3" stroke-linejoin="round"/></svg>
@@ -209,10 +216,10 @@ function productCard(p, i, { w = '', badge = '' } = {}) {
     </div>
     <div class="flex flex-col gap-0.5 px-1 py-2">
       <p class="text-[14px] font-medium leading-5 text-foreground truncate">${p.brand}</p>
-      <p class="text-[12px] leading-4 text-secondary-foreground line-clamp-2 min-h-8">${p.name}</p>
+      <p class="text-[12px] leading-4 text-secondary-foreground truncate">${p.name}</p>
       <div class="pt-1 flex flex-col">
         <div class="flex gap-1 items-center">
-          <p class="text-[14px] font-medium leading-5 text-destructive">${p.price}</p>
+          <p class="text-[14px] font-medium leading-5 ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
           ${p.off ? `<span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0">${p.off}</span>` : ''}
         </div>
         ${p.was ? `<p class="text-[12px] leading-4 text-muted-foreground line-through">${p.was}</p>` : ''}
@@ -222,27 +229,30 @@ function productCard(p, i, { w = '', badge = '' } = {}) {
 }
 
 
-const BRANDS = ['Versace','Gucci','Prada','Chanel','Dior','Balenciaga','Fendi','Saint Laurent'];
+const BRANDS = ['Versace','Versace Jeans Couture','Burberry','Balmain','Dolce&Gabbana','Ferragamo','MCM','TUMI'];
 
 // Category cards — ảnh vuông 1:1 (150×150) theo PLP-Mobile-02-ByBrand
 const CATEGORIES = [
-  { img:'brand-1.png', label:'Tshirt' },
-  { img:'brand-2.png', label:'Shoes'  },
-  { img:'p2.png',      label:'Tshirt' },
+  { img:'brand-1.png', label:'Quần áo'   },
+  { img:'brand-2.png', label:'Giày dép'  },
+  { img:'p2.png',      label:'Túi xách'  },
+  { img:'p3.png',      label:'Phụ kiện'  },
+  { img:'p4.png',      label:'Trang sức' },
+  { img:'p6.png',      label:'Làm đẹp'   },
 ];
 
 const CART = [
-  { img:'p8.png', brand:'Versace Jeans Couture', name:'Giày thông minh Ace họa tiết GG', variant:'Onesize , White', off:'-15%', was:'4,451,000đ', now:'3,490,000đ', qty:2 },
-  { img:'p8.png', brand:'Versace Jeans Couture', name:'Giày thông minh Ace họa tiết GG', variant:'Onesize , White', off:'-20%', was:'4,451,000đ', now:'4,290,000đ', qty:2 },
-  { img:'p8.png', brand:'Versace Jeans Couture', name:'Giày thông minh Ace họa tiết GG', variant:'Onesize , White', off:'-25%', was:'4,451,000đ', now:'2,490,000đ', qty:2 },
-  { img:'p8.png', brand:'Versace Jeans Couture', name:'Giày thông minh Ace họa tiết GG', variant:'Onesize , White', off:'',     was:'',           now:'4,451,000đ', qty:2 },
+  { img:'p8.png', brand:'Versace', name:'Túi da Lou mini',            variant:'Onesize , Black', off:'', was:'', now:'45.066.000 ₫', qty:1 },
+  { img:'p5.png', brand:'Versace', name:'Giày loafer da Manu',        variant:'40 , Black',      off:'', was:'', now:'35.248.000 ₫', qty:1 },
+  { img:'p10.png',brand:'Versace', name:'Thắt lưng da mặt khóa Medusa', variant:'95 , Black',    off:'', was:'', now:'17.575.000 ₫', qty:1 },
+  { img:'p2.png', brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant:'Onesize', off:'', was:'', now:'15.611.000 ₫', qty:1 },
 ];
 
 const SIZES = ['39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55'];
 const DISABLED = ['52','53','54','55'];
 
-const FLOW = ['plp','pdp','cart','login','checkout','done'];
-const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login:'Đăng nhập', checkout:'Thanh toán', done:'Hoàn tất' };
+const FLOW = ['plp','pdp','pdp2','cart','login','checkout','done'];
+const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login:'Đăng nhập', pdp2:'Sản phẩm', checkout:'Thanh toán', done:'Hoàn tất' };
 
 /* ════════════════════════════════════════════════════════════════
    ICONS
@@ -425,7 +435,7 @@ function screenPLP() {
     <!-- promo marquee -->
     <div class="h-8 bg-primary overflow-hidden flex items-center">
       <div class="marquee flex shrink-0 whitespace-nowrap">
-        ${Array(2).fill(`<span class="text-[11px] font-medium text-primary-foreground opacity-90 px-4 tracking-wide">END OF SEASON SALE — UP TO 50% OFF · FREESHIP TOÀN QUỐC · GIẢM THÊM 10% CHO DAFC INSIDER ·</span>`).join('')}
+        ${Array(2).fill(`<span class="text-[11px] font-medium text-primary-foreground opacity-90 px-4 tracking-wide">GIẢM THÊM 7% CHO ĐƠN HÀNG TỪ 8 TRIỆU ĐỒNG (*) · STEFANO RICCI ĐÃ CÓ MẶT TẠI DAFC ONLINE · GIẢM THÊM 5% CHO THẺ TECHCOMBANK (*ĐIỀU KHOẢN ÁP DỤNG) ·</span>`).join('')}
       </div>
     </div>
 
@@ -435,7 +445,7 @@ function screenPLP() {
     <div class="py-2">
       <div class="flex gap-1 items-center px-4 h-9 text-[14px] leading-5 text-muted-foreground">
         <span>Trang chủ</span>
-        ${['Nam','Áo quần'].map(t => `
+        ${['Versace'].map(t => `
           <span class="flex gap-1 items-center">
             <span class="w-4 h-4 flex items-center justify-center"><span class="w-[3px] h-[3px] rounded-full bg-muted-foreground"></span></span>
             <span>${t}</span>
@@ -445,7 +455,7 @@ function screenPLP() {
 
     <!-- ── Hero banner 390×217 (full-bleed) ── -->
     <div class="relative w-full overflow-hidden bg-secondary" style="aspect-ratio:390/217">
-      <img src="${A}brand-hero.png" alt="Versace campaign" class="w-full h-full object-cover lazy transition-transform duration-[1.2s] hover:scale-[1.03]">
+      <img src="${A}brand-hero.png" alt="Versace campaign" class="w-full h-full object-cover lazy">
     </div>
 
     <!-- ── Brand block: logo + description + Thu gọn ── -->
@@ -455,7 +465,7 @@ function screenPLP() {
       </div>
       <div id="brandDesc" class="px-4 py-2">
         <p class="text-[14px] leading-5 text-foreground">
-          Versace embodies fearless glamour, channeling the high-energy spirit of its 90s legacy into contemporary icons. The women's collection spotlights sleek black dresses with gold-tone accents, sharp tailoring, and Barocco-print swimsuits. Footwear spans from logo slides to platform heels and Chain Reaction sneakers.
+          Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo, phong cách quyến rũ và logo Medusa đặc trưng. Được thành lập vào năm 1978 bởi Gianni Versace, thương hiệu này đại diện cho sự sang trọng, tự tin và vẻ đẹp hiện đại. Từ những họa tiết ấn tượng đến kỹ thuật cắt may tinh xảo, Versace kết hợp tay nghề thủ công Ý với tinh thần táo bạo, trở thành biểu tượng của thời trang cao cấp và đẳng cấp thời đại.
         </p>
         <div class="flex justify-end pt-1">
           <button id="brandToggle" class="text-[14px] leading-5 text-foreground underline press">Thu gọn</button>
@@ -465,11 +475,11 @@ function screenPLP() {
 
     <!-- ── Category cards 150×150 (1:1) ── -->
     <div class="py-2 reveal">
-      <div class="flex gap-2 overflow-x-auto no-scrollbar px-4 pb-1">
+      <div class="drag-x flex gap-2 overflow-x-auto no-scrollbar px-4 pb-1">
         ${CATEGORIES.map(c => `
           <button class="shrink-0 w-[150px] flex flex-col press group text-left" data-cate="${c.label}">
             <div class="w-full aspect-square overflow-hidden bg-secondary">
-              <img src="${A}${c.img}" alt="${c.label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-105">
+              <img src="${A}${c.img}" alt="${c.label}" class="w-full h-full object-cover lazy">
             </div>
             <div class="flex flex-col gap-0.5 px-1 py-2 h-10 justify-center">
               <p class="text-[16px] font-medium leading-6 text-foreground truncate">${c.label}</p>
@@ -500,7 +510,7 @@ function screenPLP() {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   SCREEN: PDP
+   SCREEN: PDP — theo Figma PDP-Mobile-02-LowStock (2218:6692)
 ════════════════════════════════════════════════════════════════ */
 function screenPDP() {
   const swatches = ['pdp-main.png','pdp-sw2.png','pdp-sw3.png','pdp-sw4.png'];
@@ -518,7 +528,7 @@ function screenPDP() {
 
     <!-- gallery -->
     <div class="relative w-full bg-secondary" style="height:520px">
-      <div id="pdpGallery" class="flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+      <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
         ${[0,1,2,3].map(i => `
           <div class="w-full h-full shrink-0 snap-center relative">
             <img src="${A}${swatches[i]}" class="w-full h-full object-cover lazy" alt="A.P.C. túi satchel">
@@ -527,7 +537,7 @@ function screenPDP() {
       <button data-nav="plp" class="absolute top-3 left-3 h-9 px-3 flex items-center gap-1.5 rounded-full glass-85 backdrop-blur text-[12px] font-medium text-foreground press">${I.chevL} Back to categories</button>
       <span class="absolute top-3 right-3 glass-85 backdrop-blur text-[11px] font-semibold text-foreground px-2 py-1 rounded-full">Best seller</span>
       <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
-        ${[0,1,2,3].map(i => `<span class="h-1 rounded-full transition-all duration-300 ${i===0?'w-6 bg-primary':'w-4 bg-border-3'}"></span>`).join('')}
+        ${[0,1,2,3].map(i => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
       </div>
     </div>
 
@@ -554,10 +564,13 @@ function screenPDP() {
     <!-- variants -->
     <div class="flex flex-col gap-4 pt-2 px-4 pb-2 rise">
       <div class="flex flex-col gap-2">
-        <div class="flex gap-2"><p class="text-[12px] font-medium leading-4 text-foreground">Màu sắc</p><p id="colorName" class="text-[12px] leading-4 text-muted-foreground">Cognac</p></div>
+        <div class="flex gap-2">
+          <p class="text-[12px] font-medium leading-4 text-foreground">Màu sắc</p>
+          <p id="colorName" class="text-[12px] leading-4 text-muted-foreground">Cognac</p>
+        </div>
         <div class="flex gap-2">
           ${swatches.map((s, i) => `
-            <button class="sw w-11 h-11 rounded-xs overflow-hidden border ${i===0?'on':'border-transparent'} bg-secondary" data-sw="${i}" data-color="${['Cognac','Black','Navy','Cream'][i]}">
+            <button class="sw w-11 h-11 rounded-xs overflow-hidden border ${i===0 ? 'on' : 'border-transparent'} bg-secondary" data-sw="${i}" data-color="${['Cognac','Black','Navy','Cream'][i]}">
               <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="">
             </button>`).join('')}
         </div>
@@ -570,7 +583,7 @@ function screenPDP() {
         <div class="flex flex-wrap gap-2">
           ${SIZES.map(s => {
             const off = DISABLED.includes(s);
-            return `<button class="chip min-w-[52px] h-9 px-2 rounded-xs text-[14px] font-medium border ${s==='39'?'on border-primary':'border-border'} ${off?'off':'text-foreground'}" ${off?'disabled':''} data-size="${s}">${s}</button>`;
+            return `<button class="chip min-w-[52px] h-9 px-2 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" ${off ? 'disabled' : ''} data-size="${s}">${s}</button>`;
           }).join('')}
         </div>
         <p class="text-[12px] font-medium leading-4 text-warning flex items-center gap-1.5">
@@ -580,7 +593,7 @@ function screenPDP() {
     </div>
 
     <!-- in-flow CTA -->
-    <div id="pdpCta" class="px-4 py-4 border-t border-border rise">
+    <div id="pdpCta" class="px-4 py-4 rise">
       <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center gap-2">Thêm vào giỏ hàng</button>
     </div>
 
@@ -597,24 +610,160 @@ function screenPDP() {
       ${tabs.map(([t, body]) => `
         <div class="acc border-b border-border-1">
           <button class="acc-trigger w-full h-14 flex items-center justify-between px-2 press">
-            <span class="text-[16px] font-medium leading-6 text-foreground">${t}</span>${I.chevR('#0a0a0a')}
+            <span class="text-[16px] font-medium leading-6 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
           </button>
           <div class="acc-body"><div class="acc-inner"><p class="pb-4 px-2 text-[14px] leading-5 text-foreground-alt">${body}</p></div></div>
         </div>`).join('')}
     </div>
 
-    <!-- recommendation row -->
-    <div class="flex flex-col gap-4 py-6 reveal">
-      <p class="px-4 text-[20px] leading-7 text-foreground">Gợi ý mua kèm</p>
-      <div class="flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
-        ${PRODUCTS.slice(0, 5).map((p, i) => productCard(p, i, { w: 'w-[160px] shrink-0' })).join('')}
-      </div>
-    </div>
+    <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
+    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
+      <div class="flex flex-col gap-4 py-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
+        <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
+          ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0' })).join('')}
+        </div>
+      </div>`).join('')}
 
     ${footer()}
   </div>
 
   <!-- sticky CTA -->
+  <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium press">Thêm vào giỏ hàng</button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SCREEN: PDP2 — "05 - PDP-Mobile-02-LowStock" (3087:52415)
+   Khác bản 1: chọn size bằng DROPDOWN, không có cảnh báo tồn kho,
+   accordion có bảng thông số. Dùng cho SP #2 (Khăn lụa Broken Jewels).
+════════════════════════════════════════════════════════════════ */
+function screenPDP2() {
+  const P = PRODUCTS[1];
+  const swatches = ['p2.png','pdp-sw2.png','pdp-sw3.png','pdp-sw4.png'];
+  const promos = ['Giảm thêm 10% cho thành viên DAFC Insider','Tặng gói quà cao cấp cho đơn từ 5 triệu','Freeship toàn quốc'];
+  const specs = [['Chất liệu','Lụa twill 100%'],['Kích thước','90 × 90 cm'],['Xuất xứ','Made in Italy']];
+  const tabs = [
+    ['Mô tả sản phẩm','Khăn lụa twill in họa tiết Broken Jewels — hoạ tiết đặc trưng bộ sưu tập La Vacanza. Viền cuốn tay, mặt lụa mềm rủ, phối cùng túi xách hoặc buộc tóc.', specs],
+    ['Bảo quản sản phẩm','Giặt khô. Không vắt, không dùng chất tẩy. Là ở nhiệt độ thấp qua lớp vải lót.', null],
+    ['Chính sách đổi trả','Đổi hàng miễn phí trong 14 ngày với sản phẩm còn nguyên tem mác.', null],
+    ['Về thương hiệu Versace','Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo và logo Medusa đặc trưng.', null],
+  ];
+
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+
+    <!-- gallery -->
+    <div class="relative w-full bg-secondary" style="height:520px">
+      <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+        ${swatches.map(s => `
+          <div class="w-full h-full shrink-0 snap-center relative">
+            <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
+          </div>`).join('')}
+      </div>
+      <button data-nav="plp" class="absolute top-3 left-3 h-9 px-3 flex items-center gap-2 rounded-full glass-85 backdrop-blur text-[14px] text-foreground press">${I.chevL} Back to categories</button>
+      <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-0.5">
+        ${swatches.map((_, i) => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
+      </div>
+    </div>
+
+    <!-- Header (Frame 427319848 + 427319849) -->
+    <div class="flex flex-col gap-2 pt-4 px-4 rise">
+      <div class="flex flex-col gap-2">
+        <p class="text-[12px] font-medium leading-4 text-foreground">NEW SEASON · LA VACANZA</p>
+        <p class="text-[20px] font-medium leading-7 text-foreground">${P.brand}</p>
+        <p class="text-[14px] leading-5 text-foreground-alt">${P.name}</p>
+      </div>
+      <div class="flex flex-col gap-2 pt-2">
+        <div class="flex gap-1.5 items-center h-6">
+          <p class="text-[16px] font-medium leading-6 text-destructive">${P.price}</p>
+        </div>
+        <div class="flex gap-1 items-center">
+          <p class="text-[12px] leading-4 text-foreground-alt">Trả trước từ <b class="font-semibold">1.301.000 ₫</b>/tháng</p>
+          <button data-toast="Xem chính sách trả góp" class="text-[12px] leading-4 text-foreground underline">Xem chi tiết</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Frame 15: Element (màu) + Form field (dropdown size) -->
+    <div class="flex flex-col gap-4 pt-4 px-4 rise">
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-2">
+          <p class="text-[12px] leading-4 text-foreground">Màu sắc</p>
+          <p id="colorName" class="text-[12px] leading-4 text-muted-foreground">Broken Jewels</p>
+        </div>
+        <div class="flex gap-2">
+          ${swatches.map((s, i) => `
+            <button class="sw w-11 h-11 rounded-xs overflow-hidden border ${i===0 ? 'on' : 'border-transparent'} bg-[#f1f1f1]" data-sw="${i}" data-color="${['Broken Jewels','Nero','Blu','Oro'][i]}">
+              <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="">
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <!-- Form field — Select & Combobox (khác bản 1: không dùng chip size) -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <p class="text-[12px] leading-4 text-[#171717]">Kích thước</p>
+          <button data-toast="Mở bảng size" class="text-[12px] leading-4 text-[#171717] underline">Size guide</button>
+        </div>
+        <div class="relative">
+          <select id="sizeSelect" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] text-foreground outline-none focus:border-primary transition-colors appearance-none">
+            <option>Chọn kích thước</option>
+            <option>90 × 90 cm</option>
+            <option>84 × 5 cm</option>
+          </select>
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sticky CTA (in-flow) -->
+    <div id="pdpCta" class="px-4 pt-4 pb-4 rise">
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center">Thêm vào giỏ hàng</button>
+    </div>
+
+    <!-- CTKM -->
+    <div class="px-4 pb-2 rise">
+      <div class="bg-accent-0 rounded p-2 flex flex-col gap-1">
+        <p class="text-[14px] font-medium leading-5 text-foreground">ƯU ĐÃI KHUYẾN MÃI</p>
+        ${promos.map(p => `<p class="text-[14px] leading-5 text-secondary-foreground">${p}</p>`).join('')}
+      </div>
+    </div>
+
+    <!-- Info Tabs — label Light 16 + bảng thông số -->
+    <div class="pt-2 px-2">
+      ${tabs.map(([t, body, sp]) => `
+        <div class="acc border-b border-border-1">
+          <button class="acc-trigger w-full h-14 flex items-center justify-between px-2 press">
+            <span class="text-[16px] font-light leading-6 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+          </button>
+          <div class="acc-body"><div class="acc-inner">
+            <div class="pb-4 px-2 flex flex-col gap-2">
+              <p class="text-[14px] leading-5 text-foreground-alt">${body}</p>
+              ${sp ? sp.map(([k, v]) => `
+                <div class="flex items-center justify-between h-6">
+                  <span class="text-[12px] leading-4 text-muted-foreground">${k}</span>
+                  <span class="text-[12px] leading-4 text-foreground">${v}</span>
+                </div>`).join('') : ''}
+            </div>
+          </div></div>
+        </div>`).join('')}
+    </div>
+
+    <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
+    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
+      <div class="flex flex-col gap-4 py-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
+        <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
+          ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0' })).join('')}
+        </div>
+      </div>`).join('')}
+
+    ${footer()}
+  </div>
+
   <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
     <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium press">Thêm vào giỏ hàng</button>
   </div>`;
@@ -669,7 +818,7 @@ function giftPicker() {
 function dafcRewards() {
   const row = (id, title, sub, on) => `
     <button class="w-full flex items-start gap-2 py-2 press text-left" data-reward="${id}">
-      <span class="chk ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-[3px] border border-border flex items-center justify-center shrink-0">${I.tick}</span>
+      <span class="chk ${on ? 'on' : ''} w-4 h-4 mt-0.5 border border-border flex items-center justify-center shrink-0">${I.tick}</span>
       <span class="flex-1 min-w-0">
         <span class="block text-[14px] font-medium leading-5 text-foreground-alt">${title}</span>
         <span class="block text-[12px] leading-4 text-muted-foreground">${sub}</span>
@@ -690,7 +839,7 @@ function screenCART() {
   const row = (c, i) => `
     <div class="cart-row flex gap-2 px-4 py-4" data-row="${i}">
       <div class="w-4 shrink-0 flex items-center">
-        <button class="chk on w-4 h-4 rounded-[2px] border border-border-3 flex items-center justify-center press" data-check>${I.tick}</button>
+        <button class="chk on w-4 h-4 border border-border-3 flex items-center justify-center press" data-check>${I.tick}</button>
       </div>
       <div class="w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
         <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
@@ -733,7 +882,7 @@ function screenCART() {
 
     <div class="flex items-center justify-between px-4 py-2 border-y border-border-1 rise">
       <button id="selectAll" class="flex items-center gap-2 press">
-        <span class="chk on w-5 h-5 rounded-[3px] border border-border flex items-center justify-center">${I.tick}</span>
+        <span class="chk on w-4 h-4 border border-border flex items-center justify-center">${I.tick}</span>
         <span class="text-[14px] font-medium text-foreground">${ckAuth ? 'Chọn tất cả ( 4 sản phẩm )' : 'Chọn tất cả'}</span>
       </button>
       ${ckAuth ? '' : '<button id="delSelected" class="text-[14px] font-medium text-muted-foreground press">Xóa sản phẩm đã chọn</button>'}
@@ -759,13 +908,41 @@ function screenCART() {
       </div>
 
       <div class="flex flex-col gap-2">
-        <p class="text-[13px] font-medium text-foreground">Bạn có phiếu mua hàng?</p>
-        <div class="flex gap-2">
-          <input id="voucher" placeholder="Nhập voucher" class="flex-1 h-10 border border-border rounded-xs px-3 text-[13px] outline-none focus:border-primary transition-colors">
-          <button id="applyVoucher" class="h-10 px-5 bg-primary text-primary-foreground text-[13px] font-medium rounded-xs press">Áp dụng</button>
+        <!-- Mã giảm giá (Frame 427319782) -->
+        <div class="flex flex-col gap-2">
+          <p class="text-[14px] font-medium leading-5 text-foreground">Mã giảm giá</p>
+          <div class="flex gap-1">
+            <input id="voucher" placeholder="Nhập  voucher" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+            <button id="applyVoucher" class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press">Áp dụng</button>
+          </div>
+          <div class="flex gap-1.5 flex-wrap">
+            ${['JUNE500','JUNE900','JUNE2000'].map(v => `<button class="vcode h-6 px-2 rounded border border-dashed border-border text-[12px] font-medium text-secondary-foreground press" data-code="${v}">${v}</button>`).join('')}
+          </div>
         </div>
-        <div class="flex gap-1.5 flex-wrap">
-          ${['JUNE500','JUNE900','JUNE2000'].map(v => `<button class="vcode h-7 px-2.5 rounded-full border border-dashed border-border text-[11px] font-semibold text-mid-alt press" data-code="${v}">${v}</button>`).join('')}
+
+        <!-- Bạn có phiếu mua hàng? — đóng/mở (Chính sách accordion) -->
+        <div class="acc">
+          <button class="acc-trigger w-full h-9 flex items-center justify-between border-b border-border press">
+            <span class="text-[14px] font-medium leading-5 text-foreground">Bạn có phiếu mua hàng?</span>
+            <span class="acc-ico-minus hidden">${IcoMinus}</span>
+            <span class="acc-ico-plus">${IcoPlus}</span>
+          </button>
+          <div class="acc-body"><div class="acc-inner">
+            <div class="flex flex-col gap-2 pt-2">
+              <p class="text-[12px] leading-4 text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
+              <div class="flex gap-1">
+                <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+                <button id="applyPbh" class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press">Áp dụng</button>
+              </div>
+              <div id="pbhList" class="flex gap-2 flex-wrap">
+                ${['VOUCHERPBH1231233222','VOUCHERPBH1231233222','VOUCHERPBH1231233222','VOUCHERPBH1231233222'].map(v => `
+                  <span class="pbh-badge bg-secondary rounded flex items-center gap-1.5 px-2 py-0.5 h-6">
+                    <span class="text-[12px] font-medium leading-4 text-secondary-foreground truncate max-w-[74px]">${v}</span>
+                    <button class="pbh-del w-3 h-3 flex items-center justify-center shrink-0 press">${IcoCross}</button>
+                  </span>`).join('')}
+              </div>
+            </div>
+          </div></div>
         </div>
       </div>
     </div>
@@ -900,7 +1077,7 @@ function screenCHECKOUT() {
     ${field('Địa chỉ','Số nhà, tên đường')}
     <div class="px-4 pt-1">
       <label class="flex items-center gap-2 press">
-        <span class="chk w-4 h-4 rounded-[3px] border border-border flex items-center justify-center" data-check>${I.tick}</span>
+        <span class="chk w-4 h-4 border border-border flex items-center justify-center" data-check>${I.tick}</span>
         <span class="text-[14px] leading-5 text-foreground">Lưu địa chỉ</span>
       </label>
     </div>
@@ -948,7 +1125,7 @@ function screenCHECKOUT() {
     <div class="pt-4">
       <div class="px-4">
         <label id="vatToggle" class="flex items-center gap-2 press w-fit cursor-pointer">
-          <span class="chk w-4 h-4 rounded-[3px] border border-border flex items-center justify-center shrink-0">${I.tick}</span>
+          <span class="chk w-4 h-4 border border-border flex items-center justify-center shrink-0">${I.tick}</span>
           <span class="text-[14px] font-medium leading-5 text-foreground">Xuất hóa đơn VAT</span>
         </label>
       </div>
@@ -1096,7 +1273,7 @@ const FILTER_CATS = [
   ['Đồng hồ',   ['Đồng hồ','Đồng hồ thông minh']],
   ['Làm đẹp',   ['Nước hoa']],
 ];
-const FILTER_BRANDS = ['Burberry','Chanel','Gucci','Prada','Dior','Balenciaga','Versace','Fendi'];
+const FILTER_BRANDS = ['A.P.C.','Balmain','Burberry','Christian Louboutin','Dolce&Gabbana','Emporio Armani','Ferragamo','Gianvito Rossi','MCM','Montblanc','Moschino','MSGM','Palm Angels','Paul&Shark','Santoni','Stefano Ricci','TUMI','Versace','Versace Jeans Couture','Zimmermann'];
 const FILTER_COLORS = [['Đen','#010101'],['Trắng','#ffffff'],['Beige','#e4d8c9'],['Navy','#213259'],['Đỏ','#d62845'],['Nâu','#664232'],['Xám','#909090']];
 const FILTER_SIZES  = ['39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55'];
 
@@ -1105,7 +1282,7 @@ const IcoPlus  = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><p
 const IcoCross = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 3 10 10M13 3 3 13" stroke="var(--general-primary)" stroke-width="1.5" stroke-linecap="round"/></svg>`;
 
 /* ô checkbox 16×16 */
-const fchk = (on) => `<span class="chk ${on ? 'on' : ''} w-4 h-4 rounded-[2px] border border-border-3 flex items-center justify-center shrink-0">${I.tick}</span>`;
+const fchk = (on) => `<span class="chk ${on ? 'on' : ''} w-4 h-4 border border-border-3 flex items-center justify-center shrink-0">${I.tick}</span>`;
 
 /* Accordion cấp 1 (Danh mục / Thương hiệu / …) */
 function fSection(title, body, open = true) {
@@ -1305,7 +1482,7 @@ function wireFilter() {
    ROUTER + BEHAVIOUR
 ════════════════════════════════════════════════════════════════ */
 const RENDER = {
-  plp: screenPLP, pdp: screenPDP, cart: screenCART, login: screenLOGIN,
+  plp: screenPLP, pdp: screenPDP, pdp2: screenPDP2, cart: screenCART, login: screenLOGIN,
   checkout: screenCHECKOUT, done: screenDONE,
 };
 
@@ -1385,7 +1562,7 @@ function wire(root) {
   root.querySelectorAll('[data-product]').forEach(el => {
     el.addEventListener('click', e => {
       if (e.target.closest('.wish')) { toast('Đã lưu yêu thích'); return; }
-      go('pdp');
+      go(el.dataset.product === '1' ? 'pdp2' : 'pdp');   // SP #2 (Khăn lụa) -> bản PDP riêng
     });
   });
 
@@ -1548,6 +1725,23 @@ function wire(root) {
     root.querySelectorAll('.cart-row').forEach(r => { if (r.querySelector('.chk').classList.contains('on')) r.querySelector('.del').click(); });
   });
 
+  // Phiếu mua hàng: xoá badge + áp dụng
+  root.querySelectorAll('.pbh-del').forEach(b =>
+    b.addEventListener('click', e => { e.stopPropagation(); b.closest('.pbh-badge').remove(); toast('Đã gỡ phiếu mua hàng'); }));
+  const pbhBtn = root.querySelector('#applyPbh');
+  if (pbhBtn) pbhBtn.addEventListener('click', () => {
+    const v = (root.querySelector('#pbh').value || '').trim();
+    if (!v) { toast('Nhập mã phiếu mua hàng'); return; }
+    root.querySelector('#pbhList').insertAdjacentHTML('beforeend', `
+      <span class="pbh-badge bg-secondary rounded flex items-center gap-1.5 px-2 py-0.5 h-6">
+        <span class="text-[12px] font-medium leading-4 text-secondary-foreground truncate max-w-[74px]">${v}</span>
+        <button class="pbh-del w-3 h-3 flex items-center justify-center shrink-0 press">${IcoCross}</button>
+      </span>`);
+    root.querySelector('#pbh').value = '';
+    root.querySelectorAll('.pbh-del').forEach(b => { b.onclick = e => { e.stopPropagation(); b.closest('.pbh-badge').remove(); toast('Đã gỡ phiếu mua hàng'); }; });
+    toast('Đã thêm ' + v);
+  });
+
   // Cart: voucher
   const vBtn = root.querySelector('#applyVoucher');
   if (vBtn) {
@@ -1673,6 +1867,8 @@ function wire(root) {
     }
   }
 
+  root.querySelectorAll('.drag-x').forEach(dragScroll);
+
   observeReveal(root);
 }
 
@@ -1690,6 +1886,42 @@ function refreshCartCount(root) {
       <button data-nav="plp" class="mt-2 h-10 px-6 bg-primary text-primary-foreground text-[13px] font-semibold rounded-xs press">Tiếp tục mua sắm</button></div>`;
     wire(root);
   }
+}
+
+/* ── Kéo ngang carousel bằng chuột (mobile đã có vuốt native) ── */
+function dragScroll(el) {
+  let down = false, sx = 0, sl = 0, moved = false;
+  const onDown = e => {
+    if (e.pointerType === 'touch') return;      // để touch dùng cuộn native
+    down = true; moved = false;
+    sx = e.clientX; sl = el.scrollLeft;
+    el.classList.add('dragging');
+  };
+  const onMove = e => {
+    if (!down) return;
+    const dx = e.clientX - sx;
+    if (Math.abs(dx) > 3) moved = true;
+    el.scrollLeft = sl - dx;
+    e.preventDefault();
+  };
+  const onUp = () => {
+    if (!down) return;
+    down = false;
+    el.classList.remove('dragging');
+  };
+  // chặn click nếu vừa kéo (tránh lỡ mở sản phẩm)
+  const onClick = e => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } };
+  el.addEventListener('pointerdown', onDown);
+  el.addEventListener('click', onClick, true);
+  el.addEventListener('dragstart', e => e.preventDefault());
+  window.addEventListener('pointermove', onMove, { passive: false });
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onUp);
+  scrollCleanups.push(() => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onUp);
+  });
 }
 
 /* ── Reveal observer ── */
