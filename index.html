@@ -297,8 +297,8 @@ const CART = [
 const SIZES = ['39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55'];
 const DISABLED = ['52','53','54','55'];
 
-const FLOW = ['plp','pdp','pdp2','pdp3','pdp4','cart','login','account','checkout','done'];
-const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login:'Đăng nhập', pdp2:'Sản phẩm', pdp3:'Sản phẩm', pdp4:'Sản phẩm', account:'Tài khoản', checkout:'Thanh toán', done:'Hoàn tất' };
+const FLOW = ['plp','pdp','pdp2','pdp3','pdp4','cart','login','account','order','checkout','done'];
+const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login:'Đăng nhập', pdp2:'Sản phẩm', pdp3:'Sản phẩm', pdp4:'Sản phẩm', account:'Tài khoản', order:'Chi tiết đơn hàng', checkout:'Thanh toán', done:'Hoàn tất' };
 
 /* ════════════════════════════════════════════════════════════════
    ICONS
@@ -1235,27 +1235,58 @@ function accInfo() {
     </div>`;
 }
 
-/* ── Đơn hàng (có tab trạng thái phụ) ── */
+/* ── Dữ liệu đơn hàng (dùng chung cho list + chi tiết) ── */
+const ORDERS = [
+  {
+    id: 'DAFC102938', status: 'Đang giao', tone: 'warning', date: '14/07/2025',
+    items: [
+      { img: 'p5.png',  name: 'Giày loafer da Manu', variant: '40 · Black', qty: 1, price: '35.248.000 ₫' },
+      { img: 'p10.png', name: 'Thắt lưng da mặt khóa Medusa', variant: '95 · Black', qty: 1, price: '17.575.000 ₫' },
+    ],
+    sub: '52.823.000 ₫', ship: 'Miễn phí', discount: '− 2.113.000 ₫', total: '50.710.000 ₫',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
+    address: { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
+    steps: 2,
+  },
+  {
+    id: 'DAFC102801', status: 'Hoàn tất', tone: 'muted', date: '28/06/2025',
+    items: [ { img: 'p8.png', name: 'Túi da Lou mini', variant: 'Onesize · Black', qty: 1, price: '45.066.000 ₫' } ],
+    sub: '45.066.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '45.066.000 ₫',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng nhanh',
+    address: { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh' },
+    steps: 4,
+  },
+  {
+    id: 'DAFC102455', status: 'Hoàn tất', tone: 'muted', date: '15/06/2025',
+    items: [ { img: 'p2.png', name: 'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant: 'Onesize', qty: 1, price: '15.611.000 ₫' } ],
+    sub: '15.611.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '15.611.000 ₫',
+    payment: 'Ví MoMo', method: 'Giao hàng tiêu chuẩn',
+    address: { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
+    steps: 4,
+  },
+];
+let currentOrder = 'DAFC102938';
+
+/* ── Đơn hàng (list) ── */
 function accOrders() {
-  const orders = [
-    ['#DAFC102938', 'Đang giao', 'warning', '2 sản phẩm · 86.205.000 ₫', 'Giày loafer da Manu, Thắt lưng Medusa'],
-    ['#DAFC102801', 'Hoàn tất', 'muted', '1 sản phẩm · 45.066.000 ₫', 'Túi da Lou mini'],
-    ['#DAFC102455', 'Hoàn tất', 'muted', '1 sản phẩm · 15.611.000 ₫', 'Khăn lụa Broken Jewels'],
-  ];
   return `
     <div class="px-5 pt-4 flex flex-col gap-3">
-      ${orders.map(([id, status, tone, meta, items]) => `
+      ${ORDERS.map(o => {
+        const itemNames = o.items.map(it => it.name).join(', ');
+        const totalQty = o.items.reduce((s, it) => s + it.qty, 0);
+        return `
         <div class="border border-border-1 rounded-xs p-3 flex flex-col gap-2">
           <div class="flex items-center justify-between">
-            <span class="text-[13px] font-medium leading-5 text-foreground">${id}</span>
-            <span class="text-[12px] leading-4 ${tone==='warning' ? 'text-warning' : 'text-muted-foreground'}">${status}</span>
+            <span class="text-[13px] font-medium leading-5 text-foreground">#${o.id}</span>
+            <span class="text-[12px] leading-4 ${o.tone==='warning' ? 'text-warning' : 'text-muted-foreground'}">${o.status}</span>
           </div>
-          <p class="text-[13px] leading-5 text-foreground-alt">${items}</p>
+          <p class="text-[13px] leading-5 text-foreground-alt line-clamp-1">${itemNames}</p>
           <div class="flex items-center justify-between pt-1 border-t border-border-1">
-            <span class="text-[12px] leading-4 text-muted-foreground">${meta}</span>
-            <button data-toast="Xem chi tiết ${id}" class="text-[13px] leading-5 text-foreground underline press">Chi tiết</button>
+            <span class="text-[12px] leading-4 text-muted-foreground">${totalQty} sản phẩm · ${o.total}</span>
+            <button data-order="${o.id}" class="text-[13px] leading-5 text-foreground underline press">Chi tiết</button>
           </div>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
     </div>`;
 }
 
@@ -1341,6 +1372,128 @@ function accPoints() {
           </div>`).join('')}
       </div>
     </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ORDER DETAIL — chi tiết đơn hàng (chuẩn e-commerce/Magento)
+   Header trạng thái · timeline theo dõi · địa chỉ · SP · thanh toán
+   · tổng kết · hành động. Mở khi bấm "Chi tiết" ở tab Đơn hàng.
+════════════════════════════════════════════════════════════════ */
+const ORDER_STEPS = ['Đã đặt hàng', 'Đã xác nhận', 'Đang giao', 'Đã giao'];
+
+function screenORDER() {
+  const o = ORDERS.find(x => x.id === currentOrder) || ORDERS[0];
+  const done = o.steps;
+
+  return `
+  <div class="w-full min-h-screen bg-background pb-10">
+    <!-- nav -->
+    <div class="h-12 flex items-center px-2 border-b border-border-1 sticky top-0 bg-background z-20">
+      <button data-nav="account" class="w-9 h-9 flex items-center justify-center press">${I.chevL}</button>
+      <p class="flex-1 text-center text-[16px] font-medium text-foreground pr-9">Chi tiết đơn hàng</p>
+    </div>
+
+    <!-- header trạng thái -->
+    <div class="px-5 py-4 border-b border-border-1 flex items-center justify-between">
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[15px] font-medium leading-6 text-foreground">#${o.id}</span>
+        <span class="text-[12px] leading-4 text-muted-foreground">Đặt ngày ${o.date}</span>
+      </div>
+      <span class="text-[12px] font-medium px-2.5 py-1 rounded-full ${o.tone==='warning' ? 'bg-destructive-subtle text-warning' : 'bg-secondary text-muted-foreground'}">${o.status}</span>
+    </div>
+
+    <!-- timeline theo dõi -->
+    <div class="px-5 py-5 border-b border-border-1">
+      <div class="flex items-start">
+        ${ORDER_STEPS.map((label, i) => {
+          const reached = i < done;
+          const isCur = i === done - 1;
+          return `
+          <div class="flex-1 flex flex-col items-center relative">
+            ${i > 0 ? `<span class="absolute top-[11px] right-1/2 w-full h-0.5 ${i < done ? 'bg-primary' : 'bg-border'}"></span>` : ''}
+            <span class="relative z-10 w-6 h-6 rounded-full flex items-center justify-center ${reached ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground border border-border'}">
+              ${reached ? `<span class="w-2.5 h-2.5">${I.tick}</span>` : `<span class="w-1.5 h-1.5 rounded-full bg-current"></span>`}
+            </span>
+            <span class="mt-2 text-[11px] leading-4 text-center ${isCur ? 'text-foreground font-medium' : 'text-muted-foreground'}">${label}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      ${o.tone==='warning' ? `
+        <div class="mt-4 rounded-xs bg-secondary px-3 py-2 flex items-center gap-2">
+          <span class="w-4 h-4 text-foreground shrink-0">${I.truck}</span>
+          <span class="text-[12px] leading-4 text-foreground-alt">Dự kiến giao ngày 18/07/2025 · Mã vận đơn <b class="font-medium">GHN284917</b></span>
+        </div>` : ''}
+    </div>
+
+    <!-- địa chỉ giao -->
+    <div class="px-5 py-4 border-b border-border-1 flex flex-col gap-1">
+      <span class="text-[12px] leading-4 text-muted-foreground">Địa chỉ nhận hàng</span>
+      <span class="text-[14px] font-medium leading-5 text-foreground">${o.address.name} · ${o.address.phone}</span>
+      <span class="text-[13px] leading-5 text-foreground-alt">${o.address.line}</span>
+    </div>
+
+    <!-- danh sách sản phẩm -->
+    <div class="px-5 py-4 border-b border-border-1 flex flex-col gap-4">
+      <span class="text-[12px] leading-4 text-muted-foreground">Sản phẩm (${o.items.length})</span>
+      ${o.items.map(it => `
+        <div class="flex gap-3">
+          <div class="w-[72px] h-[96px] bg-secondary rounded-xs overflow-hidden shrink-0">
+            <img src="${A}${it.img}" class="w-full h-full object-cover" alt="${it.name}">
+          </div>
+          <div class="flex-1 min-w-0 flex flex-col">
+            <span class="text-[12px] leading-4 text-muted-foreground">Versace</span>
+            <span class="text-[14px] leading-5 text-foreground line-clamp-2">${it.name}</span>
+            <span class="text-[12px] leading-4 text-muted-foreground mt-1">${it.variant}</span>
+            <div class="flex items-center justify-between mt-auto">
+              <span class="text-[12px] leading-4 text-muted-foreground">SL: ${it.qty}</span>
+              <span class="text-[14px] font-medium leading-5 text-foreground">${it.price}</span>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <!-- phương thức -->
+    <div class="px-5 py-4 border-b border-border-1 flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <span class="text-[13px] leading-5 text-muted-foreground">Phương thức giao hàng</span>
+        <span class="text-[13px] leading-5 text-foreground">${o.method}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-[13px] leading-5 text-muted-foreground">Thanh toán</span>
+        <span class="text-[13px] leading-5 text-foreground">${o.payment}</span>
+      </div>
+    </div>
+
+    <!-- tổng kết -->
+    <div class="px-5 py-4 border-b border-border-1 flex flex-col gap-2">
+      <div class="flex items-center justify-between">
+        <span class="text-[13px] leading-5 text-muted-foreground">Tạm tính</span>
+        <span class="text-[13px] leading-5 text-foreground">${o.sub}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-[13px] leading-5 text-muted-foreground">Phí vận chuyển</span>
+        <span class="text-[13px] leading-5 text-foreground">${o.ship}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-[13px] leading-5 text-muted-foreground">Giảm giá</span>
+        <span class="text-[13px] leading-5 ${o.discount!=='0 ₫' ? 'text-destructive' : 'text-foreground'}">${o.discount}</span>
+      </div>
+      <div class="flex items-center justify-between pt-2 mt-1 border-t border-border-1">
+        <span class="text-[14px] font-medium leading-5 text-foreground">Tổng cộng</span>
+        <span class="text-[16px] font-semibold leading-6 text-foreground">${o.total}</span>
+      </div>
+    </div>
+
+    <!-- hành động -->
+    <div class="px-5 py-4 flex flex-col gap-2">
+      ${o.tone==='warning'
+        ? `<button data-toast="Theo dõi đơn GHN284917" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press">Theo dõi đơn hàng</button>
+           <button data-toast="Đã gửi yêu cầu huỷ" class="w-full h-11 rounded-xs border border-border text-mid-alt text-[14px] font-medium press">Huỷ đơn hàng</button>`
+        : `<button data-toast="Đã thêm lại vào giỏ" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press">Mua lại</button>
+           <button data-toast="Xuất hoá đơn" class="w-full h-11 rounded-xs border border-border text-foreground text-[14px] font-medium press">Xuất hoá đơn</button>`}
+      <button data-toast="Liên hệ CSKH 1900 2666" class="w-full h-11 text-[13px] text-muted-foreground press">Cần hỗ trợ? Liên hệ CSKH</button>
+    </div>
+  </div>`;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -2153,7 +2306,7 @@ function wireFilter() {
    ROUTER + BEHAVIOUR
 ════════════════════════════════════════════════════════════════ */
 const RENDER = {
-  plp: screenPLP, pdp: screenPDP, pdp2: screenPDP2, pdp3: screenPDP3, pdp4: screenPDP4, account: screenACCOUNT, cart: screenCART, login: screenLOGIN,
+  plp: screenPLP, pdp: screenPDP, pdp2: screenPDP2, pdp3: screenPDP3, pdp4: screenPDP4, account: screenACCOUNT, order: screenORDER, cart: screenCART, login: screenLOGIN,
   checkout: screenCHECKOUT, done: screenDONE,
 };
 
@@ -2227,6 +2380,11 @@ function wire(root) {
 
   // Đăng nhập: mở từ PLP/PDP -> quay lại đó (giỏ sẽ thành bản thành viên);
   // mở từ giỏ (nút Đặt hàng) -> đi tiếp checkout như Figma
+  // Mở chi tiết đơn hàng
+  root.querySelectorAll('[data-order]').forEach(btn => {
+    btn.addEventListener('click', () => { currentOrder = btn.dataset.order; go('order'); });
+  });
+
   // ACCOUNT: tabs trên đầu
   root.querySelectorAll('[data-atab]').forEach(btn => {
     btn.addEventListener('click', () => {
