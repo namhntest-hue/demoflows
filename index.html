@@ -52,6 +52,43 @@
   .drag-x.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
   .drag-x.dragging img { pointer-events: none; }
 
+  /* ── Shimmer lazy-load (versace images-shimmer) ── */
+  .shimmer { position: relative; overflow: hidden; }
+  .shimmer::after {
+    content: ''; position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+    transform: translateX(-100%); animation: shimmer 1.4s infinite;
+  }
+  .shimmer.loaded::after { display: none; }
+  .shimmer img { opacity: 0; transition: opacity .5s ease; }
+  .shimmer.loaded img { opacity: 1; }
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
+
+  /* ── Info Bottom Sheet (versace b-drawer) — đẩy lên thay vì extend ── */
+  #infoSheet { position: fixed; inset: 0; z-index: 300; pointer-events: none; }
+  #infoSheet .is-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); opacity: 0; transition: opacity .4s ease; }
+  #infoSheet .is-panel {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    max-height: 86vh; background: var(--general-background);
+    border-radius: 24px 24px 0 0;             /* bo 2 góc trên = 24px (versace) */
+    transform: translateY(100%);
+    transition: transform .4s ease-in-out;     /* versace: transform .4s ease-in-out */
+    display: flex; flex-direction: column;
+    box-shadow: 0 -8px 30px rgba(0,0,0,.12);
+  }
+  #infoSheet.open { pointer-events: auto; }
+  #infoSheet.open .is-backdrop { opacity: 1; }
+  #infoSheet.open .is-panel { transform: translateY(0); }
+
+  /* ── Zoom lightbox (chạm ảnh gallery) ── */
+  #zoomBox { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.92);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+  #zoomBox.on { opacity: 1; pointer-events: auto; }
+  #zoomBox img { max-width: 100%; max-height: 100%; transform: scale(.92); transition: transform .3s cubic-bezier(.22,1,.36,1); }
+  #zoomBox.on img { transform: scale(1); }
+  #zoomBox .zclose { position: absolute; top: calc(16px + env(safe-area-inset-top)); right: 16px; z-index: 2; }
+
   /* ── Nền mờ theo token ──
      Tailwind KHÔNG áp được modifier /95 lên màu var(), nên tự viết.
      Dòng background đầu = fallback đặc cho trình duyệt cũ. */
@@ -188,17 +225,16 @@
 const A = 'assets/';
 
 const PRODUCTS = [
-  // Xen kẽ: chẵn = có giảm (giá đỏ + badge + giá gốc), lẻ = nguyên giá (giá đen)
-  { img:'p1.png',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫' },
-  { img:'p2.png',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', price:'15.611.000 ₫' },
-  { img:'p3.png',  brand:'Versace', name:'Túi đeo vai da Emblème',                     price:'50.957.000 ₫', off:'-15%', was:'59.949.000 ₫' },
-  { img:'p4.png',  brand:'Versace', name:'Giày cao gót da nappa Gianni 90',            price:'45.066.000 ₫' },
-  { img:'p5.png',  brand:'Versace', name:'Giày loafer da Manu',                        price:'35.248.000 ₫', off:'-30%', was:'50.354.000 ₫' },
-  { img:'p6.png',  brand:'Versace', name:'Giày thể thao da lộn Greca Court',           price:'27.393.000 ₫' },
-  { img:'p7.png',  brand:'Versace', name:'Túi đeo vai da Vivian East/West cỡ nhỏ',     price:'70.593.000 ₫', off:'-25%', was:'94.124.000 ₫' },
-  { img:'p8.png',  brand:'Versace', name:'Túi da Lou mini',                            price:'45.066.000 ₫' },
-  { img:'p9.png',  brand:'Versace', name:'Túi tote Rivière mini',                      price:'50.957.000 ₫', off:'-10%', was:'56.619.000 ₫' },
-  { img:'p10.png', brand:'Versace', name:'Thắt lưng da mặt khóa Medusa',               price:'17.575.000 ₫' },
+  { img:'p1.png',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫', colors:[{name:'Broken Jewels',hex:'#c4a481'},{name:'Nero',hex:'#0a0a0a'},{name:'Oro',hex:'#c9a94b'}] },
+  { img:'p2.png',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', price:'15.611.000 ₫', colors:[{name:'Broken Jewels',hex:'#c4a481'},{name:'Blu',hex:'#213259'}] },
+  { img:'p3.png',  brand:'Versace', name:'Túi đeo vai da Emblème',                     price:'50.957.000 ₫', off:'-15%', was:'59.949.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Bianco',hex:'#f1f1f1'},{name:'Rosso',hex:'#8c1c2b'}] },
+  { img:'p4.png',  brand:'Versace', name:'Giày cao gót da nappa Gianni 90',            price:'45.066.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Nudo',hex:'#d8b79c'}] },
+  { img:'p5.png',  brand:'Versace', name:'Giày loafer da Manu',                        price:'35.248.000 ₫', off:'-30%', was:'50.354.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Marrone',hex:'#5c3a26'}] },
+  { img:'p6.png',  brand:'Versace', name:'Giày thể thao da lộn Greca Court',           price:'27.393.000 ₫', colors:[{name:'Bianco',hex:'#f1f1f1'},{name:'Nero',hex:'#0a0a0a'},{name:'Blu',hex:'#213259'}] },
+  { img:'p7.png',  brand:'Versace', name:'Túi đeo vai da Vivian East/West cỡ nhỏ',     price:'70.593.000 ₫', off:'-25%', was:'94.124.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Oro',hex:'#c9a94b'}] },
+  { img:'p8.png',  brand:'Versace', name:'Túi da Lou mini',                            price:'45.066.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Rosso',hex:'#8c1c2b'},{name:'Bianco',hex:'#f1f1f1'}] },
+  { img:'p9.png',  brand:'Versace', name:'Túi tote Rivière mini',                      price:'50.957.000 ₫', off:'-10%', was:'56.619.000 ₫', colors:[{name:'Cuoio',hex:'#a06a3f'},{name:'Nero',hex:'#0a0a0a'}] },
+  { img:'p10.png', brand:'Versace', name:'Thắt lưng da mặt khóa Medusa',               price:'17.575.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Marrone',hex:'#5c3a26'}] },
 ];
 
 /* Card sản phẩm — Card-item của Figma (2541:175787)
@@ -214,16 +250,26 @@ function productCard(p, i, { w = '', badge = '' } = {}) {
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 13.5S2 10 2 6.2A3.2 3.2 0 0 1 8 4.5a3.2 3.2 0 0 1 6 1.7C14 10 8 13.5 8 13.5Z" stroke="var(--general-primary)" stroke-width="1.3" stroke-linejoin="round"/></svg>
       </button>
     </div>
-    <div class="flex flex-col gap-0.5 px-1 py-2">
-      <p class="text-[14px] font-medium leading-5 text-foreground truncate">${p.brand}</p>
-      <p class="text-[12px] leading-4 text-secondary-foreground truncate">${p.name}</p>
-      <div class="pt-1 flex flex-col">
+    <div class="flex flex-col px-1 py-2">
+      <div class="flex flex-col gap-0.5 pb-2">
+        <p class="text-[14px] font-medium leading-5 text-foreground truncate">${p.brand}</p>
+        <p class="text-[12px] leading-4 text-secondary-foreground truncate">${p.name}</p>
+      </div>
+      <div class="flex flex-col pb-2">
         <div class="flex gap-1 items-center">
           <p class="text-[14px] font-medium leading-5 ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
           ${p.off ? `<span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0">${p.off}</span>` : ''}
         </div>
         ${p.was ? `<p class="text-[12px] leading-4 text-muted-foreground line-through">${p.was}</p>` : ''}
       </div>
+      ${(p.colors && p.colors.length) ? `
+      <div class="flex gap-2 items-center" data-swatches>
+        ${p.colors.map((c, ci) => `
+          <button class="cw w-5 h-5 rounded-full p-0.5 flex items-center justify-center border ${ci===0 ? 'border-primary' : 'border-transparent'} press" data-cw="${ci}" title="${c.name}">
+            <span class="w-4 h-4 rounded-full ${c.hex.toLowerCase()==='#ffffff'||c.hex.toLowerCase()==='#f1f1f1' ? 'border border-border-3' : ''}" style="background:${c.hex}"></span>
+          </button>`).join('')}
+        ${p.moreColors ? `<span class="text-[12px] leading-4 text-muted-foreground">+${p.moreColors}</span>` : ''}
+      </div>` : ''}
     </div>
   </div>`;
 }
@@ -251,8 +297,8 @@ const CART = [
 const SIZES = ['39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55'];
 const DISABLED = ['52','53','54','55'];
 
-const FLOW = ['plp','pdp','pdp2','cart','login','checkout','done'];
-const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login:'Đăng nhập', pdp2:'Sản phẩm', checkout:'Thanh toán', done:'Hoàn tất' };
+const FLOW = ['plp','pdp','pdp2','pdp3','pdp4','cart','login','account','checkout','done'];
+const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login:'Đăng nhập', pdp2:'Sản phẩm', pdp3:'Sản phẩm', pdp4:'Sản phẩm', account:'Tài khoản', checkout:'Thanh toán', done:'Hoàn tất' };
 
 /* ════════════════════════════════════════════════════════════════
    ICONS
@@ -289,6 +335,97 @@ const money = n => n.toLocaleString('en-US').replace(/,/g, ',') + 'đ';
 /* Nav — component 2147:1655 (390×48)
    [burger][search] · logo giữa · [user][bag]
    nền trắng 80% + background-blur, viền dưới #e5e5e5, pad 12/16 */
+/* ════════════════════════════════════════════════════════════════
+   MENU DRAWER — bố cục kiểu Ralph Lauren
+   Tab nhóm ngang trên đầu (Nữ / Nam / Trẻ em) đổi danh mục bên dưới.
+   Typography thoáng. Chưa login: dòng Đăng nhập/Đăng ký.
+   Đã login: CHỈ hiện tên user -> bấm mở trang Account (có tabs).
+════════════════════════════════════════════════════════════════ */
+const MENU_TABS = {
+  'Nữ':      ['Sản phẩm mới','Quần áo','Túi xách','Giày dép','Phụ kiện','Trang sức'],
+  'Nam':     ['Sản phẩm mới','Quần áo','Giày dép','Túi xách','Phụ kiện','Đồng hồ'],
+  'Trẻ em':  ['Sản phẩm mới','Bé gái','Bé trai','Giày dép','Phụ kiện'],
+};
+const MENU_SECONDARY = ['Thương hiệu','Khuyến mãi','PRE-LOVED','Danh sách cửa hàng'];
+let menuTab = 'Nữ';
+
+function menuSheet() {
+  return `
+  <div id="menuSheet" class="fixed inset-0 z-[200] pointer-events-none" aria-hidden="true">
+    <div class="ms-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
+    <div class="ms-panel absolute left-0 top-0 h-full w-[88%] max-w-[380px] bg-background shadow-2xl flex flex-col -translate-x-full transition-transform duration-300 ease-out">
+
+      <!-- header: logo trái + close phải -->
+      <div class="h-14 flex items-center justify-between px-5 shrink-0">
+        <img src="${A}logo.png" alt="DAFC" class="h-[18px] w-[84px] object-contain object-left">
+        <button class="ms-close w-8 h-8 -mr-1 flex items-center justify-center press">${I.close}</button>
+      </div>
+
+      <!-- tab nhóm ngang (RL: Men/Women/Kids) -->
+      <div class="flex px-5 gap-6 border-b border-border-1 shrink-0">
+        ${Object.keys(MENU_TABS).map(t => `
+          <button data-mtab="${t}" class="ms-tab relative h-11 text-[15px] tracking-wide press ${t===menuTab ? 'text-foreground font-medium' : 'text-muted-foreground'}">
+            ${t}
+            <span class="ms-tab-underline absolute left-0 -bottom-px h-0.5 bg-primary transition-all duration-300 ${t===menuTab ? 'w-full' : 'w-0'}"></span>
+          </button>`).join('')}
+      </div>
+
+      <div class="flex-1 overflow-y-auto overscroll-contain">
+        <!-- danh mục theo tab (typography-forward) -->
+        <nav id="menuCats" class="px-5 py-4 flex flex-col">
+          ${menuCatList()}
+        </nav>
+
+        <!-- nhóm phụ -->
+        <nav class="px-5 py-2 border-t border-border-1 flex flex-col">
+          ${MENU_SECONDARY.map(t => `
+            <button data-nav="plp" class="ms-link h-12 flex items-center justify-between press">
+              <span class="text-[15px] leading-5 text-foreground">${t}</span>
+            </button>`).join('')}
+        </nav>
+
+        <!-- ACCOUNT: tối giản kiểu RL -->
+        <div id="menuAccount" class="border-t border-border-1"></div>
+
+        <!-- tiện ích -->
+        <div class="px-5 py-4 flex flex-col gap-3">
+          ${['Chăm sóc khách hàng','Đặc quyền thành viên DAFC','Về DAFC'].map(t => `
+            <button data-toast="${t}" class="text-left text-[13px] leading-5 text-muted-foreground press">${t}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function menuCatList() {
+  return MENU_TABS[menuTab].map(c => `
+    <button data-nav="plp" class="ms-link h-[52px] flex items-center justify-between press border-b border-border-1 last:border-b-0">
+      <span class="text-[17px] font-light leading-6 text-foreground">${c}</span>
+      ${I.chevR('var(--general-muted-foreground)')}
+    </button>`).join('');
+}
+
+/* Account block — RL style: chưa login = 1 dòng; đã login = CHỈ tên user */
+function menuAccountBlock() {
+  if (ckAuth) {
+    return `
+      <button data-nav="account" class="w-full px-5 h-16 flex items-center gap-3 press">
+        <span class="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[14px] font-medium shrink-0">U</span>
+        <span class="flex-1 min-w-0 text-left">
+          <span class="block text-[15px] font-medium leading-5 text-foreground truncate">UserOne</span>
+          <span class="block text-[12px] leading-4 text-muted-foreground">Xem tài khoản</span>
+        </span>
+        ${I.chevR('var(--general-muted-foreground)')}
+      </button>`;
+  }
+  return `
+    <div class="px-5 py-4 flex items-center gap-1">
+      <button data-nav="login" data-auth-view="login" class="text-[15px] font-medium leading-5 text-foreground press">Đăng nhập</button>
+      <span class="text-muted-foreground px-1">/</span>
+      <button data-nav="login" data-auth-view="register" class="text-[15px] font-medium leading-5 text-foreground press">Đăng ký</button>
+    </div>`;
+}
+
 function navBar({ logoOnly = false } = {}) {
   const bar = 'navbar glass-95 sticky top-0 z-50 h-[48px] backdrop-blur-[7.5px] flex items-center px-4';
 
@@ -306,7 +443,7 @@ function navBar({ logoOnly = false } = {}) {
   return `
   <div class="${bar} justify-between">
     <div class="flex gap-2 items-center w-[133px]">
-      ${ico(I.burger, 'data-toast="Mở menu"')}
+      ${ico(I.burger, 'data-menu-open')}
       ${ico(I.search, 'data-toast="Mở tìm kiếm"')}
     </div>
     <img src="${A}logo.png" alt="DAFC" class="h-[20px] w-[93px] object-contain cursor-pointer press" data-nav="plp">
@@ -770,6 +907,443 @@ function screenPDP2() {
 }
 
 /* ════════════════════════════════════════════════════════════════
+   SCREEN: PDP3 — biến thể "luxury payment placement" (SP #3)
+   Khối giá sạch tuyệt đối (chỉ con số). Trả góp hạ trọng lượng,
+   dời xuống service line ngay DƯỚI nút Thêm vào giỏ hàng.
+════════════════════════════════════════════════════════════════ */
+function screenPDP3() {
+  const P = PRODUCTS[2];   // Túi đeo vai da Emblème
+  const swatches = ['p3.png','pdp-sw2.png','pdp-sw3.png','pdp-sw4.png'];
+  const promos = ['Giảm thêm 10% cho thành viên DAFC Insider','Tặng gói quà cao cấp cho đơn từ 5 triệu','Freeship toàn quốc'];
+  const tabs = [
+    ['Mô tả sản phẩm','Túi đeo vai Emblème bằng da bê nguyên tấm, khóa cài Medusa mạ vàng. Ngăn trong lót da lộn, dây đeo tháo rời điều chỉnh độ dài.'],
+    ['Bảo quản sản phẩm','Tránh ánh nắng trực tiếp và độ ẩm cao. Lau bằng khăn mềm khô. Cất trong túi vải khi không dùng.'],
+    ['Chính sách đổi trả','Đổi trả trong 14 ngày với sản phẩm còn nguyên tem mác.'],
+    ['Về thương hiệu Versace','Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo và logo Medusa đặc trưng.'],
+  ];
+
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+
+    <!-- gallery -->
+    <div class="relative w-full bg-secondary" style="height:520px">
+      <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+        ${swatches.map(s => `
+          <div class="w-full h-full shrink-0 snap-center relative">
+            <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
+          </div>`).join('')}
+      </div>
+      <button data-nav="plp" class="absolute top-3 left-3 h-9 px-3 flex items-center gap-1.5 rounded-full glass-85 backdrop-blur text-[12px] font-medium text-foreground press">${I.chevL} Back to categories</button>
+      <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
+        ${swatches.map((_, i) => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
+      </div>
+    </div>
+
+    <!-- header — KHỐI GIÁ SẠCH: chỉ con số, không dòng trả góp bên dưới -->
+    <div class="flex flex-col gap-1 pt-4 px-4 pb-2 rise">
+      <div class="flex flex-col gap-2 pb-4 items-start text-left">
+        <p class="text-[12px] font-medium leading-4 text-foreground tracking-wide">NEW SEASON</p>
+        <p class="text-[20px] font-medium leading-7 text-foreground">${P.brand}</p>
+        <p class="text-[14px] leading-5 text-foreground-alt">${P.name}</p>
+      </div>
+      <div class="flex gap-2 items-baseline">
+        <p class="text-[16px] font-medium leading-6 text-destructive">${P.price}</p>
+        ${P.was ? `<p class="text-[14px] leading-5 text-muted-foreground line-through">${P.was}</p>` : ''}
+      </div>
+    </div>
+
+    <!-- variants -->
+    <div class="flex flex-col gap-4 pt-2 px-4 pb-2 rise">
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-2">
+          <p class="text-[12px] leading-4 text-foreground">Màu sắc</p>
+          <p id="colorName" class="text-[12px] leading-4 text-muted-foreground">Nero</p>
+        </div>
+        <div class="flex gap-2">
+          ${swatches.map((s, i) => `
+            <button class="sw w-11 h-11 rounded-xs overflow-hidden border ${i===0 ? 'on' : 'border-transparent'} bg-secondary" data-sw="${i}" data-color="${['Nero','Oro','Blu','Bianco'][i]}">
+              <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="">
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <!-- Form field — Kích thước (dropdown, đúng mockup 3111:33554) -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <p class="text-[12px] leading-4 text-[#171717]">Kích thước</p>
+          <button data-toast="Mở bảng size" class="text-[12px] leading-4 text-[#171717] underline">Size guide</button>
+        </div>
+        <div class="relative">
+          <select id="sizeSelect" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] text-foreground outline-none focus:border-primary transition-colors appearance-none">
+            <option>Chọn kích thước</option>
+            <option>Onesize</option>
+          </select>
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sticky CTA (in-flow) — Button + Payment Offer ngay dưới, căn giữa (mockup 3111:33554) -->
+    <div id="pdpCta" class="flex flex-col gap-2 px-4 pt-4 pb-4 rise">
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center gap-2">Thêm vào giỏ hàng</button>
+      <div class="flex items-center justify-center gap-1 text-[12px] leading-4">
+        <span class="text-foreground-alt">Trả trước từ <b class="font-medium">742.000 ₫</b>/tháng</span>
+        <button data-toast="Xem chính sách trả góp" class="text-foreground underline leading-4 press">Xem chi tiết</button>
+      </div>
+    </div>
+
+    <!-- promos -->
+    <div class="pt-2 px-4 pb-2 rise">
+      <div class="bg-accent-0 rounded p-2 flex flex-col gap-1">
+        <p class="text-[14px] font-medium leading-5 text-foreground">ƯU ĐÃI KHUYẾN MÃI</p>
+        ${promos.map(p => `<p class="text-[14px] leading-5 text-secondary-foreground flex gap-1.5"><span class="text-muted-foreground">•</span>${p}</p>`).join('')}
+      </div>
+    </div>
+
+    <!-- accordions -->
+    <div class="pt-2 px-2">
+      ${tabs.map(([t, body]) => `
+        <div class="acc border-b border-border-1">
+          <button class="acc-trigger w-full h-14 flex items-center justify-between px-2 press">
+            <span class="text-[16px] font-light leading-6 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+          </button>
+          <div class="acc-body"><div class="acc-inner"><p class="pb-4 px-2 text-[14px] leading-5 text-foreground-alt">${body}</p></div></div>
+        </div>`).join('')}
+    </div>
+
+    <!-- 3 rail gợi ý — Card-item 254px, gap 4 -->
+    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
+      <div class="flex flex-col gap-4 py-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
+        <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
+          ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0' })).join('')}
+        </div>
+      </div>`).join('')}
+
+    ${footer()}
+  </div>
+
+  <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium press">Thêm vào giỏ hàng</button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SCREEN: PDP4 — LAYOUT giống hệt PDP v1, chỉ thêm ANIMATION
+   (accordion slide-in + gallery zoom/shimmer). SP #4. Giữ sticky CTA.
+════════════════════════════════════════════════════════════════ */
+function screenPDP4() {
+  const P = PRODUCTS[3];
+  window.__pdp4Tabs = null;
+  const swatches = ['pdp-main.png','pdp-sw2.png','pdp-sw3.png','pdp-sw4.png'];
+  const promos = ['Giảm thêm 10% cho thành viên DAFC Insider','Tặng gói quà cao cấp cho đơn từ 5 triệu','Freeship toàn quốc'];
+  const tabs = [
+    ['Mô tả sản phẩm','Túi satchel unisex bằng vải canvas tái chế bền bỉ. Một ngăn chính đóng nút bấm, ngăn trong có logo A.P.C. Dây đeo điều chỉnh, đeo vai hoặc đeo chéo.'],
+    ['Bảo quản sản phẩm','Tránh ánh nắng trực tiếp. Lau bằng khăn ẩm, không dùng chất tẩy mạnh.'],
+    ['Chính sách đổi trả','Đổi trả trong 7 ngày với sản phẩm còn nguyên tem mác.'],
+    ['Về thương hiệu APC','A.P.C. — thương hiệu Pháp nổi tiếng với thiết kế tối giản, bền vững.'],
+  ];
+  window.__pdp4Tabs = tabs;
+
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+
+    <!-- gallery -->
+    <div class="relative w-full bg-secondary" style="height:520px">
+      <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+        ${[0,1,2,3].map(i => `
+          <button class="zoomable shimmer w-full h-full shrink-0 snap-center relative block" data-zoom="${A}${swatches[i]}">
+            <img src="${A}${swatches[i]}" class="w-full h-full object-cover lazy" alt="${P.name}" onload="this.parentElement.classList.add('loaded')">
+          </button>`).join('')}
+      </div>
+      <button data-nav="plp" class="absolute top-3 left-3 h-9 px-3 flex items-center gap-1.5 rounded-full glass-85 backdrop-blur text-[12px] font-medium text-foreground press">${I.chevL} Back to categories</button>
+      <span class="absolute top-3 right-3 glass-85 backdrop-blur text-[11px] font-semibold text-foreground px-2 py-1 rounded-full">Best seller</span>
+      <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
+        ${[0,1,2,3].map(i => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
+      </div>
+    </div>
+
+    <!-- header -->
+    <div class="flex flex-col gap-1 pt-4 px-4 pb-2 rise">
+      <div class="flex flex-col gap-2 pb-4 items-start text-left">
+        <p class="text-[12px] font-medium leading-4 text-foreground tracking-wide">NEW SEASON</p>
+        <p class="text-[20px] font-medium leading-7 text-foreground">A.P.C.</p>
+        <p class="text-[14px] leading-5 text-foreground-alt">Túi satchel Journal cỡ nhỏ</p>
+      </div>
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-1.5 items-center">
+          <p class="text-[14px] leading-5 text-muted-foreground line-through">8.900.000 ₫</p>
+          <p class="text-[16px] font-medium leading-6 text-destructive">8.900.000 ₫</p>
+          <span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[14px] font-medium leading-5 text-destructive">-80%</span>
+        </div>
+        <div class="flex gap-1 items-center">
+          <p class="text-[12px] leading-4 text-foreground-alt">Trả trước từ <b class="font-semibold">742.000 ₫</b>/tháng</p>
+          <button data-toast="Xem chính sách trả góp" class="text-[12px] leading-4 text-foreground underline">Xem chi tiết</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- variants -->
+    <div class="flex flex-col gap-4 pt-2 px-4 pb-2 rise">
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-2">
+          <p class="text-[12px] font-medium leading-4 text-foreground">Màu sắc</p>
+          <p id="colorName" class="text-[12px] leading-4 text-muted-foreground">Cognac</p>
+        </div>
+        <div class="flex gap-2">
+          ${swatches.map((s, i) => `
+            <button class="sw w-11 h-11 rounded-xs overflow-hidden border ${i===0 ? 'on' : 'border-transparent'} bg-secondary" data-sw="${i}" data-color="${['Cognac','Black','Navy','Cream'][i]}">
+              <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="">
+            </button>`).join('')}
+        </div>
+      </div>
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <p class="text-[12px] font-medium leading-4 text-foreground">Kích thước</p>
+          <button data-toast="Mở bảng size" class="text-[12px] leading-4 text-foreground">Bảng size →</button>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          ${SIZES.map(s => {
+            const off = DISABLED.includes(s);
+            return `<button class="chip min-w-[52px] h-9 px-2 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" ${off ? 'disabled' : ''} data-size="${s}">${s}</button>`;
+          }).join('')}
+        </div>
+        <p class="text-[12px] font-medium leading-4 text-warning flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-warning animate-pulse"></span>Chỉ còn 01 sản phẩm
+        </p>
+      </div>
+    </div>
+
+    <!-- in-flow CTA -->
+    <div id="pdpCta" class="px-4 py-4 rise">
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center gap-2">Thêm vào giỏ hàng</button>
+    </div>
+
+    <!-- promos -->
+    <div class="pt-2 px-4 pb-2 rise">
+      <div class="bg-accent-0 rounded p-2 flex flex-col gap-1">
+        <p class="text-[14px] font-medium leading-5 text-foreground">ƯU ĐÃI KHUYẾN MÃI</p>
+        ${promos.map(p => `<p class="text-[14px] leading-5 text-secondary-foreground flex gap-1.5"><span class="text-muted-foreground">•</span>${p}</p>`).join('')}
+      </div>
+    </div>
+
+    <!-- Info tabs: bấm -> đẩy BOTTOM SHEET lên (versace b-drawer), không extend -->
+    <div class="pt-2 px-2">
+      ${tabs.map(([t, body], ti) => `
+        <div class="border-b border-border-1">
+          <button class="sheet-trigger w-full h-14 flex items-center justify-between px-2 press" data-sheet-idx="${ti}">
+            <span class="text-[16px] font-medium leading-6 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+          </button>
+        </div>`).join('')}
+    </div>
+
+    <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
+    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
+      <div class="flex flex-col gap-4 py-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
+        <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
+          ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0' })).join('')}
+        </div>
+      </div>`).join('')}
+
+    ${footer()}
+  </div>
+
+  <!-- sticky CTA -->
+  <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium press">Thêm vào giỏ hàng</button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ACCOUNT — trang tài khoản sau đăng nhập.
+   Tabs ngang trên đầu: Thông tin · Đơn hàng · Địa chỉ · Thành viên
+   · Yêu thích · Điểm thưởng. Nội dung đổi theo tab (không chuyển trang).
+════════════════════════════════════════════════════════════════ */
+const ACCOUNT_TABS = [
+  ['info',     'Thông tin'],
+  ['orders',   'Đơn hàng'],
+  ['address',  'Địa chỉ'],
+  ['loyalty',  'Thành viên'],
+  ['wishlist', 'Yêu thích'],
+  ['points',   'Điểm thưởng'],
+];
+let accountTab = 'info';
+
+function screenACCOUNT() {
+  return `
+  <div class="w-full min-h-screen bg-background">
+    <!-- nav -->
+    <div class="h-12 flex items-center px-2 border-b border-border-1 sticky top-0 bg-background z-20">
+      <button data-nav="plp" class="w-9 h-9 flex items-center justify-center press">${I.chevL}</button>
+      <p class="flex-1 text-center text-[16px] font-medium text-foreground pr-9">Tài khoản</p>
+    </div>
+
+    <!-- user tóm tắt -->
+    <div class="px-5 py-4 flex items-center gap-3 border-b border-border-1">
+      <span class="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[18px] font-medium shrink-0">U</span>
+      <div class="flex-1 min-w-0">
+        <p class="text-[16px] font-medium leading-6 text-foreground truncate">UserOne</p>
+        <p class="text-[13px] leading-5 text-muted-foreground">0909 *** 123 · Hạng Vàng</p>
+      </div>
+      <button data-logout class="text-[13px] leading-5 text-destructive press">Đăng xuất</button>
+    </div>
+
+    <!-- TABS ngang trên đầu (cuộn ngang) -->
+    <div id="accTabs" class="drag-x flex gap-1 overflow-x-auto no-scrollbar border-b border-border-1 px-3 sticky top-12 bg-background z-10">
+      ${ACCOUNT_TABS.map(([id, label]) => `
+        <button data-atab="${id}" class="acc-tab relative shrink-0 h-11 px-3 text-[14px] press ${id===accountTab ? 'text-foreground font-medium' : 'text-muted-foreground'}">
+          ${label}
+          <span class="acc-tab-underline absolute left-3 right-3 -bottom-px h-0.5 bg-primary transition-opacity duration-200 ${id===accountTab ? 'opacity-100' : 'opacity-0'}"></span>
+        </button>`).join('')}
+    </div>
+
+    <!-- nội dung tab -->
+    <div id="accBody" class="pb-16">
+      ${accountBody()}
+    </div>
+  </div>`;
+}
+
+function accountBody() {
+  if (accountTab === 'info')     return accInfo();
+  if (accountTab === 'orders')   return accOrders();
+  if (accountTab === 'address')  return accAddress();
+  if (accountTab === 'loyalty')  return accLoyalty();
+  if (accountTab === 'wishlist') return accWishlist();
+  if (accountTab === 'points')   return accPoints();
+  return '';
+}
+
+/* ── Thông tin ── */
+function accInfo() {
+  const row = (label, value) => `
+    <div class="flex flex-col gap-1 py-3 border-b border-border-1">
+      <span class="text-[12px] leading-4 text-muted-foreground">${label}</span>
+      <span class="text-[14px] leading-5 text-foreground">${value}</span>
+    </div>`;
+  return `
+    <div class="px-5 pt-4">
+      ${row('Họ và tên', 'Nguyễn Văn A')}
+      ${row('Số điện thoại', '0909 123 456')}
+      ${row('Email', 'userone@email.com')}
+      ${row('Giới tính', 'Nam')}
+      ${row('Ngày sinh', '01/01/1990')}
+      <button data-toast="Chỉnh sửa thông tin" class="w-full h-11 mt-4 rounded-xs border border-primary text-foreground text-[14px] font-medium press">Chỉnh sửa thông tin</button>
+    </div>`;
+}
+
+/* ── Đơn hàng (có tab trạng thái phụ) ── */
+function accOrders() {
+  const orders = [
+    ['#DAFC102938', 'Đang giao', 'warning', '2 sản phẩm · 86.205.000 ₫', 'Giày loafer da Manu, Thắt lưng Medusa'],
+    ['#DAFC102801', 'Hoàn tất', 'muted', '1 sản phẩm · 45.066.000 ₫', 'Túi da Lou mini'],
+    ['#DAFC102455', 'Hoàn tất', 'muted', '1 sản phẩm · 15.611.000 ₫', 'Khăn lụa Broken Jewels'],
+  ];
+  return `
+    <div class="px-5 pt-4 flex flex-col gap-3">
+      ${orders.map(([id, status, tone, meta, items]) => `
+        <div class="border border-border-1 rounded-xs p-3 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[13px] font-medium leading-5 text-foreground">${id}</span>
+            <span class="text-[12px] leading-4 ${tone==='warning' ? 'text-warning' : 'text-muted-foreground'}">${status}</span>
+          </div>
+          <p class="text-[13px] leading-5 text-foreground-alt">${items}</p>
+          <div class="flex items-center justify-between pt-1 border-t border-border-1">
+            <span class="text-[12px] leading-4 text-muted-foreground">${meta}</span>
+            <button data-toast="Xem chi tiết ${id}" class="text-[13px] leading-5 text-foreground underline press">Chi tiết</button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+/* ── Địa chỉ ── */
+function accAddress() {
+  return `
+    <div class="px-5 pt-4 flex flex-col gap-3">
+      <div class="border border-primary rounded-xs p-3 flex flex-col gap-1 relative">
+        <span class="absolute top-3 right-3 text-[11px] text-primary-foreground bg-primary px-2 py-0.5 rounded-full">Mặc định</span>
+        <p class="text-[14px] font-medium leading-5 text-foreground">Nguyễn Văn A · 0909 123 456</p>
+        <p class="text-[13px] leading-5 text-foreground-alt">123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh</p>
+      </div>
+      <div class="border border-border-1 rounded-xs p-3 flex flex-col gap-1">
+        <p class="text-[14px] font-medium leading-5 text-foreground">Nguyễn Văn A · 0909 123 456</p>
+        <p class="text-[13px] leading-5 text-foreground-alt">45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh</p>
+      </div>
+      <button data-toast="Thêm địa chỉ mới" class="w-full h-11 rounded-xs border border-primary text-foreground text-[14px] font-medium press">+ Thêm địa chỉ mới</button>
+    </div>`;
+}
+
+/* ── Thành viên ── */
+function accLoyalty() {
+  return `
+    <div class="px-5 pt-4 flex flex-col gap-4">
+      <div class="rounded-lg bg-primary text-primary-foreground p-5 flex flex-col gap-2">
+        <span class="text-[12px] tracking-[0.2em] uppercase opacity-70">DAFC Membership</span>
+        <span class="text-[24px] font-light leading-8">Hạng Vàng</span>
+        <span class="text-[13px] leading-5 opacity-80">UserOne · 0909 *** 123</span>
+        <div class="mt-2 pt-3 border-t border-white/20 flex items-center justify-between">
+          <span class="text-[12px] opacity-80">Chi tiêu tích lũy</span>
+          <span class="text-[14px] font-medium">142.500.000 ₫</span>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2">
+        <p class="text-[14px] font-medium leading-5 text-foreground">Đặc quyền hạng Vàng</p>
+        ${['Giảm 4% cho mọi đơn hàng','Miễn phí giao hàng nội thành','Ưu tiên tiếp cận bộ sưu tập mới','Quà sinh nhật độc quyền'].map(b => `
+          <div class="flex items-start gap-2">
+            <span class="w-4 h-4 mt-0.5 flex items-center justify-center text-primary shrink-0">${I.tick}</span>
+            <span class="text-[13px] leading-5 text-foreground-alt">${b}</span>
+          </div>`).join('')}
+      </div>
+      <div class="rounded-xs bg-secondary p-3">
+        <p class="text-[12px] leading-4 text-muted-foreground">Còn <b class="text-foreground font-medium">57.500.000 ₫</b> để lên hạng Bạch Kim</p>
+        <div class="h-2 mt-2 rounded-full bg-background overflow-hidden">
+          <div class="h-full w-[70%] bg-primary rounded-full"></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ── Yêu thích ── */
+function accWishlist() {
+  return `
+    <div class="grid grid-cols-2 gap-x-2 gap-y-4 px-3 pt-4">
+      ${PRODUCTS.slice(0, 4).map((p, i) => productCard(p, i)).join('')}
+    </div>`;
+}
+
+/* ── Điểm thưởng ── */
+function accPoints() {
+  const history = [
+    ['Đơn hàng #DAFC102938', '+ 862 điểm', '14/07/2025', 'text-emerald-600'],
+    ['Đổi voucher giảm giá', '− 500 điểm', '02/07/2025', 'text-destructive'],
+    ['Đơn hàng #DAFC102801', '+ 451 điểm', '28/06/2025', 'text-emerald-600'],
+    ['Quà sinh nhật', '+ 300 điểm', '15/06/2025', 'text-emerald-600'],
+  ];
+  return `
+    <div class="px-5 pt-4 flex flex-col gap-4">
+      <div class="rounded-lg border border-border-1 p-5 flex flex-col items-center gap-1">
+        <span class="text-[12px] leading-4 text-muted-foreground">Điểm thưởng hiện có</span>
+        <span class="text-[32px] font-light leading-none text-foreground">1.240</span>
+        <span class="text-[12px] leading-4 text-muted-foreground">≈ 1.240.000 ₫ giá trị quy đổi</span>
+      </div>
+      <div class="flex flex-col">
+        <p class="text-[14px] font-medium leading-5 text-foreground pb-2">Lịch sử điểm</p>
+        ${history.map(([label, amt, date, col]) => `
+          <div class="flex items-center justify-between py-3 border-b border-border-1">
+            <div class="flex flex-col">
+              <span class="text-[14px] leading-5 text-foreground">${label}</span>
+              <span class="text-[12px] leading-4 text-muted-foreground">${date}</span>
+            </div>
+            <span class="text-[14px] font-medium leading-5 ${col}">${amt}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
    SCREEN: CART
 ════════════════════════════════════════════════════════════════ */
 /* ── Cart · khối chỉ dành cho thành viên đã đăng nhập (multi gift 5) ── */
@@ -979,44 +1553,141 @@ function screenCART() {
 /* ════════════════════════════════════════════════════════════════
    SCREEN: LOGIN (modal over cart)
 ════════════════════════════════════════════════════════════════ */
-function screenLOGIN() {
-  return `
-  <div class="relative">
-    <div class="pointer-events-none select-none opacity-60">
-      ${screenCART()}
+/* ════════════════════════════════════════════════════════════════
+   AUTH — theo Figma "Account · Mobile" 2084:170 (01–05)
+   Trang full-screen (không phải card). Tiêu đề Light 24, label Medium
+   14 #737373, input h-36 r-2 #e5e5e5. Giữ loginFrom/ckAuth.
+════════════════════════════════════════════════════════════════ */
+let authView = 'login';
+let authViewIntent = false;
+let authPhone = '';
+
+/* input theo Figma: 358x36, pad 8, stroke #e5e5e5, r2, text 14 */
+const afield = (label, attrs, ph, extra = '') => `
+  <div class="flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <span class="text-[14px] font-medium leading-5 text-muted-foreground">${label}</span>
+      ${extra}
     </div>
-    <div id="loginSheet" class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-[2px] flex items-center justify-center px-5">
-      <div id="loginCard" class="w-full bg-background rounded-lg p-6 flex flex-col gap-5 shadow-2xl">
-        <div class="flex items-start justify-between">
-          <div>
-            <p class="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-1">Tài khoản</p>
-            <h3 class="text-[20px] font-medium text-foreground">Đăng nhập</h3>
-          </div>
-          <button data-nav="cart" class="w-9 h-9 -mr-2 -mt-2 flex items-center justify-center press">${I.close}</button>
-        </div>
+    <input ${attrs} placeholder="${ph}" class="h-9 border border-border rounded-xs px-2 text-[14px] text-foreground outline-none focus:border-primary transition-colors">
+  </div>`;
 
-        <div class="flex flex-col gap-3">
-          <label class="flex flex-col gap-1.5">
-            <span class="text-[12px] font-medium text-foreground">Số điện thoại*</span>
-            <input inputmode="tel" placeholder="Nhập số điện thoại" class="h-11 border border-border rounded-xs px-3 text-[14px] outline-none focus:border-primary transition-colors">
-          </label>
-          <label class="flex flex-col gap-1.5">
-            <span class="text-[12px] font-medium text-foreground">Mật khẩu*</span>
-            <input type="password" placeholder="Nhập mật khẩu" class="h-11 border border-border rounded-xs px-3 text-[14px] outline-none focus:border-primary transition-colors">
-          </label>
-          <button data-toast="Đã gửi liên kết đặt lại" class="text-[12px] text-mid-alt self-end press">Quên mật khẩu?</button>
-        </div>
+/* nút chính: 358x40-44, r2, label Medium 14 #fafafa */
+const abtn = (label, attrs) => `
+  <button ${attrs} class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium tracking-wide press flex items-center justify-center gap-2">${label}</button>`;
 
-        <button data-login-submit class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-semibold press flex items-center justify-center gap-2">Đăng nhập</button>
+function authNav(title) {
+  return `
+  <div class="h-12 flex items-center px-2 border-b border-border-1 sticky top-0 bg-background z-10">
+    <button data-auth-back class="w-9 h-9 flex items-center justify-center press">${I.chevL}</button>
+    <p class="flex-1 text-center text-[16px] font-medium text-foreground pr-9">${title}</p>
+  </div>`;
+}
 
-        <div class="flex items-center gap-3">
-          <span class="flex-1 h-px bg-border"></span><span class="text-[11px] text-muted-foreground">Hoặc</span><span class="flex-1 h-px bg-border"></span>
-        </div>
-
-        <button data-nav="checkout" data-auth="0" class="w-full h-12 rounded-xs border border-border text-[14px] font-medium text-mid-alt press hover:bg-accent-0 transition-colors">Mua hàng không đăng nhập</button>
-      </div>
+/* ── 01 Login ── */
+function viewLogin() {
+  return `
+  ${authNav('Đăng nhập')}
+  <div class="flex flex-col gap-8 px-4 pt-6 pb-10">
+    <div class="flex flex-col gap-2">
+      <h2 class="text-[24px] font-light leading-8 text-foreground">Đăng nhập</h2>
+      <p class="text-[14px] leading-5 text-muted-foreground">Chào mừng bạn trở lại</p>
+    </div>
+    <div class="flex flex-col gap-6">
+      ${afield('Số điện thoại hoặc Email', 'inputmode="text" id="loginId"', 'Nhập số điện thoại hoặc email')}
+      ${afield('Mật khẩu', 'type="password"', 'Nhập mật khẩu',
+        '<button data-auth-go="forgot" class="text-[14px] leading-5 text-muted-foreground press">Quên mật khẩu?</button>')}
+    </div>
+    ${abtn('Đăng nhập', 'data-login-submit')}
+    <div class="flex items-center justify-center gap-1">
+      <span class="text-[14px] leading-5 text-muted-foreground">Chưa có tài khoản?</span>
+      <button data-auth-go="register" class="text-[14px] font-medium leading-5 text-foreground press">Đăng ký ngay</button>
     </div>
   </div>`;
+}
+
+/* ── 02 Register ── */
+function viewRegister() {
+  return `
+  ${authNav('Đăng ký')}
+  <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
+    <h2 class="text-[24px] font-light leading-8 text-foreground">Tạo tài khoản</h2>
+    <div class="flex flex-col gap-5">
+      ${afield('Họ và tên', 'type="text"', 'Nhập họ và tên')}
+      ${afield('Số điện thoại', 'inputmode="tel" id="regPhone"', 'Nhập số điện thoại')}
+      ${afield('Email', 'inputmode="email"', 'Nhập email')}
+      ${afield('Mật khẩu', 'type="password"', 'Nhập mật khẩu')}
+      ${afield('Xác nhận mật khẩu', 'type="password"', 'Nhập lại mật khẩu')}
+    </div>
+    <label class="flex items-start gap-3">
+      <input type="checkbox" checked class="w-4 h-4 mt-0.5 accent-black shrink-0">
+      <span class="text-[12px] leading-4 text-muted-foreground">Tôi đồng ý với <button data-toast="Điều khoản sử dụng" class="text-foreground underline press">Điều khoản sử dụng</button> và <button data-toast="Chính sách bảo mật" class="text-foreground underline press">Chính sách bảo mật</button></span>
+    </label>
+    ${abtn('TẠO TÀI KHOẢN', 'data-auth-otp')}
+    <div class="flex items-center justify-center gap-1">
+      <span class="text-[14px] leading-5 text-muted-foreground">Đã có tài khoản?</span>
+      <button data-auth-go="login" class="text-[14px] font-medium leading-5 text-foreground press">Đăng nhập</button>
+    </div>
+  </div>`;
+}
+
+/* ── 03 Forgot Password ── */
+function viewForgot() {
+  return `
+  ${authNav('Quên mật khẩu')}
+  <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
+    <h2 class="text-[24px] font-light leading-8 text-foreground">Quên mật khẩu</h2>
+    <p class="text-[14px] leading-5 text-muted-foreground">Nhập số điện thoại hoặc email đã đăng ký. Chúng tôi sẽ gửi mã OTP để xác thực.</p>
+    ${afield('Số điện thoại hoặc Email', 'inputmode="text" id="regPhone"', 'Nhập số điện thoại hoặc email')}
+    ${abtn('GỬI MÃ XÁC THỰC', 'data-auth-otp')}
+    <button data-auth-go="login" class="text-center text-[14px] leading-5 text-muted-foreground press">← Quay lại đăng nhập</button>
+  </div>`;
+}
+
+/* ── 04 OTP Verify ── */
+function viewOtp() {
+  return `
+  ${authNav('Xác thực OTP')}
+  <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
+    <h2 class="text-[24px] font-light leading-8 text-foreground">Xác thực OTP</h2>
+    <p class="text-[14px] leading-5 text-muted-foreground">Mã xác thực đã được gửi đến<br><b class="text-foreground font-medium">${authPhone || '+84 *** *** 123'}</b></p>
+    <div class="flex gap-2 justify-between" id="otpRow">
+      ${[0,1,2,3,4,5].map(i => `<input inputmode="numeric" maxlength="1" data-otp="${i}" class="otp-cell w-11 h-[52px] text-center text-[20px] font-medium border border-border-3 rounded-xs outline-none focus:border-primary transition-colors">`).join('')}
+    </div>
+    <div class="flex flex-col gap-2">
+      <p class="text-[12px] leading-4 text-muted-foreground">Gửi lại mã sau <span id="otpTimer">60</span>s</p>
+      <button id="otpResend" class="text-left text-[12px] font-medium leading-4 text-foreground press" disabled>Không nhận được mã? Gửi lại</button>
+    </div>
+    ${abtn('XÁC NHẬN', 'data-auth-verify')}
+  </div>`;
+}
+
+/* ── 05 Reset Password (có thanh độ mạnh) ── */
+function viewSetPass() {
+  return `
+  ${authNav('Đặt mật khẩu mới')}
+  <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
+    <h2 class="text-[24px] font-light leading-8 text-foreground">Đặt mật khẩu mới</h2>
+    <p class="text-[14px] leading-5 text-muted-foreground">Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.</p>
+    <div class="flex flex-col gap-5">
+      ${afield('Mật khẩu mới', 'type="password" id="npass"', 'Nhập mật khẩu mới')}
+      ${afield('Xác nhận mật khẩu mới', 'type="password"', 'Nhập lại mật khẩu mới')}
+    </div>
+    <div class="flex flex-col gap-2">
+      <p class="text-[12px] leading-4 text-muted-foreground">Độ mạnh mật khẩu:</p>
+      <div class="h-2 rounded-full bg-secondary overflow-hidden">
+        <div id="pwBar" class="h-full w-2/5 bg-warning rounded-full transition-all duration-300"></div>
+      </div>
+      <p id="pwHint" class="text-[12px] leading-4 text-muted-foreground">Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật</p>
+    </div>
+    ${abtn('CẬP NHẬT MẬT KHẨU', 'data-login-submit')}
+  </div>`;
+}
+
+const AUTH_VIEWS = { login: viewLogin, register: viewRegister, otp: viewOtp, setpass: viewSetPass, forgot: viewForgot };
+
+function screenLOGIN() {
+  return `<div class="w-full min-h-screen bg-background">${(AUTH_VIEWS[authView] || viewLogin)()}</div>`;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -1285,10 +1956,10 @@ const IcoCross = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><p
 const fchk = (on) => `<span class="chk ${on ? 'on' : ''} w-4 h-4 border border-border-3 flex items-center justify-center shrink-0">${I.tick}</span>`;
 
 /* Accordion cấp 1 (Danh mục / Thương hiệu / …) */
-function fSection(title, body, open = true) {
+function fSection(title, body, open = true, h = 72) {
   return `
-  <div class="facc ${open ? 'open' : ''} border-b border-border">
-    <button class="facc-trigger w-full h-[72px] px-4 flex items-center justify-between press">
+  <div class="facc ${open ? 'open' : ''}">
+    <button class="facc-trigger w-full px-4 flex items-center justify-between press" style="height:${h}px">
       <span class="text-[16px] font-light leading-6 text-foreground">${title}</span>
       <span class="facc-ico">${IcoMinus}</span>
       <span class="facc-ico-plus hidden">${IcoPlus}</span>
@@ -1301,7 +1972,7 @@ function filterSheet() {
   /* ── Danh mục: cha + con (con mặc định ĐÓNG) ── */
   const cats = FILTER_CATS.map(([cat, subs], i) => `
     <div class="fcat" data-cat="${i}">
-      <div class="h-11 flex items-center gap-2 pt-2 pr-4">
+      <div class="h-11 flex items-center gap-2 pt-2">
         <button class="fcat-check flex items-center gap-2 flex-1 min-w-0 press text-left">
           ${fchk(false)}
           <span class="text-[14px] leading-5 text-foreground-alt truncate">${cat}</span>
@@ -1315,7 +1986,7 @@ function filterSheet() {
         ${subs.map(sub => `
           <div class="flex gap-1 h-9">
             <span class="w-5 flex justify-center shrink-0"><span class="w-px h-full bg-[#d9d9d9]"></span></span>
-            <button class="flex items-center gap-2 flex-1 min-w-0 pr-4 press text-left" data-sub>
+            <button class="flex items-center gap-2 flex-1 min-w-0 press text-left" data-sub>
               ${fchk(false)}
               <span class="text-[14px] leading-5 text-foreground-alt truncate">${sub}</span>
             </button>
@@ -1371,7 +2042,7 @@ function filterSheet() {
       <!-- grabber -->
       <div class="h-6 flex items-center justify-center shrink-0"><span class="w-10 h-1 rounded-full bg-border"></span></div>
       <!-- header -->
-      <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
+      <div class="px-4 py-4 flex items-center justify-between shrink-0">
         <p class="text-[20px] font-normal leading-7 text-foreground">Bộ lọc</p>
         <button id="filterClose" class="w-8 h-8 -mr-2 flex items-center justify-center press">${IcoCross}</button>
       </div>
@@ -1379,7 +2050,7 @@ function filterSheet() {
       <div class="flex-1 overflow-y-auto overscroll-contain">
         ${fSection('Danh mục', `<div class="px-4 pb-4">${cats}</div>`)}
         ${fSection('Thương hiệu (2)', `<div class="px-4 pb-6">${brands}</div>`)}
-        ${fSection('Màu sắc', `<div class="px-4 pb-4 flex flex-wrap gap-2">${colors}</div>`)}
+        ${fSection('Màu sắc', `<div class="pt-2 px-4 pb-4 flex flex-wrap gap-2">${colors}</div>`, true, 56)}
         ${fSection('Kích thước', `<div class="px-4 pb-6 flex flex-wrap gap-2">${sizes}</div>`)}
         ${fSection('Khoảng giá', price)}
         ${fSection('Khác', `<div class="px-4 pb-6 flex flex-col gap-1">
@@ -1482,7 +2153,7 @@ function wireFilter() {
    ROUTER + BEHAVIOUR
 ════════════════════════════════════════════════════════════════ */
 const RENDER = {
-  plp: screenPLP, pdp: screenPDP, pdp2: screenPDP2, cart: screenCART, login: screenLOGIN,
+  plp: screenPLP, pdp: screenPDP, pdp2: screenPDP2, pdp3: screenPDP3, pdp4: screenPDP4, account: screenACCOUNT, cart: screenCART, login: screenLOGIN,
   checkout: screenCHECKOUT, done: screenDONE,
 };
 
@@ -1492,11 +2163,19 @@ let ckAuth = false, ckStep = 0;   // checkout: đã đăng nhập? / đang mở 
 let loginFrom = null;             // mở login từ màn nào
 let scrollCleanups = [];          // gỡ listener khi đổi màn
 
+function rerenderLogin() {
+  const el = document.querySelector('.screen[data-screen="login"]');
+  if (!el) { go('login'); return; }
+  scrollCleanups.forEach(fn => fn()); scrollCleanups = [];
+  el.innerHTML = RENDER.login();
+  wire(el);
+}
+
 function go(name, opts = {}) {
   if (name === current) return;
   if (current && !opts.back) history.push(current);
 
-  if (name === 'login') loginFrom = current;
+  if (name === 'login' && current !== 'login') { loginFrom = current; if (!authViewIntent) authView = 'login'; authViewIntent = false; }
 
   scrollCleanups.forEach(fn => fn());
   scrollCleanups = [];
@@ -1548,13 +2227,101 @@ function wire(root) {
 
   // Đăng nhập: mở từ PLP/PDP -> quay lại đó (giỏ sẽ thành bản thành viên);
   // mở từ giỏ (nút Đặt hàng) -> đi tiếp checkout như Figma
-  root.querySelectorAll('[data-login-submit]').forEach(btn => {
+  // ACCOUNT: tabs trên đầu
+  root.querySelectorAll('[data-atab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      accountTab = btn.dataset.atab;
+      root.querySelectorAll('[data-atab]').forEach(x => {
+        const on = x.dataset.atab === accountTab;
+        x.className = 'acc-tab relative shrink-0 h-11 px-3 text-[14px] press ' + (on ? 'text-foreground font-medium' : 'text-muted-foreground');
+        x.querySelector('.acc-tab-underline').className = 'acc-tab-underline absolute left-3 right-3 -bottom-px h-0.5 bg-primary transition-opacity duration-200 ' + (on ? 'opacity-100' : 'opacity-0');
+      });
+      const body = root.querySelector('#accBody');
+      if (body) { body.innerHTML = accountBody(); wire(root); }
+    });
+  });
+  // Đăng xuất từ trang account
+  root.querySelectorAll('[data-logout]').forEach(btn => btn.addEventListener('click', () => { ckAuth = false; go('plp'); toast('Đã đăng xuất'); }));
+
+  // Mở menu drawer
+  root.querySelectorAll('[data-menu-open]').forEach(btn => btn.addEventListener('click', () => window.__openMenu && window.__openMenu()));
+
+  // Nút back trên nav auth: register/forgot/otp/setpass -> về login; login -> thoát về màn gọi
+  root.querySelectorAll('[data-auth-back]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (authView === 'login') { const back = loginFrom || 'cart'; authView = 'login'; go(back); }
+      else if (authView === 'otp') { authView = 'register'; rerenderLogin(); }
+      else if (authView === 'setpass') { authView = 'otp'; rerenderLogin(); }
+      else { authView = 'login'; rerenderLogin(); }
+    });
+  });
+
+  // ── AUTH: chuyển view ──
+  root.querySelectorAll('[data-auth-go]').forEach(btn => {
+    btn.addEventListener('click', () => { authView = btn.dataset.authGo; rerenderLogin(); });
+  });
+
+  // Nhận OTP: lấy SĐT -> sang view OTP
+  root.querySelectorAll('[data-auth-otp]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ph = (root.querySelector('#regPhone') || {}).value;
+      authPhone = ph && ph.trim() ? ph.trim() : '';
+      const html = btn.innerHTML;
+      btn.innerHTML = spinnerSVG();
+      setTimeout(() => { authView = 'otp'; rerenderLogin(); toast('Đã gửi mã OTP'); }, 700);
+    });
+  });
+
+  // Ô OTP: tự nhảy ô kế + đếm ngược gửi lại
+  const otpCells = [...root.querySelectorAll('[data-otp]')];
+  if (otpCells.length) {
+    otpCells[0].focus();
+    otpCells.forEach((c, i) => {
+      c.addEventListener('input', () => {
+        c.value = c.value.replace(/[^0-9]/g, '').slice(0, 1);
+        if (c.value && i < otpCells.length - 1) otpCells[i + 1].focus();
+      });
+      c.addEventListener('keydown', e => { if (e.key === 'Backspace' && !c.value && i > 0) otpCells[i - 1].focus(); });
+    });
+    let t = 60; const tEl = root.querySelector('#otpTimer'), rBtn = root.querySelector('#otpResend');
+    if (rBtn) rBtn.disabled = true;
+    const iv = setInterval(() => {
+      t--; if (tEl) tEl.textContent = t;
+      if (t <= 0) { clearInterval(iv); if (rBtn) { rBtn.disabled = false; rBtn.innerHTML = 'Gửi lại'; } }
+    }, 1000);
+    if (rBtn) rBtn.addEventListener('click', () => { if (!rBtn.disabled) toast('Đã gửi lại mã OTP'); });
+  }
+
+  // Độ mạnh mật khẩu (view reset)
+  const npass = root.querySelector('#npass'), pwBar = root.querySelector('#pwBar'), pwHint = root.querySelector('#pwHint');
+  if (npass && pwBar) {
+    npass.addEventListener('input', () => {
+      const v = npass.value; let sc = 0;
+      if (v.length >= 8) sc++; if (/[A-Z]/.test(v) && /[a-z]/.test(v)) sc++; if (/[0-9]/.test(v)) sc++; if (/[^A-Za-z0-9]/.test(v)) sc++;
+      const pct = ['w-1/5','w-2/5','w-3/5','w-4/5','w-full'][sc];
+      const col = sc <= 1 ? 'bg-destructive' : sc <= 2 ? 'bg-warning' : sc <= 3 ? 'bg-warning' : 'bg-emerald-500';
+      pwBar.className = 'h-full ' + pct + ' ' + col + ' rounded-full transition-all duration-300';
+      pwHint.textContent = sc <= 1 ? 'Yếu - Cần ít nhất 8 ký tự' : sc <= 2 ? 'Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật' : sc <= 3 ? 'Khá - Thêm ký tự đặc biệt để mạnh hơn' : 'Mạnh - Mật khẩu tốt';
+    });
+  }
+
+  // Xác nhận OTP -> sang tạo mật khẩu
+  root.querySelectorAll('[data-auth-verify]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const code = otpCells.map(c => c.value).join('');
+      if (code.length < 6) { toast('Vui lòng nhập đủ 6 số'); return; }
+      const html = btn.innerHTML; btn.innerHTML = spinnerSVG();
+      setTimeout(() => { authView = 'setpass'; rerenderLogin(); }, 700);
+    });
+  });
+
+    root.querySelectorAll('[data-login-submit]').forEach(btn => {
     btn.addEventListener('click', () => {
       ckAuth = true; ckStep = 1;
       const html = btn.innerHTML;
       btn.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
       const back = (loginFrom === 'plp' || loginFrom === 'pdp') ? loginFrom : 'checkout';
-      setTimeout(() => { btn.innerHTML = html; go(back); if (back !== 'checkout') toast('Đã đăng nhập · UserOne'); }, 700);
+      setTimeout(() => { btn.innerHTML = html; authView = 'login'; go(back); toast(back === 'checkout' ? 'Đăng nhập thành công' : 'Đã đăng nhập · UserOne'); }, 700);
     });
   });
 
@@ -1562,7 +2329,7 @@ function wire(root) {
   root.querySelectorAll('[data-product]').forEach(el => {
     el.addEventListener('click', e => {
       if (e.target.closest('.wish')) { toast('Đã lưu yêu thích'); return; }
-      go(el.dataset.product === '1' ? 'pdp2' : 'pdp');   // SP #2 (Khăn lụa) -> bản PDP riêng
+      go(el.dataset.product === '1' ? 'pdp2' : el.dataset.product === '2' ? 'pdp3' : el.dataset.product === '3' ? 'pdp4' : 'pdp');  // SP#2/3/4 -> bản riêng
     });
   });
 
@@ -1677,6 +2444,30 @@ function wire(root) {
       root.querySelectorAll('#pdpDots span').forEach((d, j) => {
         d.className = `h-1 rounded-full transition-all duration-300 ${j === i ? 'w-6 bg-primary' : 'w-4 bg-border-3'}`;
       });
+    }, { passive: true });
+  }
+
+  // Info tabs -> đẩy bottom sheet (versace b-drawer)
+  root.querySelectorAll('.sheet-trigger').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabs = window.__pdp4Tabs || [];
+      const t = tabs[+btn.dataset.sheetIdx];
+      if (t && window.__openInfoSheet) window.__openInfoSheet(t[0], t[1]);
+    });
+  });
+
+  // Zoom khi chạm ảnh gallery (versace) — dragScroll đã chặn nếu vừa kéo
+  root.querySelectorAll('.zoomable').forEach(btn => {
+    btn.addEventListener('click', e => { if (window.__openZoom) window.__openZoom(btn.dataset.zoom); });
+  });
+
+  // WEAR IT WITH: counter "i / n" chạy theo cuộn
+  const wiw = root.querySelector('#wiwRow'), wc = root.querySelector('#wiwCounter');
+  if (wiw && wc) {
+    const cards = wiw.querySelectorAll('[data-product]');
+    wiw.addEventListener('scroll', () => {
+      const i = Math.min(cards.length, Math.round(wiw.scrollLeft / (cards[0].offsetWidth + 4)) + 1);
+      wc.textContent = i + ' / ' + cards.length;
     }, { passive: true });
   }
 
@@ -1869,7 +2660,21 @@ function wire(root) {
 
   root.querySelectorAll('.drag-x').forEach(dragScroll);
 
+  root.querySelectorAll('[data-swatches]').forEach(rw => {
+    rw.addEventListener('click', ev => {
+      const btn = ev.target.closest('.cw');
+      if (!btn) return;
+      ev.stopPropagation();
+      rw.querySelectorAll('.cw').forEach(c => { c.classList.remove('border-primary'); c.classList.add('border-transparent'); });
+      btn.classList.remove('border-transparent'); btn.classList.add('border-primary');
+    });
+  });
+
   observeReveal(root);
+}
+
+function spinnerSVG() {
+  return '<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 }
 
 function refreshCartCount(root) {
@@ -1974,6 +2779,82 @@ function confetti() {
 
 /* ── Boot ── */
 document.body.insertAdjacentHTML('beforeend', filterSheet());
+document.body.insertAdjacentHTML('beforeend', menuSheet());
+(() => {
+  const ms = document.getElementById('menuSheet');
+  const openM = () => {
+    document.getElementById('menuAccount').innerHTML = menuAccountBlock();
+    ms.setAttribute('aria-hidden', 'false');
+    ms.classList.remove('pointer-events-none');
+    ms.querySelector('.ms-backdrop').classList.remove('opacity-0');
+    ms.querySelector('.ms-panel').classList.remove('-translate-x-full');
+    document.body.style.overflow = 'hidden';
+    wireMenu();
+  };
+  const closeM = () => {
+    ms.querySelector('.ms-backdrop').classList.add('opacity-0');
+    ms.querySelector('.ms-panel').classList.add('-translate-x-full');
+    document.body.style.overflow = '';
+    ms.classList.add('pointer-events-none');
+    setTimeout(() => ms.setAttribute('aria-hidden', 'true'), 300);
+  };
+  window.__openMenu = openM; window.__closeMenu = closeM;
+  ms.querySelector('.ms-backdrop').addEventListener('click', closeM);
+  ms.querySelector('.ms-close').addEventListener('click', closeM);
+  // wire nội dung động của menu (account + links)
+  window.wireMenu = function() {
+    ms.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => {
+      const v = b.dataset.authView; if (v) { authView = v; authViewIntent = true; }
+      closeM(); go(b.dataset.nav);
+    }));
+    // tab nhóm ngang (Nữ/Nam/Trẻ em) đổi danh mục bên dưới
+    ms.querySelectorAll('[data-mtab]').forEach(b => b.addEventListener('click', () => {
+      menuTab = b.dataset.mtab;
+      ms.querySelectorAll('[data-mtab]').forEach(x => {
+        const on = x.dataset.mtab === menuTab;
+        x.className = 'ms-tab relative h-11 text-[15px] tracking-wide press ' + (on ? 'text-foreground font-medium' : 'text-muted-foreground');
+        x.querySelector('.ms-tab-underline').className = 'ms-tab-underline absolute left-0 -bottom-px h-0.5 bg-primary transition-all duration-300 ' + (on ? 'w-full' : 'w-0');
+      });
+      const catNav = ms.querySelector('#menuCats');
+      if (catNav) { catNav.innerHTML = menuCatList(); window.wireMenu(); }
+    }));
+    ms.querySelectorAll('[data-toast]').forEach(b => b.addEventListener('click', () => { toast(b.dataset.toast); }));
+  };
+})();
+document.body.insertAdjacentHTML('beforeend', '<div id="zoomBox"><button class="zclose w-9 h-9 rounded-full glass-ink-95 flex items-center justify-center press"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m4 4 8 8M12 4l-8 8" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></button><img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></div>');
+(() => {
+  const zb = document.getElementById('zoomBox');
+  const open = src => { zb.querySelector('img').src = src; zb.classList.add('on'); document.body.style.overflow = 'hidden'; };
+  const close = () => { zb.classList.remove('on'); document.body.style.overflow = ''; };
+  zb.addEventListener('click', close);
+  window.__openZoom = open;
+})();
+document.body.insertAdjacentHTML('beforeend', `
+  <div id="infoSheet">
+    <div class="is-backdrop"></div>
+    <div class="is-panel">
+      <div class="h-6 flex items-center justify-center shrink-0"><span class="w-10 h-1 rounded-full bg-border"></span></div>
+      <div class="h-12 px-4 flex items-center justify-between shrink-0 border-b border-border-1">
+        <p id="isTitle" class="text-[16px] font-medium leading-6 text-foreground"></p>
+        <button id="isClose" class="w-8 h-8 -mr-2 flex items-center justify-center press">${I.close}</button>
+      </div>
+      <div class="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+        <p id="isBody" class="text-[14px] leading-5 text-foreground-alt"></p>
+      </div>
+    </div>
+  </div>`);
+(() => {
+  const sh = document.getElementById('infoSheet');
+  const openS = (title, body) => {
+    document.getElementById('isTitle').textContent = title;
+    document.getElementById('isBody').textContent = body;
+    sh.classList.add('open'); document.body.style.overflow = 'hidden';
+  };
+  const closeS = () => { sh.classList.remove('open'); document.body.style.overflow = ''; };
+  sh.querySelector('.is-backdrop').addEventListener('click', closeS);
+  sh.querySelector('#isClose').addEventListener('click', closeS);
+  window.__openInfoSheet = openS;
+})();
 wireFilter();
 go('plp');
 </script>
