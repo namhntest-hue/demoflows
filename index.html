@@ -263,13 +263,13 @@ function productCard(p, i, { w = '', badge = '', noColors = false } = {}) {
           <p class="text-[14px] font-medium leading-5 ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
           ${p.off ? `<span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0">${p.off}</span>` : ''}
         </div>
-        ${p.was ? `<p class="text-[12px] leading-4 text-muted-foreground line-through">${p.was}</p>` : ''}
+        <p class="text-[12px] leading-4 text-muted-foreground line-through ${p.was ? '' : 'invisible'}">${p.was || '&nbsp;'}</p>
       </div>
       ${(!noColors && p.colors && p.colors.length) ? `
-      <div class="flex gap-2 items-center" data-swatches>
+      <div class="flex gap-3 items-center pt-0.5" data-swatches>
         ${p.colors.map((c, ci) => `
-          <button class="cw w-5 h-5 rounded-full p-0.5 flex items-center justify-center border ${ci===0 ? 'border-primary' : 'border-transparent'} press" data-cw="${ci}" title="${c.name}">
-            <span class="w-4 h-4 rounded-full ${c.hex.toLowerCase()==='#ffffff'||c.hex.toLowerCase()==='#f1f1f1' ? 'border border-border-3' : ''}" style="background:${c.hex}"></span>
+          <button class="cw w-[18px] h-[18px] rounded-full shrink-0 transition-shadow duration-200 ${ci===0 ? 'ring-1 ring-primary ring-offset-2' : 'ring-0 ring-offset-0'} press" data-cw="${ci}" title="${c.name}">
+            <span class="block w-full h-full rounded-full ${['#ffffff','#f1f1f1','#fafafa'].includes(c.hex.toLowerCase()) ? 'border border-border-3' : ''}" style="background:${c.hex}"></span>
           </button>`).join('')}
         ${p.moreColors ? `<span class="text-[12px] leading-4 text-muted-foreground">+${p.moreColors}</span>` : ''}
       </div>` : ''}
@@ -307,6 +307,8 @@ const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login
    ICONS
 ════════════════════════════════════════════════════════════════ */
 const I = {
+  grid2: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1.5" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1.5" y="9" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>',
+  grid1: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="1.5" width="13" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1.5" y="9" width="13" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>',
   burger: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 5h16M2 10h16M2 15h11" stroke="var(--general-primary)" stroke-width="1.4" stroke-linecap="round"/></svg>`,
   search: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="var(--general-primary)" stroke-width="1.4"/><path d="m13.5 13.5 4 4" stroke="var(--general-primary)" stroke-width="1.4" stroke-linecap="round"/></svg>`,
   bag:    `<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4.5 6.5h11l-.8 9.2a1 1 0 0 1-1 .9H6.3a1 1 0 0 1-1-.9L4.5 6.5Z" stroke="var(--general-primary)" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.2 6.5V5a2.8 2.8 0 0 1 5.6 0v1.5" stroke="var(--general-primary)" stroke-width="1.4"/></svg>`,
@@ -629,13 +631,22 @@ function screenPLP() {
     </div>
 
     <!-- filter bar (in-flow) -->
+    <!-- Frame 49: đếm SP + chuyển grid 1/2 cột — KHÔNG sticky, cuộn là trôi đi -->
+    <div class="flex items-center justify-between pl-4 pr-2 h-12 bg-background">
+      <p class="text-[16px] font-light leading-6 text-foreground">${PRODUCTS.length} sản phẩm</p>
+      <div class="flex items-center">
+        ${[['2', I.grid2], ['1', I.grid1]].map(([n, ico]) => `
+          <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press ${n==='2' ? 'text-foreground' : 'text-border-4'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
+      </div>
+    </div>
+
     <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex items-center justify-between px-4 h-[52px] backdrop-blur-[7.5px]">
       <button data-sheet="filter" class="flex items-center gap-2 px-4 h-9 rounded-xs border border-border text-[14px] font-medium text-foreground press">${I.sliders} Bộ lọc</button>
       <button data-sheet="sort" class="flex items-center gap-1.5 px-4 h-9 text-[14px] font-medium text-foreground-alt press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
     </div>
 
     <!-- grid -->
-    <div class="grid grid-cols-2 gap-x-0.5 gap-y-2 px-0.5 pt-2">
+    <div id="plpGrid" class="grid grid-cols-2 gap-x-0.5 gap-y-2 px-0.5 pt-2">
       ${PRODUCTS.map((p, i) => card(p, i)).join('')}
     </div>
 
@@ -2854,7 +2865,16 @@ function wire(root) {
 
   // accordions
   root.querySelectorAll('.acc-trigger').forEach(t => {
-    t.addEventListener('click', e => { e.stopPropagation(); t.closest('.acc').classList.toggle('open'); });
+    t.addEventListener('click', e => {
+      e.stopPropagation();
+      const me = t.closest('.acc');
+      const wasOpen = me.classList.contains('open');
+      // đóng mọi mục cùng nhóm (cùng phần tử cha) trước
+      [...me.parentElement.children].forEach(sib => {
+        if (sib !== me && sib.classList && sib.classList.contains('acc')) sib.classList.remove('open');
+      });
+      me.classList.toggle('open', !wasOpen);
+    });
   });
 
   // checkbox
@@ -3120,6 +3140,23 @@ function wire(root) {
   }
 
   root.querySelectorAll('.drag-x').forEach(dragScroll);
+
+  // Chuyển grid 1 cột / 2 cột (Frame 49) — nút trên filter, không sticky
+  const plpGrid = root.querySelector('#plpGrid');
+  root.querySelectorAll('[data-grid]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cols = btn.dataset.grid;
+      if (plpGrid) {
+        plpGrid.classList.toggle('grid-cols-2', cols === '2');
+        plpGrid.classList.toggle('grid-cols-1', cols === '1');
+      }
+      root.querySelectorAll('[data-grid]').forEach(x => {
+        const on = x.dataset.grid === cols;
+        x.classList.toggle('text-foreground', on);
+        x.classList.toggle('text-border-4', !on);
+      });
+    });
+  });
 
   root.querySelectorAll('[data-swatches]').forEach(rw => {
     rw.addEventListener('click', ev => {
