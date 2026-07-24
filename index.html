@@ -6,7 +6,7 @@
 <title>Demo — E-commerce Flow (Mobile)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <!-- Tailwind đã biên dịch sẵn (không cần CDN, chạy offline). Build lại: xem README.md -->
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="tailwind.css">
@@ -54,6 +54,40 @@
 
   /* ── Inter cho PDP6 (thử nghiệm font) ── */
   .font-inter, .font-inter * { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+
+  /* ── Đổi font toàn cục (nút cài đặt nổi) ── */
+  :root { --font-app: 'Montserrat', ui-sans-serif, system-ui, sans-serif; }
+  html.font-override body { font-family: var(--font-app); }
+  html.font-override .font-inter,
+  html.font-override .font-inter * { font-family: var(--font-app); }
+
+  /* ── FAB cài đặt (kiểu back-to-top) ── */
+  #settingsFab {
+    position: fixed; right: 12px; bottom: 96px; z-index: 72;
+    width: 40px; height: 40px; border-radius: 9999px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--general-background);
+    border: 1px solid var(--general-border);
+    box-shadow: 0 2px 12px rgba(0,0,0,.10);
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  #settingsFab:active { transform: scale(.92); }
+  #settingsFab svg { width: 24px; height: 24px; }
+
+  #settingsPanel { position: fixed; inset: 0; z-index: 71; pointer-events: none; }
+  #settingsPanel .sp-backdrop { position: absolute; inset: 0; opacity: 0; transition: opacity .25s ease; }
+  #settingsPanel .sp-card {
+    position: absolute; right: 12px; bottom: 144px; width: 216px;
+    background: var(--general-background);
+    border: 1px solid var(--general-border); border-radius: 8px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.14);
+    opacity: 0; transform: translateY(8px) scale(.97);
+    transform-origin: bottom right;
+    transition: opacity .22s ease, transform .22s cubic-bezier(.22,1,.36,1);
+  }
+  #settingsPanel.open { pointer-events: auto; }
+  #settingsPanel.open .sp-backdrop { opacity: 1; }
+  #settingsPanel.open .sp-card { opacity: 1; transform: translateY(0) scale(1); }
 
   /* ── Shimmer lazy-load (versace images-shimmer) ── */
   .shimmer { position: relative; overflow: hidden; }
@@ -3278,6 +3312,63 @@ function confetti() {
 /* ── Boot ── */
 document.body.insertAdjacentHTML('beforeend', filterSheet());
 document.body.insertAdjacentHTML('beforeend', menuSheet());
+
+// ── FAB cài đặt: đổi phông chữ ──
+const FONTS = [
+  ['montserrat', 'Montserrat',        "'Montserrat', ui-sans-serif, system-ui, sans-serif"],
+  ['inter',      'Inter',             "'Inter', ui-sans-serif, system-ui, sans-serif"],
+  ['jakarta',    'Plus Jakarta Sans', "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif"],
+];
+let currentFont = 'montserrat';
+
+document.body.insertAdjacentHTML('beforeend', `
+  <button id="settingsFab" aria-label="Cài đặt hiển thị">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="3.1" stroke="var(--general-foreground)" stroke-width="1.5"/>
+      <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v.1a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1.03Z"
+        stroke="var(--general-foreground)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <div id="settingsPanel" aria-hidden="true">
+    <div class="sp-backdrop"></div>
+    <div class="sp-card" role="dialog" aria-label="Cài đặt phông chữ">
+      <div class="px-3 pt-3 pb-2">
+        <p class="text-[11px] tracking-[0.12em] uppercase text-muted-foreground">Phông chữ</p>
+      </div>
+      <div id="fontList" class="pb-2">
+        ${FONTS.map(([id, label, stack]) => `
+          <button data-font="${id}" class="fontopt w-full h-11 px-3 flex items-center justify-between press" style="font-family:${stack}">
+            <span class="text-[14px] leading-5 text-foreground">${label}</span>
+            <span class="fo-tick w-4 h-4 ${id === currentFont ? '' : 'opacity-0'}">
+              <svg viewBox="0 0 16 16" fill="none"><path d="m3.5 8.5 3 3 6-7" stroke="var(--general-foreground)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </button>`).join('')}
+      </div>
+    </div>
+  </div>`);
+
+(() => {
+  const fab = document.getElementById('settingsFab');
+  const panel = document.getElementById('settingsPanel');
+  const openP  = () => { panel.classList.add('open'); panel.setAttribute('aria-hidden', 'false'); };
+  const closeP = () => { panel.classList.remove('open'); panel.setAttribute('aria-hidden', 'true'); };
+  fab.addEventListener('click', e => { e.stopPropagation(); panel.classList.contains('open') ? closeP() : openP(); });
+  panel.querySelector('.sp-backdrop').addEventListener('click', closeP);
+  panel.querySelectorAll('[data-font]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.font;
+      const f = FONTS.find(x => x[0] === id);
+      if (!f) return;
+      currentFont = id;
+      document.documentElement.style.setProperty('--font-app', f[2]);
+      document.documentElement.classList.add('font-override');
+      panel.querySelectorAll('[data-font]').forEach(x =>
+        x.querySelector('.fo-tick').classList.toggle('opacity-0', x.dataset.font !== id));
+      closeP();
+      toast('Phông chữ: ' + f[1]);
+    });
+  });
+})();
 (() => {
   const ms = document.getElementById('menuSheet');
   const openM = () => {
