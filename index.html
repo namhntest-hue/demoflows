@@ -1,0 +1,3323 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Demo — E-commerce Flow (Mobile)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Tailwind đã biên dịch sẵn (không cần CDN, chạy offline). Build lại: xem README.md -->
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="tailwind.css">
+<style>
+  html { background: var(--general-background); -webkit-text-size-adjust: 100%; }
+  body { background: var(--general-background); min-height: 100dvh; overflow-x: hidden; }
+  .safe-b { padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); }
+  * { -webkit-tap-highlight-color: transparent; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ── Screen transitions ── */
+  .screen { opacity: 0; transform: translateY(6px); transition: opacity .28s ease, transform .28s cubic-bezier(.22,1,.36,1); }
+  .screen.active { opacity: 1; transform: none; }
+
+  /* ── Entrance stagger ── */
+  @keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .screen.active .rise { animation: riseIn .45s cubic-bezier(.22,1,.36,1) both; }
+  .screen.active .rise:nth-child(1) { animation-delay: .02s } .screen.active .rise:nth-child(2) { animation-delay: .06s }
+  .screen.active .rise:nth-child(3) { animation-delay: .10s } .screen.active .rise:nth-child(4) { animation-delay: .14s }
+  .screen.active .rise:nth-child(5) { animation-delay: .18s } .screen.active .rise:nth-child(6) { animation-delay: .22s }
+
+  /* ── Reveal on scroll ── */
+  .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1); }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  /* ── Press feedback ── */
+  .press { transition: transform .12s ease, opacity .12s ease; }
+  .press:active { transform: scale(.97); opacity: .9; }
+
+  /* ── Skeleton shimmer ── */
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
+  .skel { position: relative; overflow: hidden; background: var(--general-secondary); }
+  .skel::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent); animation: shimmer 1.4s infinite; }
+
+  /* ── Image fade-in ── */
+  img.lazy { opacity: 0; transition: opacity .5s ease; }
+  img.lazy.loaded { opacity: 1; }
+
+  /* ── Carousel kéo trái/phải ── */
+  .drag-x { cursor: grab; }
+  .drag-x.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+  .drag-x.dragging img { pointer-events: none; }
+
+  /* ── Inter cho PDP6 (thử nghiệm font) ── */
+  .font-inter, .font-inter * { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+
+  /* ── Shimmer lazy-load (versace images-shimmer) ── */
+  .shimmer { position: relative; overflow: hidden; }
+  .shimmer::after {
+    content: ''; position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+    transform: translateX(-100%); animation: shimmer 1.4s infinite;
+  }
+  .shimmer.loaded::after { display: none; }
+  .shimmer img { opacity: 0; transition: opacity .5s ease; }
+  .shimmer.loaded img { opacity: 1; }
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
+
+  /* ── Info Bottom Sheet (versace b-drawer) — đẩy lên thay vì extend ── */
+  #infoSheet { position: fixed; inset: 0; z-index: 300; pointer-events: none; }
+  #infoSheet .is-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); opacity: 0; transition: opacity .4s ease; }
+  #infoSheet .is-panel {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    max-height: 86vh; background: var(--general-background);
+    border-radius: 24px 24px 0 0;             /* bo 2 góc trên = 24px (versace) */
+    transform: translateY(100%);
+    transition: transform .4s ease-in-out;     /* versace: transform .4s ease-in-out */
+    display: flex; flex-direction: column;
+    box-shadow: 0 -8px 30px rgba(0,0,0,.12);
+  }
+  #infoSheet.open { pointer-events: auto; }
+  #infoSheet.open .is-backdrop { opacity: 1; }
+  #infoSheet.open .is-panel { transform: translateY(0); }
+
+  /* ── Zoom lightbox (chạm ảnh gallery) ── */
+  #zoomBox { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.92);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+  #zoomBox.on { opacity: 1; pointer-events: auto; }
+  #zoomBox img { max-width: 100%; max-height: 100%; transform: scale(.92); transition: transform .3s cubic-bezier(.22,1,.36,1); }
+  #zoomBox.on img { transform: scale(1); }
+  #zoomBox .zclose { position: absolute; top: calc(16px + env(safe-area-inset-top)); right: 16px; z-index: 2; }
+
+  /* ── Nền mờ theo token ──
+     Tailwind KHÔNG áp được modifier /95 lên màu var(), nên tự viết.
+     Dòng background đầu = fallback đặc cho trình duyệt cũ. */
+  .glass-95 { background: var(--general-background); background: color-mix(in srgb, var(--general-background) 95%, transparent); }
+  .glass-85 { background: var(--general-background); background: color-mix(in srgb, var(--general-background) 85%, transparent); }
+  .glass-ink-95 { background: var(--general-primary); background: color-mix(in srgb, var(--general-primary) 95%, transparent); }
+
+  /* ── Header + filter: gộp liền 1 khối khi cuộn ── */
+  /* viền dưới vẽ bằng ::after để bật/tắt mượt, không đụng tới layout */
+  .navbar::after, .filterbar::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+    background: var(--general-border);
+    transition: opacity .18s ease;
+  }
+  /* khi filter đã dính sát dưới nav -> giấu viền nav => không còn điểm tách */
+  .navbar.merged::after { opacity: 0; }
+
+  /* ── Filter bottom sheet ── */
+  #filterSheet { position: fixed; inset: 0; z-index: 300; pointer-events: none; }
+  #filterSheet .fs-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); opacity: 0; transition: opacity .3s ease; }
+  #filterSheet .fs-panel {
+    position: absolute; inset: 0; background: var(--general-background);
+    display: flex; flex-direction: column;
+    transform: translateY(100%); transition: transform .4s cubic-bezier(.22,1,.36,1);
+  }
+  #filterSheet.open { pointer-events: auto; }
+  #filterSheet.open .fs-backdrop { opacity: 1; }
+  #filterSheet.open .fs-panel { transform: translateY(0); }
+
+  /* accordion cấp 1 trong sheet */
+  .facc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s cubic-bezier(.22,1,.36,1); }
+  .facc.open .facc-body { grid-template-rows: 1fr; }
+  .acc .acc-ico-minus { display: none; } .acc .acc-ico-plus { display: block; }
+  .acc.open .acc-ico-minus { display: block; } .acc.open .acc-ico-plus { display: none; }
+  .facc .facc-ico { display: none; } .facc .facc-ico-plus { display: block; }
+  .facc.open .facc-ico { display: block; } .facc.open .facc-ico-plus { display: none; }
+
+  /* cấp con của danh mục — mặc định ĐÓNG */
+  .fcat-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s cubic-bezier(.22,1,.36,1); }
+  .fcat.open .fcat-body { grid-template-rows: 1fr; }
+  .fcat.open .fcat-ico-plus { display: none; } .fcat.open .fcat-ico-minus { display: block; }
+
+  /* ── Checkout sections ── */
+  .ck-open, .ck-done { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .4s cubic-bezier(.22,1,.36,1), opacity .3s ease; opacity: 0; }
+  .ck-open.is-open, .ck-done.is-open { grid-template-rows: 1fr; opacity: 1; }
+
+  /* ── Accordion ── */
+  .acc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .34s cubic-bezier(.22,1,.36,1); }
+  .acc.open .acc-body { grid-template-rows: 1fr; }
+  .acc-inner { overflow: hidden; }
+  .acc.open .acc-chev { transform: rotate(90deg); }
+  .acc-chev { transition: transform .3s ease; }
+
+  /* ── Toast ── */
+  @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px) scale(.96); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+  #toast.show { animation: toastIn .3s cubic-bezier(.22,1,.36,1) both; }
+
+  /* ── Cart badge pop ── */
+  @keyframes pop { 0% { transform: scale(1) } 40% { transform: scale(1.45) } 100% { transform: scale(1) } }
+  .pop { animation: pop .4s cubic-bezier(.22,1,.36,1); }
+
+  /* ── Fly-to-cart ── */
+  @keyframes flyOut { to { transform: translate(var(--dx), var(--dy)) scale(.15); opacity: 0; border-radius: 50%; } }
+  .fly { position: fixed; z-index: 999; pointer-events: none; object-fit: cover; animation: flyOut .75s cubic-bezier(.55,-0.05,.6,.32) forwards; }
+
+  /* ── Success check draw ── */
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @keyframes ringIn { from { transform: scale(.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+  .screen.active #ring { animation: ringIn .5s cubic-bezier(.22,1,.36,1) both; }
+  .screen.active #tick { stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw .5s .35s ease forwards; }
+
+  /* ── Confetti ── */
+  @keyframes fall { to { transform: translateY(340px) rotate(540deg); opacity: 0; } }
+  .confetti { position: absolute; width: 6px; height: 10px; top: -12px; animation: fall 2.2s ease-in forwards; }
+
+  /* ── Progress bar ── */
+  .bar-fill { transition: width .5s cubic-bezier(.22,1,.36,1); }
+
+  /* ── Sticky reveal ── */
+  .sticky-el { transition: opacity .24s ease, transform .24s ease; }
+
+  /* ── Spinner ── */
+  @keyframes spin { to { transform: rotate(360deg) } }
+  .spin { animation: spin .7s linear infinite; }
+
+  /* ── Radio / checkbox ── */
+  .chk { transition: background .18s ease, border-color .18s ease; }
+  .chk svg { opacity: 0; transform: scale(.4); transition: opacity .18s ease, transform .18s ease; }
+  .chk.on { background: #0a0a0a; border-color: #0a0a0a; }
+  .chk.on svg { opacity: 1; transform: scale(1); }
+  .radio-dot { transition: transform .2s cubic-bezier(.22,1,.36,1), opacity .2s ease; transform: scale(0); opacity: 0; }
+  .radio.on { border-color: #0a0a0a; }
+  .radio.on .radio-dot { transform: scale(1); opacity: 1; }
+  .opt.on { border-color: #0a0a0a; background: #fafafa; }
+  .opt { transition: border-color .2s ease, background .2s ease; }
+
+  /* ── Size / swatch chips ── */
+  .chip { transition: border-color .18s ease, background .18s ease, color .18s ease; }
+  .chip.on { border-color: #0a0a0a; border-width: 1.5px; }
+  .chip.off { background: rgba(0,0,0,.04); color: #a3a3a3; }
+  .sw { transition: border-color .18s ease, transform .18s ease; }
+  .sw.on { border-color: #0a0a0a; }
+  .sw:active { transform: scale(.94); }
+
+  /* ── Marquee ── */
+  @keyframes slide { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+  .marquee { animation: slide 18s linear infinite; }
+
+  /* ── Sheet ── */
+  #loginSheet { transition: opacity .3s ease; }
+  #loginCard { transition: transform .38s cubic-bezier(.22,1,.36,1), opacity .3s ease; }
+  #loginSheet.hidden-sheet { opacity: 0; pointer-events: none; }
+  #loginSheet.hidden-sheet #loginCard { transform: translateY(24px) scale(.97); opacity: 0; }
+</style>
+</head>
+
+<body class="font-sans antialiased">
+
+<!-- ══════════════════════ Preview chrome ══════════════════════ -->
+<div id="viewport" class="w-full bg-background"></div>
+
+<!-- Toast -->
+<div id="toast" class="fixed left-1/2 bottom-[88px] -translate-x-1/2 z-[200] hidden">
+  <div class="flex items-center gap-2 glass-ink-95 backdrop-blur text-primary-foreground text-[12px] font-medium px-4 py-2.5 rounded-full shadow-lg whitespace-nowrap">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span id="toastMsg">Đã thêm vào giỏ</span>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   DATA
+════════════════════════════════════════════════════════════════ */
+const A = 'assets/';
+
+const PRODUCTS = [
+  { img:'p1.png',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫', colors:[{name:'Broken Jewels',hex:'#c4a481'},{name:'Nero',hex:'#0a0a0a'},{name:'Oro',hex:'#c9a94b'}] },
+  { img:'p2.png',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', price:'15.611.000 ₫', colors:[{name:'Broken Jewels',hex:'#c4a481'},{name:'Blu',hex:'#213259'}] },
+  { img:'p3.png',  brand:'Versace', name:'Túi đeo vai da Emblème',                     price:'50.957.000 ₫', off:'-15%', was:'59.949.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Bianco',hex:'#f1f1f1'},{name:'Rosso',hex:'#8c1c2b'}] },
+  { img:'p4.png',  brand:'Versace', name:'Giày cao gót da nappa Gianni 90',            price:'45.066.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Nudo',hex:'#d8b79c'}] },
+  { img:'p5.png',  brand:'Versace', name:'Giày loafer da Manu',                        price:'35.248.000 ₫', off:'-30%', was:'50.354.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Marrone',hex:'#5c3a26'}] },
+  { img:'p6.png',  brand:'Versace', name:'Giày thể thao da lộn Greca Court',           price:'27.393.000 ₫', colors:[{name:'Bianco',hex:'#f1f1f1'},{name:'Nero',hex:'#0a0a0a'},{name:'Blu',hex:'#213259'}] },
+  { img:'p7.png',  brand:'Versace', name:'Túi đeo vai da Vivian East/West cỡ nhỏ',     price:'70.593.000 ₫', off:'-25%', was:'94.124.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Oro',hex:'#c9a94b'}] },
+  { img:'p8.png',  brand:'Versace', name:'Túi da Lou mini',                            price:'45.066.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Rosso',hex:'#8c1c2b'},{name:'Bianco',hex:'#f1f1f1'}] },
+  { img:'p9.png',  brand:'Versace', name:'Túi tote Rivière mini',                      price:'50.957.000 ₫', off:'-10%', was:'56.619.000 ₫', colors:[{name:'Cuoio',hex:'#a06a3f'},{name:'Nero',hex:'#0a0a0a'}] },
+  { img:'p10.png', brand:'Versace', name:'Thắt lưng da mặt khóa Medusa',               price:'17.575.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Marrone',hex:'#5c3a26'}] },
+];
+
+/* Card sản phẩm — Card-item của Figma (2541:175787)
+   giá bán #d62845 Medium 14/20 + badge -%% nền #fef2f2 · giá gốc gạch ngang #737373
+   Dùng chung cho: grid PLP, hàng gợi ý PDP, "Show more". */
+function productCard(p, i, { w = '', badge = '', noColors = false } = {}) {
+  return `
+  <div class="bg-card flex flex-col cursor-pointer group ${w}" data-product="${i}">
+    <div class="relative w-full overflow-hidden bg-secondary" style="aspect-ratio:189/252">
+      <img src="${A}${p.img}" alt="${p.name}" class="absolute inset-0 w-full h-full object-cover lazy">
+      ${badge ? `<span class="absolute top-2 left-2 bg-primary text-primary-foreground text-[12px] font-medium leading-4 px-1 tracking-wide">${badge}</span>` : ''}
+      <button class="wish absolute top-2 right-2 w-7 h-7 rounded-full glass-85 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity press">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 13.5S2 10 2 6.2A3.2 3.2 0 0 1 8 4.5a3.2 3.2 0 0 1 6 1.7C14 10 8 13.5 8 13.5Z" stroke="var(--general-primary)" stroke-width="1.3" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="flex flex-col px-1 py-2">
+      <div class="flex flex-col gap-0.5 pb-2">
+        <p class="text-[14px] font-medium leading-5 text-foreground truncate">${p.brand}</p>
+        <p class="text-[12px] leading-4 text-secondary-foreground truncate">${p.name}</p>
+      </div>
+      <div class="flex flex-col pb-2">
+        <div class="flex gap-1 items-center">
+          <p class="text-[14px] font-medium leading-5 ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
+          ${p.off ? `<span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0">${p.off}</span>` : ''}
+        </div>
+        ${p.was ? `<p class="text-[12px] leading-4 text-muted-foreground line-through">${p.was}</p>` : ''}
+      </div>
+      ${(!noColors && p.colors && p.colors.length) ? `
+      <div class="flex gap-2 items-center" data-swatches>
+        ${p.colors.map((c, ci) => `
+          <button class="cw w-5 h-5 rounded-full p-0.5 flex items-center justify-center border ${ci===0 ? 'border-primary' : 'border-transparent'} press" data-cw="${ci}" title="${c.name}">
+            <span class="w-4 h-4 rounded-full ${c.hex.toLowerCase()==='#ffffff'||c.hex.toLowerCase()==='#f1f1f1' ? 'border border-border-3' : ''}" style="background:${c.hex}"></span>
+          </button>`).join('')}
+        ${p.moreColors ? `<span class="text-[12px] leading-4 text-muted-foreground">+${p.moreColors}</span>` : ''}
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+
+
+const BRANDS = ['Versace','Versace Jeans Couture','Burberry','Balmain','Dolce&Gabbana','Ferragamo','MCM','TUMI'];
+
+// Category cards — ảnh vuông 1:1 (150×150) theo PLP-Mobile-02-ByBrand
+const CATEGORIES = [
+  { img:'brand-1.png', label:'Quần áo'   },
+  { img:'brand-2.png', label:'Giày dép'  },
+  { img:'p2.png',      label:'Túi xách'  },
+  { img:'p3.png',      label:'Phụ kiện'  },
+  { img:'p4.png',      label:'Trang sức' },
+  { img:'p6.png',      label:'Làm đẹp'   },
+];
+
+const CART = [
+  { img:'p8.png', brand:'Versace', name:'Túi da Lou mini',            variant:'Onesize , Black', off:'', was:'', now:'45.066.000 ₫', qty:1 },
+  { img:'p5.png', brand:'Versace', name:'Giày loafer da Manu',        variant:'40 , Black',      off:'', was:'', now:'35.248.000 ₫', qty:1 },
+  { img:'p10.png',brand:'Versace', name:'Thắt lưng da mặt khóa Medusa', variant:'95 , Black',    off:'', was:'', now:'17.575.000 ₫', qty:1 },
+  { img:'p2.png', brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant:'Onesize', off:'', was:'', now:'15.611.000 ₫', qty:1 },
+];
+
+const SIZES = ['39','40','41','42','43','44'];
+const DISABLED = ['44'];
+
+const FLOW = ['plp','pdp','pdp2','pdp3','pdp4','pdp5','pdp6','cart','login','account','order','checkout','done'];
+const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login:'Đăng nhập', pdp2:'Sản phẩm', pdp3:'Sản phẩm', pdp4:'Sản phẩm', pdp5:'Sản phẩm', pdp6:'Sản phẩm', account:'Tài khoản', order:'Chi tiết đơn hàng', checkout:'Thanh toán', done:'Hoàn tất' };
+
+/* ════════════════════════════════════════════════════════════════
+   ICONS
+════════════════════════════════════════════════════════════════ */
+const I = {
+  burger: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 5h16M2 10h16M2 15h11" stroke="var(--general-primary)" stroke-width="1.4" stroke-linecap="round"/></svg>`,
+  search: `<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="var(--general-primary)" stroke-width="1.4"/><path d="m13.5 13.5 4 4" stroke="var(--general-primary)" stroke-width="1.4" stroke-linecap="round"/></svg>`,
+  bag:    `<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4.5 6.5h11l-.8 9.2a1 1 0 0 1-1 .9H6.3a1 1 0 0 1-1-.9L4.5 6.5Z" stroke="var(--general-primary)" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.2 6.5V5a2.8 2.8 0 0 1 5.6 0v1.5" stroke="var(--general-primary)" stroke-width="1.4"/></svg>`,
+  user:   `<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="6.5" r="3" stroke="var(--general-primary)" stroke-width="1.4"/><path d="M4 16.5c0-3 2.7-4.7 6-4.7s6 1.7 6 4.7" stroke="var(--general-primary)" stroke-width="1.4"/></svg>`,
+  sliders:`<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4.5h9M2 11.5h5" stroke="var(--general-primary)" stroke-width="1.3" stroke-linecap="round"/><circle cx="12" cy="4.5" r="1.8" stroke="var(--general-primary)" stroke-width="1.3"/><circle cx="9" cy="11.5" r="1.8" stroke="var(--general-primary)" stroke-width="1.3"/></svg>`,
+  chevD:  (c='#0a0a0a')=>`<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="m3 5 4 4 4-4" stroke="${c}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  chevR:  (c='#0a0a0a')=>`<svg class="acc-chev" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="m5 3 4 4-4 4" stroke="${c}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  chevL:  `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="m7.5 2.5-3.5 3.5 3.5 3.5" stroke="var(--general-primary)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  close:  `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m4 4 8 8M12 4l-8 8" stroke="var(--general-secondary-foreground)" stroke-width="1.4" stroke-linecap="round"/></svg>`,
+  trash:  `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2.5 4.5h11M6 4.5V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M4 4.5l.6 8.6a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9l.6-8.6" stroke="var(--general-muted-foreground)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  tick:   `<svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="m2 6.2 2.6 2.6L10 3.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  fb:     `<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--general-primary)"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.4v7A10 10 0 0 0 22 12Z"/></svg>`,
+  ig:     `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" stroke="var(--general-primary)" stroke-width="1.6"/><circle cx="12" cy="12" r="4" stroke="var(--general-primary)" stroke-width="1.6"/><circle cx="17.2" cy="6.8" r="1.2" fill="var(--general-primary)"/></svg>`,
+  yt:     `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="2.5" y="5.5" width="19" height="13" rx="4" stroke="var(--general-primary)" stroke-width="1.6"/><path d="m10.5 9.5 5 2.5-5 2.5v-5Z" fill="var(--general-primary)"/></svg>`,
+  truck:  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M2 7.5h11v9H2v-9Z" stroke="var(--general-primary)" stroke-width="1.4"/><path d="M13 10.5h4l3 3v3h-7v-6Z" stroke="var(--general-primary)" stroke-width="1.4"/><circle cx="6" cy="17.5" r="1.8" stroke="var(--general-primary)" stroke-width="1.4"/><circle cx="16.5" cy="17.5" r="1.8" stroke="var(--general-primary)" stroke-width="1.4"/></svg>`,
+  bolt:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2Z" stroke="var(--general-primary)" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
+  card:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2.5" y="5" width="19" height="14" rx="2.5" stroke="var(--general-primary)" stroke-width="1.4"/><path d="M2.5 9.5h19" stroke="var(--general-primary)" stroke-width="1.4"/></svg>`,
+  qr:     `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="var(--general-primary)" stroke-width="1.4"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="var(--general-primary)" stroke-width="1.4"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="var(--general-primary)" stroke-width="1.4"/><path d="M14 14h3v3h-3zM19 19h2v2h-2z" fill="var(--general-primary)"/></svg>`,
+  atm:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 9.5 12 4l9 5.5" stroke="var(--general-primary)" stroke-width="1.4" stroke-linejoin="round"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8M3 19.5h18" stroke="var(--general-primary)" stroke-width="1.4" stroke-linecap="round"/></svg>`,
+  gift:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 9h18v3H3V9ZM4.5 12h15v9h-15v-9ZM12 9v12" stroke="var(--general-primary)" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 9S9 3 6.5 4.5 9 9 12 9Zm0 0s3-6 5.5-4.5S15 9 12 9Z" stroke="var(--general-primary)" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
+  shield: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2.5 4.5 5.5v6c0 5 3.2 8.7 7.5 10 4.3-1.3 7.5-5 7.5-10v-6L12 2.5Z" stroke="var(--general-muted-foreground)" stroke-width="1.4" stroke-linejoin="round"/><path d="m8.5 12 2.5 2.5 4.5-4.5" stroke="var(--general-muted-foreground)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+};
+
+/* ════════════════════════════════════════════════════════════════
+   SHARED PARTIALS
+════════════════════════════════════════════════════════════════ */
+const money = n => n.toLocaleString('en-US').replace(/,/g, ',') + 'đ';
+
+/* Nav — component 2147:1655 (390×48)
+   [burger][search] · logo giữa · [user][bag]
+   nền trắng 80% + background-blur, viền dưới #e5e5e5, pad 12/16 */
+/* ════════════════════════════════════════════════════════════════
+   MENU DRAWER — bố cục kiểu Ralph Lauren
+   Tab nhóm ngang trên đầu (Nữ / Nam / Trẻ em) đổi danh mục bên dưới.
+   Typography thoáng. Chưa login: dòng Đăng nhập/Đăng ký.
+   Đã login: CHỈ hiện tên user -> bấm mở trang Account (có tabs).
+════════════════════════════════════════════════════════════════ */
+const MENU_TABS = {
+  'Nữ':      ['Sản phẩm mới','Quần áo','Túi xách','Giày dép','Phụ kiện','Trang sức'],
+  'Nam':     ['Sản phẩm mới','Quần áo','Giày dép','Túi xách','Phụ kiện','Đồng hồ'],
+  'Trẻ em':  ['Sản phẩm mới','Bé gái','Bé trai','Giày dép','Phụ kiện'],
+};
+const MENU_SECONDARY = ['Thương hiệu','Khuyến mãi','PRE-LOVED','Danh sách cửa hàng'];
+let menuTab = 'Nữ';
+
+function menuSheet() {
+  return `
+  <div id="menuSheet" class="fixed inset-0 z-[200] pointer-events-none" aria-hidden="true">
+    <div class="ms-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
+    <div class="ms-panel absolute left-0 top-0 h-full w-[88%] max-w-[380px] bg-background shadow-2xl flex flex-col -translate-x-full transition-transform duration-300 ease-out">
+
+      <!-- header: logo trái + close phải -->
+      <div class="h-14 flex items-center justify-between px-5 shrink-0">
+        <img src="${A}logo.png" alt="DAFC" class="h-[18px] w-[84px] object-contain object-left">
+        <button class="ms-close w-8 h-8 -mr-1 flex items-center justify-center press">${I.close}</button>
+      </div>
+
+      <!-- tab nhóm ngang (RL: Men/Women/Kids) -->
+      <div class="flex px-5 gap-6 border-b border-border-1 shrink-0">
+        ${Object.keys(MENU_TABS).map(t => `
+          <button data-mtab="${t}" class="ms-tab relative h-11 text-[15px] tracking-wide press ${t===menuTab ? 'text-foreground font-medium' : 'text-muted-foreground'}">
+            ${t}
+            <span class="ms-tab-underline absolute left-0 -bottom-px h-0.5 bg-primary transition-all duration-300 ${t===menuTab ? 'w-full' : 'w-0'}"></span>
+          </button>`).join('')}
+      </div>
+
+      <div class="flex-1 overflow-y-auto overscroll-contain">
+        <!-- danh mục theo tab (typography-forward) -->
+        <nav id="menuCats" class="px-5 py-4 flex flex-col">
+          ${menuCatList()}
+        </nav>
+
+        <!-- nhóm phụ -->
+        <nav class="px-5 py-2 border-t border-border-1 flex flex-col">
+          ${MENU_SECONDARY.map(t => `
+            <button data-nav="plp" class="ms-link h-12 flex items-center justify-between press">
+              <span class="text-[15px] leading-5 text-foreground">${t}</span>
+            </button>`).join('')}
+        </nav>
+
+        <!-- ACCOUNT: tối giản kiểu RL -->
+        <div id="menuAccount" class="border-t border-border-1"></div>
+
+        <!-- tiện ích -->
+        <div class="px-5 py-4 flex flex-col gap-3">
+          ${['Chăm sóc khách hàng','Đặc quyền thành viên DAFC','Về DAFC'].map(t => `
+            <button data-toast="${t}" class="text-left text-[13px] leading-5 text-muted-foreground press">${t}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function menuCatList() {
+  return MENU_TABS[menuTab].map(c => `
+    <button data-nav="plp" class="ms-link h-[52px] flex items-center justify-between press border-b border-border-1 last:border-b-0">
+      <span class="text-[17px] font-light leading-6 text-foreground">${c}</span>
+      ${I.chevR('var(--general-muted-foreground)')}
+    </button>`).join('');
+}
+
+/* Account block — RL style: chưa login = 1 dòng; đã login = CHỈ tên user */
+function menuAccountBlock() {
+  if (ckAuth) {
+    return `
+      <button data-nav="account" class="w-full px-5 h-16 flex items-center gap-3 press">
+        <span class="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[14px] font-medium shrink-0">U</span>
+        <span class="flex-1 min-w-0 text-left">
+          <span class="block text-[15px] font-medium leading-5 text-foreground truncate">UserOne</span>
+          <span class="block text-[12px] leading-4 text-muted-foreground">Xem tài khoản</span>
+        </span>
+        ${I.chevR('var(--general-muted-foreground)')}
+      </button>`;
+  }
+  return `
+    <div class="px-5 py-4 flex items-center gap-1">
+      <button data-nav="login" data-auth-view="login" class="text-[15px] font-medium leading-5 text-foreground press">Đăng nhập</button>
+      <span class="text-muted-foreground px-1">/</span>
+      <button data-nav="login" data-auth-view="register" class="text-[15px] font-medium leading-5 text-foreground press">Đăng ký</button>
+    </div>`;
+}
+
+function navBar({ logoOnly = false } = {}) {
+  const bar = 'navbar glass-95 sticky top-0 z-50 h-[48px] backdrop-blur-[7.5px] flex items-center px-4';
+
+  // Checkout: chỉ còn logo, canh trái
+  if (logoOnly) {
+    return `
+    <div class="${bar}">
+      <img src="${A}logo.png" alt="DAFC" class="h-[20px] w-[93px] object-contain object-left cursor-pointer press" data-nav="plp">
+    </div>`;
+  }
+
+  const ico = (inner, attrs = '') =>
+    `<button class="w-6 h-6 flex items-center justify-center press" ${attrs}>${inner}</button>`;
+
+  return `
+  <div class="${bar} justify-between">
+    <div class="flex gap-2 items-center w-[133px]">
+      ${ico(I.burger, 'data-menu-open')}
+      ${ico(I.search, 'data-toast="Mở tìm kiếm"')}
+    </div>
+    <img src="${A}logo.png" alt="DAFC" class="h-[20px] w-[93px] object-contain cursor-pointer press" data-nav="plp">
+    <div class="flex gap-2 items-center justify-end w-[133px]">
+      ${ico(I.user, 'data-nav="login"')}
+      <button data-nav="cart" class="w-6 h-6 flex items-center justify-center press relative">
+        ${I.bag}
+        <span class="cart-badge absolute -top-1 -right-1.5 min-w-[15px] h-[15px] px-1 rounded-full bg-destructive text-primary-foreground text-[9px] font-bold flex items-center justify-center">4</span>
+      </button>
+    </div>
+  </div>`;
+}
+
+function footer() {
+  const accs = ['Liên hệ với chúng tôi','Chăm sóc khách hàng','Chính sách'];
+  return `
+  <div class="bg-secondary pt-8 pb-8 px-2 mt-4">
+    <!-- Newsletter -->
+    <div class="px-2 pb-6 flex flex-col gap-3 reveal">
+      <p class="text-[20px] leading-[28px] text-foreground">Cập nhật thông tin mới nhất từ DAFC</p>
+      <p class="text-[14px] leading-5 text-mid-alt">Nhận ngay thông tin về các bộ sưu tập hoặc các chương trình ưu đãi mới nhất.</p>
+      <div class="flex">
+        <input type="email" placeholder="Your email" class="flex-1 h-9 bg-background border border-border px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+        <button data-toast="Đăng ký thành công" class="h-9 px-4 bg-primary text-[14px] font-medium text-primary-foreground press">Đăng ký</button>
+      </div>
+    </div>
+    <div class="h-px bg-border mx-2"></div>
+    <!-- Company -->
+    <div class="flex flex-col gap-4 py-5 px-2 reveal">
+      <img src="${A}logo.png" alt="DAFC" class="h-7 w-[130px] object-contain object-left">
+      <p class="text-[14px] font-medium leading-5 text-foreground">DAFC - A subsidiary of IPPG</p>
+      <div class="flex flex-col gap-2 text-[14px] leading-5 text-secondary-foreground">
+        <p>Tầng 3, Tòa nhà Centec, 72-74 Nguyễn Thị Minh Khai, Phường Xuân Hòa, TP. Hồ Chí Minh</p>
+        <p>Đường dây nóng: 19002666</p>
+        <p>Giờ làm việc: 8:30 đến 22:00</p>
+        <p>dafconline@dafc.com.vn</p>
+      </div>
+    </div>
+    ${accs.map(a => `
+      <div class="acc border-b border-border">
+        <button class="acc-trigger w-full h-[52px] flex items-center justify-between px-2 press">
+          <span class="text-[14px] font-medium text-foreground">${a}</span>
+          ${I.chevR('#0a0a0a')}
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <div class="pb-3 px-2 flex flex-col gap-2 text-[13px] leading-5 text-mid-alt">
+            <p>Hotline: 1900 2666</p><p>Email: dafconline@dafc.com.vn</p><p>Giờ làm việc: 8:30 – 22:00</p>
+          </div>
+        </div></div>
+      </div>`).join('')}
+    <!-- Social / payment -->
+    <div class="flex flex-col gap-4 py-5 px-2 reveal">
+      <p class="text-[14px] font-medium leading-5 text-foreground">Kết nối với chúng tôi</p>
+      <div class="flex gap-2">
+        <a class="press">${I.fb}</a><a class="press">${I.ig}</a><a class="press">${I.yt}</a>
+      </div>
+      <p class="text-[14px] font-medium leading-5 text-foreground">Phương thức thanh toán</p>
+      <div class="flex gap-1.5 flex-wrap">
+        ${['VISA','MASTER','JCB','AMEX','MOMO'].map(t => `<span class="h-6 px-2 rounded-[3px] bg-background border border-border flex items-center text-[9px] font-bold tracking-wide text-mid-alt">${t}</span>`).join('')}
+      </div>
+      <p class="text-[14px] font-medium leading-5 text-foreground">Đối tác vận chuyển</p>
+      <span class="h-7 w-fit px-2.5 rounded-[3px] bg-background border border-border flex items-center text-[10px] font-bold tracking-wide text-mid-alt">GHN</span>
+    </div>
+    <div class="h-px bg-border mx-2"></div>
+    <div class="flex flex-col gap-2 pt-5 px-2">
+      <div class="flex items-center gap-1.5 text-muted-foreground">${I.shield}<span class="text-[11px]">Đã đăng ký Bộ Công Thương</span></div>
+      <div class="flex flex-col gap-1 text-[12px] leading-4 text-mid-alt mt-1">
+        <p>© 2026 DAFC — Công Ty Cổ Phần Thời trang và Mỹ phẩm Duy Anh</p>
+        <p>GPKD: 0302519839 · Lầu 3, 171 Đồng Khởi, Q.1, TP.HCM</p>
+        <p>Email: dafconline@dafc.com.vn · Hotline: 1900 2666</p>
+      </div>
+    </div>
+  </div>`;
+}
+
+function orderSummaryRow(label, value, strong) {
+  return `<div class="flex justify-between items-center py-2">
+    <span class="text-[13px] text-muted-foreground">${label}</span>
+    <span class="${strong ? 'text-[15px] font-semibold text-foreground' : 'text-[13px] text-secondary-foreground'}">${value}</span>
+  </div>`;
+}
+
+/* summary block reused by checkout screens */
+function miniCart() {
+  return `
+  <div class="acc bg-background border border-border rounded-xs">
+    <button class="acc-trigger w-full h-[52px] flex items-center justify-between px-3 press">
+      <span class="flex items-center gap-2 text-[14px] font-medium text-foreground">${I.gift} Giỏ hàng của bạn (4)</span>
+      <span class="flex items-center gap-2"><span class="text-[14px] font-semibold text-foreground">21,250,000đ</span>${I.chevR('#737373')}</span>
+    </button>
+    <div class="acc-body"><div class="acc-inner">
+      <div class="px-3 pb-3 flex flex-col gap-3 border-t border-border-1 pt-3">
+        ${CART.map(c => `
+          <div class="flex gap-3 items-center">
+            <img src="${A}${c.img}" class="w-12 h-14 object-cover bg-secondary lazy" alt="">
+            <div class="flex-1 min-w-0">
+              <p class="text-[12px] font-medium text-foreground truncate">${c.brand}</p>
+              <p class="text-[11px] text-mid-alt truncate">${c.name}</p>
+              <p class="text-[11px] text-muted-foreground">${c.variant} · SL ${c.qty}</p>
+            </div>
+            <p class="text-[12px] font-semibold text-foreground shrink-0">${c.now}</p>
+          </div>`).join('')}
+      </div>
+    </div></div>
+  </div>`;
+}
+
+function stickyCta(label, target, sub) {
+  return `
+  <div class="sticky bottom-0 z-50 bg-gradient-to-t from-white via-white to-white/0 pt-4 pb-4 px-4">
+    ${sub ? `<div class="flex justify-between items-baseline mb-2"><span class="text-[12px] text-muted-foreground">Tổng cộng</span><span class="text-[16px] font-semibold text-foreground">${sub}</span></div>` : ''}
+    <button data-nav="${target}" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-semibold tracking-wide press flex items-center justify-center gap-2">
+      ${label}
+    </button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SCREEN: PLP
+════════════════════════════════════════════════════════════════ */
+function screenPLP() {
+  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'NEW' : '' });
+
+  return `
+  <div class="w-full" data-scroller>
+    <!-- promo marquee -->
+    <div class="h-8 bg-primary overflow-hidden flex items-center">
+      <div class="marquee flex shrink-0 whitespace-nowrap">
+        ${Array(2).fill(`<span class="text-[11px] font-medium text-primary-foreground opacity-90 px-4 tracking-wide">GIẢM THÊM 7% CHO ĐƠN HÀNG TỪ 8 TRIỆU ĐỒNG (*) · STEFANO RICCI ĐÃ CÓ MẶT TẠI DAFC ONLINE · GIẢM THÊM 5% CHO THẺ TECHCOMBANK (*ĐIỀU KHOẢN ÁP DỤNG) ·</span>`).join('')}
+      </div>
+    </div>
+
+    ${navBar()}
+
+    <!-- ── Breadcrumb (PLP-Mobile-02-ByBrand) ── -->
+    <div class="py-2">
+      <div class="flex gap-1 items-center px-4 h-9 text-[14px] leading-5 text-muted-foreground">
+        <span>Trang chủ</span>
+        ${['Versace'].map(t => `
+          <span class="flex gap-1 items-center">
+            <span class="w-4 h-4 flex items-center justify-center"><span class="w-[3px] h-[3px] rounded-full bg-muted-foreground"></span></span>
+            <span>${t}</span>
+          </span>`).join('')}
+      </div>
+    </div>
+
+    <!-- ── Hero banner 390×217 (full-bleed) ── -->
+    <div class="relative w-full overflow-hidden bg-secondary" style="aspect-ratio:390/217">
+      <img src="${A}brand-hero.png" alt="Versace campaign" class="w-full h-full object-cover lazy">
+    </div>
+
+    <!-- ── Brand block: logo + description + Thu gọn ── -->
+    <div class="flex flex-col reveal">
+      <div class="flex items-center h-11 px-4 py-2">
+        <img src="${A}brand-logo.png" alt="Versace" class="h-[26px] w-[149px] object-contain object-left lazy">
+      </div>
+      <div id="brandDesc" class="px-4 py-2">
+        <p class="text-[14px] leading-5 text-foreground">
+          Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo, phong cách quyến rũ và logo Medusa đặc trưng. Được thành lập vào năm 1978 bởi Gianni Versace, thương hiệu này đại diện cho sự sang trọng, tự tin và vẻ đẹp hiện đại. Từ những họa tiết ấn tượng đến kỹ thuật cắt may tinh xảo, Versace kết hợp tay nghề thủ công Ý với tinh thần táo bạo, trở thành biểu tượng của thời trang cao cấp và đẳng cấp thời đại.
+        </p>
+        <div class="flex justify-end pt-1">
+          <button id="brandToggle" class="text-[14px] leading-5 text-foreground underline press">Thu gọn</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Category cards 150×150 (1:1) ── -->
+    <div class="py-2 reveal">
+      <div class="drag-x flex gap-2 overflow-x-auto no-scrollbar px-4 pb-1">
+        ${CATEGORIES.map(c => `
+          <button class="shrink-0 w-[150px] flex flex-col press group text-left" data-cate="${c.label}">
+            <div class="w-full aspect-square overflow-hidden bg-secondary">
+              <img src="${A}${c.img}" alt="${c.label}" class="w-full h-full object-cover lazy">
+            </div>
+            <div class="flex flex-col gap-0.5 px-1 py-2 h-10 justify-center">
+              <p class="text-[16px] font-medium leading-6 text-foreground truncate">${c.label}</p>
+            </div>
+          </button>`).join('')}
+      </div>
+    </div>
+
+    <!-- filter bar (in-flow) -->
+    <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex items-center justify-between px-4 h-[52px] backdrop-blur-[7.5px]">
+      <button data-sheet="filter" class="flex items-center gap-2 px-4 h-9 rounded-xs border border-border text-[14px] font-medium text-foreground press">${I.sliders} Bộ lọc</button>
+      <button data-sheet="sort" class="flex items-center gap-1.5 px-4 h-9 text-[14px] font-medium text-foreground-alt press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
+    </div>
+
+    <!-- grid -->
+    <div class="grid grid-cols-2 gap-x-0.5 gap-y-2 px-0.5 pt-2">
+      ${PRODUCTS.map((p, i) => card(p, i)).join('')}
+    </div>
+
+    <div class="flex justify-center py-6">
+      <button id="showMore" class="h-11 px-8 border border-primary text-[14px] font-semibold text-foreground press flex items-center gap-2">Show more</button>
+    </div>
+
+    ${footer()}
+  </div>
+
+`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SCREEN: PDP — theo Figma PDP-Mobile-02-LowStock (2218:6692)
+════════════════════════════════════════════════════════════════ */
+function screenPDP() {
+  const swatches = ['pdp-main.png','pdp-sw2.png','pdp-sw3.png','pdp-sw4.png'];
+  const promos = [
+    ['BUY MORE SAVE MORE',' - [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%'],
+    ['TUMI',' - [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%'],
+    ['Miễn phí vận chuyển',' cho đơn hàng từ 8 triệu'],
+  ];
+  const tabs = [
+    ['Mô tả sản phẩm','Túi satchel unisex bằng vải canvas tái chế bền bỉ. Một ngăn chính đóng nút bấm, ngăn trong có logo A.P.C. Dây đeo điều chỉnh, đeo vai hoặc đeo chéo.'],
+    ['Bảo quản sản phẩm','Tránh ánh nắng trực tiếp. Lau bằng khăn ẩm, không dùng chất tẩy mạnh.'],
+    ['Chính sách đổi trả','Đổi trả trong 7 ngày với sản phẩm còn nguyên tem mác.'],
+    ['Về thương hiệu APC','A.P.C. — thương hiệu Pháp nổi tiếng với thiết kế tối giản, bền vững.'],
+  ];
+
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+
+    <!-- gallery -->
+    <div class="relative w-full bg-secondary" style="height:520px">
+      <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+        ${[0,1,2,3].map(i => `
+          <div class="w-full h-full shrink-0 snap-center relative">
+            <img src="${A}${swatches[i]}" class="w-full h-full object-cover lazy" alt="A.P.C. túi satchel">
+          </div>`).join('')}
+      </div>
+      <button data-nav="plp" class="absolute top-3 left-3 h-9 px-3 flex items-center gap-1.5 rounded-full glass-85 backdrop-blur text-[12px] font-medium text-foreground press">${I.chevL} Back to categories</button>
+      <span class="absolute top-3 right-3 glass-85 backdrop-blur text-[11px] font-semibold text-foreground px-2 py-1 rounded-full">Best seller</span>
+      <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
+        ${[0,1,2,3].map(i => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
+      </div>
+    </div>
+
+    <!-- header -->
+    <div class="flex flex-col gap-1 pt-4 px-4 pb-2 rise">
+      <div class="flex flex-col gap-2 pb-4 items-start text-left">
+        <p class="text-[12px] font-medium leading-4 text-foreground tracking-wide">NEW SEASON</p>
+        <p class="text-[20px] font-medium leading-7 text-foreground">A.P.C.</p>
+        <p class="text-[14px] leading-5 text-foreground-alt">Túi satchel Journal cỡ nhỏ</p>
+      </div>
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-1.5 items-center">
+          <p class="text-[14px] leading-5 text-muted-foreground line-through">8.900.000 ₫</p>
+          <p class="text-[16px] font-medium leading-6 text-destructive">8.900.000 ₫</p>
+          <span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[14px] font-medium leading-5 text-destructive">-80%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- variants -->
+    <div class="flex flex-col gap-4 pt-2 px-4 pb-2 rise">
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-2">
+          <p class="text-[12px] font-medium leading-4 text-foreground">Màu sắc</p>
+          <p id="colorName" class="text-[12px] leading-4 text-muted-foreground">Cognac</p>
+        </div>
+        <div class="flex gap-2">
+          ${swatches.map((s, i) => `
+            <button class="sw w-11 h-11 rounded-xs overflow-hidden border ${i===0 ? 'on' : 'border-transparent'} bg-secondary" data-sw="${i}" data-color="${['Cognac','Black','Navy','Cream'][i]}">
+              <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="">
+            </button>`).join('')}
+        </div>
+      </div>
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <p class="text-[12px] font-medium leading-4 text-foreground">Kích thước</p>
+          <button data-toast="Mở bảng size" class="text-[12px] leading-4 text-foreground">Bảng size →</button>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          ${SIZES.map(s => {
+            const off = DISABLED.includes(s);
+            return `<button class="chip min-w-[52px] h-9 px-2 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" ${off ? 'disabled' : ''} data-size="${s}">${s}</button>`;
+          }).join('')}
+        </div>
+        <p class="text-[12px] font-medium leading-4 text-warning flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-warning animate-pulse"></span>Chỉ còn 01 sản phẩm
+        </p>
+      </div>
+    </div>
+
+    <!-- in-flow CTA -->
+    <div id="pdpCta" class="flex flex-col gap-2 px-4 py-4 rise">
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center gap-2">Thêm vào giỏ hàng</button>
+      <div class="flex items-center justify-center gap-1 text-[12px] leading-4">
+        <span class="text-foreground-alt">Trả trước từ <b class="font-medium">742.000 ₫</b>/tháng</span>
+        <button data-toast="Xem chính sách trả góp" class="text-foreground underline leading-4 press">Xem chi tiết</button>
+      </div>
+    </div>
+
+    <!-- promos -->
+    <div class="pt-2 px-4 pb-2 rise">
+      <div class="bg-accent-0 rounded p-2 flex flex-col gap-1">
+        ${promos.map(([strong, rest]) => `<p class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${strong}</span>${rest}</p>`).join('')}
+      </div>
+    </div>
+
+    <!-- accordions -->
+    <div class="pt-2 px-2">
+      ${tabs.map(([t, body]) => `
+        <div class="acc border-b border-border-1">
+          <button class="acc-trigger w-full h-14 flex items-center justify-between px-2 press">
+            <span class="text-[16px] font-medium leading-6 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+          </button>
+          <div class="acc-body"><div class="acc-inner"><p class="pb-4 px-2 text-[14px] leading-5 text-foreground-alt">${body}</p></div></div>
+        </div>`).join('')}
+    </div>
+
+    <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
+    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
+      <div class="flex flex-col gap-4 py-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground text-center">${title}</p>
+        <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
+          ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true })).join('')}
+        </div>
+      </div>`).join('')}
+
+    ${footer()}
+  </div>
+
+  <!-- sticky CTA -->
+  <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium press">Thêm vào giỏ hàng</button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SCREEN: PDP2 — "05 - PDP-Mobile-02-LowStock" (3087:52415)
+   Khác bản 1: chọn size bằng DROPDOWN, không có cảnh báo tồn kho,
+   accordion có bảng thông số. Dùng cho SP #2 (Khăn lụa Broken Jewels).
+════════════════════════════════════════════════════════════════ */
+function screenPDP2() {
+  const P = PRODUCTS[1];
+  const swatches = ['p2.png','pdp-sw2.png','pdp-sw3.png','pdp-sw4.png'];
+  const promos = [
+    ['BUY MORE SAVE MORE',' - [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%'],
+    ['TUMI',' - [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%'],
+    ['Miễn phí vận chuyển',' cho đơn hàng từ 8 triệu'],
+  ];
+  const specs = [['Chất liệu','Lụa twill 100%'],['Kích thước','90 × 90 cm'],['Xuất xứ','Made in Italy']];
+  const tabs = [
+    ['Mô tả sản phẩm','Khăn lụa twill in họa tiết Broken Jewels — hoạ tiết đặc trưng bộ sưu tập La Vacanza. Viền cuốn tay, mặt lụa mềm rủ, phối cùng túi xách hoặc buộc tóc.', specs],
+    ['Bảo quản sản phẩm','Giặt khô. Không vắt, không dùng chất tẩy. Là ở nhiệt độ thấp qua lớp vải lót.', null],
+    ['Chính sách đổi trả','Đổi hàng miễn phí trong 14 ngày với sản phẩm còn nguyên tem mác.', null],
+    ['Về thương hiệu Versace','Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo và logo Medusa đặc trưng.', null],
+  ];
+
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+
+    <!-- gallery -->
+    <div class="relative w-full bg-secondary" style="height:520px">
+      <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+        ${swatches.map(s => `
+          <div class="w-full h-full shrink-0 snap-center relative">
+            <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
+          </div>`).join('')}
+      </div>
+      <button data-nav="plp" class="absolute top-3 left-3 h-9 px-3 flex items-center gap-2 rounded-full glass-85 backdrop-blur text-[14px] text-foreground press">${I.chevL} Back to categories</button>
+      <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-0.5">
+        ${swatches.map((_, i) => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
+      </div>
+    </div>
+
+    <!-- Header (Frame 427319848 + 427319849) -->
+    <div class="flex flex-col gap-2 pt-4 px-4 rise">
+      <div class="flex flex-col gap-2">
+        <p class="text-[12px] font-medium leading-4 text-foreground">NEW SEASON · LA VACANZA</p>
+        <p class="text-[20px] font-medium leading-7 text-foreground">${P.brand}</p>
+        <p class="text-[14px] leading-5 text-foreground-alt">${P.name}</p>
+      </div>
+      <div class="flex flex-col gap-2 pt-2">
+        <div class="flex gap-1.5 items-center h-6">
+          <p class="text-[16px] font-medium leading-6 text-destructive">${P.price}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Frame 15: Element (màu) + Form field (dropdown size) -->
+    <div class="flex flex-col gap-4 pt-4 px-4 rise">
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-2">
+          <p class="text-[12px] leading-4 text-foreground">Màu sắc</p>
+          <p id="colorName" class="text-[12px] leading-4 text-muted-foreground">Broken Jewels</p>
+        </div>
+        <div class="flex gap-2">
+          ${swatches.map((s, i) => `
+            <button class="sw w-11 h-11 rounded-xs overflow-hidden border ${i===0 ? 'on' : 'border-transparent'} bg-[#f1f1f1]" data-sw="${i}" data-color="${['Broken Jewels','Nero','Blu','Oro'][i]}">
+              <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="">
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <!-- Form field — Select & Combobox (khác bản 1: không dùng chip size) -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <p class="text-[12px] leading-4 text-[#171717]">Kích thước</p>
+          <button data-toast="Mở bảng size" class="text-[12px] leading-4 text-[#171717] underline">Size guide</button>
+        </div>
+        <div class="relative">
+          <select id="sizeSelect" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] text-foreground outline-none focus:border-primary transition-colors appearance-none">
+            <option>Chọn kích thước</option>
+            <option>90 × 90 cm</option>
+            <option>84 × 5 cm</option>
+          </select>
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sticky CTA (in-flow) -->
+    <div id="pdpCta" class="flex flex-col gap-2 px-4 pt-4 pb-4 rise">
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center">Thêm vào giỏ hàng</button>
+      <div class="flex items-center justify-center gap-1 text-[12px] leading-4">
+        <span class="text-foreground-alt">Trả trước từ <b class="font-medium">1.301.000 ₫</b>/tháng</span>
+        <button data-toast="Xem chính sách trả góp" class="text-foreground underline leading-4 press">Xem chi tiết</button>
+      </div>
+    </div>
+
+    <!-- CTKM -->
+    <div class="px-4 pb-2 rise">
+      <div class="bg-accent-0 rounded p-2 flex flex-col gap-1">
+        ${promos.map(([strong, rest]) => `<p class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${strong}</span>${rest}</p>`).join('')}
+      </div>
+    </div>
+
+    <!-- Info Tabs — label Light 16 + bảng thông số -->
+    <div class="pt-2 px-2">
+      ${tabs.map(([t, body, sp]) => `
+        <div class="acc border-b border-border-1">
+          <button class="acc-trigger w-full h-14 flex items-center justify-between px-2 press">
+            <span class="text-[16px] font-light leading-6 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+          </button>
+          <div class="acc-body"><div class="acc-inner">
+            <div class="pb-4 px-2 flex flex-col gap-2">
+              <p class="text-[14px] leading-5 text-foreground-alt">${body}</p>
+              ${sp ? sp.map(([k, v]) => `
+                <div class="flex items-center justify-between h-6">
+                  <span class="text-[12px] leading-4 text-muted-foreground">${k}</span>
+                  <span class="text-[12px] leading-4 text-foreground">${v}</span>
+                </div>`).join('') : ''}
+            </div>
+          </div></div>
+        </div>`).join('')}
+    </div>
+
+    <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
+    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
+      <div class="flex flex-col gap-4 py-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground text-center">${title}</p>
+        <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
+          ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true })).join('')}
+        </div>
+      </div>`).join('')}
+
+    ${footer()}
+  </div>
+
+  <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium press">Thêm vào giỏ hàng</button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SCREEN: PDP3 — biến thể "luxury payment placement" (SP #3)
+   Khối giá sạch tuyệt đối (chỉ con số). Trả góp hạ trọng lượng,
+   dời xuống service line ngay DƯỚI nút Thêm vào giỏ hàng.
+════════════════════════════════════════════════════════════════ */
+function screenPDP3() {
+  const P = PRODUCTS[2];   // Túi đeo vai da Emblème
+  const swatches = ['p3.png','pdp-sw2.png','pdp-sw3.png','pdp-sw4.png'];
+  const promos = [
+    ['BUY MORE SAVE MORE',' - [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%'],
+    ['TUMI',' - [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%'],
+    ['Miễn phí vận chuyển',' cho đơn hàng từ 8 triệu'],
+  ];
+  const tabs = [
+    ['Mô tả sản phẩm','Túi đeo vai Emblème bằng da bê nguyên tấm, khóa cài Medusa mạ vàng. Ngăn trong lót da lộn, dây đeo tháo rời điều chỉnh độ dài.'],
+    ['Bảo quản sản phẩm','Tránh ánh nắng trực tiếp và độ ẩm cao. Lau bằng khăn mềm khô. Cất trong túi vải khi không dùng.'],
+    ['Chính sách đổi trả','Đổi trả trong 14 ngày với sản phẩm còn nguyên tem mác.'],
+    ['Về thương hiệu Versace','Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo và logo Medusa đặc trưng.'],
+  ];
+
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+
+    <!-- gallery -->
+    <div class="relative w-full bg-secondary" style="height:520px">
+      <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+        ${swatches.map(s => `
+          <div class="w-full h-full shrink-0 snap-center relative">
+            <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
+          </div>`).join('')}
+      </div>
+      <button data-nav="plp" class="absolute top-3 left-3 h-9 px-3 flex items-center gap-1.5 rounded-full glass-85 backdrop-blur text-[12px] font-medium text-foreground press">${I.chevL} Back to categories</button>
+      <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
+        ${swatches.map((_, i) => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
+      </div>
+    </div>
+
+    <!-- header — KHỐI GIÁ SẠCH: chỉ con số, không dòng trả góp bên dưới -->
+    <div class="flex flex-col gap-1 pt-4 px-4 pb-2 rise">
+      <div class="flex flex-col gap-2 pb-4 items-start text-left">
+        <p class="text-[12px] font-medium leading-4 text-foreground tracking-wide">NEW SEASON</p>
+        <p class="text-[20px] font-medium leading-7 text-foreground">${P.brand}</p>
+        <p class="text-[14px] leading-5 text-foreground-alt">${P.name}</p>
+      </div>
+      <div class="flex gap-2 items-baseline">
+        <p class="text-[16px] font-medium leading-6 text-destructive">${P.price}</p>
+        ${P.was ? `<p class="text-[14px] leading-5 text-muted-foreground line-through">${P.was}</p>` : ''}
+      </div>
+    </div>
+
+    <!-- variants -->
+    <div class="flex flex-col gap-4 pt-2 px-4 pb-2 rise">
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-2">
+          <p class="text-[12px] leading-4 text-foreground">Màu sắc</p>
+          <p id="colorName" class="text-[12px] leading-4 text-muted-foreground">Nero</p>
+        </div>
+        <div class="flex gap-2">
+          ${swatches.map((s, i) => `
+            <button class="sw w-11 h-11 rounded-xs overflow-hidden border ${i===0 ? 'on' : 'border-transparent'} bg-secondary" data-sw="${i}" data-color="${['Nero','Oro','Blu','Bianco'][i]}">
+              <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="">
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <!-- Form field — Kích thước (dropdown, đúng mockup 3111:33554) -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <p class="text-[12px] leading-4 text-[#171717]">Kích thước</p>
+          <button data-toast="Mở bảng size" class="text-[12px] leading-4 text-[#171717] underline">Size guide</button>
+        </div>
+        <div class="relative">
+          <select id="sizeSelect" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] text-foreground outline-none focus:border-primary transition-colors appearance-none">
+            <option>Chọn kích thước</option>
+            <option>Onesize</option>
+          </select>
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sticky CTA (in-flow) — Button + Payment Offer ngay dưới, căn giữa (mockup 3111:33554) -->
+    <div id="pdpCta" class="flex flex-col gap-2 px-4 pt-4 pb-4 rise">
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center gap-2">Thêm vào giỏ hàng</button>
+      <div class="flex items-center justify-center gap-1 text-[12px] leading-4">
+        <span class="text-foreground-alt">Trả trước từ <b class="font-medium">742.000 ₫</b>/tháng</span>
+        <button data-toast="Xem chính sách trả góp" class="text-foreground underline leading-4 press">Xem chi tiết</button>
+      </div>
+    </div>
+
+    <!-- promos -->
+    <div class="pt-2 px-4 pb-2 rise">
+      <div class="bg-accent-0 rounded p-2 flex flex-col gap-1">
+        ${promos.map(([strong, rest]) => `<p class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${strong}</span>${rest}</p>`).join('')}
+      </div>
+    </div>
+
+    <!-- accordions -->
+    <div class="pt-2 px-2">
+      ${tabs.map(([t, body]) => `
+        <div class="acc border-b border-border-1">
+          <button class="acc-trigger w-full h-14 flex items-center justify-between px-2 press">
+            <span class="text-[16px] font-light leading-6 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+          </button>
+          <div class="acc-body"><div class="acc-inner"><p class="pb-4 px-2 text-[14px] leading-5 text-foreground-alt">${body}</p></div></div>
+        </div>`).join('')}
+    </div>
+
+    <!-- 3 rail gợi ý — Card-item 254px, gap 4 -->
+    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
+      <div class="flex flex-col gap-4 py-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground text-center">${title}</p>
+        <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
+          ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true })).join('')}
+        </div>
+      </div>`).join('')}
+
+    ${footer()}
+  </div>
+
+  <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium press">Thêm vào giỏ hàng</button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SCREEN: PDP4 — LAYOUT giống hệt PDP v1, chỉ thêm ANIMATION
+   (accordion slide-in + gallery zoom/shimmer). SP #4. Giữ sticky CTA.
+════════════════════════════════════════════════════════════════ */
+function screenPDP4() {
+  const P = PRODUCTS[3];
+  window.__pdp4Tabs = null;
+  const swatches = ['pdp-main.png','pdp-sw2.png','pdp-sw3.png','pdp-sw4.png'];
+  const promos = [
+    ['BUY MORE SAVE MORE',' - [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%'],
+    ['TUMI',' - [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%'],
+    ['Miễn phí vận chuyển',' cho đơn hàng từ 8 triệu'],
+  ];
+  const tabs = [
+    ['Mô tả sản phẩm','Túi satchel unisex bằng vải canvas tái chế bền bỉ. Một ngăn chính đóng nút bấm, ngăn trong có logo A.P.C. Dây đeo điều chỉnh, đeo vai hoặc đeo chéo.'],
+    ['Bảo quản sản phẩm','Tránh ánh nắng trực tiếp. Lau bằng khăn ẩm, không dùng chất tẩy mạnh.'],
+    ['Chính sách đổi trả','Đổi trả trong 7 ngày với sản phẩm còn nguyên tem mác.'],
+    ['Về thương hiệu APC','A.P.C. — thương hiệu Pháp nổi tiếng với thiết kế tối giản, bền vững.'],
+  ];
+  window.__pdp4Tabs = tabs;
+
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+
+    <!-- gallery -->
+    <div class="relative w-full bg-secondary" style="height:520px">
+      <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+        ${[0,1,2,3].map(i => `
+          <button class="zoomable shimmer w-full h-full shrink-0 snap-center relative block" data-zoom="${A}${swatches[i]}">
+            <img src="${A}${swatches[i]}" class="w-full h-full object-cover lazy" alt="${P.name}" onload="this.parentElement.classList.add('loaded')">
+          </button>`).join('')}
+      </div>
+      <button data-nav="plp" class="absolute top-3 left-3 h-9 px-3 flex items-center gap-1.5 rounded-full glass-85 backdrop-blur text-[12px] font-medium text-foreground press">${I.chevL} Back to categories</button>
+      <span class="absolute top-3 right-3 glass-85 backdrop-blur text-[11px] font-semibold text-foreground px-2 py-1 rounded-full">Best seller</span>
+      <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
+        ${[0,1,2,3].map(i => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
+      </div>
+    </div>
+
+    <!-- header -->
+    <div class="flex flex-col gap-1 pt-4 px-4 pb-2 rise">
+      <div class="flex flex-col gap-2 pb-4 items-start text-left">
+        <p class="text-[12px] font-medium leading-4 text-foreground tracking-wide">NEW SEASON</p>
+        <p class="text-[20px] font-medium leading-7 text-foreground">A.P.C.</p>
+        <p class="text-[14px] leading-5 text-foreground-alt">Túi satchel Journal cỡ nhỏ</p>
+      </div>
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-1.5 items-center">
+          <p class="text-[14px] leading-5 text-muted-foreground line-through">8.900.000 ₫</p>
+          <p class="text-[16px] font-medium leading-6 text-destructive">8.900.000 ₫</p>
+          <span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[14px] font-medium leading-5 text-destructive">-80%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- variants -->
+    <div class="flex flex-col gap-4 pt-2 px-4 pb-2 rise">
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-2">
+          <p class="text-[12px] font-medium leading-4 text-foreground">Màu sắc</p>
+          <p id="colorName" class="text-[12px] leading-4 text-muted-foreground">Cognac</p>
+        </div>
+        <div class="flex gap-2">
+          ${swatches.map((s, i) => `
+            <button class="sw w-11 h-11 rounded-xs overflow-hidden border ${i===0 ? 'on' : 'border-transparent'} bg-secondary" data-sw="${i}" data-color="${['Cognac','Black','Navy','Cream'][i]}">
+              <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="">
+            </button>`).join('')}
+        </div>
+      </div>
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <p class="text-[12px] font-medium leading-4 text-foreground">Kích thước</p>
+          <button data-toast="Mở bảng size" class="text-[12px] leading-4 text-foreground">Bảng size →</button>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          ${SIZES.map(s => {
+            const off = DISABLED.includes(s);
+            return `<button class="chip min-w-[52px] h-9 px-2 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" ${off ? 'disabled' : ''} data-size="${s}">${s}</button>`;
+          }).join('')}
+        </div>
+        <p class="text-[12px] font-medium leading-4 text-warning flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-warning animate-pulse"></span>Chỉ còn 01 sản phẩm
+        </p>
+      </div>
+    </div>
+
+    <!-- in-flow CTA -->
+    <div id="pdpCta" class="flex flex-col gap-2 px-4 py-4 rise">
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center gap-2">Thêm vào giỏ hàng</button>
+      <div class="flex items-center justify-center gap-1 text-[12px] leading-4">
+        <span class="text-foreground-alt">Trả trước từ <b class="font-medium">742.000 ₫</b>/tháng</span>
+        <button data-toast="Xem chính sách trả góp" class="text-foreground underline leading-4 press">Xem chi tiết</button>
+      </div>
+    </div>
+
+    <!-- promos -->
+    <div class="pt-2 px-4 pb-2 rise">
+      <div class="bg-accent-0 rounded p-2 flex flex-col gap-1">
+        ${promos.map(([strong, rest]) => `<p class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${strong}</span>${rest}</p>`).join('')}
+      </div>
+    </div>
+
+    <!-- Info tabs: bấm -> đẩy BOTTOM SHEET lên (versace b-drawer), không extend -->
+    <div class="pt-2 px-2">
+      ${tabs.map(([t, body], ti) => `
+        <div class="border-b border-border-1">
+          <button class="sheet-trigger w-full h-14 flex items-center justify-between px-2 press" data-sheet-idx="${ti}">
+            <span class="text-[16px] font-medium leading-6 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+          </button>
+        </div>`).join('')}
+    </div>
+
+    <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
+    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
+      <div class="flex flex-col gap-4 py-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground text-center">${title}</p>
+        <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
+          ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true })).join('')}
+        </div>
+      </div>`).join('')}
+
+    ${footer()}
+  </div>
+
+  <!-- sticky CTA -->
+  <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium press">Thêm vào giỏ hàng</button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ACCOUNT — trang tài khoản sau đăng nhập.
+   Tabs ngang trên đầu: Thông tin · Đơn hàng · Địa chỉ · Thành viên
+   · Yêu thích · Điểm thưởng. Nội dung đổi theo tab (không chuyển trang).
+════════════════════════════════════════════════════════════════ */
+const ACCOUNT_TABS = [
+  ['info',     'Thông tin'],
+  ['orders',   'Đơn hàng'],
+  ['address',  'Địa chỉ'],
+  ['loyalty',  'Thành viên'],
+  ['wishlist', 'Yêu thích'],
+  ['points',   'Điểm thưởng'],
+];
+let accountTab = 'info';
+
+function screenACCOUNT() {
+  return `
+  <div class="w-full min-h-screen bg-background">
+    <!-- nav -->
+    <div class="h-12 flex items-center px-2 border-b border-border-1 sticky top-0 bg-background z-20">
+      <button data-nav="plp" class="w-9 h-9 flex items-center justify-center press">${I.chevL}</button>
+      <p class="flex-1 text-center text-[16px] font-medium text-foreground pr-9">Tài khoản</p>
+    </div>
+
+    <!-- user tóm tắt -->
+    <div class="px-5 py-4 flex items-center gap-3 border-b border-border-1">
+      <span class="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[18px] font-medium shrink-0">U</span>
+      <div class="flex-1 min-w-0">
+        <p class="text-[16px] font-medium leading-6 text-foreground truncate">UserOne</p>
+        <p class="text-[13px] leading-5 text-muted-foreground">0909 *** 123 · Hạng Vàng</p>
+      </div>
+      <button data-logout class="text-[13px] leading-5 text-destructive press">Đăng xuất</button>
+    </div>
+
+    <!-- TABS ngang trên đầu (cuộn ngang) -->
+    <div id="accTabs" class="drag-x flex gap-1 overflow-x-auto no-scrollbar border-b border-border-1 px-3 sticky top-12 bg-background z-10">
+      ${ACCOUNT_TABS.map(([id, label]) => `
+        <button data-atab="${id}" class="acc-tab relative shrink-0 h-11 px-3 text-[14px] press ${id===accountTab ? 'text-foreground font-medium' : 'text-muted-foreground'}">
+          ${label}
+          <span class="acc-tab-underline absolute left-3 right-3 -bottom-px h-0.5 bg-primary transition-opacity duration-200 ${id===accountTab ? 'opacity-100' : 'opacity-0'}"></span>
+        </button>`).join('')}
+    </div>
+
+    <!-- nội dung tab -->
+    <div id="accBody" class="pb-16">
+      ${accountBody()}
+    </div>
+  </div>`;
+}
+
+function accountBody() {
+  if (accountTab === 'info')     return accInfo();
+  if (accountTab === 'orders')   return accOrders();
+  if (accountTab === 'address')  return accAddress();
+  if (accountTab === 'loyalty')  return accLoyalty();
+  if (accountTab === 'wishlist') return accWishlist();
+  if (accountTab === 'points')   return accPoints();
+  return '';
+}
+
+/* ── Thông tin ── */
+function accInfo() {
+  const row = (label, value) => `
+    <div class="flex flex-col gap-1 py-3 border-b border-border-1">
+      <span class="text-[12px] leading-4 text-muted-foreground">${label}</span>
+      <span class="text-[14px] leading-5 text-foreground">${value}</span>
+    </div>`;
+  return `
+    <div class="px-5 pt-4">
+      ${row('Họ và tên', 'Nguyễn Văn A')}
+      ${row('Số điện thoại', '0909 123 456')}
+      ${row('Email', 'userone@email.com')}
+      ${row('Giới tính', 'Nam')}
+      ${row('Ngày sinh', '01/01/1990')}
+      <button data-toast="Chỉnh sửa thông tin" class="w-full h-11 mt-4 rounded-xs border border-primary text-foreground text-[14px] font-medium press">Chỉnh sửa thông tin</button>
+    </div>`;
+}
+
+/* ── Dữ liệu đơn hàng (dùng chung cho list + chi tiết) ── */
+const ORDERS = [
+  {
+    id: 'DAFC102938', status: 'Đang giao', tone: 'warning', date: '14/07/2025',
+    items: [
+      { img: 'p5.png',  name: 'Giày loafer da Manu', variant: '40 · Black', qty: 1, price: '35.248.000 ₫' },
+      { img: 'p10.png', name: 'Thắt lưng da mặt khóa Medusa', variant: '95 · Black', qty: 1, price: '17.575.000 ₫' },
+    ],
+    sub: '52.823.000 ₫', ship: 'Miễn phí', discount: '− 2.113.000 ₫', total: '50.710.000 ₫',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
+    address: { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
+    steps: 2,
+  },
+  {
+    id: 'DAFC102801', status: 'Hoàn tất', tone: 'muted', date: '28/06/2025',
+    items: [ { img: 'p8.png', name: 'Túi da Lou mini', variant: 'Onesize · Black', qty: 1, price: '45.066.000 ₫' } ],
+    sub: '45.066.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '45.066.000 ₫',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng nhanh',
+    address: { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh' },
+    steps: 4,
+  },
+  {
+    id: 'DAFC102455', status: 'Hoàn tất', tone: 'muted', date: '15/06/2025',
+    items: [ { img: 'p2.png', name: 'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant: 'Onesize', qty: 1, price: '15.611.000 ₫' } ],
+    sub: '15.611.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '15.611.000 ₫',
+    payment: 'Ví MoMo', method: 'Giao hàng tiêu chuẩn',
+    address: { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
+    steps: 4,
+  },
+];
+let currentOrder = 'DAFC102938';
+
+/* ── Đơn hàng (list) ── */
+function accOrders() {
+  return `
+    <div class="px-5 pt-4 flex flex-col gap-3">
+      ${ORDERS.map(o => {
+        const itemNames = o.items.map(it => it.name).join(', ');
+        const totalQty = o.items.reduce((s, it) => s + it.qty, 0);
+        return `
+        <div class="border border-border-1 rounded-xs p-3 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[13px] font-medium leading-5 text-foreground">#${o.id}</span>
+            <span class="text-[12px] leading-4 ${o.tone==='warning' ? 'text-warning' : 'text-muted-foreground'}">${o.status}</span>
+          </div>
+          <p class="text-[13px] leading-5 text-foreground-alt line-clamp-1">${itemNames}</p>
+          <div class="flex items-center justify-between pt-1 border-t border-border-1">
+            <span class="text-[12px] leading-4 text-muted-foreground">${totalQty} sản phẩm · ${o.total}</span>
+            <button data-order="${o.id}" class="text-[13px] leading-5 text-foreground underline press">Chi tiết</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+/* ── Địa chỉ ── */
+function accAddress() {
+  return `
+    <div class="px-5 pt-4 flex flex-col gap-3">
+      <div class="border border-primary rounded-xs p-3 flex flex-col gap-1 relative">
+        <span class="absolute top-3 right-3 text-[11px] text-primary-foreground bg-primary px-2 py-0.5 rounded-full">Mặc định</span>
+        <p class="text-[14px] font-medium leading-5 text-foreground">Nguyễn Văn A · 0909 123 456</p>
+        <p class="text-[13px] leading-5 text-foreground-alt">123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh</p>
+      </div>
+      <div class="border border-border-1 rounded-xs p-3 flex flex-col gap-1">
+        <p class="text-[14px] font-medium leading-5 text-foreground">Nguyễn Văn A · 0909 123 456</p>
+        <p class="text-[13px] leading-5 text-foreground-alt">45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh</p>
+      </div>
+      <button data-toast="Thêm địa chỉ mới" class="w-full h-11 rounded-xs border border-primary text-foreground text-[14px] font-medium press">+ Thêm địa chỉ mới</button>
+    </div>`;
+}
+
+/* ── Thành viên ── */
+function accLoyalty() {
+  return `
+    <div class="px-5 pt-4 flex flex-col gap-4">
+      <div class="rounded-lg bg-primary text-primary-foreground p-5 flex flex-col gap-2">
+        <span class="text-[12px] tracking-[0.2em] uppercase opacity-70">DAFC Membership</span>
+        <span class="text-[24px] font-light leading-8">Hạng Vàng</span>
+        <span class="text-[13px] leading-5 opacity-80">UserOne · 0909 *** 123</span>
+        <div class="mt-2 pt-3 border-t border-white/20 flex items-center justify-between">
+          <span class="text-[12px] opacity-80">Chi tiêu tích lũy</span>
+          <span class="text-[14px] font-medium">142.500.000 ₫</span>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2">
+        <p class="text-[14px] font-medium leading-5 text-foreground">Đặc quyền hạng Vàng</p>
+        ${['Giảm 4% cho mọi đơn hàng','Miễn phí giao hàng nội thành','Ưu tiên tiếp cận bộ sưu tập mới','Quà sinh nhật độc quyền'].map(b => `
+          <div class="flex items-start gap-2">
+            <span class="w-4 h-4 mt-0.5 flex items-center justify-center text-primary shrink-0">${I.tick}</span>
+            <span class="text-[13px] leading-5 text-foreground-alt">${b}</span>
+          </div>`).join('')}
+      </div>
+      <div class="rounded-xs bg-secondary p-3">
+        <p class="text-[12px] leading-4 text-muted-foreground">Còn <b class="text-foreground font-medium">57.500.000 ₫</b> để lên hạng Bạch Kim</p>
+        <div class="h-2 mt-2 rounded-full bg-background overflow-hidden">
+          <div class="h-full w-[70%] bg-primary rounded-full"></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ── Yêu thích ── */
+function accWishlist() {
+  return `
+    <div class="grid grid-cols-2 gap-x-2 gap-y-4 px-3 pt-4">
+      ${PRODUCTS.slice(0, 4).map((p, i) => productCard(p, i)).join('')}
+    </div>`;
+}
+
+/* ── Điểm thưởng ── */
+function accPoints() {
+  const history = [
+    ['Đơn hàng #DAFC102938', '+ 862 điểm', '14/07/2025', 'text-emerald-600'],
+    ['Đổi voucher giảm giá', '− 500 điểm', '02/07/2025', 'text-destructive'],
+    ['Đơn hàng #DAFC102801', '+ 451 điểm', '28/06/2025', 'text-emerald-600'],
+    ['Quà sinh nhật', '+ 300 điểm', '15/06/2025', 'text-emerald-600'],
+  ];
+  return `
+    <div class="px-5 pt-4 flex flex-col gap-4">
+      <div class="rounded-lg border border-border-1 p-5 flex flex-col items-center gap-1">
+        <span class="text-[12px] leading-4 text-muted-foreground">Điểm thưởng hiện có</span>
+        <span class="text-[32px] font-light leading-none text-foreground">1.240</span>
+        <span class="text-[12px] leading-4 text-muted-foreground">≈ 1.240.000 ₫ giá trị quy đổi</span>
+      </div>
+      <div class="flex flex-col">
+        <p class="text-[14px] font-medium leading-5 text-foreground pb-2">Lịch sử điểm</p>
+        ${history.map(([label, amt, date, col]) => `
+          <div class="flex items-center justify-between py-3 border-b border-border-1">
+            <div class="flex flex-col">
+              <span class="text-[14px] leading-5 text-foreground">${label}</span>
+              <span class="text-[12px] leading-4 text-muted-foreground">${date}</span>
+            </div>
+            <span class="text-[14px] font-medium leading-5 ${col}">${amt}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ORDER DETAIL — chi tiết đơn hàng (chuẩn e-commerce/Magento)
+   Header trạng thái · timeline theo dõi · địa chỉ · SP · thanh toán
+   · tổng kết · hành động. Mở khi bấm "Chi tiết" ở tab Đơn hàng.
+════════════════════════════════════════════════════════════════ */
+const ORDER_STEPS = ['Đã đặt hàng', 'Đã xác nhận', 'Đang giao', 'Đã giao'];
+
+function screenORDER() {
+  const o = ORDERS.find(x => x.id === currentOrder) || ORDERS[0];
+  const done = o.steps;
+
+  return `
+  <div class="w-full min-h-screen bg-background pb-10">
+    <!-- nav -->
+    <div class="h-12 flex items-center px-2 border-b border-border-1 sticky top-0 bg-background z-20">
+      <button data-nav="account" class="w-9 h-9 flex items-center justify-center press">${I.chevL}</button>
+      <p class="flex-1 text-center text-[16px] font-medium text-foreground pr-9">Chi tiết đơn hàng</p>
+    </div>
+
+    <!-- header trạng thái -->
+    <div class="px-5 py-4 border-b border-border-1 flex items-center justify-between">
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[15px] font-medium leading-6 text-foreground">#${o.id}</span>
+        <span class="text-[12px] leading-4 text-muted-foreground">Đặt ngày ${o.date}</span>
+      </div>
+      <span class="text-[12px] font-medium px-2.5 py-1 rounded-full ${o.tone==='warning' ? 'bg-destructive-subtle text-warning' : 'bg-secondary text-muted-foreground'}">${o.status}</span>
+    </div>
+
+    <!-- timeline theo dõi -->
+    <div class="px-5 py-5 border-b border-border-1">
+      <div class="flex items-start">
+        ${ORDER_STEPS.map((label, i) => {
+          const reached = i < done;
+          const isCur = i === done - 1;
+          return `
+          <div class="flex-1 flex flex-col items-center relative">
+            ${i > 0 ? `<span class="absolute top-[11px] right-1/2 w-full h-0.5 ${i < done ? 'bg-primary' : 'bg-border'}"></span>` : ''}
+            <span class="relative z-10 w-6 h-6 rounded-full flex items-center justify-center ${reached ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground border border-border'}">
+              ${reached ? `<span class="w-2.5 h-2.5">${I.tick}</span>` : `<span class="w-1.5 h-1.5 rounded-full bg-current"></span>`}
+            </span>
+            <span class="mt-2 text-[11px] leading-4 text-center ${isCur ? 'text-foreground font-medium' : 'text-muted-foreground'}">${label}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      ${o.tone==='warning' ? `
+        <div class="mt-4 rounded-xs bg-secondary px-3 py-2 flex items-center gap-2">
+          <span class="w-4 h-4 text-foreground shrink-0">${I.truck}</span>
+          <span class="text-[12px] leading-4 text-foreground-alt">Dự kiến giao ngày 18/07/2025 · Mã vận đơn <b class="font-medium">GHN284917</b></span>
+        </div>` : ''}
+    </div>
+
+    <!-- địa chỉ giao -->
+    <div class="px-5 py-4 border-b border-border-1 flex flex-col gap-1">
+      <span class="text-[12px] leading-4 text-muted-foreground">Địa chỉ nhận hàng</span>
+      <span class="text-[14px] font-medium leading-5 text-foreground">${o.address.name} · ${o.address.phone}</span>
+      <span class="text-[13px] leading-5 text-foreground-alt">${o.address.line}</span>
+    </div>
+
+    <!-- danh sách sản phẩm -->
+    <div class="px-5 py-4 border-b border-border-1 flex flex-col gap-4">
+      <span class="text-[12px] leading-4 text-muted-foreground">Sản phẩm (${o.items.length})</span>
+      ${o.items.map(it => `
+        <div class="flex gap-3">
+          <div class="w-[72px] h-[96px] bg-secondary rounded-xs overflow-hidden shrink-0">
+            <img src="${A}${it.img}" class="w-full h-full object-cover" alt="${it.name}">
+          </div>
+          <div class="flex-1 min-w-0 flex flex-col">
+            <span class="text-[12px] leading-4 text-muted-foreground">Versace</span>
+            <span class="text-[14px] leading-5 text-foreground line-clamp-2">${it.name}</span>
+            <span class="text-[12px] leading-4 text-muted-foreground mt-1">${it.variant}</span>
+            <div class="flex items-center justify-between mt-auto">
+              <span class="text-[12px] leading-4 text-muted-foreground">SL: ${it.qty}</span>
+              <span class="text-[14px] font-medium leading-5 text-foreground">${it.price}</span>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <!-- phương thức -->
+    <div class="px-5 py-4 border-b border-border-1 flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <span class="text-[13px] leading-5 text-muted-foreground">Phương thức giao hàng</span>
+        <span class="text-[13px] leading-5 text-foreground">${o.method}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-[13px] leading-5 text-muted-foreground">Thanh toán</span>
+        <span class="text-[13px] leading-5 text-foreground">${o.payment}</span>
+      </div>
+    </div>
+
+    <!-- tổng kết -->
+    <div class="px-5 py-4 border-b border-border-1 flex flex-col gap-2">
+      <div class="flex items-center justify-between">
+        <span class="text-[13px] leading-5 text-muted-foreground">Tạm tính</span>
+        <span class="text-[13px] leading-5 text-foreground">${o.sub}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-[13px] leading-5 text-muted-foreground">Phí vận chuyển</span>
+        <span class="text-[13px] leading-5 text-foreground">${o.ship}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-[13px] leading-5 text-muted-foreground">Giảm giá</span>
+        <span class="text-[13px] leading-5 ${o.discount!=='0 ₫' ? 'text-destructive' : 'text-foreground'}">${o.discount}</span>
+      </div>
+      <div class="flex items-center justify-between pt-2 mt-1 border-t border-border-1">
+        <span class="text-[14px] font-medium leading-5 text-foreground">Tổng cộng</span>
+        <span class="text-[16px] font-semibold leading-6 text-foreground">${o.total}</span>
+      </div>
+    </div>
+
+    <!-- hành động -->
+    <div class="px-5 py-4 flex flex-col gap-2">
+      ${o.tone==='warning'
+        ? `<button data-toast="Theo dõi đơn GHN284917" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press">Theo dõi đơn hàng</button>
+           <button data-toast="Đã gửi yêu cầu huỷ" class="w-full h-11 rounded-xs border border-border text-mid-alt text-[14px] font-medium press">Huỷ đơn hàng</button>`
+        : `<button data-toast="Đã thêm lại vào giỏ" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press">Mua lại</button>
+           <button data-toast="Xuất hoá đơn" class="w-full h-11 rounded-xs border border-border text-foreground text-[14px] font-medium press">Xuất hoá đơn</button>`}
+      <button data-toast="Liên hệ CSKH 1900 2666" class="w-full h-11 text-[13px] text-muted-foreground press">Cần hỗ trợ? Liên hệ CSKH</button>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PDP5 — /figma-to-code từ node 3111:33554 "05 - PDP-Mobile-02-LowStock"
+   Mọi giá trị map về token dự án (không hardcode hex/px tuỳ ý):
+     general/background→bg-background · general/foreground→text-foreground
+     general/muted foreground→text-muted-foreground · general/border→border-border
+     general/primary→bg-primary · general/primary foreground→text-primary-foreground
+     general/input→bg-input · card/card→bg-card · neutral/100→bg-secondary
+     neutral/300→bg-border-3 · unofficial/foreground alt→text-foreground-alt
+     rounded-2→rounded-xs · rounded-4→rounded-sm
+   Text styles: paragraph small/regular 14/20 · paragraph mini/regular 12/16
+     paragraph/regular (Light 16/24) · paragraph mini/medium 12/16
+   Căn lề theo Figma: Header LEFT · Payment Offer CENTER. SP #5.
+════════════════════════════════════════════════════════════════ */
+function screenPDP5() {
+  const P = PRODUCTS[4];
+  const swatches = ['p5.png','pdp-sw2.png','pdp-sw3.png','pdp-sw4.png'];
+  const promos = [
+    ['BUY MORE SAVE MORE',' - [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%'],
+    ['TUMI',' - [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%'],
+    ['Miễn phí vận chuyển',' cho đơn hàng từ 8 triệu'],
+  ];
+  const tabs = [
+    ['Mô tả sản phẩm','Loafer da bê nguyên tấm, đế khâu tay kỹ thuật Blake. Lót da mềm, form ôm dáng chân.'],
+    ['Bảo quản sản phẩm','Dùng cây giày gỗ. Đánh xi không màu định kỳ. Tránh mưa và độ ẩm cao.'],
+    ['Chính sách đổi trả','Đổi trả trong 14 ngày với sản phẩm còn nguyên tem mác.'],
+    ['Về thương hiệu Versace','Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo và logo Medusa đặc trưng.'],
+  ];
+
+  return `
+  <div class="w-full bg-background" data-scroller>
+    ${navBar()}
+
+    <!-- image ratio 4:3 (gallary) 390x520 + Slick dash -->
+    <div class="relative w-full bg-secondary" style="height:520px">
+      <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+        ${swatches.map(s => `
+          <div class="w-full h-full shrink-0 snap-center relative">
+            <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
+          </div>`).join('')}
+      </div>
+      <!-- Link Button: pad 8,16 · gap 8 · rounded-2 · label paragraph small/regular -->
+      <button data-nav="plp" class="absolute top-3 left-3 h-9 px-4 flex items-center gap-2 rounded-xs glass-85 backdrop-blur press">
+        <span class="w-3 h-3 flex items-center justify-center [&_svg]:w-3 [&_svg]:h-3">${I.chevL}</span>
+        <span class="text-[14px] leading-5 text-foreground">Back to categories</span>
+      </button>
+      <!-- Slick dash: active 24x4 foreground r2 · inactive 16x4 neutral-300 r2 · gap 2 -->
+      <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
+        ${swatches.map((_, i) => `<span class="h-1 rounded-xs transition-all duration-300 ${i===0 ? 'w-6 bg-foreground' : 'w-4 bg-border-3'}"></span>`).join('')}
+      </div>
+    </div>
+
+    <!-- Header: pad 16,16,26,16 · căn TRÁI theo Figma -->
+    <div class="flex flex-col px-4 pt-4 pb-[26px] rise">
+      <!-- Frame 427319848: pad-bottom 16 -->
+      <div class="flex flex-col pb-4">
+        <p class="h-4 text-[12px] leading-4 text-foreground">NEW SEASON</p>
+        <p class="h-7 text-[20px] font-medium leading-7 text-foreground">${P.brand}</p>
+        <p class="h-5 text-[14px] leading-5 text-foreground-alt">${P.name}</p>
+      </div>
+      <!-- Frame 427319849 → Frame 5: gap 6, jc=MIN (trái) -->
+      <div class="flex items-center gap-1.5 h-6">
+        ${P.was ? `<span class="text-[14px] leading-5 text-muted-foreground line-through">${P.was}</span>` : ''}
+        <span class="text-[16px] font-medium leading-6 text-destructive">${P.price}</span>
+        ${P.off ? `<span class="flex items-center px-1 py-0.5 rounded-xs bg-destructive-subtle text-[14px] font-medium leading-5 text-destructive">${P.off}</span>` : ''}
+      </div>
+    </div>
+
+    <!-- Frame 15: gap 16 · pad 0,16,26,16 -->
+    <div class="flex flex-col gap-4 px-4 pb-[26px] rise">
+      <!-- Element/Color: gap 8 -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2 h-4">
+          <span class="text-[12px] leading-4 text-foreground">Màu sắc</span>
+          <span id="colorName" class="text-[12px] leading-4 text-muted-foreground">Nero</span>
+        </div>
+        <!-- Image Selection 44x44 · gap 8 -->
+        <div class="flex gap-2">
+          ${swatches.map((s, i) => `
+            <button class="sw w-11 h-11 rounded-xs overflow-hidden border ${i===0 ? 'on' : 'border-transparent'} bg-secondary" data-sw="${i}" data-color="${['Nero','Marrone','Cuoio','Testa'][i]}">
+              <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="">
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <!-- Form field: gap 8 · Select & Combobox Size=Large 358x44 rounded-4 -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between h-4">
+          <span class="text-[12px] leading-4 text-[#171717]">Kích thước</span>
+          <button data-toast="Mở bảng size" class="text-[12px] leading-4 text-[#171717] underline press">Size guide</button>
+        </div>
+        <div class="relative">
+          <select id="sizeSelect" class="w-full h-11 bg-input border border-border rounded-sm pl-2 pr-9 text-[14px] leading-5 text-foreground outline-none focus:border-primary transition-colors appearance-none">
+            <option>Chọn kích thước</option>
+            ${SIZES.map(sz => DISABLED.includes(sz) ? `<option disabled>${sz} — hết hàng</option>` : `<option>${sz}</option>`).join('')}
+          </select>
+          <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sticky CTA (in-flow): gap 8 · pad 0,16,16,16 · bg card · stroke sw=0 (không viền) -->
+    <div id="pdpCta" class="flex flex-col gap-2 px-4 pb-4 bg-card rise">
+      <!-- Button/Primary Large: 358x48 · rounded-4 · pad 8,24 -->
+      <button data-add="pdp" class="w-full h-12 rounded-sm bg-primary text-primary-foreground text-[14px] font-medium leading-5 press flex items-center justify-center gap-2 px-6">Thêm vào giỏ hàng</button>
+      <!-- Payment Offer: ai=CENTER · _box gap 4 jc=CENTER -->
+      <div class="flex items-center justify-center gap-1 h-4">
+        <span class="text-[12px] leading-4 text-foreground-alt">Trả trước từ 587.000 ₫/tháng</span>
+        <button data-toast="Xem chính sách trả góp" class="text-[12px] leading-4 text-foreground underline press">Xem chi tiết</button>
+      </div>
+    </div>
+
+    <!-- CTKM: pad 8,16 · Frame 28 pad 12 · bg neutral/100 · rounded-4 -->
+    <div class="px-4 py-2 rise">
+      <div class="flex flex-col gap-2 p-3 rounded-sm bg-secondary">
+        ${promos.map(([strong, rest]) => `<p class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${strong}</span>${rest}</p>`).join('')}
+      </div>
+    </div>
+
+    <!-- Info Tabs: pad 8,8,0,8 · Accordion Trigger 56px pad 16,8 rounded-2 · Label Light 16/24 -->
+    <div class="px-2 pt-2">
+      ${tabs.map(([t, body]) => `
+        <div class="acc border-b border-border">
+          <button class="acc-trigger w-full h-14 flex items-center justify-between gap-2 px-2 rounded-xs press">
+            <span class="text-[16px] font-light leading-6 text-foreground">${t}</span>
+            <span class="w-3.5 h-3.5 flex items-center justify-center [&_svg]:w-3.5 [&_svg]:h-3.5">${I.chevD('var(--general-primary)')}</span>
+          </button>
+          <div class="acc-body"><div class="acc-inner">
+            <p class="pb-4 px-2 text-[14px] leading-5 text-foreground-alt">${body}</p>
+          </div></div>
+        </div>`).join('')}
+    </div>
+
+    <!-- Recently Viewed ×3: Card-item 254px gap 4 -->
+    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
+      <div class="flex flex-col gap-4 py-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground text-center">${title}</p>
+        <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
+          ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true })).join('')}
+        </div>
+      </div>`).join('')}
+
+    ${footer()}
+  </div>
+
+  <!-- Sticky CTA (fixed): 64px · pad 0,16 · bg card · _btn 358x44 bg primary · Medium 12 -->
+  <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
+    <button data-add="pdp" class="w-full h-11 rounded-sm bg-primary text-primary-foreground text-[12px] font-medium leading-4 press">Thêm vào giỏ hàng</button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PDP6 — pixel-perfect từ Figma node 3214:35073, font Inter.
+   Khác v5: KHÔNG có swatch màu (Element/Color HIDDEN) · giá ĐEN
+   #0a0a0a (giá gạch + badge -% đều HIDDEN) · Button r=2 (không 4)
+   · Accordion Medium 14/20 cao 52 (không Light 16/24 cao 56)
+   · CTKM 12px pad 8 (không 14px pad 12) · tiêu đề rail căn TRÁI
+   · nút back "Quay lại". Letter-spacing: 12px→0.4% · 14px→0.2%
+   · 20px title→0.5% · brand 20 Medium→0%.
+════════════════════════════════════════════════════════════════ */
+function screenPDP6() {
+  const P = PRODUCTS[5];
+  const gallery = ['p6.png','pdp-sw2.png','pdp-sw3.png','pdp-sw4.png'];
+  const promos = [
+    'BUY MORE SAVE MORE - [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%',
+    'TUMI - [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%',
+    'Miễn phí vận chuyển cho đơn hàng từ 8 triệu',
+  ];
+  const tabs = [
+    ['Mô tả sản phẩm','Sneaker da lộn với đế cao su lưu hóa. Họa tiết Greca dệt nổi ở gót. Sản xuất tại Ý.'],
+    ['Bảo quản sản phẩm','Dùng bàn chải mềm cho da lộn. Tránh nước và ánh nắng trực tiếp.'],
+    ['Chính sách đổi trả','Đổi trả trong 14 ngày với sản phẩm còn nguyên tem mác.'],
+    ['Về thương hiệu Versace','Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo và logo Medusa đặc trưng.'],
+  ];
+
+  return `
+  <div class="font-inter w-full bg-background" data-scroller>
+    ${navBar()}
+
+    <!-- image ratio 4:3 · 390x520 -->
+    <div class="relative w-full bg-secondary" style="height:520px">
+      <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+        ${gallery.map(s => `
+          <div class="w-full h-full shrink-0 snap-center relative">
+            <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
+          </div>`).join('')}
+      </div>
+      <!-- Link Button: 109x36 · pad 8,16 · gap 8 · r2 · Regular 14/20 ls .2% -->
+      <button data-nav="plp" class="absolute top-0 left-0 h-9 px-4 flex items-center gap-2 rounded-xs press">
+        <span class="w-3 h-3 flex items-center justify-center [&_svg]:w-3 [&_svg]:h-3">${I.chevL}</span>
+        <span class="text-[14px] leading-5 tracking-[0.002em] text-foreground">Quay lại</span>
+      </button>
+      <!-- Slick dash: 24x4 #0a0a0a r2 · 16x4 #d4d4d4 r2 · gap 2 · bottom 8 -->
+      <div id="pdpDots" class="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
+        ${gallery.map((_, i) => `<span class="h-1 rounded-xs transition-all duration-300 ${i===0 ? 'w-6 bg-foreground' : 'w-4 bg-border-3'}"></span>`).join('')}
+      </div>
+    </div>
+
+    <!-- Header: pad 16,16,8,16 · gap 4 -->
+    <div class="flex flex-col gap-1 px-4 pt-4 pb-2 rise">
+      <!-- Frame 427319848: gap 0 · pad-b 16 -->
+      <div class="flex flex-col pb-4">
+        <p class="h-4 text-[12px] font-medium leading-4 tracking-[0.004em] text-foreground">NEW SEASON</p>
+        <p class="h-7 text-[20px] font-medium leading-7 tracking-normal text-foreground">${P.brand}</p>
+        <p class="h-5 text-[14px] leading-5 tracking-[0.002em] text-foreground-alt">${P.name}</p>
+      </div>
+      <!-- Frame 427319849 gap 8 → Frame 5 gap 6 · chỉ hiện giá, ĐEN -->
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-1.5 h-6">
+          <span class="text-[16px] font-medium leading-6 text-foreground">${P.price}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Frame 15: pad 8,16,8,16 · gap 16 · (Element/Color HIDDEN → không có swatch) -->
+    <div class="flex flex-col gap-4 px-4 py-2 rise">
+      <div class="flex flex-col gap-2">
+        <!-- Frame 427319858: gap 8 · h16 -->
+        <div class="flex items-center justify-between h-4">
+          <span class="text-[12px] leading-4 tracking-[0.004em] text-[#171717]">Kích thước</span>
+          <button data-toast="Mở bảng size" class="text-[12px] leading-4 tracking-[0.004em] text-[#171717] underline press">Size guide</button>
+        </div>
+        <!-- Select & Combobox: 358x44 · pad 9.5,8 · stroke #e5e5e5 · r4 -->
+        <div class="relative">
+          <select id="sizeSelect" class="w-full h-11 bg-input border border-border rounded-sm pl-2 pr-9 text-[14px] leading-5 text-foreground outline-none focus:border-primary transition-colors appearance-none">
+            <option>Chọn kích thước</option>
+            ${SIZES.map(sz => DISABLED.includes(sz) ? `<option disabled>${sz} — hết hàng</option>` : `<option>${sz}</option>`).join('')}
+          </select>
+          <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Button slot: pad 16 · gap 8 · stroke sw=0 -->
+    <div id="pdpCta" class="flex flex-col gap-2 p-4 rise">
+      <!-- Button 358x48 · r2 · pad 8,24 · Label Medium 14/20 ls .2% #fafafa CENTER -->
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary px-6 flex items-center justify-center gap-2 press">
+        <span class="text-[14px] font-medium leading-5 tracking-[0.002em] text-primary-foreground text-center">Thêm vào giỏ hàng</span>
+      </button>
+      <!-- Payment Offer: ai=CENTER · _box gap 4 jc=CENTER -->
+      <div class="flex items-center justify-center gap-1 h-4">
+        <span class="text-[12px] leading-4 tracking-[0.004em] text-foreground-alt">Trả trước từ 402.000 ₫/tháng</span>
+        <button data-toast="Xem chính sách trả góp" class="text-[12px] leading-4 tracking-[0.004em] text-foreground underline press">Xem chi tiết</button>
+      </div>
+    </div>
+
+    <!-- Pre-order slot (CTKM): pad 8,16 · Frame 28 pad 8 r4 bg #f5f5f5 · text Regular 12 -->
+    <div class="px-4 py-2 rise">
+      <div class="flex flex-col gap-2 p-2 rounded-sm bg-secondary">
+        <div class="flex flex-col gap-2 pl-1">
+          ${promos.map(t => `<p class="text-[12px] leading-4 tracking-[0.004em] text-secondary-foreground">${t}</p>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Tabs: pad 8 · Accordion Trigger 52px pad 16,8 r2 · Label Medium 14/20 -->
+    <div class="p-2">
+      ${tabs.map(([t, body]) => `
+        <div class="acc border-b border-border">
+          <button class="acc-trigger w-full h-13 flex items-center justify-between gap-2 px-2 rounded-xs press" style="height:52px">
+            <span class="text-[14px] font-medium leading-5 tracking-[0.002em] text-foreground">${t}</span>
+            <span class="w-3.5 h-3.5 flex items-center justify-center [&_svg]:w-3.5 [&_svg]:h-3.5">${I.chevD('var(--general-primary)')}</span>
+          </button>
+          <div class="acc-body"><div class="acc-inner">
+            <p class="pb-4 px-2 text-[14px] leading-5 tracking-[0.002em] text-foreground-alt">${body}</p>
+          </div></div>
+        </div>`).join('')}
+    </div>
+
+    <!-- Recently Viewed ×3: pad 24,16 · gap 16 · title Regular 20/28 ls .5% căn TRÁI -->
+    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
+      <div class="flex flex-col gap-4 px-4 py-6 reveal">
+        <p class="text-[20px] leading-7 tracking-[0.005em] text-foreground">${title}</p>
+        <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
+          ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true, badge: i===3 ? 'New arrival' : '' })).join('')}
+        </div>
+      </div>`).join('')}
+
+    ${footer()}
+  </div>
+
+  <!-- Sticky CTA: 64px · pad 0,16 · _btn 358x44 bg #0a0a0a · Medium 12 ls .4% -->
+  <div id="pdpStickyCta" class="font-inter sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
+    <button data-add="pdp" class="w-full h-11 bg-primary flex items-center justify-center press">
+      <span class="text-[12px] font-medium leading-4 tracking-[0.004em] text-primary-foreground">Thêm vào giỏ hàng</span>
+    </button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SCREEN: CART
+════════════════════════════════════════════════════════════════ */
+/* ── Cart · khối chỉ dành cho thành viên đã đăng nhập (multi gift 5) ── */
+const GIFTS = [
+  { img:'p7.png', brand:'Balenciaga', name:'Giày thể thao Triple S trắng', variant:'Onesize , White', was:'12,345,678đ' },
+  { img:'p7.png', brand:'Balenciaga', name:'Giày thể thao Triple S trắng', variant:'Onesize , White', was:'12,345,678đ' },
+];
+
+function giftPicker() {
+  return `
+  <div class="px-4 py-4 rise">
+    <div class="border border-border rounded-xs p-3 flex flex-col gap-2">
+      <div class="flex items-start justify-between gap-2">
+        <div class="min-w-0">
+          <p class="text-[14px] font-medium leading-5 text-foreground-alt">Bạn đã đủ điều kiện nhận 2 quà</p>
+          <p class="text-[12px] leading-4 text-muted-foreground">Hãy chọn quà tặng của bạn</p>
+        </div>
+        <button data-toast="Đổi quà tặng" class="shrink-0 text-[12px] font-medium leading-4 text-secondary-foreground underline press">Thay đổi</button>
+      </div>
+      <div id="giftOpts" class="flex flex-col gap-2 pt-1">
+        ${GIFTS.map((g, i) => `
+          <button class="opt ${i === 0 ? 'on' : ''} w-full flex gap-3 items-center border ${i === 0 ? 'border-primary' : 'border-border'} rounded-xs p-2 text-left press" data-opt="gift${i}">
+            <span class="radio ${i === 0 ? 'on' : ''} w-4 h-4 rounded-full border-2 ${i === 0 ? 'border-primary' : 'border-border'} flex items-center justify-center shrink-0">
+              <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+            </span>
+            <span class="relative w-[52px] h-[60px] shrink-0 bg-secondary overflow-hidden">
+              <img src="${A}${g.img}" class="w-full h-full object-cover lazy" alt="">
+              <span class="absolute top-0 left-0 bg-primary text-[10px] font-semibold leading-3 text-destructive-subtle px-1">Quà tặng</span>
+            </span>
+            <span class="flex-1 min-w-0">
+              <span class="block text-[14px] font-medium leading-5 text-foreground truncate">${g.brand}</span>
+              <span class="block text-[14px] leading-5 text-secondary-foreground truncate">${g.name}</span>
+              <span class="block text-[12px] leading-4 text-muted-foreground">${g.variant}</span>
+            </span>
+            <span class="text-right shrink-0">
+              <span class="block text-[12px] leading-4 text-muted-foreground line-through">${g.was}</span>
+              <span class="block text-[14px] font-medium leading-5 text-foreground">0đ</span>
+              <span class="block text-[12px] font-medium leading-4 text-foreground-alt">01</span>
+            </span>
+          </button>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function dafcRewards() {
+  const row = (id, title, sub, on) => `
+    <button class="w-full flex items-start gap-2 py-2 press text-left" data-reward="${id}">
+      <span class="chk ${on ? 'on' : ''} w-4 h-4 mt-0.5 border border-border flex items-center justify-center shrink-0">${I.tick}</span>
+      <span class="flex-1 min-w-0">
+        <span class="block text-[14px] font-medium leading-5 text-foreground-alt">${title}</span>
+        <span class="block text-[12px] leading-4 text-muted-foreground">${sub}</span>
+      </span>
+    </button>`;
+  return `
+  <div class="px-4 pb-2 flex flex-col gap-2 rise">
+    <p class="text-[14px] font-medium leading-5 text-foreground">Ưu đãi chương trình DAFC Rewards</p>
+    <div class="flex flex-col">
+      ${row('member', 'Giảm giá thành viên', 'Ưu đãi 4% trên sản phẩm nguyên giá', true)}
+      ${row('points', 'Sử dụng điểm thưởng ( tối đa 10% )', 'Đã áp dụng 1000 điểm ( 1 điểm = 1000đ).', true)}
+    </div>
+  </div>`;
+}
+
+function screenCART() {
+  /* item-cart — 358×165: [checkbox 16 canh giữa] [ảnh 100×133] [thông tin 226] */
+  const row = (c, i) => `
+    <div class="cart-row flex gap-2 px-4 py-4" data-row="${i}">
+      <div class="w-4 shrink-0 flex items-center">
+        <button class="chk on w-4 h-4 border border-border-3 flex items-center justify-center press" data-check>${I.tick}</button>
+      </div>
+      <div class="w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
+        <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
+      </div>
+      <div class="flex-1 min-w-0 flex flex-col gap-2">
+        <div class="flex flex-col">
+          <div class="pb-2">
+            <div class="flex items-center gap-2 h-5">
+              <p class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground truncate">${c.brand}</p>
+              <button class="del w-3.5 h-3.5 shrink-0 flex items-center justify-center press">${I.trash}</button>
+            </div>
+            <p class="text-[14px] leading-5 text-secondary-foreground truncate">${c.name}</p>
+          </div>
+          <p class="text-[12px] leading-4 text-muted-foreground">${c.variant}</p>
+        </div>
+        <div class="flex items-end justify-between gap-0.5">
+          <div class="pt-1 flex flex-col min-w-0">
+            <div class="flex gap-1 items-center">
+              <p class="price text-[14px] font-medium leading-5 text-destructive">${c.now}</p>
+              ${c.off ? `<span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0">${c.off}</span>` : ''}
+            </div>
+            ${c.was ? `<p class="text-[12px] leading-4 text-muted-foreground line-through">${c.was}</p>` : ''}
+          </div>
+          <div class="flex shrink-0">
+            <button class="qty-btn w-7 h-6 rounded-xs border border-border bg-card flex items-center justify-center text-foreground-alt press" data-step="-1">−</button>
+            <span class="qty w-7 h-6 rounded-xs border border-border bg-card flex items-center justify-center text-[12px] font-medium leading-4 text-foreground-alt">${String(c.qty).padStart(2,'0')}</span>
+            <button class="qty-btn w-7 h-6 rounded-xs border border-border bg-card flex items-center justify-center text-foreground-alt press" data-step="1">+</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+
+    <div class="px-4 pt-4 pb-2 rise">
+      <h2 class="text-[22px] font-light text-foreground">Giỏ hàng <span id="cartCount" class="text-muted-foreground">(4)</span></h2>
+    </div>
+
+    <div class="flex items-center justify-between px-4 py-2 border-y border-border-1 rise">
+      <button id="selectAll" class="flex items-center gap-2 press">
+        <span class="chk on w-4 h-4 border border-border flex items-center justify-center">${I.tick}</span>
+        <span class="text-[14px] font-medium text-foreground">${ckAuth ? 'Chọn tất cả ( 4 sản phẩm )' : 'Chọn tất cả'}</span>
+      </button>
+      ${ckAuth ? '' : '<button id="delSelected" class="text-[14px] font-medium text-muted-foreground press">Xóa sản phẩm đã chọn</button>'}
+    </div>
+
+    <div id="cartList">${CART.map((c, i) => row(c, i)).join('')}</div>
+
+    <!-- Chỉ hiện khi ĐÃ ĐĂNG NHẬP (multi gift 5) -->
+    ${ckAuth ? giftPicker() : ''}
+
+    <!-- promo -->
+    <div class="px-4 py-4 flex flex-col gap-3 rise">
+      <div class="acc bg-accent-0 rounded p-3">
+        <button class="acc-trigger w-full flex items-center justify-between press">
+          <span class="text-[14px] font-medium text-foreground flex items-center gap-2">${I.gift} Chương trình khuyến mãi (5)</span>${I.chevR('#0a0a0a')}
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <div class="flex flex-col gap-2 pt-3">
+            ${['* Summer Sale - giảm đến 50%','* Buy more save more - mua 2 giảm 15%','Freeship cho đơn từ 2 triệu','Tặng gói quà cao cấp','Giảm thêm 10% cho DAFC Insider'].map(p =>
+              `<p class="text-[13px] leading-5 text-secondary-foreground">${p}</p>`).join('')}
+          </div>
+        </div></div>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <!-- Mã giảm giá (Frame 427319782) -->
+        <div class="flex flex-col gap-2">
+          <p class="text-[14px] font-medium leading-5 text-foreground">Mã giảm giá</p>
+          <div class="flex gap-1">
+            <input id="voucher" placeholder="Nhập  voucher" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+            <button id="applyVoucher" class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press">Áp dụng</button>
+          </div>
+          <div class="flex gap-1.5 flex-wrap">
+            ${['JUNE500','JUNE900','JUNE2000'].map(v => `<button class="vcode h-6 px-2 rounded border border-dashed border-border text-[12px] font-medium text-secondary-foreground press" data-code="${v}">${v}</button>`).join('')}
+          </div>
+        </div>
+
+        <!-- Bạn có phiếu mua hàng? — đóng/mở (Chính sách accordion) -->
+        <div class="acc">
+          <button class="acc-trigger w-full h-9 flex items-center justify-between border-b border-border press">
+            <span class="text-[14px] font-medium leading-5 text-foreground">Bạn có phiếu mua hàng?</span>
+            <span class="acc-ico-minus hidden">${IcoMinus}</span>
+            <span class="acc-ico-plus">${IcoPlus}</span>
+          </button>
+          <div class="acc-body"><div class="acc-inner">
+            <div class="flex flex-col gap-2 pt-2">
+              <p class="text-[12px] leading-4 text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
+              <div class="flex gap-1">
+                <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+                <button id="applyPbh" class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press">Áp dụng</button>
+              </div>
+              <div id="pbhList" class="flex gap-2 flex-wrap">
+                ${['VOUCHERPBH1231233222','VOUCHERPBH1231233222','VOUCHERPBH1231233222','VOUCHERPBH1231233222'].map(v => `
+                  <span class="pbh-badge bg-secondary rounded flex items-center gap-1.5 px-2 py-0.5 h-6">
+                    <span class="text-[12px] font-medium leading-4 text-secondary-foreground truncate max-w-[74px]">${v}</span>
+                    <button class="pbh-del w-3 h-3 flex items-center justify-center shrink-0 press">${IcoCross}</button>
+                  </span>`).join('')}
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    ${ckAuth ? dafcRewards() : ''}
+
+    <!-- summary -->
+    <div class="px-4 py-4 bg-accent-0 rise">
+      ${orderSummaryRow('Tạm tính','21,250,000đ')}
+      <div id="discountRow" class="hidden justify-between items-center py-2">
+        <span class="text-[13px] text-destructive">Giảm giá</span><span id="discountVal" class="text-[13px] font-medium text-destructive">-0đ</span>
+      </div>
+      ${orderSummaryRow('Vận chuyển','Miễn phí')}
+      <div class="h-px bg-border my-2"></div>
+      <div class="flex justify-between items-center py-1">
+        <span class="text-[15px] font-medium text-foreground">Tổng cộng</span>
+        <span id="cartTotal" class="text-[18px] font-semibold text-foreground">21,250,000đ</span>
+      </div>
+      <p class="text-[14px] leading-5 text-foreground pt-2">${ckAuth ? 'Hoàn tất đơn hàng để nhận ngay <b class="font-medium">98 điểm thưởng</b>' : 'Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-medium">98 điểm thưởng</b>'}</p>
+    </div>
+
+    <div id="cartCta" class="px-4 py-4">
+      <button data-nav="login" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center">Đặt hàng</button>
+    </div>
+
+    ${footer()}
+  </div>
+
+  <div id="cartStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
+    <button data-nav="login" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-semibold tracking-wide press">Đặt hàng</button>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SCREEN: LOGIN (modal over cart)
+════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════
+   AUTH — theo Figma "Account · Mobile" 2084:170 (01–05)
+   Trang full-screen (không phải card). Tiêu đề Light 24, label Medium
+   14 #737373, input h-36 r-2 #e5e5e5. Giữ loginFrom/ckAuth.
+════════════════════════════════════════════════════════════════ */
+let authView = 'login';
+let authViewIntent = false;
+let authPhone = '';
+
+/* input theo Figma: 358x36, pad 8, stroke #e5e5e5, r2, text 14 */
+const afield = (label, attrs, ph, extra = '') => `
+  <div class="flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <span class="text-[14px] font-medium leading-5 text-muted-foreground">${label}</span>
+      ${extra}
+    </div>
+    <input ${attrs} placeholder="${ph}" class="h-9 border border-border rounded-xs px-2 text-[14px] text-foreground outline-none focus:border-primary transition-colors">
+  </div>`;
+
+/* nút chính: 358x40-44, r2, label Medium 14 #fafafa */
+const abtn = (label, attrs) => `
+  <button ${attrs} class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium tracking-wide press flex items-center justify-center gap-2">${label}</button>`;
+
+function authNav(title) {
+  return `
+  <div class="h-12 flex items-center px-2 border-b border-border-1 sticky top-0 bg-background z-10">
+    <button data-auth-back class="w-9 h-9 flex items-center justify-center press">${I.chevL}</button>
+    <p class="flex-1 text-center text-[16px] font-medium text-foreground pr-9">${title}</p>
+  </div>`;
+}
+
+/* ── 01 Login ── */
+function viewLogin() {
+  return `
+  ${authNav('Đăng nhập')}
+  <div class="flex flex-col gap-8 px-4 pt-6 pb-10">
+    <div class="flex flex-col gap-2">
+      <h2 class="text-[24px] font-light leading-8 text-foreground">Đăng nhập</h2>
+      <p class="text-[14px] leading-5 text-muted-foreground">Chào mừng bạn trở lại</p>
+    </div>
+    <div class="flex flex-col gap-6">
+      ${afield('Số điện thoại hoặc Email', 'inputmode="text" id="loginId"', 'Nhập số điện thoại hoặc email')}
+      ${afield('Mật khẩu', 'type="password"', 'Nhập mật khẩu',
+        '<button data-auth-go="forgot" class="text-[14px] leading-5 text-muted-foreground press">Quên mật khẩu?</button>')}
+    </div>
+    ${abtn('Đăng nhập', 'data-login-submit')}
+    <div class="flex items-center justify-center gap-1">
+      <span class="text-[14px] leading-5 text-muted-foreground">Chưa có tài khoản?</span>
+      <button data-auth-go="register" class="text-[14px] font-medium leading-5 text-foreground press">Đăng ký ngay</button>
+    </div>
+  </div>`;
+}
+
+/* ── 02 Register ── */
+function viewRegister() {
+  return `
+  ${authNav('Đăng ký')}
+  <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
+    <h2 class="text-[24px] font-light leading-8 text-foreground">Tạo tài khoản</h2>
+    <div class="flex flex-col gap-5">
+      ${afield('Họ và tên', 'type="text"', 'Nhập họ và tên')}
+      ${afield('Số điện thoại', 'inputmode="tel" id="regPhone"', 'Nhập số điện thoại')}
+      ${afield('Email', 'inputmode="email"', 'Nhập email')}
+      ${afield('Mật khẩu', 'type="password"', 'Nhập mật khẩu')}
+      ${afield('Xác nhận mật khẩu', 'type="password"', 'Nhập lại mật khẩu')}
+    </div>
+    <label class="flex items-start gap-3">
+      <input type="checkbox" checked class="w-4 h-4 mt-0.5 accent-black shrink-0">
+      <span class="text-[12px] leading-4 text-muted-foreground">Tôi đồng ý với <button data-toast="Điều khoản sử dụng" class="text-foreground underline press">Điều khoản sử dụng</button> và <button data-toast="Chính sách bảo mật" class="text-foreground underline press">Chính sách bảo mật</button></span>
+    </label>
+    ${abtn('TẠO TÀI KHOẢN', 'data-auth-otp')}
+    <div class="flex items-center justify-center gap-1">
+      <span class="text-[14px] leading-5 text-muted-foreground">Đã có tài khoản?</span>
+      <button data-auth-go="login" class="text-[14px] font-medium leading-5 text-foreground press">Đăng nhập</button>
+    </div>
+  </div>`;
+}
+
+/* ── 03 Forgot Password ── */
+function viewForgot() {
+  return `
+  ${authNav('Quên mật khẩu')}
+  <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
+    <h2 class="text-[24px] font-light leading-8 text-foreground">Quên mật khẩu</h2>
+    <p class="text-[14px] leading-5 text-muted-foreground">Nhập số điện thoại hoặc email đã đăng ký. Chúng tôi sẽ gửi mã OTP để xác thực.</p>
+    ${afield('Số điện thoại hoặc Email', 'inputmode="text" id="regPhone"', 'Nhập số điện thoại hoặc email')}
+    ${abtn('GỬI MÃ XÁC THỰC', 'data-auth-otp')}
+    <button data-auth-go="login" class="text-center text-[14px] leading-5 text-muted-foreground press">← Quay lại đăng nhập</button>
+  </div>`;
+}
+
+/* ── 04 OTP Verify ── */
+function viewOtp() {
+  return `
+  ${authNav('Xác thực OTP')}
+  <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
+    <h2 class="text-[24px] font-light leading-8 text-foreground">Xác thực OTP</h2>
+    <p class="text-[14px] leading-5 text-muted-foreground">Mã xác thực đã được gửi đến<br><b class="text-foreground font-medium">${authPhone || '+84 *** *** 123'}</b></p>
+    <div class="flex gap-2 justify-between" id="otpRow">
+      ${[0,1,2,3,4,5].map(i => `<input inputmode="numeric" maxlength="1" data-otp="${i}" class="otp-cell w-11 h-[52px] text-center text-[20px] font-medium border border-border-3 rounded-xs outline-none focus:border-primary transition-colors">`).join('')}
+    </div>
+    <div class="flex flex-col gap-2">
+      <p class="text-[12px] leading-4 text-muted-foreground">Gửi lại mã sau <span id="otpTimer">60</span>s</p>
+      <button id="otpResend" class="text-left text-[12px] font-medium leading-4 text-foreground press" disabled>Không nhận được mã? Gửi lại</button>
+    </div>
+    ${abtn('XÁC NHẬN', 'data-auth-verify')}
+  </div>`;
+}
+
+/* ── 05 Reset Password (có thanh độ mạnh) ── */
+function viewSetPass() {
+  return `
+  ${authNav('Đặt mật khẩu mới')}
+  <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
+    <h2 class="text-[24px] font-light leading-8 text-foreground">Đặt mật khẩu mới</h2>
+    <p class="text-[14px] leading-5 text-muted-foreground">Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.</p>
+    <div class="flex flex-col gap-5">
+      ${afield('Mật khẩu mới', 'type="password" id="npass"', 'Nhập mật khẩu mới')}
+      ${afield('Xác nhận mật khẩu mới', 'type="password"', 'Nhập lại mật khẩu mới')}
+    </div>
+    <div class="flex flex-col gap-2">
+      <p class="text-[12px] leading-4 text-muted-foreground">Độ mạnh mật khẩu:</p>
+      <div class="h-2 rounded-full bg-secondary overflow-hidden">
+        <div id="pwBar" class="h-full w-2/5 bg-warning rounded-full transition-all duration-300"></div>
+      </div>
+      <p id="pwHint" class="text-[12px] leading-4 text-muted-foreground">Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật</p>
+    </div>
+    ${abtn('CẬP NHẬT MẬT KHẨU', 'data-login-submit')}
+  </div>`;
+}
+
+const AUTH_VIEWS = { login: viewLogin, register: viewRegister, otp: viewOtp, setpass: viewSetPass, forgot: viewForgot };
+
+function screenLOGIN() {
+  return `<div class="w-full min-h-screen bg-background">${(AUTH_VIEWS[authView] || viewLogin)()}</div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CHECKOUT — 1 trang, 3 section tự đóng/mở (multi gift 8 / 9 / 12)
+   Xong section nào thì section đó thu lại thành tóm tắt + "Thay doi",
+   section kế tiếp tự mở. Không chuyển trang.
+════════════════════════════════════════════════════════════════ */
+
+const ETA = 'Thời gian nhận hàng dự kiến từ ngày 14/07 đến ngày 18/07';
+
+/* Rich radio: label + mô tả phụ */
+function richRadio(id, label, sub, on) {
+  return `
+  <button class="opt ${on ? 'on' : ''} w-full flex items-start gap-2 border ${on ? 'border-primary' : 'border-border'} rounded-xs p-3 text-left press" data-opt="${id}">
+    <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border-2 ${on ? 'border-primary' : 'border-border'} flex items-center justify-center shrink-0">
+      <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+    </span>
+    <span class="flex-1 min-w-0">
+      <span class="block text-[14px] font-medium leading-5 text-foreground">${label}</span>
+      ${sub ? `<span class="block text-[14px] leading-5 text-foreground">${sub}</span>` : ''}
+    </span>
+  </button>`;
+}
+
+/* Một section: head + phần mở (editable) + phần thu gọn (tóm tắt) */
+function ckSection(i, title, openBody, doneBody) {
+  return `
+  <div class="ck-sec border-t border-border-1" data-sec="${i}">
+    <div class="h-[56px] px-4 flex items-center justify-between">
+      <p class="ck-title text-[16px] font-medium leading-6 text-foreground transition-opacity duration-300">${title}</p>
+      <button class="ck-change text-[16px] font-light leading-6 text-foreground press" data-goto="${i}">Thay doi</button>
+    </div>
+    <div class="ck-open acc-body"><div class="acc-inner">${openBody}</div></div>
+    <div class="ck-done acc-body"><div class="acc-inner">${doneBody || ''}</div></div>
+  </div>`;
+}
+
+function screenCHECKOUT() {
+  const field = (label, ph, type) => `
+    <div class="px-4 py-2 flex flex-col gap-2">
+      <label class="text-[14px] font-medium leading-5 text-foreground">${label}</label>
+      <input ${type ? `inputmode="${type}"` : ''} placeholder="${ph}" class="h-10 bg-background border border-border rounded-xs px-3 text-[14px] outline-none focus:border-primary transition-colors">
+    </div>`;
+
+  const notice = ckAuth
+    ? `<p class="text-[14px] leading-5 text-foreground">Đăng nhập tài khoản <b class="font-medium">UserOne</b></p>`
+    : `<p class="text-[14px] font-medium leading-5 text-foreground">Bạn đang thanh toán không đăng nhập</p>
+       <p class="text-[14px] leading-5 text-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-medium">98 điểm thưởng</b></p>
+       <button data-nav="login" class="self-start text-[14px] font-medium leading-5 text-foreground underline press">Đăng nhập</button>`;
+
+  /* ── Section 0: Thông tin giao hàng ── */
+  const s0open = `
+    ${field('Tên','Nhập tên')}
+    ${field('Họ','Nhập họ')}
+    ${field('Số điện thoại','0 1234 5678','tel')}
+    ${field('Tỉnh , thành phố','Chọn tỉnh / thành phố')}
+    ${field('Phường xã','Chọn phường / xã')}
+    ${field('Địa chỉ','Số nhà, tên đường')}
+    <div class="px-4 pt-1">
+      <label class="flex items-center gap-2 press">
+        <span class="chk w-4 h-4 border border-border flex items-center justify-center" data-check>${I.tick}</span>
+        <span class="text-[14px] leading-5 text-foreground">Lưu địa chỉ</span>
+      </label>
+    </div>
+    <div class="px-4 py-4">
+      <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center" data-next="1">Xác nhận</button>
+    </div>`;
+  const s0done = `
+    <div class="px-4 pb-4 flex flex-col gap-1">
+      <p class="text-[14px] font-medium leading-5 text-foreground">User name - 0 1234 5678</p>
+      <p class="text-[14px] leading-5 text-foreground">123 Nam Kỳ Khởi Nghĩa, Phường 1, Thành phố Hồ Chí Minh</p>
+    </div>`;
+
+  /* ── Section 1: Phương thức vận chuyển ── */
+  const s1open = `
+    <div id="shipOpts" class="px-4 flex flex-col gap-3">
+      ${richRadio('std','Giao hàng thông thường - Miễn Phí', ETA, true)}
+      ${richRadio('fast','Giao hang nhanh - 25,000đ', ETA, false)}
+    </div>
+    <div class="px-4 py-4">
+      <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center" data-next="2">Xác nhận</button>
+    </div>`;
+  const s1done = `
+    <div class="px-4 pb-4 flex flex-col gap-1">
+      <p id="shipDoneLabel" class="text-[14px] font-medium leading-5 text-foreground">Chuyển phát nhanh</p>
+      <p class="text-[14px] leading-5 text-foreground">${ETA}</p>
+    </div>`;
+
+  /* ── Section 2: Thanh toán ── */
+  const pays = [
+    ['cc','Thẻ tín dụng/Ghi nợ', true],
+    ['qr','Chuyển khoảng/ QR code', false],
+    ['atm','ATM', false],
+    ['inst','Thanh toán trả góp 0% qua thẻ tín dụng', false],
+  ];
+  const row = (l, v) => `
+    <div class="h-9 flex items-center justify-between">
+      <span class="text-[14px] leading-5 text-foreground">${l}</span>
+      <span class="text-[14px] leading-5 text-foreground">${v}</span>
+    </div>`;
+  const s2open = `
+    <div id="payOpts" class="px-4 flex flex-col gap-3">
+      ${pays.map(([id, l, on]) => richRadio(id, l, '', on)).join('')}
+    </div>
+    <!-- Xuất hóa đơn VAT (Frame 427319857) -->
+    <div class="pt-4">
+      <div class="px-4">
+        <label id="vatToggle" class="flex items-center gap-2 press w-fit cursor-pointer">
+          <span class="chk w-4 h-4 border border-border flex items-center justify-center shrink-0">${I.tick}</span>
+          <span class="text-[14px] font-medium leading-5 text-foreground">Xuất hóa đơn VAT</span>
+        </label>
+      </div>
+      <div id="vatFields" class="ck-open"><div class="acc-inner">
+        <p class="px-4 pt-3 text-[14px] leading-5 text-secondary-foreground">Hóa đơn VAT chỉ xuất trong ngày, khách hàng có nhu cầu xuất hóa đơn vui lòng điền đầy đủ thông tin bên dưới.</p>
+        ${[
+          ['Tên công ty','Nhập Tên công ty',''],
+          ['Địa chỉ công ty','Nhập Địa chỉ công ty',''],
+          ['Mã số thuế','Nhập Mã số thuế','numeric'],
+          ['Email nhận hóa đơn VAT','Nhập Email nhận hóa đơn VAT','email'],
+        ].map(([lb, ph, im]) => `
+          <div class="px-4 py-2 flex flex-col gap-2">
+            <label class="text-[14px] font-medium leading-5 text-foreground">${lb}</label>
+            <input ${im ? `inputmode="${im}"` : ''} placeholder="${ph}" class="h-10 bg-background border border-border rounded-xs px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+          </div>`).join('')}
+      </div></div>
+    </div>
+    <div class="px-4 pt-4">
+      ${row('Tạm tính','21,250,000đ')}
+      ${row('Giao hàng','Free')}
+      <div class="h-14 flex items-center justify-between">
+        <span class="text-[16px] font-medium leading-6 text-foreground">Tổng cộng</span>
+        <span class="text-[16px] font-medium leading-6 text-foreground">21,250,000đ</span>
+      </div>
+    </div>
+    <div class="px-4 pb-4">
+      <button data-nav="done" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center">Đặt hàng</button>
+    </div>`;
+
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar({ logoOnly: true })}
+
+    <!-- Dialog Header -->
+    <div class="py-3 px-4">
+      <p class="text-[20px] font-normal leading-7 text-foreground">Thanh toán (4)</p>
+    </div>
+
+    <!-- Giỏ hàng của bạn (thu gọn / mở rộng) -->
+    <div class="px-2 pb-2">
+      <div class="acc px-2">
+        <button class="acc-trigger w-full h-10 flex items-center justify-between press">
+          <span class="text-[14px] font-medium text-foreground">Giỏ hàng của bạn</span>
+          <span class="flex items-center gap-2"><span class="text-[14px] font-medium text-foreground">21,250,000đ</span>${I.chevR('var(--general-primary)')}</span>
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <div class="flex flex-col gap-3 pt-2 pb-2">
+            ${CART.map(c => `
+              <div class="flex gap-3 items-center">
+                <img src="${A}${c.img}" class="w-[52px] h-[60px] object-cover bg-secondary lazy" alt="">
+                <div class="flex-1 min-w-0">
+                  <p class="text-[13px] font-medium text-foreground truncate">${c.brand}</p>
+                  <p class="text-[12px] text-secondary-foreground truncate">${c.name}</p>
+                  <p class="text-[12px] text-muted-foreground">${c.variant} · SL ${c.qty}</p>
+                </div>
+                <p class="text-[13px] font-medium text-foreground shrink-0">${c.now}</p>
+              </div>`).join('')}
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- Hộp thông báo -->
+    <div class="px-2 pb-2">
+      <div class="bg-accent-0 rounded-xs px-2 py-2 flex flex-col gap-2">${notice}</div>
+    </div>
+
+    <!-- 3 section -->
+    <div id="ckSections">
+      ${ckSection(0, 'Thông tin giao hàng', s0open, s0done)}
+      ${ckSection(1, 'Phương thức vận chuyển', s1open, s1done)}
+      ${ckSection(2, 'Thanh toán', s2open, '')}
+    </div>
+    <div class="h-6"></div>
+  </div>`;
+}
+
+/* Vẽ lại trạng thái mở / thu gọn / chờ của 3 section */
+function paintCheckout(root) {
+  root.querySelectorAll('.ck-sec').forEach(sec => {
+    const i = +sec.dataset.sec;
+    const state = i < ckStep ? 'done' : i === ckStep ? 'open' : 'pending';
+    sec.querySelector('.ck-open').classList.toggle('is-open', state === 'open');
+    sec.querySelector('.ck-done').classList.toggle('is-open', state === 'done');
+    sec.querySelector('.ck-title').style.opacity = state === 'pending' ? '0.4' : '1';
+    const chg = sec.querySelector('.ck-change');
+    chg.style.display = state === 'done' ? '' : 'none';
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SCREEN: DONE
+════════════════════════════════════════════════════════════════ */
+function screenDONE() {
+  const rows = [['Mã đơn hàng','#MG-2026-0714'],['Tổng cộng','21,250,000đ'],['Vận chuyển','Miễn phí'],['Dự kiến giao','14 – 18/07']];
+  return `
+  <div class="w-full relative" data-scroller>
+    <div id="confettiHost" class="absolute inset-x-0 top-0 h-full pointer-events-none overflow-hidden z-10"></div>
+    <div class="flex flex-col items-center justify-center min-h-full gap-7 px-8 py-10 bg-background relative z-20">
+      <div class="flex flex-col items-center gap-5 text-center">
+        <div id="ring" class="w-[72px] h-[72px] rounded-full flex items-center justify-center border-[1.5px] border-primary">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9.5" stroke="var(--general-primary)" stroke-width="1.2"/>
+            <path id="tick" d="m7.5 12.3 3 3 6-6.4" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="rise">
+          <p class="text-[10px] tracking-[0.22em] uppercase text-muted-foreground mb-1.5">Xác nhận</p>
+          <h2 class="text-[22px] font-medium text-foreground leading-snug mb-2">Đặt hàng thành công</h2>
+          <p class="text-[13px] text-muted-foreground leading-relaxed">Đơn hàng đang được xử lý.<br>Cảm ơn bạn đã tin tưởng mua sắm.</p>
+        </div>
+      </div>
+
+      <div class="w-full rounded-xs overflow-hidden border border-border rise">
+        ${rows.map(([l, v], i) => `
+          <div class="flex justify-between px-4 py-3 text-[13px] ${i ? 'border-t border-border-1' : ''}">
+            <span class="text-muted-foreground">${l}</span><span class="font-medium text-foreground">${v}</span>
+          </div>`).join('')}
+      </div>
+
+      <div class="flex items-center gap-2 text-[11px] text-muted-foreground w-full px-4 py-3 rounded-xs bg-accent-0 rise">
+        ${I.gift}<span>Bạn nhận được <strong class="text-foreground-alt">98 điểm thưởng</strong> từ đơn hàng này</span>
+      </div>
+
+      <div class="w-full flex flex-col gap-2.5 rise">
+        <button data-nav="plp" data-reset class="w-full text-primary-foreground text-[13px] font-semibold py-3.5 rounded-xs tracking-wider bg-primary press">Tiếp tục mua sắm</button>
+        <button data-toast="Đang mở trang theo dõi" class="w-full text-[13px] font-medium py-3.5 rounded-xs tracking-wider border border-border text-mid-alt press hover:bg-accent-0 transition-colors">Theo dõi đơn hàng</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FILTER BOTTOM SHEET — WAP/Filter Bottom Sheet (3060:49070)
+   Bấm "Bộ lọc" -> đẩy từ dưới lên full màn hình.
+   Các cấp con của Danh mục mặc định ĐÓNG.
+════════════════════════════════════════════════════════════════ */
+
+const FILTER_CATS = [
+  ['Quần áo',   ['Áo sơ mi & áo kiểu','Áo thun & áo polo','Áo nỉ & quần áo dệt kim','Áo khoác ngoài','Đầm & áo liền quần','Chân váy','Quần dài & quần shorts','Áo dây & croptops','Bộ quần áo','Đồ bơi & đồ thể thao','Đồ lót']],
+  ['Túi xách',  ['Túi tote','Túi xách tay','Túi đeo vai','Túi đeo chéo','Ví cầm tay','Ví & ví đựng thẻ','Balo','Túi du lịch & vali','Túi thể thao','Túi đựng tài liệu','Túi đeo hông','Phụ kiện túi']],
+  ['Giày dép',  ['Giày thể thao','Giày sandals','Giày cao gót','Giày tây & monk straps','Giày loafers & slip-ons','Giày moccasins','Giày boots','Giày bệt','Dép']],
+  ['Phụ kiện',  ['Thắt lưng','Mắt kính','Khăn','Phụ kiện tóc','Phụ kiện nam','Phụ kiện quần áo','Phụ kiện công nghệ','Phụ kiện du lịch','Văn phòng phẩm','Chăm sóc sản phẩm','Phụ kiện khác']],
+  ['Trang sức', ['Nhẫn','Vòng cổ','Bông tai','Vòng tay','Charm','Trang sức khác']],
+  ['Đồng hồ',   ['Đồng hồ','Đồng hồ thông minh']],
+  ['Làm đẹp',   ['Nước hoa']],
+];
+const FILTER_BRANDS = ['A.P.C.','Balmain','Burberry','Christian Louboutin','Dolce&Gabbana','Emporio Armani','Ferragamo','Gianvito Rossi','MCM','Montblanc','Moschino','MSGM','Palm Angels','Paul&Shark','Santoni','Stefano Ricci','TUMI','Versace','Versace Jeans Couture','Zimmermann'];
+const FILTER_COLORS = [['Đen','#010101'],['Trắng','#ffffff'],['Beige','#e4d8c9'],['Navy','#213259'],['Đỏ','#d62845'],['Nâu','#664232'],['Xám','#909090']];
+const FILTER_SIZES  = ['39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55'];
+
+const IcoMinus = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M0 7h14" stroke="var(--general-primary)" stroke-width="1.4"/></svg>`;
+const IcoPlus  = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M0 7h14M7 0v14" stroke="var(--general-primary)" stroke-width="1.4"/></svg>`;
+const IcoCross = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 3 10 10M13 3 3 13" stroke="var(--general-primary)" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+
+/* ô checkbox 16×16 */
+const fchk = (on) => `<span class="chk ${on ? 'on' : ''} w-4 h-4 border border-border-3 flex items-center justify-center shrink-0">${I.tick}</span>`;
+
+/* Accordion cấp 1 (Danh mục / Thương hiệu / …) */
+function fSection(title, body, open = true, h = 72) {
+  return `
+  <div class="facc ${open ? 'open' : ''}">
+    <button class="facc-trigger w-full px-4 flex items-center justify-between press" style="height:${h}px">
+      <span class="text-[16px] font-light leading-6 text-foreground">${title}</span>
+      <span class="facc-ico">${IcoMinus}</span>
+      <span class="facc-ico-plus hidden">${IcoPlus}</span>
+    </button>
+    <div class="facc-body"><div class="acc-inner">${body}</div></div>
+  </div>`;
+}
+
+function filterSheet() {
+  /* ── Danh mục: cha + con (con mặc định ĐÓNG) ── */
+  const cats = FILTER_CATS.map(([cat, subs], i) => `
+    <div class="fcat" data-cat="${i}">
+      <div class="h-11 flex items-center gap-2 pt-2">
+        <button class="fcat-check flex items-center gap-2 flex-1 min-w-0 press text-left">
+          ${fchk(false)}
+          <span class="text-[14px] leading-5 text-foreground-alt truncate">${cat}</span>
+        </button>
+        <button class="fcat-toggle w-4 h-4 flex items-center justify-center press shrink-0">
+          <span class="fcat-ico-plus">${IcoPlus}</span>
+          <span class="fcat-ico-minus hidden">${IcoMinus}</span>
+        </button>
+      </div>
+      <div class="fcat-body"><div class="acc-inner">
+        ${subs.map(sub => `
+          <div class="flex gap-1 h-9">
+            <span class="w-5 flex justify-center shrink-0"><span class="w-px h-full bg-[#d9d9d9]"></span></span>
+            <button class="flex items-center gap-2 flex-1 min-w-0 press text-left" data-sub>
+              ${fchk(false)}
+              <span class="text-[14px] leading-5 text-foreground-alt truncate">${sub}</span>
+            </button>
+          </div>`).join('')}
+      </div></div>
+    </div>`).join('');
+
+  const brands = FILTER_BRANDS.map((b, i) => `
+    <button class="h-9 w-full flex items-center gap-2 pr-4 press text-left" data-brand>
+      ${fchk(i < 2)}
+      <span class="text-[14px] leading-5 text-foreground-alt truncate">${b}</span>
+    </button>`).join('');
+
+  const colors = FILTER_COLORS.map(([name, hex], i) => `
+    <button class="fcolor w-16 flex flex-col items-center gap-2 press shrink-0" data-color="${name}">
+      <span class="fcolor-ring w-10 h-10 rounded-full flex items-center justify-center border ${i === 0 ? 'border-[#010101]' : 'border-[#e0e0e0]'}">
+        <span class="w-8 h-8 rounded-full ${hex === '#ffffff' ? 'border border-[#e0e0e0]' : ''}" style="background:${hex}"></span>
+      </span>
+      <span class="fcolor-label text-[12px] leading-4 ${i === 0 ? 'text-foreground' : 'text-muted-foreground'}">${name}</span>
+    </button>`).join('');
+
+  const sizes = FILTER_SIZES.map(s => `
+    <button class="fsize chip min-w-[52px] h-9 px-2 rounded-xs border border-border text-[14px] font-medium text-foreground press" data-size>${s}</button>`).join('');
+
+  const price = `
+    <div class="px-4 pb-6 flex flex-col gap-6">
+      <div class="flex items-end gap-3">
+        <label class="flex-1 flex flex-col gap-1">
+          <span class="text-[12px] leading-4 text-muted-foreground">Từ</span>
+          <input inputmode="numeric" value="0" class="h-9 bg-background border border-border rounded-xs px-2 text-[14px] outline-none focus:border-primary transition-colors">
+        </label>
+        <span class="w-2.5 h-px bg-[#e0e0e0] mb-4"></span>
+        <label class="flex-1 flex flex-col gap-1">
+          <span class="text-[12px] leading-4 text-muted-foreground">Đến</span>
+          <input inputmode="numeric" value="50,000,000" class="h-9 bg-background border border-border rounded-xs px-2 text-[14px] outline-none focus:border-primary transition-colors">
+        </label>
+      </div>
+      <div class="flex flex-col gap-3">
+        <div class="relative h-4 flex items-center">
+          <span class="absolute inset-x-0 h-1.5 rounded-full bg-border-3"></span>
+          <span class="absolute left-0 h-1.5 rounded-full bg-primary" style="width:28%"></span>
+          <span class="absolute left-0 w-3.5 h-3.5 rounded-full bg-background border-2 border-primary"></span>
+          <span class="absolute w-3.5 h-3.5 rounded-full bg-background border-2 border-primary" style="left:28%"></span>
+        </div>
+        <div class="flex justify-between text-[14px] leading-5 text-muted-foreground"><span>0đ</span><span>50,000,000đ</span></div>
+      </div>
+    </div>`;
+
+  return `
+  <div id="filterSheet">
+    <div class="fs-backdrop"></div>
+    <div class="fs-panel">
+      <!-- grabber -->
+      <div class="h-6 flex items-center justify-center shrink-0"><span class="w-10 h-1 rounded-full bg-border"></span></div>
+      <!-- header -->
+      <div class="px-4 py-4 flex items-center justify-between shrink-0">
+        <p class="text-[20px] font-normal leading-7 text-foreground">Bộ lọc</p>
+        <button id="filterClose" class="w-8 h-8 -mr-2 flex items-center justify-center press">${IcoCross}</button>
+      </div>
+      <!-- body -->
+      <div class="flex-1 overflow-y-auto overscroll-contain">
+        ${fSection('Danh mục', `<div class="px-4 pb-4">${cats}</div>`)}
+        ${fSection('Thương hiệu (2)', `<div class="px-4 pb-6">${brands}</div>`)}
+        ${fSection('Màu sắc', `<div class="pt-2 px-4 pb-4 flex flex-wrap gap-2">${colors}</div>`, true, 56)}
+        ${fSection('Kích thước', `<div class="px-4 pb-6 flex flex-wrap gap-2">${sizes}</div>`)}
+        ${fSection('Khoảng giá', price)}
+        ${fSection('Khác', `<div class="px-4 pb-6 flex flex-col gap-1">
+          ${['Chỉ hàng có sẵn','Đang giảm giá','Hàng mới về'].map(t => `
+            <button class="h-9 w-full flex items-center gap-2 press text-left" data-other>${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('')}
+        </div>`, false)}
+      </div>
+      <!-- footer -->
+      <div class="shrink-0 bg-background border-t border-border px-4 pt-4 safe-b flex gap-3">
+        <button id="filterReset" class="h-12 px-6 rounded-xs bg-background border border-border text-[16px] text-foreground press shrink-0">Đặt lại</button>
+        <button id="filterApply" class="h-12 flex-1 rounded-xs bg-primary text-primary-foreground text-[16px] press">Áp dụng</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── mở / đóng ── */
+function openFilter() {
+  const sh = document.getElementById('filterSheet');
+  sh.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeFilter() {
+  const sh = document.getElementById('filterSheet');
+  sh.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ── gắn sự kiện (chạy 1 lần) ── */
+function wireFilter() {
+  const sh = document.getElementById('filterSheet');
+  if (!sh) return;
+
+  sh.querySelector('.fs-backdrop').addEventListener('click', closeFilter);
+  sh.querySelector('#filterClose').addEventListener('click', closeFilter);
+  sh.querySelector('#filterApply').addEventListener('click', () => {
+    const n = sh.querySelectorAll('.chk.on').length + sh.querySelectorAll('.fsize.on').length;
+    closeFilter();
+    toast(n ? `Áp dụng ${n} bộ lọc` : 'Đã bỏ hết bộ lọc');
+  });
+  sh.querySelector('#filterReset').addEventListener('click', () => {
+    sh.querySelectorAll('.chk.on').forEach(c => c.classList.remove('on'));
+    sh.querySelectorAll('.fsize.on').forEach(c => { c.classList.remove('on'); c.classList.replace('border-primary', 'border-border'); });
+    toast('Đã đặt lại bộ lọc');
+  });
+
+  // accordion cấp 1
+  sh.querySelectorAll('.facc-trigger').forEach(t =>
+    t.addEventListener('click', () => t.closest('.facc').classList.toggle('open')));
+
+  // cấp cha: mở/đóng cấp con
+  sh.querySelectorAll('.fcat-toggle').forEach(t =>
+    t.addEventListener('click', () => t.closest('.fcat').classList.toggle('open')));
+
+  // checkbox cha: tick cả cấp con
+  sh.querySelectorAll('.fcat-check').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cat = btn.closest('.fcat');
+      const on = !btn.querySelector('.chk').classList.contains('on');
+      cat.querySelectorAll('.chk').forEach(c => c.classList.toggle('on', on));
+    });
+  });
+
+  // checkbox lẻ
+  sh.querySelectorAll('[data-sub], [data-brand], [data-other]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.querySelector('.chk').classList.toggle('on');
+      const cat = btn.closest('.fcat');
+      if (cat) {   // đồng bộ trạng thái cha
+        const subs = [...cat.querySelectorAll('[data-sub] .chk')];
+        const parent = cat.querySelector('.fcat-check .chk');
+        parent.classList.toggle('on', subs.length > 0 && subs.every(c => c.classList.contains('on')));
+      }
+    });
+  });
+
+  // màu
+  sh.querySelectorAll('.fcolor').forEach(b => {
+    b.addEventListener('click', () => {
+      sh.querySelectorAll('.fcolor').forEach(x => {
+        x.querySelector('.fcolor-ring').classList.replace('border-[#010101]', 'border-[#e0e0e0]');
+        x.querySelector('.fcolor-label').className = 'fcolor-label text-[12px] leading-4 text-muted-foreground';
+      });
+      b.querySelector('.fcolor-ring').classList.replace('border-[#e0e0e0]', 'border-[#010101]');
+      b.querySelector('.fcolor-label').className = 'fcolor-label text-[12px] leading-4 text-foreground';
+    });
+  });
+
+  // size (chọn nhiều)
+  sh.querySelectorAll('.fsize').forEach(b => {
+    b.addEventListener('click', () => {
+      const on = b.classList.toggle('on');
+      b.classList.toggle('border-primary', on);
+      b.classList.toggle('border-border', !on);
+    });
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ROUTER + BEHAVIOUR
+════════════════════════════════════════════════════════════════ */
+const RENDER = {
+  plp: screenPLP, pdp: screenPDP, pdp2: screenPDP2, pdp3: screenPDP3, pdp4: screenPDP4, pdp5: screenPDP5, pdp6: screenPDP6, account: screenACCOUNT, order: screenORDER, cart: screenCART, login: screenLOGIN,
+  checkout: screenCHECKOUT, done: screenDONE,
+};
+
+const viewport = document.getElementById('viewport');
+let current = null, cartQty = 4, history = [];
+let ckAuth = false, ckStep = 0;   // checkout: đã đăng nhập? / đang mở section nào
+let loginFrom = null;             // mở login từ màn nào
+let scrollCleanups = [];          // gỡ listener khi đổi màn
+
+function rerenderLogin() {
+  const el = document.querySelector('.screen[data-screen="login"]');
+  if (!el) { go('login'); return; }
+  scrollCleanups.forEach(fn => fn()); scrollCleanups = [];
+  el.innerHTML = RENDER.login();
+  wire(el);
+}
+
+function go(name, opts = {}) {
+  if (name === current) return;
+  if (current && !opts.back) history.push(current);
+
+  if (name === 'login' && current !== 'login') { loginFrom = current; if (!authViewIntent) authView = 'login'; authViewIntent = false; }
+
+  scrollCleanups.forEach(fn => fn());
+  scrollCleanups = [];
+
+  viewport.innerHTML = '';
+  const el = document.createElement('div');
+  el.className = 'screen';
+  el.dataset.screen = name;
+  el.innerHTML = RENDER[name]();
+  viewport.appendChild(el);
+  window.scrollTo(0, 0);
+  void el.offsetWidth;
+  el.classList.add('active');
+
+  current = name;
+  wire(el);
+  if (name === 'done') confetti();
+}
+
+/* ── Wire behaviour for a screen ── */
+function wire(root) {
+  // images fade-in
+  root.querySelectorAll('img.lazy').forEach(img => {
+    if (img.complete) img.classList.add('loaded');
+    else img.addEventListener('load', () => img.classList.add('loaded'));
+    img.addEventListener('error', () => { img.style.background = 'var(--general-secondary)'; img.classList.add('loaded'); });
+  });
+
+  // cart badges
+  root.querySelectorAll('.cart-badge').forEach(b => b.textContent = cartQty);
+
+  // navigation
+  root.querySelectorAll('[data-nav]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const t = el.dataset.nav;
+      if (el.hasAttribute('data-reset')) { cartQty = 4; history = []; ckAuth = false; ckStep = 0; }
+      if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = ckAuth ? 1 : 0; }
+      if (t === 'back') { const prev = history.pop(); go(prev || 'plp', { back: true }); return; }
+      if (el.hasAttribute('data-loading')) {
+        const txt = el.innerHTML;
+        el.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#fff" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`;
+        setTimeout(() => { el.innerHTML = txt; go(t); }, 700);
+        return;
+      }
+      go(t);
+    });
+  });
+
+  // Đăng nhập: mở từ PLP/PDP -> quay lại đó (giỏ sẽ thành bản thành viên);
+  // mở từ giỏ (nút Đặt hàng) -> đi tiếp checkout như Figma
+  // Mở chi tiết đơn hàng
+  root.querySelectorAll('[data-order]').forEach(btn => {
+    btn.addEventListener('click', () => { currentOrder = btn.dataset.order; go('order'); });
+  });
+
+  // ACCOUNT: tabs trên đầu
+  root.querySelectorAll('[data-atab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      accountTab = btn.dataset.atab;
+      root.querySelectorAll('[data-atab]').forEach(x => {
+        const on = x.dataset.atab === accountTab;
+        x.className = 'acc-tab relative shrink-0 h-11 px-3 text-[14px] press ' + (on ? 'text-foreground font-medium' : 'text-muted-foreground');
+        x.querySelector('.acc-tab-underline').className = 'acc-tab-underline absolute left-3 right-3 -bottom-px h-0.5 bg-primary transition-opacity duration-200 ' + (on ? 'opacity-100' : 'opacity-0');
+      });
+      const body = root.querySelector('#accBody');
+      if (body) { body.innerHTML = accountBody(); wire(root); }
+    });
+  });
+  // Đăng xuất từ trang account
+  root.querySelectorAll('[data-logout]').forEach(btn => btn.addEventListener('click', () => { ckAuth = false; go('plp'); toast('Đã đăng xuất'); }));
+
+  // Mở menu drawer
+  root.querySelectorAll('[data-menu-open]').forEach(btn => btn.addEventListener('click', () => window.__openMenu && window.__openMenu()));
+
+  // Nút back trên nav auth: register/forgot/otp/setpass -> về login; login -> thoát về màn gọi
+  root.querySelectorAll('[data-auth-back]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (authView === 'login') { const back = loginFrom || 'cart'; authView = 'login'; go(back); }
+      else if (authView === 'otp') { authView = 'register'; rerenderLogin(); }
+      else if (authView === 'setpass') { authView = 'otp'; rerenderLogin(); }
+      else { authView = 'login'; rerenderLogin(); }
+    });
+  });
+
+  // ── AUTH: chuyển view ──
+  root.querySelectorAll('[data-auth-go]').forEach(btn => {
+    btn.addEventListener('click', () => { authView = btn.dataset.authGo; rerenderLogin(); });
+  });
+
+  // Nhận OTP: lấy SĐT -> sang view OTP
+  root.querySelectorAll('[data-auth-otp]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ph = (root.querySelector('#regPhone') || {}).value;
+      authPhone = ph && ph.trim() ? ph.trim() : '';
+      const html = btn.innerHTML;
+      btn.innerHTML = spinnerSVG();
+      setTimeout(() => { authView = 'otp'; rerenderLogin(); toast('Đã gửi mã OTP'); }, 700);
+    });
+  });
+
+  // Ô OTP: tự nhảy ô kế + đếm ngược gửi lại
+  const otpCells = [...root.querySelectorAll('[data-otp]')];
+  if (otpCells.length) {
+    otpCells[0].focus();
+    otpCells.forEach((c, i) => {
+      c.addEventListener('input', () => {
+        c.value = c.value.replace(/[^0-9]/g, '').slice(0, 1);
+        if (c.value && i < otpCells.length - 1) otpCells[i + 1].focus();
+      });
+      c.addEventListener('keydown', e => { if (e.key === 'Backspace' && !c.value && i > 0) otpCells[i - 1].focus(); });
+    });
+    let t = 60; const tEl = root.querySelector('#otpTimer'), rBtn = root.querySelector('#otpResend');
+    if (rBtn) rBtn.disabled = true;
+    const iv = setInterval(() => {
+      t--; if (tEl) tEl.textContent = t;
+      if (t <= 0) { clearInterval(iv); if (rBtn) { rBtn.disabled = false; rBtn.innerHTML = 'Gửi lại'; } }
+    }, 1000);
+    if (rBtn) rBtn.addEventListener('click', () => { if (!rBtn.disabled) toast('Đã gửi lại mã OTP'); });
+  }
+
+  // Độ mạnh mật khẩu (view reset)
+  const npass = root.querySelector('#npass'), pwBar = root.querySelector('#pwBar'), pwHint = root.querySelector('#pwHint');
+  if (npass && pwBar) {
+    npass.addEventListener('input', () => {
+      const v = npass.value; let sc = 0;
+      if (v.length >= 8) sc++; if (/[A-Z]/.test(v) && /[a-z]/.test(v)) sc++; if (/[0-9]/.test(v)) sc++; if (/[^A-Za-z0-9]/.test(v)) sc++;
+      const pct = ['w-1/5','w-2/5','w-3/5','w-4/5','w-full'][sc];
+      const col = sc <= 1 ? 'bg-destructive' : sc <= 2 ? 'bg-warning' : sc <= 3 ? 'bg-warning' : 'bg-emerald-500';
+      pwBar.className = 'h-full ' + pct + ' ' + col + ' rounded-full transition-all duration-300';
+      pwHint.textContent = sc <= 1 ? 'Yếu - Cần ít nhất 8 ký tự' : sc <= 2 ? 'Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật' : sc <= 3 ? 'Khá - Thêm ký tự đặc biệt để mạnh hơn' : 'Mạnh - Mật khẩu tốt';
+    });
+  }
+
+  // Xác nhận OTP -> sang tạo mật khẩu
+  root.querySelectorAll('[data-auth-verify]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const code = otpCells.map(c => c.value).join('');
+      if (code.length < 6) { toast('Vui lòng nhập đủ 6 số'); return; }
+      const html = btn.innerHTML; btn.innerHTML = spinnerSVG();
+      setTimeout(() => { authView = 'setpass'; rerenderLogin(); }, 700);
+    });
+  });
+
+    root.querySelectorAll('[data-login-submit]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      ckAuth = true; ckStep = 1;
+      const html = btn.innerHTML;
+      btn.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+      const back = (loginFrom === 'plp' || loginFrom === 'pdp') ? loginFrom : 'checkout';
+      setTimeout(() => { btn.innerHTML = html; authView = 'login'; go(back); toast(back === 'checkout' ? 'Đăng nhập thành công' : 'Đã đăng nhập · UserOne'); }, 700);
+    });
+  });
+
+  // product → PDP
+  root.querySelectorAll('[data-product]').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target.closest('.wish')) { toast('Đã lưu yêu thích'); return; }
+      go(el.dataset.product === '1' ? 'pdp2' : el.dataset.product === '2' ? 'pdp3' : el.dataset.product === '3' ? 'pdp4' : el.dataset.product === '4' ? 'pdp5' : el.dataset.product === '5' ? 'pdp6' : 'pdp');  // SP#2..6 -> bản riêng
+    });
+  });
+
+  // add to cart
+  root.querySelectorAll('[data-add]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const img = root.querySelector('#pdpGallery img');
+      if (img) flyToCart(img);
+      cartQty++;
+      document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
+      toast('Đã thêm vào giỏ');
+      setTimeout(() => go('cart'), 850);
+    });
+  });
+
+  // toast buttons
+  root.querySelectorAll('[data-toast]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); toast(b.dataset.toast); }));
+
+  // checkout: chuyển section (không chuyển trang)
+  if (root.querySelector('#ckSections')) {
+    paintCheckout(root);
+    const scrollTo = (i) => {
+      const sec = root.querySelector(`.ck-sec[data-sec="${i}"]`);
+      if (sec) window.scrollTo({ top: sec.getBoundingClientRect().top + window.scrollY - 56, behavior: 'smooth' });
+    };
+    root.querySelectorAll('.ck-next').forEach(btn => {
+      btn.addEventListener('click', () => {
+        ckStep = +btn.dataset.next;
+        paintCheckout(root);
+        setTimeout(() => scrollTo(ckStep), 120);
+      });
+    });
+    root.querySelectorAll('.ck-change').forEach(btn => {
+      btn.addEventListener('click', () => {
+        ckStep = +btn.dataset.goto;
+        paintCheckout(root);
+        setTimeout(() => scrollTo(ckStep), 120);
+      });
+    });
+    // Xuất hóa đơn VAT -> hiện/ẩn field
+    const vatToggle = root.querySelector('#vatToggle');
+    if (vatToggle) {
+      const chk = vatToggle.querySelector('.chk');
+      const fields = root.querySelector('#vatFields');
+      vatToggle.addEventListener('click', () => {
+        const on = !chk.classList.contains('on');
+        chk.classList.toggle('on', on);
+        fields.classList.toggle('is-open', on);
+        if (on) setTimeout(() => fields.querySelector('input')?.focus({ preventScroll: true }), 380);
+      });
+    }
+
+    // đổi tóm tắt vận chuyển theo lựa chọn
+    root.querySelectorAll('#shipOpts [data-opt]').forEach(o => {
+      o.addEventListener('click', () => {
+        const lbl = root.querySelector('#shipDoneLabel');
+        if (lbl) lbl.textContent = o.dataset.opt === 'fast' ? 'Giao hang nhanh' : 'Chuyển phát nhanh';
+      });
+    });
+  }
+
+  // accordions
+  root.querySelectorAll('.acc-trigger').forEach(t => {
+    t.addEventListener('click', e => { e.stopPropagation(); t.closest('.acc').classList.toggle('open'); });
+  });
+
+  // checkbox
+  root.querySelectorAll('[data-check]').forEach(c => {
+    c.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); c.classList.toggle('on'); });
+  });
+
+  // radio option groups
+  root.querySelectorAll('#shipOpts, #payOpts').forEach(group => {
+    group.querySelectorAll('[data-opt]').forEach(o => {
+      o.addEventListener('click', () => {
+        group.querySelectorAll('[data-opt]').forEach(x => {
+          x.classList.remove('on'); x.classList.replace('border-primary', 'border-border');
+          x.querySelector('.radio').classList.remove('on');
+          x.querySelector('.radio').classList.replace('border-primary', 'border-border');
+          const d = x.parentElement.querySelector('.pay-detail');
+          if (d) { d.classList.remove('max-h-40', 'mt-2'); d.classList.add('max-h-0'); }
+        });
+        o.classList.add('on'); o.classList.replace('border-border', 'border-primary');
+        o.querySelector('.radio').classList.add('on');
+        o.querySelector('.radio').classList.replace('border-border', 'border-primary');
+        const d = o.parentElement.querySelector('.pay-detail');
+        if (d) { d.classList.remove('max-h-0'); d.classList.add('max-h-40', 'mt-2'); }
+      });
+    });
+  });
+
+  // PDP: sizes / swatches / gallery
+  root.querySelectorAll('[data-size]').forEach(b => {
+    b.addEventListener('click', () => {
+      root.querySelectorAll('[data-size]').forEach(x => { x.classList.remove('on'); x.classList.replace('border-primary', 'border-border'); });
+      b.classList.add('on'); b.classList.replace('border-border', 'border-primary');
+    });
+  });
+  root.querySelectorAll('[data-sw]').forEach(b => {
+    b.addEventListener('click', () => {
+      root.querySelectorAll('[data-sw]').forEach(x => { x.classList.remove('on'); x.classList.add('border-transparent'); });
+      b.classList.add('on'); b.classList.remove('border-transparent');
+      const cn = root.querySelector('#colorName'); if (cn) cn.textContent = b.dataset.color;
+      const g = root.querySelector('#pdpGallery');
+      if (g) g.scrollTo({ left: g.clientWidth * (+b.dataset.sw), behavior: 'smooth' });
+    });
+  });
+  const gal = root.querySelector('#pdpGallery');
+  if (gal) {
+    gal.addEventListener('scroll', () => {
+      const i = Math.round(gal.scrollLeft / gal.clientWidth);
+      root.querySelectorAll('#pdpDots span').forEach((d, j) => {
+        d.className = `h-1 rounded-full transition-all duration-300 ${j === i ? 'w-6 bg-primary' : 'w-4 bg-border-3'}`;
+      });
+    }, { passive: true });
+  }
+
+  // Info tabs -> đẩy bottom sheet (versace b-drawer)
+  root.querySelectorAll('.sheet-trigger').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabs = window.__pdp4Tabs || [];
+      const t = tabs[+btn.dataset.sheetIdx];
+      if (t && window.__openInfoSheet) window.__openInfoSheet(t[0], t[1]);
+    });
+  });
+
+  // Zoom khi chạm ảnh gallery (versace) — dragScroll đã chặn nếu vừa kéo
+  root.querySelectorAll('.zoomable').forEach(btn => {
+    btn.addEventListener('click', e => { if (window.__openZoom) window.__openZoom(btn.dataset.zoom); });
+  });
+
+  // WEAR IT WITH: counter "i / n" chạy theo cuộn
+  const wiw = root.querySelector('#wiwRow'), wc = root.querySelector('#wiwCounter');
+  if (wiw && wc) {
+    const cards = wiw.querySelectorAll('[data-product]');
+    wiw.addEventListener('scroll', () => {
+      const i = Math.min(cards.length, Math.round(wiw.scrollLeft / (cards[0].offsetWidth + 4)) + 1);
+      wc.textContent = i + ' / ' + cards.length;
+    }, { passive: true });
+  }
+
+  // Cart (thành viên): chọn quà + bật/tắt ưu đãi DAFC Rewards
+  root.querySelectorAll('[data-reward]').forEach(b => {
+    b.addEventListener('click', () => {
+      const on = b.querySelector('.chk').classList.toggle('on');
+      toast((on ? 'Đã áp dụng: ' : 'Đã bỏ: ') + (b.dataset.reward === 'member' ? 'giảm giá thành viên' : 'điểm thưởng'));
+    });
+  });
+
+  // Cart: qty steppers
+  root.querySelectorAll('.qty-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const row = b.closest('.cart-row'), el = row.querySelector('.qty');
+      let v = parseInt(el.textContent, 10) + parseInt(b.dataset.step, 10);
+      v = Math.max(1, Math.min(99, v));
+      el.textContent = String(v).padStart(2, '0');
+      el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+    });
+  });
+
+  // Cart: delete row
+  root.querySelectorAll('.del').forEach(b => {
+    b.addEventListener('click', () => {
+      const row = b.closest('.cart-row');
+      row.style.transition = 'opacity .28s ease, transform .28s ease, max-height .32s ease, padding .32s ease';
+      row.style.maxHeight = row.offsetHeight + 'px';
+      requestAnimationFrame(() => {
+        row.style.opacity = '0'; row.style.transform = 'translateX(-24px)';
+        row.style.maxHeight = '0'; row.style.paddingTop = '0'; row.style.paddingBottom = '0';
+      });
+      setTimeout(() => { row.remove(); refreshCartCount(root); }, 330);
+      toast('Đã xóa sản phẩm');
+    });
+  });
+
+  // Cart: select all
+  const selAll = root.querySelector('#selectAll');
+  if (selAll) selAll.addEventListener('click', () => {
+    const on = selAll.querySelector('.chk').classList.contains('on');
+    root.querySelectorAll('.cart-row .chk').forEach(c => c.classList.toggle('on', on));
+  });
+  const delSel = root.querySelector('#delSelected');
+  if (delSel) delSel.addEventListener('click', () => {
+    root.querySelectorAll('.cart-row').forEach(r => { if (r.querySelector('.chk').classList.contains('on')) r.querySelector('.del').click(); });
+  });
+
+  // Phiếu mua hàng: xoá badge + áp dụng
+  root.querySelectorAll('.pbh-del').forEach(b =>
+    b.addEventListener('click', e => { e.stopPropagation(); b.closest('.pbh-badge').remove(); toast('Đã gỡ phiếu mua hàng'); }));
+  const pbhBtn = root.querySelector('#applyPbh');
+  if (pbhBtn) pbhBtn.addEventListener('click', () => {
+    const v = (root.querySelector('#pbh').value || '').trim();
+    if (!v) { toast('Nhập mã phiếu mua hàng'); return; }
+    root.querySelector('#pbhList').insertAdjacentHTML('beforeend', `
+      <span class="pbh-badge bg-secondary rounded flex items-center gap-1.5 px-2 py-0.5 h-6">
+        <span class="text-[12px] font-medium leading-4 text-secondary-foreground truncate max-w-[74px]">${v}</span>
+        <button class="pbh-del w-3 h-3 flex items-center justify-center shrink-0 press">${IcoCross}</button>
+      </span>`);
+    root.querySelector('#pbh').value = '';
+    root.querySelectorAll('.pbh-del').forEach(b => { b.onclick = e => { e.stopPropagation(); b.closest('.pbh-badge').remove(); toast('Đã gỡ phiếu mua hàng'); }; });
+    toast('Đã thêm ' + v);
+  });
+
+  // Cart: voucher
+  const vBtn = root.querySelector('#applyVoucher');
+  if (vBtn) {
+    root.querySelectorAll('.vcode').forEach(v => v.addEventListener('click', () => { root.querySelector('#voucher').value = v.dataset.code; }));
+    vBtn.addEventListener('click', () => {
+      const code = (root.querySelector('#voucher').value || '').trim().toUpperCase();
+      const map = { JUNE500: 500000, JUNE900: 900000, JUNE2000: 2000000 };
+      if (!map[code]) { toast('Mã không hợp lệ'); return; }
+      const dr = root.querySelector('#discountRow');
+      dr.classList.remove('hidden'); dr.classList.add('flex');
+      root.querySelector('#discountVal').textContent = '-' + map[code].toLocaleString('en-US') + 'đ';
+      root.querySelector('#cartTotal').textContent = (21250000 - map[code]).toLocaleString('en-US') + 'đ';
+      toast('Áp dụng mã ' + code);
+    });
+  }
+
+  // Show more → skeleton then append
+  const sm = root.querySelector('#showMore');
+  if (sm) sm.addEventListener('click', () => {
+    const grid = sm.closest('[data-scroller]').querySelector('.grid');
+    sm.innerHTML = `<svg class="spin" width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="var(--general-primary)" stroke-opacity=".2" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="var(--general-primary)" stroke-width="2" stroke-linecap="round"/></svg> Đang tải`;
+    const skels = Array(4).fill(`<div class="flex flex-col"><div class="skel w-full" style="aspect-ratio:189/252"></div><div class="px-1 py-2 flex flex-col gap-1"><div class="skel h-3 w-2/3 rounded"></div><div class="skel h-3 w-full rounded"></div><div class="skel h-3 w-1/2 rounded"></div></div></div>`).join('');
+    grid.insertAdjacentHTML('beforeend', skels);
+    setTimeout(() => {
+      grid.querySelectorAll('.skel').forEach(s => s.closest('.flex-col').remove());
+      PRODUCTS.slice(0, 4).forEach((p, i) => {
+        grid.insertAdjacentHTML('beforeend', productCard(p, i, { w: 'reveal' }));
+      });
+      sm.innerHTML = 'Show more';
+      wire(root);
+      observeReveal(root);
+    }, 900);
+  });
+
+  // brand description expand / collapse
+  const bToggle = root.querySelector('#brandToggle');
+  if (bToggle) {
+    const para = root.querySelector('#brandDesc p');
+    let open = true;
+    const apply = () => {
+      para.style.display = '-webkit-box';
+      para.style.webkitBoxOrient = 'vertical';
+      para.style.overflow = 'hidden';
+      para.style.webkitLineClamp = open ? 'unset' : '3';
+      bToggle.textContent = open ? 'Thu gọn' : 'Show more';
+    };
+    apply();
+    bToggle.addEventListener('click', () => { open = !open; apply(); });
+  }
+
+  // category cards
+  root.querySelectorAll('[data-cate]').forEach(b =>
+    b.addEventListener('click', () => toast('Lọc: ' + b.dataset.cate)));
+
+  // brand chips
+  root.querySelectorAll('.brand-chip').forEach(b => {
+    b.addEventListener('click', () => {
+      root.querySelectorAll('.brand-chip').forEach(x => {
+        x.querySelector('span').classList.replace('border-primary', 'border-border');
+        x.querySelectorAll('span')[1].className = 'text-[10px] text-mid-alt whitespace-nowrap';
+      });
+      b.querySelector('span').classList.replace('border-border', 'border-primary');
+      b.querySelectorAll('span')[1].className = 'text-[10px] font-semibold text-foreground whitespace-nowrap';
+    });
+  });
+
+  // Bộ lọc -> bottom sheet ; Sắp xếp -> toast
+  root.querySelectorAll('[data-sheet]').forEach(b =>
+    b.addEventListener('click', () => b.dataset.sheet === 'filter' ? openFilter() : toast('Mở sắp xếp')));
+
+  // Header + filter dính liền -> gộp thành 1 khối
+  {
+    const navbar = root.querySelector('.navbar');
+    const fbar   = root.querySelector('#plpFilterAnchor');
+    if (navbar && fbar) {
+      const NAV_H = 48;
+      const onMerge = () => {
+        // filter đã lên tới đáy nav => hai khối chạm nhau
+        navbar.classList.toggle('merged', Math.round(fbar.getBoundingClientRect().top) <= NAV_H);
+      };
+      window.addEventListener('scroll', onMerge, { passive: true });
+      window.addEventListener('resize', onMerge, { passive: true });
+      scrollCleanups.push(() => {
+        window.removeEventListener('scroll', onMerge);
+        window.removeEventListener('resize', onMerge);
+      });
+      onMerge();
+    }
+  }
+
+  // scroll-driven behaviour (cuộn theo body — như website thật)
+  {
+    const pdpSticky = root.querySelector('#pdpStickyCta');
+    const pdpCta    = root.querySelector('#pdpCta');
+    const cartSticky= root.querySelector('#cartStickyCta');
+    const cartCta   = root.querySelector('#cartCta');
+
+    if (pdpSticky || cartSticky) {
+      const onScroll = () => {
+        const vh = window.innerHeight;
+        if (pdpSticky && pdpCta) {
+          const r = pdpCta.getBoundingClientRect();
+          const show = r.bottom < 0 || r.top > vh;      // nút gốc ra khỏi màn hình
+          pdpSticky.style.opacity = show ? '1' : '0';
+          pdpSticky.style.transform = `translateY(${show ? 0 : 10}px)`;
+          pdpSticky.style.pointerEvents = show ? 'auto' : 'none';
+        }
+        if (cartSticky && cartCta) {
+          const r2 = cartCta.getBoundingClientRect();
+          const show = r2.bottom < 0 || r2.top > vh;   // nút gốc ra khỏi màn hình
+          cartSticky.style.opacity = show ? '1' : '0';
+          cartSticky.style.transform = `translateY(${show ? 0 : 10}px)`;
+          cartSticky.style.pointerEvents = show ? 'auto' : 'none';
+        }
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      scrollCleanups.push(() => {
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('resize', onScroll);
+      });
+      setTimeout(onScroll, 60);
+    }
+  }
+
+  root.querySelectorAll('.drag-x').forEach(dragScroll);
+
+  root.querySelectorAll('[data-swatches]').forEach(rw => {
+    rw.addEventListener('click', ev => {
+      const btn = ev.target.closest('.cw');
+      if (!btn) return;
+      ev.stopPropagation();
+      rw.querySelectorAll('.cw').forEach(c => { c.classList.remove('border-primary'); c.classList.add('border-transparent'); });
+      btn.classList.remove('border-transparent'); btn.classList.add('border-primary');
+    });
+  });
+
+  observeReveal(root);
+}
+
+function spinnerSVG() {
+  return '<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+}
+
+function refreshCartCount(root) {
+  const n = root.querySelectorAll('.cart-row').length;
+  const el = root.querySelector('#cartCount');
+  if (el) el.textContent = `(${n})`;
+  cartQty = n;
+  document.querySelectorAll('.cart-badge').forEach(b => b.textContent = n);
+  if (n === 0) {
+    const list = root.querySelector('#cartList');
+    list.innerHTML = `<div class="flex flex-col items-center gap-3 py-16 px-8 text-center">
+      ${I.bag}<p class="text-[15px] font-medium text-foreground">Giỏ hàng trống</p>
+      <p class="text-[13px] text-muted-foreground">Hãy khám phá bộ sưu tập mới nhất.</p>
+      <button data-nav="plp" class="mt-2 h-10 px-6 bg-primary text-primary-foreground text-[13px] font-semibold rounded-xs press">Tiếp tục mua sắm</button></div>`;
+    wire(root);
+  }
+}
+
+/* ── Kéo ngang carousel bằng chuột (mobile đã có vuốt native) ── */
+function dragScroll(el) {
+  let down = false, sx = 0, sl = 0, moved = false;
+  const onDown = e => {
+    if (e.pointerType === 'touch') return;      // để touch dùng cuộn native
+    down = true; moved = false;
+    sx = e.clientX; sl = el.scrollLeft;
+    el.classList.add('dragging');
+  };
+  const onMove = e => {
+    if (!down) return;
+    const dx = e.clientX - sx;
+    if (Math.abs(dx) > 3) moved = true;
+    el.scrollLeft = sl - dx;
+    e.preventDefault();
+  };
+  const onUp = () => {
+    if (!down) return;
+    down = false;
+    el.classList.remove('dragging');
+  };
+  // chặn click nếu vừa kéo (tránh lỡ mở sản phẩm)
+  const onClick = e => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } };
+  el.addEventListener('pointerdown', onDown);
+  el.addEventListener('click', onClick, true);
+  el.addEventListener('dragstart', e => e.preventDefault());
+  window.addEventListener('pointermove', onMove, { passive: false });
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onUp);
+  scrollCleanups.push(() => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onUp);
+  });
+}
+
+/* ── Reveal observer ── */
+let io;
+function observeReveal(root) {
+  if (!io) io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: 0.08 });
+  root.querySelectorAll('.reveal:not(.in)').forEach(el => io.observe(el));
+}
+
+/* ── Toast ── */
+let toastT;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.remove('hidden'); t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.add('hidden'), 1800);
+}
+
+/* ── Fly to cart ── */
+function flyToCart(srcImg) {
+  const target = document.querySelector('.cart-badge');
+  if (!target || !srcImg) return;
+  const s = srcImg.getBoundingClientRect(), t = target.getBoundingClientRect();
+  const clone = srcImg.cloneNode();
+  clone.className = 'fly';
+  Object.assign(clone.style, { left: s.left + 'px', top: s.top + 'px', width: s.width + 'px', height: s.height + 'px' });
+  clone.style.setProperty('--dx', (t.left - s.left + t.width / 2 - s.width / 2) + 'px');
+  clone.style.setProperty('--dy', (t.top - s.top + t.height / 2 - s.height / 2) + 'px');
+  document.body.appendChild(clone);
+  setTimeout(() => clone.remove(), 760);
+}
+
+/* ── Confetti ── */
+function confetti() {
+  const host = document.getElementById('confettiHost');
+  if (!host) return;
+  const colors = ['var(--general-primary)','var(--general-destructive)','var(--general-warning)','var(--unofficial-border-4)','var(--general-border)'];
+  for (let i = 0; i < 26; i++) {
+    const c = document.createElement('span');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + '%';
+    c.style.background = colors[i % colors.length];
+    c.style.animationDelay = (Math.random() * .5) + 's';
+    c.style.animationDuration = (1.6 + Math.random()) + 's';
+    host.appendChild(c);
+    setTimeout(() => c.remove(), 3000);
+  }
+}
+
+/* ── Boot ── */
+document.body.insertAdjacentHTML('beforeend', filterSheet());
+document.body.insertAdjacentHTML('beforeend', menuSheet());
+(() => {
+  const ms = document.getElementById('menuSheet');
+  const openM = () => {
+    document.getElementById('menuAccount').innerHTML = menuAccountBlock();
+    ms.setAttribute('aria-hidden', 'false');
+    ms.classList.remove('pointer-events-none');
+    ms.querySelector('.ms-backdrop').classList.remove('opacity-0');
+    ms.querySelector('.ms-panel').classList.remove('-translate-x-full');
+    document.body.style.overflow = 'hidden';
+    wireMenu();
+  };
+  const closeM = () => {
+    ms.querySelector('.ms-backdrop').classList.add('opacity-0');
+    ms.querySelector('.ms-panel').classList.add('-translate-x-full');
+    document.body.style.overflow = '';
+    ms.classList.add('pointer-events-none');
+    setTimeout(() => ms.setAttribute('aria-hidden', 'true'), 300);
+  };
+  window.__openMenu = openM; window.__closeMenu = closeM;
+  ms.querySelector('.ms-backdrop').addEventListener('click', closeM);
+  ms.querySelector('.ms-close').addEventListener('click', closeM);
+  // wire nội dung động của menu (account + links)
+  window.wireMenu = function() {
+    ms.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => {
+      const v = b.dataset.authView; if (v) { authView = v; authViewIntent = true; }
+      closeM(); go(b.dataset.nav);
+    }));
+    // tab nhóm ngang (Nữ/Nam/Trẻ em) đổi danh mục bên dưới
+    ms.querySelectorAll('[data-mtab]').forEach(b => b.addEventListener('click', () => {
+      menuTab = b.dataset.mtab;
+      ms.querySelectorAll('[data-mtab]').forEach(x => {
+        const on = x.dataset.mtab === menuTab;
+        x.className = 'ms-tab relative h-11 text-[15px] tracking-wide press ' + (on ? 'text-foreground font-medium' : 'text-muted-foreground');
+        x.querySelector('.ms-tab-underline').className = 'ms-tab-underline absolute left-0 -bottom-px h-0.5 bg-primary transition-all duration-300 ' + (on ? 'w-full' : 'w-0');
+      });
+      const catNav = ms.querySelector('#menuCats');
+      if (catNav) { catNav.innerHTML = menuCatList(); window.wireMenu(); }
+    }));
+    ms.querySelectorAll('[data-toast]').forEach(b => b.addEventListener('click', () => { toast(b.dataset.toast); }));
+  };
+})();
+document.body.insertAdjacentHTML('beforeend', '<div id="zoomBox"><button class="zclose w-9 h-9 rounded-full glass-ink-95 flex items-center justify-center press"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m4 4 8 8M12 4l-8 8" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></button><img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></div>');
+(() => {
+  const zb = document.getElementById('zoomBox');
+  const open = src => { zb.querySelector('img').src = src; zb.classList.add('on'); document.body.style.overflow = 'hidden'; };
+  const close = () => { zb.classList.remove('on'); document.body.style.overflow = ''; };
+  zb.addEventListener('click', close);
+  window.__openZoom = open;
+})();
+document.body.insertAdjacentHTML('beforeend', `
+  <div id="infoSheet">
+    <div class="is-backdrop"></div>
+    <div class="is-panel">
+      <div class="h-6 flex items-center justify-center shrink-0"><span class="w-10 h-1 rounded-full bg-border"></span></div>
+      <div class="h-12 px-4 flex items-center justify-between shrink-0 border-b border-border-1">
+        <p id="isTitle" class="text-[16px] font-medium leading-6 text-foreground"></p>
+        <button id="isClose" class="w-8 h-8 -mr-2 flex items-center justify-center press">${I.close}</button>
+      </div>
+      <div class="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+        <p id="isBody" class="text-[14px] leading-5 text-foreground-alt"></p>
+      </div>
+    </div>
+  </div>`);
+(() => {
+  const sh = document.getElementById('infoSheet');
+  const openS = (title, body) => {
+    document.getElementById('isTitle').textContent = title;
+    document.getElementById('isBody').textContent = body;
+    sh.classList.add('open'); document.body.style.overflow = 'hidden';
+  };
+  const closeS = () => { sh.classList.remove('open'); document.body.style.overflow = ''; };
+  sh.querySelector('.is-backdrop').addEventListener('click', closeS);
+  sh.querySelector('#isClose').addEventListener('click', closeS);
+  window.__openInfoSheet = openS;
+})();
+wireFilter();
+go('plp');
+</script>
+</body>
+</html>
