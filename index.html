@@ -2922,22 +2922,7 @@ function go(name, opts = {}) {
   wire(el);
   localizeNew(el);
   if (name === 'done') confetti();
-
-  // Đồng bộ với History API của trình duyệt: mỗi lần đi TỚI một màn mới
-  // (không phải do popstate kích hoạt) sẽ tạo 1 entry mới trong lịch sử
-  // trình duyệt, để nút back vật lý / vuốt back (mobile) hoạt động đúng.
-  if (!opts.fromPopstate) {
-    window.history.pushState({ screen: name }, '');
-  }
 }
-
-// Nút back của trình duyệt hoặc thao tác vuốt back (mobile) sẽ bắn sự kiện
-// này — tra state đã lưu và render lại đúng màn trước đó trong router nội bộ.
-window.addEventListener('popstate', (e) => {
-  const target = (e.state && e.state.screen) || history.pop() || 'plp';
-  if (e.state && e.state.screen) history.pop();
-  go(target, { back: true, fromPopstate: true });
-});
 
 /* ── Wire behaviour for a screen ── */
 function wire(root) {
@@ -2958,7 +2943,7 @@ function wire(root) {
       const t = el.dataset.nav;
       if (el.hasAttribute('data-reset')) { cartQty = 4; history = []; ckAuth = false; ckStep = 0; }
       if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = ckAuth ? 1 : 0; }
-      if (t === 'back') { window.history.back(); return; }
+      if (t === 'back') { const prev = history.pop(); go(prev || 'plp', { back: true }); return; }
       if (el.hasAttribute('data-loading')) {
         const txt = el.innerHTML;
         el.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#fff" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`;
@@ -3834,7 +3819,6 @@ document.body.insertAdjacentHTML('beforeend', `
   window.__openNotify = openN;
 })();
 wireFilter();
-window.history.replaceState({ screen: 'plp' }, '');
 go('plp');
 </script>
 </body>
