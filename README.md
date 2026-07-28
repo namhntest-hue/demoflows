@@ -1,10 +1,10 @@
-# Demo — E-commerce Flow (Mobile) · HTML + Tailwind
+# Demo — E-commerce Flow (Mobile) · DAFC / Versace · HTML + Tailwind
 
-Bản HTML/CSS/Tailwind của flow mua hàng mobile, dựng lại từ `e-commerceflowdesign.zip` (Figma Make).
+Demo mobile e-commerce flow cho **DAFC** (nhà phân phối đa thương hiệu luxury tại Việt Nam), dựng bằng HTML + Tailwind CSS thuần, không dùng framework. Nội dung sản phẩm là dữ liệu thật scrape từ `shop.dafc.com.vn/brands/versace.html` (10 sản phẩm Versace). Giá giảm/badge -% là dữ liệu tự tạo để demo.
 
 ## Chạy
 
-Mở `index.html` bằng trình duyệt là xong — **không cần build, không cần internet** (Tailwind đã biên dịch sẵn vào `tailwind.css`).
+Mở `index.html` bằng trình duyệt là xong — không cần build, không cần internet (Tailwind đã biên dịch sẵn vào `tailwind.css`).
 
 > Nếu mở bằng `file://` mà ảnh không hiện, chạy server tĩnh:
 > ```bash
@@ -15,99 +15,64 @@ Mở `index.html` bằng trình duyệt là xong — **không cần build, khôn
 
 ```
 demo-flow/
-├── index.html      ← toàn bộ 8 màn + JS router + hiệu ứng
-├── tailwind.css    ← Tailwind đã compile (21KB, không cần CDN)
-├── assets/         ← 21 ảnh thật lấy từ file gốc
+├── index.html          — toàn bộ app (router, state, tất cả screens)
+├── tailwind.css         — CSS đã compile (build ra từ in.css, PHẢI commit)
+├── tokens.css            — biến CSS design token (build ra từ tokens07.json, PHẢI commit)
+├── tokens07.json         — export gốc từ Figma variables (nguồn sự thật)
+├── gen_tokens.py          — script sinh tokens.css từ tokens07.json
+├── tailwind.config.js     — cấu hình Tailwind, map class → CSS variable
+├── assets/                — ảnh sản phẩm/logo/swatch (đường dẫn dùng qua biến A = 'assets/' trong index.html)
+├── .gitignore
 └── README.md
 ```
 
-## Flow (6 màn)
+## Flow màn hình
 
-`Danh sách → Sản phẩm → Giỏ hàng → Đăng nhập → Thanh toán → Hoàn tất`
+`PLP → PDP (6 biến thể: pdp, pdp2..pdp6) → Cart → Login (5 view: login/register/otp/setpass/forgot) → Account (6 tab) → Order detail → Checkout → Done`
 
-Checkout là **1 trang duy nhất** với 3 section tự đóng/mở (Thông tin giao hàng → Vận chuyển → Thanh toán), không chuyển trang.
-
-Điều hướng hoàn toàn bằng nút trong trang: bấm sản phẩm → PDP · Thêm vào giỏ → Giỏ hàng · Đặt hàng → Đăng nhập · logo → về Danh sách.
+- Router SPA thủ công trong `index.html`: `FLOW`, `RENDER`, `go(name)`, `history`.
+- 6 biến thể PDP, mỗi bản gắn 1 sản phẩm khác nhau (SP#1–SP#6), khác nhau về layout size (chip vs dropdown), vị trí Payment Offer, hiệu ứng gallery/lightbox, font (Inter cho pdp6)...
+- i18n VI/EN thật: từ điển 2 chiều + regex cho chuỗi có số, áp dụng qua `applyLang()`, gọi lại mỗi khi render màn mới.
+- Settings FAB (góc phải dưới): đổi ngôn ngữ + đổi font (Montserrat/Inter/Plus Jakarta Sans).
 
 ## Mobile web thật
 
-Không có khung điện thoại, không giới hạn chiều cao — trang cuộn bằng **body** nên trên điện thoại thanh địa chỉ trình duyệt tự thu/hiện đúng như website thường.
+Không có khung điện thoại, không giới hạn chiều cao — trang cuộn bằng **body**.
 
 - `<meta viewport ... viewport-fit=cover>` + `env(safe-area-inset-bottom)` cho máy có tai thỏ / thanh gesture
-- Header `sticky top-0`, thanh Bộ lọc `sticky top-[48px]` (bám thật, không phải overlay giả)
+- Header `sticky top-0`, thanh Bộ lọc `sticky top-[48px]`
 - Sticky CTA dùng `position: fixed` theo viewport
-- Đã kiểm tra **không tràn ngang** ở 360 / 375 / 393 / 412 px
-
-## Header (component Nav 2147:1655)
-
-| Trang | Header |
-|---|---|
-| Danh sách · Sản phẩm · Giỏ hàng | `[burger][search]` · logo giữa (93×20) · `[user][bag]` |
-| Thanh toán | chỉ logo, canh trái |
-
-Thanh khuyến mãi chạy chữ nằm **trên** header.
+- Đã kiểm tra không tràn ngang ở 360 / 375 / 393 / 412 px
 
 ## Design system (tokens07.json)
 
-Toàn bộ màu / spacing / bo góc **lấy trực tiếp từ `tokens07.json`** — không hardcode hex, không tự chế giá trị.
+Toàn bộ màu / spacing / bo góc lấy trực tiếp từ `tokens07.json` (export gốc từ Figma variables) — không hardcode hex.
 
-`tokens.css` được **sinh tự động** từ JSON (đừng sửa tay):
+`tokens.css` được sinh tự động từ JSON (đừng sửa tay):
 
 ```bash
 python3 gen_tokens.py     # tokens07.json -> tokens.css
 ```
 
-Nó xuất ra:
-- **243 raw colors** → `--color-neutral-950`, `--color-red-600`, …
-- **139 semantic tokens** → `--general-primary`, `--general-border`, `--general-destructive`, …
-- **36 spacing** (`--spacing-4: 16px`) + **8 border radii** (`--radius-2: 2px`)
-- Mode **D** = mặc định · mode **GM** = thêm class `.theme-gm` vào `<html>` để đổi theme
+Xuất ra 426 biến CSS (raw colors + semantic tokens + spacing + radii). Mode **D** = mặc định · mode **GM** = thêm class `.theme-gm` vào `<html>`.
 
-Tailwind map thẳng vào các biến đó (`tailwind.config.js`), nên trong HTML chỉ dùng **tên semantic**:
+`gen_tokens.py` dùng bảng ID→tên tường minh (31 entry đã verify với Figma API) thay vì đoán theo thứ tự, và fail-fast nếu gặp alias lạ chưa map — cần bổ sung bảng `ID2NAME` nếu Figma thêm theme token mới.
 
-| Dùng trong code | Token | Giá trị (mode D) |
-|---|---|---|
-| `bg-primary` / `text-foreground` | `general/primary`, `general/foreground` | `#0a0a0a` |
-| `text-primary-foreground` | `general/primary foreground` | `#fafafa` |
-| `text-secondary-foreground` | `general/secondary foreground` | `#262626` |
-| `text-foreground-alt` | `unofficial/foreground alt` | `#404040` |
-| `text-mid-alt` | `unofficial/mid alt` | `#525252` |
-| `text-muted-foreground` | `general/muted foreground` | `#737373` |
-| `border-border` / `bg-secondary` | `general/border`, `general/secondary` | `#e5e5e5` / `#f5f5f5` |
-| `bg-accent-0` | `unofficial/accent 0` | `#fafafa` |
-| `text-destructive` / `bg-destructive-subtle` | `general/destructive`, `unofficial/destructive subtle` | `#d62845` / `#fef2f2` |
-| `text-warning` | `general/warning` | `#d97706` |
-| `text-success` | `general/success` | `#1a7a5c` |
-
-Còn dùng được (chưa cần tới trong flow này): `info`, `card`, `popover`, `sidebar/*`, `focus/ring`, `chart/*`, `accent` (cam brand `#ff6600`), các bậc `border-0…5`, `accent-2/3`, trạng thái `*-hover` / `*-active`.
-
-Rebuild CSS sau khi sửa class:
+Rebuild CSS sau khi sửa class trong `index.html`:
 ```bash
 npx tailwindcss -c tailwind.config.js -i in.css -o tailwind.css --minify
 ```
+> Lưu ý: file `in.css` (input Tailwind) hiện **chưa có trong repo này** — cần tạo lại/copy vào repo để build được (xem mục Vấn đề tồn đọng bên dưới).
 
-## Tính năng thử được
+## Vấn đề tồn đọng / cần quyết định tiếp
 
-- **Voucher**: nhập `JUNE500` / `JUNE900` / `JUNE2000` → tổng tiền tự tính lại
-- **Show more** ở PLP → skeleton rồi load thêm sản phẩm
-- **Xóa/đổi số lượng** trong giỏ → xóa hết sẽ ra empty state
-- Chọn size (52–55 disabled), chọn màu → gallery tự trượt theo
+- **Ảnh sản phẩm thật từ CDN DAFC** (`cdn.dafc.com.vn`) bị chặn mạng trong môi trường build gốc — đang dùng ảnh placeholder.
+- **`--unofficial-accent`**: mode D = cam `#ff6600`, mode GM = đen `#0a0a0a` — chưa dùng ở đâu, chưa quyết định giữ/đổi.
+- **Luồng hết hàng 2 tầng** (size tạm hết / nhận thông báo khi có hàng) chỉ áp dụng cho PDP dùng size dạng chip (pdp, pdp4) — PDP dùng dropdown (pdp2/pdp3/pdp5/pdp6) chưa hỗ trợ vì `<option disabled>` chặn tương tác.
+- **PDP v1 (pdp) — layout Pre-order**: ngày giao hàng "15/08/2026" đang hardcode; "Chỉ còn 01 sản phẩm" vẫn hiện dù đã là pre-order (có thể mâu thuẫn logic).
+- **Account**: 9 màn theo Figma gốc (Info/Info-Error/Address/Address-Empty/Orders/Orders-Empty/Loyalty/Points/Points-Empty) đã gộp thành 1 trang 6-tab — chưa có trạng thái Empty/Error riêng.
+- File `in.css` cần được thêm lại vào repo để ai cũng build lại CSS được.
 
-## ⚠️ Về ảnh
+## Nguồn thiết kế
 
-File zip gốc có **9 ảnh bị hỏng encoding** khi export (mọi byte non-ASCII bị thay bằng ký tự thay thế UTF-8 → không khôi phục được):
-`brand-hero`, `cert`, `payment-methods`, `shipping`, `social-1/2/3`, `pdp-sw1`, và `p8` (Áo thun Versace).
-
-Xử lý:
-- **Icon social / payment / shipping / bảo chứng** → thay bằng **inline SVG + badge chữ** (nét gọn, không cần file ảnh).
-- **p8** → tạm dùng lại ảnh `p2.png`.
-
-20 ảnh còn lại là **ảnh thật từ file gốc**, dùng nguyên. Nếu bạn export lại zip từ Figma Make (chọn download dạng binary/ZIP thay vì copy text), gửi mình để mình gắn lại đúng 9 ảnh này.
-
-## Build lại CSS (nếu bạn sửa class trong `index.html`)
-
-```bash
-npm i -D tailwindcss@3.4.17
-npx tailwindcss -i in.css -o tailwind.css --minify
-```
-với `tailwind.config.js` trỏ `content: ['index.html']` và extend token màu ở bảng trên.
+Figma file "Test MCP - nam v2", fileKey `sOCu52RuG8ktjHYt4UiME5`, đọc qua figma-console MCP.
