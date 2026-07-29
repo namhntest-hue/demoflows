@@ -341,6 +341,21 @@ const DISABLED = ['43','44'];
 //   43 → chỉ báo "Tạm hết hàng"   ·   44 → mời "Nhận thông báo khi có hàng"
 const OOS_MODE = { '43': 'oos', '44': 'notify' };
 
+// Danh sách kích thước cho các PDP dùng "dropdown" (giờ mở bottom sheet thay vì <select>)
+const SIZE_SHEET_OPTIONS = {
+  pdp2: ['90 × 90 cm', '84 × 5 cm'].map(label => ({ label, oos: false })),
+  pdp3: ['Onesize'].map(label => ({ label, oos: false })),
+  pdp5: SIZES.map(s => ({ label: s, oos: DISABLED.includes(s) })),
+  pdp6: SIZES.map(s => ({ label: s, oos: DISABLED.includes(s) })),
+};
+
+// Nội dung banner khuyến mãi trên cùng PLP (không viết hoa toàn bộ)
+const PROMO_MESSAGES = [
+  'Giảm thêm 7% cho đơn hàng từ 8 triệu đồng (*)',
+  'Stefano Ricci đã có mặt tại DAFC Online',
+  'Giảm thêm 5% cho thẻ Techcombank (*Điều khoản áp dụng)',
+];
+
 const FLOW = ['plp','pdp','pdp2','pdp3','pdp4','pdp5','pdp6','cart','login','account','order','checkout','done'];
 const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login:'Đăng nhập', pdp2:'Sản phẩm', pdp3:'Sản phẩm', pdp4:'Sản phẩm', pdp5:'Sản phẩm', pdp6:'Sản phẩm', account:'Tài khoản', order:'Chi tiết đơn hàng', checkout:'Thanh toán', done:'Hoàn tất' };
 
@@ -615,10 +630,13 @@ function screenPLP() {
 
   return `
   <div class="w-full" data-scroller>
-    <!-- promo marquee -->
-    <div class="h-8 bg-primary overflow-hidden flex items-center">
-      <div class="marquee flex shrink-0 whitespace-nowrap">
-        ${Array(2).fill(`<span class="text-[11px] font-medium text-primary-foreground opacity-90 px-4 tracking-wide">GIẢM THÊM 7% CHO ĐƠN HÀNG TỪ 8 TRIỆU ĐỒNG (*) · STEFANO RICCI ĐÃ CÓ MẶT TẠI DAFC ONLINE · GIẢM THÊM 5% CHO THẺ TECHCOMBANK (*ĐIỀU KHOẢN ÁP DỤNG) ·</span>`).join('')}
+    <!-- promo banner slider -->
+    <div class="h-8 bg-primary overflow-hidden relative">
+      <div id="promoSlider" class="flex h-full transition-transform ease-in-out" style="transition-duration:.5s">
+        ${PROMO_MESSAGES.map(msg => `
+          <div class="w-full h-full shrink-0 flex items-center justify-center px-4">
+            <span class="text-[12px] font-medium text-primary-foreground opacity-90 tracking-wide text-center">${msg}</span>
+          </div>`).join('')}
       </div>
     </div>
 
@@ -902,11 +920,9 @@ function screenPDP2() {
           <button data-toast="Mở bảng size" class="text-[12px] leading-4 text-[#171717] underline">Size guide</button>
         </div>
         <div class="relative">
-          <select id="sizeSelect" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] text-foreground outline-none focus:border-primary transition-colors appearance-none">
-            <option>Chọn kích thước</option>
-            <option>90 × 90 cm</option>
-            <option>84 × 5 cm</option>
-          </select>
+          <button type="button" data-size-trigger="pdp2" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] outline-none focus:border-primary transition-colors flex items-center text-left press">
+            <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
+          </button>
           <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
         </div>
       </div>
@@ -1042,10 +1058,9 @@ function screenPDP3() {
           <button data-toast="Mở bảng size" class="text-[12px] leading-4 text-[#171717] underline">Size guide</button>
         </div>
         <div class="relative">
-          <select id="sizeSelect" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] text-foreground outline-none focus:border-primary transition-colors appearance-none">
-            <option>Chọn kích thước</option>
-            <option>Onesize</option>
-          </select>
+          <button type="button" data-size-trigger="pdp3" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] outline-none focus:border-primary transition-colors flex items-center text-left press">
+            <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
+          </button>
           <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
         </div>
       </div>
@@ -1648,10 +1663,9 @@ function screenPDP5() {
           <button data-toast="Mở bảng size" class="text-[12px] leading-4 text-[#171717] underline press">Size guide</button>
         </div>
         <div class="relative">
-          <select id="sizeSelect" class="w-full h-11 bg-input border border-border rounded-sm pl-2 pr-9 text-[14px] leading-5 text-foreground outline-none focus:border-primary transition-colors appearance-none">
-            <option>Chọn kích thước</option>
-            ${SIZES.map(sz => DISABLED.includes(sz) ? `<option disabled>${sz} — hết hàng</option>` : `<option>${sz}</option>`).join('')}
-          </select>
+          <button type="button" data-size-trigger="pdp5" class="w-full h-11 bg-input border border-border rounded-sm pl-2 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left press">
+            <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
+          </button>
           <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
         </div>
       </div>
@@ -1778,10 +1792,9 @@ function screenPDP6() {
         </div>
         <!-- Select & Combobox: 358x44 · pad 9.5,8 · stroke #e5e5e5 · r4 -->
         <div class="relative">
-          <select id="sizeSelect" class="w-full h-11 bg-input border border-border rounded-sm pl-2 pr-9 text-[14px] leading-5 text-foreground outline-none focus:border-primary transition-colors appearance-none">
-            <option>Chọn kích thước</option>
-            ${SIZES.map(sz => DISABLED.includes(sz) ? `<option disabled>${sz} — hết hàng</option>` : `<option>${sz}</option>`).join('')}
-          </select>
+          <button type="button" data-size-trigger="pdp6" class="w-full h-11 bg-input border border-border rounded-sm pl-2 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left press">
+            <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
+          </button>
           <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
         </div>
       </div>
@@ -2958,6 +2971,18 @@ function wire(root) {
     img.addEventListener('error', () => { img.style.background = 'var(--general-secondary)'; img.classList.add('loaded'); });
   });
 
+  // promo banner slider (PLP) — tự trượt từng dòng mỗi 4s
+  clearInterval(window.__promoTimer);
+  const slider = root.querySelector('#promoSlider');
+  if (slider) {
+    let pIdx = 0;
+    const n = PROMO_MESSAGES.length;
+    window.__promoTimer = setInterval(() => {
+      pIdx = (pIdx + 1) % n;
+      slider.style.transform = `translateX(-${pIdx * 100}%)`;
+    }, 4000);
+  }
+
   // cart badges
   root.querySelectorAll('.cart-badge').forEach(b => b.textContent = cartQty);
 
@@ -3164,6 +3189,21 @@ function wire(root) {
         if (sib !== me && sib.classList && sib.classList.contains('acc')) sib.classList.remove('open');
       });
       me.classList.toggle('open', !wasOpen);
+    });
+  });
+
+  // size trigger → bottom sheet (thay <select> gốc)
+  root.querySelectorAll('[data-size-trigger]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const kind = btn.dataset.sizeTrigger;
+      const label = btn.querySelector('.size-trigger-label');
+      if (window.__openSizeSheet) {
+        window.__openSizeSheet(kind, label.textContent, picked => {
+          label.textContent = picked;
+          label.classList.remove('text-muted-foreground');
+          label.classList.add('text-foreground');
+        });
+      }
     });
   });
 
@@ -3963,6 +4003,64 @@ function quickAddBody(p, idx) {
   qa.querySelector('#qaClose').addEventListener('click', closeQA);
   window.__openQuickAdd = openQA;
 })();
+
+/* ── Size sheet — thay cho <select> gốc của trình duyệt (PDP2/3/5/6) ── */
+document.body.insertAdjacentHTML('beforeend', `
+  <div id="sizeSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
+    <div class="sz-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
+    <div class="sz-panel absolute inset-x-0 bottom-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col"
+         style="border-radius:24px 24px 0 0; max-height:80vh" role="dialog" aria-label="Chọn kích thước">
+      <div class="h-6 flex items-center justify-center shrink-0 relative">
+        <span class="w-10 h-1 rounded-full bg-border"></span>
+        <button id="szClose" class="absolute top-0 right-3 w-8 h-8 flex items-center justify-center press">${I.close}</button>
+      </div>
+      <p class="px-4 pb-2 text-[16px] font-medium leading-6 text-foreground">Chọn kích thước</p>
+      <div id="szList" class="flex flex-col overflow-y-auto no-scrollbar px-2 pb-2"></div>
+      <div class="safe-b"></div>
+    </div>
+  </div>`);
+
+(() => {
+  const sz = document.getElementById('sizeSheet');
+  const panel = sz.querySelector('.sz-panel');
+  const list = document.getElementById('szList');
+  let onPick = null;
+
+  const openSZ = (kind, current, cb) => {
+    onPick = cb;
+    const opts = SIZE_SHEET_OPTIONS[kind] || [];
+    list.innerHTML = opts.map(o => `
+      <button class="w-full h-14 flex items-center justify-between px-2 press" style="${o.oos ? 'opacity:.5' : ''}" data-size-opt="${o.label}" ${o.oos ? 'disabled' : ''}>
+        <span class="text-[14px] leading-5 ${o.label === current ? 'font-medium text-foreground' : 'text-foreground'}">${o.label}</span>
+        <span class="flex items-center gap-2">
+          <span class="text-[12px] leading-4 ${o.oos ? 'text-muted-foreground' : 'text-foreground-alt'}">${o.oos ? 'Hết hàng' : 'Còn hàng'}</span>
+          ${o.label === current ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+        </span>
+      </button>`).join('');
+    list.querySelectorAll('[data-size-opt]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        if (onPick) onPick(btn.dataset.sizeOpt);
+        closeSZ();
+      });
+    });
+    sz.classList.remove('pointer-events-none'); sz.setAttribute('aria-hidden', 'false');
+    sz.querySelector('.sz-backdrop').classList.remove('opacity-0');
+    panel.classList.remove('translate-y-full');
+    document.body.style.overflow = 'hidden';
+  };
+  const closeSZ = () => {
+    sz.querySelector('.sz-backdrop').classList.add('opacity-0');
+    panel.classList.add('translate-y-full');
+    sz.classList.add('pointer-events-none');
+    document.body.style.overflow = '';
+    setTimeout(() => sz.setAttribute('aria-hidden', 'true'), 300);
+  };
+  sz.querySelector('.sz-backdrop').addEventListener('click', closeSZ);
+  sz.querySelector('#szClose').addEventListener('click', closeSZ);
+  window.__openSizeSheet = openSZ;
+})();
+
 wireFilter();
 window.history.replaceState({ screen: 'plp' }, '');
 go('plp');
