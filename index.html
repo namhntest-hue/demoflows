@@ -837,8 +837,8 @@ function screenPDP() {
   <!-- sticky CTA -->
   <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
     <button data-add="pdp" class="w-full min-h-[48px] py-1.5 rounded-xs bg-primary text-primary-foreground press flex flex-col items-center justify-center">
-      <span class="text-[12px] font-medium leading-4">Đặt trước</span>
-      <span class="text-[11px] leading-4 text-primary-foreground/80">Dự kiến giao 15/08/2026</span>
+      <span class="text-[16px] leading-5">Đặt trước</span>
+      <span class="text-[12px] leading-4 text-primary-foreground/80">Dự kiến giao 15/08/2026</span>
     </button>
   </div>`;
 }
@@ -977,7 +977,7 @@ function screenPDP2() {
   </div>
 
   <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
-    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium press">Thêm vào giỏ hàng</button>
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[16px] press">Thêm vào giỏ hàng</button>
   </div>`;
 }
 
@@ -1099,7 +1099,7 @@ function screenPDP3() {
   </div>
 
   <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
-    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium press">Thêm vào giỏ hàng</button>
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[16px] press">Thêm vào giỏ hàng</button>
   </div>`;
 }
 
@@ -1231,7 +1231,7 @@ function screenPDP4() {
 
   <!-- sticky CTA -->
   <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
-    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium press">Thêm vào giỏ hàng</button>
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[16px] press">Thêm vào giỏ hàng</button>
   </div>`;
 }
 
@@ -1717,7 +1717,7 @@ function screenPDP5() {
 
   <!-- Sticky CTA (fixed): 64px · pad 0,16 · bg card · _btn 358x44 bg primary · Medium 12 -->
   <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
-    <button data-add="pdp" class="w-full h-11 rounded-sm bg-primary text-primary-foreground text-[12px] font-medium leading-4 press">Thêm vào giỏ hàng</button>
+    <button data-add="pdp" class="w-full h-11 rounded-sm bg-primary text-primary-foreground text-[14px] font-medium leading-5 press">Thêm vào giỏ hàng</button>
   </div>`;
 }
 
@@ -1851,7 +1851,7 @@ function screenPDP6() {
   <!-- Sticky CTA: 64px · pad 0,16 · _btn 358x44 bg #0a0a0a · Medium 12 ls .4% -->
   <div id="pdpStickyCta" class="font-inter sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
     <button data-add="pdp" class="w-full h-11 bg-primary flex items-center justify-center press">
-      <span class="text-[12px] font-medium leading-4 tracking-[0.004em] text-primary-foreground">Thêm vào giỏ hàng</span>
+      <span class="text-[14px] font-medium leading-5 tracking-[0.002em] text-primary-foreground">Thêm vào giỏ hàng</span>
     </button>
   </div>`;
 }
@@ -2584,12 +2584,12 @@ function filterSheet() {
 function openFilter() {
   const sh = document.getElementById('filterSheet');
   sh.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  lockBodyScroll();
 }
 function closeFilter() {
   const sh = document.getElementById('filterSheet');
   sh.classList.remove('open');
-  document.body.style.overflow = '';
+  unlockBodyScroll();
 }
 
 /* ── gắn sự kiện (chạy 1 lần) ── */
@@ -2961,6 +2961,27 @@ window.addEventListener('popstate', (e) => {
   if (e.state && e.state.screen) history.pop();
   go(target, { back: true, fromPopstate: true });
 });
+
+/* ── Khoá scroll nền khi có bottom sheet/drawer mở ──
+   Dùng kỹ thuật position:fixed (thay vì chỉ overflow:hidden) để chặn
+   triệt để scroll/rubber-band nền trên Safari iOS. Có đếm số sheet đang
+   mở (lockCount) để xử lý đúng khi 2 sheet chồng nhau (vd: size sheet
+   mở tiếp notify sheet) — chỉ mở khoá khi sheet cuối cùng đã đóng. */
+let __scrollLockCount = 0, __scrollLockY = 0;
+function lockBodyScroll() {
+  if (__scrollLockCount === 0) {
+    __scrollLockY = window.scrollY || document.documentElement.scrollTop || 0;
+    Object.assign(document.body.style, { position: 'fixed', top: `-${__scrollLockY}px`, left: '0', right: '0', width: '100%' });
+  }
+  __scrollLockCount++;
+}
+function unlockBodyScroll() {
+  __scrollLockCount = Math.max(0, __scrollLockCount - 1);
+  if (__scrollLockCount === 0) {
+    Object.assign(document.body.style, { position: '', top: '', left: '', right: '', width: '' });
+    window.scrollTo(0, __scrollLockY);
+  }
+}
 
 /* ── Wire behaviour for a screen ── */
 function wire(root) {
@@ -3752,13 +3773,13 @@ document.body.insertAdjacentHTML('beforeend', `
     ms.classList.remove('pointer-events-none');
     ms.querySelector('.ms-backdrop').classList.remove('opacity-0');
     ms.querySelector('.ms-panel').classList.remove('-translate-x-full');
-    document.body.style.overflow = 'hidden';
+    lockBodyScroll();
     wireMenu();
   };
   const closeM = () => {
     ms.querySelector('.ms-backdrop').classList.add('opacity-0');
     ms.querySelector('.ms-panel').classList.add('-translate-x-full');
-    document.body.style.overflow = '';
+    unlockBodyScroll();
     ms.classList.add('pointer-events-none');
     setTimeout(() => ms.setAttribute('aria-hidden', 'true'), 300);
   };
@@ -3788,8 +3809,8 @@ document.body.insertAdjacentHTML('beforeend', `
 document.body.insertAdjacentHTML('beforeend', '<div id="zoomBox"><button class="zclose w-9 h-9 rounded-full glass-ink-95 flex items-center justify-center press"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m4 4 8 8M12 4l-8 8" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></button><img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></div>');
 (() => {
   const zb = document.getElementById('zoomBox');
-  const open = src => { zb.querySelector('img').src = src; zb.classList.add('on'); document.body.style.overflow = 'hidden'; };
-  const close = () => { zb.classList.remove('on'); document.body.style.overflow = ''; };
+  const open = src => { zb.querySelector('img').src = src; zb.classList.add('on'); lockBodyScroll(); };
+  const close = () => { zb.classList.remove('on'); unlockBodyScroll(); };
   zb.addEventListener('click', close);
   window.__openZoom = open;
 })();
@@ -3812,9 +3833,9 @@ document.body.insertAdjacentHTML('beforeend', `
   const openS = (title, body) => {
     document.getElementById('isTitle').textContent = title;
     document.getElementById('isBody').textContent = body;
-    sh.classList.add('open'); document.body.style.overflow = 'hidden';
+    sh.classList.add('open'); lockBodyScroll();
   };
-  const closeS = () => { sh.classList.remove('open'); document.body.style.overflow = ''; };
+  const closeS = () => { sh.classList.remove('open'); unlockBodyScroll(); };
   sh.querySelector('.is-backdrop').addEventListener('click', closeS);
   sh.querySelector('#isClose').addEventListener('click', closeS);
   window.__openInfoSheet = openS;
@@ -3861,14 +3882,14 @@ document.body.insertAdjacentHTML('beforeend', `
     ns.classList.remove('pointer-events-none'); ns.setAttribute('aria-hidden', 'false');
     ns.querySelector('.ns-backdrop').classList.remove('opacity-0');
     panel.classList.remove('translate-y-full');
-    document.body.style.overflow = 'hidden';
+    lockBodyScroll();
     setTimeout(() => { const e = document.getElementById('nsEmail'); if (e) e.focus(); }, 380);
   };
   const closeN = () => {
     ns.querySelector('.ns-backdrop').classList.add('opacity-0');
     panel.classList.add('translate-y-full');
     ns.classList.add('pointer-events-none');
-    document.body.style.overflow = '';
+    unlockBodyScroll();
     setTimeout(() => ns.setAttribute('aria-hidden', 'true'), 300);
   };
   ns.querySelector('.ns-backdrop').addEventListener('click', closeN);
@@ -3990,13 +4011,13 @@ function quickAddBody(p, idx) {
     qa.classList.remove('pointer-events-none'); qa.setAttribute('aria-hidden', 'false');
     qa.querySelector('.qa-backdrop').classList.remove('opacity-0');
     panel.classList.remove('translate-y-full');
-    document.body.style.overflow = 'hidden';
+    lockBodyScroll();
   };
   const closeQA = () => {
     qa.querySelector('.qa-backdrop').classList.add('opacity-0');
     panel.classList.add('translate-y-full');
     qa.classList.add('pointer-events-none');
-    document.body.style.overflow = '';
+    unlockBodyScroll();
     setTimeout(() => qa.setAttribute('aria-hidden', 'true'), 300);
   };
   qa.querySelector('.qa-backdrop').addEventListener('click', closeQA);
@@ -4082,13 +4103,13 @@ document.body.insertAdjacentHTML('beforeend', `
     sz.classList.remove('pointer-events-none'); sz.setAttribute('aria-hidden', 'false');
     sz.querySelector('.sz-backdrop').classList.remove('opacity-0');
     panel.classList.remove('translate-y-full');
-    document.body.style.overflow = 'hidden';
+    lockBodyScroll();
   };
   const closeSZ = () => {
     sz.querySelector('.sz-backdrop').classList.add('opacity-0');
     panel.classList.add('translate-y-full');
     sz.classList.add('pointer-events-none');
-    document.body.style.overflow = '';
+    unlockBodyScroll();
     setTimeout(() => sz.setAttribute('aria-hidden', 'true'), 300);
   };
   sz.querySelector('.sz-backdrop').addEventListener('click', closeSZ);
