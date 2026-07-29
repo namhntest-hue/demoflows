@@ -4009,13 +4009,19 @@ document.body.insertAdjacentHTML('beforeend', `
   <div id="sizeSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
     <div class="sz-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
     <div class="sz-panel absolute inset-x-0 bottom-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col"
-         style="border-radius:24px 24px 0 0; max-height:80vh" role="dialog" aria-label="Chọn kích thước">
+         style="border-radius:24px 24px 0 0; max-height:85vh" role="dialog" aria-label="Chọn kích thước">
       <div class="h-6 flex items-center justify-center shrink-0 relative">
         <span class="w-10 h-1 rounded-full bg-border"></span>
         <button id="szClose" class="absolute top-0 right-3 w-8 h-8 flex items-center justify-center press">${I.close}</button>
       </div>
-      <p class="px-4 pb-2 text-[16px] font-medium leading-6 text-foreground">Chọn kích thước</p>
+      <div class="px-4 pb-2 flex items-center justify-between">
+        <p class="text-[16px] font-medium leading-6 text-foreground">Chọn kích thước</p>
+        <button id="szGuide" class="text-[12px] leading-4 text-foreground underline press">Hướng dẫn chọn size</button>
+      </div>
       <div id="szList" class="flex flex-col overflow-y-auto no-scrollbar px-2 pb-2"></div>
+      <div class="px-4 pt-2 pb-2 shrink-0">
+        <button id="szAdd" disabled class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press" style="opacity:.4">Thêm vào giỏ hàng</button>
+      </div>
       <div class="safe-b"></div>
     </div>
   </div>`);
@@ -4024,26 +4030,55 @@ document.body.insertAdjacentHTML('beforeend', `
   const sz = document.getElementById('sizeSheet');
   const panel = sz.querySelector('.sz-panel');
   const list = document.getElementById('szList');
+  const cta = document.getElementById('szAdd');
   let onPick = null;
+  let opts = [];
+  let selected = null;
 
-  const openSZ = (kind, current, cb) => {
-    onPick = cb;
-    const opts = SIZE_SHEET_OPTIONS[kind] || [];
+  const renderList = () => {
     list.innerHTML = opts.map(o => `
-      <button class="w-full h-14 flex items-center justify-between px-2 press" style="${o.oos ? 'opacity:.5' : ''}" data-size-opt="${o.label}" ${o.oos ? 'disabled' : ''}>
-        <span class="text-[14px] leading-5 ${o.label === current ? 'font-medium text-foreground' : 'text-foreground'}">${o.label}</span>
+      <button class="w-full h-14 flex items-center justify-between px-2 press" data-size-opt="${o.label}">
+        <span class="text-[14px] leading-5 ${o.oos ? 'text-muted-foreground' : 'text-foreground'} ${o.label === selected ? 'font-medium' : ''}">${o.label}</span>
         <span class="flex items-center gap-2">
           <span class="text-[12px] leading-4 ${o.oos ? 'text-muted-foreground' : 'text-foreground-alt'}">${o.oos ? 'Hết hàng' : 'Còn hàng'}</span>
-          ${o.label === current ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+          ${o.label === selected ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<span style="width:16px"></span>'}
         </span>
       </button>`).join('');
     list.querySelectorAll('[data-size-opt]').forEach(btn => {
       btn.addEventListener('click', () => {
-        if (btn.disabled) return;
-        if (onPick) onPick(btn.dataset.sizeOpt);
-        closeSZ();
+        selected = btn.dataset.sizeOpt;
+        renderList();
+        updateCta();
       });
     });
+  };
+
+  const updateCta = () => {
+    const opt = opts.find(o => o.label === selected);
+    if (!opt) {
+      cta.disabled = true;
+      cta.style.opacity = '.4';
+      cta.textContent = 'Thêm vào giỏ hàng';
+      cta.dataset.mode = '';
+      return;
+    }
+    cta.disabled = false;
+    cta.style.opacity = '1';
+    if (opt.oos) {
+      cta.textContent = 'Nhận thông báo khi có hàng';
+      cta.dataset.mode = 'notify';
+    } else {
+      cta.textContent = 'Thêm vào giỏ hàng';
+      cta.dataset.mode = 'add';
+    }
+  };
+
+  const openSZ = (kind, current, cb) => {
+    onPick = cb;
+    opts = SIZE_SHEET_OPTIONS[kind] || [];
+    selected = opts.some(o => o.label === current) ? current : null;
+    renderList();
+    updateCta();
     sz.classList.remove('pointer-events-none'); sz.setAttribute('aria-hidden', 'false');
     sz.querySelector('.sz-backdrop').classList.remove('opacity-0');
     panel.classList.remove('translate-y-full');
@@ -4058,6 +4093,26 @@ document.body.insertAdjacentHTML('beforeend', `
   };
   sz.querySelector('.sz-backdrop').addEventListener('click', closeSZ);
   sz.querySelector('#szClose').addEventListener('click', closeSZ);
+  sz.querySelector('#szGuide').addEventListener('click', () => {
+    if (window.__openInfoSheet) window.__openInfoSheet('Hướng dẫn chọn size', 'Đo vòng chân/vòng tay tương ứng và đối chiếu với bảng size của từng sản phẩm. Nếu phân vân giữa 2 size, ưu tiên chọn size lớn hơn để thoải mái hơn khi sử dụng. Với sản phẩm da, size có thể giãn nhẹ sau thời gian đầu sử dụng.');
+  });
+  cta.addEventListener('click', () => {
+    if (cta.disabled) return;
+    if (cta.dataset.mode === 'notify') {
+      closeSZ();
+      if (window.__openNotify) window.__openNotify(() => toast('Đã đăng ký · sẽ báo bạn khi có hàng'));
+      return;
+    }
+    if (cta.dataset.mode === 'add') {
+      const img = document.querySelector('#pdpGallery img');
+      if (img) flyToCart(img);
+      cartQty++;
+      document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
+      if (onPick) onPick(selected);
+      closeSZ();
+      toast('Đã thêm vào giỏ');
+    }
+  });
   window.__openSizeSheet = openSZ;
 })();
 
