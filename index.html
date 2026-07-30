@@ -168,6 +168,11 @@
   .fcat.open .fcat-body { grid-template-rows: 1fr; }
   .fcat.open .fcat-ico-plus { display: none; } .fcat.open .fcat-ico-minus { display: block; }
 
+  /* cấp 3 (con của sub-category) — mặc định ĐÓNG */
+  .fsub-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s cubic-bezier(.22,1,.36,1); }
+  .fsub.open .fsub-body { grid-template-rows: 1fr; }
+  .fsub.open .fsub-ico-plus { display: none; } .fsub.open .fsub-ico-minus { display: block; }
+
   /* ── Checkout sections ── */
   .ck-open, .ck-done { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .4s cubic-bezier(.22,1,.36,1), opacity .3s ease; opacity: 0; }
   .ck-open.is-open, .ck-done.is-open { grid-template-rows: 1fr; opacity: 1; }
@@ -670,7 +675,7 @@ function screenPLP() {
           Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo, phong cách quyến rũ và logo Medusa đặc trưng. Được thành lập vào năm 1978 bởi Gianni Versace, thương hiệu này đại diện cho sự sang trọng, tự tin và vẻ đẹp hiện đại. Từ những họa tiết ấn tượng đến kỹ thuật cắt may tinh xảo, Versace kết hợp tay nghề thủ công Ý với tinh thần táo bạo, trở thành biểu tượng của thời trang cao cấp và đẳng cấp thời đại.
         </p>
         <div class="flex justify-end pt-1">
-          <button id="brandToggle" class="text-[14px] leading-5 text-foreground underline press">Thu gọn</button>
+          <button id="brandToggle" class="text-[14px] leading-5 text-foreground underline press">Xem thêm</button>
         </div>
       </div>
     </div>
@@ -702,12 +707,21 @@ function screenPLP() {
 
     <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex items-center justify-between px-4 h-[52px] backdrop-blur-[7.5px]">
       <button data-sheet="filter" class="flex items-center gap-2 px-4 h-9 rounded-xs border border-border text-[14px] font-medium text-foreground press">${I.sliders} Bộ lọc</button>
-      <button data-sheet="sort" class="flex items-center gap-1.5 px-4 h-9 text-[14px] font-medium text-foreground-alt press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
+      <div class="relative">
+        <button id="sortBtn" class="flex items-center gap-1.5 px-4 h-9 text-[14px] font-medium text-foreground-alt press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
+        <div id="sortMenu" class="hidden absolute mt-1 bg-background border border-border shadow-lg z-50" style="right:0;top:100%;width:240px">
+          ${SORT_OPTIONS.map(([id, label]) => `
+            <button class="sort-opt w-full text-left px-4 h-11 flex items-center justify-between text-[14px] ${id === plpSort ? 'font-medium text-foreground' : 'text-foreground-alt'}" data-sort="${id}">
+              <span>${label}</span>
+              ${id === plpSort ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+            </button>`).join('')}
+        </div>
+      </div>
     </div>
 
     <!-- grid -->
     <div id="plpGrid" class="grid grid-cols-2 gap-x-0.5 px-0.5 pt-2" style="row-gap:24px">
-      ${PRODUCTS.map((p, i) => card(p, i)).join('')}
+      ${sortedProducts().map(({ p, i }) => card(p, i)).join('')}
     </div>
 
     <div class="flex justify-center py-6">
@@ -725,7 +739,7 @@ function screenPLP() {
 ════════════════════════════════════════════════════════════════ */
 function screenPDP() {
   const P = PRODUCTS[0];
-  const swatches = [P.img, 'pdp-sw2.png', 'pdp-sw3.png', 'pdp-sw4.png'].slice(0, P.colors.length);
+  const swatches = [P.img, 'p1-nero.png', 'p1-oro.png'].slice(0, P.colors.length);
   const tabs = [
     ['Mô tả sản phẩm','Túi satchel unisex bằng vải canvas tái chế bền bỉ. Một ngăn chính đóng nút bấm, ngăn trong có logo A.P.C. Dây đeo điều chỉnh, đeo vai hoặc đeo chéo.'],
     ['Bảo quản sản phẩm','Tránh ánh nắng trực tiếp. Lau bằng khăn ẩm, không dùng chất tẩy mạnh.'],
@@ -851,7 +865,7 @@ function screenPDP() {
 ════════════════════════════════════════════════════════════════ */
 function screenPDP2() {
   const P = PRODUCTS[1];
-  const swatches = [P.img, 'pdp-sw2.png', 'pdp-sw3.png', 'pdp-sw4.png'].slice(0, P.colors.length);
+  const swatches = [P.img, 'p2-blu.png'].slice(0, P.colors.length);
   const promos = [
     ['BUY MORE SAVE MORE',' - [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%'],
     ['TUMI',' - [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%'],
@@ -991,7 +1005,7 @@ function screenPDP2() {
 ════════════════════════════════════════════════════════════════ */
 function screenPDP3() {
   const P = PRODUCTS[2];   // Túi đeo vai da Emblème
-  const swatches = [P.img, 'pdp-sw2.png', 'pdp-sw3.png', 'pdp-sw4.png'].slice(0, P.colors.length);
+  const swatches = [P.img, 'p3-bianco.png', 'p3-rosso.png'].slice(0, P.colors.length);
   const promos = [
     ['BUY MORE SAVE MORE',' - [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%'],
     ['TUMI',' - [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%'],
@@ -1113,7 +1127,7 @@ function screenPDP3() {
 function screenPDP4() {
   const P = PRODUCTS[3];
   window.__pdp4Tabs = null;
-  const swatches = [P.img, 'pdp-sw2.png', 'pdp-sw3.png', 'pdp-sw4.png'].slice(0, P.colors.length);
+  const swatches = [P.img, 'p4-nudo.png'].slice(0, P.colors.length);
   const promos = [
     ['BUY MORE SAVE MORE',' - [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%'],
     ['TUMI',' - [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%'],
@@ -1582,7 +1596,7 @@ function screenORDER() {
 ════════════════════════════════════════════════════════════════ */
 function screenPDP5() {
   const P = PRODUCTS[4];
-  const swatches = [P.img, 'pdp-sw2.png', 'pdp-sw3.png', 'pdp-sw4.png'].slice(0, P.colors.length);
+  const swatches = [P.img, 'p5-marrone.png'].slice(0, P.colors.length);
   const promos = [
     ['BUY MORE SAVE MORE',' - [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%'],
     ['TUMI',' - [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%'],
@@ -2442,7 +2456,7 @@ function screenDONE() {
 ════════════════════════════════════════════════════════════════ */
 
 const FILTER_CATS = [
-  ['Quần áo',   ['Áo sơ mi & áo kiểu','Áo thun & áo polo','Áo nỉ & quần áo dệt kim','Áo khoác ngoài','Đầm & áo liền quần','Chân váy','Quần dài & quần shorts','Áo dây & croptops','Bộ quần áo','Đồ bơi & đồ thể thao','Đồ lót']],
+  ['Quần áo',   [['Áo sơ mi & áo kiểu', ['Sơ mi kiểu','Áo kiểu','Áo sơ mi dài tay','Áo sơ mi ngắn tay']],'Áo thun & áo polo','Áo nỉ & quần áo dệt kim','Áo khoác ngoài','Đầm & áo liền quần','Chân váy','Quần dài & quần shorts','Áo dây & croptops','Bộ quần áo','Đồ bơi & đồ thể thao','Đồ lót']],
   ['Túi xách',  ['Túi tote','Túi xách tay','Túi đeo vai','Túi đeo chéo','Ví cầm tay','Ví & ví đựng thẻ','Balo','Túi du lịch & vali','Túi thể thao','Túi đựng tài liệu','Túi đeo hông','Phụ kiện túi']],
   ['Giày dép',  ['Giày thể thao','Giày sandals','Giày cao gót','Giày tây & monk straps','Giày loafers & slip-ons','Giày moccasins','Giày boots','Giày bệt','Dép']],
   ['Phụ kiện',  ['Thắt lưng','Mắt kính','Khăn','Phụ kiện tóc','Phụ kiện nam','Phụ kiện quần áo','Phụ kiện công nghệ','Phụ kiện du lịch','Văn phòng phẩm','Chăm sóc sản phẩm','Phụ kiện khác']],
@@ -2489,14 +2503,45 @@ function filterSheet() {
         </button>
       </div>
       <div class="fcat-body"><div class="acc-inner">
-        ${subs.map(sub => `
+        ${subs.map((sub, si) => {
+          const hasKids = Array.isArray(sub);
+          const label = hasKids ? sub[0] : sub;
+          const kids = hasKids ? sub[1] : null;
+          if (!hasKids) {
+            return `
           <div class="flex gap-1 h-9">
             <span class="w-5 flex justify-center shrink-0"><span class="w-px h-full bg-[#d9d9d9]"></span></span>
             <button class="flex items-center gap-2 flex-1 min-w-0 press text-left" data-sub>
               ${fchk(false)}
-              <span class="text-[14px] leading-5 text-foreground-alt truncate">${sub}</span>
+              <span class="text-[14px] leading-5 text-foreground-alt truncate">${label}</span>
             </button>
-          </div>`).join('')}
+          </div>`;
+          }
+          return `
+          <div class="fsub" data-sub-parent="${i}-${si}">
+            <div class="flex gap-1 h-9">
+              <span class="w-5 flex justify-center shrink-0"><span class="w-px h-full bg-[#d9d9d9]"></span></span>
+              <button class="flex items-center gap-2 flex-1 min-w-0 press text-left" data-sub>
+                ${fchk(false)}
+                <span class="text-[14px] leading-5 text-foreground-alt truncate">${label}</span>
+              </button>
+              <button class="fsub-toggle w-4 h-4 flex items-center justify-center press shrink-0 self-center">
+                <span class="fsub-ico-plus">${IcoPlus}</span>
+                <span class="fsub-ico-minus hidden">${IcoMinus}</span>
+              </button>
+            </div>
+            <div class="fsub-body"><div class="acc-inner">
+              ${kids.map(k => `
+              <div class="flex gap-1 h-9">
+                <span class="w-9 flex justify-center shrink-0"><span class="w-px h-full bg-[#d9d9d9]"></span></span>
+                <button class="flex items-center gap-2 flex-1 min-w-0 press text-left" data-sub>
+                  ${fchk(false)}
+                  <span class="text-[14px] leading-5 text-foreground-alt truncate">${k}</span>
+                </button>
+              </div>`).join('')}
+            </div></div>
+          </div>`;
+        }).join('')}
       </div></div>
     </div>`).join('');
 
@@ -2611,6 +2656,10 @@ function wireFilter() {
   sh.querySelectorAll('.fcat-toggle').forEach(t =>
     t.addEventListener('click', () => t.closest('.fcat').classList.toggle('open')));
 
+  // cấp con: mở/đóng cấp 3 (vd: "Áo sơ mi & áo kiểu" -> Sơ mi kiểu, Áo kiểu...)
+  sh.querySelectorAll('.fsub-toggle').forEach(t =>
+    t.addEventListener('click', () => t.closest('.fsub').classList.toggle('open')));
+
   // checkbox cha: tick cả cấp con
   sh.querySelectorAll('.fcat-check').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -2664,7 +2713,43 @@ const RENDER = {
 };
 
 const viewport = document.getElementById('viewport');
-let current = null, cartQty = 4, history = [];
+let current = null, cartQty = 4, history = [], plpSort = 'relevance';
+
+const SORT_OPTIONS = [
+  ['relevance', 'Phù hợp nhất'],
+  ['newest',    'Mới nhất'],
+  ['bestseller','Bán chạy nhất'],
+  ['price-asc', 'Giá: Thấp đến cao'],
+  ['price-desc','Giá: Cao đến thấp'],
+];
+
+function sortedProducts() {
+  const list = PRODUCTS.map((p, i) => ({ p, i }));
+  const priceNum = p => Number(String(p.price).replace(/[^\d]/g, ''));
+  if (plpSort === 'newest') list.reverse();
+  else if (plpSort === 'bestseller') list.sort((a, b) => (a.p.tag === 'Best seller' ? -1 : 0) - (b.p.tag === 'Best seller' ? -1 : 0));
+  else if (plpSort === 'price-asc') list.sort((a, b) => priceNum(a.p) - priceNum(b.p));
+  else if (plpSort === 'price-desc') list.sort((a, b) => priceNum(b.p) - priceNum(a.p));
+  return list;
+}
+
+function wireProductCards(root) {
+  root.querySelectorAll('[data-product]').forEach(el => {
+    el.addEventListener('click', e => {
+      const qa = e.target.closest('.quick-add');
+      if (qa) { if (window.__openQuickAdd) window.__openQuickAdd(+qa.dataset.quick); return; }
+      go(el.dataset.product === '1' ? 'pdp2' : el.dataset.product === '2' ? 'pdp3' : el.dataset.product === '3' ? 'pdp4' : el.dataset.product === '4' ? 'pdp5' : el.dataset.product === '5' ? 'pdp6' : 'pdp');  // SP#2..6 -> bản riêng
+    });
+  });
+}
+
+function renderPlpGrid(root) {
+  const grid = root.querySelector('#plpGrid');
+  if (!grid) return;
+  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'NEW' : '', pillBadges: i === 3 ? ['New Season', 'Lavancaza'] : null });
+  grid.innerHTML = sortedProducts().map(({ p, i }) => card(p, i)).join('');
+  wireProductCards(grid);
+}
 let ckAuth = false, ckStep = 0;   // checkout: đã đăng nhập? / đang mở section nào
 let loginFrom = null;             // mở login từ màn nào
 let scrollCleanups = [];          // gỡ listener khi đổi màn
@@ -2680,7 +2765,7 @@ const I18N = {
   // ── Điều hướng & chung ──
   'Trang chủ':'Home', 'Quay lại':'Back', 'Bộ lọc':'Filter', 'Sắp xếp':'Sort', 'Đặt lại':'Reset',
   'Áp dụng':'Apply', 'Xác nhận':'Confirm', 'XÁC NHẬN':'CONFIRM', 'Hoàn tất':'Done', 'Chi tiết':'Details',
-  'Thu gọn':'Show less', 'Xem chi tiết':'See details', 'Chọn tất cả':'Select all', 'Mặc định':'Default',
+  'Thu gọn':'Show less', 'Xem thêm':'Show more', 'Xem chi tiết':'See details', 'Chọn tất cả':'Select all', 'Mặc định':'Default',
   'Từ':'From', 'Đến':'To', 'Còn':'Only', 'và':'and', 'Khác':'Other', 'Miễn phí':'Free',
   'Hiển thị 1 cột':'Show 1 column', 'Hiển thị 2 cột':'Show 2 columns',
   'Mở tìm kiếm':'Open search', 'Mở bảng size':'Open size guide', 'Bảng size →':'Size guide →',
@@ -3124,13 +3209,7 @@ function wire(root) {
   });
 
   // product → PDP
-  root.querySelectorAll('[data-product]').forEach(el => {
-    el.addEventListener('click', e => {
-      const qa = e.target.closest('.quick-add');
-      if (qa) { if (window.__openQuickAdd) window.__openQuickAdd(+qa.dataset.quick); return; }
-      go(el.dataset.product === '1' ? 'pdp2' : el.dataset.product === '2' ? 'pdp3' : el.dataset.product === '3' ? 'pdp4' : el.dataset.product === '4' ? 'pdp5' : el.dataset.product === '5' ? 'pdp6' : 'pdp');  // SP#2..6 -> bản riêng
-    });
-  });
+  wireProductCards(root);
 
   // add to cart
   root.querySelectorAll('[data-add]').forEach(btn => {
@@ -3446,13 +3525,13 @@ function wire(root) {
   const bToggle = root.querySelector('#brandToggle');
   if (bToggle) {
     const para = root.querySelector('#brandDesc p');
-    let open = true;
+    let open = false;
     const apply = () => {
       para.style.display = '-webkit-box';
       para.style.webkitBoxOrient = 'vertical';
       para.style.overflow = 'hidden';
       para.style.webkitLineClamp = open ? 'unset' : '3';
-      bToggle.textContent = open ? 'Thu gọn' : 'Show more';
+      bToggle.textContent = open ? 'Thu gọn' : 'Xem thêm';
     };
     apply();
     bToggle.addEventListener('click', () => { open = !open; apply(); });
@@ -3474,9 +3553,37 @@ function wire(root) {
     });
   });
 
-  // Bộ lọc -> bottom sheet ; Sắp xếp -> toast
+  // Bộ lọc -> bottom sheet ; Sắp xếp -> dropdown thật
   root.querySelectorAll('[data-sheet]').forEach(b =>
-    b.addEventListener('click', () => b.dataset.sheet === 'filter' ? openFilter() : toast('Mở sắp xếp')));
+    b.addEventListener('click', () => { if (b.dataset.sheet === 'filter') openFilter(); }));
+
+  const sortBtn = root.querySelector('#sortBtn');
+  const sortMenu = root.querySelector('#sortMenu');
+  if (sortBtn && sortMenu) {
+    sortBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      sortMenu.classList.toggle('hidden');
+    });
+    sortMenu.querySelectorAll('[data-sort]').forEach(opt => {
+      opt.addEventListener('click', () => {
+        plpSort = opt.dataset.sort;
+        sortMenu.classList.add('hidden');
+        sortMenu.querySelectorAll('[data-sort]').forEach(o => {
+          const isOn = o.dataset.sort === plpSort;
+          o.classList.toggle('font-medium', isOn);
+          o.classList.toggle('text-foreground', isOn);
+          o.classList.toggle('text-foreground-alt', !isOn);
+          const tick = o.querySelector('svg');
+          if (isOn && !tick) o.insertAdjacentHTML('beforeend', '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+          if (!isOn && tick) tick.remove();
+        });
+        renderPlpGrid(root);
+      });
+    });
+    const closeSortMenu = () => sortMenu.classList.add('hidden');
+    document.addEventListener('click', closeSortMenu);
+    scrollCleanups.push(() => document.removeEventListener('click', closeSortMenu));
+  }
 
   // Header + filter dính liền -> gộp thành 1 khối
   {
