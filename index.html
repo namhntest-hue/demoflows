@@ -52,6 +52,13 @@
   .drag-x.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
   .drag-x.dragging img { pointer-events: none; }
 
+  /* ── Search screen ── */
+  .search-tab { transition: color .2s ease, border-bottom-color .2s ease; }
+  @keyframes searchIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .search-pane { animation: searchIn .22s ease both; }
+  .search-row { transition: height .28s cubic-bezier(.22,1,.36,1), opacity .2s ease; }
+  .search-row.removing { overflow: hidden; opacity: 0; }
+
   /* ── Inter cho PDP6 (thử nghiệm font) ── */
   .font-inter, .font-inter * { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
 
@@ -380,6 +387,7 @@ const I = {
   chevR:  (c='#0a0a0a')=>`<svg class="acc-chev" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="m5 3 4 4-4 4" stroke="${c}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   chevL:  `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="m7.5 2.5-3.5 3.5 3.5 3.5" stroke="var(--general-primary)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   close:  `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m4 4 8 8M12 4l-8 8" stroke="var(--general-secondary-foreground)" stroke-width="1.4" stroke-linecap="round"/></svg>`,
+  closeLg:`<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="m5 5 10 10M15 5 5 15" stroke="var(--general-primary)" stroke-width="1.4" stroke-linecap="round"/></svg>`,
   trash:  `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2.5 4.5h11M6 4.5V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1.5M4 4.5l.6 8.6a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9l.6-8.6" stroke="var(--general-muted-foreground)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   tick:   `<svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="m2 6.2 2.6 2.6L10 3.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   fb:     `<svg width="24" height="24" viewBox="0 0 24 24" fill="var(--general-primary)"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.4v7A10 10 0 0 0 22 12Z"/></svg>`,
@@ -757,36 +765,42 @@ function searchSuggestions(q) {
   return [...new Set(pool)].filter(s => s.toLowerCase().includes(needle)).slice(0, 6);
 }
 
-function searchResultsHTML() {
+/* Pane "đang gõ" — chỉ chứa list gợi ý dạng chữ, tách khỏi pane trending
+   để mỗi phím gõ không re-mount lại product card (ảnh nhấp nháy). */
+function searchSuggestHTML() {
   const q = searchQuery.trim();
-  if (q) {
-    const sug = searchSuggestions(q);
-    return `
-    <section class="flex flex-col gap-2 pt-4">
-      <h2 class="px-4 text-[12px] leading-4 text-muted-foreground">Gợi ý</h2>
-      ${sug.length ? `
-      <ul>
-        ${sug.map(s => `
-        <li><button class="search-suggest w-full text-left px-4 py-3 text-[14px] leading-5 text-foreground press" data-suggest="${s}">${highlightMatch(s, q)}</button></li>`).join('')}
-      </ul>` : `<p class="px-4 py-3 text-[14px] leading-5 text-muted-foreground">Không tìm thấy kết quả phù hợp với "${q}"</p>`}
-    </section>`;
-  }
-
-  const hasHistory = searchHistory.length > 0;
+  const sug = searchSuggestions(q);
   return `
-  ${hasHistory ? `
+  <section class="flex flex-col gap-2 pt-4">
+    <h2 class="px-4 text-[12px] leading-4 text-muted-foreground">Gợi ý</h2>
+    ${sug.length ? `
+    <ul>
+      ${sug.map(s => `
+      <li><button class="search-suggest w-full text-left px-4 py-3 text-[14px] leading-5 text-foreground press" data-suggest="${s}">${highlightMatch(s, q)}</button></li>`).join('')}
+    </ul>` : `<p class="px-4 py-3 text-[14px] leading-5 text-muted-foreground">Không tìm thấy kết quả phù hợp với "${q}"</p>`}
+  </section>`;
+}
+
+function searchHistoryHTML() {
+  if (!searchHistory.length) return '';
+  return `
   <section class="flex flex-col gap-2 pt-4">
     <h2 class="px-4 text-[12px] leading-4 text-muted-foreground">Vừa tìm kiếm</h2>
     <ul>
       ${searchHistory.map(h => `
-      <li class="flex items-center">
+      <li class="search-row flex items-center">
         <button class="search-suggest flex-1 min-w-0 text-left px-4 py-3 text-[14px] leading-5 text-foreground press truncate" data-suggest="${h}">${h}</button>
-        <button class="search-remove w-3 h-3 flex items-center justify-center shrink-0 press" style="margin-right:16px" data-remove="${h}" aria-label="Xoá &quot;${h}&quot; khỏi lịch sử">${I.close}</button>
+        <button class="search-remove w-8 h-8 mr-2 flex items-center justify-center shrink-0 press [&_svg]:w-3 [&_svg]:h-3" data-remove="${h}" aria-label="Xoá &quot;${h}&quot; khỏi lịch sử">${I.close}</button>
       </li>`).join('')}
     </ul>
-  </section>` : ''}
+  </section>`;
+}
+
+function searchTrendingHTML() {
+  const hasHistory = searchHistory.length > 0;
+  return `
   <section class="flex flex-col gap-2 py-6">
-    <h2 class="px-4 text-[20px] leading-7 ${hasHistory ? 'text-secondary-foreground' : 'text-muted-foreground'} text-center">${hasHistory ? 'Sản phẩm nổi bật' : 'Trending item'}</h2>
+    <h2 id="trendTitle" class="px-4 text-[20px] leading-7 ${hasHistory ? 'text-secondary-foreground' : 'text-muted-foreground'} text-center">${hasHistory ? 'Sản phẩm nổi bật' : 'Trending item'}</h2>
     <div class="drag-x flex gap-0.5 overflow-x-auto no-scrollbar px-2">
       ${PRODUCTS.slice(0, 4).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true })).join('')}
     </div>
@@ -800,10 +814,10 @@ function screenSearch() {
       <label class="flex-1 min-w-0 flex items-center gap-3 h-10 bg-secondary rounded-xs px-2">
         <span class="w-5 h-5 flex items-center justify-center shrink-0">${I.search}</span>
         <span style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Tìm kiếm</span>
-        <input id="searchInput" type="search" value="${searchQuery}" placeholder="Bạn đang tìm kiếm gì" autocomplete="off"
+        <input id="searchInput" type="search" value="${searchQuery}" placeholder="Bạn đang tìm kiếm gì" autocomplete="off" enterkeyhint="search"
                class="flex-1 min-w-0 outline-none text-[16px] leading-6 text-foreground placeholder:text-muted-foreground" style="background:transparent;border:0;padding:0;-webkit-appearance:none;appearance:none">
       </label>
-      <button data-nav="plp" aria-label="Đóng tìm kiếm" class="w-10 h-10 flex items-center justify-center shrink-0 press">${I.close}</button>
+      <button data-nav="plp" aria-label="Đóng tìm kiếm" class="w-10 h-10 flex items-center justify-center shrink-0 press">${I.closeLg}</button>
     </div>
 
     <div class="flex gap-2 px-2" style="border-bottom:1px solid var(--general-border)">
@@ -811,7 +825,13 @@ function screenSearch() {
         <button class="search-tab h-8 px-2 text-[16px] leading-6 press" style="min-width:32px;white-space:nowrap;border-bottom:2px solid ${i === searchTab ? 'var(--general-foreground)' : 'transparent'}; color:${i === searchTab ? 'var(--general-foreground)' : 'var(--general-secondary-foreground)'}" data-tab="${i}">${t}</button>`).join('')}
     </div>
 
-    <div id="searchResults">${searchResultsHTML()}</div>
+    <div id="searchResults">
+      <div id="searchSug" class="search-pane"${searchQuery.trim() ? '' : ' style="display:none"'}>${searchQuery.trim() ? searchSuggestHTML() : ''}</div>
+      <div id="searchEmpty" class="search-pane"${searchQuery.trim() ? ' style="display:none"' : ''}>
+        <div id="searchHistoryBox" class="rise">${searchHistoryHTML()}</div>
+        <div class="rise">${searchTrendingHTML()}</div>
+      </div>
+    </div>
   </div>`;
 }
 
@@ -908,16 +928,16 @@ function screenPDP() {
       ${tabs.map(([t, body]) => `
         <div class="acc border-b border-border-1">
           <button class="acc-trigger w-full h-14 flex items-center justify-between px-2 press">
-            <span class="text-[16px] font-light leading-6 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+            <span class="text-[14px] leading-5 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
           </button>
-          <div class="acc-body"><div class="acc-inner"><p class="pb-4 px-2 text-[14px] leading-5 text-foreground-alt">${body}</p></div></div>
+          <div class="acc-body"><div class="acc-inner"><div class="pb-4 px-2 text-[12px] leading-4 text-foreground-alt">${body}</div></div></div>
         </div>`).join('')}
     </div>
 
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
     ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
-      <div class="flex flex-col gap-4 py-6 reveal">
-        <p class="px-4 text-[20px] leading-7 text-foreground text-center">${title}</p>
+      <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true })).join('')}
         </div>
@@ -1033,8 +1053,10 @@ function screenPDP2() {
 
     <!-- CTKM -->
     <div class="px-4 pb-2 rise">
-      <div class="bg-accent-0 rounded p-2 flex flex-col gap-1">
-        ${promos.map(([strong, rest]) => `<p class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${strong}</span>${rest}</p>`).join('')}
+      <div class="bg-accent-0 rounded p-2">
+        <ul class="list-disc pl-4 space-y-1">
+          ${promos.map(([strong, rest]) => `<li class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${strong}</span>${rest}</li>`).join('')}
+        </ul>
       </div>
     </div>
 
@@ -1043,11 +1065,11 @@ function screenPDP2() {
       ${tabs.map(([t, body, sp]) => `
         <div class="acc border-b border-border-1">
           <button class="acc-trigger w-full h-14 flex items-center justify-between px-2 press">
-            <span class="text-[16px] font-light leading-6 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+            <span class="text-[14px] leading-5 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
           </button>
           <div class="acc-body"><div class="acc-inner">
             <div class="pb-4 px-2 flex flex-col gap-2">
-              <p class="text-[14px] leading-5 text-foreground-alt">${body}</p>
+              <p class="text-[12px] leading-4 text-foreground-alt">${body}</p>
               ${sp ? sp.map(([k, v]) => `
                 <div class="flex items-center justify-between h-6">
                   <span class="text-[12px] leading-4 text-muted-foreground">${k}</span>
@@ -1060,8 +1082,8 @@ function screenPDP2() {
 
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
     ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
-      <div class="flex flex-col gap-4 py-6 reveal">
-        <p class="px-4 text-[20px] leading-7 text-foreground text-center">${title}</p>
+      <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true })).join('')}
         </div>
@@ -1088,7 +1110,7 @@ function screenPDP3() {
     ['TUMI',' - [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%'],
     ['Miễn phí vận chuyển',' cho đơn hàng từ 8 triệu'],
   ];
-  const promoBody = promos.map(([strong, rest]) => `<b class="font-medium">${strong}</b>${rest}`).join('<br><br>');
+  const promoBody = `<ul class="list-disc pl-4 space-y-1">${promos.map(([strong, rest]) => `<li><b class="font-medium">${strong}</b>${rest}</li>`).join('')}</ul>`;
   const tabs = [
     ['Ưu đãi khuyến mãi', promoBody],
     ['Mô tả sản phẩm','Túi đeo vai Emblème bằng da bê nguyên tấm, khóa cài Medusa mạ vàng. Ngăn trong lót da lộn, dây đeo tháo rời điều chỉnh độ dài.'],
@@ -1174,16 +1196,16 @@ function screenPDP3() {
       ${tabs.map(([t, body]) => `
         <div class="acc border-b border-border-1${t === 'Ưu đãi khuyến mãi' ? ' open' : ''}">
           <button class="acc-trigger w-full h-14 flex items-center justify-between px-2 press">
-            <span class="text-[16px] font-light leading-6 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+            <span class="text-[14px] leading-5 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
           </button>
-          <div class="acc-body"><div class="acc-inner"><p class="pb-4 px-2 text-[14px] leading-5 text-foreground-alt">${body}</p></div></div>
+          <div class="acc-body"><div class="acc-inner"><div class="pb-4 px-2 text-[12px] leading-4 text-foreground-alt">${body}</div></div></div>
         </div>`).join('')}
     </div>
 
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 -->
     ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
-      <div class="flex flex-col gap-4 py-6 reveal">
-        <p class="px-4 text-[20px] leading-7 text-foreground text-center">${title}</p>
+      <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true })).join('')}
         </div>
@@ -1296,8 +1318,10 @@ function screenPDP4() {
 
     <!-- promos -->
     <div class="pt-2 px-4 pb-2 rise">
-      <div class="bg-accent-0 rounded p-2 flex flex-col gap-1">
-        ${promos.map(([strong, rest]) => `<p class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${strong}</span>${rest}</p>`).join('')}
+      <div class="bg-accent-0 rounded p-2">
+        <ul class="list-disc pl-4 space-y-1">
+          ${promos.map(([strong, rest]) => `<li class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${strong}</span>${rest}</li>`).join('')}
+        </ul>
       </div>
     </div>
 
@@ -1306,15 +1330,15 @@ function screenPDP4() {
       ${tabs.map(([t, body], ti) => `
         <div class="border-b border-border-1">
           <button class="sheet-trigger w-full h-14 flex items-center justify-between px-2 press" data-sheet-idx="${ti}">
-            <span class="text-[16px] font-medium leading-6 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+            <span class="text-[14px] leading-5 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
           </button>
         </div>`).join('')}
     </div>
 
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
     ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
-      <div class="flex flex-col gap-4 py-6 reveal">
-        <p class="px-4 text-[20px] leading-7 text-foreground text-center">${title}</p>
+      <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true })).join('')}
         </div>
@@ -1767,8 +1791,10 @@ function screenPDP5() {
 
     <!-- CTKM: pad 8,16 · Frame 28 pad 12 · bg neutral/100 · rounded-4 -->
     <div class="px-4 py-2 rise">
-      <div class="flex flex-col gap-2 p-3 rounded-sm bg-secondary">
-        ${promos.map(([strong, rest]) => `<p class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${strong}</span>${rest}</p>`).join('')}
+      <div class="p-3 rounded-sm bg-secondary">
+        <ul class="list-disc pl-4 space-y-2">
+          ${promos.map(([strong, rest]) => `<li class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${strong}</span>${rest}</li>`).join('')}
+        </ul>
       </div>
     </div>
 
@@ -1777,19 +1803,19 @@ function screenPDP5() {
       ${tabs.map(([t, body]) => `
         <div class="acc border-b border-border">
           <button class="acc-trigger w-full h-14 flex items-center justify-between gap-2 px-2 rounded-xs press">
-            <span class="text-[16px] font-light leading-6 text-foreground">${t}</span>
+            <span class="text-[14px] leading-5 text-foreground">${t}</span>
             <span class="w-3.5 h-3.5 flex items-center justify-center [&_svg]:w-3.5 [&_svg]:h-3.5">${I.chevD('var(--general-primary)')}</span>
           </button>
           <div class="acc-body"><div class="acc-inner">
-            <p class="pb-4 px-2 text-[14px] leading-5 text-foreground-alt">${body}</p>
+            <p class="pb-4 px-2 text-[12px] leading-4 text-foreground-alt">${body}</p>
           </div></div>
         </div>`).join('')}
     </div>
 
     <!-- Recently Viewed ×3: Card-item 254px gap 4 -->
     ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
-      <div class="flex flex-col gap-4 py-6 reveal">
-        <p class="px-4 text-[20px] leading-7 text-foreground text-center">${title}</p>
+      <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
+        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true })).join('')}
         </div>
@@ -1899,10 +1925,10 @@ function screenPDP6() {
 
     <!-- Pre-order slot (CTKM): pad 8,16 · Frame 28 pad 8 r4 bg #f5f5f5 · text Regular 12 -->
     <div class="px-4 py-2 rise">
-      <div class="flex flex-col gap-2 p-2 rounded-sm bg-secondary">
-        <div class="flex flex-col gap-2 pl-1">
-          ${promos.map(t => `<p class="text-[12px] leading-4 tracking-[0.004em] text-secondary-foreground">${t}</p>`).join('')}
-        </div>
+      <div class="p-2 rounded-sm bg-secondary">
+        <ul class="list-disc pl-4 space-y-2">
+          ${promos.map(t => `<li class="text-[12px] leading-4 tracking-[0.004em] text-secondary-foreground">${t}</li>`).join('')}
+        </ul>
       </div>
     </div>
 
@@ -1911,18 +1937,18 @@ function screenPDP6() {
       ${tabs.map(([t, body]) => `
         <div class="acc border-b border-border">
           <button class="acc-trigger w-full h-13 flex items-center justify-between gap-2 px-2 rounded-xs press" style="height:52px">
-            <span class="text-[14px] font-medium leading-5 tracking-[0.002em] text-foreground">${t}</span>
+            <span class="text-[14px] leading-5 tracking-[0.002em] text-foreground">${t}</span>
             <span class="w-3.5 h-3.5 flex items-center justify-center [&_svg]:w-3.5 [&_svg]:h-3.5">${I.chevD('var(--general-primary)')}</span>
           </button>
           <div class="acc-body"><div class="acc-inner">
-            <p class="pb-4 px-2 text-[14px] leading-5 tracking-[0.002em] text-foreground-alt">${body}</p>
+            <p class="pb-4 px-2 text-[12px] leading-4 tracking-[0.004em] text-foreground-alt">${body}</p>
           </div></div>
         </div>`).join('')}
     </div>
 
     <!-- Recently Viewed ×3: pad 24,16 · gap 16 · title Regular 20/28 ls .5% căn TRÁI -->
     ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4], ['Đã xem gần đây', 1]].map(([title, n]) => `
-      <div class="flex flex-col gap-4 px-4 py-6 reveal">
+      <div class="flex flex-col gap-4 px-4 mt-10 pb-6 reveal">
         <p class="text-[20px] leading-7 tracking-[0.005em] text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
           ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true, badge: i===3 ? 'New arrival' : '' })).join('')}
@@ -2810,31 +2836,71 @@ function sortedProducts() {
   return list;
 }
 
-function wireSearchResults(root, resultsEl) {
-  wireProductCards(resultsEl);
-  resultsEl.querySelectorAll('img.lazy').forEach(img => {
+function renderSearchSug(root) {
+  const sug = root.querySelector('#searchSug');
+  if (!sug) return;
+  sug.innerHTML = searchSuggestHTML();
+  wireSearchPane(root, sug);
+  localizeNew(sug);
+}
+
+function refreshSearchHistory(root) {
+  const box = root.querySelector('#searchHistoryBox');
+  if (!box) return;
+  box.innerHTML = searchHistoryHTML();
+  wireSearchPane(root, box);
+  localizeNew(box);
+  // tiêu đề khối trending đổi theo còn/hết lịch sử tìm kiếm
+  const t = root.querySelector('#trendTitle');
+  if (t) {
+    const has = searchHistory.length > 0;
+    t.textContent = has ? 'Sản phẩm nổi bật' : 'Trending item';
+    t.classList.toggle('text-secondary-foreground', has);
+    t.classList.toggle('text-muted-foreground', !has);
+    localizeNew(t.parentElement);
+  }
+}
+
+function wireSearchPane(root, pane) {
+  wireProductCards(pane);
+  pane.querySelectorAll('img.lazy').forEach(img => {
     if (img.complete) img.classList.add('loaded');
     else img.addEventListener('load', () => img.classList.add('loaded'));
   });
-  resultsEl.querySelectorAll('[data-suggest]').forEach(btn => {
+  pane.querySelectorAll('[data-suggest]').forEach(btn => {
     btn.addEventListener('click', () => {
       const term = btn.dataset.suggest;
-      if (!searchHistory.includes(term)) searchHistory.unshift(term);
-      searchHistory = searchHistory.slice(0, 8);
+      if (!searchHistory.includes(term)) {
+        searchHistory = [term, ...searchHistory].slice(0, 8);
+        refreshSearchHistory(root);
+      }
       searchQuery = term;
       const input = root.querySelector('#searchInput');
       if (input) input.value = term;
-      resultsEl.innerHTML = searchResultsHTML();
-      wireSearchResults(root, resultsEl);
+      renderSearchSug(root);
       toast(`Đang tìm "${term}"`);
     });
   });
-  resultsEl.querySelectorAll('[data-remove]').forEach(btn => {
+  pane.querySelectorAll('[data-remove]').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      searchHistory = searchHistory.filter(h => h !== btn.dataset.remove);
-      resultsEl.innerHTML = searchResultsHTML();
-      wireSearchResults(root, resultsEl);
+      // thu gọn dòng mượt rồi mới cập nhật danh sách
+      const row = btn.closest('.search-row');
+      if (!row) return;
+      row.style.height = row.offsetHeight + 'px';
+      void row.offsetWidth;
+      row.classList.add('removing');
+      row.style.height = '0px';
+      // fallback timeout: transitionend không bắn khi tab ẩn / reduced-motion
+      let removed = false;
+      const finish = () => {
+        if (removed) return;
+        removed = true;
+        searchHistory = searchHistory.filter(h => h !== btn.dataset.remove);
+        refreshSearchHistory(root);
+      };
+      row.addEventListener('transitionend', ev => { if (ev.propertyName === 'height') finish(); });
+      setTimeout(finish, 350);
     });
   });
 }
@@ -3032,6 +3098,10 @@ const I18N = {
   '- [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%':' — [16/07 – 02/08] Extra 5% off 2 items, extra 10% off 3 items',
   '- [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%':' — [08/07 – 06/09] Free leather notebook on orders over 40 million, extra 10% off 2 items',
 
+  // ── Tìm kiếm ──
+  'Tìm kiếm':'Search', 'Đóng tìm kiếm':'Close search', 'Bạn đang tìm kiếm gì':'What are you looking for',
+  'Vừa tìm kiếm':'Recent searches', 'Gợi ý':'Suggestions', 'Sản phẩm nổi bật':'Featured items',
+
   // ── Cài đặt ──
   'Cài đặt hiển thị':'Display settings', 'Cài đặt phông chữ':'Font settings', 'Phông chữ':'Font',
   'Ngôn ngữ':'Language', 'Tiếng Việt':'Vietnamese', 'Sẽ báo bạn ngay khi có hàng':'We\u2019ll notify you when it\u2019s back',
@@ -3049,6 +3119,9 @@ const I18N_RE = [
   [/^Đơn hàng (#\S+)$/,               'Order $1'],
   [/^Mục: (.+)$/,                     'Section: $1'],
   [/^Phông chữ: (.+)$/,               'Font: $1'],
+  [/^Đang tìm "(.+)"$/,               'Searching for "$1"'],
+  [/^Không tìm thấy kết quả phù hợp với "(.+)"$/, 'No results found for "$1"'],
+  [/^Xoá "(.+)" khỏi lịch sử$/,       'Remove "$1" from history'],
 ];
 const I18N_REV_RE = [
   [/^(\d+) products$/,                '$1 sản phẩm'],
@@ -3060,6 +3133,9 @@ const I18N_REV_RE = [
   [/^Order (#\S+)$/,                  'Đơn hàng $1'],
   [/^Section: (.+)$/,                 'Mục: $1'],
   [/^Font: (.+)$/,                    'Phông chữ: $1'],
+  [/^Searching for "(.+)"$/,          'Đang tìm "$1"'],
+  [/^No results found for "(.+)"$/,   'Không tìm thấy kết quả phù hợp với "$1"'],
+  [/^Remove "(.+)" from history$/,    'Xoá "$1" khỏi lịch sử'],
 ];
 
 const I18N_REV = Object.fromEntries(Object.entries(I18N).map(([k, v]) => [v, k]));
@@ -3179,10 +3255,24 @@ function wire(root) {
   // ── Search screen ──
   const searchInput = root.querySelector('#searchInput');
   if (searchInput) {
-    const resultsEl = root.querySelector('#searchResults');
-    const renderResults = () => { resultsEl.innerHTML = searchResultsHTML(); wireSearchResults(root, resultsEl); };
-    searchInput.addEventListener('input', () => { searchQuery = searchInput.value; renderResults(); });
-    searchInput.focus();
+    const sugEl = root.querySelector('#searchSug');
+    const emptyEl = root.querySelector('#searchEmpty');
+    // đổi pane có fade-rise nhẹ; gõ tiếp trong cùng pane thì không chạy lại animation
+    const swapPane = (showEl, hideEl) => {
+      hideEl.style.display = 'none';
+      if (showEl.style.display === 'none') {
+        showEl.style.display = '';
+        showEl.classList.remove('search-pane');
+        void showEl.offsetWidth;
+        showEl.classList.add('search-pane');
+      }
+    };
+    searchInput.addEventListener('input', () => {
+      searchQuery = searchInput.value;
+      if (searchQuery.trim()) { renderSearchSug(root); swapPane(sugEl, emptyEl); }
+      else swapPane(emptyEl, sugEl);
+    });
+    searchInput.focus({ preventScroll: true });
     root.querySelectorAll('.search-tab').forEach(t => {
       t.addEventListener('click', () => {
         searchTab = +t.dataset.tab;
@@ -3193,7 +3283,8 @@ function wire(root) {
         });
       });
     });
-    wireSearchResults(root, resultsEl);
+    wireSearchPane(root, sugEl);
+    wireSearchPane(root, emptyEl);
   }
 
   // promo banner slider (PLP) — tự trượt từng dòng mỗi 4s
@@ -4059,7 +4150,7 @@ document.body.insertAdjacentHTML('beforeend', `
         <button id="isClose" class="w-8 h-8 -mr-2 flex items-center justify-center press">${I.close}</button>
       </div>
       <div class="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
-        <p id="isBody" class="text-[14px] leading-5 text-foreground-alt"></p>
+        <p id="isBody" class="text-[12px] leading-4 text-foreground-alt"></p>
       </div>
     </div>
   </div>`);

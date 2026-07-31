@@ -16,6 +16,7 @@ Mở `index.html` bằng trình duyệt là xong — không cần build, không 
 ```
 demo-flow/
 ├── index.html          — toàn bộ app (router, state, tất cả screens)
+├── in.css              — input Tailwind (3 directive @tailwind)
 ├── tailwind.css         — CSS đã compile (build ra từ in.css, PHẢI commit)
 ├── tokens.css            — biến CSS design token (build ra từ tokens07.json, PHẢI commit)
 ├── tokens07.json         — export gốc từ Figma variables (nguồn sự thật)
@@ -60,9 +61,9 @@ Xuất ra 426 biến CSS (raw colors + semantic tokens + spacing + radii). Mode 
 
 Rebuild CSS sau khi sửa class trong `index.html`:
 ```bash
-npx tailwindcss -c tailwind.config.js -i in.css -o tailwind.css --minify
+npx tailwindcss@3.4.17 -c tailwind.config.js -i in.css -o tailwind.css --minify
 ```
-> Lưu ý: file `in.css` (input Tailwind) hiện **chưa có trong repo này** — cần tạo lại/copy vào repo để build được (xem mục Vấn đề tồn đọng bên dưới).
+> Pin bản `3.4.17` (bản đã dùng để build) — Tailwind v4 đổi CLI/config, chạy bản mới nhất sẽ lỗi.
 
 ## Vấn đề tồn đọng / cần quyết định tiếp
 
@@ -71,7 +72,6 @@ npx tailwindcss -c tailwind.config.js -i in.css -o tailwind.css --minify
 - **Luồng hết hàng 2 tầng** (size tạm hết / nhận thông báo khi có hàng) chỉ áp dụng cho PDP dùng size dạng chip (pdp, pdp4) — PDP dùng dropdown (pdp2/pdp3/pdp5/pdp6) chưa hỗ trợ vì `<option disabled>` chặn tương tác.
 - **PDP v1 (pdp) — layout Pre-order**: ngày giao hàng "15/08/2026" đang hardcode; "Chỉ còn 01 sản phẩm" vẫn hiện dù đã là pre-order (có thể mâu thuẫn logic).
 - **Account**: 9 màn theo Figma gốc (Info/Info-Error/Address/Address-Empty/Orders/Orders-Empty/Loyalty/Points/Points-Empty) đã gộp thành 1 trang 6-tab — chưa có trạng thái Empty/Error riêng.
-- File `in.css` cần được thêm lại vào repo để ai cũng build lại CSS được.
 
 ## Nguồn thiết kế
 
