@@ -362,7 +362,7 @@ const PROMO_MESSAGES = [
   'Giảm thêm 5% cho thẻ Techcombank (*Điều khoản áp dụng)',
 ];
 
-const FLOW = ['plp','pdp','pdp2','pdp3','pdp4','pdp5','pdp6','cart','login','account','order','checkout','done'];
+const FLOW = ['plp','search','pdp','pdp2','pdp3','pdp4','pdp5','pdp6','cart','login','account','order','checkout','done'];
 const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login:'Đăng nhập', pdp2:'Sản phẩm', pdp3:'Sản phẩm', pdp4:'Sản phẩm', pdp5:'Sản phẩm', pdp6:'Sản phẩm', account:'Tài khoản', order:'Chi tiết đơn hàng', checkout:'Thanh toán', done:'Hoàn tất' };
 
 /* ════════════════════════════════════════════════════════════════
@@ -511,7 +511,7 @@ function navBar({ logoOnly = false } = {}) {
   <div class="${bar} justify-between">
     <div class="flex gap-2 items-center w-[133px]">
       ${ico(I.burger, 'data-menu-open')}
-      ${ico(I.search, 'data-toast="Mở tìm kiếm"')}
+      ${ico(I.search, 'data-nav="search"')}
     </div>
     <img src="${A}logo.png" alt="DAFC" class="h-[20px] w-[93px] object-contain cursor-pointer press" data-nav="plp">
     <div class="flex gap-2 items-center justify-end w-[133px]">
@@ -735,6 +735,87 @@ function screenPLP() {
 }
 
 /* ════════════════════════════════════════════════════════════════
+   SCREEN: SEARCH — theo 3 trạng thái Figma (search overlay)
+   01 empty/trending · 02 typing/suggestions · 03 recent + featured
+════════════════════════════════════════════════════════════════ */
+let searchQuery = '';
+let searchTab = 0;
+let searchHistory = ['Áo sơ mi', 'Túi xách da', 'Versace loafer', 'Đầm dạ hội', 'Giày thể thao'];
+
+function highlightMatch(text, q) {
+  if (!q) return text;
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return text;
+  return text.slice(0, idx) + `<span class="font-medium">${text.slice(idx, idx + q.length)}</span>` + text.slice(idx + q.length);
+}
+
+function searchSuggestions(q) {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return [];
+  const pool = [];
+  PRODUCTS.forEach(p => { pool.push(p.brand); pool.push(p.name); });
+  return [...new Set(pool)].filter(s => s.toLowerCase().includes(needle)).slice(0, 6);
+}
+
+function searchResultsHTML() {
+  const q = searchQuery.trim();
+  if (q) {
+    const sug = searchSuggestions(q);
+    return `
+    <section class="flex flex-col gap-2 pt-4">
+      <h2 class="px-4 text-[12px] leading-4 text-muted-foreground">Gợi ý</h2>
+      ${sug.length ? `
+      <ul>
+        ${sug.map(s => `
+        <li><button class="search-suggest w-full text-left px-4 py-3 text-[14px] leading-5 text-foreground press" data-suggest="${s}">${highlightMatch(s, q)}</button></li>`).join('')}
+      </ul>` : `<p class="px-4 py-3 text-[14px] leading-5 text-muted-foreground">Không tìm thấy kết quả phù hợp với "${q}"</p>`}
+    </section>`;
+  }
+
+  const hasHistory = searchHistory.length > 0;
+  return `
+  ${hasHistory ? `
+  <section class="flex flex-col gap-2 pt-4">
+    <h2 class="px-4 text-[12px] leading-4 text-muted-foreground">Vừa tìm kiếm</h2>
+    <ul>
+      ${searchHistory.map(h => `
+      <li class="flex items-center">
+        <button class="search-suggest flex-1 min-w-0 text-left px-4 py-3 text-[14px] leading-5 text-foreground press truncate" data-suggest="${h}">${h}</button>
+        <button class="search-remove w-3 h-3 flex items-center justify-center shrink-0 press" style="margin-right:16px" data-remove="${h}" aria-label="Xoá &quot;${h}&quot; khỏi lịch sử">${I.close}</button>
+      </li>`).join('')}
+    </ul>
+  </section>` : ''}
+  <section class="flex flex-col gap-2 py-6">
+    <h2 class="px-4 text-[20px] leading-7 ${hasHistory ? 'text-secondary-foreground' : 'text-muted-foreground'} text-center">${hasHistory ? 'Sản phẩm nổi bật' : 'Trending item'}</h2>
+    <div class="drag-x flex gap-0.5 overflow-x-auto no-scrollbar px-2">
+      ${PRODUCTS.slice(0, 4).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true })).join('')}
+    </div>
+  </section>`;
+}
+
+function screenSearch() {
+  return `
+  <div class="w-full" data-scroller>
+    <div class="flex items-center gap-1 px-2 h-14">
+      <label class="flex-1 min-w-0 flex items-center gap-3 h-10 bg-secondary rounded-xs px-2">
+        <span class="w-5 h-5 flex items-center justify-center shrink-0">${I.search}</span>
+        <span style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Tìm kiếm</span>
+        <input id="searchInput" type="search" value="${searchQuery}" placeholder="Bạn đang tìm kiếm gì" autocomplete="off"
+               class="flex-1 min-w-0 outline-none text-[16px] leading-6 text-foreground placeholder:text-muted-foreground" style="background:transparent;border:0;padding:0;-webkit-appearance:none;appearance:none">
+      </label>
+      <button data-nav="plp" aria-label="Đóng tìm kiếm" class="w-10 h-10 flex items-center justify-center shrink-0 press">${I.close}</button>
+    </div>
+
+    <div class="flex gap-2 px-2" style="border-bottom:1px solid var(--general-border)">
+      ${['Nam','Nữ','Làm đẹp'].map((t, i) => `
+        <button class="search-tab h-8 px-2 text-[16px] leading-6 press" style="min-width:32px;white-space:nowrap;border-bottom:2px solid ${i === searchTab ? 'var(--general-foreground)' : 'transparent'}; color:${i === searchTab ? 'var(--general-foreground)' : 'var(--general-secondary-foreground)'}" data-tab="${i}">${t}</button>`).join('')}
+    </div>
+
+    <div id="searchResults">${searchResultsHTML()}</div>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
    SCREEN: PDP — theo Figma PDP-Mobile-02-LowStock (2218:6692)
 ════════════════════════════════════════════════════════════════ */
 function screenPDP() {
@@ -820,10 +901,6 @@ function screenPDP() {
         <span class="text-[16px] leading-5">Đặt trước</span>
         <span class="text-[12px] leading-4 text-primary-foreground/80">Dự kiến giao hàng vào ngày 15/08/2026</span>
       </button>
-      <div class="flex items-center justify-center gap-1 text-[12px] leading-4">
-        <span class="text-foreground-alt">Trả trước từ <b class="font-medium">742.000 ₫</b>/tháng</span>
-        <button data-toast="Xem chính sách trả góp" class="text-foreground underline leading-4 press">Xem chi tiết</button>
-      </div>
     </div>
 
     <!-- accordions -->
@@ -2708,7 +2785,7 @@ function wireFilter() {
    ROUTER + BEHAVIOUR
 ════════════════════════════════════════════════════════════════ */
 const RENDER = {
-  plp: screenPLP, pdp: screenPDP, pdp2: screenPDP2, pdp3: screenPDP3, pdp4: screenPDP4, pdp5: screenPDP5, pdp6: screenPDP6, account: screenACCOUNT, order: screenORDER, cart: screenCART, login: screenLOGIN,
+  plp: screenPLP, search: screenSearch, pdp: screenPDP, pdp2: screenPDP2, pdp3: screenPDP3, pdp4: screenPDP4, pdp5: screenPDP5, pdp6: screenPDP6, account: screenACCOUNT, order: screenORDER, cart: screenCART, login: screenLOGIN,
   checkout: screenCHECKOUT, done: screenDONE,
 };
 
@@ -2731,6 +2808,35 @@ function sortedProducts() {
   else if (plpSort === 'price-asc') list.sort((a, b) => priceNum(a.p) - priceNum(b.p));
   else if (plpSort === 'price-desc') list.sort((a, b) => priceNum(b.p) - priceNum(a.p));
   return list;
+}
+
+function wireSearchResults(root, resultsEl) {
+  wireProductCards(resultsEl);
+  resultsEl.querySelectorAll('img.lazy').forEach(img => {
+    if (img.complete) img.classList.add('loaded');
+    else img.addEventListener('load', () => img.classList.add('loaded'));
+  });
+  resultsEl.querySelectorAll('[data-suggest]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const term = btn.dataset.suggest;
+      if (!searchHistory.includes(term)) searchHistory.unshift(term);
+      searchHistory = searchHistory.slice(0, 8);
+      searchQuery = term;
+      const input = root.querySelector('#searchInput');
+      if (input) input.value = term;
+      resultsEl.innerHTML = searchResultsHTML();
+      wireSearchResults(root, resultsEl);
+      toast(`Đang tìm "${term}"`);
+    });
+  });
+  resultsEl.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      searchHistory = searchHistory.filter(h => h !== btn.dataset.remove);
+      resultsEl.innerHTML = searchResultsHTML();
+      wireSearchResults(root, resultsEl);
+    });
+  });
 }
 
 function wireProductCards(root) {
@@ -3070,6 +3176,26 @@ function wire(root) {
     img.addEventListener('error', () => { img.style.background = 'var(--general-secondary)'; img.classList.add('loaded'); });
   });
 
+  // ── Search screen ──
+  const searchInput = root.querySelector('#searchInput');
+  if (searchInput) {
+    const resultsEl = root.querySelector('#searchResults');
+    const renderResults = () => { resultsEl.innerHTML = searchResultsHTML(); wireSearchResults(root, resultsEl); };
+    searchInput.addEventListener('input', () => { searchQuery = searchInput.value; renderResults(); });
+    searchInput.focus();
+    root.querySelectorAll('.search-tab').forEach(t => {
+      t.addEventListener('click', () => {
+        searchTab = +t.dataset.tab;
+        root.querySelectorAll('.search-tab').forEach(x => {
+          const on = x === t;
+          x.style.borderBottom = `2px solid ${on ? 'var(--general-foreground)' : 'transparent'}`;
+          x.style.color = on ? 'var(--general-foreground)' : 'var(--general-secondary-foreground)';
+        });
+      });
+    });
+    wireSearchResults(root, resultsEl);
+  }
+
   // promo banner slider (PLP) — tự trượt từng dòng mỗi 4s
   clearInterval(window.__promoTimer);
   const slider = root.querySelector('#promoSlider');
@@ -3353,13 +3479,23 @@ function wire(root) {
         mainBtn.dataset.oosState = state;
         mainBtn.innerHTML = LABEL[state];
         if (stickyBtn) { stickyBtn.dataset.oosState = state; stickyBtn.innerHTML = LABEL[state]; }
-        note.classList.remove('hidden');
         if (payOffer) payOffer.classList.add('hidden');   // Figma: Payment Offer ẩn khi hết hàng
         if (lowStock) lowStock.classList.add('hidden');   // hết hàng thì không còn "Chỉ còn 01 sản phẩm"
+        if (state === 'oos') {
+          // Tạm hết hàng: không còn hành động nào khả dụng -> disable hẳn nút, bỏ dòng cảnh báo đỏ (dư thừa)
+          note.classList.add('hidden');
+          mainBtn.disabled = true; mainBtn.style.opacity = '.4'; mainBtn.style.pointerEvents = 'none';
+          if (stickyBtn) { stickyBtn.disabled = true; stickyBtn.style.opacity = '.4'; stickyBtn.style.pointerEvents = 'none'; }
+        } else {
+          note.classList.remove('hidden');
+          mainBtn.disabled = false; mainBtn.style.opacity = ''; mainBtn.style.pointerEvents = '';
+          if (stickyBtn) { stickyBtn.disabled = false; stickyBtn.style.opacity = ''; stickyBtn.style.pointerEvents = ''; }
+        }
       } else {
         delete mainBtn.dataset.oosState;
         mainBtn.innerHTML = NORMAL;
-        if (stickyBtn) { delete stickyBtn.dataset.oosState; stickyBtn.innerHTML = stickyNormal; }
+        mainBtn.disabled = false; mainBtn.style.opacity = ''; mainBtn.style.pointerEvents = '';
+        if (stickyBtn) { delete stickyBtn.dataset.oosState; stickyBtn.innerHTML = stickyNormal; stickyBtn.disabled = false; stickyBtn.style.opacity = ''; stickyBtn.style.pointerEvents = ''; }
         note.classList.add('hidden');
         if (payOffer) payOffer.classList.remove('hidden');
         if (lowStock) lowStock.classList.remove('hidden');
