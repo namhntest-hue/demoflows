@@ -55,7 +55,7 @@
   /* ── Search screen ── */
   /* ẩn nút ✕ clear mặc định của trình duyệt — đã có nút "Xóa" riêng theo Figma */
   #searchInput::-webkit-search-cancel-button, #searchInput::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
-  .search-tab { transition: color .2s ease, border-bottom-color .2s ease; }
+  .search-tab, .ms-tab { transition: color .2s ease, border-bottom-color .2s ease; }
   @keyframes searchIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   .search-pane { animation: searchIn .22s ease both; }
   .search-row { transition: height .28s cubic-bezier(.22,1,.36,1), opacity .2s ease; }
@@ -927,9 +927,11 @@ function screenSearch() {
       </label>
     </div>
 
-    <div class="flex gap-2 px-4" style="border-bottom:1px solid var(--unofficial-border-0)">
+    <!-- Tab: active = foreground + medium + gạch primary; inactive = muted + light;
+         track viền dưới dùng general-border thay border-0 (nâng affordance so với Figma gốc) -->
+    <div class="flex gap-2 px-4" style="border-bottom:1px solid var(--general-border)">
       ${['Nam','Nữ','Làm đẹp'].map((t, i) => `
-        <button class="search-tab h-10 px-2 text-[16px] leading-6 font-light text-secondary-foreground press" style="min-width:32px;white-space:nowrap;border-bottom:2px solid ${i === searchTab ? 'var(--unofficial-border-5)' : 'transparent'}" data-tab="${i}">${t}</button>`).join('')}
+        <button class="search-tab h-10 px-2 text-[16px] leading-6 press ${i === searchTab ? 'font-medium text-foreground' : 'font-light text-muted-foreground'}" style="min-width:32px;white-space:nowrap;border-bottom:2px solid ${i === searchTab ? 'var(--general-primary)' : 'transparent'}" data-tab="${i}">${t}</button>`).join('')}
     </div>
 
     <div id="searchResults">
@@ -3507,7 +3509,12 @@ function wire(root) {
       t.addEventListener('click', () => {
         searchTab = +t.dataset.tab;
         root.querySelectorAll('.search-tab').forEach(x => {
-          x.style.borderBottom = `2px solid ${x === t ? 'var(--unofficial-border-5)' : 'transparent'}`;
+          const on = x === t;
+          x.style.borderBottom = `2px solid ${on ? 'var(--general-primary)' : 'transparent'}`;
+          x.classList.toggle('font-medium', on);
+          x.classList.toggle('text-foreground', on);
+          x.classList.toggle('font-light', !on);
+          x.classList.toggle('text-muted-foreground', !on);
         });
       });
     });
@@ -4433,11 +4440,12 @@ document.body.insertAdjacentHTML('beforeend', `
       <p class="flex-1 min-w-0 text-center text-[16px] leading-6 font-medium text-foreground truncate">${title}</p>
       <button class="w-6 h-6 flex items-center justify-center shrink-0 press [&_svg]:w-3.5 [&_svg]:h-3.5" data-ms-close aria-label="Đóng menu">${I.close}</button>
     </div>`;
-  /* Tab Nam/Nữ/Làm đẹp — cùng kiểu tab màn Search */
+  /* Tab Nam/Nữ/Làm đẹp — cùng kiểu tab màn Search:
+     active = foreground + medium + gạch primary; inactive = muted + light */
   const deptTabs = () => `
-    <div class="flex gap-2 px-4 shrink-0" style="border-bottom:1px solid var(--unofficial-border-0)">
+    <div class="flex gap-2 px-4 shrink-0" style="border-bottom:1px solid var(--general-border)">
       ${Object.keys(MENU_DATA).map(t => `
-        <button class="ms-tab h-10 px-2 text-[16px] leading-6 font-light text-secondary-foreground press" style="min-width:32px;white-space:nowrap;border-bottom:2px solid ${t === menuTab ? 'var(--unofficial-border-5)' : 'transparent'}" data-mtab="${t}">${t}</button>`).join('')}
+        <button class="ms-tab h-10 px-2 text-[16px] leading-6 press ${t === menuTab ? 'font-medium text-foreground' : 'font-light text-muted-foreground'}" style="min-width:32px;white-space:nowrap;border-bottom:2px solid ${t === menuTab ? 'var(--general-primary)' : 'transparent'}" data-mtab="${t}">${t}</button>`).join('')}
     </div>`;
   /* Thanh Ngôn ngữ ghim đáy — toggle pill ENG|VIE (cùng kiểu settings panel) */
   const langBar = () => `
