@@ -628,7 +628,103 @@ function stickyCta(label, target, sub) {
 /* ════════════════════════════════════════════════════════════════
    SCREEN: PLP
 ════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════
+   PLP có 3 chế độ — theo section Figma "02 — PLP / Mobile" (2084:158):
+   · brand    → PLP-Mobile-01-ByBrand (hero + brand block, mặc định)
+   · category → PLP-Mobile-04-Default: breadcrumb + tiêu đề 20/28, không hero
+                (vào từ menu / thẻ danh mục)
+   · search   → tiêu đề "Kết quả tìm kiếm của “q”"; không khớp sản phẩm nào
+                thì hiện khối hướng dẫn PLP-Mobile-07-Search-Empty (2918:45172)
+════════════════════════════════════════════════════════════════ */
+let plpMode = { type: 'brand' };
+
+function goPlp(mode) {
+  plpMode = (mode && mode.type) ? mode : { type: 'brand' };
+  if (current === 'plp') { history.push('plp'); current = null; } // ép render lại khi đang ở PLP
+  go('plp');
+}
+
+/* Danh sách sản phẩm theo chế độ PLP (giữ index gốc cho router PDP/quick-add) */
+function plpProducts() {
+  const all = PRODUCTS.map((p, i) => ({ p, i }));
+  if (plpMode.type !== 'search') return all;
+  const q = (plpMode.query || '').trim().toLowerCase();
+  return q ? all.filter(({ p }) => `${p.brand} ${p.name}`.toLowerCase().includes(q)) : all;
+}
+
+/* PLP dạng danh sách (category/search) */
+function screenPLPList() {
+  const m = plpMode;
+  const list = plpProducts();
+  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'NEW' : '', pillBadges: i === 3 ? ['New Season', 'Lavancaza'] : null });
+  const crumbs = ['Trang chủ', ...(m.crumbs || [])];
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+
+    <!-- breadcrumb + tiêu đề trang -->
+    <div class="py-2">
+      <div class="flex gap-1 items-center px-4 h-9 text-[14px] leading-5 text-muted-foreground">
+        <span>${crumbs[0]}</span>
+        ${crumbs.slice(1).map(t => `
+        <span class="flex gap-1 items-center">
+          <span class="w-4 h-4 flex items-center justify-center"><span class="w-[3px] h-[3px] rounded-full bg-muted-foreground"></span></span>
+          <span>${t}</span>
+        </span>`).join('')}
+      </div>
+    </div>
+    <div class="flex items-center px-4 py-2">
+      <h1 class="flex-1 min-w-0 text-[20px] leading-7 text-foreground truncate">${m.title || ''}</h1>
+    </div>
+
+    ${list.length ? `
+    <div class="flex items-center justify-between pl-4 pr-2 h-12 bg-background">
+      <p class="text-[16px] font-light leading-6 text-foreground">${list.length} sản phẩm</p>
+      <div class="flex items-center">
+        ${[['2', I.grid2], ['1', I.grid1]].map(([n, ico]) => `
+          <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press ${n==='2' ? 'text-foreground' : 'text-border-4'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
+      </div>
+    </div>
+
+    <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex items-center justify-between px-4 h-[52px] backdrop-blur-[7.5px]">
+      <button data-sheet="filter" class="flex items-center gap-2 px-4 h-9 rounded-xs border border-border text-[14px] font-medium text-foreground press">${I.sliders} Bộ lọc</button>
+      <div class="relative">
+        <button id="sortBtn" class="flex items-center gap-1.5 px-4 h-9 text-[14px] font-medium text-foreground-alt press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
+        <div id="sortMenu" class="hidden absolute mt-1 bg-background border border-border shadow-lg z-50" style="right:0;top:100%;width:240px">
+          ${SORT_OPTIONS.map(([id, label]) => `
+            <button class="sort-opt w-full text-left px-4 h-11 flex items-center justify-between text-[14px] ${id === plpSort ? 'font-medium text-foreground' : 'text-foreground-alt'}" data-sort="${id}">
+              <span>${label}</span>
+              ${id === plpSort ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+            </button>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div id="plpGrid" class="grid grid-cols-2 gap-x-0.5 px-0.5 pt-2" style="row-gap:24px">
+      ${sortedProducts().map(({ p, i }) => card(p, i)).join('')}
+    </div>
+
+    <div class="flex justify-center py-6">
+      <button id="showMore" class="h-11 px-8 border border-primary text-[14px] font-semibold text-foreground press flex items-center gap-2">Show more</button>
+    </div>
+
+    ${camKetSection()}` : `
+    <!-- không có kết quả — Listing rỗng (2918:45172): 16/24 Light, px-16 py-24 -->
+    <div class="px-4 py-6 text-[16px] font-light leading-6 text-foreground">
+      <p>Không tìm thấy kết quả phù hợp</p>
+      <p class="pt-3.5">Rất tiếc, chúng tôi không tìm thấy sản phẩm nào phù hợp với từ khóa tìm kiếm của bạn.<br>Đừng lo lắng! Bạn có thể thử một trong những cách sau để tìm sản phẩm dễ dàng hơn:</p>
+      <ul class="pt-3.5 pl-6" style="list-style:disc">
+        <li>Kiểm tra lại từ khóa tìm kiếm để đảm bảo không có lỗi chính tả.</li>
+        <li>Sử dụng các từ khóa ngắn gọn và chính xác hơn.</li>
+      </ul>
+    </div>`}
+
+    ${footer()}
+  </div>`;
+}
+
 function screenPLP() {
+  if (plpMode.type !== 'brand') return screenPLPList();
   const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'NEW' : '', pillBadges: i === 3 ? ['New Season', 'Lavancaza'] : null });
 
   return `
@@ -2841,7 +2937,7 @@ const SORT_OPTIONS = [
 ];
 
 function sortedProducts() {
-  const list = PRODUCTS.map((p, i) => ({ p, i }));
+  const list = plpProducts();
   const priceNum = p => Number(String(p.price).replace(/[^\d]/g, ''));
   if (plpSort === 'newest') list.reverse();
   else if (plpSort === 'bestseller') list.sort((a, b) => (a.p.tag === 'Best seller' ? -1 : 0) - (b.p.tag === 'Best seller' ? -1 : 0));
@@ -2881,14 +2977,10 @@ function wireSearchPane(root, pane) {
   pane.querySelectorAll('[data-suggest]').forEach(btn => {
     btn.addEventListener('click', () => {
       const term = btn.dataset.suggest;
-      if (!searchHistory.includes(term)) {
-        searchHistory = [term, ...searchHistory].slice(0, 8);
-        refreshSearchHistory(root);
-      }
+      if (!searchHistory.includes(term)) searchHistory = [term, ...searchHistory].slice(0, 8);
       searchQuery = term;
-      const input = root.querySelector('#searchInput');
-      if (input) { input.value = term; input.dispatchEvent(new Event('input')); }
-      toast(`Đang tìm "${term}"`);
+      // Results = PLP grid (Figma 02—PLP): mở màn kết quả tìm kiếm
+      goPlp({ type: 'search', query: term, title: `Kết quả tìm kiếm của “${term}”` });
     });
   });
   pane.querySelectorAll('[data-remove]').forEach(btn => {
@@ -3138,6 +3230,13 @@ const I18N = {
   'Sữa rửa mặt':'Cleansers', 'Serum & Tinh chất':'Serums & essences', 'Kem dưỡng ẩm':'Moisturisers',
   'Kem chống nắng':'Sunscreen', 'Mặt nạ':'Masks',
 
+  // ── PLP danh mục / kết quả tìm kiếm ──
+  'Không tìm thấy kết quả phù hợp':'No matching results',
+  'Rất tiếc, chúng tôi không tìm thấy sản phẩm nào phù hợp với từ khóa tìm kiếm của bạn.':'Sorry, we couldn’t find any products matching your search.',
+  'Đừng lo lắng! Bạn có thể thử một trong những cách sau để tìm sản phẩm dễ dàng hơn:':'Don’t worry! Try one of the following to find products more easily:',
+  'Kiểm tra lại từ khóa tìm kiếm để đảm bảo không có lỗi chính tả.':'Double-check your keywords for typos.',
+  'Sử dụng các từ khóa ngắn gọn và chính xác hơn.':'Use shorter, more specific keywords.',
+
   // ── Cam kết DAFC (PDP) ──
   'Tích lũy điểm thưởng và nhận các đặc quyền phân hạng VIP.':'Earn reward points and unlock VIP tier privileges.',
   'Thanh toán linh hoạt':'Flexible payment',
@@ -3165,6 +3264,7 @@ const I18N_RE = [
   [/^Mục: (.+)$/,                     'Section: $1'],
   [/^Phông chữ: (.+)$/,               'Font: $1'],
   [/^Đang tìm "(.+)"$/,               'Searching for "$1"'],
+  [/^Kết quả tìm kiếm của “(.+)”$/,   'Search results for “$1”'],
   [/^Không tìm thấy kết quả phù hợp với "(.+)"$/, 'No results found for "$1"'],
   [/^Xoá "(.+)" khỏi lịch sử$/,       'Remove "$1" from history'],
 ];
@@ -3179,6 +3279,7 @@ const I18N_REV_RE = [
   [/^Section: (.+)$/,                 'Mục: $1'],
   [/^Font: (.+)$/,                    'Phông chữ: $1'],
   [/^Searching for "(.+)"$/,          'Đang tìm "$1"'],
+  [/^Search results for “(.+)”$/,     'Kết quả tìm kiếm của “$1”'],
   [/^No results found for "(.+)"$/,   'Không tìm thấy kết quả phù hợp với "$1"'],
   [/^Remove "(.+)" from history$/,    'Xoá "$1" khỏi lịch sử'],
 ];
@@ -3329,6 +3430,15 @@ function wire(root) {
       searchQuery = searchInput.value;
       updatePanes();
     });
+    // Enter -> màn kết quả tìm kiếm (PLP search; rỗng -> PLP-Mobile-07-Search-Empty)
+    searchInput.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const q = searchInput.value.trim();
+      if (!q) return;
+      if (!searchHistory.includes(q)) searchHistory = [q, ...searchHistory].slice(0, 8);
+      searchQuery = q;
+      goPlp({ type: 'search', query: q, title: `Kết quả tìm kiếm của “${q}”` });
+    });
     if (clearBtn) clearBtn.addEventListener('click', () => {
       searchQuery = '';
       searchInput.value = '';
@@ -3378,6 +3488,7 @@ function wire(root) {
         setTimeout(() => { el.innerHTML = txt; go(t); }, 700);
         return;
       }
+      if (t === 'plp') { goPlp({ type: 'brand' }); return; } // logo/link chung -> PLP brand mặc định
       go(t);
     });
   });
@@ -3826,9 +3937,9 @@ function wire(root) {
     bToggle.addEventListener('click', () => { open = !open; apply(); });
   }
 
-  // category cards
+  // category cards -> PLP chế độ danh mục
   root.querySelectorAll('[data-cate]').forEach(b =>
-    b.addEventListener('click', () => toast('Lọc: ' + b.dataset.cate)));
+    b.addEventListener('click', () => goPlp({ type: 'category', title: b.dataset.cate, crumbs: [] })));
 
   // brand chips
   root.querySelectorAll('.brand-chip').forEach(b => {
@@ -4157,17 +4268,20 @@ document.body.insertAdjacentHTML('beforeend', `
   const ms = document.getElementById('menuSheet');
   const panel = ms.querySelector('.ms-panel');
 
-  /* hàng menu 44px: nhãn 14/20 + chevron 12px (Icon-Cpn) sát mép phải 16px */
+  /* hàng menu 44px: nhãn 14/20 + chevron 12px (Icon-Cpn) sát mép phải 16px
+     — riêng "Khuyến mãi" dùng màu destructive */
   const row = (label, attrs) => `
     <button ${attrs} class="w-full flex items-center px-4 py-3 press">
-      <span class="flex-1 min-w-0 text-left text-[14px] leading-5 text-foreground truncate">${label}</span>
+      <span class="flex-1 min-w-0 text-left text-[14px] leading-5 ${label === 'Khuyến mãi' ? 'text-destructive' : 'text-foreground'} truncate">${label}</span>
       <span class="w-3 h-3 flex items-center justify-center shrink-0 [&_svg]:w-3 [&_svg]:h-3">${I.chevR('var(--general-muted-foreground)')}</span>
     </button>`;
   /* hàng "Trang chủ …/Tất cả …" 36px, medium, không icon */
-  const headRow = (label) => `
-    <button data-nav="plp" class="w-full flex items-center px-4 py-2 press">
+  const headRow = (label, extra = '') => `
+    <button data-nav="plp" ${extra} class="w-full flex items-center px-4 py-2 press">
       <span class="flex-1 min-w-0 text-left text-[14px] leading-5 font-medium text-foreground truncate">${label}</span>
     </button>`;
+  /* attrs điều hướng PLP chế độ danh mục (breadcrumb Trang chủ · dept [· cat]) */
+  const catAttrs = (title, crumbs) => `data-nav="plp" data-plp-title="${title}" data-plp-crumbs="${crumbs.join('|')}"`;
   const loginRow = () => ckAuth
     ? row('Tài khoản', 'data-nav="account"')
     : row('Đăng ký / đăng nhập', 'data-nav="login" data-auth-view="login"');
@@ -4216,14 +4330,14 @@ document.body.insertAdjacentHTML('beforeend', `
     panel.innerHTML = menuSub
       ? navSub(menuSub.title) + `
         <div class="ms-view flex-1 overflow-y-auto overscroll-contain pt-4">
-          ${headRow(menuSub.all)}
-          ${menuSub.items.map(it => row(it, 'data-nav="plp"')).join('')}
+          ${headRow(menuSub.all, menuSub.login ? '' : catAttrs(menuSub.all, [menuTab, menuSub.title]))}
+          ${menuSub.items.map(it => row(it, menuSub.login ? 'data-nav="plp"' : catAttrs(it, [menuTab, menuSub.title]))).join('')}
           ${menuSub.login ? loginRow() : ''}
         </div>`
       : navRoot() + deptTabs() + `
         <div class="ms-view flex-1 overflow-y-auto overscroll-contain pt-4">
           ${headRow(d.home)}
-          ${d.cats.map(([label, sub], i) => row(label, sub ? `data-ms-sub="${i}"` : 'data-nav="plp"')).join('')}
+          ${d.cats.map(([label, sub], i) => row(label, sub ? `data-ms-sub="${i}"` : catAttrs(label, [menuTab]))).join('')}
           ${loginRow()}
         </div>` + langBar();
     wire();
@@ -4249,7 +4363,15 @@ document.body.insertAdjacentHTML('beforeend', `
   const wire = () => {
     panel.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => {
       const v = b.dataset.authView; if (v) { authView = v; authViewIntent = true; }
-      closeM(); go(b.dataset.nav);
+      closeM();
+      if (b.dataset.nav === 'plp') {
+        // hàng danh mục -> PLP category (breadcrumb + tiêu đề); còn lại -> PLP brand
+        goPlp(b.dataset.plpTitle
+          ? { type: 'category', title: b.dataset.plpTitle, crumbs: (b.dataset.plpCrumbs || '').split('|').filter(Boolean) }
+          : { type: 'brand' });
+        return;
+      }
+      go(b.dataset.nav);
     }));
     panel.querySelectorAll('[data-ms-close]').forEach(b => b.addEventListener('click', closeM));
     panel.querySelectorAll('[data-ms-back]').forEach(b => b.addEventListener('click', () => { menuSub = null; render(); }));
