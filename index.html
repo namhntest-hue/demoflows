@@ -366,11 +366,14 @@ const DISABLED = ['43','44'];
 const OOS_MODE = { '43': 'oos', '44': 'notify' };
 
 // Danh sách kích thước cho các PDP dùng "dropdown" (giờ mở bottom sheet thay vì <select>)
+// `left` = số lượng còn lại, CHỈ gán khi sắp hết -> hàng đó hiện "Còn X sản phẩm";
+// size còn hàng bình thường không hiện trạng thái gì (Figma 3281:53948)
+const SIZE_LOW_STOCK = { '42': 1 };
 const SIZE_SHEET_OPTIONS = {
   pdp2: ['90 × 90 cm', '84 × 5 cm'].map(label => ({ label, oos: false })),
   pdp3: ['Onesize'].map(label => ({ label, oos: false })),
-  pdp5: SIZES.map(s => ({ label: s, oos: DISABLED.includes(s) })),
-  pdp6: SIZES.map(s => ({ label: s, oos: DISABLED.includes(s) })),
+  pdp5: SIZES.map(s => ({ label: s, oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
+  pdp6: SIZES.map(s => ({ label: s, oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
 };
 
 // Nội dung banner khuyến mãi trên cùng PLP (không viết hoa toàn bộ)
@@ -3117,6 +3120,7 @@ const I18N = {
 
   // ── PDP ──
   'Thêm vào giỏ hàng':'Add to bag', 'Đặt trước':'Pre-order', 'Chọn kích thước':'Select size',
+  'Chọn size':'Select size', 'Hướng dẫn chọn size':'Size guide', 'Nhận thông báo':'Notify me',
   'Chỉ còn 01 sản phẩm':'Only 1 left in stock', 'Tạm hết hàng':'Out of stock', '*Tạm hết hàng':'*Out of stock',
   'Nhận thông báo khi có hàng':'Notify me when available', 'Đã đăng ký nhận thông báo':'You\u2019re on the list',
   'Đăng ký nhận thông báo':'Notify me', 'Chúng tôi sẽ báo bạn ngay khi sản phẩm có hàng trở lại.':'We\u2019ll let you know as soon as this item is back in stock.',
@@ -3128,7 +3132,8 @@ const I18N = {
   'Chất liệu':'Material', 'Xuất xứ':'Made in', 'Lụa twill 100%':'100% twill silk',
   'Trả trước từ':'From', '/tháng':'/month', 'Xem chính sách trả góp':'View instalment policy',
   'Dự kiến giao hàng vào ngày 15/08/2026':'Estimated delivery 15/08/2026', 'Dự kiến giao 15/08/2026':'Est. delivery 15/08/2026',
-  'Đã thêm vào giỏ':'Added to bag',
+  'Đã thêm vào giỏ':'Added to bag', 'Đã thêm vào giỏ hàng':'Added to your bag',
+  'Xem giỏ hàng':'Go to cart', 'Tiếp tục mua sắm':'Continue shopping',
   'Tránh ánh nắng trực tiếp và độ ẩm cao. Lau bằng khăn mềm khô. Cất trong túi vải khi không dùng.':'Keep away from direct sunlight and humidity. Wipe with a soft dry cloth. Store in the dust bag when not in use.',
   'Tránh ánh nắng trực tiếp. Lau bằng khăn ẩm, không dùng chất tẩy mạnh.':'Keep away from direct sunlight. Wipe with a damp cloth; avoid harsh detergents.',
   'Giặt khô. Không vắt, không dùng chất tẩy. Là ở nhiệt độ thấp qua lớp vải lót.':'Dry clean only. Do not wring or bleach. Iron on low heat through a cloth.',
@@ -3307,6 +3312,8 @@ const I18N_RE = [
   [/^\+ ([\d.]+) điểm$/,              '+ $1 points'],
   [/^− ([\d.]+) điểm$/,               '− $1 points'],
   [/^(\d+) — hết hàng$/,              '$1 — out of stock'],
+  [/^Còn (\d+) sản phẩm$/,            'Only $1 left'],
+  [/^Giỏ hàng hiện có (\d+) sản phẩm$/, 'Your bag now has $1 items'],
   [/^Đặt ngày (.+)$/,                 'Ordered on $1'],
   [/^Đơn hàng (#\S+)$/,               'Order $1'],
   [/^Mục: (.+)$/,                     'Section: $1'],
@@ -3322,6 +3329,8 @@ const I18N_REV_RE = [
   [/^\+ ([\d.]+) points$/,            '+ $1 điểm'],
   [/^− ([\d.]+) points$/,             '− $1 điểm'],
   [/^(\d+) — out of stock$/,          '$1 — hết hàng'],
+  [/^Only (\d+) left$/,               'Còn $1 sản phẩm'],
+  [/^Your bag now has (\d+) items$/,  'Giỏ hàng hiện có $1 sản phẩm'],
   [/^Ordered on (.+)$/,               'Đặt ngày $1'],
   [/^Order (#\S+)$/,                  'Đơn hàng $1'],
   [/^Section: (.+)$/,                 'Mục: $1'],
@@ -3649,7 +3658,7 @@ function wire(root) {
   // product → PDP
   wireProductCards(root);
 
-  // add to cart
+  // add to cart -> bay ảnh vào giỏ rồi mở sheet xác nhận (thay toast + tự chuyển giỏ)
   root.querySelectorAll('[data-add]').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.oosState) return;   // đang ở trạng thái hết hàng -> không thêm giỏ
@@ -3657,8 +3666,17 @@ function wire(root) {
       if (img) flyToCart(img);
       cartQty++;
       document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
-      toast('Đã thêm vào giỏ');
-      setTimeout(() => go('cart'), 850);
+      const p = PRODUCTS[SCREEN_PRODUCT[current] || 0];
+      const colorEl = root.querySelector('#colorName');
+      const sizeChip = root.querySelector('.chip.on');
+      const sizeLbl = root.querySelector('.size-trigger-label');
+      const size = sizeChip ? sizeChip.dataset.size
+        : (sizeLbl && !sizeLbl.classList.contains('text-muted-foreground') ? sizeLbl.textContent.trim() : '');
+      const variant = [colorEl ? colorEl.textContent.trim() : '', size].filter(Boolean).join(' , ');
+      setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
+        img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
+        price: p.price, off: p.off, was: p.was,
+      }), 450);
     });
   });
 
@@ -4714,8 +4732,15 @@ function quickAddBody(p, idx) {
       if (img) flyToCart(img);
       cartQty++;
       document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
+      const colorName = body.querySelector('.qa-color-name');
+      const sizeChip = body.querySelector('[data-qa-sizes] .chip.on');
+      const variant = [colorName ? colorName.textContent.trim() : '', sizeChip ? sizeChip.dataset.size : ''].filter(Boolean).join(' , ');
       closeQA();
-      toast('Đã thêm vào giỏ');
+      // đợi sheet quick-add trượt xuống xong rồi mở sheet xác nhận
+      setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
+        img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
+        price: p.price, off: p.off, was: p.was,
+      }), 350);
     });
     // nút ghost "Xem chi tiết" -> đóng sheet, mở đúng PDP của sản phẩm
     body.querySelector('#qaDetail').addEventListener('click', () => {
@@ -4816,23 +4841,105 @@ document.body.insertAdjacentHTML('beforeend', `
   });
 })();
 
-/* ── Size sheet — thay cho <select> gốc của trình duyệt (PDP2/3/5/6) ── */
+/* ── Bottom sheet xác nhận đã thêm vào giỏ ──
+   Theo ngôn ngữ sheet chung của app: bo 10, handle 50×3, header 52px (tiêu đề 20/28 + ✕ 12px),
+   hàng item kiểu item-cart (ảnh 3:4 + brand 14 medium + tên 14 + variant 12 + giá),
+   nút chính 48 "Xem giỏ hàng" + nút ghost 36 "Tiếp tục mua sắm" (như drawer quick-add) */
+document.body.insertAdjacentHTML('beforeend', `
+  <div id="cartConfirm" class="fixed inset-0 z-[220] pointer-events-none" aria-hidden="true">
+    <div class="cc-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
+    <div class="cc-panel absolute inset-x-0 bottom-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col"
+         style="border-radius:10px 10px 0 0" role="dialog" aria-label="Đã thêm vào giỏ hàng">
+      <span class="absolute left-1/2 -translate-x-1/2 top-2 w-[50px] h-[3px] rounded-full bg-border"></span>
+      <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
+        <p class="flex-1 min-w-0 text-[20px] leading-7 text-foreground">Đã thêm vào giỏ hàng</p>
+        <button id="ccClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
+      </div>
+      <div class="px-4 py-2 flex gap-3">
+        <div class="w-20 shrink-0 bg-secondary overflow-hidden" style="aspect-ratio:3/4">
+          <img id="ccImg" src="" class="w-full h-full object-cover" alt="">
+        </div>
+        <div class="flex-1 min-w-0 flex flex-col">
+          <p id="ccBrand" class="text-[14px] font-medium leading-5 text-foreground truncate"></p>
+          <p id="ccName" class="text-[14px] leading-5 text-secondary-foreground truncate"></p>
+          <p id="ccVariant" class="text-[12px] leading-4 text-muted-foreground pt-0.5"></p>
+          <div class="flex gap-1 items-center pt-1">
+            <p id="ccPrice" class="text-[14px] font-medium leading-5 text-foreground"></p>
+            <span id="ccOff" class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0 hidden"></span>
+            <p id="ccWas" class="text-[12px] leading-4 text-muted-foreground line-through hidden"></p>
+          </div>
+          <p id="ccCount" class="text-[12px] leading-4 text-muted-foreground pt-1"></p>
+        </div>
+      </div>
+      <div class="px-4 pt-2 pb-4 flex flex-col gap-2.5 shrink-0">
+        <button id="ccGoCart" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium press">Xem giỏ hàng</button>
+        <button id="ccContinue" class="w-full h-9 rounded-xs text-[14px] leading-5 font-medium press" style="color:var(--unofficial-ghost-foreground)">Tiếp tục mua sắm</button>
+      </div>
+      <div class="safe-b"></div>
+    </div>
+  </div>`);
+(() => {
+  const cc = document.getElementById('cartConfirm');
+  const panel = cc.querySelector('.cc-panel');
+  const openCC = (d = {}) => {
+    cc.querySelector('#ccImg').src = d.img || '';
+    cc.querySelector('#ccBrand').textContent = d.brand || '';
+    cc.querySelector('#ccName').textContent = d.name || '';
+    const va = cc.querySelector('#ccVariant');
+    va.textContent = d.variant || '';
+    va.classList.toggle('hidden', !d.variant);
+    const price = cc.querySelector('#ccPrice');
+    price.textContent = d.price || '';
+    price.classList.toggle('text-destructive', !!d.off);
+    price.classList.toggle('text-foreground', !d.off);
+    const off = cc.querySelector('#ccOff');
+    off.textContent = d.off || '';
+    off.classList.toggle('hidden', !d.off);
+    const was = cc.querySelector('#ccWas');
+    was.textContent = d.was || '';
+    was.classList.toggle('hidden', !d.was);
+    cc.querySelector('#ccCount').textContent = `Giỏ hàng hiện có ${cartQty} sản phẩm`;
+    localizeNew(panel);
+    cc.classList.remove('pointer-events-none');
+    cc.setAttribute('aria-hidden', 'false');
+    cc.querySelector('.cc-backdrop').classList.remove('opacity-0');
+    panel.classList.remove('translate-y-full');
+    lockBodyScroll();
+  };
+  const closeCC = () => {
+    cc.querySelector('.cc-backdrop').classList.add('opacity-0');
+    panel.classList.add('translate-y-full');
+    cc.classList.add('pointer-events-none');
+    unlockBodyScroll();
+    setTimeout(() => cc.setAttribute('aria-hidden', 'true'), 300);
+  };
+  window.__openCartConfirm = openCC;
+  cc.querySelector('.cc-backdrop').addEventListener('click', closeCC);
+  cc.querySelector('#ccClose').addEventListener('click', closeCC);
+  cc.querySelector('#ccContinue').addEventListener('click', closeCC);
+  cc.querySelector('#ccGoCart').addEventListener('click', () => { closeCC(); go('cart'); });
+})();
+
+/* Sản phẩm đang xem theo màn PDP — dùng cho sheet xác nhận thêm giỏ */
+const SCREEN_PRODUCT = { pdp: 0, pdp2: 1, pdp3: 2, pdp4: 3, pdp5: 4, pdp6: 5 };
+
+/* ── Size sheet — thay cho <select> gốc của trình duyệt (PDP2/3/5/6) ──
+   Drawer 3281:53948: bo 10, handle 50×3 đè trên header 52px ("Chọn size" 20/1.4 + ✕ 12px),
+   hàng size 36px, link "Hướng dẫn chọn size" dưới list, CTA 48px chữ 16 */
 document.body.insertAdjacentHTML('beforeend', `
   <div id="sizeSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
     <div class="sz-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
     <div class="sz-panel absolute inset-x-0 bottom-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col"
-         style="border-radius:24px 24px 0 0; max-height:85vh" role="dialog" aria-label="Chọn kích thước">
-      <div class="h-6 flex items-center justify-center shrink-0 relative">
-        <span class="w-10 h-1 rounded-full bg-border"></span>
-        <button id="szClose" class="absolute top-0 right-3 w-8 h-8 flex items-center justify-center press">${I.close}</button>
+         style="border-radius:10px 10px 0 0; max-height:85vh" role="dialog" aria-label="Chọn size">
+      <span class="absolute left-1/2 -translate-x-1/2 top-2 w-[50px] h-[3px] rounded-full bg-border"></span>
+      <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
+        <p class="flex-1 min-w-0 text-[20px] leading-7 text-foreground">Chọn size</p>
+        <button id="szClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3">${I.close}</button>
       </div>
-      <div class="px-4 pb-2 flex items-center justify-between">
-        <p class="text-[16px] font-medium leading-6 text-foreground">Chọn kích thước</p>
-        <button id="szGuide" class="text-[12px] leading-4 text-foreground underline press">Hướng dẫn chọn size</button>
-      </div>
-      <div id="szList" class="flex flex-col overflow-y-auto no-scrollbar px-2 pb-2"></div>
-      <div class="px-4 pt-2 pb-2 shrink-0">
-        <button id="szAdd" disabled class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press" style="opacity:.4">Thêm vào giỏ hàng</button>
+      <div id="szList" class="flex flex-col overflow-y-auto no-scrollbar"></div>
+      <button id="szGuide" class="w-full min-h-9 px-4 py-2 text-left text-[14px] leading-5 text-secondary-foreground underline press shrink-0">Hướng dẫn chọn size</button>
+      <div class="p-4 shrink-0">
+        <button id="szAdd" disabled class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium press" style="opacity:.4">Thêm vào giỏ hàng</button>
       </div>
       <div class="safe-b"></div>
     </div>
@@ -4847,15 +4954,17 @@ document.body.insertAdjacentHTML('beforeend', `
   let opts = [];
   let selected = null;
 
+  // Hàng 36px: còn hàng -> chỉ nhãn; sắp hết -> "Còn X sản phẩm"; hết -> nhãn gạch + "Nhận thông báo"
+  // Hàng đang chọn highlight bằng nền bg-secondary (không dùng dấu check)
   const renderList = () => {
-    list.innerHTML = opts.map(o => `
-      <button class="w-full h-14 flex items-center justify-between px-2 press" data-size-opt="${o.label}">
-        <span class="text-[14px] leading-5 ${o.oos ? 'text-muted-foreground' : 'text-foreground'} ${o.label === selected ? 'font-medium' : ''}">${o.label}</span>
-        <span class="flex items-center gap-2">
-          <span class="text-[12px] leading-4 ${o.oos ? 'text-muted-foreground' : 'text-foreground-alt'}">${o.oos ? 'Hết hàng' : 'Còn hàng'}</span>
-          ${o.label === selected ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<span style="width:16px"></span>'}
-        </span>
-      </button>`).join('');
+    list.innerHTML = opts.map(o => {
+      const status = o.oos ? 'Nhận thông báo' : (o.left ? `Còn ${o.left} sản phẩm` : '');
+      return `
+      <button class="w-full min-h-9 flex items-center gap-1 px-4 py-2 press text-left transition-colors ${o.label === selected ? 'bg-secondary' : ''}" data-size-opt="${o.label}">
+        <span class="flex-1 min-w-0 text-[14px] font-medium leading-5 ${o.oos ? 'text-muted-foreground line-through' : 'text-foreground'}">${o.label}</span>
+        ${status ? `<span class="text-[14px] leading-5 text-muted-foreground shrink-0">${status}</span>` : ''}
+      </button>`;
+    }).join('');
     list.querySelectorAll('[data-size-opt]').forEach(btn => {
       btn.addEventListener('click', () => {
         selected = btn.dataset.sizeOpt;
@@ -4863,6 +4972,7 @@ document.body.insertAdjacentHTML('beforeend', `
         updateCta();
       });
     });
+    localizeNew(list);
   };
 
   const updateCta = () => {
@@ -4922,7 +5032,13 @@ document.body.insertAdjacentHTML('beforeend', `
       document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
       if (onPick) onPick(selected);
       closeSZ();
-      toast('Đã thêm vào giỏ');
+      const p = PRODUCTS[SCREEN_PRODUCT[current] || 0];
+      const colorEl = document.querySelector('.screen #colorName');
+      const variant = [colorEl ? colorEl.textContent.trim() : '', selected].filter(Boolean).join(' , ');
+      setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
+        img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
+        price: p.price, off: p.off, was: p.was,
+      }), 350);
     }
   });
   window.__openSizeSheet = openSZ;
