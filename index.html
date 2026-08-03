@@ -53,6 +53,8 @@
   .drag-x.dragging img { pointer-events: none; }
 
   /* ── Search screen ── */
+  /* ẩn nút ✕ clear mặc định của trình duyệt — đã có nút "Xóa" riêng theo Figma */
+  #searchInput::-webkit-search-cancel-button, #searchInput::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
   .search-tab { transition: color .2s ease, border-bottom-color .2s ease; }
   @keyframes searchIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   .search-pane { animation: searchIn .22s ease both; }
@@ -743,8 +745,9 @@ function screenPLP() {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   SCREEN: SEARCH — theo 3 trạng thái Figma (search overlay)
+   SCREEN: SEARCH — theo 4 trạng thái Figma "03 — Search / Mobile" (2084:160)
    01 empty/trending · 02 typing/suggestions · 03 recent + featured
+   04 no-result ("Không tìm thấy kết quả" + Sản phẩm nổi bật)
 ════════════════════════════════════════════════════════════════ */
 let searchQuery = '';
 let searchTab = 0;
@@ -771,63 +774,75 @@ function searchSuggestHTML() {
   const q = searchQuery.trim();
   const sug = searchSuggestions(q);
   return `
-  <section class="flex flex-col gap-2 pt-4">
+  <section class="flex flex-col py-4">
     <h2 class="px-4 text-[12px] leading-4 text-muted-foreground">Gợi ý</h2>
     ${sug.length ? `
     <ul>
       ${sug.map(s => `
       <li><button class="search-suggest w-full text-left px-4 py-3 text-[14px] leading-5 text-foreground press" data-suggest="${s}">${highlightMatch(s, q)}</button></li>`).join('')}
-    </ul>` : `<p class="px-4 py-3 text-[14px] leading-5 text-muted-foreground">Không tìm thấy kết quả phù hợp với "${q}"</p>`}
+    </ul>` : `<p class="px-4 py-3 text-[14px] leading-5 font-medium text-foreground">Không tìm thấy kết quả</p>`}
   </section>`;
 }
 
 function searchHistoryHTML() {
   if (!searchHistory.length) return '';
   return `
-  <section class="flex flex-col gap-2 pt-4">
-    <h2 class="px-4 text-[12px] leading-4 text-muted-foreground">Vừa tìm kiếm</h2>
+  <section class="flex flex-col py-4">
+    <h2 class="px-4 py-2 text-[12px] leading-4 text-muted-foreground">Vừa tìm kiếm</h2>
     <ul>
       ${searchHistory.map(h => `
       <li class="search-row flex items-center">
         <button class="search-suggest flex-1 min-w-0 text-left px-4 py-3 text-[14px] leading-5 text-foreground press truncate" data-suggest="${h}">${h}</button>
-        <button class="search-remove w-8 h-8 mr-2 flex items-center justify-center shrink-0 press [&_svg]:w-3 [&_svg]:h-3" data-remove="${h}" aria-label="Xoá &quot;${h}&quot; khỏi lịch sử">${I.close}</button>
+        <button class="search-remove w-8 h-8 mr-1.5 flex items-center justify-center shrink-0 press [&_svg]:w-3 [&_svg]:h-3" data-remove="${h}" aria-label="Xoá &quot;${h}&quot; khỏi lịch sử">${I.close}</button>
       </li>`).join('')}
     </ul>
   </section>`;
 }
 
-function searchTrendingHTML() {
-  const hasHistory = searchHistory.length > 0;
+/* Khối sản phẩm ngang — "Trending item" khi chưa có lịch sử, "Sản phẩm nổi bật"
+   khi đã có; fixedTitle dùng cho pane no-result (không gắn id động). */
+function searchTrendingHTML(fixedTitle = '') {
+  const title = fixedTitle || (searchHistory.length ? 'Sản phẩm nổi bật' : 'Trending item');
   return `
-  <section class="flex flex-col gap-2 py-6">
-    <h2 id="trendTitle" class="px-4 text-[20px] leading-7 ${hasHistory ? 'text-secondary-foreground' : 'text-muted-foreground'} text-center">${hasHistory ? 'Sản phẩm nổi bật' : 'Trending item'}</h2>
-    <div class="drag-x flex gap-0.5 overflow-x-auto no-scrollbar px-2">
-      ${PRODUCTS.slice(0, 4).map((p, i) => productCard(p, i, { w: 'w-[254px] shrink-0', noColors: true })).join('')}
+  <section class="flex flex-col gap-2 py-4">
+    <h2 ${fixedTitle ? '' : 'id="trendTitle" '}class="px-4 text-[12px] leading-4 text-muted-foreground">${title}</h2>
+    <div class="drag-x flex gap-0.5 overflow-x-auto no-scrollbar px-4">
+      ${PRODUCTS.slice(0, 4).map((p, i) => productCard(p, i, { w: 'w-[176px] shrink-0', noColors: true })).join('')}
     </div>
   </section>`;
 }
 
 function screenSearch() {
+  const q = searchQuery.trim();
+  const noResult = q && !searchSuggestions(q).length;
   return `
   <div class="w-full" data-scroller>
-    <div class="flex items-center gap-1 px-2 h-14">
-      <label class="flex-1 min-w-0 flex items-center gap-3 h-10 bg-secondary rounded-xs px-2">
-        <span class="w-5 h-5 flex items-center justify-center shrink-0">${I.search}</span>
-        <span style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Tìm kiếm</span>
-        <input id="searchInput" type="search" value="${searchQuery}" placeholder="Bạn đang tìm kiếm gì" autocomplete="off" enterkeyhint="search"
-               class="flex-1 min-w-0 outline-none text-[16px] leading-6 text-foreground placeholder:text-muted-foreground" style="background:transparent;border:0;padding:0;-webkit-appearance:none;appearance:none">
-      </label>
-      <button data-nav="plp" aria-label="Đóng tìm kiếm" class="w-10 h-10 flex items-center justify-center shrink-0 press">${I.closeLg}</button>
+    <!-- Nav — logo giữa + đóng bên phải, không viền dưới (Figma 3376:44047) -->
+    <div class="glass-95 sticky top-0 z-50 h-[48px] backdrop-blur-[7.5px] flex items-center justify-between px-4">
+      <div class="w-6 h-6 shrink-0"></div>
+      <img src="${A}logo.png" alt="DAFC" class="h-[20px] w-[93px] object-contain cursor-pointer press" data-nav="plp">
+      <button data-nav="plp" aria-label="Đóng tìm kiếm" class="w-6 h-6 flex items-center justify-center shrink-0 press [&_svg]:w-3.5 [&_svg]:h-3.5">${I.close}</button>
     </div>
 
-    <div class="flex gap-2 px-2" style="border-bottom:1px solid var(--general-border)">
+    <div class="flex items-center px-4 py-2">
+      <label class="flex-1 min-w-0 flex items-center gap-3 min-h-10 bg-secondary rounded-xs p-2">
+        <span class="w-5 h-5 flex items-center justify-center shrink-0 [&_svg]:w-4 [&_svg]:h-4">${I.search}</span>
+        <span style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Tìm kiếm</span>
+        <input id="searchInput" type="search" value="${searchQuery}" placeholder="Bạn đang tìm kiếm gì" autocomplete="off" enterkeyhint="search"
+               class="flex-1 min-w-0 outline-none text-[16px] leading-6 font-light text-foreground placeholder:text-muted-foreground" style="background:transparent;border:0;padding:0;-webkit-appearance:none;appearance:none">
+        <button id="searchClear" type="button" class="shrink-0 text-[14px] leading-5 text-muted-foreground press"${searchQuery ? '' : ' style="display:none"'}>Xóa</button>
+      </label>
+    </div>
+
+    <div class="flex gap-2 px-4" style="border-bottom:1px solid var(--unofficial-border-0)">
       ${['Nam','Nữ','Làm đẹp'].map((t, i) => `
-        <button class="search-tab h-8 px-2 text-[16px] leading-6 press" style="min-width:32px;white-space:nowrap;border-bottom:2px solid ${i === searchTab ? 'var(--general-foreground)' : 'transparent'}; color:${i === searchTab ? 'var(--general-foreground)' : 'var(--general-secondary-foreground)'}" data-tab="${i}">${t}</button>`).join('')}
+        <button class="search-tab h-10 px-2 text-[16px] leading-6 font-light text-secondary-foreground press" style="min-width:32px;white-space:nowrap;border-bottom:2px solid ${i === searchTab ? 'var(--unofficial-border-5)' : 'transparent'}" data-tab="${i}">${t}</button>`).join('')}
     </div>
 
     <div id="searchResults">
-      <div id="searchSug" class="search-pane"${searchQuery.trim() ? '' : ' style="display:none"'}>${searchQuery.trim() ? searchSuggestHTML() : ''}</div>
-      <div id="searchEmpty" class="search-pane"${searchQuery.trim() ? ' style="display:none"' : ''}>
+      <div id="searchSug" class="search-pane"${q ? '' : ' style="display:none"'}>${q ? searchSuggestHTML() : ''}</div>
+      <div id="searchNores"${noResult ? '' : ' style="display:none"'}>${searchTrendingHTML('Sản phẩm nổi bật')}</div>
+      <div id="searchEmpty" class="search-pane"${q ? ' style="display:none"' : ''}>
         <div id="searchHistoryBox" class="rise">${searchHistoryHTML()}</div>
         <div class="rise">${searchTrendingHTML()}</div>
       </div>
@@ -2853,10 +2868,7 @@ function refreshSearchHistory(root) {
   // tiêu đề khối trending đổi theo còn/hết lịch sử tìm kiếm
   const t = root.querySelector('#trendTitle');
   if (t) {
-    const has = searchHistory.length > 0;
-    t.textContent = has ? 'Sản phẩm nổi bật' : 'Trending item';
-    t.classList.toggle('text-secondary-foreground', has);
-    t.classList.toggle('text-muted-foreground', !has);
+    t.textContent = searchHistory.length ? 'Sản phẩm nổi bật' : 'Trending item';
     localizeNew(t.parentElement);
   }
 }
@@ -2876,8 +2888,7 @@ function wireSearchPane(root, pane) {
       }
       searchQuery = term;
       const input = root.querySelector('#searchInput');
-      if (input) input.value = term;
-      renderSearchSug(root);
+      if (input) { input.value = term; input.dispatchEvent(new Event('input')); }
       toast(`Đang tìm "${term}"`);
     });
   });
@@ -3101,6 +3112,7 @@ const I18N = {
   // ── Tìm kiếm ──
   'Tìm kiếm':'Search', 'Đóng tìm kiếm':'Close search', 'Bạn đang tìm kiếm gì':'What are you looking for',
   'Vừa tìm kiếm':'Recent searches', 'Gợi ý':'Suggestions', 'Sản phẩm nổi bật':'Featured items',
+  'Xóa':'Clear', 'Không tìm thấy kết quả':'No results found',
 
   // ── Cài đặt ──
   'Cài đặt hiển thị':'Display settings', 'Cài đặt phông chữ':'Font settings', 'Phông chữ':'Font',
@@ -3256,34 +3268,51 @@ function wire(root) {
   const searchInput = root.querySelector('#searchInput');
   if (searchInput) {
     const sugEl = root.querySelector('#searchSug');
+    const noresEl = root.querySelector('#searchNores');
     const emptyEl = root.querySelector('#searchEmpty');
-    // đổi pane có fade-rise nhẹ; gõ tiếp trong cùng pane thì không chạy lại animation
-    const swapPane = (showEl, hideEl) => {
-      hideEl.style.display = 'none';
-      if (showEl.style.display === 'none') {
-        showEl.style.display = '';
-        showEl.classList.remove('search-pane');
-        void showEl.offsetWidth;
-        showEl.classList.add('search-pane');
+    const clearBtn = root.querySelector('#searchClear');
+    // hiện/ẩn pane có fade-rise nhẹ; gõ tiếp trong pane đang mở thì không chạy lại animation
+    const setShown = (el, show) => {
+      if (!el) return;
+      if (!show) { el.style.display = 'none'; return; }
+      if (el.style.display === 'none') {
+        el.style.display = '';
+        el.classList.remove('search-pane');
+        void el.offsetWidth;
+        el.classList.add('search-pane');
       }
+    };
+    // 3 khối theo Figma: gõ có kết quả → Gợi ý; gõ không kết quả → Gợi ý
+    // ("Không tìm thấy kết quả") + Sản phẩm nổi bật; rỗng → lịch sử + trending
+    const updatePanes = () => {
+      const q = searchQuery.trim();
+      if (clearBtn) clearBtn.style.display = searchInput.value ? '' : 'none';
+      if (q) renderSearchSug(root);
+      setShown(sugEl, !!q);
+      setShown(noresEl, !!q && !searchSuggestions(q).length);
+      setShown(emptyEl, !q);
     };
     searchInput.addEventListener('input', () => {
       searchQuery = searchInput.value;
-      if (searchQuery.trim()) { renderSearchSug(root); swapPane(sugEl, emptyEl); }
-      else swapPane(emptyEl, sugEl);
+      updatePanes();
+    });
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+      searchQuery = '';
+      searchInput.value = '';
+      updatePanes();
+      searchInput.focus({ preventScroll: true });
     });
     searchInput.focus({ preventScroll: true });
     root.querySelectorAll('.search-tab').forEach(t => {
       t.addEventListener('click', () => {
         searchTab = +t.dataset.tab;
         root.querySelectorAll('.search-tab').forEach(x => {
-          const on = x === t;
-          x.style.borderBottom = `2px solid ${on ? 'var(--general-foreground)' : 'transparent'}`;
-          x.style.color = on ? 'var(--general-foreground)' : 'var(--general-secondary-foreground)';
+          x.style.borderBottom = `2px solid ${x === t ? 'var(--unofficial-border-5)' : 'transparent'}`;
         });
       });
     });
     wireSearchPane(root, sugEl);
+    wireSearchPane(root, noresEl);
     wireSearchPane(root, emptyEl);
   }
 
