@@ -198,9 +198,17 @@
   .acc-chev { transition: transform .3s ease; }
 
   /* ── Peek + "Xem tất cả" (khác accordion: mặc định đã hiện mấp mé, không thu về 0) ──
-     73px = chiều cao clip đúng theo Figma 2843:45226 (nội dung bị cắt ngang, không phải bội số dòng) */
-  .promo-peek { max-height: 73px; overflow: hidden; transition: max-height .3s ease; }
+     73px = chiều cao clip đúng theo Figma 2843:45226 (nội dung bị cắt ngang, không phải bội số dòng).
+     ::after tạo dải mờ dần (fade-to-bg) ở đáy khi đang thu gọn, thay vì cắt cứng
+     — theo layout user chỉnh lại, ẩn dải mờ khi đã mở (.open). */
+  .promo-peek { position: relative; max-height: 73px; overflow: hidden; transition: max-height .3s ease; }
+  .promo-peek::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 40px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, var(--general-background) 90%);
+    pointer-events: none;
+  }
   .promo-peek.open { max-height: 500px; }
+  .promo-peek.open::after { display: none; }
 
   /* ── Toast ── */
   @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px) scale(.96); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
@@ -2205,13 +2213,16 @@ function cartPbhTotal() { return cartPbh.reduce((s, p) => s + p.amount, 0); }
 /* Các dòng Tạm tính / giảm giá trong summary — sinh động theo state (đăng nhập,
    reward đang chọn, voucher, N mã phiếu mua hàng), dùng chung cho cả lần render
    đầu (screenCART) và mỗi lần cập nhật sau tương tác (refreshCartSummary).
-   Nhãn dòng KHÔNG kèm tên mã (mã cụ thể đã hiện sẵn dưới ô input tương ứng) —
-   voucher chỉ 1 mã nên ghi "Mã giảm giá"; phiếu mua hàng có thể nhiều mã nên
-   dồn thành 1 dòng tổng "Phiếu mua hàng" (không lặp label cho từng mã). */
+   Theo đúng Figma 3437:55820: MỖI mã (voucher hoặc phiếu mua hàng) có 1 dòng
+   riêng dạng "Giảm giá(<CODE>)" — cả 2 loại dùng CHUNG format nhãn này, không
+   gộp/rút gọn thành 1 dòng tổng như bản trước. */
 function discountLinesHTML() {
+  /* py-2 (không h-9 cố định) + items-start: mã dài (VOUCHERPBH...) sẽ XUỐNG
+     DÒNG thay vì bị cắt "..." — đúng theo Figma (dòng đó cao 56px = 2 dòng
+     label, không phải 36px 1 dòng như các dòng còn lại). */
   const line = (label, amount, isDiscount) => `
-    <div class="flex justify-between items-center h-9 gap-2">
-      <span class="text-[14px] leading-5 text-foreground truncate">${label}</span>
+    <div class="flex justify-between items-start gap-2 py-2">
+      <span class="text-[14px] leading-5 text-foreground">${label}</span>
       <span class="text-[14px] leading-5 ${isDiscount ? 'text-destructive' : 'text-foreground'} shrink-0">${isDiscount ? '-' : ''}${amount.toLocaleString('en-US')}đ</span>
     </div>`;
   const rows = [line('Tạm tính', CART_SUBTOTAL, false)];
@@ -2219,21 +2230,20 @@ function discountLinesHTML() {
     const amt = rewardAmount(cartReward);
     if (amt > 0) rows.push(line(cartReward === 'points' ? `Dùng ${REWARD_POINTS} điểm` : 'Giảm giá thành viên', amt, true));
   }
-  if (cartVoucherDiscount > 0) rows.push(line('Mã giảm giá', cartVoucherDiscount, true));
-  const pbhTotal = cartPbhTotal();
-  if (pbhTotal > 0) rows.push(line('Phiếu mua hàng', pbhTotal, true));
+  if (cartVoucherDiscount > 0) rows.push(line(`Giảm giá(${cartVoucherCode})`, cartVoucherDiscount, true));
+  cartPbh.forEach(p => rows.push(line(`Giảm giá(${p.code})`, p.amount, true)));
   return rows.join('');
 }
 
-/* Khối hợp nhất theo Figma 3428:55499: 1 panel nền secondary (#f5f5f5, viền trên)
-   chứa 2 card trắng riêng (Rewards / Mã giảm giá) rồi tới summary ngay trong
-   panel đó. "Chương trình khuyến mãi" CHỦ Ý để ngoài khối này — giữ nguyên vị
-   trí/hành vi cũ, theo yêu cầu trước đó. "Bạn có phiếu mua hàng?" KHÔNG còn ở
-   đây nữa — đã dời xuống dưới nút "Đặt hàng" (xem #cartCta trong screenCART()),
-   vì user coi phiếu mua hàng là một PHƯƠNG THỨC MUA HÀNG, không phải ưu đãi
-   giảm giá cùng nhóm với Rewards/Mã giảm giá. Figma cũng xác nhận thay đổi này
-   (đọc lại lần 2, node y hệt nhưng cards-group giờ chỉ còn 2 card, "Chính sách"
-   card dời sang Frame 427319741 — cùng khối với Button "Đặt hàng"). */
+/* Khối hợp nhất theo Figma 3458:56933 (đọc lại lần 4 — user xác nhận "chưa
+   đúng thiết kế", bỏ hẳn kiểu "card nổi bo góc" của 2 vòng trước): panel giờ
+   lại là full-bleed sát viền màn hình (KHÔNG margin trắng quanh, KHÔNG bo
+   góc — chỉ 1 lớp pad[24,16,24,16] trực tiếp trên chính panel, không còn
+   wrapper ngoài + card trong lồng nhau). Nền secondary (#f5f5f5) giữ nguyên.
+   Summary KHÔNG còn thụt vào thêm 8px như trước — giờ rộng bằng 2 card phía
+   trên (358px, không phải 342px). "Chương trình khuyến mãi" vẫn để ngoài
+   khối này. "Bạn có phiếu mua hàng?" ở #cartCta (screenCART()), gap với nút
+   "Đặt hàng" tăng 8px→16px theo số liệu mới. */
 function discountPanel(cartTotalNow) {
   const rewardsCard = ckAuth ? `
     <div class="bg-background border border-border-1 rounded-md p-3 flex flex-col gap-4">
@@ -2241,7 +2251,7 @@ function discountPanel(cartTotalNow) {
       ${dafcRewards()}
     </div>` : '';
   return `
-  <div class="py-6 px-4 border-t border-border bg-secondary flex flex-col gap-4 rise">
+  <div class="py-6 px-4 bg-secondary flex flex-col gap-4 rise">
     <div class="flex flex-col gap-2">
       ${rewardsCard}
       <div class="bg-background border border-border-1 rounded-md py-1 px-3">
@@ -2256,7 +2266,7 @@ function discountPanel(cartTotalNow) {
       </div>
     </div>
 
-    <div class="flex flex-col px-2">
+    <div class="flex flex-col">
       <div id="discountLines" class="flex flex-col">${discountLinesHTML()}</div>
       <div class="border-t border-border flex justify-between items-center h-14">
         <span class="text-[16px] font-medium leading-6 text-foreground">Tổng cộng</span>
@@ -2269,16 +2279,16 @@ function discountPanel(cartTotalNow) {
   </div>`;
 }
 
-/* Rule text 1 mục khuyến mãi — 3 tầng chữ: Headline 12px medium (tên chương
-   trình + thời gian), Scheme 10px regular (cơ chế giảm giá), T&Cs 8px medium
-   (điều kiện/loại trừ). Theo yêu cầu rule text trực tiếp từ user, không phải
-   số liệu đo từ Figma. */
+/* Rule text 1 mục khuyến mãi — 3 tầng chữ: Headline 14px medium (tên chương
+   trình + thời gian), Scheme 14px regular (cơ chế giảm giá), T&Cs 12px regular
+   (điều kiện/loại trừ). scheme/tnc để trống khi mục không có (ví dụ dòng
+   freeship đơn lẻ, không kèm mã/điều kiện riêng) — chỉ hiện dòng headline. */
 function promoRule(headline, scheme, tnc) {
   return `
   <div class="flex flex-col gap-1">
-    <p class="text-[12px] font-medium leading-4 text-foreground">${headline}</p>
-    <p class="text-[10px] leading-3 text-foreground">${scheme}</p>
-    <p class="text-[8px] font-medium leading-3 text-foreground">${tnc}</p>
+    <p class="text-[14px] font-medium leading-5 text-foreground">${headline}</p>
+    ${scheme ? `<p class="text-[14px] leading-5 text-foreground">${scheme}</p>` : ''}
+    ${tnc ? `<p class="text-[12px] leading-4 text-foreground">${tnc}</p>` : ''}
   </div>`;
 }
 
@@ -2349,24 +2359,33 @@ function screenCART() {
     ${ckAuth ? giftPicker() : ''}
 
     <!-- promo -->
-    <!-- Chương trình khuyến mãi — theo Figma 3428:55499: card viền border-border
-         (không còn fill accent-0), peek clip đúng 73px, CTA full-width canh
-         giữa có gạch chân. Mỗi mục tách 3 tầng chữ theo rule text: Headline
-         12px medium / Scheme 10px regular / T&Cs 8px medium. -->
-    <div class="py-6 px-2 rise">
+    <!-- Chương trình khuyến mãi — theo Figma 2851:28697: pad ngang wrapper
+         8->16px (px-4); card viền border-border rounded-md giữ nguyên (bg/r
+         không đổi so với lần trước — đã kiểm lại, Figma không cho số khác);
+         peek clip đúng 73px, CTA full-width canh giữa có gạch chân. Nội dung
+         cập nhật theo dữ liệu mới (WARDROBE REFRESH / TUMI / BUY MORE SAVE
+         MORE), style rule text 3 tầng giữ y nguyên: Headline 14px medium /
+         Scheme 14px regular / T&Cs 12px regular. -->
+    <div class="py-6 px-4 rise">
       <div class="border border-border rounded-md py-2 px-3 flex flex-col gap-2">
         <p class="text-[16px] leading-6 font-medium text-foreground">Chương trình khuyến mãi (5)</p>
         <div id="promoPeek" class="promo-peek flex flex-col gap-2">
           ${promoRule(
-            '** Buy more save more - [15/06 - 15/07]',
-            'Mua 2 giảm thêm 10%  Mua 3 giảm thêm 15%',
-            '(**)  Sản phẩm chọn lọc thuộc Moschino, Moschino Jeans Mua 2 giảm thêm 20% (**) Sản phẩm chọn lọc thuộc MessyWeekend'
+            '* WARDROBE REFRESH - [20/07 - 31/07]',
+            'Nhập mã JUL1500 - giảm 1.5 triệu cho đơn từ 16 triệu JUL1000 - giảm 1 triệu cho đơn từ 11 triệu JUL500 - giảm 500K cho đơn từ 8 triệu',
+            '(*) Không áp dụng cho Stefano Ricci, TUMI, Montblanc, Phiếu Quà Tặng và New Season'
           )}
           ${promoRule(
-            '* Summer Sale - [15/06 - 28/06]',
-            'Nhập mã JUNE2000 - giảm 2 triệu cho đơn từ 20 triệu JUNE900 - giảm 900K cho đơn từ 15 triệu JUNE500 - giảm 500K cho đơn từ 10 triệu',
-            '(*) Không áp dụng cho Montblanc, TUMI, Phiếu Quà Tặng và New Season.'
+            '** TUMI - [08/07 - 06/09]',
+            'Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%',
+            '(**) Sản phẩm chọn lọc'
           )}
+          ${promoRule(
+            '*** BUY MORE SAVE MORE - [16/07 - 02/08]',
+            'Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%',
+            '(***) Sản phẩm chọn lọc'
+          )}
+          ${promoRule('Miễn phí vận chuyển cho đơn hàng từ 8 triệu')}
         </div>
         <button id="promoToggle" class="w-full min-h-8 flex items-center justify-center text-[14px] leading-5 font-medium text-foreground underline press">Xem tất cả 5 chương trình</button>
       </div>
@@ -2379,25 +2398,23 @@ function screenCART() {
     <!-- "Bạn có phiếu mua hàng?" — coi là 1 phương thức mua hàng, không phải ưu
          đãi giảm giá, nên đặt bên dưới nút Đặt hàng (theo Figma 3428:55499,
          Frame 427319741) thay vì chung nhóm với Rewards/Mã giảm giá phía trên. -->
-    <div id="cartCta" class="px-4 py-4 bg-secondary flex flex-col gap-2">
+    <div id="cartCta" class="px-4 py-4 flex flex-col gap-4">
       <button data-checkout class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center">Đặt hàng</button>
-      <div class="bg-background border border-border-1 rounded-md py-1 px-3">
-        <div class="acc">
-          <button class="acc-trigger w-full h-9 flex items-center justify-between press">
-            <span class="text-[14px] font-medium leading-5 text-foreground">Bạn có phiếu mua hàng?</span>
-            ${I.chevR('var(--general-primary)')}
-          </button>
-          <div class="acc-body"><div class="acc-inner">
-            <div class="flex flex-col gap-2 pt-2 pb-2">
-              <p class="text-[12px] leading-4 text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
-              <div class="flex gap-1">
-                <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[16px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-                <button id="applyPbh" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
-              </div>
-              <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
+      <div class="acc">
+        <button class="acc-trigger w-full h-9 flex items-center justify-between press">
+          <span class="text-[14px] font-medium leading-5 text-foreground">Bạn có phiếu mua hàng?</span>
+          ${I.chevR('var(--general-primary)')}
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <div class="flex flex-col gap-2 pt-2 pb-2">
+            <p class="text-[12px] leading-4 text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
+            <div class="flex gap-1">
+              <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[16px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+              <button id="applyPbh" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
             </div>
-          </div></div>
-        </div>
+            <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
+          </div>
+        </div></div>
       </div>
     </div>
 
@@ -3403,14 +3420,15 @@ const I18N = {
   'Giảm thêm 10% cho DAFC Insider':'Extra 10% off for DAFC Insiders',
   '* Summer Sale - giảm đến 50%':'* Summer Sale — up to 50% off',
   '* Buy more save more - mua 2 giảm 15%':'* Buy more save more — 15% off when you buy 2',
-  '- [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%':' — [16/07 – 02/08] Extra 5% off 2 items, extra 10% off 3 items',
-  '- [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%':' — [08/07 – 06/09] Free leather notebook on orders over 40 million, extra 10% off 2 items',
-  '** Buy more save more - [15/06 - 15/07]':'** Buy more save more — [15/06 – 15/07]',
-  'Mua 2 giảm thêm 10%  Mua 3 giảm thêm 15%':'Extra 10% off 2 items, extra 15% off 3 items',
-  '(**)  Sản phẩm chọn lọc thuộc Moschino, Moschino Jeans Mua 2 giảm thêm 20% (**) Sản phẩm chọn lọc thuộc MessyWeekend':'(**) Selected Moschino, Moschino Jeans items — extra 20% off 2 items (**) Selected MessyWeekend items',
-  '* Summer Sale - [15/06 - 28/06]':'* Summer Sale — [15/06 – 28/06]',
-  'Nhập mã JUNE2000 - giảm 2 triệu cho đơn từ 20 triệu JUNE900 - giảm 900K cho đơn từ 15 triệu JUNE500 - giảm 500K cho đơn từ 10 triệu':'Enter code JUNE2000 for 2 million off orders over 20 million, JUNE900 for 900K off orders over 15 million, JUNE500 for 500K off orders over 10 million',
-  '(*) Không áp dụng cho Montblanc, TUMI, Phiếu Quà Tặng và New Season.':'(*) Not applicable to Montblanc, TUMI, Gift Vouchers and New Season.',
+  '* WARDROBE REFRESH - [20/07 - 31/07]':'* WARDROBE REFRESH — [20/07 – 31/07]',
+  'Nhập mã JUL1500 - giảm 1.5 triệu cho đơn từ 16 triệu JUL1000 - giảm 1 triệu cho đơn từ 11 triệu JUL500 - giảm 500K cho đơn từ 8 triệu':'Enter code JUL1500 for 1.5 million off orders over 16 million, JUL1000 for 1 million off orders over 11 million, JUL500 for 500K off orders over 8 million',
+  '(*) Không áp dụng cho Stefano Ricci, TUMI, Montblanc, Phiếu Quà Tặng và New Season':'(*) Not applicable to Stefano Ricci, TUMI, Montblanc, Gift Vouchers and New Season',
+  '** TUMI - [08/07 - 06/09]':'** TUMI — [08/07 – 06/09]',
+  'Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%':'Free leather notebook on orders over 40 million, extra 10% off 2 items',
+  '(**) Sản phẩm chọn lọc':'(**) Selected items',
+  '*** BUY MORE SAVE MORE - [16/07 - 02/08]':'*** BUY MORE SAVE MORE — [16/07 – 02/08]',
+  'Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%':'Extra 5% off 2 items, extra 10% off 3 items',
+  '(***) Sản phẩm chọn lọc':'(***) Selected items',
 
   // ── Tìm kiếm ──
   'Tìm kiếm':'Search', 'Đóng tìm kiếm':'Close search', 'Bạn đang tìm kiếm gì':'What are you looking for',
@@ -3482,7 +3500,7 @@ const I18N_RE = [
   [/^Không tìm thấy kết quả phù hợp với "(.+)"$/, 'No results found for "$1"'],
   [/^Xoá "(.+)" khỏi lịch sử$/,       'Remove "$1" from history'],
   [/^Dùng (\d+) điểm$/,               'Use $1 points'],
-  [/^Giảm giá \((.+)\)$/,             'Discount ($1)'],
+  [/^Giảm giá\((.+)\)$/,              'Discount ($1)'],
   [/^Tiết kiệm ([\d,]+)đ$/,           'Save $1đ'],
 ];
 const I18N_REV_RE = [
@@ -3502,7 +3520,7 @@ const I18N_REV_RE = [
   [/^No results found for "(.+)"$/,   'Không tìm thấy kết quả phù hợp với "$1"'],
   [/^Remove "(.+)" from history$/,    'Xoá "$1" khỏi lịch sử'],
   [/^Use (\d+) points$/,              'Dùng $1 điểm'],
-  [/^Discount \((.+)\)$/,             'Giảm giá ($1)'],
+  [/^Discount \((.+)\)$/,             'Giảm giá($1)'],
   [/^Save ([\d,]+)đ$/,                'Tiết kiệm $1đ'],
 ];
 
