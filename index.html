@@ -2225,23 +2225,21 @@ function discountLinesHTML() {
   return rows.join('');
 }
 
-/* Khối hợp nhất theo Figma 3428:55499: 1 panel nền accent-0 (#fafafa, viền trên)
-   chứa 2 card trắng riêng (Rewards / Mã giảm giá + Phiếu mua hàng) rồi tới summary
-   ngay trong panel đó (không còn tách rời như trước). "Chương trình khuyến mãi"
-   CHỦ Ý để ngoài khối này — giữ nguyên vị trí/hành vi cũ, theo yêu cầu trước đó. */
+/* Khối hợp nhất theo Figma 3428:55499: 1 panel nền secondary (#f5f5f5, viền trên)
+   chứa 2 card trắng riêng (Rewards / Mã giảm giá) rồi tới summary ngay trong
+   panel đó. "Chương trình khuyến mãi" CHỦ Ý để ngoài khối này — giữ nguyên vị
+   trí/hành vi cũ, theo yêu cầu trước đó. "Bạn có phiếu mua hàng?" KHÔNG còn ở
+   đây nữa — đã dời xuống dưới nút "Đặt hàng" (xem #cartCta trong screenCART()),
+   vì user coi phiếu mua hàng là một PHƯƠNG THỨC MUA HÀNG, không phải ưu đãi
+   giảm giá cùng nhóm với Rewards/Mã giảm giá. Figma cũng xác nhận thay đổi này
+   (đọc lại lần 2, node y hệt nhưng cards-group giờ chỉ còn 2 card, "Chính sách"
+   card dời sang Frame 427319741 — cùng khối với Button "Đặt hàng"). */
 function discountPanel(cartTotalNow) {
   const rewardsCard = ckAuth ? `
     <div class="bg-background border border-border-1 rounded-md p-3 flex flex-col gap-4">
       <p class="text-[16px] font-medium leading-6 text-foreground">Ưu đãi chương trình DAFC Rewards</p>
       ${dafcRewards()}
     </div>` : '';
-  /* Spacing/style dưới đây đối chiếu lại theo node Figma 3428:55499 sau khi user
-     cập nhật thiết kế (đọc lại bằng figma_execute, không dùng bản cũ trong đầu):
-     nền panel đổi bg-accent-0(#fafafa) -> bg-secondary(#f5f5f5), pad ngang
-     8->16px; heading Rewards Light -> Medium; "Bạn có phiếu mua hàng?" TÁCH
-     thành 1 card trắng riêng (không còn chung card với "Mã giảm giá"); đường
-     kẻ ngăn cards-group/summary đã bị bỏ (chỉ còn khoảng trống); CTA không còn
-     nền xám. */
   return `
   <div class="py-6 px-4 border-t border-border bg-secondary flex flex-col gap-4 rise">
     <div class="flex flex-col gap-2">
@@ -2256,25 +2254,6 @@ function discountPanel(cartTotalNow) {
           <div id="voucherChipSlot" class="${cartVoucherCode ? 'flex gap-2 flex-wrap' : 'hidden'}">${voucherChip()}</div>
         </div>
       </div>
-      <div class="bg-background border border-border-1 rounded-md py-1 px-3">
-        <div class="acc">
-          <button class="acc-trigger w-full h-9 flex items-center justify-between press">
-            <span class="text-[14px] font-medium leading-5 text-foreground">Bạn có phiếu mua hàng?</span>
-            <span class="acc-ico-minus hidden">${IcoMinus}</span>
-            <span class="acc-ico-plus">${IcoPlus}</span>
-          </button>
-          <div class="acc-body"><div class="acc-inner">
-            <div class="flex flex-col gap-2 pt-2 pb-2">
-              <p class="text-[12px] leading-4 text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
-              <div class="flex gap-1">
-                <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[16px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-                <button id="applyPbh" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
-              </div>
-              <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
-            </div>
-          </div></div>
-        </div>
-      </div>
     </div>
 
     <div class="flex flex-col px-2">
@@ -2287,6 +2266,19 @@ function discountPanel(cartTotalNow) {
         ? 'Hoàn tất đơn hàng để nhận ngay <b class="font-bold">98</b> điểm thưởng'
         : '<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b class="font-bold">98</b> điểm thưởng'}</p>
     </div>
+  </div>`;
+}
+
+/* Rule text 1 mục khuyến mãi — 3 tầng chữ: Headline 12px medium (tên chương
+   trình + thời gian), Scheme 10px regular (cơ chế giảm giá), T&Cs 8px medium
+   (điều kiện/loại trừ). Theo yêu cầu rule text trực tiếp từ user, không phải
+   số liệu đo từ Figma. */
+function promoRule(headline, scheme, tnc) {
+  return `
+  <div class="flex flex-col gap-1">
+    <p class="text-[12px] font-medium leading-4 text-foreground">${headline}</p>
+    <p class="text-[10px] leading-3 text-foreground">${scheme}</p>
+    <p class="text-[8px] font-medium leading-3 text-foreground">${tnc}</p>
   </div>`;
 }
 
@@ -2358,14 +2350,23 @@ function screenCART() {
 
     <!-- promo -->
     <!-- Chương trình khuyến mãi — theo Figma 3428:55499: card viền border-border
-         (không còn fill accent-0), chữ nội dung 14px đen (không còn gray/13px),
-         peek clip đúng 73px, CTA full-width canh giữa có gạch chân. -->
+         (không còn fill accent-0), peek clip đúng 73px, CTA full-width canh
+         giữa có gạch chân. Mỗi mục tách 3 tầng chữ theo rule text: Headline
+         12px medium / Scheme 10px regular / T&Cs 8px medium. -->
     <div class="py-6 px-2 rise">
       <div class="border border-border rounded-md py-2 px-3 flex flex-col gap-2">
         <p class="text-[16px] leading-6 font-medium text-foreground">Chương trình khuyến mãi (5)</p>
         <div id="promoPeek" class="promo-peek flex flex-col gap-2">
-          <p class="text-[14px] leading-5 text-foreground">** Buy more save more - [15/06 - 15/07] Mua 2 giảm thêm 10%  Mua 3 giảm thêm 15%<br>(**)  Sản phẩm chọn lọc thuộc Moschino, Moschino Jeans Mua 2 giảm thêm 20% (**) Sản phẩm chọn lọc thuộc MessyWeekend</p>
-          <p class="text-[14px] leading-5 text-foreground">* Summer Sale - [15/06 - 28/06] Nhập mã JUNE2000 - giảm 2 triệu cho đơn từ 20 triệu JUNE900 - giảm 900K cho đơn từ 15 triệu JUNE500 - giảm 500K cho đơn từ 10 triệu (*) Không áp dụng cho Montblanc, TUMI, Phiếu Quà Tặng và New Season.</p>
+          ${promoRule(
+            '** Buy more save more - [15/06 - 15/07]',
+            'Mua 2 giảm thêm 10%  Mua 3 giảm thêm 15%',
+            '(**)  Sản phẩm chọn lọc thuộc Moschino, Moschino Jeans Mua 2 giảm thêm 20% (**) Sản phẩm chọn lọc thuộc MessyWeekend'
+          )}
+          ${promoRule(
+            '* Summer Sale - [15/06 - 28/06]',
+            'Nhập mã JUNE2000 - giảm 2 triệu cho đơn từ 20 triệu JUNE900 - giảm 900K cho đơn từ 15 triệu JUNE500 - giảm 500K cho đơn từ 10 triệu',
+            '(*) Không áp dụng cho Montblanc, TUMI, Phiếu Quà Tặng và New Season.'
+          )}
         </div>
         <button id="promoToggle" class="w-full min-h-8 flex items-center justify-center text-[14px] leading-5 font-medium text-foreground underline press">Xem tất cả 5 chương trình</button>
       </div>
@@ -2375,8 +2376,29 @@ function screenCART() {
          Figma 3428:55499, xem discountPanel(). -->
     ${discountPanel(cartTotalNow)}
 
-    <div id="cartCta" class="px-4 py-4 bg-secondary">
+    <!-- "Bạn có phiếu mua hàng?" — coi là 1 phương thức mua hàng, không phải ưu
+         đãi giảm giá, nên đặt bên dưới nút Đặt hàng (theo Figma 3428:55499,
+         Frame 427319741) thay vì chung nhóm với Rewards/Mã giảm giá phía trên. -->
+    <div id="cartCta" class="px-4 py-4 bg-secondary flex flex-col gap-2">
       <button data-checkout class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center">Đặt hàng</button>
+      <div class="bg-background border border-border-1 rounded-md py-1 px-3">
+        <div class="acc">
+          <button class="acc-trigger w-full h-9 flex items-center justify-between press">
+            <span class="text-[14px] font-medium leading-5 text-foreground">Bạn có phiếu mua hàng?</span>
+            ${I.chevR('var(--general-primary)')}
+          </button>
+          <div class="acc-body"><div class="acc-inner">
+            <div class="flex flex-col gap-2 pt-2 pb-2">
+              <p class="text-[12px] leading-4 text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
+              <div class="flex gap-1">
+                <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[16px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+                <button id="applyPbh" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
+              </div>
+              <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
     </div>
 
     ${camKetSection()}
@@ -3383,9 +3405,12 @@ const I18N = {
   '* Buy more save more - mua 2 giảm 15%':'* Buy more save more — 15% off when you buy 2',
   '- [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%':' — [16/07 – 02/08] Extra 5% off 2 items, extra 10% off 3 items',
   '- [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%':' — [08/07 – 06/09] Free leather notebook on orders over 40 million, extra 10% off 2 items',
-  '** Buy more save more - [15/06 - 15/07] Mua 2 giảm thêm 10%  Mua 3 giảm thêm 15%':'** Buy more save more — [15/06 – 15/07] Extra 10% off 2 items, extra 15% off 3 items',
+  '** Buy more save more - [15/06 - 15/07]':'** Buy more save more — [15/06 – 15/07]',
+  'Mua 2 giảm thêm 10%  Mua 3 giảm thêm 15%':'Extra 10% off 2 items, extra 15% off 3 items',
   '(**)  Sản phẩm chọn lọc thuộc Moschino, Moschino Jeans Mua 2 giảm thêm 20% (**) Sản phẩm chọn lọc thuộc MessyWeekend':'(**) Selected Moschino, Moschino Jeans items — extra 20% off 2 items (**) Selected MessyWeekend items',
-  '* Summer Sale - [15/06 - 28/06] Nhập mã JUNE2000 - giảm 2 triệu cho đơn từ 20 triệu JUNE900 - giảm 900K cho đơn từ 15 triệu JUNE500 - giảm 500K cho đơn từ 10 triệu (*) Không áp dụng cho Montblanc, TUMI, Phiếu Quà Tặng và New Season.':'* Summer Sale — [15/06 – 28/06] Enter code JUNE2000 for 2 million off orders over 20 million, JUNE900 for 900K off orders over 15 million, JUNE500 for 500K off orders over 10 million (*) Not applicable to Montblanc, TUMI, Gift Vouchers and New Season.',
+  '* Summer Sale - [15/06 - 28/06]':'* Summer Sale — [15/06 – 28/06]',
+  'Nhập mã JUNE2000 - giảm 2 triệu cho đơn từ 20 triệu JUNE900 - giảm 900K cho đơn từ 15 triệu JUNE500 - giảm 500K cho đơn từ 10 triệu':'Enter code JUNE2000 for 2 million off orders over 20 million, JUNE900 for 900K off orders over 15 million, JUNE500 for 500K off orders over 10 million',
+  '(*) Không áp dụng cho Montblanc, TUMI, Phiếu Quà Tặng và New Season.':'(*) Not applicable to Montblanc, TUMI, Gift Vouchers and New Season.',
 
   // ── Tìm kiếm ──
   'Tìm kiếm':'Search', 'Đóng tìm kiếm':'Close search', 'Bạn đang tìm kiếm gì':'What are you looking for',
