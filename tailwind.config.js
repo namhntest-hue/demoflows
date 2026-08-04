@@ -1,7 +1,7 @@
 /** Sinh từ tokens07.json — mọi giá trị trỏ về CSS var trong tokens.css */
 const v = (n) => `var(--${n})`;
 module.exports = {
-  content: ['./index.html'],
+  content: ['./index.html', './desktop.html'],
   theme: {
     extend: {
       fontFamily: { sans: ['Montserrat', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
