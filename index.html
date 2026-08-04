@@ -2105,6 +2105,8 @@ const REWARD_POINTS = 1000;
 const REWARD_POINT_VALUE = 1000;
 let cartReward = 'points';       // 'member' | 'points'
 let cartVoucherDiscount = 0;     // cộng dồn với ưu đãi hội viên, từ mã giảm giá nhập tay
+let cartVoucherCode = '';        // mã đang active (để hiện chip + gỡ) — chỉ 1 mã tại 1 thời điểm
+let cartPbh = [];                // [{code, amount}] — phiếu mua hàng đang áp, có thể nhiều mã cùng lúc
 
 function rewardAmount(kind) {
   if (kind === 'member') return Math.round(CART_SUBTOTAL * 0.04);
@@ -2151,7 +2153,9 @@ function giftPicker() {
 
 function dafcRewards() {
   /* Rich Radio Group (2843:45234/45235): card viền + radio tròn, chọn 1 trong 2.
-     Card đang chọn -> viền border-5 (#737373) đậm hơn card thường (border #e5e5e5). */
+     Card đang chọn -> viền border-5 (#737373) đậm hơn card thường (border #e5e5e5).
+     Không còn wrapper riêng — nằm trong card "Ưu đãi chương trình DAFC Rewards"
+     của discountPanel(), padding/heading do khối cha cấp (theo Figma 3428:55499). */
   const opt = (id, title, sub) => {
     const on = cartReward === id;
     return `
@@ -2167,19 +2171,119 @@ function dafcRewards() {
   };
   const pointsSub = `Đã áp dụng <b class="font-medium text-foreground">${REWARD_POINTS} điểm</b> ( 1 điểm = ${REWARD_POINT_VALUE.toLocaleString('en-US')}đ ).`;
   return `
-  <div id="rewardOpts" class="px-4 pb-2 flex flex-col gap-2 rise">
-    <p class="text-[14px] font-medium leading-5 text-foreground">Ưu đãi chương trình DAFC Rewards</p>
+  <div id="rewardOpts" class="flex flex-col gap-2">
+    ${opt('member', 'Giảm giá thành viên', 'Ưu đãi 4% trên sản phẩm nguyên giá')}
+    ${opt('points', 'Sử dụng điểm thưởng ( tối đa 10% )', pointsSub)}
+  </div>`;
+}
+
+/* Voucher đang active hiện thành chip có nút gỡ, cạnh tiêu đề "Mã giảm giá"
+   (thay cho chỉ đọc ở dòng Tổng cộng như trước) — chỉ 1 mã tại 1 thời điểm. */
+function voucherChip() {
+  if (!cartVoucherCode) return '';
+  return `
+  <span id="voucherChip" class="flex items-center gap-1.5 h-7 px-2 bg-secondary rounded-xs">
+    <span class="text-[12px] leading-4 text-foreground">${cartVoucherCode}</span>
+    <span class="text-[12px] leading-4 font-medium text-destructive">-${cartVoucherDiscount.toLocaleString('en-US')}đ</span>
+    <button data-voucher-remove class="w-3 h-3 flex items-center justify-center shrink-0 press [&_svg]:w-3 [&_svg]:h-3">${IcoCross}</button>
+  </span>`;
+}
+
+/* Phiếu mua hàng: demo không có backend tra cứu mã thật, nên sinh số tiền giảm
+   ổn định theo chuỗi mã (cùng 1 mã luôn ra cùng 1 số tiền) — 50,000 .. 1,000,000đ,
+   bước 50,000. Mỗi mã cộng dồn vào tổng và có dòng riêng trong summary
+   (theo Figma 3428:55499: 3 mã phiếu = 3 dòng "Giảm giá(...)" khác nhau). */
+function pbhAmount(code) {
+  let h = 0;
+  for (let i = 0; i < code.length; i++) h = (h * 31 + code.charCodeAt(i)) >>> 0;
+  return 50000 + (h % 20) * 50000;
+}
+function cartPbhTotal() { return cartPbh.reduce((s, p) => s + p.amount, 0); }
+
+/* Các dòng Tạm tính / giảm giá trong summary — sinh động theo state (đăng nhập,
+   reward đang chọn, voucher, N mã phiếu mua hàng), dùng chung cho cả lần render
+   đầu (screenCART) và mỗi lần cập nhật sau tương tác (refreshCartSummary). */
+function discountLinesHTML() {
+  const line = (label, amount, isDiscount) => `
+    <div class="flex justify-between items-center h-9 gap-2">
+      <span class="text-[14px] leading-5 text-foreground truncate">${label}</span>
+      <span class="text-[14px] leading-5 ${isDiscount ? 'text-destructive' : 'text-foreground'} shrink-0">${isDiscount ? '-' : ''}${amount.toLocaleString('en-US')}đ</span>
+    </div>`;
+  const rows = [line('Tạm tính', CART_SUBTOTAL, false)];
+  if (ckAuth) {
+    const amt = rewardAmount(cartReward);
+    if (amt > 0) rows.push(line(cartReward === 'points' ? `Dùng ${REWARD_POINTS} điểm` : 'Giảm giá thành viên', amt, true));
+  }
+  if (cartVoucherDiscount > 0) rows.push(line(`Giảm giá (${cartVoucherCode})`, cartVoucherDiscount, true));
+  cartPbh.forEach(p => rows.push(line(`Giảm giá (${p.code})`, p.amount, true)));
+  return rows.join('');
+}
+
+/* Khối hợp nhất theo Figma 3428:55499: 1 panel nền accent-0 (#fafafa, viền trên)
+   chứa 2 card trắng riêng (Rewards / Mã giảm giá + Phiếu mua hàng) rồi tới summary
+   ngay trong panel đó (không còn tách rời như trước). "Chương trình khuyến mãi"
+   CHỦ Ý để ngoài khối này — giữ nguyên vị trí/hành vi cũ, theo yêu cầu trước đó. */
+function discountPanel(cartTotalNow, totalDiscount) {
+  const rewardsCard = ckAuth ? `
+    <div class="bg-background border border-border-1 rounded-md p-3 flex flex-col gap-4">
+      <p class="text-[16px] font-light leading-6 text-foreground">Ưu đãi chương trình DAFC Rewards</p>
+      ${dafcRewards()}
+    </div>` : '';
+  /* Spacing dưới đây đối chiếu trực tiếp theo px/gap trong node Figma 3428:55499
+     (đọc qua figma_execute, không đoán từ ảnh) — panel pad 24/8/24/8 gap16; card
+     "Mã giảm giá + Phiếu" pad 4/12/4/12 gap8; summary lùi thêm 8px so với 2 card
+     phía trên (358px vs 374px, do Frame 427319735 có pad ngang riêng 8px). */
+  return `
+  <div class="py-6 px-2 border-t border-border bg-accent-0 flex flex-col gap-4 rise">
     <div class="flex flex-col gap-2">
-      ${opt('member', 'Giảm giá thành viên', 'Ưu đãi 4% trên sản phẩm nguyên giá')}
-      ${opt('points', 'Sử dụng điểm thưởng ( tối đa 10% )', pointsSub)}
+      ${rewardsCard}
+      <div class="bg-background border border-border-1 rounded-md py-1 px-3 flex flex-col gap-2">
+        <div class="py-2 flex flex-col gap-2">
+          <p class="text-[14px] font-medium leading-5 text-foreground">Mã giảm giá</p>
+          <div id="voucherChipSlot" class="${cartVoucherCode ? 'flex items-center gap-2 min-w-0' : 'hidden'}">${voucherChip()}</div>
+          <div class="flex gap-1">
+            <input id="voucher" placeholder="Nhập voucher" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[16px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+            <button id="applyVoucher" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
+          </div>
+        </div>
+        <div class="pb-2 flex flex-col">
+          <div class="h-9 flex items-center border-b border-border-1">
+            <p class="text-[14px] font-medium leading-5 text-foreground">Bạn có phiếu mua hàng?</p>
+          </div>
+          <div class="flex flex-col gap-2">
+            <p class="text-[12px] leading-4 text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
+            <div class="flex gap-1">
+              <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[16px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+              <button id="applyPbh" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
+            </div>
+            <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="h-px bg-border"></div>
+
+    <div class="flex flex-col px-2">
+      <div id="discountLines" class="flex flex-col">${discountLinesHTML()}</div>
+      <div class="border-t border-border flex justify-between items-center h-14">
+        <span class="text-[16px] font-medium leading-6 text-foreground">Tổng cộng</span>
+        <div class="text-right">
+          <span id="cartTotal" class="text-[16px] font-medium leading-6 text-foreground">${cartTotalNow.toLocaleString('en-US')}đ</span>
+          <p id="cartSaved" class="${totalDiscount > 0 ? '' : 'hidden'} text-[12px] leading-4 text-destructive">Tiết kiệm ${totalDiscount.toLocaleString('en-US')}đ</p>
+        </div>
+      </div>
+      <p class="text-[14px] leading-5 text-secondary-foreground">${ckAuth
+        ? 'Hoàn tất đơn hàng để nhận ngay <b class="font-bold">98</b> điểm thưởng'
+        : '<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b class="font-bold">98</b> điểm thưởng'}</p>
     </div>
   </div>`;
 }
 
 function screenCART() {
-  // Tổng tiền: ưu đãi hội viên (chỉ khi đã đăng nhập) + mã giảm giá nhập tay
+  // Tổng tiền: ưu đãi hội viên (chỉ khi đã đăng nhập) + mã giảm giá + N phiếu mua hàng
   const rewardDiscount = ckAuth ? rewardAmount(cartReward) : 0;
-  const totalDiscount = rewardDiscount + cartVoucherDiscount;
+  const totalDiscount = rewardDiscount + cartVoucherDiscount + cartPbhTotal();
   const cartTotalNow = Math.max(0, CART_SUBTOTAL - totalDiscount);
 
   /* item-cart — 358×165: [checkbox 16 canh giữa] [ảnh 100×133] [thông tin 226] */
@@ -2243,80 +2347,25 @@ function screenCART() {
     ${ckAuth ? giftPicker() : ''}
 
     <!-- promo -->
-    <!-- Chương trình khuyến mãi (2843:45222): card #fafafa r-8, tiêu đề 16 medium,
-         peek clip đúng 73px, CTA full-width canh giữa có gạch chân -->
-    <div class="px-4 pt-4 pb-1.5 rise">
-      <div class="bg-accent-0 rounded-md p-3 flex flex-col gap-2">
+    <!-- Chương trình khuyến mãi — theo Figma 3428:55499: card viền border-border
+         (không còn fill accent-0), chữ nội dung 14px đen (không còn gray/13px),
+         peek clip đúng 73px, CTA full-width canh giữa có gạch chân. -->
+    <div class="py-6 px-2 rise">
+      <div class="border border-border rounded-md py-2 px-3 flex flex-col gap-2">
         <p class="text-[16px] leading-6 font-medium text-foreground">Chương trình khuyến mãi (5)</p>
         <div id="promoPeek" class="promo-peek flex flex-col gap-2">
-          ${['* Summer Sale - giảm đến 50%','* Buy more save more - mua 2 giảm 15%','Freeship cho đơn từ 2 triệu','Tặng gói quà cao cấp','Giảm thêm 10% cho DAFC Insider'].map(p =>
-            `<p class="text-[13px] leading-5 text-secondary-foreground">${p}</p>`).join('')}
+          <p class="text-[14px] leading-5 text-foreground">** Buy more save more - [15/06 - 15/07] Mua 2 giảm thêm 10%  Mua 3 giảm thêm 15%<br>(**)  Sản phẩm chọn lọc thuộc Moschino, Moschino Jeans Mua 2 giảm thêm 20% (**) Sản phẩm chọn lọc thuộc MessyWeekend</p>
+          <p class="text-[14px] leading-5 text-foreground">* Summer Sale - [15/06 - 28/06] Nhập mã JUNE2000 - giảm 2 triệu cho đơn từ 20 triệu JUNE900 - giảm 900K cho đơn từ 15 triệu JUNE500 - giảm 500K cho đơn từ 10 triệu (*) Không áp dụng cho Montblanc, TUMI, Phiếu Quà Tặng và New Season.</p>
         </div>
         <button id="promoToggle" class="w-full min-h-8 flex items-center justify-center text-[14px] leading-5 font-medium text-foreground underline press">Xem tất cả 5 chương trình</button>
       </div>
     </div>
 
-    <!-- Ưu đãi DAFC Rewards — chỉ khi đã đăng nhập (multi gift 5) -->
-    ${ckAuth ? dafcRewards() : ''}
+    <!-- Ưu đãi Rewards + Mã giảm giá + Phiếu mua hàng + Summary — 1 panel theo
+         Figma 3428:55499, xem discountPanel(). -->
+    ${discountPanel(cartTotalNow, totalDiscount)}
 
-    <div class="px-4 pt-1.5 pb-4 rise">
-      <div class="flex flex-col gap-2">
-        <!-- Mã giảm giá (Frame 427319782) -->
-        <div class="flex flex-col gap-2">
-          <p class="text-[14px] font-medium leading-5 text-foreground">Mã giảm giá</p>
-          <div class="flex gap-1">
-            <input id="voucher" placeholder="Nhập voucher" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[16px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-            <button id="applyVoucher" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
-          </div>
-        </div>
-
-        <!-- Bạn có phiếu mua hàng? — đóng/mở (Chính sách accordion); không đặt border-b lên
-             trigger vì đây là block đơn lẻ, không phải danh sách accordion cần gạch phân cách -->
-        <div class="acc">
-          <button class="acc-trigger w-full h-9 flex items-center justify-between press">
-            <span class="text-[14px] font-medium leading-5 text-foreground">Bạn có phiếu mua hàng?</span>
-            <span class="acc-ico-minus hidden">${IcoMinus}</span>
-            <span class="acc-ico-plus">${IcoPlus}</span>
-          </button>
-          <div class="acc-body"><div class="acc-inner">
-            <div class="flex flex-col gap-2 pt-2">
-              <p class="text-[12px] leading-4 text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
-              <div class="flex gap-1">
-                <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[16px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-                <button id="applyPbh" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
-              </div>
-              <div id="pbhList" class="flex gap-2 flex-wrap"></div>
-            </div>
-          </div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- summary — multi gift 5 (đã đăng nhập) / multi gift 6 (khách):
-         divider trên · hàng 36px 14/20 · Tổng cộng 56px 16/24 ·
-         khách: chữ "Đăng nhập" bấm được -->
-    <div class="px-4 rise">
-      <div class="h-px bg-border"></div>
-      <div class="pt-2 pb-3 flex flex-col">
-        <div class="flex justify-between items-center h-9">
-          <span class="text-[14px] leading-5 text-foreground">Tạm tính</span>
-          <span class="text-[14px] leading-5 text-foreground">${CART_SUBTOTAL.toLocaleString('en-US')}đ</span>
-        </div>
-        <div id="discountRow" class="${totalDiscount > 0 ? 'flex' : 'hidden'} justify-between items-center h-9">
-          <span class="text-[14px] leading-5 text-destructive">Giảm giá</span>
-          <span id="discountVal" class="text-[14px] font-medium leading-5 text-destructive">-${totalDiscount.toLocaleString('en-US')}đ</span>
-        </div>
-        <div class="flex justify-between items-center h-14">
-          <span class="text-[16px] font-medium leading-6 text-foreground">Tổng cộng</span>
-          <span id="cartTotal" class="text-[16px] font-medium leading-6 text-foreground">${cartTotalNow.toLocaleString('en-US')}đ</span>
-        </div>
-        <p class="text-[14px] leading-5 text-secondary-foreground">${ckAuth
-          ? 'Hoàn tất đơn hàng để nhận ngay <b class="font-bold">98</b> điểm thưởng'
-          : '<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b class="font-bold">98</b> điểm thưởng'}</p>
-      </div>
-    </div>
-
-    <div id="cartCta" class="px-4 py-4">
+    <div id="cartCta" class="px-4 py-4 bg-accent-0">
       <button data-order class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center">Đặt hàng</button>
     </div>
 
@@ -3289,6 +3338,9 @@ const I18N = {
   '* Buy more save more - mua 2 giảm 15%':'* Buy more save more — 15% off when you buy 2',
   '- [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%':' — [16/07 – 02/08] Extra 5% off 2 items, extra 10% off 3 items',
   '- [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%':' — [08/07 – 06/09] Free leather notebook on orders over 40 million, extra 10% off 2 items',
+  '** Buy more save more - [15/06 - 15/07] Mua 2 giảm thêm 10%  Mua 3 giảm thêm 15%':'** Buy more save more — [15/06 – 15/07] Extra 10% off 2 items, extra 15% off 3 items',
+  '(**)  Sản phẩm chọn lọc thuộc Moschino, Moschino Jeans Mua 2 giảm thêm 20% (**) Sản phẩm chọn lọc thuộc MessyWeekend':'(**) Selected Moschino, Moschino Jeans items — extra 20% off 2 items (**) Selected MessyWeekend items',
+  '* Summer Sale - [15/06 - 28/06] Nhập mã JUNE2000 - giảm 2 triệu cho đơn từ 20 triệu JUNE900 - giảm 900K cho đơn từ 15 triệu JUNE500 - giảm 500K cho đơn từ 10 triệu (*) Không áp dụng cho Montblanc, TUMI, Phiếu Quà Tặng và New Season.':'* Summer Sale — [15/06 – 28/06] Enter code JUNE2000 for 2 million off orders over 20 million, JUNE900 for 900K off orders over 15 million, JUNE500 for 500K off orders over 10 million (*) Not applicable to Montblanc, TUMI, Gift Vouchers and New Season.',
 
   // ── Tìm kiếm ──
   'Tìm kiếm':'Search', 'Đóng tìm kiếm':'Close search', 'Bạn đang tìm kiếm gì':'What are you looking for',
@@ -3359,6 +3411,9 @@ const I18N_RE = [
   [/^Kết quả tìm kiếm của “(.+)”$/,   'Search results for “$1”'],
   [/^Không tìm thấy kết quả phù hợp với "(.+)"$/, 'No results found for "$1"'],
   [/^Xoá "(.+)" khỏi lịch sử$/,       'Remove "$1" from history'],
+  [/^Dùng (\d+) điểm$/,               'Use $1 points'],
+  [/^Giảm giá \((.+)\)$/,             'Discount ($1)'],
+  [/^Tiết kiệm ([\d,]+)đ$/,           'Save $1đ'],
 ];
 const I18N_REV_RE = [
   [/^(\d+) products$/,                '$1 sản phẩm'],
@@ -3376,6 +3431,9 @@ const I18N_REV_RE = [
   [/^Search results for “(.+)”$/,     'Kết quả tìm kiếm của “$1”'],
   [/^No results found for "(.+)"$/,   'Không tìm thấy kết quả phù hợp với "$1"'],
   [/^Remove "(.+)" from history$/,    'Xoá "$1" khỏi lịch sử'],
+  [/^Use (\d+) points$/,              'Dùng $1 điểm'],
+  [/^Discount \((.+)\)$/,             'Giảm giá ($1)'],
+  [/^Save ([\d,]+)đ$/,                'Tiết kiệm $1đ'],
 ];
 
 const I18N_REV = Object.fromEntries(Object.entries(I18N).map(([k, v]) => [v, k]));
@@ -3975,7 +4033,7 @@ function wire(root) {
           rd.classList.toggle('border-primary', on);
           rd.classList.toggle('border-border', !on);
         });
-        recalcCartTotal(root);
+        refreshCartSummary(root);
         toast('Đã áp dụng: ' + (cartReward === 'member' ? 'Giảm giá thành viên' : 'Điểm thưởng'));
       });
     });
@@ -4048,24 +4106,61 @@ function wire(root) {
   bindApplyGate(root.querySelector('#voucher'), root.querySelector('#applyVoucher'));
   bindApplyGate(root.querySelector('#pbh'), root.querySelector('#applyPbh'));
 
-  // Phiếu mua hàng: xoá badge + áp dụng
-  root.querySelectorAll('.pbh-del').forEach(b =>
-    b.addEventListener('click', e => { e.stopPropagation(); b.closest('.pbh-badge').remove(); toast('Đã gỡ phiếu mua hàng'); }));
+  // Phiếu mua hàng: mỗi mã cộng dồn vào tổng (pbhAmount demo) + có dòng riêng
+  // trong summary (theo Figma 3428:55499) — hỗ trợ nhiều mã cùng lúc, xoá qua ×.
+  const renderPbhList = () => {
+    const list = root.querySelector('#pbhList');
+    if (!list) return;
+    // Ẩn hẳn khi rỗng, tránh flex gap tạo khoảng trống thừa dưới ô input
+    // (cùng lý do với voucherChipSlot ở trên — theo đúng Figma).
+    list.className = cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden';
+    list.innerHTML = cartPbh.map((p, i) => `
+      <span class="pbh-badge bg-secondary rounded flex items-center gap-1.5 px-2 py-0.5 h-6" data-pbh-idx="${i}">
+        <span class="text-[12px] font-medium leading-4 text-secondary-foreground truncate max-w-[140px]">${p.code}</span>
+        <button class="pbh-del w-3 h-3 flex items-center justify-center shrink-0 press [&_svg]:w-3 [&_svg]:h-3">${IcoCross}</button>
+      </span>`).join('');
+    list.querySelectorAll('.pbh-del').forEach(b => b.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx = Number(b.closest('.pbh-badge').dataset.pbhIdx);
+      const removed = cartPbh.splice(idx, 1)[0];
+      renderPbhList();
+      refreshCartSummary(root);
+      toast('Đã gỡ ' + (removed ? removed.code : 'phiếu mua hàng'));
+    }));
+  };
   const pbhBtn = root.querySelector('#applyPbh');
   if (pbhBtn) pbhBtn.addEventListener('click', () => {
-    const v = root.querySelector('#pbh').value.trim();
-    root.querySelector('#pbhList').insertAdjacentHTML('beforeend', `
-      <span class="pbh-badge bg-secondary rounded flex items-center gap-1.5 px-2 py-0.5 h-6">
-        <span class="text-[12px] font-medium leading-4 text-secondary-foreground truncate max-w-[74px]">${v}</span>
-        <button class="pbh-del w-3 h-3 flex items-center justify-center shrink-0 press [&_svg]:w-3 [&_svg]:h-3">${IcoCross}</button>
-      </span>`);
-    root.querySelector('#pbh').value = '';
+    const inp = root.querySelector('#pbh');
+    const v = inp.value.trim();
+    if (!v) return;
+    cartPbh.push({ code: v, amount: pbhAmount(v) });
+    inp.value = '';
     pbhBtn.disabled = true; pbhBtn.style.opacity = '.4';
-    root.querySelectorAll('.pbh-del').forEach(b => { b.onclick = e => { e.stopPropagation(); b.closest('.pbh-badge').remove(); toast('Đã gỡ phiếu mua hàng'); }; });
+    renderPbhList();
+    refreshCartSummary(root);
     toast('Đã thêm ' + v);
   });
+  renderPbhList();
 
   // Cart: voucher — mã hợp lệ để demo: JUNE500 / JUNE900 / JUNE2000 (không show sẵn, gõ tay)
+  // Chỉ 1 mã active tại 1 thời điểm: áp mã mới thay mã cũ, hiện thành chip cạnh
+  // tiêu đề "Mã giảm giá" (có nút gỡ) — đồng bộ với cách phiếu mua hàng hiển thị.
+  const renderVoucherChip = () => {
+    const slot = root.querySelector('#voucherChipSlot');
+    if (slot) {
+      slot.innerHTML = voucherChip();
+      // Ẩn hẳn (không chỉ rỗng) khi không có mã, tránh flex gap tạo khoảng
+      // trống thừa giữa tiêu đề "Mã giảm giá" và ô input (theo đúng Figma).
+      slot.className = cartVoucherCode ? 'flex items-center gap-2 min-w-0' : 'hidden';
+    }
+    root.querySelectorAll('[data-voucher-remove]').forEach(b => b.addEventListener('click', e => {
+      e.stopPropagation();
+      cartVoucherDiscount = 0; cartVoucherCode = '';
+      renderVoucherChip();
+      refreshCartSummary(root);
+      toast('Đã gỡ mã giảm giá');
+    }));
+  };
   const vBtn = root.querySelector('#applyVoucher');
   if (vBtn) {
     vBtn.addEventListener('click', () => {
@@ -4073,10 +4168,15 @@ function wire(root) {
       const map = { JUNE500: 500000, JUNE900: 900000, JUNE2000: 2000000 };
       if (!map[code]) { toast('Mã không hợp lệ'); return; }
       cartVoucherDiscount = map[code];
-      recalcCartTotal(root);
+      cartVoucherCode = code;
+      root.querySelector('#voucher').value = '';
+      vBtn.disabled = true; vBtn.style.opacity = '.4';
+      renderVoucherChip();
+      refreshCartSummary(root);
       toast('Áp dụng mã ' + code);
     });
   }
+  renderVoucherChip();
 
   // Show more → skeleton then append
   const sm = root.querySelector('#showMore');
@@ -4251,20 +4351,24 @@ function spinnerSVG() {
   return '<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 }
 
-/* Cộng ưu đãi hội viên (đã đăng nhập) + mã giảm giá đã áp -> cập nhật hàng
-   Giảm giá / Tổng cộng trong summary, không reload lại cả màn cart. */
-function recalcCartTotal(root) {
+/* Cộng ưu đãi hội viên (đã đăng nhập) + mã giảm giá + N phiếu mua hàng -> render
+   lại toàn bộ #discountLines (số dòng thay đổi động theo số phiếu đang áp) +
+   cập nhật Tổng cộng / Tiết kiệm, không reload lại cả màn cart. */
+function refreshCartSummary(root) {
+  const dl = root.querySelector('#discountLines');
+  if (dl) dl.innerHTML = discountLinesHTML();
+
   const reward = ckAuth ? rewardAmount(cartReward) : 0;
-  const totalDiscount = reward + cartVoucherDiscount;
+  const totalDiscount = reward + cartVoucherDiscount + cartPbhTotal();
   const total = Math.max(0, CART_SUBTOTAL - totalDiscount);
-  const dr = root.querySelector('#discountRow');
-  if (dr) {
-    dr.classList.toggle('hidden', totalDiscount <= 0);
-    dr.classList.toggle('flex', totalDiscount > 0);
-    root.querySelector('#discountVal').textContent = '-' + totalDiscount.toLocaleString('en-US') + 'đ';
-  }
+
   const ct = root.querySelector('#cartTotal');
   if (ct) ct.textContent = total.toLocaleString('en-US') + 'đ';
+  const sv = root.querySelector('#cartSaved');
+  if (sv) {
+    sv.classList.toggle('hidden', totalDiscount <= 0);
+    sv.textContent = 'Tiết kiệm ' + totalDiscount.toLocaleString('en-US') + 'đ';
+  }
 }
 
 function refreshCartCount(root) {
