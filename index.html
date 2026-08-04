@@ -2181,18 +2181,20 @@ function dafcRewards() {
    (thay cho chỉ đọc ở dòng Tổng cộng như trước) — chỉ 1 mã tại 1 thời điểm. */
 function voucherChip() {
   if (!cartVoucherCode) return '';
+  // Cùng style badge với phiếu mua hàng (bg-secondary, rounded, h-6) — hiện dưới
+  // ô input, không còn cạnh tiêu đề "Mã giảm giá" như trước.
   return `
-  <span id="voucherChip" class="flex items-center gap-1.5 h-7 px-2 bg-secondary rounded-xs">
-    <span class="text-[12px] leading-4 text-foreground">${cartVoucherCode}</span>
-    <span class="text-[12px] leading-4 font-medium text-destructive">-${cartVoucherDiscount.toLocaleString('en-US')}đ</span>
+  <span id="voucherChip" class="bg-secondary rounded flex items-center gap-1.5 px-2 py-0.5 h-6">
+    <span class="text-[12px] font-medium leading-4 text-secondary-foreground">${cartVoucherCode}</span>
+    <span class="text-[12px] font-medium leading-4 text-destructive">-${cartVoucherDiscount.toLocaleString('en-US')}đ</span>
     <button data-voucher-remove class="w-3 h-3 flex items-center justify-center shrink-0 press [&_svg]:w-3 [&_svg]:h-3">${IcoCross}</button>
   </span>`;
 }
 
 /* Phiếu mua hàng: demo không có backend tra cứu mã thật, nên sinh số tiền giảm
    ổn định theo chuỗi mã (cùng 1 mã luôn ra cùng 1 số tiền) — 50,000 .. 1,000,000đ,
-   bước 50,000. Mỗi mã cộng dồn vào tổng và có dòng riêng trong summary
-   (theo Figma 3428:55499: 3 mã phiếu = 3 dòng "Giảm giá(...)" khác nhau). */
+   bước 50,000. Nhiều mã cộng dồn vào tổng nhưng chỉ hiện 1 dòng "Phiếu mua hàng"
+   trong summary (xem discountLinesHTML) — từng mã cụ thể xem ở badge dưới input. */
 function pbhAmount(code) {
   let h = 0;
   for (let i = 0; i < code.length; i++) h = (h * 31 + code.charCodeAt(i)) >>> 0;
@@ -2202,7 +2204,10 @@ function cartPbhTotal() { return cartPbh.reduce((s, p) => s + p.amount, 0); }
 
 /* Các dòng Tạm tính / giảm giá trong summary — sinh động theo state (đăng nhập,
    reward đang chọn, voucher, N mã phiếu mua hàng), dùng chung cho cả lần render
-   đầu (screenCART) và mỗi lần cập nhật sau tương tác (refreshCartSummary). */
+   đầu (screenCART) và mỗi lần cập nhật sau tương tác (refreshCartSummary).
+   Nhãn dòng KHÔNG kèm tên mã (mã cụ thể đã hiện sẵn dưới ô input tương ứng) —
+   voucher chỉ 1 mã nên ghi "Mã giảm giá"; phiếu mua hàng có thể nhiều mã nên
+   dồn thành 1 dòng tổng "Phiếu mua hàng" (không lặp label cho từng mã). */
 function discountLinesHTML() {
   const line = (label, amount, isDiscount) => `
     <div class="flex justify-between items-center h-9 gap-2">
@@ -2214,8 +2219,9 @@ function discountLinesHTML() {
     const amt = rewardAmount(cartReward);
     if (amt > 0) rows.push(line(cartReward === 'points' ? `Dùng ${REWARD_POINTS} điểm` : 'Giảm giá thành viên', amt, true));
   }
-  if (cartVoucherDiscount > 0) rows.push(line(`Giảm giá (${cartVoucherCode})`, cartVoucherDiscount, true));
-  cartPbh.forEach(p => rows.push(line(`Giảm giá (${p.code})`, p.amount, true)));
+  if (cartVoucherDiscount > 0) rows.push(line('Mã giảm giá', cartVoucherDiscount, true));
+  const pbhTotal = cartPbhTotal();
+  if (pbhTotal > 0) rows.push(line('Phiếu mua hàng', pbhTotal, true));
   return rows.join('');
 }
 
@@ -2223,55 +2229,59 @@ function discountLinesHTML() {
    chứa 2 card trắng riêng (Rewards / Mã giảm giá + Phiếu mua hàng) rồi tới summary
    ngay trong panel đó (không còn tách rời như trước). "Chương trình khuyến mãi"
    CHỦ Ý để ngoài khối này — giữ nguyên vị trí/hành vi cũ, theo yêu cầu trước đó. */
-function discountPanel(cartTotalNow, totalDiscount) {
+function discountPanel(cartTotalNow) {
   const rewardsCard = ckAuth ? `
     <div class="bg-background border border-border-1 rounded-md p-3 flex flex-col gap-4">
-      <p class="text-[16px] font-light leading-6 text-foreground">Ưu đãi chương trình DAFC Rewards</p>
+      <p class="text-[16px] font-medium leading-6 text-foreground">Ưu đãi chương trình DAFC Rewards</p>
       ${dafcRewards()}
     </div>` : '';
-  /* Spacing dưới đây đối chiếu trực tiếp theo px/gap trong node Figma 3428:55499
-     (đọc qua figma_execute, không đoán từ ảnh) — panel pad 24/8/24/8 gap16; card
-     "Mã giảm giá + Phiếu" pad 4/12/4/12 gap8; summary lùi thêm 8px so với 2 card
-     phía trên (358px vs 374px, do Frame 427319735 có pad ngang riêng 8px). */
+  /* Spacing/style dưới đây đối chiếu lại theo node Figma 3428:55499 sau khi user
+     cập nhật thiết kế (đọc lại bằng figma_execute, không dùng bản cũ trong đầu):
+     nền panel đổi bg-accent-0(#fafafa) -> bg-secondary(#f5f5f5), pad ngang
+     8->16px; heading Rewards Light -> Medium; "Bạn có phiếu mua hàng?" TÁCH
+     thành 1 card trắng riêng (không còn chung card với "Mã giảm giá"); đường
+     kẻ ngăn cards-group/summary đã bị bỏ (chỉ còn khoảng trống); CTA không còn
+     nền xám. */
   return `
-  <div class="py-6 px-2 border-t border-border bg-accent-0 flex flex-col gap-4 rise">
+  <div class="py-6 px-4 border-t border-border bg-secondary flex flex-col gap-4 rise">
     <div class="flex flex-col gap-2">
       ${rewardsCard}
-      <div class="bg-background border border-border-1 rounded-md py-1 px-3 flex flex-col gap-2">
+      <div class="bg-background border border-border-1 rounded-md py-1 px-3">
         <div class="py-2 flex flex-col gap-2">
           <p class="text-[14px] font-medium leading-5 text-foreground">Mã giảm giá</p>
-          <div id="voucherChipSlot" class="${cartVoucherCode ? 'flex items-center gap-2 min-w-0' : 'hidden'}">${voucherChip()}</div>
           <div class="flex gap-1">
             <input id="voucher" placeholder="Nhập voucher" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[16px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
             <button id="applyVoucher" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
           </div>
+          <div id="voucherChipSlot" class="${cartVoucherCode ? 'flex gap-2 flex-wrap' : 'hidden'}">${voucherChip()}</div>
         </div>
-        <div class="pb-2 flex flex-col">
-          <div class="h-9 flex items-center border-b border-border-1">
-            <p class="text-[14px] font-medium leading-5 text-foreground">Bạn có phiếu mua hàng?</p>
-          </div>
-          <div class="flex flex-col gap-2">
-            <p class="text-[12px] leading-4 text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
-            <div class="flex gap-1">
-              <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[16px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-              <button id="applyPbh" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
+      </div>
+      <div class="bg-background border border-border-1 rounded-md py-1 px-3">
+        <div class="acc">
+          <button class="acc-trigger w-full h-9 flex items-center justify-between press">
+            <span class="text-[14px] font-medium leading-5 text-foreground">Bạn có phiếu mua hàng?</span>
+            <span class="acc-ico-minus hidden">${IcoMinus}</span>
+            <span class="acc-ico-plus">${IcoPlus}</span>
+          </button>
+          <div class="acc-body"><div class="acc-inner">
+            <div class="flex flex-col gap-2 pt-2 pb-2">
+              <p class="text-[12px] leading-4 text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
+              <div class="flex gap-1">
+                <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[16px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+                <button id="applyPbh" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
+              </div>
+              <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
             </div>
-            <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
-          </div>
+          </div></div>
         </div>
       </div>
     </div>
-
-    <div class="h-px bg-border"></div>
 
     <div class="flex flex-col px-2">
       <div id="discountLines" class="flex flex-col">${discountLinesHTML()}</div>
       <div class="border-t border-border flex justify-between items-center h-14">
         <span class="text-[16px] font-medium leading-6 text-foreground">Tổng cộng</span>
-        <div class="text-right">
-          <span id="cartTotal" class="text-[16px] font-medium leading-6 text-foreground">${cartTotalNow.toLocaleString('en-US')}đ</span>
-          <p id="cartSaved" class="${totalDiscount > 0 ? '' : 'hidden'} text-[12px] leading-4 text-destructive">Tiết kiệm ${totalDiscount.toLocaleString('en-US')}đ</p>
-        </div>
+        <span id="cartTotal" class="text-[16px] font-medium leading-6 text-foreground">${cartTotalNow.toLocaleString('en-US')}đ</span>
       </div>
       <p class="text-[14px] leading-5 text-secondary-foreground">${ckAuth
         ? 'Hoàn tất đơn hàng để nhận ngay <b class="font-bold">98</b> điểm thưởng'
@@ -2363,19 +2373,19 @@ function screenCART() {
 
     <!-- Ưu đãi Rewards + Mã giảm giá + Phiếu mua hàng + Summary — 1 panel theo
          Figma 3428:55499, xem discountPanel(). -->
-    ${discountPanel(cartTotalNow, totalDiscount)}
+    ${discountPanel(cartTotalNow)}
 
-    <div id="cartCta" class="px-4 py-4 bg-accent-0">
-      <button data-order class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center">Đặt hàng</button>
+    <div id="cartCta" class="px-4 py-4 bg-secondary">
+      <button data-checkout class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center">Đặt hàng</button>
     </div>
 
-    ${ckAuth ? camKetSection() : ''}
+    ${camKetSection()}
 
     ${footer()}
   </div>
 
   <div id="cartStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
-    <button data-order class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-semibold tracking-wide press">Đặt hàng</button>
+    <button data-checkout class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-semibold tracking-wide press">Đặt hàng</button>
   </div>`;
 }
 
@@ -2565,6 +2575,31 @@ function richRadio(id, label, sub, on) {
 }
 
 /* Một section: head + phần mở (editable) + phần thu gọn (tóm tắt) */
+/* Xuất hóa đơn VAT — 2 loại (Figma 3028:47246): Cá nhân / Công ty, mỗi loại
+   một bộ field khác nhau (Công ty cần thêm Mã số thuế, Cá nhân thì không).
+   Hoist lên module scope vì cả screenCHECKOUT() (render lần đầu) và wire()
+   (đổi tab sau khi mount) đều cần gọi vatFieldRows(). */
+const vatFieldSets = {
+  personal: [
+    ['Họ và tên', 'Nhập Họ và tên', ''],
+    ['Địa chỉ', 'Nhập Địa chỉ', ''],
+    ['Email nhận hóa đơn VAT', 'Nhập Email nhận hóa đơn VAT', 'email'],
+  ],
+  company: [
+    ['Tên công ty', 'Nhập Tên công ty', ''],
+    ['Địa chỉ công ty', 'Nhập Địa chỉ công ty', ''],
+    ['Mã số thuế', 'Nhập Mã số thuế', 'numeric'],
+    ['Email nhận hóa đơn VAT', 'Nhập Email nhận hóa đơn VAT', 'email'],
+  ],
+};
+function vatFieldRows(type) {
+  return vatFieldSets[type].map(([lb, ph, im]) => `
+    <div class="px-4 py-2 flex flex-col gap-2">
+      <label class="text-[14px] font-medium leading-5 text-foreground">${lb}</label>
+      <input ${im ? `inputmode="${im}"` : ''} placeholder="${ph}" class="h-10 bg-background border border-border rounded-xs px-2 text-[16px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+    </div>`).join('');
+}
+
 function ckSection(i, title, openBody, doneBody) {
   return `
   <div class="ck-sec border-t border-border-1" data-sec="${i}">
@@ -2653,17 +2688,14 @@ function screenCHECKOUT() {
         </label>
       </div>
       <div id="vatFields" class="ck-open"><div class="acc-inner">
-        <p class="px-4 pt-3 text-[14px] leading-5 text-secondary-foreground">Hóa đơn VAT chỉ xuất trong ngày, khách hàng có nhu cầu xuất hóa đơn vui lòng điền đầy đủ thông tin bên dưới.</p>
-        ${[
-          ['Tên công ty','Nhập Tên công ty',''],
-          ['Địa chỉ công ty','Nhập Địa chỉ công ty',''],
-          ['Mã số thuế','Nhập Mã số thuế','numeric'],
-          ['Email nhận hóa đơn VAT','Nhập Email nhận hóa đơn VAT','email'],
-        ].map(([lb, ph, im]) => `
-          <div class="px-4 py-2 flex flex-col gap-2">
-            <label class="text-[14px] font-medium leading-5 text-foreground">${lb}</label>
-            <input ${im ? `inputmode="${im}"` : ''} placeholder="${ph}" class="h-10 bg-background border border-border rounded-xs px-2 text-[16px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-          </div>`).join('')}
+        <div class="px-4 pt-3 flex flex-col gap-3">
+          <div class="flex">
+            <button data-vat-type="personal" class="flex-1 h-10 border border-border rounded-xs flex items-center justify-center text-[14px] font-medium press ${vatType === 'personal' ? 'bg-secondary text-secondary-foreground' : 'text-foreground'}">Cá nhân</button>
+            <button data-vat-type="company" class="-ml-px flex-1 h-10 border border-border rounded-xs flex items-center justify-center text-[14px] font-medium press ${vatType === 'company' ? 'bg-secondary text-secondary-foreground' : 'text-foreground'}">Công ty</button>
+          </div>
+          <p class="text-[14px] leading-5 text-secondary-foreground">Hóa đơn VAT chỉ xuất trong ngày, khách hàng có nhu cầu xuất hóa đơn vui lòng điền đầy đủ thông tin bên dưới.</p>
+        </div>
+        <div id="vatFieldRows">${vatFieldRows(vatType)}</div>
       </div></div>
     </div>
     <div class="px-4 pt-4">
@@ -2706,6 +2738,16 @@ function screenCHECKOUT() {
                 </div>
                 <p class="text-[13px] font-medium text-foreground shrink-0">${c.now}</p>
               </div>`).join('')}
+          </div>
+          <div class="h-px bg-border-1"></div>
+          <!-- Chưa xác nhận phương thức vận chuyển (section 1) nên phí giao hàng
+               chưa xác định — chỉ hiện Tạm tính, phần giao hàng ghi "chưa xác định". -->
+          <div class="flex flex-col pb-2">
+            ${row('Tạm tính','21,250,000đ')}
+            <div class="h-9 flex items-center justify-between">
+              <span class="text-[14px] leading-5 text-foreground">Giao hàng</span>
+              <span class="text-[14px] leading-5 text-muted-foreground">Sẽ được tính sau</span>
+            </div>
           </div>
         </div></div>
       </div>
@@ -3144,6 +3186,7 @@ function renderPlpGrid(root) {
   wireProductCards(grid);
 }
 let ckAuth = false, ckStep = 0;   // checkout: đã đăng nhập? / đang mở section nào
+let vatType = 'personal';         // 'personal' | 'company' — loại xuất hoá đơn VAT (Figma 3028:47246, mặc định "Cá nhân")
 let loginFrom = null;             // mở login từ màn nào
 let scrollCleanups = [];          // gỡ listener khi đổi màn
 
@@ -3245,10 +3288,12 @@ const I18N = {
   'Phương thức vận chuyển':'Delivery method', 'Phương thức thanh toán':'Payment method',
   'Phương thức giao hàng':'Delivery method', 'Giao hàng tiêu chuẩn':'Standard delivery',
   'Giao hàng thông thường - Miễn Phí':'Standard delivery — Free', 'Giao hang nhanh - 25,000đ':'Express delivery — 25,000đ',
-  'Chuyển phát nhanh':'Express delivery', 'Thẻ tín dụng/Ghi nợ':'Credit / debit card',
+  'Chuyển phát nhanh':'Express delivery', 'Sẽ được tính sau':'Calculated later', 'Thẻ tín dụng/Ghi nợ':'Credit / debit card',
   'Chuyển khoảng/ QR code':'Bank transfer / QR code', 'Thẻ tín dụng · **** 4829':'Credit card · **** 4829',
   'Thanh toán trả góp 0% qua thẻ tín dụng':'0% instalments with credit card',
-  'Xuất hóa đơn VAT':'Request VAT invoice', 'Tên công ty':'Company name', 'Địa chỉ công ty':'Company address',
+  'Xuất hóa đơn VAT':'Request VAT invoice', 'Cá nhân':'Individual', 'Công ty':'Company',
+  'Nhập Họ và tên':'Enter full name', 'Nhập Địa chỉ':'Enter address',
+  'Tên công ty':'Company name', 'Địa chỉ công ty':'Company address',
   'Mã số thuế':'Tax code', 'Email nhận hóa đơn VAT':'Email for VAT invoice',
   'Nhập Tên công ty':'Enter company name', 'Nhập Địa chỉ công ty':'Enter company address',
   'Nhập Mã số thuế':'Enter tax code', 'Nhập Email nhận hóa đơn VAT':'Enter email for VAT invoice',
@@ -3841,6 +3886,22 @@ function wire(root) {
         if (on) setTimeout(() => fields.querySelector('input')?.focus({ preventScroll: true }), 380);
       });
     }
+    // Xuất hóa đơn VAT: đổi tab Cá nhân / Công ty -> đổi luôn bộ field bên dưới
+    root.querySelectorAll('[data-vat-type]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.dataset.vatType;
+        if (type === vatType) return;
+        vatType = type;
+        root.querySelectorAll('[data-vat-type]').forEach(b => {
+          const on = b.dataset.vatType === vatType;
+          b.classList.toggle('bg-secondary', on);
+          b.classList.toggle('text-secondary-foreground', on);
+          b.classList.toggle('text-foreground', !on);
+        });
+        const rows = root.querySelector('#vatFieldRows');
+        if (rows) { rows.innerHTML = vatFieldRows(vatType); localizeNew(rows); }
+      });
+    });
 
     // đổi tóm tắt vận chuyển theo lựa chọn
     root.querySelectorAll('#shipOpts [data-opt]').forEach(o => {
@@ -4087,7 +4148,10 @@ function wire(root) {
   });
 
   // Cart: Đặt hàng — khách -> popup đăng nhập nhanh (2858:42899); đã đăng nhập -> checkout
-  root.querySelectorAll('[data-order]').forEach(b => b.addEventListener('click', () => {
+  // (dùng data-checkout riêng, KHÔNG dùng chung data-order với nút "Chi tiết" đơn
+  // hàng ở Account — trước đây trùng attribute nên bấm "Đặt hàng" cũng bị dính
+  // luôn handler go('order') ở dưới, đẩy sang sai trang chi tiết đơn hàng.)
+  root.querySelectorAll('[data-checkout]').forEach(b => b.addEventListener('click', () => {
     if (ckAuth) go('checkout');
     else if (window.__openLoginPop) window.__openLoginPop();
   }));
@@ -4150,8 +4214,8 @@ function wire(root) {
     if (slot) {
       slot.innerHTML = voucherChip();
       // Ẩn hẳn (không chỉ rỗng) khi không có mã, tránh flex gap tạo khoảng
-      // trống thừa giữa tiêu đề "Mã giảm giá" và ô input (theo đúng Figma).
-      slot.className = cartVoucherCode ? 'flex items-center gap-2 min-w-0' : 'hidden';
+      // trống thừa dưới ô input khi chưa áp mã.
+      slot.className = cartVoucherCode ? 'flex gap-2 flex-wrap' : 'hidden';
     }
     root.querySelectorAll('[data-voucher-remove]').forEach(b => b.addEventListener('click', e => {
       e.stopPropagation();
@@ -4359,16 +4423,10 @@ function refreshCartSummary(root) {
   if (dl) dl.innerHTML = discountLinesHTML();
 
   const reward = ckAuth ? rewardAmount(cartReward) : 0;
-  const totalDiscount = reward + cartVoucherDiscount + cartPbhTotal();
-  const total = Math.max(0, CART_SUBTOTAL - totalDiscount);
+  const total = Math.max(0, CART_SUBTOTAL - reward - cartVoucherDiscount - cartPbhTotal());
 
   const ct = root.querySelector('#cartTotal');
   if (ct) ct.textContent = total.toLocaleString('en-US') + 'đ';
-  const sv = root.querySelector('#cartSaved');
-  if (sv) {
-    sv.classList.toggle('hidden', totalDiscount <= 0);
-    sv.textContent = 'Tiết kiệm ' + totalDiscount.toLocaleString('en-US') + 'đ';
-  }
 }
 
 function refreshCartCount(root) {
