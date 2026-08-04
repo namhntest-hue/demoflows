@@ -2335,26 +2335,29 @@ function screenCART() {
 ════════════════════════════════════════════════════════════════ */
 /* ════════════════════════════════════════════════════════════════
    AUTH — theo Figma "Account · Mobile" 2084:170 (01–05)
-   Trang full-screen (không phải card). Tiêu đề Light 24, label Medium
-   14 #737373, input h-36 r-2 #e5e5e5. Giữ loginFrom/ckAuth.
+   Trang full-screen (không phải card). Tiêu đề Light 24, input h-36
+   r-2 #e5e5e5. Giữ loginFrom/ckAuth.
+   Luồng đăng ký (Figma 3107:50758 + 3354:47931): nhập SĐT → Gửi mã
+   OTP → Xác thực OTP → Hoàn tất đăng ký (điền thông tin).
 ════════════════════════════════════════════════════════════════ */
 let authView = 'login';
 let authViewIntent = false;
 let authPhone = '';
+let authFlow = 'register';   // luồng đang dùng OTP: 'register' (SĐT → OTP → điền thông tin) | 'forgot' (SĐT → OTP → đặt lại mật khẩu)
 
 /* input theo Figma: 358x36, pad 8, stroke #e5e5e5, r2, text 14 */
-const afield = (label, attrs, ph, extra = '') => `
+const afield = (label, attrs, ph, extra = '', labelCls = 'text-muted-foreground') => `
   <div class="flex flex-col gap-2">
     <div class="flex items-center justify-between">
-      <span class="text-[14px] font-medium leading-5 text-muted-foreground">${label}</span>
+      <span class="text-[14px] font-medium leading-5 ${labelCls}">${label}</span>
       ${extra}
     </div>
     <input ${attrs} placeholder="${ph}" class="h-9 border border-border rounded-xs px-2 text-[16px] text-foreground outline-none focus:border-primary transition-colors">
   </div>`;
 
 /* nút chính: 358x40-44, r2, label Medium 14 #fafafa */
-const abtn = (label, attrs) => `
-  <button ${attrs} class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium tracking-wide press flex items-center justify-center gap-2">${label}</button>`;
+const abtn = (label, attrs, h = 'h-11') => `
+  <button ${attrs} class="w-full ${h} rounded-xs bg-primary text-primary-foreground text-[14px] font-medium tracking-wide press flex items-center justify-center gap-2">${label}</button>`;
 
 function authNav(title) {
   return `
@@ -2374,7 +2377,7 @@ function viewLogin() {
       <p class="text-[14px] leading-5 text-muted-foreground">Chào mừng bạn trở lại</p>
     </div>
     <div class="flex flex-col gap-6">
-      ${afield('Số điện thoại hoặc Email', 'inputmode="text" id="loginId"', 'Nhập số điện thoại hoặc email')}
+      ${afield('Số điện thoại', 'type="tel" inputmode="tel" id="loginId"', 'Nhập số điện thoại')}
       ${afield('Mật khẩu', 'type="password"', 'Nhập mật khẩu',
         '<button data-auth-go="forgot" class="text-[14px] leading-5 text-muted-foreground press">Quên mật khẩu?</button>')}
     </div>
@@ -2386,24 +2389,18 @@ function viewLogin() {
   </div>`;
 }
 
-/* ── 02 Register ── */
+/* ── 02 Register — chỉ nhập SĐT để nhận OTP (Figma 3107:50758) ── */
 function viewRegister() {
   return `
   ${authNav('Đăng ký')}
   <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
     <h2 class="text-[24px] font-light leading-8 text-foreground">Tạo tài khoản</h2>
-    <div class="flex flex-col gap-5">
-      ${afield('Họ và tên', 'type="text"', 'Nhập họ và tên')}
-      ${afield('Số điện thoại', 'inputmode="tel" id="regPhone"', 'Nhập số điện thoại')}
-      ${afield('Email', 'inputmode="email"', 'Nhập email')}
-      ${afield('Mật khẩu', 'type="password"', 'Nhập mật khẩu')}
-      ${afield('Xác nhận mật khẩu', 'type="password"', 'Nhập lại mật khẩu')}
+    <div class="flex flex-col gap-3 text-[14px] leading-5" style="color:var(--unofficial-ghost-foreground)">
+      <p>Để tận hưởng những ưu đãi độc quyền, Quý khách vui lòng sử dụng số điện thoại đã đăng ký chương trình Khách hàng thân thiết tại hệ thống cửa hàng DAFC khi mua sắm trực tuyến tại DAFC Online.</p>
+      <p>Hãy sẵn sàng trải nghiệm những đặc quyền mua sắm tuyệt vời chỉ dành riêng cho bạn!</p>
     </div>
-    <label class="flex items-start gap-3">
-      <input type="checkbox" checked class="w-4 h-4 mt-0.5 accent-black shrink-0">
-      <span class="text-[12px] leading-4 text-muted-foreground">Tôi đồng ý với <button data-toast="Điều khoản sử dụng" class="text-foreground underline press">Điều khoản sử dụng</button> và <button data-toast="Chính sách bảo mật" class="text-foreground underline press">Chính sách bảo mật</button></span>
-    </label>
-    ${abtn('TẠO TÀI KHOẢN', 'data-auth-otp')}
+    ${afield('Số điện thoại', `type="tel" inputmode="tel" id="regPhone" value="${authPhone.replace(/"/g, '&quot;')}"`, 'Nhập thông tin...', '', 'text-foreground')}
+    ${abtn('Gửi mã OTP', 'data-auth-otp', 'h-10')}
     <div class="flex items-center justify-center gap-1">
       <span class="text-[14px] leading-5 text-muted-foreground">Đã có tài khoản?</span>
       <button data-auth-go="login" class="text-[14px] font-medium leading-5 text-foreground press">Đăng nhập</button>
@@ -2417,28 +2414,54 @@ function viewForgot() {
   ${authNav('Quên mật khẩu')}
   <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
     <h2 class="text-[24px] font-light leading-8 text-foreground">Quên mật khẩu</h2>
-    <p class="text-[14px] leading-5 text-muted-foreground">Nhập số điện thoại hoặc email đã đăng ký. Chúng tôi sẽ gửi mã OTP để xác thực.</p>
-    ${afield('Số điện thoại hoặc Email', 'inputmode="text" id="regPhone"', 'Nhập số điện thoại hoặc email')}
+    <p class="text-[14px] leading-5 text-muted-foreground">Nhập số điện thoại đã đăng ký. Chúng tôi sẽ gửi mã OTP để xác thực.</p>
+    ${afield('Số điện thoại', `type="tel" inputmode="tel" id="regPhone" value="${authPhone.replace(/"/g, '&quot;')}"`, 'Nhập số điện thoại')}
     ${abtn('GỬI MÃ XÁC THỰC', 'data-auth-otp')}
     <button data-auth-go="login" class="text-center text-[14px] leading-5 text-muted-foreground press">← Quay lại đăng nhập</button>
   </div>`;
 }
 
-/* ── 04 OTP Verify ── */
+/* ── 04 OTP Verify (Figma 3354:47931) ── */
 function viewOtp() {
   return `
   ${authNav('Xác thực OTP')}
   <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
     <h2 class="text-[24px] font-light leading-8 text-foreground">Xác thực OTP</h2>
-    <p class="text-[14px] leading-5 text-muted-foreground">Mã xác thực đã được gửi đến<br><b class="text-foreground font-medium">${authPhone || '+84 *** *** 123'}</b></p>
-    <div class="flex gap-2 justify-between" id="otpRow">
-      ${[0,1,2,3,4,5].map(i => `<input inputmode="numeric" maxlength="1" data-otp="${i}" class="otp-cell w-11 h-[52px] text-center text-[20px] font-medium border border-border-3 rounded-xs outline-none focus:border-primary transition-colors">`).join('')}
+    <p class="text-[14px] leading-5" style="color:var(--unofficial-ghost-foreground)">Mã xác thực đã được gửi đến ${authPhone ? `<b class="font-medium text-foreground">${authPhone}</b>` : 'số điện thoại của bạn'}<br>Hoặc <button data-otp-change class="underline underline-offset-2 press">thay đổi số điện thoại</button></p>
+    <div class="flex gap-2" id="otpRow">
+      ${[0,1,2,3,4,5].map(i => `<input inputmode="numeric" maxlength="1" data-otp="${i}" class="otp-cell w-[52px] h-[52px] text-center text-[20px] font-medium border border-border-3 rounded-xs outline-none focus:border-primary transition-colors">`).join('')}
     </div>
+    <div class="flex flex-col gap-4">
+      ${abtn('Xác nhận', 'data-auth-verify', 'h-10')}
+      <button id="otpResend" class="w-full h-10 rounded-xs bg-secondary border border-border text-[14px] font-medium text-foreground press" disabled>Nhận lại mã (<span id="otpTimer">60</span>s)</button>
+    </div>
+    <div class="flex items-center justify-center gap-1">
+      <span class="text-[14px] leading-5 text-muted-foreground">Đã có tài khoản?</span>
+      <button data-auth-go="login" class="text-[14px] font-medium leading-5 text-foreground press">Đăng nhập</button>
+    </div>
+  </div>`;
+}
+
+/* ── 04b Hoàn tất đăng ký — điền thông tin sau khi xác thực OTP ── */
+function viewRegInfo() {
+  return `
+  ${authNav('Đăng ký')}
+  <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
     <div class="flex flex-col gap-2">
-      <p class="text-[12px] leading-4 text-muted-foreground">Gửi lại mã sau <span id="otpTimer">60</span>s</p>
-      <button id="otpResend" class="text-left text-[12px] font-medium leading-4 text-foreground press" disabled>Không nhận được mã? Gửi lại</button>
+      <h2 class="text-[24px] font-light leading-8 text-foreground">Hoàn tất đăng ký</h2>
+      <p class="text-[14px] leading-5 text-muted-foreground"><span class="text-success">✓</span> Số điện thoại ${authPhone ? `<b class="font-medium text-foreground">${authPhone}</b> ` : ''}đã được xác thực.</p>
     </div>
-    ${abtn('XÁC NHẬN', 'data-auth-verify')}
+    <div class="flex flex-col gap-5">
+      ${afield('Họ và tên', 'type="text"', 'Nhập họ và tên', '', 'text-foreground')}
+      ${afield('Email ( không bắt buộc )', 'type="email" inputmode="email"', 'Nhập email', '', 'text-foreground')}
+      ${afield('Mật khẩu', 'type="password"', 'Nhập mật khẩu', '', 'text-foreground')}
+      ${afield('Xác nhận mật khẩu', 'type="password"', 'Nhập lại mật khẩu', '', 'text-foreground')}
+    </div>
+    <label class="flex items-start gap-3">
+      <input type="checkbox" checked class="w-4 h-4 mt-0.5 accent-black shrink-0">
+      <span class="text-[12px] leading-4 text-muted-foreground">Tôi đồng ý với <button data-toast="Điều khoản sử dụng" class="text-foreground underline press">Điều khoản sử dụng</button> và <button data-toast="Chính sách bảo mật" class="text-foreground underline press">Chính sách bảo mật</button></span>
+    </label>
+    ${abtn('TẠO TÀI KHOẢN', 'data-reg-done', 'h-10')}
   </div>`;
 }
 
@@ -2464,7 +2487,7 @@ function viewSetPass() {
   </div>`;
 }
 
-const AUTH_VIEWS = { login: viewLogin, register: viewRegister, otp: viewOtp, setpass: viewSetPass, forgot: viewForgot };
+const AUTH_VIEWS = { login: viewLogin, register: viewRegister, otp: viewOtp, reginfo: viewRegInfo, setpass: viewSetPass, forgot: viewForgot };
 
 function screenLOGIN() {
   return `<div class="w-full min-h-screen bg-background">${(AUTH_VIEWS[authView] || viewLogin)()}</div>`;
@@ -3198,11 +3221,13 @@ const I18N = {
   'Đăng nhập tài khoản':'Account sign-in', 'Chào mừng bạn trở lại':'Welcome back',
   'Chưa có tài khoản?':'No account yet?', 'Đã có tài khoản?':'Already have an account?',
   'Số điện thoại hoặc Email':'Phone number or email', 'Nhập số điện thoại hoặc email':'Enter phone number or email',
+  'Nhập số điện thoại đã đăng ký. Chúng tôi sẽ gửi mã OTP để xác thực.':'Enter the phone number you registered with. We’ll send you an OTP to verify.',
   'Mật khẩu':'Password', 'Nhập mật khẩu':'Enter password', 'Quên mật khẩu':'Forgot password',
   'Quên mật khẩu?':'Forgot password?', '← Quay lại đăng nhập':'← Back to sign in',
   'Tạo tài khoản':'Create account', 'TẠO TÀI KHOẢN':'CREATE ACCOUNT', 'Họ và tên':'Full name',
   'Nhập họ và tên':'Enter your full name', 'Số điện thoại':'Phone number', 'Nhập số điện thoại':'Enter phone number',
-  'Nhập email':'Enter email', 'Xác nhận mật khẩu':'Confirm password', 'Nhập lại mật khẩu':'Re-enter password',
+  'Nhập email':'Enter email', 'Email ( không bắt buộc )':'Email ( optional )',
+  'Xác nhận mật khẩu':'Confirm password', 'Nhập lại mật khẩu':'Re-enter password',
   'Tôi đồng ý với':'I agree to the', 'Điều khoản sử dụng':'Terms of Use', 'Chính sách bảo mật':'Privacy Policy',
   'Nhập số điện thoại hoặc email đã đăng ký. Chúng tôi sẽ gửi mã OTP để xác thực.':'Enter the phone number or email you registered with. We\u2019ll send you an OTP to verify.',
   'GỬI MÃ XÁC THỰC':'SEND VERIFICATION CODE', 'Xác thực OTP':'OTP verification',
@@ -3214,6 +3239,16 @@ const I18N = {
   'Độ mạnh mật khẩu:':'Password strength:', 'CẬP NHẬT MẬT KHẨU':'UPDATE PASSWORD',
   'Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật':'Medium — add a special character to strengthen it',
   'Đăng nhập thành công':'Signed in successfully', 'Đăng ký thành công':'Account created',
+  'Để tận hưởng những ưu đãi độc quyền, Quý khách vui lòng sử dụng số điện thoại đã đăng ký chương trình Khách hàng thân thiết tại hệ thống cửa hàng DAFC khi mua sắm trực tuyến tại DAFC Online.':'To enjoy exclusive privileges, please use the phone number registered with the DAFC loyalty programme at our stores when shopping online at DAFC Online.',
+  'Hãy sẵn sàng trải nghiệm những đặc quyền mua sắm tuyệt vời chỉ dành riêng cho bạn!':'Get ready to enjoy wonderful shopping privileges reserved just for you!',
+  'Nhập thông tin...':'Enter details...', 'Gửi mã OTP':'Send OTP code',
+  'số điện thoại của bạn':'your phone number', 'thay đổi số điện thoại':'change phone number',
+  'Nhận lại mã':'Resend code', 'Nhận lại mã (':'Resend code (',
+  'Hoàn tất đăng ký':'Complete registration', 'đã được xác thực.':'has been verified.',
+  'Số điện thoại đã được xác thực.':'Your phone number has been verified.',
+  'Đã gửi mã OTP':'OTP code sent', 'Đã gửi lại mã OTP':'OTP code re-sent',
+  'Vui lòng nhập số điện thoại':'Please enter your phone number',
+  'Vui lòng nhập đủ 6 số':'Please enter all 6 digits',
 
   // ── Trang tài khoản ──
   'Tài khoản':'Account', 'Thông tin':'Profile', 'Đơn hàng':'Orders', 'Địa chỉ':'Addresses',
@@ -3583,11 +3618,12 @@ function wire(root) {
   // Mở menu drawer
   root.querySelectorAll('[data-menu-open]').forEach(btn => btn.addEventListener('click', () => window.__openMenu && window.__openMenu()));
 
-  // Nút back trên nav auth: register/forgot/otp/setpass -> về login; login -> thoát về màn gọi
+  // Nút back trên nav auth: otp -> về màn nhập SĐT của luồng; reginfo -> register; setpass -> otp; login -> thoát về màn gọi
   root.querySelectorAll('[data-auth-back]').forEach(btn => {
     btn.addEventListener('click', () => {
       if (authView === 'login') { const back = loginFrom || 'cart'; authView = 'login'; go(back); }
-      else if (authView === 'otp') { authView = 'register'; rerenderLogin(); }
+      else if (authView === 'otp') { authView = authFlow; rerenderLogin(); }
+      else if (authView === 'reginfo') { authView = 'register'; rerenderLogin(); }
       else if (authView === 'setpass') { authView = 'otp'; rerenderLogin(); }
       else { authView = 'login'; rerenderLogin(); }
     });
@@ -3598,18 +3634,24 @@ function wire(root) {
     btn.addEventListener('click', () => { authView = btn.dataset.authGo; rerenderLogin(); });
   });
 
-  // Nhận OTP: lấy SĐT -> sang view OTP
+  // Nhận OTP: lấy SĐT (bắt buộc) -> ghi nhớ luồng -> sang view OTP
   root.querySelectorAll('[data-auth-otp]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const ph = (root.querySelector('#regPhone') || {}).value;
-      authPhone = ph && ph.trim() ? ph.trim() : '';
-      const html = btn.innerHTML;
+      const inp = root.querySelector('#regPhone');
+      authPhone = inp && inp.value.trim() ? inp.value.trim() : '';
+      if (!authPhone) { toast('Vui lòng nhập số điện thoại'); if (inp) inp.focus(); return; }
+      authFlow = authView === 'forgot' ? 'forgot' : 'register';
       btn.innerHTML = spinnerSVG();
       setTimeout(() => { authView = 'otp'; rerenderLogin(); toast('Đã gửi mã OTP'); }, 700);
     });
   });
 
-  // Ô OTP: tự nhảy ô kế + đếm ngược gửi lại
+  // Đổi SĐT từ màn OTP -> quay lại màn nhập SĐT của luồng
+  root.querySelectorAll('[data-otp-change]').forEach(btn => {
+    btn.addEventListener('click', () => { authView = authFlow; rerenderLogin(); });
+  });
+
+  // Ô OTP: tự nhảy ô kế + nút "Nhận lại mã (60s)" đếm ngược
   const otpCells = [...root.querySelectorAll('[data-otp]')];
   if (otpCells.length) {
     otpCells[0].focus();
@@ -3620,13 +3662,21 @@ function wire(root) {
       });
       c.addEventListener('keydown', e => { if (e.key === 'Backspace' && !c.value && i > 0) otpCells[i - 1].focus(); });
     });
-    let t = 60; const tEl = root.querySelector('#otpTimer'), rBtn = root.querySelector('#otpResend');
-    if (rBtn) rBtn.disabled = true;
-    const iv = setInterval(() => {
-      t--; if (tEl) tEl.textContent = t;
-      if (t <= 0) { clearInterval(iv); if (rBtn) { rBtn.disabled = false; rBtn.innerHTML = 'Gửi lại'; } }
-    }, 1000);
-    if (rBtn) rBtn.addEventListener('click', () => { if (!rBtn.disabled) toast('Đã gửi lại mã OTP'); });
+    const rBtn = root.querySelector('#otpResend');
+    if (rBtn) {
+      const startCountdown = () => {
+        rBtn.disabled = true;
+        rBtn.innerHTML = 'Nhận lại mã (<span id="otpTimer">60</span>s)';
+        localizeNew(rBtn);
+        let t = 60; const tEl = rBtn.querySelector('#otpTimer');
+        const iv = setInterval(() => {
+          t--; if (tEl) tEl.textContent = t;
+          if (t <= 0) { clearInterval(iv); rBtn.disabled = false; rBtn.textContent = 'Nhận lại mã'; localizeNew(rBtn); }
+        }, 1000);
+      };
+      startCountdown();
+      rBtn.addEventListener('click', () => { if (!rBtn.disabled) { toast('Đã gửi lại mã OTP'); startCountdown(); } });
+    }
   }
 
   // Độ mạnh mật khẩu (view reset)
@@ -3642,13 +3692,23 @@ function wire(root) {
     });
   }
 
-  // Xác nhận OTP -> sang tạo mật khẩu
+  // Xác nhận OTP -> đăng ký: sang điền thông tin; quên mật khẩu: sang đặt mật khẩu mới
   root.querySelectorAll('[data-auth-verify]').forEach(btn => {
     btn.addEventListener('click', () => {
       const code = otpCells.map(c => c.value).join('');
       if (code.length < 6) { toast('Vui lòng nhập đủ 6 số'); return; }
-      const html = btn.innerHTML; btn.innerHTML = spinnerSVG();
-      setTimeout(() => { authView = 'setpass'; rerenderLogin(); }, 700);
+      btn.innerHTML = spinnerSVG();
+      setTimeout(() => { authView = authFlow === 'register' ? 'reginfo' : 'setpass'; rerenderLogin(); }, 700);
+    });
+  });
+
+  // Hoàn tất đăng ký (sau OTP): tạo tài khoản -> đăng nhập luôn, quay về màn gọi
+  root.querySelectorAll('[data-reg-done]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      ckAuth = true; ckStep = 1;
+      btn.innerHTML = spinnerSVG();
+      const back = loginFrom || 'checkout';
+      setTimeout(() => { authView = 'login'; go(back); toast('Đăng ký thành công'); }, 700);
     });
   });
 

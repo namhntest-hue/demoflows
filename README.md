@@ -29,9 +29,10 @@ demo-flow/
 
 ## Flow màn hình
 
-`PLP → PDP (6 biến thể: pdp, pdp2..pdp6) → Cart → Login (5 view: login/register/otp/setpass/forgot) → Account (6 tab) → Order detail → Checkout → Done`
+`PLP → PDP (6 biến thể: pdp, pdp2..pdp6) → Cart → Login (6 view: login/register/otp/reginfo/setpass/forgot) → Account (6 tab) → Order detail → Checkout → Done`
 
 - Router SPA thủ công trong `index.html`: `FLOW`, `RENDER`, `go(name)`, `history`.
+- Đăng ký kiểu OTP-first (Figma `3107:50758` + `3354:47931`): nhập SĐT → **Gửi mã OTP** → xác thực 6 ô (nút "Nhận lại mã (60s)" đếm ngược; link "thay đổi số điện thoại" quay lại bước trước, giữ nguyên số đã nhập) → màn `reginfo` mới điền Họ tên / Email / Mật khẩu → tạo tài khoản + đăng nhập luôn. Quên mật khẩu dùng chung màn OTP, phân nhánh bằng state `authFlow` (`register` → reginfo, `forgot` → setpass).
 - 6 biến thể PDP, mỗi bản gắn 1 sản phẩm khác nhau (SP#1–SP#6), khác nhau về layout size (chip vs dropdown), vị trí Payment Offer, hiệu ứng gallery/lightbox, font (Inter cho pdp6)...
 - i18n VI/EN thật: từ điển 2 chiều + regex cho chuỗi có số, áp dụng qua `applyLang()`, gọi lại mỗi khi render màn mới.
 - Settings FAB (góc phải dưới): đổi ngôn ngữ + đổi font (Montserrat/Inter/Plus Jakarta Sans).
@@ -72,6 +73,7 @@ npx tailwindcss@3.4.17 -c tailwind.config.js -i in.css -o tailwind.css --minify
 - **Luồng hết hàng 2 tầng** (size tạm hết / nhận thông báo khi có hàng) chỉ áp dụng cho PDP dùng size dạng chip (pdp, pdp4) — PDP dùng dropdown (pdp2/pdp3/pdp5/pdp6) chưa hỗ trợ vì `<option disabled>` chặn tương tác.
 - **PDP v1 (pdp) — layout Pre-order**: ngày giao hàng "15/08/2026" đang hardcode; "Chỉ còn 01 sản phẩm" vẫn hiện dù đã là pre-order (có thể mâu thuẫn logic).
 - **Account**: 9 màn theo Figma gốc (Info/Info-Error/Address/Address-Empty/Orders/Orders-Empty/Loyalty/Points/Points-Empty) đã gộp thành 1 trang 6-tab — chưa có trạng thái Empty/Error riêng.
+- **Màn "Hoàn tất đăng ký" (`reginfo`)**: chưa có frame Figma riêng — đang tự dựng theo style 2 màn đăng ký mới. Lưu ý frame thiết kế màn "Tạo tài khoản" (chỉ SĐT) trong Figma mang tên `Account-Mobile-03b-ForgotPassword-Alt` (3107:50758, có vẻ đặt nhầm tên khi copy); frame `Account-Mobile-02-Register` (2379:21218) vẫn là bản form dài cũ.
 
 ## Nguồn thiết kế
 
