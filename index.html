@@ -21,7 +21,7 @@
   /* ── Input: chữ 14px ──
      Mặc định cho field không tự đặt cỡ chữ (Tailwind preflight để font-size:100%).
      CỐ Ý dùng selector thuần element (specificity 0,0,1) để utility text-[…] trong
-     markup vẫn thắng khi cần cỡ khác — vd ô OTP 52×52 giữ text-[20px]. Nếu thêm
+     markup vẫn thắng khi cần cỡ khác — vd ô OTP 52×52 giữ text-[18px]. Nếu thêm
      :not(...) vào đây thì specificity lên 0,2,1 và sẽ đè luôn các utility đó.
      Checkbox/radio không bị ảnh hưởng vì kích thước do w-4 h-4 quyết định.
      Đặt sau tailwind.css nên không bị preflight ghi đè.
@@ -158,15 +158,16 @@
   .glass-85 { background: var(--general-background); background: color-mix(in srgb, var(--general-background) 85%, transparent); }
   .glass-ink-95 { background: var(--general-primary); background: color-mix(in srgb, var(--general-primary) 95%, transparent); }
 
-  /* ── Header + filter: gộp liền 1 khối khi cuộn ── */
-  /* viền dưới vẽ bằng ::after để bật/tắt mượt, không đụng tới layout */
-  .navbar::after, .filterbar::after {
+  /* ── Filter bar: viền dưới vẽ bằng ::after, không đụng tới layout ──
+     NAVBAR KHÔNG CÓ VIỀN DƯỚI (quy ước design, áp cho mọi màn mobile) —
+     tách khỏi nội dung bằng nền glass-95 + blur, không kẻ line. Vì vậy cũng
+     không còn logic .merged (trước đây dùng để giấu viền nav khi filter bar
+     dính sát đáy nav). */
+  .filterbar::after {
     content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
     background: var(--general-border);
     transition: opacity .18s ease;
   }
-  /* khi filter đã dính sát dưới nav -> giấu viền nav => không còn điểm tách */
-  .navbar.merged::after { opacity: 0; }
 
   /* ── Filter bottom sheet ── */
   #filterSheet { position: fixed; inset: 0; z-index: 300; pointer-events: none; }
@@ -403,8 +404,8 @@ const PROMO_MESSAGES = [
   'Giảm thêm 5% cho thẻ Techcombank (*Điều khoản áp dụng)',
 ];
 
-const FLOW = ['plp','search','pdp','pdp2','pdp3','pdp4','pdp5','pdp6','cart','login','account','order','checkout','done'];
-const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login:'Đăng nhập', pdp2:'Sản phẩm', pdp3:'Sản phẩm', pdp4:'Sản phẩm', pdp5:'Sản phẩm', pdp6:'Sản phẩm', account:'Tài khoản', order:'Chi tiết đơn hàng', checkout:'Thanh toán', done:'Hoàn tất' };
+const FLOW = ['plp','search','pdp','pdp2','pdp3','pdp4','pdp5','pdp6','cart','login','account','order','checkout','done','privacy','terms','returns'];
+const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login:'Đăng nhập', pdp2:'Sản phẩm', pdp3:'Sản phẩm', pdp4:'Sản phẩm', pdp5:'Sản phẩm', pdp6:'Sản phẩm', account:'Tài khoản', order:'Chi tiết đơn hàng', checkout:'Thanh toán', done:'Hoàn tất', privacy:'Chính sách bảo mật', terms:'Điều khoản dịch vụ', returns:'Chính sách đổi trả' };
 
 /* ════════════════════════════════════════════════════════════════
    ICONS
@@ -427,6 +428,9 @@ const I = {
   fb:     `<svg width="24" height="24" viewBox="1.75 1.77 20.5 20.38" fill="var(--general-primary)"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.4v7A10 10 0 0 0 22 12Z"/></svg>`,
   ig:     `<svg width="24" height="24" viewBox="2.75 2.75 18.5 18.5" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" stroke="var(--general-primary)" stroke-width="1.6"/><circle cx="12" cy="12" r="4" stroke="var(--general-primary)" stroke-width="1.6"/><circle cx="17.2" cy="6.8" r="1.2" fill="var(--general-primary)"/></svg>`,
   yt:     `<svg width="24" height="24" viewBox="2.25 5.25 19.5 13.5" fill="none"><rect x="2.5" y="5.5" width="19" height="13" rx="4" stroke="var(--general-primary)" stroke-width="1.6"/><path d="m10.5 9.5 5 2.5-5 2.5v-5Z" fill="var(--general-primary)"/></svg>`,
+  /* Zalo — kênh social thật của shop.dafc.com.vn (thay cho YouTube). Vẽ khung
+     bo góc + chữ "Z" cách điệu cho khớp bộ icon outline 24px ở trên. */
+  zalo:   `<svg width="24" height="24" viewBox="2.25 2.75 19.5 18.5" fill="none"><path d="M2.5 9c0-2.8 0-4.2.9-5.1.9-.9 2.3-.9 5.1-.9h7c2.8 0 4.2 0 5.1.9.9.9.9 2.3.9 5.1v3c0 2.8 0 4.2-.9 5.1-.9.9-2.3.9-5.1.9H9l-4.2 2.2a.5.5 0 0 1-.7-.5l.2-2.3c-1.3-.5-1.8-1.7-1.8-4.4V9Z" stroke="var(--general-primary)" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.7 8.6h4.1l-4.1 5.8h4.3M16 8.6v5.8" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   truck:  `<svg width="20" height="20" viewBox="-0.25 0.75 24.5 22.5" fill="var(--general-primary)"><path d="m19.5,6h-2.5v-.5c0-2.481-2.019-4.5-4.5-4.5H4.5C2.019,1,0,3.019,0,5.5v10c0,1.496.944,2.776,2.268,3.276-.176.385-.268.799-.268,1.224,0,1.654,1.346,3,3,3s3-1.346,3-3c0-.344-.06-.68-.176-1h8.352c-.116.319-.176.656-.176,1,0,1.654,1.346,3,3,3s3-1.346,3-3c0-.426-.092-.84-.268-1.224,1.324-.5,2.268-1.78,2.268-3.276v-5c0-2.481-2.019-4.5-4.5-4.5Zm0,1c1.93,0,3.5,1.57,3.5,3.5v1.5h-6v-5h2.5ZM1,15.5V5.5c0-1.93,1.57-3.5,3.5-3.5h8c1.93,0,3.5,1.57,3.5,3.5v12.5H3.5c-1.378,0-2.5-1.121-2.5-2.5Zm6,4.5c0,1.103-.897,2-2,2s-2-.897-2-2c0-.354.097-.698.282-1.007.072.004.145.007.218.007h3.223c.182.307.277.649.277,1Zm14,0c0,1.103-.897,2-2,2s-2-.897-2-2c0-.352.095-.693.277-1h3.223c.073,0,.146-.003.219-.007.185.309.281.652.281,1.007Zm-.5-2h-3.5v-5h6v2.5c0,1.379-1.121,2.5-2.5,2.5Z"/></svg>`,
   medal:  `<svg width="20" height="20" viewBox="0.72 -0.25 22.56 24.5" fill="var(--general-primary)"><path d="m22.802.703c-.274-.44-.747-.703-1.265-.703h-4.025c-1.342,0-2.545.748-3.139,1.952l-2.001,4.057c-.123-.005-.247-.008-.371-.008s-.248.003-.371.008l-2.001-4.057c-.594-1.204-1.796-1.952-3.139-1.952H2.463c-.519,0-.991.263-1.265.703-.273.44-.3.98-.071,1.445l3.674,7.455c-1.131,1.505-1.802,3.374-1.802,5.396,0,4.962,4.038,9,9,9s9-4.038,9-9c0-2.023-.671-3.892-1.802-5.396l3.674-7.455c.229-.465.203-1.005-.071-1.445ZM2.024,1.706c-.108-.22-.02-.406.023-.475.043-.069.17-.231.416-.231h4.025c.958,0,1.818.534,2.242,1.394l1.836,3.721c-1.973.317-3.734,1.278-5.059,2.659L2.024,1.706Zm9.976,21.294c-4.411,0-8-3.589-8-8,0-4.176,3.744-8,8-8s8,3.825,8,8c0,4.411-3.589,8-8,8ZM21.976,1.706l-3.484,7.068c-1.325-1.381-3.086-2.342-5.059-2.659l1.836-3.721c.424-.86,1.284-1.394,2.242-1.394h4.025c.246,0,.373.162.416.231.043.069.132.255.023.475Zm-6.082,11.294h-2.025l-.536-1.961c-.157-.601-.702-1.027-1.342-1.039-.622.012-1.167.438-1.322,1.034l-.538,1.966h-2.025c-.792,0-1.283.635-1.283,1.224,0,.545.331,1.068.843,1.352l1.331.829-.604,1.646c-.222.604-.025,1.27.489,1.657.257.194.564.291.872.291.313,0,.626-.101.886-.302l1.361-1.052,1.361,1.052c.515.398,1.238.402,1.758.011.514-.387.71-1.053.489-1.657l-.604-1.646,1.309-.816c.533-.296.864-.819.864-1.365,0-.589-.491-1.224-1.283-1.224Zm-.088,1.728l-1.676,1.044c-.201.125-.287.374-.205.597l.744,2.028c.067.184.005.395-.152.513-.162.121-.386.119-.545-.003l-1.667-1.289c-.18-.14-.432-.14-.611,0l-1.667,1.289c-.161.123-.385.125-.545.003-.157-.118-.219-.329-.152-.513l.744-2.028c.082-.223-.004-.472-.205-.597l-1.697-1.057c-.174-.097-.35-.286-.35-.491,0-.06.067-.224.283-.224h2.407c.226,0,.423-.151.482-.368l.64-2.34c.044-.168.198-.289.356-.292.176.003.331.124.376.297l.638,2.334c.06.217.257.368.482.368h2.407c.216,0,.283.164.283.224,0,.205-.176.394-.371.503Z"/></svg>`,
   wallet: `<svg width="20" height="20" viewBox="-0.25 1.75 24.5 20.5" fill="var(--general-primary)"><path d="M21.5,6H4.5c-1.146,0-2.221-.567-2.872-1.499,.634-.907,1.685-1.501,2.872-1.501H23.5c.276,0,.5-.224,.5-.5s-.224-.5-.5-.5H4.5C2.015,2,0,4.015,0,6.5v11c0,2.485,2.015,4.5,4.5,4.5H21.5c1.381,0,2.5-1.119,2.5-2.5V8.5c0-1.381-1.119-2.5-2.5-2.5Zm1.5,13.5c0,.827-.673,1.5-1.5,1.5H4.5c-1.93,0-3.5-1.57-3.5-3.5V6.5c0-.348,.051-.684,.146-1.001,.846,.942,2.064,1.501,3.354,1.501H21.5c.827,0,1.5,.673,1.5,1.5v11Zm-2-5.5c0,.552-.448,1-1,1s-1-.448-1-1,.448-1,1-1,1,.448,1,1Z"/></svg>`,
@@ -551,13 +555,44 @@ function camKetSection() {
   </div>`;
 }
 
+/* Menu footer — dữ liệu lấy từ footer thật của shop.dafc.com.vn (05/08/2026).
+   Giữ nguyên thứ tự nhóm + thứ tự link như trên site. Link chỉ để hiển thị,
+   không điều hướng (demo chưa dựng các trang tĩnh này).
+   Bản desktop có hằng tương đương tên `FOOTER_COLS` (dựng 4 cột thay vì
+   accordion) — nội dung ở đó đang lệch 3 chuỗi, xem README mục "Chờ port". */
+const FOOTER_LINKS = [
+  ['Liên hệ với chúng tôi', [
+    'Thông tin về DAFC', 'Tuyển dụng', 'Liên hệ', 'Danh sách cửa hàng',
+  ]],
+  ['Chăm sóc khách hàng', [
+    'Chương trình thành viên', 'Câu hỏi thường gặp', 'Chính sách vận chuyển',
+    'Chính sách đổi trả', 'Chính sách trả góp', 'Chính sách thanh toán',
+    'Hướng dẫn bảo quản sản phẩm',
+  ]],
+  ['Chính sách', [
+    'Chính sách bảo mật', 'Chính sách Thu Thập Và Xử Lý Dữ Liệu Cá Nhân',
+    'Điều khoản và điều kiện', 'Quyền và nghĩa vụ các bên',
+    'Chính sách bảo hành', 'Quy trình tiếp nhận và xử lý khiếu nại',
+  ]],
+];
+
+/* Link footer nào ĐÃ có trang thật trong demo -> route tương ứng (screenPOLICY,
+   Figma Section 8 / 3479:58974). Nhãn footer lấy theo site DAFC nên không trùng
+   khít tên trang: "Điều khoản và điều kiện" (footer) ↔ "ĐIỀU KHOẢN DỊCH VỤ"
+   (trang) là cùng một nội dung — đây là cặp gần nhất, không có ứng viên khác.
+   14 link còn lại render chữ tĩnh vì chưa có frame thiết kế. */
+const FOOTER_ROUTES = {
+  'Chính sách bảo mật':      'privacy',
+  'Điều khoản và điều kiện': 'terms',
+  'Chính sách đổi trả':      'returns',
+};
+
 function footer() {
-  const accs = ['Liên hệ với chúng tôi','Chăm sóc khách hàng','Chính sách'];
   return `
   <div class="bg-secondary pt-8 pb-8 px-2 mt-4">
     <!-- Newsletter -->
     <div class="px-2 pb-6 flex flex-col gap-3 reveal">
-      <p class="text-[20px] leading-[28px] text-foreground">Cập nhật thông tin mới nhất từ DAFC</p>
+      <p class="text-[18px] leading-[28px] text-foreground">Cập nhật thông tin mới nhất từ DAFC</p>
       <p class="text-[14px] leading-5 text-mid-alt">Nhận ngay thông tin về các bộ sưu tập hoặc các chương trình ưu đãi mới nhất.</p>
       <div class="flex">
         <input type="email" placeholder="Your email" class="flex-1 h-9 bg-background border border-border px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
@@ -576,37 +611,41 @@ function footer() {
         <p>dafconline@dafc.com.vn</p>
       </div>
     </div>
-    ${accs.map(a => `
+    ${FOOTER_LINKS.map(([group, links]) => `
       <div class="acc border-b border-border">
         <button class="acc-trigger w-full h-[52px] flex items-center justify-between px-2 press">
-          <span class="text-[14px] font-medium text-foreground">${a}</span>
+          <span class="text-[14px] font-medium text-foreground">${group}</span>
           ${I.chevR('#0a0a0a')}
         </button>
         <div class="acc-body"><div class="acc-inner">
-          <div class="pb-3 px-2 flex flex-col gap-2 text-[13px] leading-5 text-mid-alt">
-            <p>Hotline: 1900 2666</p><p>Email: dafconline@dafc.com.vn</p><p>Giờ làm việc: 8:30 – 22:00</p>
+          <div class="pb-3 px-2 flex flex-col items-start">
+            ${links.map(l => FOOTER_ROUTES[l]
+              ? `<button data-nav="${FOOTER_ROUTES[l]}" class="py-1.5 text-left text-[13px] leading-5 text-foreground underline press">${l}</button>`
+              : `<span class="py-1.5 text-[13px] leading-5 text-mid-alt">${l}</span>`).join('')}
           </div>
         </div></div>
       </div>`).join('')}
     <!-- Social / payment -->
     <div class="flex flex-col gap-4 py-5 px-2 reveal">
-      <p class="text-[14px] font-medium leading-5 text-foreground">Kết nối với chúng tôi</p>
+      <p class="text-[14px] font-medium leading-5 text-foreground">Theo dõi chúng tôi</p>
       <div class="flex gap-2">
-        <a class="press">${I.fb}</a><a class="press">${I.ig}</a><a class="press">${I.yt}</a>
+        <a class="press">${I.fb}</a><a class="press">${I.ig}</a><a class="press">${I.zalo}</a>
       </div>
-      <p class="text-[14px] font-medium leading-5 text-foreground">Phương thức thanh toán</p>
+      <p class="text-[14px] font-medium leading-5 text-foreground">Chấp nhận thanh toán</p>
+      <!-- Site thật render 1 ảnh gộp (payment_2.png), không có tên từng cổng ->
+           giữ bộ badge chữ sẵn có làm đại diện. -->
       <div class="flex gap-1.5 flex-wrap">
         ${['VISA','MASTER','JCB','AMEX','MOMO'].map(t => `<span class="h-6 px-2 rounded-[3px] bg-background border border-border flex items-center text-[9px] font-bold tracking-wide text-mid-alt">${t}</span>`).join('')}
       </div>
       <p class="text-[14px] font-medium leading-5 text-foreground">Đối tác vận chuyển</p>
-      <span class="h-7 w-fit px-2.5 rounded-[3px] bg-background border border-border flex items-center text-[10px] font-bold tracking-wide text-mid-alt">GHN</span>
+      <span class="h-7 w-fit px-2.5 rounded-[3px] bg-background border border-border flex items-center text-[10px] font-bold tracking-wide text-mid-alt">TIKINOW</span>
     </div>
     <div class="h-px bg-border mx-2"></div>
     <div class="flex flex-col gap-2 pt-5 px-2">
-      <div class="flex items-center gap-1.5 text-muted-foreground">${I.shield}<span class="text-[11px]">Đã đăng ký Bộ Công Thương</span></div>
+      <div class="flex items-center gap-1.5 text-muted-foreground">${I.shield}<span class="text-[11px]">Đã thông báo Bộ Công Thương</span></div>
       <div class="flex flex-col gap-1 text-[12px] leading-4 text-mid-alt mt-1">
         <p>© 2026 DAFC — Công Ty Cổ Phần Thời trang và Mỹ phẩm Duy Anh</p>
-        <p>GPKD: 0302519839 · Lầu 3, 171 Đồng Khởi, Q.1, TP.HCM</p>
+        <p>GPĐKKD: 0304130177 do Sở KH &amp; ĐT Tp.HCM cấp lần đầu: 22/11/2005</p>
         <p>Email: dafconline@dafc.com.vn · Hotline: 1900 2666</p>
       </div>
     </div>
@@ -704,7 +743,7 @@ function screenPLPList() {
       </div>
     </div>
     <div class="flex items-center px-4 py-2">
-      <h1 class="flex-1 min-w-0 text-[20px] leading-7 text-foreground truncate">${m.title || ''}</h1>
+      <h1 class="flex-1 min-w-0 text-[18px] leading-7 text-foreground truncate">${m.title || ''}</h1>
     </div>
 
     ${list.length ? `
@@ -1002,7 +1041,7 @@ function screenPDP() {
     <!-- header -->
     <div class="flex flex-col gap-1 pt-4 px-4 pb-2 rise">
       <div class="flex flex-col pb-4 items-start text-left">
-        <p class="h-7 text-[20px] font-medium leading-7 text-foreground">${P.brand}</p>
+        <p class="h-7 text-[18px] font-medium leading-7 text-foreground">${P.brand}</p>
         <p class="h-5 text-[14px] leading-5 text-foreground-alt">${P.name}</p>
       </div>
       <div class="flex flex-col gap-2">
@@ -1067,7 +1106,7 @@ function screenPDP() {
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
     ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
       <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
-        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
+        <p class="px-4 text-[18px] leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[170px] shrink-0', noColors: true })).join('')}
         </div>
@@ -1132,7 +1171,7 @@ function screenPDP2() {
     <!-- Header (Frame 427319848 + 427319849) -->
     <div class="flex flex-col gap-1 pt-4 px-4 pb-2 rise">
       <div class="flex flex-col pb-4">
-        <p class="h-7 text-[20px] font-medium leading-7 text-foreground">${P.brand}</p>
+        <p class="h-7 text-[18px] font-medium leading-7 text-foreground">${P.brand}</p>
         <p class="h-5 text-[14px] leading-5 text-foreground-alt">${P.name}</p>
       </div>
       <div class="flex flex-col gap-2 pt-2">
@@ -1215,7 +1254,7 @@ function screenPDP2() {
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
     ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
       <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
-        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
+        <p class="px-4 text-[18px] leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[170px] shrink-0', noColors: true })).join('')}
         </div>
@@ -1276,7 +1315,7 @@ function screenPDP3() {
     <!-- header — KHỐI GIÁ SẠCH: chỉ con số, không dòng trả góp bên dưới -->
     <div class="flex flex-col gap-1 pt-4 px-4 pb-2 rise">
       <div class="flex flex-col pb-4 items-start text-left">
-        <p class="h-7 text-[20px] font-medium leading-7 text-foreground">${P.brand}</p>
+        <p class="h-7 text-[18px] font-medium leading-7 text-foreground">${P.brand}</p>
         <p class="h-5 text-[14px] leading-5 text-foreground-alt">${P.name}</p>
       </div>
       <div class="flex gap-2 items-baseline">
@@ -1339,7 +1378,7 @@ function screenPDP3() {
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 -->
     ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
       <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
-        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
+        <p class="px-4 text-[18px] leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[170px] shrink-0', noColors: true })).join('')}
         </div>
@@ -1400,7 +1439,7 @@ function screenPDP4() {
     <!-- header -->
     <div class="flex flex-col gap-1 pt-4 px-4 pb-2 rise">
       <div class="flex flex-col pb-4 items-start text-left">
-        <p class="h-7 text-[20px] font-medium leading-7 text-foreground">${P.brand}</p>
+        <p class="h-7 text-[18px] font-medium leading-7 text-foreground">${P.brand}</p>
         <p class="h-5 text-[14px] leading-5 text-foreground-alt">${P.name}</p>
       </div>
       <div class="flex flex-col gap-2">
@@ -1474,7 +1513,7 @@ function screenPDP4() {
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
     ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
       <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
-        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
+        <p class="px-4 text-[18px] leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[170px] shrink-0', noColors: true })).join('')}
         </div>
@@ -1509,13 +1548,13 @@ function screenACCOUNT() {
   return `
   <div class="w-full min-h-screen bg-background">
     <!-- nav -->
-    <div class="h-12 flex items-center px-2 border-b border-border-1 sticky top-0 bg-background z-20">
+    <div class="h-12 flex items-center px-2 sticky top-0 bg-background z-20">
       <button data-nav="plp" class="w-9 h-9 flex items-center justify-center press">${I.chevL}</button>
       <p class="flex-1 text-center text-[16px] font-medium text-foreground pr-9">Tài khoản</p>
     </div>
 
     <!-- user tóm tắt -->
-    <div class="px-5 py-4 flex items-center gap-3 border-b border-border-1">
+    <div class="px-5 py-4 flex items-center gap-3">
       <span class="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[18px] font-medium shrink-0">U</span>
       <div class="flex-1 min-w-0">
         <p class="text-[16px] font-medium leading-6 text-foreground truncate">UserOne</p>
@@ -1552,7 +1591,7 @@ function accountBody() {
 /* ── Thông tin ── */
 function accInfo() {
   const row = (label, value) => `
-    <div class="flex flex-col gap-1 py-3 border-b border-border-1">
+    <div class="flex flex-col gap-1 py-3">
       <span class="text-[12px] leading-4 text-muted-foreground">${label}</span>
       <span class="text-[14px] leading-5 text-foreground">${value}</span>
     </div>`;
@@ -1613,7 +1652,7 @@ function accOrders() {
             <span class="text-[12px] leading-4 ${o.tone==='warning' ? 'text-warning' : 'text-muted-foreground'}">${o.status}</span>
           </div>
           <p class="text-[13px] leading-5 text-foreground-alt line-clamp-1">${itemNames}</p>
-          <div class="flex items-center justify-between pt-1 border-t border-border-1">
+          <div class="flex items-center justify-between pt-1">
             <span class="text-[12px] leading-4 text-muted-foreground">${totalQty} sản phẩm · ${o.total}</span>
             <button data-order="${o.id}" class="text-[13px] leading-5 text-foreground underline press">Chi tiết</button>
           </div>
@@ -1712,13 +1751,13 @@ function screenORDER() {
   return `
   <div class="w-full min-h-screen bg-background pb-10">
     <!-- nav -->
-    <div class="h-12 flex items-center px-2 border-b border-border-1 sticky top-0 bg-background z-20">
+    <div class="h-12 flex items-center px-2 sticky top-0 bg-background z-20">
       <button data-nav="account" class="w-9 h-9 flex items-center justify-center press">${I.chevL}</button>
       <p class="flex-1 text-center text-[16px] font-medium text-foreground pr-9">Chi tiết đơn hàng</p>
     </div>
 
     <!-- header trạng thái -->
-    <div class="px-5 py-4 border-b border-border-1 flex items-center justify-between">
+    <div class="px-5 py-4 flex items-center justify-between">
       <div class="flex flex-col gap-0.5">
         <span class="text-[15px] font-medium leading-6 text-foreground">#${o.id}</span>
         <span class="text-[12px] leading-4 text-muted-foreground">Đặt ngày ${o.date}</span>
@@ -1727,7 +1766,7 @@ function screenORDER() {
     </div>
 
     <!-- timeline theo dõi -->
-    <div class="px-5 py-5 border-b border-border-1">
+    <div class="px-5 py-5">
       <div class="flex items-start">
         ${ORDER_STEPS.map((label, i) => {
           const reached = i < done;
@@ -1750,14 +1789,14 @@ function screenORDER() {
     </div>
 
     <!-- địa chỉ giao -->
-    <div class="px-5 py-4 border-b border-border-1 flex flex-col gap-1">
+    <div class="px-5 py-4 flex flex-col gap-1">
       <span class="text-[12px] leading-4 text-muted-foreground">Địa chỉ nhận hàng</span>
       <span class="text-[14px] font-medium leading-5 text-foreground">${o.address.name} · ${o.address.phone}</span>
       <span class="text-[13px] leading-5 text-foreground-alt">${o.address.line}</span>
     </div>
 
     <!-- danh sách sản phẩm -->
-    <div class="px-5 py-4 border-b border-border-1 flex flex-col gap-4">
+    <div class="px-5 py-4 flex flex-col gap-4">
       <span class="text-[12px] leading-4 text-muted-foreground">Sản phẩm (${o.items.length})</span>
       ${o.items.map(it => `
         <div class="flex gap-3">
@@ -1777,7 +1816,7 @@ function screenORDER() {
     </div>
 
     <!-- phương thức -->
-    <div class="px-5 py-4 border-b border-border-1 flex flex-col gap-3">
+    <div class="px-5 py-4 flex flex-col gap-3">
       <div class="flex items-center justify-between">
         <span class="text-[13px] leading-5 text-muted-foreground">Phương thức giao hàng</span>
         <span class="text-[13px] leading-5 text-foreground">${o.method}</span>
@@ -1789,7 +1828,7 @@ function screenORDER() {
     </div>
 
     <!-- tổng kết -->
-    <div class="px-5 py-4 border-b border-border-1 flex flex-col gap-2">
+    <div class="px-5 py-4 flex flex-col gap-2">
       <div class="flex items-center justify-between">
         <span class="text-[13px] leading-5 text-muted-foreground">Tạm tính</span>
         <span class="text-[13px] leading-5 text-foreground">${o.sub}</span>
@@ -1802,7 +1841,7 @@ function screenORDER() {
         <span class="text-[13px] leading-5 text-muted-foreground">Giảm giá</span>
         <span class="text-[13px] leading-5 ${o.discount!=='0 ₫' ? 'text-destructive' : 'text-foreground'}">${o.discount}</span>
       </div>
-      <div class="flex items-center justify-between pt-2 mt-1 border-t border-border-1">
+      <div class="flex items-center justify-between pt-2 mt-1">
         <span class="text-[14px] font-medium leading-5 text-foreground">Tổng cộng</span>
         <span class="text-[16px] font-semibold leading-6 text-foreground">${o.total}</span>
       </div>
@@ -1873,7 +1912,7 @@ function screenPDP5() {
     <div class="flex flex-col gap-1 px-4 pt-4 pb-2 rise">
       <!-- Frame 427319848: pad-bottom 16 -->
       <div class="flex flex-col pb-4">
-        <p class="h-7 text-[20px] font-medium leading-7 text-foreground">${P.brand}</p>
+        <p class="h-7 text-[18px] font-medium leading-7 text-foreground">${P.brand}</p>
         <p class="h-5 text-[14px] leading-5 text-foreground-alt">${P.name}</p>
       </div>
       <!-- Frame 427319849 → Frame 5: gap 6, jc=MIN (trái) -->
@@ -1953,7 +1992,7 @@ function screenPDP5() {
     <!-- Recently Viewed ×3: Card-item 254px gap 4 -->
     ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
       <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
-        <p class="px-4 text-[20px] leading-7 text-foreground">${title}</p>
+        <p class="px-4 text-[18px] leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[170px] shrink-0', noColors: true })).join('')}
         </div>
@@ -1977,7 +2016,8 @@ function screenPDP5() {
    · Accordion Medium 14/20 cao 52 (không Light 16/24 cao 56)
    · CTKM 12px pad 8 (không 14px pad 12) · tiêu đề rail căn TRÁI
    · nút back "Quay lại". Letter-spacing: 12px→0.4% · 14px→0.2%
-   · 20px title→0.5% · brand 20 Medium→0%.
+   · 18px title→0.5% · brand 18 Medium→0% (trước là 20px, đã hạ
+     theo type scale Figma: thang chữ chỉ có 16/18/24/32/48).
 ════════════════════════════════════════════════════════════════ */
 function screenPDP6() {
   const P = PRODUCTS[5];
@@ -2019,7 +2059,7 @@ function screenPDP6() {
     <div class="flex flex-col gap-1 px-4 pt-4 pb-2 rise">
       <!-- Frame 427319848: gap 0 · pad-b 16 -->
       <div class="flex flex-col pb-4">
-        <p class="h-7 text-[20px] font-medium leading-7 tracking-normal text-foreground">${P.brand}</p>
+        <p class="h-7 text-[18px] font-medium leading-7 tracking-normal text-foreground">${P.brand}</p>
         <p class="h-5 text-[14px] leading-5 tracking-[0.002em] text-foreground-alt">${P.name}</p>
       </div>
       <!-- Frame 427319849 gap 8 → Frame 5 gap 6 · chỉ hiện giá, ĐEN -->
@@ -2089,7 +2129,7 @@ function screenPDP6() {
     <!-- Recently Viewed ×3: pad 24,16 · gap 16 · title Regular 20/28 ls .5% căn TRÁI -->
     ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
       <div class="flex flex-col gap-4 px-4 mt-10 pb-6 reveal">
-        <p class="text-[20px] leading-7 tracking-[0.005em] text-foreground">${title}</p>
+        <p class="text-[18px] leading-7 tracking-[0.005em] text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
           ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w: 'w-[170px] shrink-0', noColors: true, badge: i===3 ? 'New arrival' : '' })).join('')}
         </div>
@@ -2280,7 +2320,7 @@ function discountPanel(cartTotalNow) {
 
     <div class="flex flex-col">
       <div id="discountLines" class="flex flex-col">${discountLinesHTML()}</div>
-      <div class="border-t border-border flex justify-between items-center h-14">
+      <div class="flex justify-between items-center h-14">
         <span class="text-[16px] font-medium leading-6 text-foreground">Tổng cộng</span>
         <span id="cartTotal" class="text-[16px] font-medium leading-6 text-foreground">${cartTotalNow.toLocaleString('en-US')}đ</span>
       </div>
@@ -2354,10 +2394,10 @@ function screenCART() {
     ${navBar()}
 
     <div class="px-4 pt-4 pb-2 rise">
-      <h2 class="text-[22px] font-light text-foreground">Giỏ hàng <span id="cartCount" class="text-muted-foreground">(4)</span></h2>
+      <h2 class="text-[18px] font-light text-foreground">Giỏ hàng <span id="cartCount" class="text-muted-foreground">(4)</span></h2>
     </div>
 
-    <div class="flex items-center justify-between px-4 py-2 border-y border-border-1 rise">
+    <div class="flex items-center justify-between px-4 py-2 rise">
       <button id="selectAll" class="flex items-center gap-2 press">
         <span class="chk on w-4 h-4 border border-border-3 rounded-xs shadow-sm flex items-center justify-center">${I.tick}</span>
         <span class="text-[14px] font-medium text-foreground">${ckAuth ? 'Chọn tất cả ( 4 sản phẩm )' : 'Chọn tất cả'}</span>
@@ -2471,7 +2511,7 @@ const abtn = (label, attrs, h = 'h-11') => `
 
 function authNav(title) {
   return `
-  <div class="h-12 flex items-center px-2 border-b border-border-1 sticky top-0 bg-background z-10">
+  <div class="h-12 flex items-center px-2 sticky top-0 bg-background z-10">
     <button data-auth-back class="w-9 h-9 flex items-center justify-center press">${I.chevL}</button>
     <p class="flex-1 text-center text-[16px] font-medium text-foreground pr-9">${title}</p>
   </div>`;
@@ -2539,7 +2579,7 @@ function viewOtp() {
     <h2 class="text-[24px] font-light leading-8 text-foreground">Xác thực OTP</h2>
     <p class="text-[14px] leading-5" style="color:var(--unofficial-ghost-foreground)">Mã xác thực đã được gửi đến ${authPhone ? `<b class="font-medium text-foreground">${authPhone}</b>` : 'số điện thoại của bạn'}<br>Hoặc <button data-otp-change class="underline underline-offset-2 press">thay đổi số điện thoại</button></p>
     <div class="flex gap-2" id="otpRow">
-      ${[0,1,2,3,4,5].map(i => `<input inputmode="numeric" maxlength="1" data-otp="${i}" class="otp-cell w-[52px] h-[52px] text-center text-[20px] font-medium border border-border-3 rounded-xs outline-none focus:border-primary transition-colors">`).join('')}
+      ${[0,1,2,3,4,5].map(i => `<input inputmode="numeric" maxlength="1" data-otp="${i}" class="otp-cell w-[52px] h-[52px] text-center text-[18px] font-medium border border-border-3 rounded-xs outline-none focus:border-primary transition-colors">`).join('')}
     </div>
     <div class="flex flex-col gap-4">
       ${abtn('Xác nhận', 'data-auth-verify', 'h-10')}
@@ -2653,7 +2693,7 @@ function vatFieldRows(type) {
 
 function ckSection(i, title, openBody, doneBody) {
   return `
-  <div class="ck-sec border-t border-border-1" data-sec="${i}">
+  <div class="ck-sec" data-sec="${i}">
     <div class="h-[56px] px-4 flex items-center justify-between">
       <p class="ck-title text-[16px] font-medium leading-6 text-foreground transition-opacity duration-300">${title}</p>
       <button class="ck-change text-[16px] font-light leading-6 text-foreground press" data-goto="${i}">Thay doi</button>
@@ -2767,7 +2807,7 @@ function screenCHECKOUT() {
 
     <!-- Dialog Header -->
     <div class="py-3 px-4">
-      <p class="text-[20px] font-normal leading-7 text-foreground">Thanh toán (4)</p>
+      <p class="text-[18px] font-normal leading-7 text-foreground">Thanh toán (4)</p>
     </div>
 
     <!-- Giỏ hàng của bạn (thu gọn / mở rộng) -->
@@ -2856,8 +2896,8 @@ function screenDONE() {
       </div>
 
       <div class="w-full rounded-xs overflow-hidden border border-border rise">
-        ${rows.map(([l, v], i) => `
-          <div class="flex justify-between px-4 py-3 text-[13px] ${i ? 'border-t border-border-1' : ''}">
+        ${rows.map(([l, v]) => `
+          <div class="flex justify-between px-4 py-3 text-[13px]">
             <span class="text-muted-foreground">${l}</span><span class="font-medium text-foreground">${v}</span>
           </div>`).join('')}
       </div>
@@ -3019,7 +3059,7 @@ function filterSheet() {
       <div class="h-6 flex items-center justify-center shrink-0"><span class="w-10 h-1 rounded-full bg-border"></span></div>
       <!-- header -->
       <div class="px-4 py-4 flex items-center justify-between shrink-0">
-        <p class="text-[20px] font-normal leading-7 text-foreground">Bộ lọc</p>
+        <p class="text-[18px] font-normal leading-7 text-foreground">Bộ lọc</p>
         <button id="filterClose" class="w-8 h-8 -mr-2 flex items-center justify-center press">${IcoCross}</button>
       </div>
       <!-- body -->
@@ -3035,7 +3075,7 @@ function filterSheet() {
         </div>`, false)}
       </div>
       <!-- footer -->
-      <div class="shrink-0 bg-background border-t border-border px-4 pt-4 safe-b flex gap-3">
+      <div class="shrink-0 bg-background px-4 pt-4 safe-b flex gap-3">
         <button id="filterReset" class="h-12 px-6 rounded-xs bg-background border border-border text-[16px] text-foreground press shrink-0">Đặt lại</button>
         <button id="filterApply" class="h-12 flex-1 rounded-xs bg-primary text-primary-foreground text-[16px] press">Áp dụng</button>
       </div>
@@ -3130,11 +3170,127 @@ function wireFilter() {
 }
 
 /* ════════════════════════════════════════════════════════════════
+   TRANG ĐIỀU KHOẢN / CHÍNH SÁCH — Figma Section 8 (3479:58974)
+   3 frame: privacy-policy-mobile 3380:56109 · terms-of-service-mobile
+   3380:56273 · return-policy-mobile 3380:56449. Cùng 1 layout nên gom
+   vào screenPOLICY(key) + POLICY_DATA, giống cách desktop gom PDP_DATA.
+
+   Số đo lấy đúng Figma: container VERTICAL gap 24, pad 24/16/48/16 —
+   [tab pill cuộn ngang h28 r-full pad 6/12, 12px] → [tiêu đề 24 SemiBold
+   uppercase lh32 + "Cập nhật lần cuối" 12 muted] → [mục lục pad-y 8,
+   viền TRÊN+DƯỚI 1px #e5e5e5, item h24 pad-y 4 gap 8, 12px muted] →
+   [stack section gap 32; mỗi section gap 12: heading 18 Regular #0a0a0a
+   + body 16 Light lh24 #262626].
+
+   LƯU Ý: tab strip trong Figma có 5 tab (thêm Vận chuyển / Thanh toán)
+   nhưng file chỉ thiết kế 3 trang. Code render đúng 3 tab có nội dung
+   thật thay vì 2 tab bấm không ra gì — xem README mục "Trang tĩnh".
+════════════════════════════════════════════════════════════════ */
+const POLICY_TABS = [
+  ['privacy', 'Chính sách Bảo mật'],
+  ['terms',   'Điều khoản Dịch vụ'],
+  ['returns', 'Chính sách Đổi trả'],
+];
+
+const POLICY_UPDATED = 'Cập nhật lần cuối: 01/08/2026';
+
+const POLICY_DATA = {
+  privacy: {
+    title: 'CHÍNH SÁCH BẢO MẬT',
+    sections: [
+      ['Thu thập thông tin', 'Khi bạn mua sắm tại DAFC, chúng tôi thu thập các thông tin cá nhân bao gồm: họ tên, địa chỉ email, số điện thoại, địa chỉ giao hàng, và thông tin thanh toán. Chúng tôi cũng thu thập thông tin tự động như địa chỉ IP, loại trình duyệt, và hành vi duyệt web của bạn trên trang.'],
+      ['Mục đích sử dụng', 'Thông tin của bạn được sử dụng để: xử lý đơn hàng và giao hàng, liên hệ về đơn hàng và dịch vụ khách hàng, gửi thông tin khuyến mãi (nếu bạn đồng ý), cải thiện trải nghiệm mua sắm, và tuân thủ các nghĩa vụ pháp lý.'],
+      ['Bảo mật thông tin', 'Chúng tôi áp dụng các biện pháp bảo mật tiêu chuẩn ngành bao gồm mã hóa SSL, tường lửa, và kiểm soát truy cập để bảo vệ thông tin cá nhân của bạn. Chỉ nhân viên được ủy quyền mới có quyền truy cập vào dữ liệu khách hàng.'],
+      ['Chia sẻ thông tin', 'Chúng tôi không bán hoặc cho thuê thông tin cá nhân của bạn cho bên thứ ba. Thông tin chỉ được chia sẻ với đối tác vận chuyển và cổng thanh toán để hoàn tất đơn hàng, hoặc khi pháp luật yêu cầu.'],
+      ['Quyền của khách hàng', 'Bạn có quyền: truy cập và chỉnh sửa thông tin cá nhân, yêu cầu xóa dữ liệu, từ chối nhận email marketing, và khiếu nại về việc xử lý dữ liệu.'],
+      ['Liên hệ', 'Nếu có bất kỳ câu hỏi nào về chính sách bảo mật, vui lòng liên hệ:\nEmail: support@dafc.com.vn\nĐiện thoại: 1900 2666\nĐịa chỉ: TP. Hồ Chí Minh, Việt Nam'],
+    ],
+  },
+  terms: {
+    title: 'ĐIỀU KHOẢN DỊCH VỤ',
+    sections: [
+      ['Điều khoản chung', 'Chào mừng bạn đến với DAFC Shop. Bằng việc truy cập và sử dụng website shop.dafc.com.vn, bạn đồng ý tuân thủ các điều khoản và điều kiện được nêu dưới đây. Nếu bạn không đồng ý với bất kỳ điều khoản nào, vui lòng không sử dụng dịch vụ của chúng tôi.'],
+      ['Tài khoản người dùng', 'Khi tạo tài khoản tại DAFC, bạn có trách nhiệm cung cấp thông tin chính xác và cập nhật. Bạn chịu trách nhiệm bảo mật mật khẩu và mọi hoạt động diễn ra dưới tài khoản của mình. DAFC có quyền đình chỉ hoặc chấm dứt tài khoản nếu phát hiện vi phạm.'],
+      ['Đặt hàng và thanh toán', 'Tất cả đơn hàng đều phụ thuộc vào tình trạng còn hàng. Giá sản phẩm có thể thay đổi mà không cần thông báo trước. Chúng tôi chấp nhận thanh toán qua chuyển khoản ngân hàng, thẻ tín dụng/ghi nợ, và các ví điện tử phổ biến. Đơn hàng chỉ được xác nhận sau khi thanh toán thành công.'],
+      ['Vận chuyển và giao hàng', 'DAFC hợp tác với các đơn vị vận chuyển uy tín để đảm bảo đơn hàng đến tay bạn an toàn. Thời gian giao hàng dự kiến từ 2-5 ngày làm việc tùy khu vực. Phí vận chuyển được tính dựa trên trọng lượng và địa chỉ giao hàng.'],
+      ['Sở hữu trí tuệ', 'Tất cả nội dung trên website bao gồm hình ảnh, văn bản, logo, và thiết kế đều thuộc quyền sở hữu của DAFC hoặc các đối tác được cấp phép. Nghiêm cấm sao chép, phân phối, hoặc sử dụng nội dung mà không có sự đồng ý bằng văn bản.'],
+      ['Giới hạn trách nhiệm', 'DAFC không chịu trách nhiệm đối với bất kỳ thiệt hại gián tiếp, ngẫu nhiên, hoặc hậu quả nào phát sinh từ việc sử dụng dịch vụ. Trách nhiệm tối đa của chúng tôi được giới hạn ở giá trị đơn hàng liên quan.'],
+      ['Liên hệ', 'Mọi thắc mắc về điều khoản dịch vụ, vui lòng liên hệ:\nEmail: support@dafc.com.vn\nĐiện thoại: 1900 2666\nĐịa chỉ: TP. Hồ Chí Minh, Việt Nam'],
+    ],
+  },
+  returns: {
+    title: 'CHÍNH SÁCH ĐỔI TRẢ',
+    sections: [
+      ['Điều kiện đổi trả', 'DAFC chấp nhận đổi trả sản phẩm trong vòng 7 ngày kể từ ngày nhận hàng với các điều kiện: sản phẩm còn nguyên tem, nhãn mác, chưa qua sử dụng hoặc giặt ủi, còn đầy đủ phụ kiện đi kèm, và có hóa đơn mua hàng.'],
+      ['Trường hợp được đổi trả', '• Sản phẩm bị lỗi do nhà sản xuất (đường chỉ, vải bị rách, phai màu bất thường)\n• Giao sai sản phẩm (sai mẫu, sai size, sai màu so với đơn hàng)\n• Sản phẩm không đúng mô tả trên website\n• Sản phẩm bị hư hỏng trong quá trình vận chuyển'],
+      ['Trường hợp không được đổi trả', '• Sản phẩm đã qua sử dụng, giặt ủi, hoặc có dấu hiệu đã mặc\n• Sản phẩm bị hư hỏng do lỗi của khách hàng\n• Sản phẩm thuộc chương trình khuyến mãi/giảm giá đặc biệt (trừ trường hợp lỗi sản xuất)\n• Đã quá 7 ngày kể từ ngày nhận hàng'],
+      ['Quy trình đổi trả', 'Bước 1: Liên hệ DAFC qua email hoặc hotline để yêu cầu đổi trả\nBước 2: Cung cấp mã đơn hàng, hình ảnh sản phẩm và lý do đổi trả\nBước 3: Chờ xác nhận từ bộ phận CSKH (trong vòng 24h)\nBước 4: Gửi sản phẩm về địa chỉ kho DAFC\nBước 5: Nhận sản phẩm thay thế hoặc hoàn tiền trong 3-5 ngày làm việc'],
+      ['Chính sách hoàn tiền', 'Hoàn tiền được thực hiện qua phương thức thanh toán ban đầu. Thời gian hoàn tiền từ 5-7 ngày làm việc sau khi DAFC nhận được sản phẩm trả lại và kiểm tra đạt điều kiện. Phí vận chuyển đổi trả do DAFC chịu nếu lỗi thuộc về chúng tôi.'],
+      ['Liên hệ hỗ trợ', 'Nếu có bất kỳ câu hỏi nào về chính sách đổi trả, vui lòng liên hệ:\nEmail: support@dafc.com.vn\nHotline: 1900 2666\nGiờ làm việc: 8:30 - 22:00 (T2 - CN)'],
+    ],
+  },
+};
+
+function screenPOLICY(key) {
+  const p = POLICY_DATA[key];
+
+  /* body giữ nguyên ngắt dòng của Figma: mỗi dòng 1 <p>. Dòng bullet "•"
+     dùng thụt treo để chữ dòng 2 thẳng hàng với chữ dòng 1, không lùi về
+     sát dấu bullet. */
+  const body = txt => txt.split('\n').map(line => {
+    const bullet = line.startsWith('•');
+    return `<p class="text-[16px] font-light leading-6 text-secondary-foreground${bullet ? ' pl-4 -indent-4' : ''}">${line}</p>`;
+  }).join('');
+
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+
+    <div class="flex flex-col gap-6 pt-6 px-4 pb-12">
+      <!-- tab chuyển qua lại giữa các trang chính sách (cuộn ngang) -->
+      <div class="drag-x flex gap-2 overflow-x-auto no-scrollbar rise">
+        ${POLICY_TABS.map(([k, label]) => k === key
+          ? `<span class="shrink-0 h-7 px-3 rounded-full bg-primary flex items-center text-[12px] font-semibold leading-4 text-primary-foreground">${label}</span>`
+          : `<button data-nav="${k}" class="shrink-0 h-7 px-3 rounded-full bg-secondary flex items-center text-[12px] font-medium leading-4 text-secondary-foreground press">${label}</button>`
+        ).join('')}
+      </div>
+
+      <div class="flex flex-col gap-2 rise">
+        <h1 class="text-[24px] font-semibold leading-8 text-foreground">${p.title}</h1>
+        <p class="text-[12px] leading-4 text-muted-foreground">${POLICY_UPDATED}</p>
+      </div>
+
+      <!-- mục lục: bấm để nhảy tới section -->
+      <div class="flex flex-col py-2 border-y border-border rise">
+        ${p.sections.map(([h], i) => `
+          <button data-policy-toc="${i}" class="flex items-start gap-2 py-1 text-left press">
+            <span class="text-[12px] leading-4 text-muted-foreground">${i + 1}.</span>
+            <span class="flex-1 min-w-0 text-[12px] leading-4 text-muted-foreground">${h}</span>
+          </button>`).join('')}
+      </div>
+
+      <div class="flex flex-col gap-8">
+        ${p.sections.map(([h, txt], i) => `
+          <div data-policy-sec="${i}" class="flex flex-col gap-3 scroll-mt-[64px] reveal">
+            <h2 class="text-[18px] leading-[25px] text-foreground">${i + 1}. ${h}</h2>
+            ${body(txt)}
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Figma 3380:56109/56273/56449 chỉ có [Nav][Main][Footer] — KHÔNG có
+         cam-ket-section, nên không chèn vào đây. -->
+    ${footer()}
+  </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
    ROUTER + BEHAVIOUR
 ════════════════════════════════════════════════════════════════ */
 const RENDER = {
   plp: screenPLP, search: screenSearch, pdp: screenPDP, pdp2: screenPDP2, pdp3: screenPDP3, pdp4: screenPDP4, pdp5: screenPDP5, pdp6: screenPDP6, account: screenACCOUNT, order: screenORDER, cart: screenCART, login: screenLOGIN,
   checkout: screenCHECKOUT, done: screenDONE,
+  privacy: () => screenPOLICY('privacy'), terms: () => screenPOLICY('terms'), returns: () => screenPOLICY('returns'),
 };
 
 const viewport = document.getElementById('viewport');
@@ -3416,13 +3572,64 @@ const I18N = {
   // ── Menu & footer ──
   'Chăm sóc khách hàng':'Customer care', 'Đặc quyền thành viên DAFC':'DAFC member benefits',
   'Về DAFC':'About DAFC', 'Chính sách':'Policies', 'Liên hệ với chúng tôi':'Contact us',
-  'Kết nối với chúng tôi':'Follow us', 'Đối tác vận chuyển':'Delivery partners',
+  'Theo dõi chúng tôi':'Follow us', 'Đối tác vận chuyển':'Delivery partners',
+  'Chấp nhận thanh toán':'Payment accepted',
   'Cập nhật thông tin mới nhất từ DAFC':'Stay updated with DAFC',
   'Nhận ngay thông tin về các bộ sưu tập hoặc các chương trình ưu đãi mới nhất.':'Be the first to hear about new collections and exclusive offers.',
   'Giờ làm việc: 8:30 đến 22:00':'Opening hours: 8:30–22:00', 'Giờ làm việc: 8:30 – 22:00':'Opening hours: 8:30–22:00',
   'Đường dây nóng: 19002666':'Hotline: 1900 2666', 'Liên hệ CSKH 1900 2666':'Contact customer care 1900 2666',
-  'Đã đăng ký Bộ Công Thương':'Registered with the Ministry of Industry and Trade',
+  'Đã thông báo Bộ Công Thương':'Notified to the Ministry of Industry and Trade',
   '© 2026 DAFC — Công Ty Cổ Phần Thời trang và Mỹ phẩm Duy Anh':'© 2026 DAFC — Duy Anh Fashion & Cosmetics JSC',
+  'GPĐKKD: 0304130177 do Sở KH & ĐT Tp.HCM cấp lần đầu: 22/11/2005':'Business licence 0304130177, first issued by HCMC DPI on 22/11/2005',
+
+  // ── Trang chính sách / điều khoản (screenPOLICY) ──
+  // CHỈ dịch phần khung: tab, tiêu đề trang, mốc cập nhật, heading section
+  // (heading dùng chung cho cả mục lục). Phần body văn bản pháp lý CỐ Ý để
+  // nguyên tiếng Việt — dịch điều khoản là quyết định nội dung/pháp lý, cần
+  // bản EN chính thức từ DAFC chứ không dịch máy. Xem README mục "Trang tĩnh".
+  'Chính sách Bảo mật':'Privacy Policy', 'Điều khoản Dịch vụ':'Terms of Service',
+  'Chính sách Đổi trả':'Return Policy',
+  'CHÍNH SÁCH BẢO MẬT':'PRIVACY POLICY', 'ĐIỀU KHOẢN DỊCH VỤ':'TERMS OF SERVICE',
+  'CHÍNH SÁCH ĐỔI TRẢ':'RETURN POLICY',
+  'Cập nhật lần cuối: 01/08/2026':'Last updated: 01/08/2026',
+  // heading privacy
+  '1. Thu thập thông tin':'1. Information we collect', '2. Mục đích sử dụng':'2. How we use it',
+  '3. Bảo mật thông tin':'3. Data security', '4. Chia sẻ thông tin':'4. Information sharing',
+  '5. Quyền của khách hàng':'5. Your rights', '6. Liên hệ':'6. Contact',
+  'Thu thập thông tin':'Information we collect', 'Mục đích sử dụng':'How we use it',
+  'Bảo mật thông tin':'Data security', 'Chia sẻ thông tin':'Information sharing',
+  'Quyền của khách hàng':'Your rights',
+  // heading terms
+  '1. Điều khoản chung':'1. General terms', '2. Tài khoản người dùng':'2. User accounts',
+  '3. Đặt hàng và thanh toán':'3. Orders and payment', '4. Vận chuyển và giao hàng':'4. Shipping and delivery',
+  '5. Sở hữu trí tuệ':'5. Intellectual property', '6. Giới hạn trách nhiệm':'6. Limitation of liability',
+  '7. Liên hệ':'7. Contact',
+  'Điều khoản chung':'General terms', 'Tài khoản người dùng':'User accounts',
+  'Đặt hàng và thanh toán':'Orders and payment', 'Vận chuyển và giao hàng':'Shipping and delivery',
+  'Sở hữu trí tuệ':'Intellectual property', 'Giới hạn trách nhiệm':'Limitation of liability',
+  // heading returns
+  '1. Điều kiện đổi trả':'1. Return conditions', '2. Trường hợp được đổi trả':'2. Eligible for return',
+  '3. Trường hợp không được đổi trả':'3. Not eligible for return', '4. Quy trình đổi trả':'4. Return process',
+  '5. Chính sách hoàn tiền':'5. Refund policy', '6. Liên hệ hỗ trợ':'6. Support contact',
+  'Điều kiện đổi trả':'Return conditions', 'Trường hợp được đổi trả':'Eligible for return',
+  'Trường hợp không được đổi trả':'Not eligible for return', 'Quy trình đổi trả':'Return process',
+  'Chính sách hoàn tiền':'Refund policy', 'Liên hệ hỗ trợ':'Support contact',
+
+  // Link trong 3 accordion footer (dữ liệu thật shop.dafc.com.vn).
+  // 'Danh sách cửa hàng' / 'Chính sách đổi trả' / 'Chính sách bảo mật' đã có
+  // key ở trên (menu, info-tab PDP, form đăng ký) — KHÔNG khai lại, khai trùng
+  // thì entry sau đè entry trước và đổi luôn bản dịch chỗ khác.
+  'Thông tin về DAFC':'About DAFC', 'Tuyển dụng':'Careers', 'Liên hệ':'Contact',
+  'Chương trình thành viên':'Membership programme',
+  'Câu hỏi thường gặp':'FAQs', 'Chính sách vận chuyển':'Shipping policy',
+  'Chính sách trả góp':'Instalment policy',
+  'Chính sách thanh toán':'Payment policy',
+  'Hướng dẫn bảo quản sản phẩm':'Product care guide',
+  'Chính sách Thu Thập Và Xử Lý Dữ Liệu Cá Nhân':'Personal Data Collection & Processing Policy',
+  'Điều khoản và điều kiện':'Terms and conditions',
+  'Quyền và nghĩa vụ các bên':'Rights and obligations of the parties',
+  'Chính sách bảo hành':'Warranty policy',
+  'Quy trình tiếp nhận và xử lý khiếu nại':'Complaint handling process',
 
   // ── Khuyến mãi ──
   'Miễn phí vận chuyển':'Free shipping', 'cho đơn hàng từ 8 triệu':'on orders over 8 million',
@@ -3968,6 +4175,16 @@ function wire(root) {
   }
 
   // accordions
+  // Mục lục trang chính sách -> cuộn tới section tương ứng.
+  // scroll-mt-[64px] trên section đã trừ sẵn chiều cao navbar sticky (48px)
+  // + 16px thở, nên tiêu đề không bị nav che.
+  root.querySelectorAll('[data-policy-toc]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      root.querySelector(`[data-policy-sec="${btn.dataset.policyToc}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
   root.querySelectorAll('.acc-trigger').forEach(t => {
     t.addEventListener('click', e => {
       e.stopPropagation();
@@ -4379,25 +4596,8 @@ function wire(root) {
     scrollCleanups.push(() => document.removeEventListener('click', closeSortMenu));
   }
 
-  // Header + filter dính liền -> gộp thành 1 khối
-  {
-    const navbar = root.querySelector('.navbar');
-    const fbar   = root.querySelector('#plpFilterAnchor');
-    if (navbar && fbar) {
-      const NAV_H = 48;
-      const onMerge = () => {
-        // filter đã lên tới đáy nav => hai khối chạm nhau
-        navbar.classList.toggle('merged', Math.round(fbar.getBoundingClientRect().top) <= NAV_H);
-      };
-      window.addEventListener('scroll', onMerge, { passive: true });
-      window.addEventListener('resize', onMerge, { passive: true });
-      scrollCleanups.push(() => {
-        window.removeEventListener('scroll', onMerge);
-        window.removeEventListener('resize', onMerge);
-      });
-      onMerge();
-    }
-  }
+  // (đã bỏ) Header + filter gộp 1 khối: navbar không còn viền dưới nên không
+  // cần class .merged để giấu viền khi filter bar dính sát đáy nav.
 
   // scroll-driven behaviour (cuộn theo body — như website thật)
   {
@@ -4943,7 +5143,7 @@ function quickAddBody(p, idx) {
     </div>
     <div class="flex flex-col gap-1 pt-4 px-4 pb-2">
       <div class="flex flex-col pb-4 items-start text-left">
-        <p class="h-7 text-[20px] font-medium leading-7 text-foreground">${p.brand}</p>
+        <p class="h-7 text-[18px] font-medium leading-7 text-foreground">${p.brand}</p>
         <p class="h-5 text-[14px] leading-5 text-foreground-alt">${p.name}</p>
       </div>
       <div class="flex gap-1.5 items-center">
@@ -5060,7 +5260,7 @@ document.body.insertAdjacentHTML('beforeend', `
     <div class="lp-card absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] max-w-[calc(100%-32px)] rounded-md backdrop-blur-[7.5px] py-2 flex flex-col opacity-0 scale-95 transition-all duration-300"
          style="background:var(--general-background-blur)" role="dialog" aria-label="Đăng nhập">
       <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
-        <p class="flex-1 min-w-0 text-[20px] leading-7 text-foreground">Đăng nhập</p>
+        <p class="flex-1 min-w-0 text-[18px] leading-7 text-foreground">Đăng nhập</p>
         <button id="lpClose" class="w-8 h-8 -mr-2 flex items-center justify-center press" aria-label="Đóng">${I.close}</button>
       </div>
       <p class="px-4 py-2 text-[14px] leading-5 text-secondary-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-bold">98</b> điểm thưởng</p>
@@ -5137,7 +5337,7 @@ document.body.insertAdjacentHTML('beforeend', `
          style="border-radius:10px 10px 0 0" role="dialog" aria-label="Đã thêm vào giỏ hàng">
       <span class="absolute left-1/2 -translate-x-1/2 top-2 w-[50px] h-[3px] rounded-full bg-border"></span>
       <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
-        <p class="flex-1 min-w-0 text-[20px] leading-7 text-foreground">Đã thêm vào giỏ hàng</p>
+        <p class="flex-1 min-w-0 text-[18px] leading-7 text-foreground">Đã thêm vào giỏ hàng</p>
         <button id="ccClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
       </div>
       <div class="px-4 py-2 flex gap-3">
@@ -5218,7 +5418,7 @@ document.body.insertAdjacentHTML('beforeend', `
          style="border-radius:10px 10px 0 0; max-height:85vh" role="dialog" aria-label="Chọn size">
       <span class="absolute left-1/2 -translate-x-1/2 top-2 w-[50px] h-[3px] rounded-full bg-border"></span>
       <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
-        <p class="flex-1 min-w-0 text-[20px] leading-7 text-foreground">Chọn size</p>
+        <p class="flex-1 min-w-0 text-[18px] leading-7 text-foreground">Chọn size</p>
         <button id="szClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3">${I.close}</button>
       </div>
       <div id="szList" class="flex flex-col overflow-y-auto no-scrollbar"></div>

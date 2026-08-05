@@ -36,12 +36,41 @@ demo-flow/
 
 `PLP → PDP (6 biến thể: pdp, pdp2..pdp6) → Cart → Login (6 view: login/register/otp/reginfo/setpass/forgot) → Account (6 tab) → Order detail → Checkout → Done`
 
+Ngoài luồng mua hàng còn 3 trang tĩnh vào từ footer: `privacy` · `terms` · `returns` (xem mục "Trang tĩnh / chính sách").
+
 - Router SPA thủ công trong `index.html`: `FLOW`, `RENDER`, `go(name)`, `history`.
 - Đăng ký kiểu OTP-first (Figma `3107:50758` + `3354:47931`): nhập SĐT → **Gửi mã OTP** → xác thực 6 ô (nút "Nhận lại mã (60s)" đếm ngược; link "thay đổi số điện thoại" quay lại bước trước, giữ nguyên số đã nhập) → màn `reginfo` mới điền Họ tên / Email / Mật khẩu → tạo tài khoản + đăng nhập luôn. Quên mật khẩu dùng chung màn OTP, phân nhánh bằng state `authFlow` (`register` → reginfo, `forgot` → setpass).
 - 6 biến thể PDP, mỗi bản gắn 1 sản phẩm khác nhau (SP#1–SP#6), khác nhau về layout size (chip vs dropdown), vị trí Payment Offer, hiệu ứng gallery/lightbox, font (Inter cho pdp6)...
 - Picker "Chọn size" (dùng cho các PDP dropdown) theo Figma `3281:40140` — hàng 52px, nền mờ 60%, hàng hết hàng gạch ngang + "Nhận thông báo", link "Hướng dẫn chọn size", CTA 48px. **Markup giống nhau ở cả 2 bản** (mobile = bottom sheet, desktop = dialog giữa màn hình).
 - i18n VI/EN thật: từ điển 2 chiều + regex cho chuỗi có số, áp dụng qua `applyLang()`, gọi lại mỗi khi render màn mới.
 - Settings FAB (góc phải dưới): đổi ngôn ngữ + đổi font (Montserrat/Inter/Plus Jakarta Sans).
+
+## Trang tĩnh / chính sách
+
+3 trang từ Figma Section 8 (`3479:58974`), dùng chung `screenPOLICY(key)` + `POLICY_DATA` (1 layout, 3 bộ nội dung):
+
+| Route | Frame Figma | Tiêu đề |
+|---|---|---|
+| `privacy` | `3380:56109` privacy-policy-mobile | CHÍNH SÁCH BẢO MẬT (6 mục) |
+| `terms` | `3380:56273` terms-of-service-mobile | ĐIỀU KHOẢN DỊCH VỤ (7 mục) |
+| `returns` | `3380:56449` return-policy-mobile | CHÍNH SÁCH ĐỔI TRẢ (6 mục) |
+
+Layout: `[tab pill cuộn ngang] → [tiêu đề 24 SemiBold + mốc cập nhật] → [mục lục viền trên/dưới] → [các section gap 32]`. Mục lục bấm được → `scrollIntoView` tới section (`scroll-mt-[64px]` trừ sẵn navbar 48px). Dòng bullet dùng `pl-4 -indent-4` để thụt treo. Không có `cam-ket-section` (Figma 3 frame này chỉ có Nav + Main + Footer).
+
+**Vào từ footer** — bảng `FOOTER_ROUTES` map nhãn link → route, chỉ 3 link có trang thì render `<button data-nav>` gạch chân, 14 link còn lại là chữ tĩnh:
+
+| Nhãn trong footer | Route |
+|---|---|
+| Chính sách bảo mật | `privacy` |
+| Điều khoản và điều kiện | `terms` (trang tên "ĐIỀU KHOẢN DỊCH VỤ" — cặp gần nhất, không có ứng viên khác) |
+| Chính sách đổi trả | `returns` |
+
+### 2 điểm còn hở
+
+- **Tab strip trong Figma có 5 tab** (thêm "Chính sách Vận chuyển", "Chính sách Thanh toán") nhưng file **chỉ thiết kế 3 frame**. Code render đúng 3 tab có nội dung thật — thà lệch design 2 tab còn hơn để 2 tab bấm không ra gì. 2 nhãn này cũng nằm trong `FOOTER_LINKS` nên đang là chữ tĩnh. Cần thiết kế thêm 2 frame rồi bổ sung vào `POLICY_DATA` + `POLICY_TABS` + `FOOTER_ROUTES`.
+- **i18n chỉ dịch phần khung** (tab, tiêu đề, mốc cập nhật, heading section — heading dùng chung cho mục lục). Body văn bản pháp lý **cố ý để nguyên tiếng Việt**: cần bản EN chính thức từ DAFC, không dịch máy điều khoản.
+
+> Border ngoại lệ: khối mục lục có `border-y border-border` — đúng theo Figma (`Table of Contents` stroke top/bottom 1px `#e5e5e5`, left/right 0). Đây là viền bao của 1 component list, không phải vách ngăn giữa các block, nên không trái quy ước ở mục "Quy ước border".
 
 ## Mobile web thật
 
@@ -82,6 +111,41 @@ Xuất ra 426 biến CSS (raw colors + semantic tokens + spacing + radii). Mode 
 
 `gen_tokens.py` dùng bảng ID→tên tường minh (31 entry đã verify với Figma API) thay vì đoán theo thứ tự, và fail-fast nếu gặp alias lạ chưa map — cần bổ sung bảng `ID2NAME` nếu Figma thêm theme token mới.
 
+### Thang chữ
+
+Cỡ chữ **không** nằm trong `tokens07.json` — viết thẳng bằng utility `text-[Npx]` trong markup. Thang chuẩn theo Figma `02 — 🔤 Typography` (2003:12350):
+
+`12 · 14 · 16 · 18 · 24 · 32 · 48`
+
+(Code dùng thêm 11 / 13 / 15 cho vài chỗ chữ phụ dày đặc — có sẵn từ trước, chưa rà.)
+
+**Không dùng 20px và 22px** — không có trong thang. Tiêu đề cấp section (h2 trong trang: "Giỏ hàng", "Thanh toán", "Bộ lọc", tên brand ở PDP, tiêu đề bottom sheet) dùng **18px**; tiêu đề trang full-screen (auth) dùng **24px Light**.
+
+> Ngoại lệ còn lại: "Đặt hàng thành công" ở màn `done` vẫn 22px — Figma `2084:166` chưa có nội dung màn này nên chưa có số để bám.
+
+### Quy ước border
+
+**Giữa các block KHÔNG kẻ border** — khoảng trắng (padding/gap) là thứ ngăn cách, đúng theo Figma (`2851:28697` cart, `2084:170` account, `2084:164` checkout, `2084:166` done đều không có stroke ngang giữa các section).
+
+**Navbar KHÔNG có viền dưới** — áp cho *mọi* màn mobile. Nav chính (`navBar()`) tách khỏi nội dung bằng nền `glass-95` + `backdrop-blur`; 3 nav phụ (Tài khoản / Chi tiết đơn hàng / `authNav`) và nav màn Search cũng để trần. Đây là **quyết định của design, cố ý khác Figma** (`Nav` 2136:13304 có stroke-bottom 1) — đừng "sửa lại theo Figma".
+
+> Kéo theo: đã bỏ `.navbar::after`, rule `.navbar.merged::after` và khối JS toggle class `.merged` (trước dùng để giấu viền nav khi filter bar dính sát đáy nav — nay vô nghĩa). Class `navbar` giữ lại làm mốc ngữ nghĩa. Riêng `.filterbar::after` (viền dưới thanh Bộ lọc ở PLP) **vẫn giữ** — đó là thanh filter, không phải navbar.
+
+Border ngang chỉ giữ ở 4 chỗ **có trong design** (12 chỗ `border-t/b/y` còn lại trong `index.html` đều thuộc nhóm này):
+
+| Chỗ | Nguồn Figma |
+|---|---|
+| Hàng accordion (`.acc border-b`, cả divider trong `.acc-body` của mini-cart) | component `Accordion` có `Line` 1px |
+| Rail tab ngang (`#accTabs`) | component `Tabs` stroke-bottom 1 |
+| Header bottom sheet (`#isTitle`) | `WAP/Filter Bottom Sheet` → `Dialog Header` stroke-bottom 1 |
+| Hàng "Lịch sử điểm" | `Account · Mobile` → `History Row` stroke-bottom 1 |
+
+Cộng thêm 1 divider trang trí `border-white/20` trên thẻ hạng thành viên (nền tối) — không phải ngăn block.
+
+Ranh giới `cam-ket-section` / `Footer`: Figma có stroke-top 1 nhưng code tách bằng **đổi nền** (`bg-secondary`) chứ không kẻ viền — giữ nguyên cách này.
+
+Border **bao quanh** (`border` 4 cạnh: card CTKM, card mã giảm giá, input, button outline, checkbox, chip, swatch) không thuộc quy ước này — giữ nguyên.
+
 Rebuild CSS sau khi sửa class trong `index.html` / `desktop.html` (content quét cả 2 file):
 ```bash
 npx tailwindcss@3.4.17 -c tailwind.config.js -i in.css -o tailwind.css --minify
@@ -98,9 +162,15 @@ Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫ
 
 - **Input 14px + chặn zoom iOS** (chỉ mới làm ở mobile). Gồm 3 phần:
   1. Thẻ `<meta name="viewport">` thêm `maximum-scale=1`.
-  2. Rule CSS `input, textarea, select { font-size: 14px; }` trong `<style>` (đặt sau `tailwind.css`). **Phải giữ selector thuần element** — thêm `:not(...)` sẽ nâng specificity lên 0,2,1 và đè luôn các utility `text-[…]` cố ý (ô OTP 20px bị co còn 14px).
+  2. Rule CSS `input, textarea, select { font-size: 14px; }` trong `<style>` (đặt sau `tailwind.css`). **Phải giữ selector thuần element** — thêm `:not(...)` sẽ nâng specificity lên 0,2,1 và đè luôn các utility `text-[…]` cố ý (ô OTP 18px bị co còn 14px).
   3. Đổi `text-[16px]` → `text-[14px]` ở 12 thẻ `<input>` (bỏ qua ô OTP và checkbox). Desktop hiện còn 64 chỗ `text-[16px]` nhưng phần lớn là nút/nhãn — chỉ đổi bên trong thẻ `<input>`.
   - Cân nhắc khi port: desktop không có vấn đề zoom của iOS, nên `maximum-scale=1` là không cần thiết; có thể chỉ áp phần cỡ chữ 14px nếu muốn thống nhất thị giác.
+- **Type scale bỏ cỡ 20px** (chỉ mới làm ở mobile). Toàn bộ 21 chỗ `text-[20px]` → `text-[18px]`; riêng h2 "Giỏ hàng" 22px → 18px theo Figma `2851:28697` (18 Regular / line-height 140%). `leading-*` và các `h-7` đi kèm giữ nguyên để không đổi chiều cao dòng/khối. Desktop hiện còn 8 chỗ `text-[20px]` chưa đổi — xem mục "Thang chữ" bên dưới.
+- **Bỏ border ngăn giữa các block** (chỉ mới làm ở mobile) — 15 chỗ, xem mục "Quy ước border" bên dưới.
+- **Navbar bỏ viền dưới** (chỉ mới làm ở mobile) — 3 nav phụ bỏ `border-b`, bỏ `.navbar::after` + `.navbar.merged::after` + khối JS toggle `.merged`. Desktop hiện còn 28 chỗ `border-t/b/y` chưa rà.
+- **Footer: dữ liệu thật từ shop.dafc.com.vn** (chỉ mới làm ở mobile). Hằng `FOOTER_LINKS` (3 nhóm / 17 link) thay cho placeholder "Hotline · Email · Giờ làm việc" lặp lại ở cả 3 accordion. Kèm sửa dữ liệu sai: đối tác vận chuyển GHN → **TIKINOW**, "Đã đăng ký" → **"Đã thông báo"** Bộ Công Thương, GPKD 0302519839 (số sai) → **GPĐKKD 0304130177 do Sở KH & ĐT Tp.HCM cấp lần đầu 22/11/2005**, heading "Kết nối với chúng tôi" → **"Theo dõi chúng tôi"**, "Phương thức thanh toán" → **"Chấp nhận thanh toán"**, social YouTube → **Zalo** (thêm icon `I.zalo`).
+- **3 trang chính sách + link footer** (chỉ mới làm ở mobile) — `POLICY_TABS` / `POLICY_UPDATED` / `POLICY_DATA` / `screenPOLICY()` / `FOOTER_ROUTES`, 3 route mới trong `RENDER` + `FLOW` + `LABELS`, handler `[data-policy-toc]` trong `wire()`. Desktop chưa có route nào trong số này nên link footer bên đó vẫn chưa bấm được.
+  - **Desktop cần sửa 3 chuỗi** trong `FOOTER_COLS` cho khớp site thật: `Chính sách bán hàng` → `Chính sách bảo hành`; `Quy trình bảo hành và xử lý khiếu nại` → `Quy trình tiếp nhận và xử lý khiếu nại`; `Thu Thập và Xử Lý` → `Thu Thập Và Xử Lý`. Desktop cũng còn GHN / "Đã đăng ký" / GPKD cũ nếu có.
 
 ## Vấn đề tồn đọng / cần quyết định tiếp
 
