@@ -45,6 +45,100 @@ Ngoài luồng mua hàng còn 3 trang tĩnh vào từ footer: `privacy` · `term
 - i18n VI/EN thật: từ điển 2 chiều + regex cho chuỗi có số, áp dụng qua `applyLang()`, gọi lại mỗi khi render màn mới.
 - Settings FAB (góc phải dưới): đổi ngôn ngữ + đổi font (Montserrat/Inter/Plus Jakarta Sans).
 
+## Quick add to cart (`#quickAddSheet`)
+
+Theo Figma `Drawer` **3373:41590** (đủ màu + size, 390×647) và **3373:41766** (chỉ size, 390×577). Hai frame đã được thu gọn; code khớp số đo mới:
+
+| Chi tiết | Cũ | Mới (Figma 3373:41590) |
+|---|---|---|
+| Bo góc panel | 24px | **0** — không bo góc |
+| Thanh handle 50×3 + hàng chứa nó | có | **bỏ** (Figma không có handle) |
+| Nút ✕ | 32×32 trong hàng riêng | **32×32 r2, icon 16, `absolute top-2 right-2`** — không chiếm chiều cao layout (Figma: "Button Group Icon Button" x=350 y=8) |
+| Pad gallery | `px-4` (16), không pad dọc | **`p-0.5`** — pad 2 mọi phía |
+| Ảnh gallery | 160×213 | **W=163 ⇒ H=213** (`w-[163px]` + `aspect-ratio:163/213`) |
+| Ô chọn màu | ô màu hex 36px (`.cw` + ring) | **ảnh 44×44** (`.sw` + `on`/`border-transparent`) — giống PDP, khớp component "Image Selection" |
+| Grid size | 4 cột `h-9` | **5 cột `h-9`** (Figma `Chips` GRID `gridColumnCount: 5`, 358×80 = 2 hàng 36 + gap 8) |
+| Pad trên header | 16 | **8** |
+| Link "Bảng kích thước" ở hàng size | có | **bỏ** — node "Bảng size" trong Figma đang tắt |
+| "Xem chi tiết" | nút full-width dưới nút chính | **dời lên cạnh TÊN sản phẩm** — `[tên] gap 10 [Xem chi tiết]`, 14 Regular gạch chân (Figma `Frame 427319813` HORIZONTAL gap 10, `Link Button` 85×24) |
+| Khối CTA | pad 16 gap 10, 2 nút | **chỉ còn nút chính** — cao 80 = 16 + 48 + 16 |
+| Pad dưới khối brand/tên | 16 | **8** (Figma `Frame 427319848` pad `0,0,8,0`) |
+
+Cấu trúc khớp Figma (frame đã đổi tên thành **"Quick add"**):
+
+```
+Quick add (390×635, radius 0)
+├── group1  ← BLOCK CUỘN DUY NHẤT khi màn thấp  = #qaBody (flex-1 min-h-0 overflow-y-auto)
+│   ├── Frame 427319867   gallery  pad 2 gap 2, ảnh W163 → H213
+│   └── element
+│       ├── Frame 50      header: brand 18 · [tên | Xem chi tiết] · giá
+│       └── Frame 15      pad 8/16 gap 16: ô màu 44 · grid size 5 cột h36
+├── Frame 427319820       CTA cao 80 — GHIM đáy = #qaCta (shrink-0)
+└── Button Group Icon Button  ✕ 32×32 absolute top/right 8
+```
+
+> Tên sản phẩm **không** dùng `flex-1`: để nó hug đúng như Figma, chỉ `min-w-0 truncate` nên tên ngắn thì link nằm sát ngay sau, tên dài thì tên cắt bớt và link vẫn còn nguyên chỗ.
+
+### Nội dung quick add phải khớp PDP
+
+Hằng **`PRODUCT_GALLERY`** (6 mảng, 1 mảng / sản phẩm) là **nguồn duy nhất** cho ảnh gallery — cả 6 `screenPDP*` và `quickAddBody()` đều đọc từ đó:
+
+| SP | Ảnh |
+|---|---|
+| #1 | `p1.png` · `p1-nero.png` · `p1-oro.png` |
+| #2 | `p2.png` · `p2-blu.png` |
+| #3 | `p3.png` · `p3-bianco.png` · `p3-rosso.png` |
+| #4 | `p4.png` · `p4-nudo.png` |
+| #5 | `p5.png` · `p5-marrone.png` |
+| #6 | `p6.png` · `pdp-sw2.png` · `pdp-sw3.png` · `pdp-sw4.png` |
+
+> Trước đây quick add hardcode `['<ảnh chính>','pdp-sw2.png','pdp-sw3.png']` cho **mọi** sản phẩm nên mở quick add của SP#3 lại thấy ảnh của SP#6. Nay khớp 1:1 với PDP.
+>
+> Với SP#1–SP#5, phần tử thứ `i` của mảng tương ứng `PRODUCTS[i].colors[i]` nên dùng luôn làm ô chọn màu dạng ảnh. SP#6 có 4 ảnh / 3 màu (gallery dài hơn số màu) — ô màu chỉ lấy 3 phần tử đầu.
+>
+> Size/màu vốn đã dùng chung `SIZES` / `DISABLED` / `p.colors` nên không lệch.
+
+Giữ nguyên: gap ảnh 2 · swatch r2 · gap grid 8 · chữ chip 14 · nút chính 48 · gap CTA 10 · pad `Frame 15` 8/16.
+
+> Ảnh 163px ⇒ ở màn 390 thấy **2 ảnh đầy + hé ảnh thứ 3**, gallery cuộn ngang.
+>
+> **Điểm cần quyết**: `SIZES` có **6** giá trị, chia 5 cột ⇒ dòng 2 còn **lẻ 1 ô** (ở cả quick add và `pdp`). Muốn đúng "1 dòng 5 ô" thì rút xuống 5 size (size còn lại xem ở bảng kích thước).
+
+### Tỉ lệ khung ảnh
+
+Tỉ lệ chuẩn của ảnh sản phẩm: **ngang 160 ⇒ cao 213** (`160/213` ≈ 0.751 ≈ 3:4). Các khung hiện dùng:
+
+| Khung | Tỉ lệ |
+|---|---|
+| Quick add gallery | `160/213` (rộng 120px ⇒ cao 159.75) |
+| Thumb `#cartConfirm` | `160/213` (rộng 80px) |
+| `productCard` — grid PLP + mọi rail | `189/252` = 0.7500 |
+| Gallery 6 PDP | `height:520px` @ w390 = 0.7500 |
+| Ô ảnh trong size picker | `3/4` = 0.7500 |
+| Thumb hàng giỏ hàng | `100×133` = 0.7519 |
+
+> **Lưu ý asset**: file ảnh sản phẩm trong `assets/` thực tế là **1200×1484 (0.8086)**, không phải 0.751 — nên `object-cover` đang cắt ~7% hai bên ở MỌI khung. Muốn không cắt thì phải xuất lại ảnh theo đúng 160:213 (hoặc đổi hết khung sang `1200/1484`, nhưng khi đó card PLP cao thêm ~11% và gallery PDP 520 → 482px).
+>
+> Ngoài ra `pdp-sw2.png` (256×256) và `pdp-sw3/4.png` (173×210) đang được dùng làm slide gallery cùng với `p*.png` — 3 tỉ lệ khác nhau nên 2 ảnh đó bị cắt nhiều nhất. Hạn chế asset (ảnh CDN thật bị chặn), không phải lỗi khung.
+
+### Quy ước bottom sheet
+
+Áp cho **mọi** bottom sheet: **`max-height: 90vh`** · nội dung cuộn trong vùng riêng (`flex-1 min-h-0 overflow-y-auto`) · **khối nút GHIM đáy** (`shrink-0`, nằm ngoài vùng cuộn) nên không cuộn theo nội dung.
+
+| Sheet | max-height | Vùng cuộn | Nút ghim |
+|---|---|---|---|
+| `#quickAddSheet` | 90vh | `#qaBody` | `#qaCta` — tách ra khỏi `quickAddBody()` thành `quickAddCta()` |
+| `#sizeSheet` | 90vh | `#szList` | khối `#szAdd` |
+| `#cartConfirm` | 90vh | khối thông tin sản phẩm | khối `#ccGoCart`/`#ccContinue` |
+| `#notifySheet` | 90vh | khối 2 field | khối `#nsSubmit` |
+| `#infoSheet` | 90vh | khối `#isBody` | (không có nút) |
+
+> `#filterSheet` **không** theo quy ước này — nó là drawer **full-screen** (`inset: 0`) vì cây danh mục rất dài; đã có header/footer riêng và vùng giữa tự cuộn.
+
+> **Cố ý khác Figma 2 chỗ**: brand giữ **18 Medium** (Figma để 20 Medium, mà thang chữ project đã bỏ cỡ 20 — xem mục "Thang chữ"); nút ✕ đặt bên **phải** cho khớp `#infoSheet`/`#notifySheet` (Figma `3373:41766` để bên trái).
+>
+> Layer `NEW SEASON` / `SKU sản phẩm` / `Đã bao gồm thuế · Miễn phí vận chuyển` / `*Tạm hết hàng` trong Figma đều đang **tắt hiển thị** → không dựng.
+
 ## Quy ước đồng bộ giữa 6 bản PDP
 
 6 bản `pdp`…`pdp6` cố ý khác nhau về layout size, vị trí khối, hiệu ứng gallery — nhưng **3 điểm sau phải giống hệt nhau ở cả 6 bản**:
@@ -54,6 +148,8 @@ Ngoài luồng mua hàng còn 3 trang tĩnh vào từ footer: `privacy` · `term
 | Info tab (Mô tả / Bảo quản / Đổi trả / Thương hiệu) | **Extend tại chỗ** (`.acc` + `.acc-trigger` + `.acc-body`). Không dùng bottom sheet. Vách dưới `border-b border-border-1`. |
 | Trả góp / trả trước | **Không có ở cấp sản phẩm.** Không PDP nào hiện dòng "Trả trước từ …/tháng". |
 | Nhãn bảng size | **"Bảng kích thước"** — không dùng "Size guide", "Bảng size →" hay "Hướng dẫn chọn size". |
+
+Chọn size dạng chip hiện có ở `pdp` (5 cột) và `pdp4` (**còn 4 cột**); `pdp2`/`pdp3`/`pdp5`/`pdp6` dùng dropdown nên không có grid.
 
 > Đã sửa để đạt quy ước: `pdp4` trước đây info tab bấm ra **bottom sheet** (`.sheet-trigger` + `window.__pdp4Tabs`) → đổi sang accordion, bỏ luôn handler và cầu nối `window.__pdp4Tabs` vì không còn ai đọc. Bỏ **5** dòng "Trả trước từ" ở `pdp2`…`pdp6` kèm logic `payOffer` trong `wire()` (vốn để ẩn/hiện dòng đó khi hết hàng). Thống nhất **8** nhãn size guide, `data-toast`, và tiêu đề sheet trong size picker. `pdp5`/`pdp6` dùng vách accordion `border-border` đậm hơn 4 bản kia → về `border-border-1`.
 >
@@ -228,6 +324,7 @@ Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫ
 - **Bỏ border ngăn giữa các block** (chỉ mới làm ở mobile) — 15 chỗ, xem mục "Quy ước border" bên dưới.
 - **Navbar bỏ viền dưới** (chỉ mới làm ở mobile) — 3 nav phụ bỏ `border-b`, bỏ `.navbar::after` + `.navbar.merged::after` + khối JS toggle `.merged`. Desktop hiện còn 28 chỗ `border-t/b/y` chưa rà.
 - **Footer: dữ liệu thật từ shop.dafc.com.vn** (chỉ mới làm ở mobile). Hằng `FOOTER_LINKS` (3 nhóm / 17 link) thay cho placeholder "Hotline · Email · Giờ làm việc" lặp lại ở cả 3 accordion. Kèm sửa dữ liệu sai: đối tác vận chuyển GHN → **TIKINOW**, "Đã đăng ký" → **"Đã thông báo"** Bộ Công Thương, GPKD 0302519839 (số sai) → **GPĐKKD 0304130177 do Sở KH & ĐT Tp.HCM cấp lần đầu 22/11/2005**, heading "Kết nối với chúng tôi" → **"Theo dõi chúng tôi"**, "Phương thức thanh toán" → **"Chấp nhận thanh toán"**, social YouTube → **Zalo** (thêm icon `I.zalo`).
+- **Quick add thu gọn** (chỉ mới làm ở mobile) — bo góc 8, bỏ handle, ✕ 24px, gallery `p-2`, bỏ link bảng kích thước, "Xem chi tiết" 24px gạch chân. Xem mục "Quick add to cart".
 - **Đồng bộ 6 bản PDP** (chỉ mới làm ở mobile) — info tab về accordion (bỏ bottom sheet ở `pdp4`), bỏ hết dòng trả trước/trả góp cấp sản phẩm, nhãn "Bảng kích thước". Xem mục "Quy ước đồng bộ giữa 6 bản PDP". Desktop chưa rà 3 điểm này.
 - **Mô tả sản phẩm: data thật từ DAFC** (chỉ mới làm ở mobile) — hằng `PRODUCT_INFO`, 6 PDP đọc `desc`/`care` từ đó, bỏ 10 entry i18n của text tự viết đã không còn render. Desktop vẫn đang dùng text tự viết (gồm cả 2 chỗ tả sai thành túi A.P.C.). Xem mục "Mô tả sản phẩm — data thật từ DAFC".
 - **PDP + PDP2: khối KHUYẾN MÃI + bottom sheet chi tiết** (chỉ mới làm ở mobile). Style card theo Figma `Product Info` 2275:505057: `bg-accent-0 rounded-sm p-2 gap-2`, tiêu đề "KHUYẾN MÃI" 14 Medium in hoa, dòng chương trình 12 Medium. Catalogue `PROMOS` (4 chương trình, mỗi cái có `line` tóm tắt + `title` + `rows` 4 cặp nhãn/giá trị cho sheet) khai **một lần** ở module scope, `PDP_PROMOS` quyết định mỗi PDP hiện chương trình nào — `pdp` và `pdp2` dùng chung 2 chương trình nên tách nội dung ra là sớm muộn lệch. Hai layout:
