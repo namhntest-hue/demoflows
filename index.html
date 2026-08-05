@@ -210,6 +210,10 @@
   .acc.open .acc-chev { transform: rotate(90deg); }
   .acc-chev { transition: transform .3s ease; }
 
+  /* ── Nút mũi tên mở dropdown danh sách trang chính sách ── */
+  #policyMore svg { transition: transform .22s ease; }
+  #policyMore.open svg { transform: rotate(180deg); }
+
   /* ── Peek + "Xem tất cả" (khác accordion: mặc định đã hiện mấp mé, không thu về 0) ──
      73px = chiều cao clip đúng theo Figma 2843:45226 (nội dung bị cắt ngang, không phải bội số dòng).
      ::after tạo dải mờ dần (fade-to-bg) ở đáy khi đang thu gọn, thay vì cắt cứng
@@ -3179,10 +3183,13 @@ function wireFilter() {
    [tab pill cuộn ngang h28 r-full pad 6/12, 12px] → [tiêu đề 24 SemiBold
    uppercase lh32 + "Cập nhật lần cuối" 12 muted] → [mục lục pad-y 8,
    viền TRÊN+DƯỚI 1px #e5e5e5, item h24 pad-y 4 gap 8, 12px muted] →
-   [stack section gap 32; mỗi section gap 12: heading 18 #0a0a0a
-   + body 16 Light lh24 #262626].
-   Heading dùng font-medium theo quy ước "18px luôn Medium" của project —
-   CỐ Ý khác Figma (Figma để 18 Regular). Xem README mục "Thang chữ".
+   [stack section gap 32; mỗi section gap 12].
+
+   CỐ Ý khác Figma ở phần chữ nội dung — đã hạ 1 bậc thang chữ cho trang
+   dài dễ đọc: heading section 18/25 → 16/24 (Figma 18 Regular), body
+   16/24 → 14/20 (Figma 16 Light). Cả 2 dùng đúng cặp size/leading có sẵn
+   trong project (16 + leading-6, 14 + leading-5). Tiêu đề trang giữ 24 và
+   mốc cập nhật / mục lục giữ 12 (đã ở đáy thang). Xem README "Thang chữ".
 
    LƯU Ý: tab strip trong Figma có 5 tab (thêm Vận chuyển / Thanh toán)
    nhưng file chỉ thiết kế 3 trang. Code render đúng 3 tab có nội dung
@@ -3241,7 +3248,7 @@ function screenPOLICY(key) {
      sát dấu bullet. */
   const body = txt => txt.split('\n').map(line => {
     const bullet = line.startsWith('•');
-    return `<p class="text-[16px] font-light leading-6 text-secondary-foreground${bullet ? ' pl-4 -indent-4' : ''}">${line}</p>`;
+    return `<p class="text-[14px] font-light leading-5 text-secondary-foreground${bullet ? ' pl-4 -indent-4' : ''}">${line}</p>`;
   }).join('');
 
   return `
@@ -3249,12 +3256,41 @@ function screenPOLICY(key) {
     ${navBar()}
 
     <div class="flex flex-col gap-6 pt-6 px-4 pb-12">
-      <!-- tab chuyển qua lại giữa các trang chính sách (cuộn ngang) -->
-      <div class="drag-x flex gap-2 overflow-x-auto no-scrollbar rise">
-        ${POLICY_TABS.map(([k, label]) => k === key
-          ? `<span class="shrink-0 h-7 px-3 rounded-full bg-primary flex items-center text-[12px] font-semibold leading-4 text-primary-foreground">${label}</span>`
-          : `<button data-nav="${k}" class="shrink-0 h-7 px-3 rounded-full bg-secondary flex items-center text-[12px] font-medium leading-4 text-secondary-foreground press">${label}</button>`
-        ).join('')}
+      <!-- Tab chuyển qua lại giữa các trang chính sách (cuộn ngang) + nút mũi
+           tên bên phải mở dropdown liệt kê đủ danh sách (Figma có gợi ý icon
+           fi-tr-angle-down 3479:46946 cạnh nhóm 3 frame). Cần dropdown vì 3
+           pill cộng lại 447px > 358px vùng nội dung, tab cuối luôn bị cắt.
+
+           BẮT BUỘC có "relative z-30" (KHÔNG dùng dấu backtick trong comment
+           này — cả khối nằm trong template literal, backtick sẽ đứt string):
+           class .rise kết thúc bằng
+           animation-fill-mode:both nên transform:translateY(0) còn dính lại
+           → mỗi block .rise (và .reveal.in) là 1 stacking context riêng với
+           z-index:auto. Cùng z-index thì thứ tự DOM quyết định, nên khối tiêu
+           đề / mục lục / section nằm SAU sẽ vẽ đè lên dropdown, dù dropdown đã
+           z-50 (z-50 chỉ có tác dụng bên trong stacking context của hàng tab).
+           z-30 nâng cả hàng tab lên trên các block sau, vẫn dưới navbar z-50.
+           Cùng cách #sortMenu ở PLP sống được nhờ #plpFilterAnchor có z-40. -->
+      <div class="relative z-30 flex items-center gap-2 rise">
+        <div class="drag-x flex-1 min-w-0 flex gap-2 overflow-x-auto no-scrollbar">
+          ${POLICY_TABS.map(([k, label]) => k === key
+            ? `<span class="shrink-0 h-7 px-3 rounded-full bg-primary flex items-center text-[12px] font-semibold leading-4 text-primary-foreground">${label}</span>`
+            : `<button data-nav="${k}" class="shrink-0 h-7 px-3 rounded-full bg-secondary flex items-center text-[12px] font-medium leading-4 text-secondary-foreground press">${label}</button>`
+          ).join('')}
+        </div>
+        <div class="relative shrink-0">
+          <button id="policyMore" aria-label="Xem tất cả trang chính sách" aria-expanded="false"
+                  class="w-7 h-7 rounded-full bg-secondary flex items-center justify-center press">${I.chevD('#0a0a0a')}</button>
+          <div id="policyMenu" class="hidden absolute mt-1 bg-background border border-border shadow-lg z-50" style="right:0;top:100%;width:220px">
+            ${POLICY_TABS.map(([k, label]) => k === key
+              ? `<button data-policy-close class="w-full text-left px-4 h-11 flex items-center justify-between text-[14px] font-medium text-foreground">
+                   <span>${label}</span>
+                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                 </button>`
+              : `<button data-nav="${k}" class="w-full text-left px-4 h-11 flex items-center text-[14px] text-foreground-alt">${label}</button>`
+            ).join('')}
+          </div>
+        </div>
       </div>
 
       <div class="flex flex-col gap-2 rise">
@@ -3274,7 +3310,7 @@ function screenPOLICY(key) {
       <div class="flex flex-col gap-8">
         ${p.sections.map(([h, txt], i) => `
           <div data-policy-sec="${i}" class="flex flex-col gap-3 scroll-mt-[64px] reveal">
-            <h2 class="text-[18px] font-medium leading-[25px] text-foreground">${i + 1}. ${h}</h2>
+            <h2 class="text-[16px] font-medium leading-6 text-foreground">${i + 1}. ${h}</h2>
             ${body(txt)}
           </div>`).join('')}
       </div>
@@ -4177,6 +4213,30 @@ function wire(root) {
   }
 
   // accordions
+  // Nút mũi tên cạnh tab trang chính sách -> dropdown đủ danh sách trang.
+  // Cùng kiểu với #sortBtn/#sortMenu ở PLP: toggle .hidden, click ra ngoài thì
+  // đóng. Item không phải trang hiện tại mang data-nav nên handler [data-nav]
+  // bên dưới tự điều hướng; item của trang hiện tại chỉ đóng menu (go() return
+  // sớm khi name === current nên tự nó không đóng được).
+  const pMoreBtn  = root.querySelector('#policyMore');
+  const pMoreMenu = root.querySelector('#policyMenu');
+  if (pMoreBtn && pMoreMenu) {
+    const setOpen = open => {
+      pMoreMenu.classList.toggle('hidden', !open);
+      pMoreBtn.classList.toggle('open', open);
+      pMoreBtn.setAttribute('aria-expanded', String(open));
+    };
+    pMoreBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      setOpen(pMoreMenu.classList.contains('hidden'));
+    });
+    pMoreMenu.querySelector('[data-policy-close]')
+      ?.addEventListener('click', e => { e.stopPropagation(); setOpen(false); });
+    const closePolicyMenu = () => setOpen(false);
+    document.addEventListener('click', closePolicyMenu);
+    scrollCleanups.push(() => document.removeEventListener('click', closePolicyMenu));
+  }
+
   // Mục lục trang chính sách -> cuộn tới section tương ứng.
   // scroll-mt-[64px] trên section đã trừ sẵn chiều cao navbar sticky (48px)
   // + 16px thở, nên tiêu đề không bị nav che.

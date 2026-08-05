@@ -55,7 +55,13 @@ Ngoài luồng mua hàng còn 3 trang tĩnh vào từ footer: `privacy` · `term
 | `terms` | `3380:56273` terms-of-service-mobile | ĐIỀU KHOẢN DỊCH VỤ (7 mục) |
 | `returns` | `3380:56449` return-policy-mobile | CHÍNH SÁCH ĐỔI TRẢ (6 mục) |
 
-Layout: `[tab pill cuộn ngang] → [tiêu đề 24 SemiBold + mốc cập nhật] → [mục lục viền trên/dưới] → [các section gap 32]`. Mục lục bấm được → `scrollIntoView` tới section (`scroll-mt-[64px]` trừ sẵn navbar 48px). Dòng bullet dùng `pl-4 -indent-4` để thụt treo. Không có `cam-ket-section` (Figma 3 frame này chỉ có Nav + Main + Footer).
+Layout: `[tab pill cuộn ngang + nút mũi tên] → [tiêu đề 24 SemiBold + mốc cập nhật 12] → [mục lục viền trên/dưới, 12] → [các section gap 32: heading 16/24 Medium + body 14/20 Light]`.
+
+> Chữ nội dung **cố ý hạ 1 bậc so với Figma** cho trang dài dễ đọc: heading section 18 → **16**, body 16 → **14** (leading đi kèm 25→24 và 24→20, đều là cặp size/leading có sẵn trong project). Tiêu đề trang vẫn 24; mốc cập nhật và mục lục vẫn 12 vì đã ở đáy thang chữ. Mục lục bấm được → `scrollIntoView` tới section (`scroll-mt-[64px]` trừ sẵn navbar 48px). Dòng bullet dùng `pl-4 -indent-4` để thụt treo. Không có `cam-ket-section` (Figma 3 frame này chỉ có Nav + Main + Footer).
+
+**Nút mũi tên `#policyMore`** nằm bên phải hàng tab, bấm sổ dropdown `#policyMenu` liệt kê đủ danh sách trang. Cần nó vì 3 pill cộng lại 447px > 358px vùng nội dung nên tab cuối luôn bị cắt. Figma có gợi ý icon `fi-tr-angle-down` (`3479:46946`) đặt cạnh nhóm 3 frame nhưng **không thiết kế dropdown** — phần dropdown dựng theo mẫu `#sortBtn`/`#sortMenu` ở PLP cho đồng bộ (`w-220px`, item `h-11` 14px, trang đang xem có dấu tick). Icon bare 24px của Figma đổi thành pill tròn `w-7 h-7 bg-secondary` để ăn cùng ngôn ngữ với các tab pill. Mũi tên quay 180° khi mở (`#policyMore.open svg`).
+
+> **Hàng tab phải có `relative z-30`** — nếu bỏ, dropdown bị các block bên dưới đè lên. `.rise` dùng `animation-fill-mode: both` nên `transform: translateY(0)` còn dính lại sau khi chạy xong → **mỗi block `.rise` / `.reveal.in` là một stacking context riêng, `z-index: auto`**. Cùng z-index thì thứ tự DOM thắng, nên khối tiêu đề / mục lục / section (nằm sau trong DOM) vẽ đè lên dropdown, và `z-50` trên `#policyMenu` vô dụng vì chỉ có tác dụng *bên trong* stacking context của hàng tab. Đây cũng là lý do `#sortMenu` ở PLP sống được: cha nó `#plpFilterAnchor` có `z-40`. Lưu ý chung: **mọi popup/dropdown đặt trong block `.rise` hay `.reveal` đều cần z-index trên chính block đó**, không phải trên popup.
 
 **Vào từ footer** — bảng `FOOTER_ROUTES` map nhãn link → route, chỉ 3 link có trang thì render `<button data-nav>` gạch chân, 14 link còn lại là chữ tĩnh:
 
@@ -119,9 +125,9 @@ Cỡ chữ **không** nằm trong `tokens07.json` — viết thẳng bằng util
 
 (Code dùng thêm 11 / 13 / 15 cho vài chỗ chữ phụ dày đặc — có sẵn từ trước, chưa rà.)
 
-**Không dùng 20px và 22px** — không có trong thang. Tiêu đề cấp section (h2 trong trang: "Giỏ hàng", "Thanh toán", "Bộ lọc", tên brand ở PDP, tiêu đề bottom sheet, heading các trang chính sách) dùng **18px**; tiêu đề trang full-screen (auth) dùng **24px Light**.
+**Không dùng 20px và 22px** — không có trong thang. Tiêu đề cấp section (h2 trong trang: "Giỏ hàng", "Thanh toán", "Bộ lọc", tên brand ở PDP, tiêu đề bottom sheet) dùng **18px**; tiêu đề trang full-screen (auth) dùng **24px Light**. Riêng heading section trong 3 trang chính sách dùng **16px** — xem mục "Trang tĩnh / chính sách".
 
-**18px LUÔN đi với `font-medium`** — cả 24 chỗ dùng `text-[18px]` trong `index.html` đều Medium (500), không có 18px Light / Regular. Đây là **quyết định của design, cố ý khác Figma** (Figma để 18 Regular ở tiêu đề giỏ hàng, heading trang chính sách và heading newsletter footer) — đừng "sửa lại theo Figma". Thêm chỗ 18px mới thì nhớ kèm `font-medium`.
+**18px LUÔN đi với `font-medium`** — cả 23 chỗ dùng `text-[18px]` trong `index.html` đều Medium (500), không có 18px Light / Regular. Đây là **quyết định của design, cố ý khác Figma** (Figma để 18 Regular ở tiêu đề giỏ hàng và heading newsletter footer) — đừng "sửa lại theo Figma". Thêm chỗ 18px mới thì nhớ kèm `font-medium`.
 
 > Ngoại lệ còn lại: "Đặt hàng thành công" ở màn `done` vẫn 22px — Figma `2084:166` chưa có nội dung màn này nên chưa có số để bám.
 
@@ -167,11 +173,11 @@ Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫ
   2. Rule CSS `input, textarea, select { font-size: 14px; }` trong `<style>` (đặt sau `tailwind.css`). **Phải giữ selector thuần element** — thêm `:not(...)` sẽ nâng specificity lên 0,2,1 và đè luôn các utility `text-[…]` cố ý (ô OTP 18px bị co còn 14px).
   3. Đổi `text-[16px]` → `text-[14px]` ở 12 thẻ `<input>` (bỏ qua ô OTP và checkbox). Desktop hiện còn 64 chỗ `text-[16px]` nhưng phần lớn là nút/nhãn — chỉ đổi bên trong thẻ `<input>`.
   - Cân nhắc khi port: desktop không có vấn đề zoom của iOS, nên `maximum-scale=1` là không cần thiết; có thể chỉ áp phần cỡ chữ 14px nếu muốn thống nhất thị giác.
-- **Type scale bỏ cỡ 20px + 18px thành Medium** (chỉ mới làm ở mobile). Toàn bộ 21 chỗ `text-[20px]` → `text-[18px]`; riêng h2 "Giỏ hàng" 22px → 18px theo Figma `2851:28697`. Sau đó **cả 24 chỗ 18px đều thêm `font-medium`** (15 chỗ đổi: 12 chỗ chưa có class weight, `font-light` ở h2 giỏ hàng, `font-normal` ở "Thanh toán (4)" + "Bộ lọc"; 9 chỗ đã Medium từ trước). `leading-*` và các `h-7` đi kèm giữ nguyên để không đổi chiều cao dòng/khối. Desktop hiện còn 8 chỗ `text-[20px]` chưa đổi và chưa áp quy ước Medium — xem mục "Thang chữ" bên dưới.
+- **Type scale bỏ cỡ 20px + 18px thành Medium** (chỉ mới làm ở mobile). Toàn bộ 21 chỗ `text-[20px]` → `text-[18px]`; riêng h2 "Giỏ hàng" 22px → 18px theo Figma `2851:28697`. Sau đó **mọi chỗ 18px đều thêm `font-medium`** (15 chỗ đổi: 12 chỗ chưa có class weight, `font-light` ở h2 giỏ hàng, `font-normal` ở "Thanh toán (4)" + "Bộ lọc"; 9 chỗ đã Medium từ trước). `leading-*` và các `h-7` đi kèm giữ nguyên để không đổi chiều cao dòng/khối. Desktop hiện còn 8 chỗ `text-[20px]` chưa đổi và chưa áp quy ước Medium — xem mục "Thang chữ" bên dưới.
 - **Bỏ border ngăn giữa các block** (chỉ mới làm ở mobile) — 15 chỗ, xem mục "Quy ước border" bên dưới.
 - **Navbar bỏ viền dưới** (chỉ mới làm ở mobile) — 3 nav phụ bỏ `border-b`, bỏ `.navbar::after` + `.navbar.merged::after` + khối JS toggle `.merged`. Desktop hiện còn 28 chỗ `border-t/b/y` chưa rà.
 - **Footer: dữ liệu thật từ shop.dafc.com.vn** (chỉ mới làm ở mobile). Hằng `FOOTER_LINKS` (3 nhóm / 17 link) thay cho placeholder "Hotline · Email · Giờ làm việc" lặp lại ở cả 3 accordion. Kèm sửa dữ liệu sai: đối tác vận chuyển GHN → **TIKINOW**, "Đã đăng ký" → **"Đã thông báo"** Bộ Công Thương, GPKD 0302519839 (số sai) → **GPĐKKD 0304130177 do Sở KH & ĐT Tp.HCM cấp lần đầu 22/11/2005**, heading "Kết nối với chúng tôi" → **"Theo dõi chúng tôi"**, "Phương thức thanh toán" → **"Chấp nhận thanh toán"**, social YouTube → **Zalo** (thêm icon `I.zalo`).
-- **3 trang chính sách + link footer** (chỉ mới làm ở mobile) — `POLICY_TABS` / `POLICY_UPDATED` / `POLICY_DATA` / `screenPOLICY()` / `FOOTER_ROUTES`, 3 route mới trong `RENDER` + `FLOW` + `LABELS`, handler `[data-policy-toc]` trong `wire()`. Desktop chưa có route nào trong số này nên link footer bên đó vẫn chưa bấm được.
+- **3 trang chính sách + link footer** (chỉ mới làm ở mobile) — `POLICY_TABS` / `POLICY_UPDATED` / `POLICY_DATA` / `screenPOLICY()` / `FOOTER_ROUTES`, 3 route mới trong `RENDER` + `FLOW` + `LABELS`, handler `[data-policy-toc]` + `#policyMore` trong `wire()`, rule CSS `#policyMore svg` trong `<style>`. Desktop chưa có route nào trong số này nên link footer bên đó vẫn chưa bấm được.
   - **Desktop cần sửa 3 chuỗi** trong `FOOTER_COLS` cho khớp site thật: `Chính sách bán hàng` → `Chính sách bảo hành`; `Quy trình bảo hành và xử lý khiếu nại` → `Quy trình tiếp nhận và xử lý khiếu nại`; `Thu Thập và Xử Lý` → `Thu Thập Và Xử Lý`. Desktop cũng còn GHN / "Đã đăng ký" / GPKD cũ nếu có.
 
 ## Vấn đề tồn đọng / cần quyết định tiếp
