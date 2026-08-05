@@ -119,7 +119,9 @@ Cỡ chữ **không** nằm trong `tokens07.json` — viết thẳng bằng util
 
 (Code dùng thêm 11 / 13 / 15 cho vài chỗ chữ phụ dày đặc — có sẵn từ trước, chưa rà.)
 
-**Không dùng 20px và 22px** — không có trong thang. Tiêu đề cấp section (h2 trong trang: "Giỏ hàng", "Thanh toán", "Bộ lọc", tên brand ở PDP, tiêu đề bottom sheet) dùng **18px**; tiêu đề trang full-screen (auth) dùng **24px Light**.
+**Không dùng 20px và 22px** — không có trong thang. Tiêu đề cấp section (h2 trong trang: "Giỏ hàng", "Thanh toán", "Bộ lọc", tên brand ở PDP, tiêu đề bottom sheet, heading các trang chính sách) dùng **18px**; tiêu đề trang full-screen (auth) dùng **24px Light**.
+
+**18px LUÔN đi với `font-medium`** — cả 24 chỗ dùng `text-[18px]` trong `index.html` đều Medium (500), không có 18px Light / Regular. Đây là **quyết định của design, cố ý khác Figma** (Figma để 18 Regular ở tiêu đề giỏ hàng, heading trang chính sách và heading newsletter footer) — đừng "sửa lại theo Figma". Thêm chỗ 18px mới thì nhớ kèm `font-medium`.
 
 > Ngoại lệ còn lại: "Đặt hàng thành công" ở màn `done` vẫn 22px — Figma `2084:166` chưa có nội dung màn này nên chưa có số để bám.
 
@@ -165,7 +167,7 @@ Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫ
   2. Rule CSS `input, textarea, select { font-size: 14px; }` trong `<style>` (đặt sau `tailwind.css`). **Phải giữ selector thuần element** — thêm `:not(...)` sẽ nâng specificity lên 0,2,1 và đè luôn các utility `text-[…]` cố ý (ô OTP 18px bị co còn 14px).
   3. Đổi `text-[16px]` → `text-[14px]` ở 12 thẻ `<input>` (bỏ qua ô OTP và checkbox). Desktop hiện còn 64 chỗ `text-[16px]` nhưng phần lớn là nút/nhãn — chỉ đổi bên trong thẻ `<input>`.
   - Cân nhắc khi port: desktop không có vấn đề zoom của iOS, nên `maximum-scale=1` là không cần thiết; có thể chỉ áp phần cỡ chữ 14px nếu muốn thống nhất thị giác.
-- **Type scale bỏ cỡ 20px** (chỉ mới làm ở mobile). Toàn bộ 21 chỗ `text-[20px]` → `text-[18px]`; riêng h2 "Giỏ hàng" 22px → 18px theo Figma `2851:28697` (18 Regular / line-height 140%). `leading-*` và các `h-7` đi kèm giữ nguyên để không đổi chiều cao dòng/khối. Desktop hiện còn 8 chỗ `text-[20px]` chưa đổi — xem mục "Thang chữ" bên dưới.
+- **Type scale bỏ cỡ 20px + 18px thành Medium** (chỉ mới làm ở mobile). Toàn bộ 21 chỗ `text-[20px]` → `text-[18px]`; riêng h2 "Giỏ hàng" 22px → 18px theo Figma `2851:28697`. Sau đó **cả 24 chỗ 18px đều thêm `font-medium`** (15 chỗ đổi: 12 chỗ chưa có class weight, `font-light` ở h2 giỏ hàng, `font-normal` ở "Thanh toán (4)" + "Bộ lọc"; 9 chỗ đã Medium từ trước). `leading-*` và các `h-7` đi kèm giữ nguyên để không đổi chiều cao dòng/khối. Desktop hiện còn 8 chỗ `text-[20px]` chưa đổi và chưa áp quy ước Medium — xem mục "Thang chữ" bên dưới.
 - **Bỏ border ngăn giữa các block** (chỉ mới làm ở mobile) — 15 chỗ, xem mục "Quy ước border" bên dưới.
 - **Navbar bỏ viền dưới** (chỉ mới làm ở mobile) — 3 nav phụ bỏ `border-b`, bỏ `.navbar::after` + `.navbar.merged::after` + khối JS toggle `.merged`. Desktop hiện còn 28 chỗ `border-t/b/y` chưa rà.
 - **Footer: dữ liệu thật từ shop.dafc.com.vn** (chỉ mới làm ở mobile). Hằng `FOOTER_LINKS` (3 nhóm / 17 link) thay cho placeholder "Hotline · Email · Giờ làm việc" lặp lại ở cả 3 accordion. Kèm sửa dữ liệu sai: đối tác vận chuyển GHN → **TIKINOW**, "Đã đăng ký" → **"Đã thông báo"** Bộ Công Thương, GPKD 0302519839 (số sai) → **GPĐKKD 0304130177 do Sở KH & ĐT Tp.HCM cấp lần đầu 22/11/2005**, heading "Kết nối với chúng tôi" → **"Theo dõi chúng tôi"**, "Phương thức thanh toán" → **"Chấp nhận thanh toán"**, social YouTube → **Zalo** (thêm icon `I.zalo`).
