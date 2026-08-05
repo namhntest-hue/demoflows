@@ -45,6 +45,41 @@ Ngoài luồng mua hàng còn 3 trang tĩnh vào từ footer: `privacy` · `term
 - i18n VI/EN thật: từ điển 2 chiều + regex cho chuỗi có số, áp dụng qua `applyLang()`, gọi lại mỗi khi render màn mới.
 - Settings FAB (góc phải dưới): đổi ngôn ngữ + đổi font (Montserrat/Inter/Plus Jakarta Sans).
 
+## Quy ước đồng bộ giữa 6 bản PDP
+
+6 bản `pdp`…`pdp6` cố ý khác nhau về layout size, vị trí khối, hiệu ứng gallery — nhưng **3 điểm sau phải giống hệt nhau ở cả 6 bản**:
+
+| Điểm | Quy ước |
+|---|---|
+| Info tab (Mô tả / Bảo quản / Đổi trả / Thương hiệu) | **Extend tại chỗ** (`.acc` + `.acc-trigger` + `.acc-body`). Không dùng bottom sheet. Vách dưới `border-b border-border-1`. |
+| Trả góp / trả trước | **Không có ở cấp sản phẩm.** Không PDP nào hiện dòng "Trả trước từ …/tháng". |
+| Nhãn bảng size | **"Bảng kích thước"** — không dùng "Size guide", "Bảng size →" hay "Hướng dẫn chọn size". |
+
+> Đã sửa để đạt quy ước: `pdp4` trước đây info tab bấm ra **bottom sheet** (`.sheet-trigger` + `window.__pdp4Tabs`) → đổi sang accordion, bỏ luôn handler và cầu nối `window.__pdp4Tabs` vì không còn ai đọc. Bỏ **5** dòng "Trả trước từ" ở `pdp2`…`pdp6` kèm logic `payOffer` trong `wire()` (vốn để ẩn/hiện dòng đó khi hết hàng). Thống nhất **8** nhãn size guide, `data-toast`, và tiêu đề sheet trong size picker. `pdp5`/`pdp6` dùng vách accordion `border-border` đậm hơn 4 bản kia → về `border-border-1`.
+>
+> Dọn kèm 5 entry i18n đã chết: `Trả trước từ` · `/tháng` · `Xem chính sách trả góp` · `Bảng size →` · `Hướng dẫn chọn size`.
+>
+> **Vẫn giữ** trả góp ở 3 chỗ KHÔNG thuộc cấp sản phẩm: mục "Thanh toán linh hoạt" trong `camKetSection`, link "Chính sách trả góp" ở footer (data thật của site), và phương thức "Thanh toán trả góp 0% qua thẻ tín dụng" ở checkout.
+
+## Mô tả sản phẩm — data thật từ DAFC
+
+Hằng `PRODUCT_INFO` (6 entry, tương ứng SP#1–SP#6 của `pdp`…`pdp6`) chứa `desc` / `care` / `specs` / `features` / `sku` **copy nguyên văn** từ trang chi tiết trên `shop.dafc.com.vn` (kéo 05/08/2026), kèm `src` là slug trang gốc để đối chiếu lại.
+
+Khớp sản phẩm bằng **tên + giá trùng khít** với `PRODUCTS`:
+
+| # | Sản phẩm | Giá | Slug nguồn |
+|---|---|---|---|
+| 1 | Đầm lụa mini Broken Jewels | 72.557.000 ₫ | `printed-silk-twill-mini-dress-10254991a186725ge70` |
+| 2 | Khăn lụa in họa tiết Broken Jewels 90×90 cm | 15.611.000 ₫ | `printed-silk-twill-scarf-90-x-90-cm-10016001a188205ge70` |
+| 3 | Túi đeo vai da Emblème | 50.957.000 ₫ | `embleme-nappa-bowling-bag-10243181a174491gt4j` |
+| 4 | Giày cao gót da nappa Gianni 90 | 45.066.000 ₫ | `gianni-nappa-pumps-90-10253491a001982b13j` |
+| 5 | Giày loafer da Manu | 35.248.000 ₫ | `manu-leather-loafers-10233201a144571b55j` |
+| 6 | Giày thể thao da lộn Greca Court | 27.393.000 ₫ | `greca-court-nappa-and-suede-sneakers-10242051a177762nc70` |
+
+> Bản cũ dùng text tự viết và **sai nội dung**: `pdp` + `pdp4` đều tả "túi satchel canvas A.P.C." trong khi SP#1 là đầm lụa Versace và SP#4 là giày cao gót Versace (tab "Về thương hiệu APC" cũng sai theo). Đã sửa cả tab thương hiệu về Versace.
+
+**Chưa hiển thị**: `features` (danh sách gạch đầu dòng) và `sku` có thật trong data nhưng markup 6 PDP chưa có chỗ; `specs` chỉ `pdp2` đang render thành bảng, 5 PDP còn lại có data mà chưa dựng bảng.
+
 ## Trang tĩnh / chính sách
 
 3 trang từ Figma Section 8 (`3479:58974`), dùng chung `screenPOLICY(key)` + `POLICY_DATA` (1 layout, 3 bộ nội dung):
@@ -193,9 +228,12 @@ Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫ
 - **Bỏ border ngăn giữa các block** (chỉ mới làm ở mobile) — 15 chỗ, xem mục "Quy ước border" bên dưới.
 - **Navbar bỏ viền dưới** (chỉ mới làm ở mobile) — 3 nav phụ bỏ `border-b`, bỏ `.navbar::after` + `.navbar.merged::after` + khối JS toggle `.merged`. Desktop hiện còn 28 chỗ `border-t/b/y` chưa rà.
 - **Footer: dữ liệu thật từ shop.dafc.com.vn** (chỉ mới làm ở mobile). Hằng `FOOTER_LINKS` (3 nhóm / 17 link) thay cho placeholder "Hotline · Email · Giờ làm việc" lặp lại ở cả 3 accordion. Kèm sửa dữ liệu sai: đối tác vận chuyển GHN → **TIKINOW**, "Đã đăng ký" → **"Đã thông báo"** Bộ Công Thương, GPKD 0302519839 (số sai) → **GPĐKKD 0304130177 do Sở KH & ĐT Tp.HCM cấp lần đầu 22/11/2005**, heading "Kết nối với chúng tôi" → **"Theo dõi chúng tôi"**, "Phương thức thanh toán" → **"Chấp nhận thanh toán"**, social YouTube → **Zalo** (thêm icon `I.zalo`).
+- **Đồng bộ 6 bản PDP** (chỉ mới làm ở mobile) — info tab về accordion (bỏ bottom sheet ở `pdp4`), bỏ hết dòng trả trước/trả góp cấp sản phẩm, nhãn "Bảng kích thước". Xem mục "Quy ước đồng bộ giữa 6 bản PDP". Desktop chưa rà 3 điểm này.
+- **Mô tả sản phẩm: data thật từ DAFC** (chỉ mới làm ở mobile) — hằng `PRODUCT_INFO`, 6 PDP đọc `desc`/`care` từ đó, bỏ 10 entry i18n của text tự viết đã không còn render. Desktop vẫn đang dùng text tự viết (gồm cả 2 chỗ tả sai thành túi A.P.C.). Xem mục "Mô tả sản phẩm — data thật từ DAFC".
 - **PDP + PDP2: khối KHUYẾN MÃI + bottom sheet chi tiết** (chỉ mới làm ở mobile). Style card theo Figma `Product Info` 2275:505057: `bg-accent-0 rounded-sm p-2 gap-2`, tiêu đề "KHUYẾN MÃI" 14 Medium in hoa, dòng chương trình 12 Medium. Catalogue `PROMOS` (4 chương trình, mỗi cái có `line` tóm tắt + `title` + `rows` 4 cặp nhãn/giá trị cho sheet) khai **một lần** ở module scope, `PDP_PROMOS` quyết định mỗi PDP hiện chương trình nào — `pdp` và `pdp2` dùng chung 2 chương trình nên tách nội dung ra là sớm muộn lệch. Hai layout:
   - `promoCardGrouped()` — **pdp2**: 1 card gộp, các dòng gạch chân, bấm cả dòng.
-  - `promoCardsSplit()` — **pdp**: mỗi chương trình 1 card riêng, tiêu đề "KHUYẾN MÃI" đặt **ngoài** các khung nền xám và dùng chung cho cả nhóm (không lặp trong từng card). Link "Xem chi tiết" đặt **inline trong `<p>`** để trôi theo chỗ ngắt dòng của câu chứ không tụt xuống dòng riêng.
+  - `promoCardsSplit()` — **pdp**: 4 chương trình, mỗi cái 1 card riêng **extend tại chỗ**. Tiêu đề "KHUYẾN MÃI" đặt **ngoài** các khung nền xám, dùng chung cho cả nhóm. Cuối dòng là **icon + / −** (không có link "Xem chi tiết", không mở bottom sheet). Dùng lại nguyên cơ chế `.acc`/`.acc-trigger`/`.acc-body` của app — CSS `.acc.open .acc-ico-plus/-minus` tự đảo icon nên không cần JS riêng, và vì các card là `.acc` anh em cùng cha nên handler sẵn có tự đóng card khác khi mở một card.
+  - Nội dung khi extend: ưu tiên `body` (mảng dòng, dùng cho `voucher` — "Nhập mã" + 3 dòng mã JUL), không có `body` thì đổ `rows` thành cặp nhãn/giá trị.
   - Tiêu đề card dùng dạng IN HOA ở cả 2 layout vì `'Khuyến mãi'` (sentence case) đã là key i18n của mục menu Sale → `'Sale'`; khai lại là đổi luôn bản dịch của menu.
   - Bỏ chương trình TUMI vì sai thương hiệu trên trang Versace. **PDP4 vẫn còn khối `bg-accent-0` + bullet cũ** kèm TUMI (~dòng 1620) nếu muốn áp cùng kiểu.
   - Kèm sửa `#infoSheet`: `#isBody` từ `<p>` → `<div>` và `__openInfoSheet(title, body, asHTML)` thêm tham số thứ 3. Cần vì nội dung sheet có block bên trong — `<p>` chứa `<div>` là HTML không hợp lệ, trình duyệt tự đóng thẻ và làm vỡ layout. Gọi 2 tham số như cũ vẫn dùng `textContent`, không đổi hành vi. `openS` cũng gọi thêm `localizeNew` vì sheet render sau `applyLang` của màn.
