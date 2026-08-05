@@ -1096,6 +1096,9 @@ function screenPDP() {
       </button>
     </div>
 
+    <!-- KHUYẾN MÃI — layout B: mỗi chương trình 1 card, cuối dòng "Xem chi tiết" -->
+    ${promoCardsSplit(PDP_PROMOS.pdp)}
+
     <!-- accordions -->
     <div class="pt-2 px-2">
       ${tabs.map(([t, body]) => `
@@ -1135,14 +1138,107 @@ function screenPDP() {
    Khác bản 1: chọn size bằng DROPDOWN, không có cảnh báo tồn kho,
    accordion có bảng thông số. Dùng cho SP #2 (Khăn lụa Broken Jewels).
 ════════════════════════════════════════════════════════════════ */
+/* ── KHUYẾN MÃI — catalogue dùng chung cho các PDP ──
+   Style card lấy từ Figma "Product Info" 2275:505057: card #fafafa r=4 pad 8
+   gap 8, tiêu đề "Khuyến mãi" 14 Medium, mỗi chương trình 1 dòng bullet "·"
+   14 Regular, cuối dòng là link mở chi tiết. Dòng ngoài chỉ giữ 1 câu tóm
+   tắt — điều kiện / thời gian / loại trừ dồn hết vào bottom sheet.
+
+   Chi tiết khai MỘT LẦN ở đây rồi mỗi PDP chọn key muốn hiện (PDP_PROMOS):
+   pdp và pdp2 dùng chung 2 chương trình (insider, freeship) nên nếu copy nội
+   dung sang từng screen thì sớm muộn cũng lệch nhau.
+   Để ở module scope vì wire() cần đọc để mở sheet.
+
+   Mọi chương trình dưới đây đều hợp lệ với 2 sản phẩm đang gắn: đầm lụa
+   Versace 72.557.000 ₫ (SP#1, pre-order) và khăn lụa 15.611.000 ₫ (SP#2) —
+   cả hai đều là New Season, nên KHÔNG dùng bộ mã JUL của cart (điều kiện thật
+   loại trừ New Season) và KHÔNG dùng chương trình TUMI (sai thương hiệu). */
+const PROMOS = {
+  insider: {
+    line:  'Giảm thêm 10% cho thành viên DAFC Insider',
+    title: 'Ưu đãi thành viên DAFC Insider',
+    rows: [
+      ['Ưu đãi',    'Giảm thêm 10% trên giá sau khuyến mãi, áp dụng ngay tại bước thanh toán.'],
+      ['Điều kiện', 'Đăng nhập bằng tài khoản đã đạt hạng Insider trở lên. Mỗi đơn áp dụng 1 lần.'],
+      ['Thời gian', 'Áp dụng thường xuyên, không giới hạn thời gian.'],
+      ['Lưu ý',     'Không cộng dồn với mã giảm giá khác. Không áp dụng cho Phiếu Quà Tặng.'],
+    ],
+  },
+  gift5m: {
+    line:  'Tặng gói quà cao cấp cho đơn từ 5 triệu',
+    title: 'Gói quà cao cấp miễn phí',
+    rows: [
+      ['Quà tặng',  'Hộp quà cứng, giấy lụa và nơ lụa in hoạ tiết, kèm thiệp viết tay theo yêu cầu.'],
+      ['Điều kiện', 'Giá trị đơn hàng từ 5.000.000 ₫. Đơn hàng này đã đủ điều kiện.'],
+      ['Cách nhận', 'Chọn "Gói quà tặng" ở bước thanh toán và ghi nội dung thiệp nếu cần.'],
+      ['Lưu ý',     'Đơn có gói quà cần thêm 1 ngày xử lý trước khi giao.'],
+    ],
+  },
+  buymore: {
+    line:  'Mua 2 giảm thêm 5%, mua 3 giảm thêm 10%',
+    title: 'Mua càng nhiều, giảm càng sâu',
+    rows: [
+      ['Mức giảm',  'Mua 2 sản phẩm giảm thêm 5%. Mua 3 sản phẩm trở lên giảm thêm 10%.'],
+      ['Điều kiện', 'Tính trên số sản phẩm thuộc chương trình trong cùng một đơn hàng.'],
+      ['Thời gian', 'Từ 16/07 đến 02/08.'],
+      ['Lưu ý',     'Chỉ áp dụng cho sản phẩm chọn lọc, không cộng dồn với mã giảm giá khác.'],
+    ],
+  },
+  freeship: {
+    line:  'Miễn phí vận chuyển toàn quốc',
+    title: 'Miễn phí vận chuyển toàn quốc',
+    rows: [
+      ['Ưu đãi',         'Miễn phí phí vận chuyển tới mọi tỉnh thành, không yêu cầu giá trị tối thiểu.'],
+      ['Thời gian giao', 'Nội thành TP.HCM và Hà Nội 1–2 ngày làm việc, các tỉnh khác 2–5 ngày.'],
+      ['Đơn vị',         'Giao bởi đối tác vận chuyển của DAFC, có mã vận đơn để theo dõi.'],
+      ['Lưu ý',          'Đổi trả trong 14 ngày, phí vận chuyển đổi trả do DAFC chịu nếu lỗi từ DAFC.'],
+    ],
+  },
+};
+
+/* Mỗi PDP chọn chương trình muốn hiện. pdp2 gộp 1 card, pdp tách từng card. */
+const PDP_PROMOS = {
+  pdp:  ['insider', 'buymore', 'freeship'],
+  pdp2: ['insider', 'gift5m', 'freeship'],
+};
+
+/* Layout A (pdp2) — 1 card gộp, tiêu đề in hoa, các dòng gạch chân. */
+function promoCardGrouped(keys) {
+  return `
+    <div class="px-4 pb-2 rise">
+      <div class="bg-accent-0 rounded-sm p-2 flex flex-col gap-2">
+        <p class="h-5 text-[14px] font-medium leading-5 text-foreground">KHUYẾN MÃI</p>
+        ${keys.map(k => `
+          <button data-promo="${k}" class="flex items-start gap-2 text-left press">
+            <span class="w-2 shrink-0 text-[12px] font-medium leading-4 text-secondary-foreground">·</span>
+            <span class="flex-1 min-w-0 text-[12px] font-medium leading-4 text-secondary-foreground underline">${PROMOS[k].line}</span>
+          </button>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* Layout B (pdp) — mỗi chương trình 1 card riêng. Tiêu đề "KHUYẾN MÃI" nằm
+   NGOÀI các khung nền xám, dùng chung cho cả nhóm (không lặp trong từng card).
+   Link "Xem chi tiết" nằm INLINE trong <p> để nó trôi theo chỗ ngắt dòng của
+   câu, không bị đẩy xuống dòng riêng. <button> là phrasing content nên đặt
+   trong <p> hợp lệ. */
+function promoCardsSplit(keys) {
+  return `
+    <div class="px-4 pb-2 flex flex-col gap-2 rise">
+      <p class="text-[14px] font-medium leading-5 text-foreground">KHUYẾN MÃI</p>
+      ${keys.map(k => `
+        <div class="bg-accent-0 rounded-sm p-2 flex items-start gap-2">
+          <span class="w-2 shrink-0 text-[12px] font-medium leading-4 text-secondary-foreground">·</span>
+          <p class="flex-1 min-w-0 text-[12px] font-medium leading-4 text-secondary-foreground">${PROMOS[k].line}
+            <button data-promo="${k}" class="text-foreground underline press">Xem chi tiết</button>
+          </p>
+        </div>`).join('')}
+    </div>`;
+}
+
 function screenPDP2() {
   const P = PRODUCTS[1];
   const swatches = [P.img, 'p2-blu.png'].slice(0, P.colors.length);
-  const promos = [
-    ['BUY MORE SAVE MORE',' - [16/07 - 02/08] Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%'],
-    ['TUMI',' - [08/07 - 06/09] Quà tặng Sổ tay da cho đơn hàng từ 40 triệu Mua 2 giảm thêm 10%'],
-    ['Miễn phí vận chuyển',' cho đơn hàng từ 8 triệu'],
-  ];
   const specs = [['Chất liệu','Lụa twill 100%'],['Kích thước','90 × 90 cm'],['Xuất xứ','Made in Italy']];
   const tabs = [
     ['Mô tả sản phẩm','Khăn lụa twill in họa tiết Broken Jewels — hoạ tiết đặc trưng bộ sưu tập La Vacanza. Viền cuốn tay, mặt lụa mềm rủ, phối cùng túi xách hoặc buộc tóc.', specs],
@@ -1226,14 +1322,8 @@ function screenPDP2() {
       </div>
     </div>
 
-    <!-- CTKM -->
-    <div class="px-4 pb-2 rise">
-      <div class="bg-accent-0 rounded p-2">
-        <ul class="list-disc pl-4 space-y-1">
-          ${promos.map(([strong, rest]) => `<li class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${strong}</span>${rest}</li>`).join('')}
-        </ul>
-      </div>
-    </div>
+    <!-- KHUYẾN MÃI — layout A: 1 card gộp (Figma 2275:505057) -->
+    ${promoCardGrouped(PDP_PROMOS.pdp2)}
 
     <!-- Info Tabs — label Light 16 + bảng thông số -->
     <div class="pt-2 px-2">
@@ -2941,8 +3031,35 @@ const IcoMinus = `<svg width="14" height="14" viewBox="-0.25 11.25 24.5 1.5" fil
 const IcoPlus  = `<svg width="14" height="14" viewBox="-0.25 -0.25 24.5 24.5" fill="var(--general-primary)"><path d="M24,12c0,.276-.224,.5-.5,.5H12.5v11c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5V12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H11.5V.5c0-.276,.224-.5,.5-.5s.5,.224,.5,.5V11.5h11c.276,0,.5,.224,.5,.5Z"/></svg>`;
 const IcoCross = `<svg width="16" height="16" viewBox="5.74 5.75 12.51 12.5" fill="var(--general-primary)"><path d="M17.854,17.146c.195,.195,.195,.512,0,.707-.098,.098-.226,.146-.354,.146s-.256-.049-.354-.146l-5.146-5.146-5.146,5.146c-.098,.098-.226,.146-.354,.146s-.256-.049-.354-.146c-.195-.195-.195-.512,0-.707l5.146-5.146L6.146,6.854c-.195-.195-.195-.512,0-.707s.512-.195,.707,0l5.146,5.146,5.146-5.146c.195-.195,.512-.195,.707,0s.195,.512,0,.707l-5.146,5.146,5.146,5.146Z"/></svg>`;
 
-/* ô checkbox 16×16 */
-const fchk = (on) => `<span class="chk ${on ? 'on' : ''} w-4 h-4 border border-border-3 flex items-center justify-center shrink-0">${I.tick}</span>`;
+/* ô checkbox 16×16 — Figma để r=2 (rounded-xs), trước đây thiếu nên ô vuông
+   góc, lệch cả với checkbox ở giỏ hàng / chọn tất cả (đều có rounded-xs). */
+const fchk = (on) => `<span class="chk ${on ? 'on' : ''} w-4 h-4 border border-border-3 rounded-xs flex items-center justify-center shrink-0">${I.tick}</span>`;
+
+/* ── Cây Danh mục: rail thụt cấp — Figma "WAP/Filter Bottom Sheet" 3060:49070 ──
+   Mỗi cấp con thêm ĐÚNG 1 cột "leaf" rộng 20px, giữa cột là 1 đường dọc 1px
+   #d9d9d9 cao hết dòng; dòng liền nhau nên các đoạn rail nối thành 1 đường
+   liên tục. Gap giữa các cột và với nội dung = 4px, nên mốc thụt là:
+     Cat      (0 cột) → nội dung x=0
+     Sub      (1 cột) → nội dung x=24   (20 + 4)
+     Sub con  (2 cột) → nội dung x=48   (20+4 + 20+4)
+   Figma dựng đúng vậy: hàng "Áo kiểu" có 2 frame `leaf`, divider ở x=10 và
+   x=34, Checkbox Group bắt đầu x=48.
+   BUG ĐÃ SỬA: cấp sâu nhất trước đây dùng 1 cột w-9 (36px) với 1 đường ở giữa
+   → mất hẳn rail của cấp trên (cây bị đứt, đường lạc ra giữa dòng) và thụt sai
+   40px thay vì 48px. Gom 2 cấp con về 1 helper để không lệch nhau lần nữa. */
+const frail = (depth) =>
+  `<span class="w-5 flex justify-center shrink-0"><span class="w-px h-full bg-[#d9d9d9]"></span></span>`.repeat(depth);
+
+/* 1 dòng chọn ở nhánh con của Danh mục. depth 1 = Sub, 2 = Sub con. */
+const fsubRow = (label, depth, toggle = '') => `
+          <div class="flex gap-1 h-9">
+            ${frail(depth)}
+            <button class="flex items-center gap-2 flex-1 min-w-0 press text-left" data-sub>
+              ${fchk(false)}
+              <span class="text-[14px] leading-5 text-foreground-alt truncate">${label}</span>
+            </button>
+            ${toggle}
+          </div>`;
 
 /* Accordion cấp 1 (Danh mục / Thương hiệu / …) */
 function fSection(title, body, open = true, h = 72) {
@@ -2976,38 +3093,16 @@ function filterSheet() {
           const hasKids = Array.isArray(sub);
           const label = hasKids ? sub[0] : sub;
           const kids = hasKids ? sub[1] : null;
-          if (!hasKids) {
-            return `
-          <div class="flex gap-1 h-9">
-            <span class="w-5 flex justify-center shrink-0"><span class="w-px h-full bg-[#d9d9d9]"></span></span>
-            <button class="flex items-center gap-2 flex-1 min-w-0 press text-left" data-sub>
-              ${fchk(false)}
-              <span class="text-[14px] leading-5 text-foreground-alt truncate">${label}</span>
-            </button>
-          </div>`;
-          }
+          if (!hasKids) return fsubRow(label, 1);
           return `
           <div class="fsub" data-sub-parent="${i}-${si}">
-            <div class="flex gap-1 h-9">
-              <span class="w-5 flex justify-center shrink-0"><span class="w-px h-full bg-[#d9d9d9]"></span></span>
-              <button class="flex items-center gap-2 flex-1 min-w-0 press text-left" data-sub>
-                ${fchk(false)}
-                <span class="text-[14px] leading-5 text-foreground-alt truncate">${label}</span>
-              </button>
+            ${fsubRow(label, 1, `
               <button class="fsub-toggle w-4 h-4 flex items-center justify-center press shrink-0 self-center">
                 <span class="fsub-ico-plus">${IcoPlus}</span>
                 <span class="fsub-ico-minus hidden">${IcoMinus}</span>
-              </button>
-            </div>
+              </button>`)}
             <div class="fsub-body"><div class="acc-inner">
-              ${kids.map(k => `
-              <div class="flex gap-1 h-9">
-                <span class="w-9 flex justify-center shrink-0"><span class="w-px h-full bg-[#d9d9d9]"></span></span>
-                <button class="flex items-center gap-2 flex-1 min-w-0 press text-left" data-sub>
-                  ${fchk(false)}
-                  <span class="text-[14px] leading-5 text-foreground-alt truncate">${k}</span>
-                </button>
-              </div>`).join('')}
+              ${kids.map(k => fsubRow(k, 2)).join('')}
             </div></div>
           </div>`;
         }).join('')}
@@ -3670,6 +3765,38 @@ const I18N = {
   'Quy trình tiếp nhận và xử lý khiếu nại':'Complaint handling process',
 
   // ── Khuyến mãi ──
+  // khối KHUYẾN MÃI ở PDP / PDP2 + nội dung bottom sheet chi tiết
+  // KHÔNG khai lại 'Khuyến mãi' (đã là mục menu Sale -> 'Sale' ở trên) và
+  // 'Xem chi tiết' (đã có -> 'See details'): entry sau đè entry trước, khai
+  // lại là đổi luôn bản dịch của menu. Tiêu đề card vì vậy dùng dạng IN HOA
+  // "KHUYẾN MÃI" cho cả 2 layout — trùng với Figma 2275:505057 luôn.
+  'KHUYẾN MÃI':'PROMOTIONS',
+  'Mua 2 giảm thêm 5%, mua 3 giảm thêm 10%':'Buy 2 for an extra 5% off, buy 3 for an extra 10% off',
+  'Mua càng nhiều, giảm càng sâu':'Buy more, save more', 'Mức giảm':'Discount',
+  'Mua 2 sản phẩm giảm thêm 5%. Mua 3 sản phẩm trở lên giảm thêm 10%.':'Buy 2 items for an extra 5% off. Buy 3 or more for an extra 10% off.',
+  'Tính trên số sản phẩm thuộc chương trình trong cùng một đơn hàng.':'Counted across eligible items in the same order.',
+  'Từ 16/07 đến 02/08.':'From 16/07 to 02/08.',
+  'Chỉ áp dụng cho sản phẩm chọn lọc, không cộng dồn với mã giảm giá khác.':'Selected items only. Cannot be combined with other promo codes.',
+  'Giảm thêm 10% cho thành viên DAFC Insider':'Extra 10% off for DAFC Insider members',
+  'Tặng gói quà cao cấp cho đơn từ 5 triệu':'Complimentary premium gift wrap on orders over 5 million',
+  'Freeship toàn quốc':'Free nationwide shipping',
+  'Ưu đãi thành viên DAFC Insider':'DAFC Insider member benefit',
+  'Gói quà cao cấp miễn phí':'Complimentary premium gift wrap',
+  'Miễn phí vận chuyển toàn quốc':'Free nationwide shipping',
+  'Ưu đãi':'Benefit', 'Điều kiện':'Requirements', 'Thời gian':'Validity', 'Lưu ý':'Note',
+  'Quà tặng':'Gift', 'Cách nhận':'How to claim', 'Thời gian giao':'Delivery time', 'Đơn vị':'Carrier',
+  'Giảm thêm 10% trên giá sau khuyến mãi, áp dụng ngay tại bước thanh toán.':'An extra 10% off the post-discount price, applied at checkout.',
+  'Đăng nhập bằng tài khoản đã đạt hạng Insider trở lên. Mỗi đơn áp dụng 1 lần.':'Sign in with an account at Insider tier or above. One use per order.',
+  'Áp dụng thường xuyên, không giới hạn thời gian.':'Always available, no end date.',
+  'Không cộng dồn với mã giảm giá khác. Không áp dụng cho Phiếu Quà Tặng.':'Cannot be combined with other promo codes. Not valid on Gift Vouchers.',
+  'Hộp quà cứng, giấy lụa và nơ lụa in hoạ tiết, kèm thiệp viết tay theo yêu cầu.':'Rigid gift box, tissue paper and printed silk ribbon, with a handwritten card on request.',
+  'Giá trị đơn hàng từ 5.000.000 ₫. Đơn hàng này đã đủ điều kiện.':'Order value from 5,000,000 ₫. This order already qualifies.',
+  'Chọn "Gói quà tặng" ở bước thanh toán và ghi nội dung thiệp nếu cần.':'Select "Gift wrap" at checkout and add your card message if needed.',
+  'Đơn có gói quà cần thêm 1 ngày xử lý trước khi giao.':'Gift-wrapped orders need one extra day of handling before dispatch.',
+  'Miễn phí phí vận chuyển tới mọi tỉnh thành, không yêu cầu giá trị tối thiểu.':'Free shipping to every province, with no minimum order value.',
+  'Nội thành TP.HCM và Hà Nội 1–2 ngày làm việc, các tỉnh khác 2–5 ngày.':'1–2 business days within HCMC and Hanoi, 2–5 days elsewhere.',
+  'Giao bởi đối tác vận chuyển của DAFC, có mã vận đơn để theo dõi.':'Shipped by a DAFC delivery partner, with a tracking number.',
+  'Đổi trả trong 14 ngày, phí vận chuyển đổi trả do DAFC chịu nếu lỗi từ DAFC.':'14-day returns; DAFC covers return shipping when the fault is ours.',
   'Miễn phí vận chuyển':'Free shipping', 'cho đơn hàng từ 8 triệu':'on orders over 8 million',
   'Miễn phí vận chuyển cho đơn hàng từ 8 triệu':'Free shipping on orders over 8 million',
   'Freeship cho đơn từ 2 triệu':'Free shipping on orders over 2 million',
@@ -4387,6 +4514,29 @@ function wire(root) {
     }, { passive: true });
   }
 
+  // Dòng khuyến mãi ở PDP / PDP2 -> bottom sheet chi tiết chương trình.
+  // Dùng lại #infoSheet (chrome + animation + lock scroll đã có), truyền HTML
+  // nên phải bật cờ asHTML ở tham số thứ 3.
+  root.querySelectorAll('[data-promo]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const p = PROMOS[btn.dataset.promo];
+      if (!p || !window.__openInfoSheet) return;
+      const body = `
+        <div class="flex flex-col gap-4">
+          <p class="text-[14px] font-medium leading-5 text-foreground">${p.line}</p>
+          <div class="flex flex-col gap-3">
+            ${p.rows.map(([k, v]) => `
+              <div class="flex flex-col gap-1">
+                <span class="text-[12px] leading-4 text-muted-foreground">${k}</span>
+                <span class="text-[14px] leading-5 text-secondary-foreground">${v}</span>
+              </div>`).join('')}
+          </div>
+        </div>`;
+      window.__openInfoSheet(p.title, body, true);
+    });
+  });
+
   // Info tabs -> đẩy bottom sheet (versace b-drawer)
   root.querySelectorAll('.sheet-trigger').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -5093,16 +5243,25 @@ document.body.insertAdjacentHTML('beforeend', `
         <button id="isClose" class="w-8 h-8 -mr-2 flex items-center justify-center press">${I.close}</button>
       </div>
       <div class="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
-        <p id="isBody" class="text-[12px] leading-4 text-foreground-alt"></p>
+        <!-- div (không phải <p>) để __openInfoSheet còn nhận được nội dung HTML
+             có block bên trong — <p> không hợp lệ khi chứa <div>, trình duyệt
+             sẽ tự đóng thẻ và làm vỡ layout. Gọi kiểu text thuần vẫn y nguyên. -->
+        <div id="isBody" class="text-[12px] leading-4 text-foreground-alt"></div>
       </div>
     </div>
   </div>`);
 (() => {
   const sh = document.getElementById('infoSheet');
-  const openS = (title, body) => {
+  /* asHTML=true khi cần nội dung có cấu trúc (vd chi tiết chương trình khuyến
+     mãi ở PDP2). Mặc định vẫn textContent nên mọi chỗ gọi 2 tham số như cũ
+     không đổi hành vi. localizeNew để nội dung mới chèn vào cũng dịch theo
+     ngôn ngữ đang chọn — sheet render sau applyLang của màn nên phải gọi tay. */
+  const openS = (title, body, asHTML = false) => {
     document.getElementById('isTitle').textContent = title;
-    document.getElementById('isBody').textContent = body;
+    const bodyEl = document.getElementById('isBody');
+    if (asHTML) bodyEl.innerHTML = body; else bodyEl.textContent = body;
     sh.classList.add('open'); lockBodyScroll();
+    localizeNew(sh);
   };
   const closeS = () => { sh.classList.remove('open'); unlockBodyScroll(); };
   sh.querySelector('.is-backdrop').addEventListener('click', closeS);

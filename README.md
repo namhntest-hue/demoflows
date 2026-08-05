@@ -78,6 +78,22 @@ Layout: `[tab pill cuộn ngang + nút mũi tên] → [tiêu đề 24 SemiBold +
 
 > Border ngoại lệ: khối mục lục có `border-y border-border` — đúng theo Figma (`Table of Contents` stroke top/bottom 1px `#e5e5e5`, left/right 0). Đây là viền bao của 1 component list, không phải vách ngăn giữa các block, nên không trái quy ước ở mục "Quy ước border".
 
+## Bộ lọc — cây Danh mục 3 tầng
+
+Bottom sheet `#filterSheet` theo Figma `WAP/Filter Bottom Sheet` (`3060:49070`). Section "Danh mục" là cây 3 tầng, thụt cấp bằng **rail**: mỗi cấp con thêm đúng **1 cột `leaf` rộng 20px**, giữa cột là đường dọc **1px `#d9d9d9` cao hết dòng** — dòng liền nhau nên các đoạn rail nối thành một đường liên tục. Gap giữa các cột và với nội dung là **4px**.
+
+| Tầng | Hàm/class | Cao | Số cột rail | Nội dung thụt |
+|---|---|---|---|---|
+| Cat (Quần áo, Túi xách…) | `.fcat` | 44 (`h-11 pt-2`) | 0 | 0 |
+| Sub (Áo sơ mi & áo kiểu…) | `fsubRow(label, 1)` | 36 (`h-9`) | 1 | **24px** |
+| Sub con (Áo kiểu…) | `fsubRow(label, 2)` | 36 (`h-9`) | 2 | **48px** |
+
+Khớp Figma: hàng "Áo kiểu" (`3228:33369`) có 2 frame `leaf`, divider ở x=10 và x=34, `Checkbox Group` bắt đầu x=48.
+
+> **Bug đã sửa ở tầng 3**: trước đây cấp sâu nhất dùng **1 cột `w-9` (36px)** với đường ở giữa → rail của cấp trên biến mất (cây bị đứt, đường lạc ra giữa dòng) và thụt sai **40px** thay vì 48px. Nay 2 cấp con dùng chung helper `fsubRow(label, depth)` + `frail(depth)` nên không lệch nhau được nữa. `desktop.html` **vẫn còn lỗi này** (1 chỗ `w-9`).
+
+Icon `091-warning` trong `Checkbox Group` của Figma đang `visible: false` → không render. Checkbox dùng `rounded-xs` (Figma r=2).
+
 ## Mobile web thật
 
 Không có khung điện thoại, không giới hạn chiều cao — trang cuộn bằng **body**.
@@ -177,6 +193,13 @@ Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫ
 - **Bỏ border ngăn giữa các block** (chỉ mới làm ở mobile) — 15 chỗ, xem mục "Quy ước border" bên dưới.
 - **Navbar bỏ viền dưới** (chỉ mới làm ở mobile) — 3 nav phụ bỏ `border-b`, bỏ `.navbar::after` + `.navbar.merged::after` + khối JS toggle `.merged`. Desktop hiện còn 28 chỗ `border-t/b/y` chưa rà.
 - **Footer: dữ liệu thật từ shop.dafc.com.vn** (chỉ mới làm ở mobile). Hằng `FOOTER_LINKS` (3 nhóm / 17 link) thay cho placeholder "Hotline · Email · Giờ làm việc" lặp lại ở cả 3 accordion. Kèm sửa dữ liệu sai: đối tác vận chuyển GHN → **TIKINOW**, "Đã đăng ký" → **"Đã thông báo"** Bộ Công Thương, GPKD 0302519839 (số sai) → **GPĐKKD 0304130177 do Sở KH & ĐT Tp.HCM cấp lần đầu 22/11/2005**, heading "Kết nối với chúng tôi" → **"Theo dõi chúng tôi"**, "Phương thức thanh toán" → **"Chấp nhận thanh toán"**, social YouTube → **Zalo** (thêm icon `I.zalo`).
+- **PDP + PDP2: khối KHUYẾN MÃI + bottom sheet chi tiết** (chỉ mới làm ở mobile). Style card theo Figma `Product Info` 2275:505057: `bg-accent-0 rounded-sm p-2 gap-2`, tiêu đề "KHUYẾN MÃI" 14 Medium in hoa, dòng chương trình 12 Medium. Catalogue `PROMOS` (4 chương trình, mỗi cái có `line` tóm tắt + `title` + `rows` 4 cặp nhãn/giá trị cho sheet) khai **một lần** ở module scope, `PDP_PROMOS` quyết định mỗi PDP hiện chương trình nào — `pdp` và `pdp2` dùng chung 2 chương trình nên tách nội dung ra là sớm muộn lệch. Hai layout:
+  - `promoCardGrouped()` — **pdp2**: 1 card gộp, các dòng gạch chân, bấm cả dòng.
+  - `promoCardsSplit()` — **pdp**: mỗi chương trình 1 card riêng, tiêu đề "KHUYẾN MÃI" đặt **ngoài** các khung nền xám và dùng chung cho cả nhóm (không lặp trong từng card). Link "Xem chi tiết" đặt **inline trong `<p>`** để trôi theo chỗ ngắt dòng của câu chứ không tụt xuống dòng riêng.
+  - Tiêu đề card dùng dạng IN HOA ở cả 2 layout vì `'Khuyến mãi'` (sentence case) đã là key i18n của mục menu Sale → `'Sale'`; khai lại là đổi luôn bản dịch của menu.
+  - Bỏ chương trình TUMI vì sai thương hiệu trên trang Versace. **PDP4 vẫn còn khối `bg-accent-0` + bullet cũ** kèm TUMI (~dòng 1620) nếu muốn áp cùng kiểu.
+  - Kèm sửa `#infoSheet`: `#isBody` từ `<p>` → `<div>` và `__openInfoSheet(title, body, asHTML)` thêm tham số thứ 3. Cần vì nội dung sheet có block bên trong — `<p>` chứa `<div>` là HTML không hợp lệ, trình duyệt tự đóng thẻ và làm vỡ layout. Gọi 2 tham số như cũ vẫn dùng `textContent`, không đổi hành vi. `openS` cũng gọi thêm `localizeNew` vì sheet render sau `applyLang` của màn.
+- **Bộ lọc: sửa rail tầng 3 + checkbox bo góc** (chỉ mới làm ở mobile) — thêm `frail()` / `fsubRow()`, cấp sâu nhất từ 1 cột `w-9` → 2 cột `w-5`, `fchk()` thêm `rounded-xs`. `desktop.html` còn đúng 1 chỗ `w-9` cần sửa y hệt (dòng ~2561) và checkbox filter cũng chưa bo góc.
 - **3 trang chính sách + link footer** (chỉ mới làm ở mobile) — `POLICY_TABS` / `POLICY_UPDATED` / `POLICY_DATA` / `screenPOLICY()` / `FOOTER_ROUTES`, 3 route mới trong `RENDER` + `FLOW` + `LABELS`, handler `[data-policy-toc]` + `#policyMore` trong `wire()`, rule CSS `#policyMore svg` trong `<style>`. Desktop chưa có route nào trong số này nên link footer bên đó vẫn chưa bấm được.
   - **Desktop cần sửa 3 chuỗi** trong `FOOTER_COLS` cho khớp site thật: `Chính sách bán hàng` → `Chính sách bảo hành`; `Quy trình bảo hành và xử lý khiếu nại` → `Quy trình tiếp nhận và xử lý khiếu nại`; `Thu Thập và Xử Lý` → `Thu Thập Và Xử Lý`. Desktop cũng còn GHN / "Đã đăng ký" / GPKD cũ nếu có.
 
