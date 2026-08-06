@@ -3730,8 +3730,56 @@ function wireProductCards(root) {
   root.querySelectorAll('[data-product]').forEach(el => {
     el.addEventListener('click', e => {
       const qa = e.target.closest('.quick-add');
-      if (qa) { if (window.__openQuickAdd) window.__openQuickAdd(+qa.dataset.quick); return; }
+      if (qa) {
+        const idx = +qa.dataset.quick, ci = +(el.dataset.color || 0);
+        const kind = SIZE_SHEET_BY_PRODUCT[idx];
+        if (kind && window.__openSizeSheet) {
+          // ctx cho size sheet biết đang thêm SP nào / màu nào / bay từ ảnh nào
+          window.__openSizeSheet(kind, '', null, { idx, ci, img: el.querySelector('img') });
+        } else if (window.__openQuickAdd) {
+          window.__openQuickAdd(idx, ci);
+        }
+        return;
+      }
       go(el.dataset.product === '1' ? 'pdp2' : el.dataset.product === '2' ? 'pdp3' : el.dataset.product === '3' ? 'pdp4' : el.dataset.product === '4' ? 'pdp5' : el.dataset.product === '5' ? 'pdp6' : 'pdp');  // SP#2..6 -> bản riêng
+    });
+  });
+
+  /* Đổi màu ngay trên card PLP — không phải vào PDP mới xem được màu khác.
+     Ảnh lấy từ PRODUCT_GALLERY: phần tử thứ ci ứng với colors[ci] (xem chú
+     thích ở PRODUCT_GALLERY). Sản phẩm chưa có bộ ảnh riêng thì chỉ dời vòng
+     chọn, giữ nguyên ảnh — thà không đổi còn hơn đổi sang ảnh sai màu.
+     Màu đang chọn ghim vào data-color của card để quick add mở đúng màu đó.
+     Nằm trong wireProductCards (không phải wire) vì lưới PLP còn được dựng
+     lại khi đổi sắp xếp / bấm "Show more" — chỗ đó chỉ gọi hàm này. */
+  root.querySelectorAll('[data-swatches]').forEach(rw => {
+    const card = rw.closest('[data-product]');
+    if (!card) return;
+    const idx = +card.dataset.product;
+    rw.addEventListener('click', ev => {
+      const btn = ev.target.closest('.cw');
+      if (!btn) return;
+      ev.stopPropagation();          // chạm ô màu thì đừng mở PDP
+      rw.querySelectorAll('.cw').forEach(c => {
+        const on = c === btn;
+        c.classList.toggle('ring-1', on);
+        c.classList.toggle('ring-primary', on);
+        c.classList.toggle('ring-offset-2', on);
+        c.classList.toggle('ring-0', !on);
+        c.classList.toggle('ring-offset-0', !on);
+      });
+      const ci = +btn.dataset.cw;
+      card.dataset.color = ci;
+      const src = (PRODUCT_GALLERY[idx] || [])[ci];
+      const img = card.querySelector('img');
+      if (!src || !img || img.getAttribute('src') === A + src) return;
+      img.style.transition = 'opacity .18s ease';
+      img.style.opacity = '0';
+      setTimeout(() => {
+        const show = () => { img.style.opacity = '1'; };
+        img.src = A + src;
+        if (img.complete) show(); else img.addEventListener('load', show, { once: true });
+      }, 180);
     });
   });
 }
@@ -5136,15 +5184,8 @@ function wire(root) {
     });
   });
 
-  root.querySelectorAll('[data-swatches]').forEach(rw => {
-    rw.addEventListener('click', ev => {
-      const btn = ev.target.closest('.cw');
-      if (!btn) return;
-      ev.stopPropagation();
-      rw.querySelectorAll('.cw').forEach(c => { c.classList.remove('border-primary'); c.classList.add('border-transparent'); });
-      btn.classList.remove('border-transparent'); btn.classList.add('border-primary');
-    });
-  });
+  /* Ô màu trên card do wireProductCards lo — bản cũ ở đây toggle border-primary
+     trong khi markup dùng ring-*, tức bấm vào không có gì đổi. */
 
   observeReveal(root);
 }
@@ -5651,7 +5692,7 @@ document.body.insertAdjacentHTML('beforeend', `
    · CTA pad 16 gap 10: nút 48 primary + link 24 gạch chân (trước là 36 đậm)
    Các layer NEW SEASON / SKU / "Đã bao gồm thuế" / "*Tạm hết hàng" trong Figma
    đều đang tắt hiển thị nên không dựng. */
-function quickAddBody(p, idx) {
+function quickAddBody(p, idx, sel = 0) {
   /* ĐỒNG NHẤT với PDP: cùng đọc PRODUCT_GALLERY nên quick add của sản phẩm
      nào ra đúng bộ ảnh của PDP sản phẩm đó. */
   const gallery = PRODUCT_GALLERY[idx] || [p.img];
@@ -5686,13 +5727,13 @@ function quickAddBody(p, idx) {
       <div class="flex flex-col gap-2">
         <div class="flex gap-2">
           <p class="text-[12px] font-medium leading-4 text-foreground">Màu sắc</p>
-          <p class="qa-color-name text-[12px] leading-4 text-muted-foreground">${p.colors[0].name}</p>
+          <p class="qa-color-name text-[12px] leading-4 text-muted-foreground">${p.colors[sel].name}</p>
         </div>
         <!-- Ô chọn màu dạng ẢNH 44×44 giống PDP (Figma "Image Selection"), thay
              cho ô màu hex 36px trước đây — để quick add và PDP nhìn như một. -->
         <div class="flex gap-2" data-qa-colors>
           ${p.colors.map((c, ci) => `
-            <button class="sw w-11 h-11 rounded-xs overflow-hidden shrink-0 border ${ci===0 ? 'on' : 'border-transparent'} bg-secondary press" data-cw="${ci}" data-name="${c.name}">
+            <button class="sw w-11 h-11 rounded-xs overflow-hidden shrink-0 border ${ci===sel ? 'on' : 'border-transparent'} bg-secondary press" data-cw="${ci}" data-name="${c.name}">
               <img src="${A}${gallery[ci] || p.img}" class="w-full h-full object-cover" alt="${c.name}">
             </button>`).join('')}
         </div>
@@ -5731,9 +5772,10 @@ function quickAddCta(p) {
   const body = document.getElementById('qaBody');
   const ctaBox = document.getElementById('qaCta');
 
-  const openQA = idx => {
+  /* `ci` = màu vừa chọn trên card PLP, để quick add mở lên đúng màu đó */
+  const openQA = (idx, ci = 0) => {
     const p = PRODUCTS[idx];
-    body.innerHTML = quickAddBody(p, idx);
+    body.innerHTML = quickAddBody(p, idx, (p.colors && p.colors[ci]) ? ci : 0);
     ctaBox.innerHTML = quickAddCta(p);
 
     body.querySelectorAll('[data-qa-colors]').forEach(rw => {
@@ -5950,6 +5992,12 @@ document.body.insertAdjacentHTML('beforeend', `
 
 /* Sản phẩm đang xem theo màn PDP — dùng cho sheet xác nhận thêm giỏ */
 const SCREEN_PRODUCT = { pdp: 0, pdp2: 1, pdp3: 2, pdp4: 3, pdp5: 4, pdp6: 5 };
+/* SP nào mà PDP chọn size bằng dropdown (tức có mặt trong SIZE_SHEET_OPTIONS)
+   thì ngoài PLP KHÔNG mở quick add nữa: màu đã chọn ngay trên card, chỉ còn
+   thiếu size -> mở thẳng #sizeSheet, đúng bộ chọn size của PDP. Nhờ vậy luôn
+   chỉ có 1 bottom sheet trên màn hình, không có chuyện sheet đè sheet. */
+const SIZE_SHEET_BY_PRODUCT = Object.fromEntries(
+  Object.entries(SCREEN_PRODUCT).filter(([k]) => SIZE_SHEET_OPTIONS[k]).map(([k, i]) => [i, k]));
 
 /* ── Size sheet — thay cho <select> gốc của trình duyệt (PDP2/3/5/6) ──
    Drawer 3281:53948: bo 10, handle 50×3 đè trên header 52px ("Chọn size" 20/1.4 + ✕ 12px),
@@ -6023,8 +6071,9 @@ document.body.insertAdjacentHTML('beforeend', `
     }
   };
 
-  const openSZ = (kind, current, cb) => {
-    onPick = cb;
+  let szCtx = null;   // != null khi mở từ card PLP (không phải từ PDP)
+  const openSZ = (kind, current, cb, ctx = null) => {
+    onPick = cb; szCtx = ctx;
     opts = SIZE_SHEET_OPTIONS[kind] || [];
     selected = opts.some(o => o.label === current) ? current : null;
     renderList();
@@ -6035,6 +6084,7 @@ document.body.insertAdjacentHTML('beforeend', `
     lockBodyScroll();
   };
   const closeSZ = () => {
+    szCtx = null;
     sz.querySelector('.sz-backdrop').classList.add('opacity-0');
     panel.classList.add('translate-y-full');
     sz.classList.add('pointer-events-none');
@@ -6054,17 +6104,24 @@ document.body.insertAdjacentHTML('beforeend', `
       return;
     }
     if (cta.dataset.mode === 'add') {
-      const img = document.querySelector('#pdpGallery img');
+      /* Mở từ card PLP thì mọi thứ lấy theo ctx: bay từ ảnh của card, đúng SP,
+         và tên màu lấy từ ô màu đã chọn ngoài card thay vì #colorName của PDP. */
+      const img = szCtx ? szCtx.img : document.querySelector('#pdpGallery img');
       if (img) flyToCart(img);
       cartQty++;
       document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
       if (onPick) onPick(selected);
+      const ctx = szCtx;
       closeSZ();
-      const p = PRODUCTS[SCREEN_PRODUCT[current] || 0];
+      const p = PRODUCTS[ctx ? ctx.idx : (SCREEN_PRODUCT[current] || 0)];
       const colorEl = document.querySelector('.screen #colorName');
-      const variant = [colorEl ? colorEl.textContent.trim() : '', selected].filter(Boolean).join(' , ');
+      const colorName = ctx
+        ? ((p.colors && p.colors[ctx.ci]) ? p.colors[ctx.ci].name : '')
+        : (colorEl ? colorEl.textContent.trim() : '');
+      const variant = [colorName, selected].filter(Boolean).join(' , ');
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
-        img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
+        img: (ctx && ctx.img) ? ctx.img.getAttribute('src') : `${A}${p.img}`,
+        brand: p.brand, name: p.name, variant,
         price: p.price, off: p.off, was: p.was,
       }), 350);
     }
