@@ -350,6 +350,23 @@ const PRODUCTS = [
   { img:'p8.png',  brand:'Versace', name:'Túi da Lou mini',                            price:'45.066.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Rosso',hex:'#8c1c2b'},{name:'Bianco',hex:'#f1f1f1'}] },
   { img:'p9.png',  brand:'Versace', name:'Túi tote Rivière mini',                      price:'50.957.000 ₫', off:'-10%', was:'56.619.000 ₫', colors:[{name:'Cuoio',hex:'#a06a3f'},{name:'Nero',hex:'#0a0a0a'}] },
   { img:'p10.png', brand:'Versace', name:'Thắt lưng da mặt khóa Medusa',               price:'17.575.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Marrone',hex:'#5c3a26'}] },
+
+  /* ── Hàng làm đẹp (dept:'beauty') ────────────────────────────────────
+     Tách bằng cờ `dept` chứ không phải mảng riêng, để index sản phẩm vẫn
+     là index trong PRODUCTS — router PDP và quick add đang định danh sản
+     phẩm bằng đúng index đó.
+     `sizes` = dung tích riêng của từng món (nguồn: sheet "Size" dòng Làm
+     đẹp trong Filter - Beauty cate demo.xlsx → 50/75/100 ml); món không có
+     thì quick add rơi về SIZES thời trang.
+     ẢNH: demo chưa có ảnh mỹ phẩm nên tạm mượn ảnh thời trang có sẵn. */
+  { img:'p1.png', dept:'beauty', brand:'Versace',        name:'Nước hoa Eros Eau de Parfum',            price:'4.590.000 ₫', sizes:['50 ml','100 ml'] },
+  { img:'p2.png', dept:'beauty', brand:'Dolce&Gabbana',  name:'Nước hoa Light Blue Eau de Toilette',    price:'3.250.000 ₫', off:'-15%', was:'3.825.000 ₫', sizes:['50 ml','75 ml','100 ml'] },
+  { img:'p3.png', dept:'beauty', brand:'Burberry',       name:'Nước hoa Her Eau de Parfum',             price:'3.890.000 ₫', sizes:['50 ml','100 ml'] },
+  { img:'p4.png', dept:'beauty', brand:'Montblanc',      name:'Nước hoa du lịch Explorer',              price:'1.450.000 ₫', sizes:['50 ml'] },
+  { img:'p5.png', dept:'beauty', brand:'Versace',        name:'Sữa tắm dưỡng ẩm Crystal Noir',          price:'1.190.000 ₫', sizes:['75 ml','100 ml'] },
+  { img:'p6.png', dept:'beauty', brand:'Burberry',       name:'Kem dưỡng tay Signature',                price:'890.000 ₫',   sizes:['75 ml'] },
+  { img:'p7.png', dept:'beauty', brand:'Versace',        name:'Nến thơm Medusa Signature 190g',         price:'2.750.000 ₫' },
+  { img:'p8.png', dept:'beauty', brand:'Dolce&Gabbana',  name:'Set quà tặng Discovery 5 x 5ml',         price:'2.190.000 ₫', off:'-20%', was:'2.740.000 ₫' },
 ];
 
 /* ── Ảnh gallery từng sản phẩm — dùng CHUNG cho PDP và quick add ──
@@ -835,12 +852,20 @@ function goPlp(mode) {
   go('plp');
 }
 
+/* PLP đang ở ngành làm đẹp? Nhận qua breadcrumb chứ không cần cờ riêng: mọi
+   lối vào (menu tab Làm đẹp, submenu, hàng "Trang chủ làm đẹp") đều đẩy
+   crumbs[0] = 'Làm đẹp'. Dùng chung cho danh sách sản phẩm và bộ lọc. */
+const isBeautyPlp = () => plpMode.type === 'category' && (plpMode.crumbs || [])[0] === 'Làm đẹp';
+
 /* Danh sách sản phẩm theo chế độ PLP (giữ index gốc cho router PDP/quick-add) */
 function plpProducts() {
   const all = PRODUCTS.map((p, i) => ({ p, i }));
-  if (plpMode.type !== 'search') return all;
-  const q = (plpMode.query || '').trim().toLowerCase();
-  return q ? all.filter(({ p }) => `${p.brand} ${p.name}`.toLowerCase().includes(q)) : all;
+  if (plpMode.type === 'search') {   // tìm kiếm quét cả 2 ngành hàng
+    const q = (plpMode.query || '').trim().toLowerCase();
+    return q ? all.filter(({ p }) => `${p.brand} ${p.name}`.toLowerCase().includes(q)) : all;
+  }
+  const beauty = isBeautyPlp();
+  return all.filter(({ p }) => (p.dept === 'beauty') === beauty);
 }
 
 /* PLP dạng danh sách (category/search) */
@@ -3171,6 +3196,10 @@ const FILTER_CATS = [
 ];
 const FILTER_BRANDS = ['A.P.C.','Balmain','Burberry','Christian Louboutin','Dolce&Gabbana','Emporio Armani','Ferragamo','Gianvito Rossi','MCM','Montblanc','Moschino','MSGM','Palm Angels','Paul&Shark','Santoni','Stefano Ricci','TUMI','Versace','Versace Jeans Couture','Zimmermann'];
 const FILTER_COLORS = [['Đen','#010101'],['Trắng','#ffffff'],['Beige','#e4d8c9'],['Navy','#213259'],['Đỏ','#d62845'],['Nâu','#664232'],['Xám','#909090']];
+/* Bộ lọc riêng ngành làm đẹp — cùng nguồn Filter - Beauty cate demo.xlsx:
+   dung tích lấy ở sheet "Size" dòng Làm đẹp, ưu đãi lấy nguyên sheet "Promo". */
+const FILTER_VOLUMES = ['50 ml','75 ml','100 ml'];
+const FILTER_PROMOS  = ['Nguyên giá','10% - 30%','30% - 50%','50% - 70%','Trên 70%'];
 const FILTER_SIZES  = ['39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55'];
 
 const IcoMinus = `<svg width="14" height="14" viewBox="-0.25 11.25 24.5 1.5" fill="var(--general-primary)"><path d="M23.5,12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H23.5c.276,0,.5,.224,.5,.5s-.224,.5-.5,.5Z"/></svg>`;
@@ -3220,9 +3249,20 @@ function fSection(title, body, open = true, h = 72) {
   </div>`;
 }
 
-function filterSheet() {
+/* ── Thân bộ lọc — dựng lại mỗi khi đổi ngành hàng ──────────────────────
+   PLP Làm đẹp và PLP thời trang không dùng chung facet: trang nước hoa mà
+   vẫn hiện "Giày dép", size 39–55 hay bảng màu da/nâu là vô nghĩa. Nên:
+   · Danh mục: beauty đưa THẲNG 8 nhóm beauty lên cấp 1 (không lồng thêm 1
+     cấp "Làm đẹp" thừa), thời trang giữ 6 nhóm còn lại;
+   · Kích thước ⇄ Dung tích (50/75/100 ml);
+   · beauty bỏ Màu sắc, thêm Ưu đãi (nguyên sheet "Promo" của file Excel).
+   Vỏ sheet (backdrop / header / footer) dựng 1 lần, chỉ #filterBody thay. */
+function filterBody(beauty) {
   /* ── Danh mục: cha + con (con mặc định ĐÓNG) ── */
-  const cats = FILTER_CATS.map(([cat, subs], i) => `
+  const catSrc = beauty
+    ? (FILTER_CATS.find(([c]) => c === 'Làm đẹp') || ['', []])[1]
+    : FILTER_CATS.filter(([c]) => c !== 'Làm đẹp');
+  const cats = catSrc.map(([cat, subs], i) => `
     <div class="fcat" data-cat="${i}">
       <div class="h-11 flex items-center gap-2 pt-2">
         <button class="fcat-check flex items-center gap-2 flex-1 min-w-0 press text-left">
@@ -3269,8 +3309,13 @@ function filterSheet() {
       <span class="fcolor-label text-[12px] leading-4 ${i === 0 ? 'text-foreground' : 'text-muted-foreground'}">${name}</span>
     </button>`).join('');
 
-  const sizes = FILTER_SIZES.map(s => `
+  /* chip dung tích dùng đúng class .fsize để tái dụng luôn handler chọn nhiều */
+  const chips = (arr) => arr.map(s => `
     <button class="fsize chip min-w-[52px] h-9 px-2 rounded-xs border border-border text-[14px] font-medium text-foreground press" data-size>${s}</button>`).join('');
+  const sizes   = chips(FILTER_SIZES);
+  const volumes = chips(FILTER_VOLUMES);
+  const promos  = FILTER_PROMOS.map(t => `
+    <button class="h-9 w-full flex items-center gap-2 press text-left" data-other>${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('');
 
   const price = `
     <div class="px-4 pb-6 flex flex-col gap-6">
@@ -3297,6 +3342,23 @@ function filterSheet() {
     </div>`;
 
   return `
+    ${fSection('Danh mục', `<div class="px-4 pb-4">${cats}</div>`)}
+    ${fSection('Thương hiệu (2)', `<div class="px-4 pb-6">${brands}</div>`)}
+    ${beauty ? '' : fSection('Màu sắc', `<div class="pt-2 px-4 pb-4 flex flex-wrap gap-2">${colors}</div>`, true, 56)}
+    ${beauty
+      ? fSection('Dung tích', `<div class="px-4 pb-6 flex flex-wrap gap-2">${volumes}</div>`)
+      : fSection('Kích thước', `<div class="px-4 pb-6 flex flex-wrap gap-2">${sizes}</div>`)}
+    ${fSection('Khoảng giá', price)}
+    ${beauty ? fSection('Ưu đãi', `<div class="px-4 pb-6 flex flex-col gap-1">${promos}</div>`) : ''}
+    ${fSection('Khác', `<div class="px-4 pb-6 flex flex-col gap-1">
+      ${['Chỉ hàng có sẵn','Đang giảm giá','Hàng mới về'].map(t => `
+        <button class="h-9 w-full flex items-center gap-2 press text-left" data-other>${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('')}
+    </div>`, false)}`;
+}
+
+/* Vỏ sheet — dựng 1 lần lúc khởi động, #filterBody để trống chờ render. */
+function filterSheet() {
+  return `
   <div id="filterSheet">
     <div class="fs-backdrop"></div>
     <div class="fs-panel">
@@ -3308,17 +3370,7 @@ function filterSheet() {
         <button id="filterClose" class="w-8 h-8 -mr-2 flex items-center justify-center press">${IcoCross}</button>
       </div>
       <!-- body -->
-      <div class="flex-1 overflow-y-auto overscroll-contain">
-        ${fSection('Danh mục', `<div class="px-4 pb-4">${cats}</div>`)}
-        ${fSection('Thương hiệu (2)', `<div class="px-4 pb-6">${brands}</div>`)}
-        ${fSection('Màu sắc', `<div class="pt-2 px-4 pb-4 flex flex-wrap gap-2">${colors}</div>`, true, 56)}
-        ${fSection('Kích thước', `<div class="px-4 pb-6 flex flex-wrap gap-2">${sizes}</div>`)}
-        ${fSection('Khoảng giá', price)}
-        ${fSection('Khác', `<div class="px-4 pb-6 flex flex-col gap-1">
-          ${['Chỉ hàng có sẵn','Đang giảm giá','Hàng mới về'].map(t => `
-            <button class="h-9 w-full flex items-center gap-2 press text-left" data-other>${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('')}
-        </div>`, false)}
-      </div>
+      <div id="filterBody" class="flex-1 overflow-y-auto overscroll-contain"></div>
       <!-- footer -->
       <div class="shrink-0 bg-background px-4 pt-4 safe-b flex gap-3">
         <button id="filterReset" class="h-12 px-6 rounded-xs bg-background border border-border text-[16px] text-foreground press shrink-0">Đặt lại</button>
@@ -3328,9 +3380,24 @@ function filterSheet() {
   </div>`;
 }
 
+/* Chỉ dựng lại thân khi ĐỔI ngành hàng — mở lại bộ lọc trong cùng ngành thì
+   giữ nguyên các ô đang tick. */
+let filterMode = null;
+function renderFilterBody() {
+  const sh = document.getElementById('filterSheet');
+  if (!sh) return;
+  const mode = isBeautyPlp() ? 'beauty' : 'fashion';
+  if (filterMode === mode) return;
+  sh.querySelector('#filterBody').innerHTML = filterBody(mode === 'beauty');
+  filterMode = mode;
+  wireFilterBody(sh);
+  localizeNew(sh);
+}
+
 /* ── mở / đóng ── */
 function openFilter() {
   const sh = document.getElementById('filterSheet');
+  renderFilterBody();          // PLP nào thì facet nấy
   sh.classList.add('open');
   lockBodyScroll();
 }
@@ -3358,6 +3425,11 @@ function wireFilter() {
     toast('Đã đặt lại bộ lọc');
   });
 
+  renderFilterBody();
+}
+
+/* Handler thuộc THÂN — gọi lại sau mỗi lần render lại #filterBody. */
+function wireFilterBody(sh) {
   // accordion cấp 1
   sh.querySelectorAll('.facc-trigger').forEach(t =>
     t.addEventListener('click', () => t.closest('.facc').classList.toggle('open')));
@@ -4070,6 +4142,9 @@ const I18N = {
   'Tất cả chăm sóc tóc':'All hair care', 'Tất cả hương thơm không gian':'All home fragrance',
   'Tất cả quà tặng':'All gifts', 'Tất cả sản phẩm cho nam':'All men’s products',
   'Tất cả sản phẩm du lịch':'All travel products',
+
+  // ── Bộ lọc ngành làm đẹp ──
+  'Dung tích':'Volume', 'Ưu đãi':'Promotion', 'Nguyên giá':'Full-priced', 'Trên 70%':'From 70%',
 };
 
 // Luật cho chuỗi động
@@ -5360,7 +5435,7 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>`
       : navRoot() + deptTabs() + `
         <div class="ms-view flex-1 overflow-y-auto overscroll-contain py-4">
-          ${headRow(d.home)}
+          ${headRow(d.home, menuTab === 'Làm đẹp' ? `data-plp-title="${d.home}" data-plp-crumbs="${menuTab}"` : '')}
           ${d.cats.map(([label, sub], i) => row(label, sub ? `data-ms-sub="${i}"` : catAttrs(label, [menuTab]))).join('')}
         </div>
         <!-- Vùng tiện ích ghim đáy — tài khoản là TÍNH NĂNG, tách khỏi nhóm danh mục -->
@@ -5625,12 +5700,12 @@ function quickAddBody(p, idx) {
       <div class="flex flex-col gap-2">
         <!-- Không có link bảng kích thước ở quick add: node "Bảng size" trong
              Figma 3373:41590 đang TẮT hiển thị. Muốn xem thì vào trang PDP. -->
-        <p class="text-[12px] font-medium leading-4 text-foreground">Kích thước</p>
+        <p class="text-[12px] font-medium leading-4 text-foreground">${p.sizes ? 'Dung tích' : 'Kích thước'}</p>
         <!-- 5 ô / dòng (trước là 4) -> chip hẹp hơn: (358 - 4×8)/5 ≈ 65px.
              SIZES đang có 6 giá trị nên dòng 2 còn lẻ 1 ô — xem README. -->
         <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)" data-qa-sizes>
-          ${SIZES.map((s, si) => {
-            const off = DISABLED.includes(s);
+          ${(p.sizes || SIZES).map((s, si) => {
+            const off = !p.sizes && DISABLED.includes(s);
             return `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${(si === 0 && !off) ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? 'disabled' : ''}>${s}</button>`;
           }).join('')}
         </div>
