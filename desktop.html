@@ -293,6 +293,29 @@
   .dk-modal.translate-y-full { transform: translate(-50%, -46%) scale(.97); opacity: 0; }
   .dk-modal .safe-b { padding-bottom: 0; }
 
+  /* ── Cookie bar ──
+     Desktop không dùng cổng chặn như mobile: đây là THANH trải hết bề ngang
+     dán đáy, trang vẫn xem và cuộn được phía sau (không nền tối). Nội dung
+     bên trong vẫn bó về khung 1440 như mọi dải khác của trang. */
+  #cookieBar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 190;
+    background: var(--general-background);
+    border-top: 1px solid var(--general-border);
+    box-shadow: 0 -8px 30px rgba(0,0,0,.10);
+    transform: translateY(100%); transition: transform .4s ease-in-out;
+    pointer-events: none;
+  }
+  #cookieBar.open { transform: translateY(0); pointer-events: auto; }
+  /* Công tắc 40×24 cho modal tuỳ chọn — bản desktop của .cg-sw ở index.html */
+  .cg-sw { position: relative; width: 40px; height: 24px; flex-shrink: 0;
+    border-radius: 999px; background: var(--general-border); transition: background .2s ease; }
+  .cg-sw[aria-checked="true"] { background: var(--general-primary); }
+  .cg-sw[aria-disabled="true"] { opacity: .4; }
+  .cg-sw i { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+    border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    transition: transform .2s ease; }
+  .cg-sw[aria-checked="true"] i { transform: translateX(16px); }
+
   /* ── Mega menu (CSS hover) ── */
   .dk-nav-item > .dk-mega {
     opacity: 0; visibility: hidden; pointer-events: none;
@@ -3092,6 +3115,23 @@ const I18N = {
   'Cài đặt hiển thị':'Display settings', 'Cài đặt phông chữ':'Font settings', 'Phông chữ':'Font',
   'Ngôn ngữ':'Language', 'Tiếng Việt':'Vietnamese', 'Sẽ báo bạn ngay khi có hàng':'We\u2019ll notify you when it\u2019s back',
   'Đã đăng ký · sẽ báo bạn khi có hàng':'Registered · we\u2019ll notify you when it\u2019s back',
+
+  // ── Cookie ──
+  'Chúng tôi sử dụng cookie để đảm bảo bạn có trải nghiệm mua sắm tốt nhất khi truy cập trang web của chúng tôi. Bằng cách nhấp vào “Tôi Đồng Ý” hoặc tiếp tục sử dụng trang web, bạn đồng ý với tất cả cookie của chúng tôi. Bạn có thể thay đổi tuỳ chọn bất kỳ lúc nào thông qua':'We use cookies to ensure you get the best shopping experience on our website. By clicking “I Agree” or continuing to use our website, you consent to all our cookies. You can change your preferences at any time via our',
+  'Chính sách Cookie':'Cookie Policy', 'Chính sách Bảo mật':'Privacy Policy',
+  ', hoặc xem thêm tại':', or read more in our',
+  'Tôi Đồng Ý':'I Agree', 'Thay Đổi Tuỳ Chọn':'Change Preferences',
+  'Tuỳ chọn cookie':'Cookie preferences', 'Chấp nhận tất cả':'Accept all', 'Lưu lựa chọn':'Save choices',
+  'Cookie cần thiết':'Essential cookies',
+  'Giữ cho trang hoạt động: giỏ hàng, đăng nhập, bảo mật. Không thể tắt.':'Keeps the site working: cart, sign-in, security. Cannot be turned off.',
+  'Cookie phân tích':'Analytics cookies',
+  'Giúp chúng tôi hiểu cách bạn dùng trang để cải thiện trải nghiệm.':'Helps us understand how you use the site so we can improve it.',
+  'Cookie cá nhân hoá':'Personalisation cookies',
+  'Ghi nhớ tuỳ chọn và gợi ý sản phẩm phù hợp với bạn.':'Remembers your preferences and suggests products that suit you.',
+  'Cookie quảng cáo':'Advertising cookies',
+  'Hiển thị quảng cáo phù hợp trên nền tảng của các đối tác.':'Shows relevant ads on our partners’ platforms.',
+  'Cookie cần thiết không thể tắt':'Essential cookies can’t be turned off',
+  'Đã chấp nhận tất cả cookie':'All cookies accepted',
 };
 
 // Luật cho chuỗi động
@@ -3114,6 +3154,7 @@ const I18N_RE = [
   [/^Dùng (\d+) điểm$/,               'Use $1 points'],
   [/^Giảm giá\((.+)\)$/,              'Discount ($1)'],
   [/^Tiết kiệm ([\d,]+)đ$/,           'Save $1đ'],
+  [/^Đã lưu tuỳ chọn cookie · (\d+)\/(\d+) nhóm$/, 'Cookie preferences saved · $1/$2 groups'],
 ];
 const I18N_REV_RE = [
   [/^(\d+) products$/,                '$1 sản phẩm'],
@@ -3134,6 +3175,7 @@ const I18N_REV_RE = [
   [/^Use (\d+) points$/,              'Dùng $1 điểm'],
   [/^Discount \((.+)\)$/,             'Giảm giá($1)'],
   [/^Save ([\d,]+)đ$/,                'Tiết kiệm $1đ'],
+  [/^Cookie preferences saved · (\d+)\/(\d+) groups$/, 'Đã lưu tuỳ chọn cookie · $1/$2 nhóm'],
 ];
 
 /* ── Bổ sung từ điển cho các chuỗi riêng của bản DESKTOP ── */
@@ -5052,6 +5094,105 @@ document.body.insertAdjacentHTML('beforeend', `
     }
   });
   window.__openSizeSheet = openSZ;
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   COOKIE — thanh đáy trải hết bề ngang + modal tuỳ chọn
+   Khác bản mobile (index.html) ở hai điểm do khuôn desktop:
+   · banner là THANH ngang (chữ trái · nút phải), không nền tối, không khoá
+     cuộn — trang vẫn dùng được, đúng kiểu cookie bar của site thời trang;
+   · phần chọn từng nhóm tách ra thành .dk-modal giữa màn hình, vì nhồi 4
+     nhóm + công tắc vào một thanh cao 88px thì không đọc được.
+   Nhóm "Cần thiết" luôn bật và khoá; 3 nhóm còn lại mặc định TẮT. Demo không
+   lưu lựa chọn (project không dùng localStorage) nên tải lại là hiện lại.
+════════════════════════════════════════════════════════════════ */
+const COOKIE_CATS = [
+  ['need',  'Cookie cần thiết',    'Giữ cho trang hoạt động: giỏ hàng, đăng nhập, bảo mật. Không thể tắt.', true],
+  ['stats', 'Cookie phân tích',    'Giúp chúng tôi hiểu cách bạn dùng trang để cải thiện trải nghiệm.',     false],
+  ['pref',  'Cookie cá nhân hoá',  'Ghi nhớ tuỳ chọn và gợi ý sản phẩm phù hợp với bạn.',                   false],
+  ['ads',   'Cookie quảng cáo',    'Hiển thị quảng cáo phù hợp trên nền tảng của các đối tác.',             false],
+];
+document.body.insertAdjacentHTML('beforeend', `
+  <div id="cookieBar" aria-hidden="true" role="region" aria-label="Cookie">
+    <div class="max-w-[1440px] mx-auto px-6 py-5 flex items-center gap-10">
+      <p class="flex-1 min-w-0 text-[13px] font-light leading-5 text-foreground">Chúng tôi sử dụng cookie để đảm bảo bạn có trải nghiệm mua sắm tốt nhất khi truy cập trang web của chúng tôi. Bằng cách nhấp vào “Tôi Đồng Ý” hoặc tiếp tục sử dụng trang web, bạn đồng ý với tất cả cookie của chúng tôi. Bạn có thể thay đổi tuỳ chọn bất kỳ lúc nào thông qua <button data-cg-prefs class="underline text-foreground press">Chính sách Cookie</button>, hoặc xem thêm tại <button data-cg-policy class="underline text-foreground press">Chính sách Bảo mật</button>.</p>
+      <div class="shrink-0 flex gap-3">
+        <button data-cg-prefs class="h-11 px-6 rounded-xs border border-border text-foreground text-[12px] font-medium tracking-wider uppercase press hover:bg-accent-0 transition-colors">Thay Đổi Tuỳ Chọn</button>
+        <button data-cg-all class="h-11 px-8 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium tracking-wider uppercase press">Tôi Đồng Ý</button>
+      </div>
+    </div>
+  </div>
+  <div id="cookiePrefs" class="fixed inset-0 z-[220] pointer-events-none" aria-hidden="true">
+    <div class="cp-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
+    <div class="cp-panel dk-modal absolute bg-background translate-y-full flex flex-col"
+         style="width:520px" role="dialog" aria-label="Tuỳ chọn cookie">
+      <div class="h-[52px] px-5 flex items-center justify-between shrink-0" style="border-bottom:1px solid var(--general-border)">
+        <p class="text-[16px] font-medium leading-6 text-foreground">Tuỳ chọn cookie</p>
+        <button data-cp-close class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
+      </div>
+      <div class="flex-1 min-h-0 overflow-y-auto px-5 flex flex-col">
+        ${COOKIE_CATS.map(([id, name, desc, locked]) => `
+          <div class="flex items-start gap-4 py-4" style="border-bottom:1px solid var(--unofficial-border-0)">
+            <div class="flex-1 min-w-0 flex flex-col gap-1">
+              <p class="text-[13px] font-medium leading-5 text-foreground">${name}</p>
+              <p class="text-[12px] font-light leading-4 text-secondary-foreground">${desc}</p>
+            </div>
+            <button class="cg-sw press" data-cg-cat="${id}" role="switch"
+                    aria-checked="${locked}" ${locked ? 'aria-disabled="true"' : ''}
+                    aria-label="${name}"><i></i></button>
+          </div>`).join('')}
+      </div>
+      <div class="shrink-0 px-5 py-4 flex justify-end gap-3">
+        <button data-cg-all class="h-11 px-6 rounded-xs border border-border text-foreground text-[12px] font-medium tracking-wider uppercase press hover:bg-accent-0 transition-colors">Chấp nhận tất cả</button>
+        <button data-cg-save class="h-11 px-8 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium tracking-wider uppercase press">Lưu lựa chọn</button>
+      </div>
+    </div>
+  </div>`);
+(() => {
+  const bar = document.getElementById('cookieBar');
+  const md  = document.getElementById('cookiePrefs');
+  const panel = md.querySelector('.cp-panel');
+  const sws = [...md.querySelectorAll('[data-cg-cat]')];
+
+  const openBar  = () => { bar.classList.add('open'); bar.setAttribute('aria-hidden', 'false'); };
+  const closeBar = () => { bar.classList.remove('open'); bar.setAttribute('aria-hidden', 'true'); };
+  const openMD = () => {
+    md.classList.remove('pointer-events-none'); md.setAttribute('aria-hidden', 'false');
+    md.querySelector('.cp-backdrop').classList.remove('opacity-0');
+    panel.classList.remove('translate-y-full');
+    lockBodyScroll();
+  };
+  const closeMD = () => {
+    md.querySelector('.cp-backdrop').classList.add('opacity-0');
+    panel.classList.add('translate-y-full');
+    md.classList.add('pointer-events-none');
+    unlockBodyScroll();
+    setTimeout(() => md.setAttribute('aria-hidden', 'true'), 300);
+  };
+
+  const setAll = on => sws.forEach(s => { if (s.getAttribute('aria-disabled') !== 'true') s.setAttribute('aria-checked', String(on)); });
+  const chosen = () => sws.filter(s => s.getAttribute('aria-checked') === 'true').length;
+
+  sws.forEach(s => s.addEventListener('click', () => {
+    if (s.getAttribute('aria-disabled') === 'true') { toast('Cookie cần thiết không thể tắt'); return; }
+    s.setAttribute('aria-checked', s.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+  }));
+  /* 2 lối mở modal: nút "Thay Đổi Tuỳ Chọn" và link "Chính sách Cookie" */
+  bar.querySelectorAll('[data-cg-prefs]').forEach(b => b.addEventListener('click', openMD));
+  md.querySelector('[data-cp-close]').addEventListener('click', closeMD);
+  md.querySelector('.cp-backdrop').addEventListener('click', closeMD);
+  document.querySelectorAll('#cookieBar [data-cg-all], #cookiePrefs [data-cg-all]').forEach(b =>
+    b.addEventListener('click', () => { setAll(true); closeMD(); closeBar(); toast('Đã chấp nhận tất cả cookie'); }));
+  md.querySelector('[data-cg-save]').addEventListener('click', () => {
+    const n = chosen(); closeMD(); closeBar();
+    toast(n === sws.length ? 'Đã chấp nhận tất cả cookie' : `Đã lưu tuỳ chọn cookie · ${n}/${sws.length} nhóm`);
+  });
+  /* Desktop chưa dựng trang chính sách (FLOW không có 'privacy') nên link chỉ
+     toast như các link footer — thanh vẫn ở lại để người dùng còn phải chọn. */
+  bar.querySelector('[data-cg-policy]').addEventListener('click', () => toast('Chính sách Bảo mật'));
+
+  localizeNew(bar); localizeNew(md);
+  setTimeout(openBar, 700);
 })();
 
 wireFilter();
