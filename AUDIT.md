@@ -1,5 +1,7 @@
 # AUDIT — index.html (mobile) · 07/08/2026
 
+> **Cập nhật 07/08 (đợt "sync đoạn thoại" + data thật):** các finding sau ĐÃ XỬ LÝ ở bản mobile — quảng cáo mã JUL nhưng chỉ nhận JUNE (map giờ nhận cả 2); TUMI còn sót ở 4 PDP + cart (đã gỡ, title đổi "(5)"→"(3)"); 7 vs 14 ngày đổi trả (chốt 7); typo "Thay doi/Giao hang nhanh/Chuyển khoảng/Lavancaza"; nhãn tóm tắt ship "Chuyển phát nhanh" sai với option đã chọn; badge "Đang giao" vs timeline steps:2 (→3); GHN vs TIKINOW (→TKN); ngày promo/đơn hàng quá hạn (→08/2026); 'Sản phẩm (2)' thiếu bản (1); các cặp I18N_REV trùng value (Phương thức vận chuyển, Phí vận chuyển, Chọn size, Đăng ký nhận thông báo, Xuất xứ, Mức giảm, Ưu đãi, Bảo quản sản phẩm); 12/18 SP sai PDP **chưa** sửa routing nhưng data/ảnh đã thật; quick add beauty rơi về size giày (hết — beauty giờ có dung tích thật). Các finding hành vi (validation, cart động, wire() double-bind, scroll/back...) vẫn nguyên — xem kế hoạch Đợt 1–4.
+
 Ket qua ra soat toan bo luong cua demo mobile, moi phat hien deu duoc mot agent phan bien doc lai code de xac nhan (tag `confirmed` / `adjusted`; cum journey doi chieu bang grep, tag `no-verify`). So dong tinh tai thoi diem audit — co the xe dich sau khi sua.
 
 Ky hieu: **[high/medium/low]** muc do de "be" khi demo · [kind] loai gap · [KNOWN] = README da ghi nhan tu truoc.

@@ -1,6 +1,6 @@
 # Demo — E-commerce Flow (Mobile + Desktop) · DAFC / Versace · HTML + Tailwind
 
-Demo e-commerce flow cho **DAFC** (nhà phân phối đa thương hiệu luxury tại Việt Nam), dựng bằng HTML + Tailwind CSS thuần, không dùng framework. Nội dung sản phẩm là dữ liệu thật scrape từ `shop.dafc.com.vn/brands/versace.html` (10 sản phẩm Versace). Giá giảm/badge -% là dữ liệu tự tạo để demo.
+Demo e-commerce flow cho **DAFC** (nhà phân phối đa thương hiệu luxury tại Việt Nam), dựng bằng HTML + Tailwind CSS thuần, không dùng framework. Nội dung sản phẩm là **dữ liệu thật** scrape từ `shop.dafc.com.vn` (re-scrape 07/08/2026): 16 SP thời trang Versace + 8 nước hoa (Versace/D&G/Montblanc/Moschino), kèm **ảnh thật tải từ `cdn.dafc.com.vn`** (1200×1484, đặt tên `pN-*.jpg` / `x*.jpg` / `b*.jpg` trong `assets/` — chỉ bản mobile dùng; desktop vẫn dùng bộ `p*.png` cũ). Giá giảm/badge -% là dữ liệu tự tạo để demo.
 
 Hai phiên bản độc lập, dùng chung assets/tokens/tailwind.css:
 - `index.html` — bản **mobile** (viewport 360–412px)
@@ -81,22 +81,21 @@ Quick add (390×635, radius 0)
 
 ### Nội dung quick add phải khớp PDP
 
-Hằng **`PRODUCT_GALLERY`** (6 mảng, 1 mảng / sản phẩm) là **nguồn duy nhất** cho ảnh gallery — cả 6 `screenPDP*` và `quickAddBody()` đều đọc từ đó:
+Hằng **`PRODUCT_GALLERY`** (10 mảng — SP#1–#10) là **nguồn duy nhất** cho ảnh gallery — cả 6 `screenPDP*` và `quickAddBody()` đều đọc từ đó. Từ 07/08/2026 toàn bộ là **ảnh thật** kéo từ trang chi tiết của từng sản phẩm trên shop.dafc.com.vn:
 
-| SP | Ảnh |
-|---|---|
-| #1 | `p1.png` · `p1-nero.png` · `p1-oro.png` |
-| #2 | `p2.png` · `p2-blu.png` |
-| #3 | `p3.png` · `p3-bianco.png` · `p3-rosso.png` |
-| #4 | `p4.png` · `p4-nudo.png` |
-| #5 | `p5.png` · `p5-marrone.png` |
-| #6 | `p6.png` · `pdp-sw2.png` · `pdp-sw3.png` · `pdp-sw4.png` |
+| SP | Ảnh (assets/) | Ghi chú |
+|---|---|---|
+| #1 đầm lụa | `p1-0..4.jpg` | 1 màu thật (Broken Jewels xanh lá); ảnh 1–4 là model mặc |
+| #2 khăn lụa | `p2-0..1.jpg` | 1 màu thật |
+| #3 túi Emblème | `p3-0.jpg` + `p3-v1.jpg` + `p3-1..6.jpg` | 2 màu THẬT: Verde Menta (SKU 1226346) + Rosa (SKU 1226345) |
+| #4 Gianni 90 | `p4-0.jpg` + `p4-v1.jpg` + `p4-1..6.jpg` | 2 màu THẬT: Nero + Oro (SKU 1226328) |
+| #5 loafer Manu | `p5-0..6.jpg` | 1 màu thật |
+| #6 Greca Court | `p6-0.jpg` + `p6-v2.jpg` + `p6-v1.jpg` + `p6-1..6.jpg` | màu 2/3 mượn 2 SKU anh em (1215580 trắng / 1215579 đen-gold, giá gốc khác) |
+| #7–#10 | `p7-0..4` · `p8-0..7` · `p9-0..7` · `p10-0..2` (.jpg) | không có PDP riêng nhưng quick add đọc đủ bộ ảnh |
 
-> Trước đây quick add hardcode `['<ảnh chính>','pdp-sw2.png','pdp-sw3.png']` cho **mọi** sản phẩm nên mở quick add của SP#3 lại thấy ảnh của SP#6. Nay khớp 1:1 với PDP.
+> **Quy ước:** slide gallery của PDP render **toàn bộ** mảng (`const gallery = PRODUCT_GALLERY[n]`), còn ô chọn màu chỉ lấy `slice(0, colors.length)` — các ảnh MÀU luôn đứng đầu mảng, ảnh góc chụp xếp sau. `colors` trong `PRODUCTS` đã rút về đúng số phiên bản màu THẬT đang bán (nhiều SP chỉ còn 1 swatch — đó là thực tế, đừng "bịa" thêm màu).
 >
-> Với SP#1–SP#5, phần tử thứ `i` của mảng tương ứng `PRODUCTS[i].colors[i]` nên dùng luôn làm ô chọn màu dạng ảnh. SP#6 có 4 ảnh / 3 màu (gallery dài hơn số màu) — ô màu chỉ lấy 3 phần tử đầu.
->
-> Size/màu vốn đã dùng chung `SIZES` / `DISABLED` / `p.colors` nên không lệch.
+> Size/màu vốn đã dùng chung `SIZES` / `DISABLED` / `p.colors` nên không lệch. Hàng beauty không khai gallery — quick add rơi về ảnh chính `b*.jpg`.
 
 Giữ nguyên: gap ảnh 2 · swatch r2 · gap grid 8 · chữ chip 14 · nút chính 48 · gap CTA 10 · pad `Frame 15` 8/16.
 
@@ -117,9 +116,7 @@ Tỉ lệ chuẩn của ảnh sản phẩm: **ngang 160 ⇒ cao 213** (`160/213`
 | Ô ảnh trong size picker | `3/4` = 0.7500 |
 | Thumb hàng giỏ hàng | `100×133` = 0.7519 |
 
-> **Lưu ý asset**: file ảnh sản phẩm trong `assets/` thực tế là **1200×1484 (0.8086)**, không phải 0.751 — nên `object-cover` đang cắt ~7% hai bên ở MỌI khung. Muốn không cắt thì phải xuất lại ảnh theo đúng 160:213 (hoặc đổi hết khung sang `1200/1484`, nhưng khi đó card PLP cao thêm ~11% và gallery PDP 520 → 482px).
->
-> Ngoài ra `pdp-sw2.png` (256×256) và `pdp-sw3/4.png` (173×210) đang được dùng làm slide gallery cùng với `p*.png` — 3 tỉ lệ khác nhau nên 2 ảnh đó bị cắt nhiều nhất. Hạn chế asset (ảnh CDN thật bị chặn), không phải lỗi khung.
+> **Lưu ý asset**: ảnh CDN DAFC chuẩn **1200×1484 (0.8086)**, không phải 0.751 — nên `object-cover` đang cắt ~7% hai bên ở MỌI khung. Muốn không cắt thì phải xuất lại ảnh theo đúng 160:213 (hoặc đổi hết khung sang `1200/1484`, nhưng khi đó card PLP cao thêm ~11% và gallery PDP 520 → 482px). Từ 07/08/2026 toàn bộ ảnh bản mobile là `.jpg` thật cùng 1 tỉ lệ này (không còn ảnh lẫn tỉ lệ như bộ `pdp-sw*.png` cũ).
 
 ### Quy ước bottom sheet
 
@@ -315,6 +312,8 @@ Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫ
 
 ### Chờ port sang desktop
 
+- **Đồng bộ copy toàn app** (chỉ mới làm ở mobile, 07/08/2026 — đợt "sync đoạn thoại"). Desktop vẫn còn nguyên các lệch đã sửa bên mobile: đổi trả chỗ 7 chỗ 14 ngày (mobile đã chốt **7 ngày** theo trang chính sách + site thật); mã voucher chỉ nhận JUNE trong khi copy quảng cáo JUL (mobile: map nhận **cả JUL500/1000/1500 lẫn JUNE**, copy chỉ đường về ô "Mã giảm giá" ở giỏ hàng); TUMI còn trong promo; ngày khuyến mãi quá hạn (mobile: WARDROBE [01/08-31/08], BUY MORE [28/07-24/08]); ORDERS ngày 2025 + steps lệch badge + mã vận đơn GHN (mobile: 2026, steps 3, **TKN**284917 khớp TIKINOW); typo checkout "Thay doi/Giao hang nhanh/Chuyển khoảng"; nhãn tóm tắt vận chuyển "Chuyển phát nhanh" (mobile: khớp đúng option "Giao hàng thông thường"/"Giao hàng nhanh", ORDERS cũng đổi "tiêu chuẩn"→"thông thường"); tổng tiền 21,250,000đ không khớp 4 item (mobile: **113,500,000đ** = tổng thật, `CART_SUBTOTAL` đổi theo, checkout/done cùng số); "98 điểm" (mobile: **1.135 điểm**, `REWARD_POINTS` 1000→**1240** khớp ví điểm, lịch sử điểm ngày khớp ORDERS); menu "Áo quần/Túi sách/Giày sneaker/Váy" (mobile: "Quần áo/Túi xách/Giày thể thao/Chân váy" thống nhất với filter); casing "Chính sách Bảo mật"→"bảo mật"; dọn ~12 key i18n chết/trùng value gây hỏng vòng VI→EN→VI ('Mức giảm'→'Discount amount', 'Bảo quản sản phẩm'→'Care instructions', 'Ưu đãi'→'Offer', 'Phí vận chuyển'→'Shipping fee', 'Phương thức vận chuyển'→'Shipping method', 'Xuất xứ'→'Origin', 'Chọn size'→'Choose size', 'Đăng ký nhận thông báo'→'Get notified'...).
+- **Data + ảnh thật từ shop.dafc.com.vn** (chỉ mới làm ở mobile, 07/08/2026). Desktop vẫn dùng: bộ ảnh placeholder `p*.png` cũ (nhiều file trùng nhau), 8 SP beauty tự bịa, tên thắt lưng cũ "Thắt lưng da mặt khóa Medusa", GIFTS Balenciaga cũ, và chưa có 6 SP bổ sung `x*.jpg`. Khi port: copy khối `PRODUCTS` / `PRODUCT_GALLERY` / `CART` / `GIFTS` / items trong `ORDERS` + ~20 entry tên SP mới trong `I18N` từ index.html; lưu ý desktop gộp PDP vào `PDP_DATA` nên phần gallery/swatch cần map lại theo quy ước "slide = full gallery, swatch = slice theo colors".
 - **Input 14px + chặn zoom iOS** (chỉ mới làm ở mobile). Gồm 3 phần:
   1. Thẻ `<meta name="viewport">` thêm `maximum-scale=1`.
   2. Rule CSS `input, textarea, select { font-size: 14px; }` trong `<style>` (đặt sau `tailwind.css`). **Phải giữ selector thuần element** — thêm `:not(...)` sẽ nâng specificity lên 0,2,1 và đè luôn các utility `text-[…]` cố ý (ô OTP 18px bị co còn 14px).
@@ -332,7 +331,7 @@ Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫ
   - `promoCardsSplit()` — **pdp**: 4 chương trình, mỗi cái 1 card riêng **extend tại chỗ**. Tiêu đề "KHUYẾN MÃI" đặt **ngoài** các khung nền xám, dùng chung cho cả nhóm. Cuối dòng là **icon + / −** (không có link "Xem chi tiết", không mở bottom sheet). Dùng lại nguyên cơ chế `.acc`/`.acc-trigger`/`.acc-body` của app — CSS `.acc.open .acc-ico-plus/-minus` tự đảo icon nên không cần JS riêng, và vì các card là `.acc` anh em cùng cha nên handler sẵn có tự đóng card khác khi mở một card.
   - Nội dung khi extend: ưu tiên `body` (mảng dòng, dùng cho `voucher` — "Nhập mã" + 3 dòng mã JUL), không có `body` thì đổ `rows` thành cặp nhãn/giá trị.
   - Tiêu đề card dùng dạng IN HOA ở cả 2 layout vì `'Khuyến mãi'` (sentence case) đã là key i18n của mục menu Sale → `'Sale'`; khai lại là đổi luôn bản dịch của menu.
-  - Bỏ chương trình TUMI vì sai thương hiệu trên trang Versace. **PDP4 vẫn còn khối `bg-accent-0` + bullet cũ** kèm TUMI (~dòng 1620) nếu muốn áp cùng kiểu.
+  - Bỏ chương trình TUMI vì sai thương hiệu trên trang Versace — **07/08 đã gỡ sạch TUMI khỏi TOÀN BỘ bản mobile** (pdp3/4/5/6 + cart, kèm dọn key i18n); chỉ giữ tên TUMI trong các câu "Không áp dụng cho..." (điều khoản loại trừ) và danh sách brand menu/filter (DAFC có phân phối TUMI thật).
   - Kèm sửa `#infoSheet`: `#isBody` từ `<p>` → `<div>` và `__openInfoSheet(title, body, asHTML)` thêm tham số thứ 3. Cần vì nội dung sheet có block bên trong — `<p>` chứa `<div>` là HTML không hợp lệ, trình duyệt tự đóng thẻ và làm vỡ layout. Gọi 2 tham số như cũ vẫn dùng `textContent`, không đổi hành vi. `openS` cũng gọi thêm `localizeNew` vì sheet render sau `applyLang` của màn.
 - **Bộ lọc: sửa rail tầng 3 + checkbox bo góc** (chỉ mới làm ở mobile) — thêm `frail()` / `fsubRow()`, cấp sâu nhất từ 1 cột `w-9` → 2 cột `w-5`, `fchk()` thêm `rounded-xs`. `desktop.html` còn đúng 1 chỗ `w-9` cần sửa y hệt (dòng ~2561) và checkbox filter cũng chưa bo góc.
 - **3 trang chính sách + link footer** (chỉ mới làm ở mobile) — `POLICY_TABS` / `POLICY_UPDATED` / `POLICY_DATA` / `screenPOLICY()` / `FOOTER_ROUTES`, 3 route mới trong `RENDER` + `FLOW` + `LABELS`, handler `[data-policy-toc]` + `#policyMore` trong `wire()`, rule CSS `#policyMore svg` trong `<style>`. Desktop chưa có route nào trong số này nên link footer bên đó vẫn chưa bấm được.
@@ -340,7 +339,7 @@ Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫ
 
 ## Vấn đề tồn đọng / cần quyết định tiếp
 
-- **Ảnh sản phẩm thật từ CDN DAFC** (`cdn.dafc.com.vn`) bị chặn mạng trong môi trường build gốc — đang dùng ảnh placeholder.
+- ~~Ảnh sản phẩm thật từ CDN DAFC bị chặn~~ → **ĐÃ XONG cho mobile (07/08/2026)**: CDN `cdn.dafc.com.vn` truy cập được, đã tải ~80 ảnh thật về `assets/` (`pN-*.jpg`, `x*.jpg`, `b*.jpg`, `g2.jpg`) và thay toàn bộ placeholder trong `index.html`. Desktop.html vẫn dùng placeholder cũ (xem "Chờ port sang desktop").
 - **`--unofficial-accent`**: mode D = cam `#ff6600`, mode GM = đen `#0a0a0a` — chưa dùng ở đâu, chưa quyết định giữ/đổi.
 - **Luồng hết hàng 2 tầng** (size tạm hết / nhận thông báo khi có hàng): PDP dùng chip (pdp, pdp4) xử lý ngay trên chip; PDP dùng dropdown (pdp2/pdp3/pdp5/pdp6) xử lý trong picker "Chọn size" — hàng hết gạch ngang + nhãn "Nhận thông báo", CTA đổi thành "Nhận thông báo khi có hàng". Áp dụng cho **cả 2 bản**.
 - **PDP v1 (pdp) — layout Pre-order**: ngày giao hàng "15/08/2026" đang hardcode; "Chỉ còn 01 sản phẩm" vẫn hiện dù đã là pre-order (có thể mâu thuẫn logic).
