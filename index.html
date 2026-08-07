@@ -46,8 +46,12 @@
   .reveal.in { opacity: 1; transform: translateY(0); }
 
   /* ── Press feedback ── */
-  .press { transition: transform .12s ease, opacity .12s ease; }
-  .press:active { transform: scale(.97); opacity: .9; }
+  /* Phản hồi khi chạm: CHỈ mờ đi, KHÔNG scale. Bản cũ có scale(.97) — nó co cả
+     khối nên chữ bên trong bị xê dịch, thấy rõ nhất ở nút full-width và hàng
+     danh mục dài trong menu. Thêm nữa .press được gắn khắp nơi kể cả các hàng
+     list, nên chữ nhảy vặt mỗi lần chạm. */
+  .press { transition: opacity .12s ease; }
+  .press:active { opacity: .9; }
 
   /* ── Skeleton shimmer ── */
   @keyframes shimmer { 100% { transform: translateX(100%); } }
@@ -132,7 +136,7 @@
   #infoSheet .is-panel {
     position: absolute; left: 0; right: 0; bottom: 0;
     max-height: 90vh; background: var(--general-background);
-    border-radius: 24px 24px 0 0;             /* bo 2 góc trên = 24px (versace) */
+    border-radius: 0;                         /* mọi bottom sheet đều vuông góc — xem ghi chú ở #infoSheet.full */
     transform: translateY(100%);
     transition: transform .4s ease-in-out;     /* versace: transform .4s ease-in-out */
     display: flex; flex-direction: column;
@@ -141,6 +145,18 @@
   #infoSheet.open { pointer-events: auto; }
   #infoSheet.open .is-backdrop { opacity: 1; }
   #infoSheet.open .is-panel { transform: translateY(0); }
+  /* GÓC BO CỦA BOTTOM SHEET: toàn bộ sheet trượt-từ-đáy trong file đều VUÔNG
+     góc (radius 0) cho đồng bộ — trước đây mỗi cái một kiểu: infoSheet 24px,
+     size/pick/cart-confirm 10px, quick add 0. Lấy quick add làm chuẩn vì đó
+     là cái duy nhất dựng đúng Figma (3373:41590 vẽ panel không bo góc).
+     Sửa radius thì sửa cả 5 chỗ, đừng để lệch lại.
+
+     Biến thể FULL TRANG (bảng size): vẫn trượt lên từ đáy như bottom sheet
+     nhưng chiếm trọn màn hình — 5 bảng cuộn dọc khá dài, gò trong 90vh chỉ
+     tổ phải cuộn trong một khung hẹp. Bỏ luôn đổ bóng và thanh grabber cho
+     đúng chất một trang. Chỉ bật khi gọi __openInfoSheet với full=true. */
+  #infoSheet.full .is-panel { top: 0; max-height: none; box-shadow: none; }
+  #infoSheet.full .is-grab { display: none; }
 
   /* ── Cookie consent gate ──
      Cùng khuôn bottom-sheet với #infoSheet (bo 24 góc trên, trượt .4s) nhưng
@@ -171,6 +187,21 @@
     border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25);
     transition: transform .2s ease; }
   .cg-sw[aria-checked="true"] i { transform: translateX(16px); }
+
+  /* ── Bảng size (mở từ PDP / sheet chọn size) ──
+     Bảng rộng 8 cột không thể nhét vừa 375px nên mỗi bảng tự cuộn ngang trong
+     khung riêng; margin âm 16 để mép bảng chạm sát mép sheet, người dùng thấy
+     ngay là còn nội dung bên phải. Cột nhãn dùng <th> nên tự có nền phân biệt. */
+  .szc-wrap { overflow-x: auto; margin: 0 -16px; padding: 0 16px; -webkit-overflow-scrolling: touch; }
+  .szc-wrap::-webkit-scrollbar { display: none; }
+  .szc { border-collapse: collapse; width: max-content; min-width: 100%; }
+  .szc th, .szc td {
+    border: 1px solid var(--general-border);
+    padding: 7px 10px; text-align: center; white-space: nowrap;
+    font-size: 12px; line-height: 16px; color: var(--general-foreground);
+  }
+  .szc th { background: var(--general-secondary); font-weight: 500; }
+  .szc tbody th { text-align: left; }
 
   /* ── Zoom lightbox (chạm ảnh gallery) ── */
   #zoomBox { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.92);
@@ -1244,7 +1275,7 @@ function screenPDP() {
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <p class="text-[12px] font-medium leading-4 text-foreground">Kích thước</p>
-          <button data-toast="Mở bảng kích thước" class="text-[12px] leading-4 text-foreground">Bảng kích thước</button>
+          <button data-size-chart class="text-[12px] leading-4 text-foreground">Bảng kích thước</button>
         </div>
         <!-- 5 ô / dòng (trước là 4). SIZES có 6 giá trị nên dòng 2 còn lẻ 1 ô. -->
         <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)">
@@ -1512,7 +1543,7 @@ function screenPDP2() {
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <p class="text-[12px] leading-4 text-[#171717]">Kích thước</p>
-          <button data-toast="Mở bảng kích thước" class="text-[12px] leading-4 text-[#171717] underline">Bảng kích thước</button>
+          <button data-size-chart class="text-[12px] leading-4 text-[#171717] underline">Bảng kích thước</button>
         </div>
         <div class="relative">
           <button type="button" data-size-trigger="pdp2" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] outline-none focus:border-primary transition-colors flex items-center text-left press">
@@ -1644,7 +1675,7 @@ function screenPDP3() {
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <p class="text-[12px] leading-4 text-[#171717]">Kích thước</p>
-          <button data-toast="Mở bảng kích thước" class="text-[12px] leading-4 text-[#171717] underline">Bảng kích thước</button>
+          <button data-size-chart class="text-[12px] leading-4 text-[#171717] underline">Bảng kích thước</button>
         </div>
         <div class="relative">
           <button type="button" data-size-trigger="pdp3" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] outline-none focus:border-primary transition-colors flex items-center text-left press">
@@ -1762,7 +1793,7 @@ function screenPDP4() {
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <p class="text-[12px] font-medium leading-4 text-foreground">Kích thước</p>
-          <button data-toast="Mở bảng kích thước" class="text-[12px] leading-4 text-foreground">Bảng kích thước</button>
+          <button data-size-chart class="text-[12px] leading-4 text-foreground">Bảng kích thước</button>
         </div>
         <div class="grid gap-2" style="grid-template-columns:repeat(4,1fr)">
           ${SIZES.map(s => {
@@ -2238,7 +2269,7 @@ function screenPDP5() {
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between h-4">
           <span class="text-[12px] leading-4 text-[#171717]">Kích thước</span>
-          <button data-toast="Mở bảng kích thước" class="text-[12px] leading-4 text-[#171717] underline press">Bảng kích thước</button>
+          <button data-size-chart class="text-[12px] leading-4 text-[#171717] underline press">Bảng kích thước</button>
         </div>
         <div class="relative">
           <button type="button" data-size-trigger="pdp5" class="w-full h-11 bg-input border border-border rounded-sm pl-2 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left press">
@@ -2366,7 +2397,7 @@ function screenPDP6() {
         <!-- Frame 427319858: gap 8 · h16 -->
         <div class="flex items-center justify-between h-4">
           <span class="text-[12px] leading-4 tracking-[0.004em] text-[#171717]">Kích thước</span>
-          <button data-toast="Mở bảng kích thước" class="text-[12px] leading-4 tracking-[0.004em] text-[#171717] underline press">Bảng kích thước</button>
+          <button data-size-chart class="text-[12px] leading-4 tracking-[0.004em] text-[#171717] underline press">Bảng kích thước</button>
         </div>
         <!-- Select & Combobox: 358x44 · pad 9.5,8 · stroke #e5e5e5 · r4 -->
         <div class="relative">
@@ -3471,6 +3502,93 @@ function renderFilterBody() {
   localizeNew(sh);
 }
 
+/* ════════════════════════════════════════════════════════════════
+   BẢNG SIZE — số liệu lấy nguyên từ bảng size chính thức của Versace.
+   Hai dạng bảng:
+   · 'matrix' — cột đầu là nhãn hệ size (IT, AU, Ngực (CM)…), các cột sau là
+     giá trị; đọc theo HÀNG. Không có hàng tiêu đề.
+   · 'table'  — có hàng tiêu đề, đọc theo CỘT (dùng cho Áo sơ mi).
+   `span` = số cột mà ô tiêu đề đầu tiên chiếm (Áo sơ mi: "IT" gộp 2 cột).
+════════════════════════════════════════════════════════════════ */
+const SIZE_CHART_NOTE = 'Số đo sản phẩm có thể chênh lệch từ 1-3cm tùy theo từng chất liệu và thiết kế. Vui lòng liên hệ Nhân viên tư vấn để được hỗ trợ tốt nhất.';
+const SIZE_CHART = [
+  ['QUẦN ÁO - NAM', [
+    { name: 'Áo', type: 'matrix', rows: [
+      ['IT', '44/XS', '46/S', '48/M', '50/L', '52/XL', '54/2XL', '56/3XL'],
+      ['AU', 'XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'],
+      ['UK/US', '34', '36', '38', '40', '42', '44', '46'],
+      ['FR', '40', '42', '44', '46', '48', '50', '52'],
+      ['EU', '44', '46', '48', '50', '52', '54', '56'],
+      ['Ngực (CM)', '88', '92', '96', '100', '104', '108', '112'],
+      ['Chiều dài tay áo (CM)', '85', '86.5', '88', '89.5', '91', '92.5', '94'],
+      ['Vai (CM)', '43', '44', '45', '46', '47', '48', '49'],
+    ]},
+    { name: 'Áo sơ mi', type: 'table', span: 2, head: ['IT', 'EU (Cổ áo)', 'UK/US/AU'], rows: [
+      ['44', 'XS', '37', '14.5'],
+      ['46', 'S', '38', '15'],
+      ['48', 'M', '39', '15.5'],
+      ['50', 'L', '40', '16'],
+      ['52', 'XL', '41', '16.5'],
+      ['54', '2XL', '42', '17'],
+      ['56', '3XL', '43', '17.5'],
+      ['58', '4XL', '44', '18'],
+      ['60', '5XL', '45', '18.5'],
+      ['62', '6XL', '46', '19'],
+    ]},
+    { name: 'Quần', type: 'matrix', rows: [
+      ['IT', '44', '46', '48', '50', '52', '54', '56'],
+      ['UK/US', '28', '30', '32', '34', '36', '38', '40'],
+    ]},
+    { name: 'Jeans', type: 'matrix', rows: [
+      ['IT', '28-29', '30-31', '32-33', '34-35', '36', '38', '40'],
+      ['UK/US', '28', '30', '32', '34', '36', '38', '40'],
+    ]},
+  ]],
+  ['ĐỒ LÓT', [
+    { name: 'Bảng quy đổi', type: 'matrix', head: true, rows: [
+      ['Bảng quy đổi', '3', '4', '5', '6', '7', '8'],
+      ['IT', 'S/46', 'M/48', 'L/50', 'XL/52', 'XXL/54', '3XL/56'],
+      ['EU', 'S', 'M', 'L', 'XL', 'XXL', '3XL'],
+      ['US', 'XS', 'S', 'M', 'L', 'XL', 'XXL'],
+      ['FR', '2', '3', '4', '5', '6', '7'],
+      ['UK', '32', '34', '36', '38', '40', '42'],
+      ['Eo (CM)', '80', '85', '90', '95', '100', '105'],
+      ['Hông (CM)', '95 - 97', '98 - 101', '102 - 105', '106 - 109', '110 - 113', '114 - 117'],
+    ]},
+  ]],
+];
+
+function sizeChartHTML() {
+  const table = t => {
+    const head = t.type === 'table'
+      ? `<thead><tr><th colspan="${t.span || 1}">${t.head[0]}</th>${t.head.slice(1).map(h => `<th>${h}</th>`).join('')}</tr></thead>`
+      : (t.head ? `<thead><tr>${t.rows[0].map(c => `<th>${c}</th>`).join('')}</tr></thead>` : '');
+    const body = (t.head && t.type === 'matrix' ? t.rows.slice(1) : t.rows).map(row => t.type === 'matrix'
+      ? `<tr><th scope="row">${row[0]}</th>${row.slice(1).map(c => `<td>${c}</td>`).join('')}</tr>`
+      : `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+    return `
+      <div class="flex flex-col gap-2">
+        <p class="text-[13px] font-medium leading-5 text-foreground">${t.name}</p>
+        <div class="szc-wrap"><table class="szc">${head}<tbody>${body}</tbody></table></div>
+      </div>`;
+  };
+  return `
+    <div class="flex flex-col gap-6">
+      <p class="text-[12px] leading-4 text-secondary-foreground"><b class="font-medium text-foreground">Lưu ý:</b> ${SIZE_CHART_NOTE}</p>
+      ${SIZE_CHART.map(([group, tables]) => `
+        <div class="flex flex-col gap-4">
+          <p class="text-[14px] font-medium leading-5 tracking-wide text-foreground">${group}</p>
+          ${tables.map(table).join('')}
+        </div>`).join('')}
+    </div>`;
+}
+
+/* Dùng lại #infoSheet (chrome + animation + khoá cuộn đã có) thay vì dựng sheet
+   mới — nội dung truyền dạng HTML nên phải bật cờ asHTML. */
+function openSizeChart() {
+  if (window.__openInfoSheet) window.__openInfoSheet('Bảng kích thước', sizeChartHTML(), true, true);
+}
+
 /* ── mở / đóng ── */
 function openFilter() {
   const sh = document.getElementById('filterSheet');
@@ -4286,6 +4404,14 @@ const I18N = {
   'Phường xã':'Ward',   // nhãn field ở checkout — trước giờ thiếu key nên bản EN vẫn ra tiếng Việt
   'Chọn tỉnh / thành phố trước':'Select a province / city first',
   'Hiện mật khẩu':'Show password', 'Ẩn mật khẩu':'Hide password',
+
+  // ── Bảng size ──
+  'QUẦN ÁO - NAM':'MENSWEAR', 'ĐỒ LÓT':'UNDERWEAR',
+  'Áo':'Tops', 'Áo sơ mi':'Shirts', 'Quần':'Trousers', 'Bảng quy đổi':'Conversion',
+  'Ngực (CM)':'Chest (CM)', 'Chiều dài tay áo (CM)':'Sleeve length (CM)', 'Vai (CM)':'Shoulder (CM)',
+  'Eo (CM)':'Waist (CM)', 'Hông (CM)':'Hip (CM)', 'EU (Cổ áo)':'EU (Collar)',
+  'Lưu ý:':'Note:',
+  'Số đo sản phẩm có thể chênh lệch từ 1-3cm tùy theo từng chất liệu và thiết kế. Vui lòng liên hệ Nhân viên tư vấn để được hỗ trợ tốt nhất.':'Measurements may vary by 1-3cm depending on the material and design. Please contact our client advisor for the best assistance.',
 };
 
 // Luật cho chuỗi động
@@ -4491,6 +4617,8 @@ function wireAddressPickers(root) {
 /* ── Wire behaviour for a screen ── */
 function wire(root) {
   wirePasswordToggles(root);
+  root.querySelectorAll('[data-size-chart]').forEach(b =>
+    b.addEventListener('click', e => { e.stopPropagation(); openSizeChart(); }));
   wireAddressPickers(root);
   // images fade-in
   root.querySelectorAll('img.lazy').forEach(img => {
@@ -5705,7 +5833,7 @@ document.body.insertAdjacentHTML('beforeend', `
   <div id="infoSheet">
     <div class="is-backdrop"></div>
     <div class="is-panel">
-      <div class="h-6 flex items-center justify-center shrink-0"><span class="w-10 h-1 rounded-full bg-border"></span></div>
+      <div class="is-grab h-6 flex items-center justify-center shrink-0"><span class="w-10 h-1 rounded-full bg-border"></span></div>
       <div class="h-12 px-4 flex items-center justify-between shrink-0 border-b border-border-1">
         <p id="isTitle" class="text-[16px] font-medium leading-6 text-foreground"></p>
         <button id="isClose" class="w-8 h-8 -mr-2 flex items-center justify-center press">${I.close}</button>
@@ -5724,10 +5852,11 @@ document.body.insertAdjacentHTML('beforeend', `
      mãi ở PDP2). Mặc định vẫn textContent nên mọi chỗ gọi 2 tham số như cũ
      không đổi hành vi. localizeNew để nội dung mới chèn vào cũng dịch theo
      ngôn ngữ đang chọn — sheet render sau applyLang của màn nên phải gọi tay. */
-  const openS = (title, body, asHTML = false) => {
+  const openS = (title, body, asHTML = false, full = false) => {
     document.getElementById('isTitle').textContent = title;
     const bodyEl = document.getElementById('isBody');
     if (asHTML) bodyEl.innerHTML = body; else bodyEl.textContent = body;
+    sh.classList.toggle('full', full);
     sh.classList.add('open'); lockBodyScroll();
     localizeNew(sh);
   };
@@ -5741,7 +5870,7 @@ document.body.insertAdjacentHTML('beforeend', `
   <div id="notifySheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
     <div class="ns-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
     <div class="ns-panel absolute inset-x-0 bottom-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col"
-         style="border-radius:24px 24px 0 0; max-height:90vh" role="dialog" aria-label="Nhận thông báo khi có hàng">
+         style="border-radius:0; max-height:90vh" role="dialog" aria-label="Nhận thông báo khi có hàng">
       <div class="h-6 flex items-center justify-center shrink-0"><span class="w-10 h-1 rounded-full bg-border"></span></div>
       <div class="px-4 pb-2 flex items-start justify-between gap-3 shrink-0">
         <div class="flex flex-col gap-1">
@@ -6078,7 +6207,7 @@ document.body.insertAdjacentHTML('beforeend', `
   <div id="cartConfirm" class="fixed inset-0 z-[220] pointer-events-none" aria-hidden="true">
     <div class="cc-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
     <div class="cc-panel absolute inset-x-0 bottom-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col"
-         style="border-radius:10px 10px 0 0; max-height:90vh" role="dialog" aria-label="Đã thêm vào giỏ hàng">
+         style="border-radius:0; max-height:90vh" role="dialog" aria-label="Đã thêm vào giỏ hàng">
       <span class="absolute left-1/2 -translate-x-1/2 top-2 w-[50px] h-[3px] rounded-full bg-border"></span>
       <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
         <p class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">Đã thêm vào giỏ hàng</p>
@@ -6166,7 +6295,7 @@ document.body.insertAdjacentHTML('beforeend', `
   <div id="sizeSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
     <div class="sz-backdrop absolute inset-0 bg-black/60 opacity-0 transition-opacity duration-300"></div>
     <div class="sz-panel absolute inset-x-0 bottom-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col"
-         style="border-radius:10px 10px 0 0; max-height:90vh" role="dialog" aria-label="Chọn size">
+         style="border-radius:0; max-height:90vh" role="dialog" aria-label="Chọn size">
       <span class="absolute left-1/2 -translate-x-1/2 top-2 w-[50px] h-[3px] rounded-full bg-border"></span>
       <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
         <p class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">Chọn size</p>
@@ -6254,7 +6383,7 @@ document.body.insertAdjacentHTML('beforeend', `
   sz.querySelector('.sz-backdrop').addEventListener('click', closeSZ);
   sz.querySelector('#szClose').addEventListener('click', closeSZ);
   sz.querySelector('#szGuide').addEventListener('click', () => {
-    if (window.__openInfoSheet) window.__openInfoSheet('Bảng kích thước', 'Đo vòng chân/vòng tay tương ứng và đối chiếu với bảng size của từng sản phẩm. Nếu phân vân giữa 2 size, ưu tiên chọn size lớn hơn để thoải mái hơn khi sử dụng. Với sản phẩm da, size có thể giãn nhẹ sau thời gian đầu sử dụng.');
+    openSizeChart();   // trước đây chỉ là đoạn văn hướng dẫn chung
   });
   cta.addEventListener('click', () => {
     if (cta.disabled) return;
@@ -6391,7 +6520,7 @@ document.body.insertAdjacentHTML('beforeend', `
   <div id="pickSheet" class="fixed inset-0 z-[220] pointer-events-none" aria-hidden="true">
     <div class="pk-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
     <div class="pk-panel absolute inset-x-0 bottom-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col"
-         style="border-radius:10px 10px 0 0; max-height:72vh" role="dialog" aria-label="Chọn">
+         style="border-radius:0; max-height:72vh" role="dialog" aria-label="Chọn">
       <span class="absolute left-1/2 -translate-x-1/2 top-2 w-[50px] h-[3px] rounded-full bg-border"></span>
       <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
         <p id="pkTitle" class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground"></p>
