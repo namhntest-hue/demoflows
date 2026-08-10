@@ -42,6 +42,7 @@ Ngoài luồng mua hàng còn 3 trang tĩnh vào từ footer: `privacy` · `term
 - Đăng ký kiểu OTP-first (Figma `3107:50758` + `3354:47931`): nhập SĐT → **Gửi mã OTP** → xác thực 6 ô (nút "Nhận lại mã (60s)" đếm ngược; link "thay đổi số điện thoại" quay lại bước trước, giữ nguyên số đã nhập) → màn `reginfo` mới điền Họ tên / Email / Mật khẩu → tạo tài khoản + đăng nhập luôn. Quên mật khẩu dùng chung màn OTP, phân nhánh bằng state `authFlow` (`register` → reginfo, `forgot` → setpass).
 - 6 biến thể PDP, mỗi bản gắn 1 sản phẩm khác nhau (SP#1–SP#6), khác nhau về layout size (chip vs dropdown), vị trí Payment Offer, hiệu ứng gallery/lightbox, font (Inter cho pdp6)...
 - Picker "Chọn size" (dùng cho các PDP dropdown) theo Figma `3281:40140` — hàng 52px, nền mờ 60%, hàng hết hàng gạch ngang + "Nhận thông báo", link "Hướng dẫn chọn size", CTA 48px. **Markup giống nhau ở cả 2 bản** (mobile = bottom sheet, desktop = dialog giữa màn hình).
+- Menu mobile (`MENU_DATA`): mỗi tab Nam/Nữ/Làm đẹp mở đầu bằng **"Sản phẩm mới"** (bổ sung 10/08/2026 theo yêu cầu — vị trí "New In" của Farfetch, Figma Menu `3358:54912` chưa có dòng này). Bấm vào mở **submenu theo menu THẬT của shop.dafc.com.vn nhưng BỎ tầng giới tính** (tab đã là giới tính rồi): nhóm "Bộ sưu tập mới" (`MENU_NEW_COLLECTIONS` — MCM AW26 / Stefano Ricci / D&G Maiolica 2026, data thật 10/08/2026) + nhóm "Danh mục" theo giới tính đang chọn (Nữ thêm Trang sức, đúng site thật) + Quà tặng. Submenu hỗ trợ item dạng `{header}` — tiêu đề nhóm 12px muted, không bấm được. Site thật không có mục làm đẹp trong Sản phẩm mới → tab Làm đẹp giữ `sub=null`, bấm là sang thẳng PLP. **Chỉ mới có ở mobile** — `MENU_DATA` của desktop là bản copy riêng, chưa thêm.
 - i18n VI/EN thật: từ điển 2 chiều + regex cho chuỗi có số, áp dụng qua `applyLang()`, gọi lại mỗi khi render màn mới.
 - Settings FAB (góc phải dưới): đổi ngôn ngữ + đổi font (Montserrat/Inter/Plus Jakarta Sans).
 
@@ -218,7 +219,7 @@ Bottom sheet `#filterSheet` theo Figma `WAP/Filter Bottom Sheet` (`3060:49070`).
 
 Khớp Figma: hàng "Áo kiểu" (`3228:33369`) có 2 frame `leaf`, divider ở x=10 và x=34, `Checkbox Group` bắt đầu x=48.
 
-> **Bug đã sửa ở tầng 3**: trước đây cấp sâu nhất dùng **1 cột `w-9` (36px)** với đường ở giữa → rail của cấp trên biến mất (cây bị đứt, đường lạc ra giữa dòng) và thụt sai **40px** thay vì 48px. Nay 2 cấp con dùng chung helper `fsubRow(label, depth)` + `frail(depth)` nên không lệch nhau được nữa. `desktop.html` **vẫn còn lỗi này** (1 chỗ `w-9`).
+> **Bug đã sửa ở tầng 3**: trước đây cấp sâu nhất dùng **1 cột `w-9` (36px)** với đường ở giữa → rail của cấp trên biến mất (cây bị đứt, đường lạc ra giữa dòng) và thụt sai **40px** thay vì 48px. Nay 2 cấp con dùng chung helper `fsubRow(label, depth)` + `frail(depth)` nên không lệch nhau được nữa. `desktop.html` đã sửa theo (10/08/2026).
 
 Icon `091-warning` trong `Checkbox Group` của Figma đang `visible: false` → không render. Checkbox dùng `rounded-xs` (Figma r=2).
 
@@ -235,13 +236,41 @@ Không có khung điện thoại, không giới hạn chiều cao — trang cu�
 
 Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI-EN / settings FAB / luồng auth-OTP; chỉ viết lại layout theo các frame desktop 1440px trong Figma:
 
-- **Header 3 tầng** (Figma `2171:13006`): promo bar (tái dùng slider `PROMO_MESSAGES`) + main nav (dept trái · logo giữa · đổi ngôn ngữ/cửa hàng/tài khoản/giỏ phải) + subheader (category nav + ô tìm kiếm 270px). Sticky `top-[-32px]` — promo bar cuộn trôi, 112px còn lại dính.
+- **Header 3 tầng** (Figma `2171:13006`, 1440×144): promo bar 32 (tái dùng slider `PROMO_MESSAGES`) + main nav 60 (dept trái · logo giữa · đổi ngôn ngữ/cửa hàng/tài khoản/giỏ phải) + subheader 52 (category nav + ô tìm kiếm 270px). Sticky `top-[-32px]` — promo bar cuộn trôi, 112px còn lại dính.
+  - Ô tìm kiếm (`2171:12954`) **chỉ có viền dưới** 1px `#a3a3a3` trên nền trắng — không phải hộp viền 4 cạnh (`strokeWeight` của Figma là mixed: `[0,0,1,0]`).
+  - Dept đang chọn (`Nam` = State Active trong Figma) tô `#0a0a0a`, các dept khác `#404040`; state giữ ở biến `dkDept`.
+  - Icon tài khoản / giỏ hàng 16px (Icon Button 44×44), khớp `Size=16` của Icon-Cpn.
+  - **Không có viền dưới** ở cả hàng nav lẫn subheader — xem "Quy ước border"; `.navbar::after` và khối JS toggle `.merged` đã bỏ, chỉ `.filterbar::after` còn lại.
+  - Figma để nhãn `Store location` + placeholder `What are you looking for?` bằng tiếng Anh giữa bản tiếng Việt — code **giữ chuỗi tiếng Việt** vì màn hình chạy qua i18n VI↔EN.
 - **Mega menu** hover thuần CSS (`.dk-nav-item:hover`), cột Nam/Nữ sinh từ `MENU_DATA`, cột brands từ `MENU_BRANDS`; click điều hướng PLP chế độ danh mục qua `data-plp-title/-crumbs`.
+  - **Hiệu ứng hover kiểu Farfetch (10/08/2026)**: **KHÔNG gạch chân** (đối chứng cả Farfetch lẫn component Button trong Figma — không state nào có underline). Hover theo đúng 2 biến thể Button: hàng giới tính + nút tiện ích là **Ghost** → "nhún" nền đen 5% (`.ghost-hover`, Button/Ghost/Hover: fill #000 5% + label #0a0a0a, r2); danh mục subheader là **Ghost Muted** → chỉ đậm chữ #404040→#0a0a0a, không nền. Panel + **scrim tối `rgba(0,0,0,.45)`** phủ phần trang bên dưới mở sau **120ms** (hover-intent — lướt ngang thanh menu không nháy panel). Scrim là `div.dk-scrim` fixed `z:-1` NẰM TRONG `.navbar` (stacking context z-50) nên đè lên nội dung trang nhưng dưới 3 tầng header + panel; bật bằng `.navbar:has(.dk-nav-item:hover > .dk-mega)` — mục không có panel (Pre-loved, Khuyến mãi) không làm tối trang. Độ tối .45 cùng tông mọi backdrop khác của app.
 - **Search**: dropdown dưới ô tìm kiếm header (gợi ý + lịch sử + từ khóa phổ biến) → Enter/click ra trang kết quả (PLP search mode). Màn `search` cũ vẫn giữ (cột giữa 720px).
-- **PLP** (`PLP-Desktop-02-ByBrand` 2474:107065): breadcrumb, brand hero 2 cột (logo 149px + mô tả + strip danh mục 150px + ảnh hero 575×320), filter bar 80px (Bộ lọc outline 48 + chip ghost + density 4/3 cột + Sắp xếp), grid 4 cột `gap-x-1` row 16px, "Xem thêm".
+- **PLP** — bám cả nhóm `PLP · Product Listing` (`2084:159`), 6 frame = 6 trạng thái của cùng một màn:
+
+  | Frame | Trạng thái | Dựng ở đâu |
+  |---|---|---|
+  | `01-Default` (2470:105732) | tìm kiếm 0 kết quả | nhánh `else` của `screenPLPList()` — không có filter bar |
+  | `02-ByBrand` (2474:107065) | brand hero + grid 4 cột | `screenPLP()` |
+  | `03-ByBrand-Alt` (2539:174249) | biến thể hero (wordmark chữ, mô tả không thu gọn) | **chưa dựng** — không có cơ chế chuyển biến thể, 02 là bản chính |
+  | `04-ByCategory-Grid3` (2439:22580) | danh mục, grid 3 cột, có chip bộ lọc | `screenPLPList()` + `plpCols='3'` |
+  | `05-SearchResults` (2237:18029) | kết quả tìm kiếm có sản phẩm | `screenPLPList()` chế độ `search` |
+  | `06-SearchResults-Empty` (2918:46100) | **khung xương loading** (tên frame gây hiểu nhầm) | `plpSkeletonCards()` qua `renderPlpGrid(root,{skeleton:true})` |
+
+  - **Breadcrumb** (`2903:45117`): hàng 36px, ngăn cách bằng **chấm tròn 16px** (không phải dấu `/`), chữ 14/20 `#737373`, luôn 2 đoạn — thiếu `crumbs` thì lấy tiêu đề, chế độ tìm kiếm dùng nhãn ngắn "Kết quả tìm kiếm".
+  - **Heading** (`2903:45118`): tiêu đề Light 24/32 + số sản phẩm 14/20 canh đáy, `gap-2`, `py-6`.
+  - **Brand hero** (`2474:107068`): cột trái 801 (logo 149×28 + mô tả + strip danh mục 150px + nút cuộn 44px) · ảnh hero 575×320.
+  - **Filter bar 80px** (`2903:45194`): `Bộ lọc (n)` outline 48/24 · chip ghost 48/24 (chip trùng danh mục đang xem = State Active, chữ `#0a0a0a`) · density 4/3 cột — icon 20px, nút không chọn `opacity-50` · nhãn nút sắp xếp = **giá trị đang chọn** (mặc định `relevance` vẫn hiện "Sắp xếp").
+  - **Hàng chip bộ lọc đang áp dụng** (`2910:111376`): chip Secondary 48/24 nền `#f5f5f5` + ✕, cuối hàng "Xóa tất cả" (Figma ghi sai chính tả "Xoát"). State thật ở `plpFilters`, sinh từ nút Áp dụng của drawer Bộ lọc; bỏ chip / xóa tất cả đều re-render lưới.
+  - **Grid**: `gap-x-1` row 16px, 4 cột (card 345×590, có swatch) hoặc 3 cột (card 461×695). Figma dùng 2 variant Card-item khác nhau (3 cột là bản `Default` không có swatch) — code **giữ swatch ở cả hai** vì `v2` là bản mới hơn.
+  - **Tiến độ + Xem thêm** (`2237:18725` + Frame 46): "Bạn đã xem X trong Y sản phẩm" 14/20 `#737373` + track 240×2, rồi nút Xem thêm outline canh giữa. `PLP_TOTAL = 152` là tổng catalog demo.
+  - Bỏ `camKetSection()` khỏi PLP — không frame nào trong nhóm có khối cam kết.
 - **PDP** (`PDP-Desktop-01-Default` 2190:14530): 1 layout dùng chung cho cả 6 route `pdp..pdp6` (data từng SP gom vào `PDP_DATA`) — gallery 2 cột (cell 469:579, zoom lightbox) + info panel 451px sticky (giá/swatch 44px/chọn size/CTA/box ưu đãi/accordion ±) + 3 carousel 5 card.
   - Chọn size giữ đúng 2 biến thể như bản mobile, bật/tắt bằng cờ `dropdown` trong `PDP_DATA`: **chip grid** cho `pdp`/`pdp4`, **dropdown** (Select & Combobox `3111:33591`) cho `pdp2`/`pdp3`/`pdp5`/`pdp6` → mở picker "Chọn size".
-- **Cart** (`multi-gift-4-desktop` 2775:61994): 2 cột — trái list item (thumb 120×133, stepper, xoá) + quà tặng (khi đăng nhập) + CTKM peek; phải "Tóm tắt đơn hàng" sticky (DAFC Rewards, mã giảm giá, phiếu mua hàng, tổng, Đặt hàng).
+- **Cart**: khung 2 cột lấy từ `multi-gift-4-desktop` (2775:61994) — trái list item + quà tặng (khi đăng nhập) + CTKM peek; phải "Tóm tắt đơn hàng" sticky. **Ruột đã đồng bộ lại theo bản mobile (10/08/2026)** vì `item-cart` (2851:28601) chỉ có variant 358px, tức bản mobile là thiết kế mới nhất:
+  - Row theo `item-cart` 2851:28705: checkbox 16 canh giữa · thumb **100×133** (bỏ badge -% đè ảnh) · brand 14 Medium + nút xoá 14 cùng hàng · name 14 · variant 12 · giá 14 Medium + badge -% nền subtle **cạnh giá** · stepper ghost không viền [− 12][02 12 Medium][+ 12] cao 24 ghim đáy phải · **không** `border-b` giữa các hàng, không bọc card viền quanh list/selectAll (quy ước border).
+  - CTKM: card viền `border-border rounded-md py-2 px-3`, title 16 Medium (bỏ nền accent-0 của frame desktop cũ 2775:62093).
+  - Quà tặng: style card mobile (viền rounded-xs p-3, title 14 + phụ đề 12, "Thay đổi" gạch chân, option thumb 52×60 + cột giá gạch ngang/0đ/01) — chỉ khác là 2 option nằm ngang vì cột trái đủ rộng.
+  - Summary: "Mã giảm giá" 14 Medium, bỏ 2 divider quanh khối tổng, "Tổng cộng" 16 Medium, dòng điểm thưởng 14/20; **"Bạn có phiếu mua hàng?" chuyển xuống DƯỚI nút Đặt hàng** (Figma 3428:55499: là phương thức mua hàng, không phải ưu đãi).
 - **Checkout**: 2 cột theo note Figma `2084:165` — form 3 section tự đóng/mở bên trái, summary sticky + CTA bên phải; header rút gọn (logo + "Thanh toán an toàn & bảo mật").
 - **Auth**: card 440px giữa trang trên nền xám (đủ 6 view login/register/otp/reginfo/setpass/forgot). **Account**: sidebar 280px + nội dung 720px. **Order**: card 860px với timeline. **Done**: xác nhận giữa trang + cross-sell 5 card.
 - **Bottom sheet mobile → dialog desktop**: quick-add / xác nhận thêm giỏ / chọn size / nhận thông báo / info sheet thành modal giữa màn hình (class `.dk-modal`, tái dùng nguyên JS mở/đóng); riêng Bộ lọc thành drawer trượt phải 420px.
@@ -279,9 +308,9 @@ Cỡ chữ **không** nằm trong `tokens07.json` — viết thẳng bằng util
 
 **Giữa các block KHÔNG kẻ border** — khoảng trắng (padding/gap) là thứ ngăn cách, đúng theo Figma (`2851:28697` cart, `2084:170` account, `2084:164` checkout, `2084:166` done đều không có stroke ngang giữa các section).
 
-**Navbar KHÔNG có viền dưới** — áp cho *mọi* màn mobile. Nav chính (`navBar()`) tách khỏi nội dung bằng nền `glass-95` + `backdrop-blur`; 3 nav phụ (Tài khoản / Chi tiết đơn hàng / `authNav`) và nav màn Search cũng để trần. Đây là **quyết định của design, cố ý khác Figma** (`Nav` 2136:13304 có stroke-bottom 1) — đừng "sửa lại theo Figma".
+**Navbar KHÔNG có viền dưới** — áp cho *mọi* màn, **cả mobile lẫn desktop**. Nav chính (`navBar()`) tách khỏi nội dung bằng nền `glass-95` + `backdrop-blur`; 3 nav phụ (Tài khoản / Chi tiết đơn hàng / `authNav`) và nav màn Search cũng để trần. Ở mobile đây là **quyết định của design, cố ý khác Figma** (`Nav` 2136:13304 có stroke-bottom 1) — đừng "sửa lại theo Figma". Ở desktop thì trùng luôn với Figma: Header `2171:13006` không có stroke ở cả 3 tầng.
 
-> Kéo theo: đã bỏ `.navbar::after`, rule `.navbar.merged::after` và khối JS toggle class `.merged` (trước dùng để giấu viền nav khi filter bar dính sát đáy nav — nay vô nghĩa). Class `navbar` giữ lại làm mốc ngữ nghĩa. Riêng `.filterbar::after` (viền dưới thanh Bộ lọc ở PLP) **vẫn giữ** — đó là thanh filter, không phải navbar.
+> Kéo theo: đã bỏ `.navbar::after`, rule `.navbar.merged::after` và khối JS toggle class `.merged` (trước dùng để giấu viền nav khi filter bar dính sát đáy nav — nay vô nghĩa) ở **cả `index.html` và `desktop.html`**. Class `navbar` giữ lại làm mốc ngữ nghĩa. Riêng `.filterbar::after` (viền dưới thanh Bộ lọc ở PLP) **vẫn giữ** — đó là thanh filter, không phải navbar.
 
 Border ngang chỉ giữ ở 4 chỗ **có trong design** (12 chỗ `border-t/b/y` còn lại trong `index.html` đều thuộc nhóm này):
 
@@ -306,41 +335,80 @@ npx tailwindcss@3.4.17 -c tailwind.config.js -i in.css -o tailwind.css --minify
 
 ## Nhịp làm việc: mobile trước, desktop sau
 
-Hai bản **tách rời có chủ ý** — không tự động đồng bộ. Mặc định mọi thay đổi chỉ áp vào `index.html`; `desktop.html` chỉ cập nhật khi được yêu cầu rõ ràng ("làm bản desktop"). Nghĩa là hai file sẽ lệch nhau dần, và đó là bình thường.
+Hai bản **tách rời có chủ ý** — không tự động đồng bộ (đợt 10/08/2026 đã kéo desktop bắt kịp mobile một lần, xem bên dưới). Mặc định mọi thay đổi chỉ áp vào `index.html`; `desktop.html` chỉ cập nhật khi được yêu cầu rõ ràng ("làm bản desktop"). Nghĩa là hai file sẽ lệch nhau dần, và đó là bình thường.
 
 Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫn trùng nhau giữa hai file, mỗi thay đổi ở mobile cần ghi lại bên dưới để lần port sang desktop không bỏ sót.
 
-### Chờ port sang desktop
+### Đã port sang desktop (10/08/2026)
 
-- **"Chỉ còn 01 sản phẩm" theo size** (chỉ mới làm ở mobile, 07/08/2026): `#lowStock` ở `pdp`/`pdp4` mặc định ẩn, chỉ hiện khi chọn size nằm trong `SIZE_LOW_STOCK` (setCta nhận thêm tham số `size`). Desktop nếu có dòng tương tự trong `PDP_DATA` layout thì cần áp cùng rule.
-- **Đồng bộ copy toàn app** (chỉ mới làm ở mobile, 07/08/2026 — đợt "sync đoạn thoại"). Desktop vẫn còn nguyên các lệch đã sửa bên mobile: đổi trả chỗ 7 chỗ 14 ngày (mobile đã chốt **7 ngày** theo trang chính sách + site thật); mã voucher chỉ nhận JUNE trong khi copy quảng cáo JUL (mobile: map nhận **cả JUL500/1000/1500 lẫn JUNE**, copy chỉ đường về ô "Mã giảm giá" ở giỏ hàng); TUMI còn trong promo; ngày khuyến mãi quá hạn (mobile: WARDROBE [01/08-31/08], BUY MORE [28/07-24/08]); ORDERS ngày 2025 + steps lệch badge + mã vận đơn GHN (mobile: 2026, steps 3, **TKN**284917 khớp TIKINOW); typo checkout "Thay doi/Giao hang nhanh/Chuyển khoảng"; nhãn tóm tắt vận chuyển "Chuyển phát nhanh" (mobile: khớp đúng option "Giao hàng thông thường"/"Giao hàng nhanh", ORDERS cũng đổi "tiêu chuẩn"→"thông thường"); tổng tiền 21,250,000đ không khớp 4 item (mobile: **113,500,000đ** = tổng thật, `CART_SUBTOTAL` đổi theo, checkout/done cùng số); "98 điểm" (mobile: **1.135 điểm**, `REWARD_POINTS` 1000→**1240** khớp ví điểm, lịch sử điểm ngày khớp ORDERS); menu "Áo quần/Túi sách/Giày sneaker/Váy" (mobile: "Quần áo/Túi xách/Giày thể thao/Chân váy" thống nhất với filter); casing "Chính sách Bảo mật"→"bảo mật"; dọn ~12 key i18n chết/trùng value gây hỏng vòng VI→EN→VI ('Mức giảm'→'Discount amount', 'Bảo quản sản phẩm'→'Care instructions', 'Ưu đãi'→'Offer', 'Phí vận chuyển'→'Shipping fee', 'Phương thức vận chuyển'→'Shipping method', 'Xuất xứ'→'Origin', 'Chọn size'→'Choose size', 'Đăng ký nhận thông báo'→'Get notified'...).
-- **Data + ảnh thật từ shop.dafc.com.vn** (chỉ mới làm ở mobile, 07/08/2026). Desktop vẫn dùng: bộ ảnh placeholder `p*.png` cũ (nhiều file trùng nhau), 8 SP beauty tự bịa, tên thắt lưng cũ "Thắt lưng da mặt khóa Medusa", GIFTS Balenciaga cũ, và chưa có 6 SP bổ sung `x*.jpg`. Khi port: copy khối `PRODUCTS` / `PRODUCT_GALLERY` / `CART` / `GIFTS` / items trong `ORDERS` + ~20 entry tên SP mới trong `I18N` từ index.html; lưu ý desktop gộp PDP vào `PDP_DATA` nên phần gallery/swatch cần map lại theo quy ước "slide = full gallery, swatch = slice theo colors".
-- **Input 14px + chặn zoom iOS** (chỉ mới làm ở mobile). Gồm 3 phần:
-  1. Thẻ `<meta name="viewport">` thêm `maximum-scale=1`.
-  2. Rule CSS `input, textarea, select { font-size: 14px; }` trong `<style>` (đặt sau `tailwind.css`). **Phải giữ selector thuần element** — thêm `:not(...)` sẽ nâng specificity lên 0,2,1 và đè luôn các utility `text-[…]` cố ý (ô OTP 18px bị co còn 14px).
-  3. Đổi `text-[16px]` → `text-[14px]` ở 12 thẻ `<input>` (bỏ qua ô OTP và checkbox). Desktop hiện còn 64 chỗ `text-[16px]` nhưng phần lớn là nút/nhãn — chỉ đổi bên trong thẻ `<input>`.
-  - Cân nhắc khi port: desktop không có vấn đề zoom của iOS, nên `maximum-scale=1` là không cần thiết; có thể chỉ áp phần cỡ chữ 14px nếu muốn thống nhất thị giác.
-- **Type scale bỏ cỡ 20px + 18px thành Medium** (chỉ mới làm ở mobile). Toàn bộ 21 chỗ `text-[20px]` → `text-[18px]`; riêng h2 "Giỏ hàng" 22px → 18px theo Figma `2851:28697`. Sau đó **mọi chỗ 18px đều thêm `font-medium`** (15 chỗ đổi: 12 chỗ chưa có class weight, `font-light` ở h2 giỏ hàng, `font-normal` ở "Thanh toán (4)" + "Bộ lọc"; 9 chỗ đã Medium từ trước). `leading-*` và các `h-7` đi kèm giữ nguyên để không đổi chiều cao dòng/khối. Desktop hiện còn 8 chỗ `text-[20px]` chưa đổi và chưa áp quy ước Medium — xem mục "Thang chữ" bên dưới.
-- **Bỏ border ngăn giữa các block** (chỉ mới làm ở mobile) — 15 chỗ, xem mục "Quy ước border" bên dưới.
-- **Navbar bỏ viền dưới** (chỉ mới làm ở mobile) — 3 nav phụ bỏ `border-b`, bỏ `.navbar::after` + `.navbar.merged::after` + khối JS toggle `.merged`. Desktop hiện còn 28 chỗ `border-t/b/y` chưa rà.
-- **Footer: dữ liệu thật từ shop.dafc.com.vn** (chỉ mới làm ở mobile). Hằng `FOOTER_LINKS` (3 nhóm / 17 link) thay cho placeholder "Hotline · Email · Giờ làm việc" lặp lại ở cả 3 accordion. Kèm sửa dữ liệu sai: đối tác vận chuyển GHN → **TIKINOW**, "Đã đăng ký" → **"Đã thông báo"** Bộ Công Thương, GPKD 0302519839 (số sai) → **GPĐKKD 0304130177 do Sở KH & ĐT Tp.HCM cấp lần đầu 22/11/2005**, heading "Kết nối với chúng tôi" → **"Theo dõi chúng tôi"**, "Phương thức thanh toán" → **"Chấp nhận thanh toán"**, social YouTube → **Zalo** (thêm icon `I.zalo`).
-- **Quick add thu gọn** (chỉ mới làm ở mobile) — bo góc 8, bỏ handle, ✕ 24px, gallery `p-2`, bỏ link bảng kích thước, "Xem chi tiết" 24px gạch chân. Xem mục "Quick add to cart".
-- **Đồng bộ 6 bản PDP** (chỉ mới làm ở mobile) — info tab về accordion (bỏ bottom sheet ở `pdp4`), bỏ hết dòng trả trước/trả góp cấp sản phẩm, nhãn "Bảng kích thước". Xem mục "Quy ước đồng bộ giữa 6 bản PDP". Desktop chưa rà 3 điểm này.
-- **Mô tả sản phẩm: data thật từ DAFC** (chỉ mới làm ở mobile) — hằng `PRODUCT_INFO`, 6 PDP đọc `desc`/`care` từ đó, bỏ 10 entry i18n của text tự viết đã không còn render. Desktop vẫn đang dùng text tự viết (gồm cả 2 chỗ tả sai thành túi A.P.C.). Xem mục "Mô tả sản phẩm — data thật từ DAFC".
-- **PDP + PDP2: khối KHUYẾN MÃI + bottom sheet chi tiết** (chỉ mới làm ở mobile). Style card theo Figma `Product Info` 2275:505057: `bg-accent-0 rounded-sm p-2 gap-2`, tiêu đề "KHUYẾN MÃI" 14 Medium in hoa, dòng chương trình 12 Medium. Catalogue `PROMOS` (4 chương trình, mỗi cái có `line` tóm tắt + `title` + `rows` 4 cặp nhãn/giá trị cho sheet) khai **một lần** ở module scope, `PDP_PROMOS` quyết định mỗi PDP hiện chương trình nào — `pdp` và `pdp2` dùng chung 2 chương trình nên tách nội dung ra là sớm muộn lệch. Hai layout:
-  - `promoCardGrouped()` — **pdp2**: 1 card gộp, các dòng gạch chân, bấm cả dòng.
-  - `promoCardsSplit()` — **pdp**: 4 chương trình, mỗi cái 1 card riêng **extend tại chỗ**. Tiêu đề "KHUYẾN MÃI" đặt **ngoài** các khung nền xám, dùng chung cho cả nhóm. Cuối dòng là **icon + / −** (không có link "Xem chi tiết", không mở bottom sheet). Dùng lại nguyên cơ chế `.acc`/`.acc-trigger`/`.acc-body` của app — CSS `.acc.open .acc-ico-plus/-minus` tự đảo icon nên không cần JS riêng, và vì các card là `.acc` anh em cùng cha nên handler sẵn có tự đóng card khác khi mở một card.
-  - Nội dung khi extend: ưu tiên `body` (mảng dòng, dùng cho `voucher` — "Nhập mã" + 3 dòng mã JUL), không có `body` thì đổ `rows` thành cặp nhãn/giá trị.
-  - Tiêu đề card dùng dạng IN HOA ở cả 2 layout vì `'Khuyến mãi'` (sentence case) đã là key i18n của mục menu Sale → `'Sale'`; khai lại là đổi luôn bản dịch của menu.
-  - Bỏ chương trình TUMI vì sai thương hiệu trên trang Versace — **07/08 đã gỡ sạch TUMI khỏi TOÀN BỘ bản mobile** (pdp3/4/5/6 + cart, kèm dọn key i18n); chỉ giữ tên TUMI trong các câu "Không áp dụng cho..." (điều khoản loại trừ) và danh sách brand menu/filter (DAFC có phân phối TUMI thật).
-  - Kèm sửa `#infoSheet`: `#isBody` từ `<p>` → `<div>` và `__openInfoSheet(title, body, asHTML)` thêm tham số thứ 3. Cần vì nội dung sheet có block bên trong — `<p>` chứa `<div>` là HTML không hợp lệ, trình duyệt tự đóng thẻ và làm vỡ layout. Gọi 2 tham số như cũ vẫn dùng `textContent`, không đổi hành vi. `openS` cũng gọi thêm `localizeNew` vì sheet render sau `applyLang` của màn.
-- **Bộ lọc: sửa rail tầng 3 + checkbox bo góc** (chỉ mới làm ở mobile) — thêm `frail()` / `fsubRow()`, cấp sâu nhất từ 1 cột `w-9` → 2 cột `w-5`, `fchk()` thêm `rounded-xs`. `desktop.html` còn đúng 1 chỗ `w-9` cần sửa y hệt (dòng ~2561) và checkbox filter cũng chưa bo góc.
-- **3 trang chính sách + link footer** (chỉ mới làm ở mobile) — `POLICY_TABS` / `POLICY_UPDATED` / `POLICY_DATA` / `screenPOLICY()` / `FOOTER_ROUTES`, 3 route mới trong `RENDER` + `FLOW` + `LABELS`, handler `[data-policy-toc]` + `#policyMore` trong `wire()`, rule CSS `#policyMore svg` trong `<style>`. Desktop chưa có route nào trong số này nên link footer bên đó vẫn chưa bấm được.
-  - **Desktop cần sửa 3 chuỗi** trong `FOOTER_COLS` cho khớp site thật: `Chính sách bán hàng` → `Chính sách bảo hành`; `Quy trình bảo hành và xử lý khiếu nại` → `Quy trình tiếp nhận và xử lý khiếu nại`; `Thu Thập và Xử Lý` → `Thu Thập Và Xử Lý`. Desktop cũng còn GHN / "Đã đăng ký" / GPKD cũ nếu có.
+Toàn bộ backlog "chờ port" bên dưới đã chạy xong trong một đợt. Ghi lại từng mục
+để lần sau đối chiếu, kèm chỗ desktop cố ý làm khác mobile.
+
+- **Data + ảnh thật từ shop.dafc.com.vn** — `PRODUCTS` (24 SP: 10 thời trang + 8
+  beauty `dept:'beauty'` + 6 SP bổ sung `x*.jpg`), `PRODUCT_GALLERY`,
+  `PRODUCT_INFO`, `CATEGORIES`, `CART`, `GIFTS`, `ORDERS`, `CART_SUBTOTAL`
+  113.500.000đ, `REWARD_POINTS` 1240 + ~39 entry i18n tên SP / nhãn thông số /
+  mô tả / bảo quản. `PDP_DATA` bỏ hẳn `swatches`/`gallery` viết tay: `dkScreenPDP`
+  đọc thẳng `PRODUCT_GALLERY[idx]` (slide = full gallery cắt 6 ô cho lưới 2 cột,
+  swatch = slice theo `colors`), 4 tab sinh từ `pdpTabs(idx)` nên pdp/pdp4 hết
+  cảnh tả nhầm thành túi canvas A.P.C.
+- **`plpProducts()` lọc theo ngành hàng** — thêm `isBeautyPlp()`; PLP Làm đẹp chỉ
+  ra 8 nước hoa, PLP thời trang không lẫn nước hoa, tìm kiếm quét cả hai.
+- **Đồng bộ copy toàn app** — 7 ngày đổi trả, voucher nhận cả JUL500/1000/1500,
+  bỏ TUMI khỏi promo (PDP + giỏ hàng), WARDROBE [01/08-31/08] + BUY MORE
+  [28/07-24/08] (còn 3 chương trình), ORDERS 2026 + TKN284917, typo checkout
+  "Thay đổi / Giao hàng nhanh / Chuyển khoản / QR code", nhãn vận chuyển khớp
+  option, 1.135 điểm, MENU_DATA "Quần áo/Túi xách/Giày thể thao/Chân váy" + cây
+  Làm đẹp 8 nhóm, casing "Chính sách bảo mật", 11 bản dịch lệch chỉnh về bản
+  mobile, 23 key i18n chết đã xoá.
+- **Footer thật** — TIKINOW, "Đã thông báo Bộ Công Thương", icon Zalo thay
+  YouTube, `FOOTER_COLS` khớp `FOOTER_LINKS` của mobile, 3 link chính sách trỏ
+  route thật qua `FOOTER_ROUTES`.
+- **3 trang chính sách** — `POLICY_TABS` / `POLICY_UPDATED` / `POLICY_DATA` dùng
+  chung với mobile; `screenPOLICY()` dựng **layout desktop riêng**: sidebar 280px
+  (3 trang + mục lục dính) + nội dung 860px, không có dropdown `#policyMore` vì ở
+  1440 cả 3 tab nằm thoải mái trong sidebar. Link cookie bar cũng mở trang thật.
+- **Khối KHUYẾN MÃI ở PDP** — `PROMOS` / `PDP_PROMOS` + `promoCardGrouped` (pdp2)
+  và `promoCardsSplit` (pdp), bỏ wrapper `px-4` vì panel info 427px đã có padding.
+  `#isBody` đổi `<p>` → `<div>`, `__openInfoSheet(title, body, asHTML, full)`.
+- **Bảng size** — `SIZE_CHART` / `SIZE_CHART_NOTE` / `sizeChartHTML` /
+  `openSizeChart`; nút "Bảng kích thước →" ở PDP và quick add, cùng link "Hướng
+  dẫn chọn size" trong sheet chọn size đều mở bảng thật. Dialog `.full` rộng
+  880px thay vì full-screen như mobile.
+- **"Chỉ còn 01 sản phẩm" theo size** — `#lowStock` mặc định ẩn, `setCta(state,
+  size)` chỉ hiện khi size nằm trong `SIZE_LOW_STOCK`.
+- **Bộ lọc** — `fchk()` thêm `rounded-xs`, `frail()`/`fsubRow()` sửa rail tầng 3
+  (2 cột `w-5` thay 1 cột `w-9`), tách `filterBody(beauty)` + `renderFilterBody()`
+  + `wireFilterBody()` nên PLP Làm đẹp đổi sang facet Dung tích / Ưu đãi và bỏ
+  Màu sắc. Giữ nguyên phần desktop đã có: số đếm trong tiêu đề section, nút Áp
+  dụng sinh `plpFilters` cho hàng chip, drawer phải 420px không grabber.
+- **Picker địa giới + nút mắt mật khẩu** — `VN_LOCATIONS`, `ckProvince`/`ckWard`,
+  `wireAddressPickers` / `setPickLabel`, `#pickSheet` chuyển thành `.dk-modal`
+  480px; `eyeBtn()` + `wirePasswordToggles` cho `afield` và popup đăng nhập nhanh.
+- **Quick add thu gọn** — bỏ grabber, ✕ 24px, gallery `p-0.5`, "Xem chi tiết" dời
+  lên cạnh tên SP, CTA ghim đáy qua `#qaCta` + `quickAddCta()`, swatch dạng ảnh
+  44px, size 5 ô/dòng, không có link bảng size (node đó Figma đang tắt).
+- **Thang chữ / border / input** — 6 chỗ `text-[20px]` → `text-[18px] font-medium`
+  (hết cỡ 20px), mọi `<input>` về 14px + rule `input, textarea, select
+  { font-size: 14px }` thuần element; **không** thêm `maximum-scale=1` vì desktop
+  không có chuyện iOS zoom. Navbar và nav phụ bỏ viền dưới, khối cam kết bỏ
+  `border-t`.
+
+**Còn lại chưa làm:**
+
+- `PLP-Desktop-03-ByBrand-Alt` (2539:174249) — biến thể hero dùng wordmark chữ
+  thay logo ảnh và mô tả không thu gọn; chưa dựng vì app không có cơ chế chuyển
+  biến thể hero.
+- Rà nốt ~26 chỗ `border-t/b/y` còn lại trong `desktop.html`. Phần lớn là khung
+  card riêng của layout desktop (card tài khoản / đơn hàng / checkout) chứ không
+  phải "border ngăn giữa các block" như đợt mobile, nên cần đối chiếu từng chỗ
+  với frame desktop tương ứng trước khi bỏ.
+- `SIZE_SHEET_BY_PRODUCT` của mobile (map index SP → kiểu sheet size) chưa port;
+  desktop vẫn dùng `SIZE_SHEET_OPTIONS` khoá theo route `pdpN`.
 
 ## Vấn đề tồn đọng / cần quyết định tiếp
 
-- ~~Ảnh sản phẩm thật từ CDN DAFC bị chặn~~ → **ĐÃ XONG cho mobile (07/08/2026)**: CDN `cdn.dafc.com.vn` truy cập được, đã tải ~80 ảnh thật về `assets/` (`pN-*.jpg`, `x*.jpg`, `b*.jpg`, `g2.jpg`) và thay toàn bộ placeholder trong `index.html`. Desktop.html vẫn dùng placeholder cũ (xem "Chờ port sang desktop").
+- ~~Ảnh sản phẩm thật từ CDN DAFC bị chặn~~ → **ĐÃ XONG cho mobile (07/08/2026)**: CDN `cdn.dafc.com.vn` truy cập được, đã tải ~80 ảnh thật về `assets/` (`pN-*.jpg`, `x*.jpg`, `b*.jpg`, `g2.jpg`) và thay toàn bộ placeholder trong `index.html`. Desktop.html cũng đã dùng bộ ảnh thật này từ 10/08/2026.
 - **`--unofficial-accent`**: mode D = cam `#ff6600`, mode GM = đen `#0a0a0a` — chưa dùng ở đâu, chưa quyết định giữ/đổi.
 - **Luồng hết hàng 2 tầng** (size tạm hết / nhận thông báo khi có hàng): PDP dùng chip (pdp, pdp4) xử lý ngay trên chip; PDP dùng dropdown (pdp2/pdp3/pdp5/pdp6) xử lý trong picker "Chọn size" — hàng hết gạch ngang + nhãn "Nhận thông báo", CTA đổi thành "Nhận thông báo khi có hàng". Áp dụng cho **cả 2 bản**.
 - **PDP v1 (pdp) — layout Pre-order**: ngày giao hàng "15/08/2026" đang hardcode. ~~"Chỉ còn 01 sản phẩm" vẫn hiện dù đã là pre-order~~ → **ĐÃ CHỐT (07/08, chỉ đạo của user)**: dòng `#lowStock` mặc định ẨN, chỉ hiện khi bấm đúng size sắp hết hàng (tra `SIZE_LOW_STOCK`, hiện chỉ có size 42) — áp cho cả `pdp` lẫn `pdp4`; bấm size thường/hết hàng thì ẩn lại. Cùng nguồn dữ liệu với dòng "Còn 1 sản phẩm" trong size picker nên 2 nơi không lệch nhau được. Desktop chưa áp hành vi này (xem "Chờ port sang desktop").
