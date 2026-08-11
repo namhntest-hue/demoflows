@@ -308,6 +308,16 @@ Mọi cặp nút chọn-1-trong-N (Cá nhân/Công ty, Giao hàng/Nhận tại c
 - `segBtnClass(on, h)` là nguồn class **duy nhất**, dùng cho cả lúc dựng markup lẫn lúc JS đổi trạng thái (handler `[data-vat-type]`), nên hai chỗ không thể lệch nhau.
 - Không áp cho: dòng danh sách trong bottom sheet (chọn size / chọn tỉnh) — nền xám ở đó là highlight **dòng đang chọn của một danh sách**, không phải tab.
 
+## Checkout: 3 nâng cấp từ vòng đề xuất (11/08/2026, cả 2 bản)
+
+Dựng demo ở `demo-checkout-upgrades.html` → user duyệt 3/8 → áp vào app:
+
+**1. `ckMaxStep` — sửa một bước không đẩy lùi các bước sau.** Trước đây trạng thái section tính tuyến tính theo `ckStep`, nên bấm "Thay đổi" ở bước 1 là bước 2-3 tụt hết về `pending` (tóm tắt thu lại, phải Xác nhận lại từng bước). Nay tách 2 biến: `ckStep` = đang mở, `ckMaxStep` = xa nhất đã xong, công thức thành `i === ckStep ? 'open' : i <= ckMaxStep ? 'done' : 'pending'`. Section đang mở mà trước đó đã xong thì nút đổi nhãn **"Lưu thay đổi"** (đặt trong `paintCheckout` vì phụ thuộc trạng thái) và bấm xong **nhảy thẳng về `ckMaxStep`**. Cặp nút Giao hàng/Nhận tại cửa hàng cũng ẩn theo `ckMaxStep` — quay lại sửa bước 1 không làm nó hiện lại rồi bấm nhầm mất sạch. Mọi chỗ gán `ckStep` (đăng nhập, `data-auth`, đổi tab, reset) đều đồng bộ `ckMaxStep`.
+
+**2. Sổ địa chỉ đã lưu.** Tách `ADDRESSES` thành **một nguồn dùng chung** cho tab Địa chỉ của trang Tài khoản và bước giao hàng — trước đây 2 chỗ viết tay 2 bản riêng nên khách đã đăng nhập vẫn phải gõ lại 6 ô. `ckAuth` → mở ra là 2 thẻ địa chỉ + **"+ Thêm địa chỉ mới"** (đổi từ "Giao đến địa chỉ khác" theo góp ý) xổ form; khách vãng lai vẫn thấy form ngay. Chọn địa chỉ khác chỉ đổi thẻ, chuyển sang/rời khỏi "thêm mới" mới dựng lại màn. Tóm tắt `ckShipDoneHTML()` đọc từ địa chỉ đã chọn hoặc từ chữ vừa gõ (`ckShipName/ckShipPhone/ckShipLine` qua `data-ckf`) — **xoá hẳn chuỗi chết "User name - 0 1234 5678"**.
+
+**3. Đặt xong thì khoá đơn, dọn giỏ, không đăng xuất ngầm.** `placeOrder()` sinh mã theo đúng hệ **DAFC1029xx** của màn Đơn hàng (trước in cứng `#MG-2026-0807`, không khớp đơn nào), `unshift` vào `ORDERS` nên tab Đơn hàng thấy ngay, rồi **dọn giỏ** (`CART.length = 0`, badge về 0). Quay lại route checkout khi `ckPlaced` thì render thẻ "Đơn … đã được đặt" thay vì form — hết cửa đặt đơn thứ hai. `CART_BASE` giữ bản gốc để `data-reset` dựng lại giỏ, và **`ckAuth = false` đã bị bỏ khỏi `data-reset`** — nút "Tiếp tục mua sắm" không còn âm thầm đăng xuất. Trạng thái giỏ rỗng tách thành `cartEmptyHTML()` vì giờ có 2 đường tới (xoá hết item · đặt hàng xong).
+
 ## Checkout: nhận tại cửa hàng (mobile, 11/08/2026)
 
 Ngay trên khối 3 section của màn `checkout` có cặp nút chọn hình thức nhận hàng (**Giao hàng** | **Nhận tại cửa hàng**, cùng kiểu phân đoạn với Cá nhân/Công ty của khối VAT). State ở `ckMode` (`'ship'` mặc định · `'pickup'`), kèm `ckCity` / `ckStore`.

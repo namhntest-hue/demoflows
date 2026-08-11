@@ -233,9 +233,9 @@ window.RESP = (function () {
 
   /* ── Cookie consent gate ──
      Cùng khuôn bottom-sheet với #infoSheet (bo 24 góc trên, trượt .4s) nhưng
-     z-index cao hơn mọi sheet vì phải nằm trên cùng lúc mở trang, và KHÔNG
-     đóng khi chạm nền — đồng ý cookie phải là hành động chủ động, chạm ra
-     ngoài không được tính là chấp nhận. */
+     z-index cao hơn mọi sheet vì phải nằm trên cùng lúc mở trang.
+     Chạm nền = TẠM ĐÓNG để xem trang (11/08/2026) chứ KHÔNG phải đồng ý:
+     không nhóm cookie nào được bật, tải lại trang là banner hiện lại. */
   #cookieGate { position: fixed; inset: 0; z-index: 400; pointer-events: none; }
   #cookieGate .cg-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); opacity: 0; transition: opacity .4s ease; }
   #cookieGate .cg-panel {
@@ -652,12 +652,16 @@ const CATEGORIES = [
   { img:'b1.jpg',      label:'Làm đẹp'   },
 ];
 
-const CART = [
+/* CART_BASE = bản gốc để dựng lại giỏ khi bấm "Tiếp tục mua sắm" (đặt hàng
+   xong thì CART bị dọn rỗng). CART vẫn là mảng được sửa tại chỗ như cũ. */
+const CART_BASE = [
   { img:'p8-0.jpg', brand:'Versace', name:'Túi da Lou mini',            variant:'Onesize , Black', off:'', was:'', now:'45.066.000 ₫', qty:1 },
   { img:'p5-0.jpg', brand:'Versace', name:'Giày loafer da Manu',        variant:'40 , Black',      off:'', was:'', now:'35.248.000 ₫', qty:1 },
   { img:'p10-0.jpg',brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm', variant:'95 , Black', off:'', was:'', now:'17.575.000 ₫', qty:1 },
   { img:'p2-0.jpg', brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant:'Onesize', off:'', was:'', now:'15.611.000 ₫', qty:1 },
 ];
+const CART = CART_BASE.map(c => ({ ...c }));
+
 
 const SIZES = ['39','40','41','42','43','44'];
 const DISABLED = ['43','44'];
@@ -2112,18 +2116,23 @@ function accOrders() {
 }
 
 /* ── Địa chỉ ── */
+/* Sổ địa chỉ — MỘT nguồn dùng chung cho tab Địa chỉ của trang Tài khoản và
+   bước giao hàng ở checkout. Trước đây 2 chỗ này viết tay 2 bản riêng nên
+   checkout bắt khách đã đăng nhập gõ lại từ đầu. */
+const ADDRESSES = [
+  { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh', def: true },
+  { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh',    def: false },
+];
+
 function accAddress() {
   return `
     <div class="px-5 pt-4 flex flex-col gap-3">
-      <div class="border border-primary rounded-xs p-3 flex flex-col gap-1 relative">
-        <span class="absolute top-3 right-3 text-[11px] text-primary-foreground bg-primary px-2 py-0.5 rounded-full">Mặc định</span>
-        <p class="text-[14px] font-medium leading-5 text-foreground">Nguyễn Văn A · 0909 123 456</p>
-        <p class="text-[13px] leading-5 text-foreground-alt">123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh</p>
-      </div>
-      <div class="border border-border-1 rounded-xs p-3 flex flex-col gap-1">
-        <p class="text-[14px] font-medium leading-5 text-foreground">Nguyễn Văn A · 0909 123 456</p>
-        <p class="text-[13px] leading-5 text-foreground-alt">45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh</p>
-      </div>
+      ${ADDRESSES.map(a => `
+      <div class="border ${a.def ? 'border-primary' : 'border-border-1'} rounded-xs p-3 flex flex-col gap-1 relative">
+        ${a.def ? '<span class="absolute top-3 right-3 text-[11px] text-primary-foreground bg-primary px-2 py-0.5 rounded-full">Mặc định</span>' : ''}
+        <p class="text-[14px] font-medium leading-5 text-foreground">${a.name} · ${a.phone}</p>
+        <p class="text-[13px] leading-5 text-foreground-alt">${a.line}</p>
+      </div>`).join('')}
       <button data-toast="Thêm địa chỉ mới" class="w-full h-11 rounded-xs border border-primary text-foreground text-[14px] font-medium press">+ Thêm địa chỉ mới</button>
     </div>`;
 }
@@ -2846,7 +2855,9 @@ function screenCART() {
       ${ckAuth ? '' : '<button id="delSelected" class="text-[14px] font-medium text-muted-foreground press">Xóa sản phẩm đã chọn</button>'}
     </div>
 
-    <div id="cartList">${CART.map((c, i) => row(c, i)).join('')}</div>
+    <!-- Giỏ rỗng (sau khi đặt hàng xong) dùng lại đúng khối trạng thái rỗng mà
+         refreshCartCount vẫn dựng khi xoá hết item -->
+    <div id="cartList">${CART.length ? CART.map((c, i) => row(c, i)).join('') : cartEmptyHTML()}</div>
 
     <!-- Chỉ hiện khi ĐÃ ĐĂNG NHẬP (multi gift 5) -->
     ${ckAuth ? giftPicker() : ''}
@@ -3244,6 +3255,13 @@ const storeInfo = name => {
    trắng. Cũng là nguồn để phần tóm tắt nhắc lại người nhận sau khi Xác nhận. */
 let ckMode = 'ship', ckCity = '', ckStore = '', ckHome = '';
 let ckName = '', ckPhone = '', ckEmail = '';
+/* Bước giao hàng: ckAddr = chỉ số địa chỉ đã lưu đang chọn, hoặc 'new' khi
+   khách nhập địa chỉ khác. 3 biến ckShip* giữ chữ của form địa chỉ mới để
+   phần tóm tắt in đúng tên khách vừa gõ thay cho chuỗi chết cũ. */
+let ckAddr = 0, ckShipName = '', ckShipPhone = '', ckShipLine = '';
+/* Đã đặt hàng xong: khoá không cho đặt lại đơn thứ hai khi bấm back, và giữ
+   mã đơn vừa sinh để màn Hoàn tất / Chi tiết đơn cùng đọc một nguồn. */
+let ckPlaced = false, ckOrderId = '';
 
 /* gap-2.5 = 10 và px-2 = 8 trong ô nhập: đúng số đo Figma (nhóm field gap 10,
    Input padding 8/8, cao 40, r2, viền #e5e5e5).
@@ -3365,10 +3383,26 @@ function rerenderCheckout(root) {
 }
 
 function screenCHECKOUT() {
+  /* Đã đặt hàng rồi mà quay lại (back vật lý) thì KHÔNG vẽ form nữa — trước
+     đây bấm "Đặt hàng" lần nữa là ra đơn thứ hai, không cảnh báo gì. */
+  if (ckPlaced) return `
+  <div class="w-full" data-scroller>
+    ${navBar({ logoOnly: true })}
+    <div class="px-4 py-10 flex flex-col items-center text-center gap-3">
+      <div class="w-12 h-12 rounded-full border border-primary flex items-center justify-center">${I.tick}</div>
+      <p class="text-[18px] font-medium leading-7 text-foreground">Đơn ${ckOrderId} đã được đặt</p>
+      <p class="text-[14px] leading-5 text-muted-foreground">Đơn hàng đang được xử lý. Bạn không cần đặt lại.</p>
+      <div class="w-full flex flex-col gap-2 pt-2">
+        <button data-order="0" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press">Xem chi tiết đơn hàng</button>
+        <button data-nav="plp" data-reset class="w-full h-12 rounded-xs border border-border text-foreground text-[14px] font-medium press">Tiếp tục mua sắm</button>
+      </div>
+    </div>
+  </div>`;
+
   /* Đăng nhập xong thì router nhảy tới ckStep = 1 (bỏ qua bước địa chỉ). Ở chế
      độ nhận tại cửa hàng, bước 1 là Thanh toán — mà chưa chọn cửa hàng thì
      không được phép nhảy qua, nên kéo về bước 0. */
-  if (ckMode === 'pickup' && !ckStore) ckStep = 0;
+  if (ckMode === 'pickup' && !ckStore) { ckStep = 0; ckMaxStep = 0; }
 
   const notice = ckAuth
     ? `<p class="text-[14px] leading-5 text-foreground">Đăng nhập tài khoản <b class="font-medium">UserOne</b></p>`
@@ -3376,28 +3410,51 @@ function screenCHECKOUT() {
        <p class="text-[14px] leading-5 text-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-medium">1.135 điểm thưởng</b></p>
        <button data-nav="login" class="self-start text-[14px] font-medium leading-5 text-foreground underline press">Đăng nhập</button>`;
 
-  /* ── Section 0: Thông tin giao hàng ── */
-  const s0open = `
-    ${field('Tên','Nhập tên')}
+  /* ── Section 0: Thông tin giao hàng ──
+     Khách ĐÃ ĐĂNG NHẬP thì mở ra là sổ địa chỉ đã lưu (chọn 1 chạm là xong
+     bước này), cuối danh sách mới là "Thêm địa chỉ mới" xổ form 6 ô. Khách
+     vãng lai vẫn thấy form ngay như cũ. */
+  const addrForm = `
+    ${field('Tên','Nhập tên','', { val: ckShipName, key: 'sname', auto: 'given-name' })}
     ${field('Họ','Nhập họ')}
-    ${field('Số điện thoại','0 1234 5678','tel')}
+    ${field('Số điện thoại','0 1234 5678','tel', { val: ckShipPhone, key: 'sphone', auto: 'tel' })}
     ${pickField('Tỉnh , thành phố','Chọn tỉnh / thành phố','province', ckProvince)}
     ${pickField('Phường xã','Chọn phường / xã','ward', ckWard)}
-    ${field('Địa chỉ','Số nhà, tên đường')}
+    ${field('Địa chỉ','Số nhà, tên đường','', { val: ckShipLine, key: 'saddr', auto: 'street-address' })}
     <div class="px-4 pt-1">
       <label class="flex items-center gap-2 press">
-        <span class="chk w-4 h-4 rounded-xs border border-border-3 flex items-center justify-center" data-check>${I.tick}</span>
-        <span class="text-[14px] leading-5 text-foreground">Lưu địa chỉ</span>
+        <span class="chk on w-4 h-4 rounded-xs border border-border-3 flex items-center justify-center" data-check>${I.tick}</span>
+        <span class="text-[14px] leading-5 text-foreground">Lưu vào sổ địa chỉ</span>
       </label>
+    </div>`;
+  const s0open = ckAuth ? `
+    <div class="px-4 py-2 flex flex-col gap-3" id="addrOpts">
+      ${ADDRESSES.map((a, i) => `
+      <button class="opt ${ckAddr === i ? 'on' : ''} w-full flex items-start gap-2 border border-border rounded-xs p-3 text-left press" data-addr="${i}">
+        <span class="radio ${ckAddr === i ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
+          <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+        </span>
+        <span class="flex-1 min-w-0">
+          <span class="block text-[14px] font-medium leading-5 text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="text-[11px] font-normal text-muted-foreground">(Mặc định)</span>' : ''}</span>
+          <span class="block text-[13px] leading-5 text-secondary-foreground">${a.line}</span>
+        </span>
+      </button>`).join('')}
+      <button class="opt ${ckAddr === 'new' ? 'on' : ''} w-full flex items-center gap-2 border border-border rounded-xs p-3 text-left press" data-addr="new">
+        <span class="radio ${ckAddr === 'new' ? 'on' : ''} w-4 h-4 rounded-full border border-border-3 flex items-center justify-center shrink-0">
+          <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+        </span>
+        <span class="text-[14px] font-medium leading-5 text-foreground">+ Thêm địa chỉ mới</span>
+      </button>
     </div>
+    ${ckAddr === 'new' ? addrForm : ''}
+    <div class="px-4 py-4">
+      <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center" data-next="1">Xác nhận</button>
+    </div>` : `
+    ${addrForm}
     <div class="px-4 py-4">
       <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center" data-next="1">Xác nhận</button>
     </div>`;
-  const s0done = `
-    <div class="px-4 py-2 flex flex-col gap-1">
-      <p class="text-[14px] font-medium leading-5 text-foreground">User name - 0 1234 5678</p>
-      <p class="text-[14px] leading-5 text-foreground">123 Nam Kỳ Khởi Nghĩa, Phường 1, Thành phố Hồ Chí Minh</p>
-    </div>`;
+  const s0done = `<div id="ckShipDone" class="px-4 py-2 flex flex-col gap-1">${ckShipDoneHTML()}</div>`;
 
   /* ── Section 0 bản NHẬN TẠI CỬA HÀNG ──
      Thứ tự thao tác: thành phố -> cửa hàng trong thành phố đó -> người nhận.
@@ -3550,7 +3607,8 @@ function screenCHECKOUT() {
 function paintCheckout(root) {
   root.querySelectorAll('.ck-sec').forEach(sec => {
     const i = +sec.dataset.sec;
-    const state = i < ckStep ? 'done' : i === ckStep ? 'open' : 'pending';
+    // đang mở > đã từng xong (kể cả section nằm SAU section đang sửa) > chưa tới
+    const state = i === ckStep ? 'open' : (i <= ckMaxStep ? 'done' : 'pending');
     sec.querySelector('.ck-open').classList.toggle('is-open', state === 'open');
     sec.querySelector('.ck-done').classList.toggle('is-open', state === 'done');
     // bước chưa tới: hàng tiêu đề cao 72 thay vì 56 (xem .ck-sec.is-pending)
@@ -3565,7 +3623,16 @@ function paintCheckout(root) {
      đó cặp nút hiện lại. Bước Thanh toán là section 1 ở luồng nhận tại cửa
      hàng (chỉ 2 section) và section 2 ở luồng giao hàng. */
   const tabs = root.querySelector('#ckModeTabs');
-  if (tabs) tabs.classList.toggle('hidden', ckStep >= (ckMode === 'pickup' ? 1 : 2));
+  if (tabs) tabs.classList.toggle('hidden', ckMaxStep >= (ckMode === 'pickup' ? 1 : 2));
+
+  /* Section đang mở mà TRƯỚC ĐÓ đã xong rồi thì đây là lần sửa lại: nút đổi
+     nhãn "Lưu thay đổi" và bấm xong nhảy thẳng về bước xa nhất, không bắt đi
+     lại từng bước. Đặt ở paintCheckout vì nhãn phụ thuộc trạng thái. */
+  const openSec = root.querySelector(`.ck-sec[data-sec="${ckStep}"] .ck-next`);
+  if (openSec) {
+    openSec.textContent = ckMaxStep > ckStep ? 'Lưu thay đổi' : 'Xác nhận';
+    localizeNew(openSec);
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -3574,9 +3641,10 @@ function paintCheckout(root) {
 function screenDONE() {
   /* Đơn nhận tại cửa hàng thì 2 dòng cuối nói về cửa hàng thay vì vận chuyển */
   const st = storeInfo(ckStore);
+  const oid = ckOrderId || 'DAFC102939';   // mã sinh lúc bấm Đặt hàng (placeOrder)
   const rows = ckMode === 'pickup'
-    ? [['Mã đơn hàng','#MG-2026-0807'],['Tổng cộng','113,500,000đ'],['Nhận tại', st ? st.name : 'Cửa hàng DAFC'],['Sẵn sàng nhận','Từ 12/08']]
-    : [['Mã đơn hàng','#MG-2026-0807'],['Tổng cộng','113,500,000đ'],['Vận chuyển','Miễn phí'],['Dự kiến giao','12 – 16/08']];
+    ? [['Mã đơn hàng', oid],['Tổng cộng','113,500,000đ'],['Nhận tại', st ? st.name : 'Cửa hàng DAFC'],['Sẵn sàng nhận','Từ 12/08']]
+    : [['Mã đơn hàng', oid],['Tổng cộng','113,500,000đ'],['Vận chuyển','Miễn phí'],['Dự kiến giao','12 – 16/08']];
   return `
   <div class="w-full relative" data-scroller>
     <div id="confettiHost" class="absolute inset-x-0 top-0 h-full pointer-events-none overflow-hidden z-10"></div>
@@ -3608,7 +3676,7 @@ function screenDONE() {
 
       <div class="w-full flex flex-col gap-2.5 rise">
         <button data-nav="plp" data-reset class="w-full text-primary-foreground text-[13px] font-semibold py-3.5 rounded-xs tracking-wider bg-primary press">Tiếp tục mua sắm</button>
-        <button data-toast="Đang mở trang theo dõi" class="w-full text-[13px] font-medium py-3.5 rounded-xs tracking-wider border border-border text-mid-alt press hover:bg-accent-0 transition-colors">Theo dõi đơn hàng</button>
+        <button data-order="0" class="w-full text-[13px] font-medium py-3.5 rounded-xs tracking-wider border border-border text-mid-alt press hover:bg-accent-0 transition-colors">Theo dõi đơn hàng</button>
       </div>
     </div>
   </div>`;
@@ -4323,7 +4391,10 @@ function renderPlpGrid(root) {
   grid.innerHTML = sortedProducts().map(({ p, i }) => card(p, i)).join('');
   wireProductCards(grid);
 }
-let ckAuth = false, ckStep = 0;   // checkout: đã đăng nhập? / đang mở section nào
+/* ckStep = section đang mở · ckMaxStep = section XA NHẤT đã hoàn tất.
+   Tách 2 biến để bấm "Thay đổi" ở bước 1 không kéo bước 2-3 về "chưa làm":
+   trạng thái giờ tính theo ckMaxStep, còn ckStep chỉ nói đang mở cái nào. */
+let ckAuth = false, ckStep = 0, ckMaxStep = 0;
 let vatType = 'personal';         // 'personal' | 'company' — loại xuất hoá đơn VAT (Figma 3028:47246, mặc định "Cá nhân")
 let loginFrom = null;             // mở login từ màn nào
 let scrollCleanups = [];          // gỡ listener khi đổi màn
@@ -4696,6 +4767,10 @@ const I18N = {
   // ── Nhận tại cửa hàng (checkout) ──
   'Nhận tại cửa hàng':'Store pickup', 'Thành phố':'City', 'Chọn thành phố':'Select city',
   'Email':'Email', 'Tỉnh thành sinh sống':'Province of residence',
+  'Lưu thay đổi':'Save changes', 'Lưu vào sổ địa chỉ':'Save to address book',
+  'Chưa có thông tin người nhận':'No recipient details yet',
+  'Đơn hàng đang được xử lý. Bạn không cần đặt lại.':'Your order is being processed. No need to place it again.',
+  'Xem chi tiết đơn hàng':'View order details',
   'Thông tin người nhận':'Recipient details',
   'Bước 1/3 · Chọn thành phố':'Step 1/3 · Choose a city',
   'Bước 2/3 · Chọn cửa hàng':'Step 2/3 · Choose a store',
@@ -4730,6 +4805,7 @@ const I18N = {
   'Cookie cần thiết không thể tắt':'Essential cookies can’t be turned off',
   'Đã chấp nhận tất cả cookie':'All cookies accepted',
   'Đã từ chối cookies tùy chọn':'Optional cookies rejected',
+  'Bạn có thể chọn cookie bất kỳ lúc nào ở Chính sách Cookie':'You can set your cookie choices anytime in the Cookie Policy',
 
   // ── Làm đẹp: cây danh mục 2 cấp (Filter - Beauty cate demo.xlsx) ──
   // EN = nguyên văn cột Category / Product Type trong file.
@@ -4988,6 +5064,45 @@ function validatePickup(root) {
   return !first;
 }
 
+/* ── Chốt đơn ──
+   Sinh mã theo đúng hệ DAFC1029xx của màn Đơn hàng (trước đây màn Hoàn tất in
+   cứng #MG-2026-0807, không khớp với bất kỳ đơn nào trong ORDERS), đẩy đơn mới
+   lên đầu ORDERS để tab Đơn hàng thấy ngay, rồi DỌN GIỎ. */
+function placeOrder() {
+  ckPlaced = true;
+  ckOrderId = 'DAFC1029' + (39 + ORDERS.length - 3);
+  const a = (ckAuth && ckAddr !== 'new') ? ADDRESSES[ckAddr] : null;
+  const st = storeInfo(ckStore);
+  ORDERS.unshift({
+    id: ckOrderId, status: 'Đã xác nhận', tone: 'info', date: '11/08/2026',
+    items: CART.map(c => ({ img: c.img, name: c.name, variant: c.variant, qty: c.qty, price: c.now })),
+    sub: '113.500.000 ₫', ship: 'Miễn phí', discount: '', total: '113.500.000 ₫',
+    payment: 'Thẻ tín dụng/Ghi nợ',
+    method: ckMode === 'pickup' ? 'Nhận tại cửa hàng' : 'Giao hàng thông thường',
+    address: ckMode === 'pickup'
+      ? { name: ckName || 'Khách nhận tại cửa hàng', phone: ckPhone, line: st ? `${st.name} · ${st.addr}` : '' }
+      : { name: a ? a.name : ckShipName, phone: a ? a.phone : ckShipPhone,
+          line: a ? a.line : [ckShipLine, ckWard, ckProvince].filter(Boolean).join(', ') },
+    steps: 1,
+  });
+  // dọn giỏ: badge về 0 và màn Giỏ hàng hiện trạng thái rỗng
+  CART.length = 0;
+  cartQty = 0;
+  document.querySelectorAll('.cart-badge').forEach(b => b.textContent = 0);
+}
+
+/* Tóm tắt bước giao hàng — đọc từ sổ địa chỉ hoặc từ chữ khách vừa gõ, thay
+   cho chuỗi chết "User name - 0 1234 5678" trước đây (dù gõ gì cũng hiện y
+   như vậy). Dùng chung cho lúc render màn và lúc cập nhật tại chỗ. */
+function ckShipDoneHTML() {
+  const a = (ckAuth && ckAddr !== 'new') ? ADDRESSES[ckAddr] : null;
+  const name = a ? `${a.name} · ${a.phone}` : [ckShipName, ckShipPhone].filter(Boolean).join(' · ');
+  const line = a ? a.line : [ckShipLine, ckWard, ckProvince].filter(Boolean).join(', ');
+  return `
+    <p class="text-[14px] font-medium leading-5 text-foreground">${name || 'Chưa có thông tin người nhận'}</p>
+    ${line ? `<p class="text-[14px] leading-5 text-foreground">${line}</p>` : ''}`;
+}
+
 /* Phần tóm tắt sau khi Xác nhận: nhắc lại NGƯỜI NHẬN rồi mới tới cửa hàng —
    trước đây chỉ hiện mỗi cửa hàng, tức là gõ họ tên/SĐT xong bấm Xác nhận là
    không còn thấy chúng ở đâu nữa. Dùng chung 1 hàm cho cả lúc render màn
@@ -5156,8 +5271,20 @@ function wire(root) {
     el.addEventListener('click', e => {
       e.stopPropagation();
       const t = el.dataset.nav;
-      if (el.hasAttribute('data-reset')) { cartQty = 4; history = []; ckAuth = false; ckStep = 0; ckMode = 'ship'; ckCity = ''; ckStore = ''; ckHome = ''; ckName = ''; ckPhone = ''; ckEmail = ''; }
-      if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = ckAuth ? 1 : 0; }
+      /* Reset để lặp lại demo: KHÔNG đụng ckAuth nữa — trước đây nút "Tiếp tục
+         mua sắm" ở màn Hoàn tất âm thầm đăng xuất người đang đăng nhập. */
+      if (el.hasAttribute('data-reset')) {
+        cartQty = 4; CART.length = 0; CART.push(...CART_BASE.map(c => ({ ...c })));
+        history = []; ckStep = 0; ckMaxStep = 0; ckMode = 'ship';
+        ckCity = ''; ckStore = ''; ckHome = ''; ckName = ''; ckPhone = ''; ckEmail = '';
+        ckAddr = 0; ckShipName = ''; ckShipPhone = ''; ckShipLine = '';
+        ckPlaced = false; ckOrderId = '';
+      }
+      /* Bấm "Đặt hàng": chốt đơn lại. Sinh mã theo hệ DAFC1029xx của màn Đơn
+         hàng, đẩy đơn vào ORDERS để tab Đơn hàng thấy ngay, rồi DỌN GIỎ —
+         trước đây đặt xong quay lại giỏ vẫn thấy đủ 4 món "vừa mua". */
+      if (t === 'done' && !ckPlaced) placeOrder();
+      if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = ckAuth ? 1 : 0; ckMaxStep = ckStep; }
       if (t === 'back') { window.history.back(); return; }
       if (el.hasAttribute('data-loading')) {
         const txt = el.innerHTML;
@@ -5283,7 +5410,7 @@ function wire(root) {
   // Hoàn tất đăng ký (sau OTP): tạo tài khoản -> đăng nhập luôn, quay về màn gọi
   root.querySelectorAll('[data-reg-done]').forEach(btn => {
     btn.addEventListener('click', () => {
-      ckAuth = true; ckStep = 1;
+      ckAuth = true; ckStep = 1; ckMaxStep = Math.max(ckMaxStep, 1);
       btn.innerHTML = spinnerSVG();
       const back = loginFrom || 'checkout';
       setTimeout(() => { authView = 'login'; go(back); toast('Đăng ký thành công'); }, 700);
@@ -5292,7 +5419,7 @@ function wire(root) {
 
     root.querySelectorAll('[data-login-submit]').forEach(btn => {
     btn.addEventListener('click', () => {
-      ckAuth = true; ckStep = 1;
+      ckAuth = true; ckStep = 1; ckMaxStep = Math.max(ckMaxStep, 1);
       const html = btn.innerHTML;
       btn.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
       const back = loginFrom || 'checkout'; // luôn trả về đúng màn đã mở đăng nhập, không ép về checkout
@@ -5338,7 +5465,8 @@ function wire(root) {
     /* 3 ô người nhận ghi thẳng vào state mỗi lần gõ — nhờ vậy đổi thành phố /
        cửa hàng (dựng lại phần thân) không làm mất chữ, và phần tóm tắt sau khi
        Xác nhận có dữ liệu để nhắc lại. */
-    const CKF = { name: v => ckName = v, phone: v => ckPhone = v, email: v => ckEmail = v };
+    const CKF = { name: v => ckName = v, phone: v => ckPhone = v, email: v => ckEmail = v,
+                  sname: v => ckShipName = v, sphone: v => ckShipPhone = v, saddr: v => ckShipLine = v };
     root.querySelectorAll('[data-ckf]').forEach(inp => {
       inp.addEventListener('input', () => {
         CKF[inp.dataset.ckf] && CKF[inp.dataset.ckf](inp.value);
@@ -5354,7 +5482,13 @@ function wire(root) {
           if (!validatePickup(root)) return;
           paintStore(root);   // đồng bộ tóm tắt với chữ vừa gõ trước khi thu gọn
         }
-        ckStep = +btn.dataset.next;
+        // bước giao hàng: đồng bộ tóm tắt với địa chỉ/chữ vừa nhập
+        const shipDone = root.querySelector('#ckShipDone');
+        if (shipDone) { shipDone.innerHTML = ckShipDoneHTML(); localizeNew(shipDone); }
+        // đang sửa lại một bước đã xong -> nhảy thẳng về bước xa nhất
+        const editing = ckMaxStep > ckStep;
+        ckStep = editing ? ckMaxStep : +btn.dataset.next;
+        ckMaxStep = Math.max(ckMaxStep, ckStep);
         paintCheckout(root);
         setTimeout(() => scrollTo(ckStep), 120);
       });
@@ -5365,11 +5499,30 @@ function wire(root) {
       btn.addEventListener('click', () => {
         if (ckMode === btn.dataset.ckMode) return;
         ckMode = btn.dataset.ckMode;
-        ckStep = 0;
+        ckStep = 0; ckMaxStep = 0;
         rerenderCheckout(root);
         window.scrollTo(0, 0);
       });
     });
+    /* Sổ địa chỉ: chọn địa chỉ đã lưu chỉ cần đổi thẻ đang chọn; chuyển sang
+       (hoặc rời khỏi) "Thêm địa chỉ mới" thì phải dựng lại vì form 6 ô xổ ra /
+       thu vào. Tóm tắt cập nhật ngay để nút Xác nhận thu gọn là thấy đúng. */
+    root.querySelectorAll('#addrOpts [data-addr]').forEach(o => {
+      o.addEventListener('click', () => {
+        const v = o.dataset.addr === 'new' ? 'new' : +o.dataset.addr;
+        if (v === ckAddr) return;
+        const formToggles = (v === 'new') !== (ckAddr === 'new');
+        ckAddr = v;
+        if (formToggles) { rerenderCheckout(root); return; }
+        root.querySelectorAll('#addrOpts [data-addr]').forEach(x => {
+          x.classList.remove('on'); x.querySelector('.radio').classList.remove('on');
+        });
+        o.classList.add('on'); o.querySelector('.radio').classList.add('on');
+        const done = root.querySelector('#ckShipDone');
+        if (done) { done.innerHTML = ckShipDoneHTML(); localizeNew(done); }
+      });
+    });
+
     /* Danh sách cửa hàng: lần chọn ĐẦU TIÊN phải dựng lại để lộ khối thông tin
        người nhận; các lần đổi sau chỉ chuyển thẻ đang chọn — giữ nguyên chữ
        người dùng đã gõ ở ô SĐT/email. */
@@ -5981,6 +6134,15 @@ function refreshCartSummary(root) {
   if (ct) ct.textContent = total.toLocaleString('en-US') + 'đ';
 }
 
+/* Trạng thái giỏ rỗng — tách ra hàm riêng vì giờ có 2 đường tới: xoá hết item
+   (refreshCartCount) và đặt hàng xong nên giỏ được dọn (screenCART). */
+function cartEmptyHTML() {
+  return `<div class="flex flex-col items-center gap-3 py-16 px-8 text-center">
+      ${I.bag}<p class="text-[15px] font-medium text-foreground">Giỏ hàng trống</p>
+      <p class="text-[13px] text-muted-foreground">Hãy khám phá bộ sưu tập mới nhất.</p>
+      <button data-nav="plp" class="mt-2 h-10 px-6 bg-primary text-primary-foreground text-[13px] font-semibold rounded-xs press">Tiếp tục mua sắm</button></div>`;
+}
+
 function refreshCartCount(root) {
   const n = root.querySelectorAll('.cart-row').length;
   const el = root.querySelector('#cartCount');
@@ -5988,11 +6150,7 @@ function refreshCartCount(root) {
   cartQty = n;
   document.querySelectorAll('.cart-badge').forEach(b => b.textContent = n);
   if (n === 0) {
-    const list = root.querySelector('#cartList');
-    list.innerHTML = `<div class="flex flex-col items-center gap-3 py-16 px-8 text-center">
-      ${I.bag}<p class="text-[15px] font-medium text-foreground">Giỏ hàng trống</p>
-      <p class="text-[13px] text-muted-foreground">Hãy khám phá bộ sưu tập mới nhất.</p>
-      <button data-nav="plp" class="mt-2 h-10 px-6 bg-primary text-primary-foreground text-[13px] font-semibold rounded-xs press">Tiếp tục mua sắm</button></div>`;
+    root.querySelector('#cartList').innerHTML = cartEmptyHTML();
     wire(root);
   }
 }
@@ -6685,7 +6843,7 @@ document.body.insertAdjacentHTML('beforeend', `
     btn.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
     setTimeout(() => {
       btn.innerHTML = html;
-      ckAuth = true; ckStep = 1;
+      ckAuth = true; ckStep = 1; ckMaxStep = Math.max(ckMaxStep, 1);
       closeLP();
       go('checkout');
       toast('Đăng nhập thành công');
@@ -7017,6 +7175,15 @@ document.body.insertAdjacentHTML('beforeend', `
   g.querySelector('[data-cg-save]').addEventListener('click', () => {
     const n = chosen(); closeG();
     toast(n === sws.length ? 'Đã chấp nhận tất cả cookie' : `Đã lưu tuỳ chọn cookie · ${n}/${sws.length} nhóm`);
+  });
+
+  /* Chạm nền = TẠM ĐÓNG để xem trang, KHÔNG tính là đồng ý: không đụng tới
+     công tắc nhóm nào, chỉ đóng banner và nhả khoá cuộn. Đưa view về "intro"
+     để lần hiện lại bắt đầu từ đầu thay vì nằm giữa màn tuỳ chọn. */
+  g.querySelector('.cg-backdrop').addEventListener('click', () => {
+    closeG();
+    view('intro');
+    toast('Bạn có thể chọn cookie bất kỳ lúc nào ở Chính sách Cookie');
   });
 
   localizeNew(g);

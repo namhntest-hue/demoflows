@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Demo — Đề xuất nâng cấp Checkout (đã lọc theo phản hồi)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* Trang demo dựng bằng CSS viết tay (không dùng class Tailwind) để không phụ
+     thuộc bản tailwind.css đã build. Màu lấy đúng token của app qua tokens.css. */
+  :root{--ink:#0a0a0a;--ink-2:#262626;--muted:#737373;--line:#e5e5e5;--line-2:#f5f5f5;
+        --line-3:#d4d4d4;--red:#d62845;--ok:#0a7c42}
+  *{box-sizing:border-box}
+  body{margin:0;background:#f4f4f5;font-family:Montserrat,sans-serif;color:var(--ink)}
+  .wrap{max-width:1360px;margin:0 auto;padding:32px 24px 80px}
+  h1{font-size:22px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:14px;line-height:22px;color:#52525b;margin:0 0 10px;max-width:900px}
+  .warn{font-size:13px;line-height:20px;color:#7c2d12;background:#fff7ed;border:1px solid #fed7aa;
+        border-radius:4px;padding:10px 12px;margin:0 0 22px;max-width:900px}
+  .dropped{background:#fff;border:1px solid #e4e4e7;border-radius:10px;padding:16px 18px;margin:0 0 30px;max-width:900px}
+  .dropped h3{font-size:13px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .dropped li{font-size:13px;line-height:21px;margin-bottom:6px}
+  .dropped li b{font-weight:500}
+  .dropped li span{color:var(--muted)}
+
+  .secttl{display:flex;align-items:baseline;gap:10px;margin:0 0 16px}
+  .secttl h2{font-size:17px;margin:0}
+  .secttl span{font-size:13px;color:var(--muted)}
+  .grid{display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start;margin-bottom:38px}
+  .card{flex:0 0 auto;width:390px;background:#fff;border:1px solid #e4e4e7;border-radius:12px;
+        overflow:hidden;box-shadow:0 6px 22px rgba(0,0,0,.06)}
+  .card.ok{border-color:#bbf0d0}
+  .card > .hd{padding:14px 16px 12px;border-bottom:1px solid var(--line-2)}
+  .card .n{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .card.ok .n{color:var(--ok)}
+  .card h2{font-size:15px;font-weight:600;margin:4px 0 6px}
+  .card .now{font-size:12px;line-height:18px;color:#52525b;margin:0}
+  .card .now b{color:var(--red);font-weight:500}
+  .tags{display:flex;gap:6px;margin-top:8px}
+  .tag{font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:2px;border:1px solid var(--line)}
+  .tag.hi{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tag.ok{background:var(--ok);color:#fff;border-color:var(--ok)}
+  .tag.ef{color:var(--muted)}
+  .stage{padding:14px 16px 18px;background:#fafafa;border-top:1px solid var(--line-2)}
+  .stage .cap{font-size:11px;color:var(--muted);margin:0 0 8px}
+  .phone{background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+
+  /* ── Bộ phận dùng lại, bám đúng số đo app ── */
+  .lbl{font-size:14px;font-weight:500;line-height:20px;display:block;margin-bottom:10px}
+  .inp{width:100%;height:40px;border:1px solid var(--line);border-radius:2px;padding:0 8px;font:400 14px Montserrat;color:var(--ink);background:#fff}
+  .inp::placeholder{color:var(--muted)}
+  .cta{width:100%;height:48px;border:0;border-radius:2px;background:var(--ink);color:#fafafa;font:400 16px Montserrat;cursor:pointer}
+  .cta[disabled]{background:#8a8a8a;cursor:not-allowed}
+  .ghost{width:100%;height:44px;border:1px solid var(--line);background:#fff;border-radius:2px;font:500 13px Montserrat;cursor:pointer}
+  .opt{width:100%;display:flex;align-items:flex-start;gap:8px;border:1px solid var(--line);border-radius:2px;
+       padding:12px;text-align:left;background:#fff;cursor:pointer;font-family:inherit;transition:border-color .15s}
+  .opt + .opt{margin-top:10px}
+  .opt.on{border-color:var(--ink-2)}
+  .opt .rd{width:16px;height:16px;border:1px solid var(--line-3);border-radius:50%;flex:0 0 auto;margin-top:2px;
+           display:flex;align-items:center;justify-content:center}
+  .opt.on .rd::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--ink)}
+  .opt .t{font-size:14px;font-weight:500;line-height:20px}
+  .opt .d{font-size:13px;line-height:19px;color:var(--ink-2);margin-top:2px}
+  .opt .d2{font-size:13px;line-height:19px;color:var(--muted)}
+  .opt .badge{font-size:10px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);
+              padding:2px 6px;border-radius:2px;color:var(--muted);margin-left:8px}
+  .row{display:flex;align-items:center;justify-content:space-between;height:36px;font-size:14px}
+  .row .k{color:var(--muted)}
+  .row.tot{height:48px;font-size:16px;font-weight:500;border-top:1px solid var(--line);margin-top:4px}
+
+  .sec{border-top:1px solid var(--line-2);padding:8px 0}
+  .sec .hd2{height:44px;display:flex;align-items:center;justify-content:space-between}
+  .sec .ttl{font-size:16px;font-weight:500}
+  .sec .chg{font-size:14px;background:none;border:0;cursor:pointer;font-family:inherit;color:var(--muted);
+            text-decoration:underline;text-underline-offset:3px}
+  .sec .sum{font-size:14px;line-height:20px;color:var(--ink);margin:0}
+  .sec .sum span{display:block;color:var(--muted);font-size:13px}
+  .sec.pending .ttl{opacity:.4}
+
+  .placed{border:1px solid var(--line);border-radius:2px;padding:16px;text-align:center}
+  .placed .ok{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--ok);margin:0 auto 10px;
+              display:flex;align-items:center;justify-content:center;color:var(--ok);font-size:18px}
+  .placed h3{font-size:15px;margin:0 0 4px}
+  .placed p{font-size:13px;color:var(--muted);margin:0 0 14px}
+
+  .sumtbl{background:#fff;border:1px solid #e4e4e7;border-radius:10px;padding:20px 22px;margin-top:10px}
+  .sumtbl h2{font-size:16px;margin:0 0 12px}
+  table{width:100%;border-collapse:collapse;font-size:13px;line-height:20px}
+  th{text-align:left;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:8px 10px 8px 0;border-bottom:1px solid var(--line)}
+  td{padding:9px 10px 9px 0;border-bottom:1px solid var(--line-2);vertical-align:top}
+  td.c{width:96px;white-space:nowrap}
+  .pill{display:inline-block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:2px;border:1px solid var(--line)}
+  .pill.hi{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .pill.ok{background:var(--ok);color:#fff;border-color:var(--ok)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Đề xuất nâng cấp Checkout — bản đã lọc</h1>
+  <p class="lede">Vòng 1 đưa ra 8 đề xuất, bạn đã duyệt: <b>giữ 3</b>, <b>bỏ 5</b>. Trang này giữ đúng 3 cái được duyệt (đã chỉnh theo góp ý) và bổ sung 5 đề xuất <b>mới</b> chưa qua duyệt, tách riêng ở nhóm dưới.</p>
+  <p class="warn"><b>Chưa áp vào app.</b> File này độc lập — <code>index.html</code> và <code>desktop.html</code> không đổi một dòng nào.</p>
+
+  <div class="dropped">
+    <h3>5 đề xuất đã bỏ theo phản hồi</h3>
+    <ul>
+      <li><b>Thanh tiến độ 3 bước</b> — <span>chưa cần thiết.</span></li>
+      <li><b>Đặt lịch nhận tại boutique (ngày + khung giờ)</b> — <span>giữ cơ chế trữ 3 ngày; cửa hàng không đông tới mức phải hẹn giờ.</span></li>
+      <li><b>Gói quà cao cấp + thiệp</b> — <span>chưa có tính năng này trong vận hành thật. <i>Lưu ý:</i> trang khuyến mãi đang hứa “Chọn Gói quà tặng ở bước thanh toán” — nên gỡ câu đó khỏi promo để khỏi hứa suông.</span></li>
+      <li><b>Chi tiết từng phương thức + lưu thẻ</b> — <span>thanh toán qua dịch vụ bên thứ ba nên không lưu thẻ. <i>Vẫn nên dọn:</i> handler <code>.pay-detail</code> trong code đang chờ một phần tử không bao giờ tồn tại — code chết, xoá đi.</span></li>
+      <li><b>Bảng ưu đãi mang từ giỏ sang</b> — <span>điểm thưởng đã áp sẵn khi đăng nhập. <i>Còn lại một việc thật:</i> checkout vẫn in cứng <code>113,500,000đ</code> ở 5 chỗ nên không khớp con số 112.260.000đ mà giỏ đang hiện sau khi trừ điểm — xem dòng cuối bảng tổng hợp.</span></li>
+    </ul>
+  </div>
+
+  <div class="secttl"><h2>Đã duyệt — 3 đề xuất</h2><span>bấm thử được</span></div>
+  <div class="grid" id="gridOk"></div>
+
+  <div class="secttl"><h2>Mới, chờ bạn duyệt — 5 đề xuất</h2><span>từ vòng quét thứ hai</span></div>
+  <div class="grid" id="gridNew"></div>
+
+  <div class="sumtbl">
+    <h2>Tổng hợp — gồm cả mục chưa dựng demo</h2>
+    <table>
+      <thead><tr><th>Đề xuất</th><th class="c">Trạng thái</th><th class="c">Công</th><th>Ghi chú</th></tr></thead>
+      <tbody id="tbl"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const A = 'assets/';
+/* $() chỉ trả về THẺ GỐC ĐẦU TIÊN — muốn chèn nhiều thẻ liền nhau phải dùng add() */
+const $ = (h) => { const d = document.createElement('div'); d.innerHTML = h.trim(); return d.firstElementChild; };
+const add = (p, h) => p.insertAdjacentHTML('beforeend', h);
+const money = n => n.toLocaleString('vi-VN') + 'đ';
+
+/* ══ ĐÃ DUYỆT ══════════════════════════════════════════════════════════ */
+const OK = [
+{
+  n:'01', title:'Sửa một bước không đẩy lùi các bước sau',
+  now:'Bấm “Thay đổi” ở bước 1 kéo <code>ckStep</code> về 0, nên bước 2 và 3 <b>tụt hết về trạng thái chưa làm</b> — tóm tắt bị thu lại, phải bấm Xác nhận lại từng bước dù không đổi gì.',
+  effort:'vừa',
+  build(s){
+    const D=[{t:'Thông tin giao hàng',v:'Nguyễn Văn A - 0912 345 678<span>123 Nam Kỳ Khởi Nghĩa, P. Bến Thành, TP.HCM</span>'},
+             {t:'Phương thức vận chuyển',v:'Giao hàng thông thường<span>Nhận hàng 14 – 16/08</span>'},
+             {t:'Thanh toán',v:'Thẻ tín dụng/Ghi nợ<span>Chuyển tới cổng thanh toán khi xác nhận</span>'}];
+    let cur=2, max=2;
+    const el=$('<div></div>');
+    const paint=()=>{
+      el.innerHTML='';
+      D.forEach((d,i)=>{
+        const st = i===cur?'open':(i<=max?'done':'pending');
+        const sec=$(`<div class="sec ${st}">
+          <div class="hd2"><span class="ttl">${i+1}. ${d.t}</span>
+          ${st==='done'?'<button class="chg">Thay đổi</button>':''}</div>
+          ${st==='done'?`<p class="sum">${d.v}</p>`:''}
+          ${st==='open'?`<p class="sum" style="color:var(--muted)">— đang mở để chỉnh sửa —</p><div style="height:8px"></div><button class="cta">Lưu thay đổi</button>`:''}
+        </div>`);
+        el.appendChild(sec);
+        const chg=sec.querySelector('.chg'); if(chg) chg.addEventListener('click',()=>{cur=i;paint();});
+        const cta=sec.querySelector('.cta'); if(cta) cta.addEventListener('click',()=>{max=Math.max(max,i);cur=max;paint();});
+      });
+      add(el, `<p style="font-size:12px;color:var(--muted);margin:10px 0 0">Đang mở bước ${cur+1}. Hai bước kia <b>vẫn giữ tóm tắt</b>, không phải làm lại. Nút đổi nhãn thành “Lưu thay đổi” và nhảy thẳng về bước xa nhất đã đạt.</p>`);
+    };
+    paint(); s.appendChild(el);
+  }
+},
+{
+  n:'02', title:'Sổ địa chỉ đã lưu (khách đã đăng nhập)',
+  now:'Trang Tài khoản có sẵn 2 địa chỉ kèm badge “Mặc định”, nhưng checkout <b>không đọc tới</b>: khách đăng nhập vẫn phải gõ tay 6 ô. Tóm tắt sau đó lại hardcode <b>“User name - 0 1234 5678”</b>.',
+  effort:'vừa',
+  build(s){
+    const AD=[{n:'Nguyễn Văn A',p:'0909 123 456',a:'123 Đồng Khởi, Phường Bến Nghé, TP. Hồ Chí Minh',d:true},
+              {n:'Văn phòng DAFC',p:'0912 345 678',a:'45 Lê Lợi, Phường Bến Thành, TP. Hồ Chí Minh',d:false}];
+    let sel=0, other=false;
+    const el=$('<div></div>');
+    const paint=()=>{
+      el.innerHTML='';
+      AD.forEach((a,i)=>{
+        const o=$(`<button class="opt ${sel===i&&!other?'on':''}"><span class="rd"></span>
+          <span style="flex:1"><span class="t">${a.n} · ${a.p}${a.d?'<span class="badge">Mặc định</span>':''}</span>
+          <span class="d">${a.a}</span></span></button>`);
+        o.addEventListener('click',()=>{sel=i;other=false;paint();});
+        el.appendChild(o);
+      });
+      /* Theo góp ý: đổi "Giao đến địa chỉ khác" -> "Thêm địa chỉ mới" (có dấu +,
+         đúng ngôn ngữ của tab Địa chỉ trong trang Tài khoản) */
+      const o2=$(`<button class="opt ${other?'on':''}" style="margin-top:10px"><span class="rd"></span>
+        <span class="t">+ Thêm địa chỉ mới</span></button>`);
+      o2.addEventListener('click',()=>{other=true;paint();});
+      el.appendChild(o2);
+      if(other) add(el, `<div style="margin-top:12px">
+        <label class="lbl">Họ và tên</label><input class="inp" placeholder="Nhập họ và tên">
+        <div style="height:12px"></div>
+        <label class="lbl">Số điện thoại</label><input class="inp" placeholder="0 1234 5678">
+        <div style="height:12px"></div>
+        <label class="lbl">Địa chỉ</label><input class="inp" placeholder="Số nhà, tên đường">
+        <div style="height:10px"></div>
+        <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" checked> Lưu vào sổ địa chỉ</label></div>`);
+      add(el, `<div style="height:14px"></div><button class="cta">Xác nhận</button>
+        <p style="font-size:12px;color:var(--muted);margin:10px 0 0">Chọn địa chỉ có sẵn là xong bước này trong một chạm; tóm tắt lấy đúng tên/SĐT thật thay cho “User name - 0 1234 5678”.</p>`);
+    };
+    paint(); s.appendChild(el);
+  }
+},
+{
+  n:'03', title:'Đặt xong thì khoá đơn, dọn giỏ, không đăng xuất ngầm',
+  now:'Bấm back từ màn Hoàn tất là quay lại checkout <b>nguyên trạng và đặt được đơn thứ hai</b>. Giỏ hàng không bao giờ được dọn (vẫn đủ 4 món “vừa mua”), còn nút “Tiếp tục mua sắm” thì <b>âm thầm đăng xuất</b>.',
+  effort:'vừa',
+  build(s){
+    let placed=false;
+    const el=$('<div></div>');
+    const paint=()=>{
+      el.innerHTML='';
+      if(!placed){
+        add(el, `<div class="row"><span class="k">Tổng cộng</span><span style="font-weight:500">${money(112260000)}</span></div>
+                 <div style="height:10px"></div>`);
+        const btn=$('<button class="cta">Đặt hàng</button>');
+        btn.addEventListener('click',()=>{placed=true;paint();});
+        el.appendChild(btn);
+      } else {
+        add(el, `<div class="placed">
+          <div class="ok">✓</div><h3>Đơn DAFC102939 đã được đặt</h3>
+          <p>Giỏ hàng đã dọn · Bạn vẫn đang đăng nhập</p>
+          <button class="ghost" style="margin-bottom:8px">Xem chi tiết đơn hàng</button>
+          <button class="ghost" id="again">Tiếp tục mua sắm</button></div>
+          <p style="font-size:12px;color:var(--muted);margin:10px 0 0">Quay lại trang thanh toán sẽ thấy đúng thẻ này thay vì form trống — không đặt trùng được. Mã đơn sinh theo hệ <b>DAFC1029xx</b> và đơn xuất hiện luôn trong tab Đơn hàng.</p>`);
+        el.querySelector('#again').addEventListener('click',()=>{placed=false;paint();});
+      }
+    };
+    paint(); s.appendChild(el);
+  }
+},
+];
+
+/* ══ MỚI — CHỜ DUYỆT ═══════════════════════════════════════════════════ */
+const NEW = [
+{
+  n:'04', title:'Ngày giao có thật — và ship nhanh phải nhanh hơn thấy được',
+  now:'Hằng <code>ETA</code> là chuỗi cứng <b>“14/07 – 18/07”</b> (đã quá hạn so với mốc demo 08/2026) và <b>hiện y hệt nhau ở cả 2 lựa chọn</b> vận chuyển — trả thêm 25.000đ mà ngày không đổi. Màn Hoàn tất lại ghi “12 – 16/08”, mâu thuẫn với chính nó.',
+  effort:'nhỏ',
+  build(s){
+    const OPT=[{id:'std',t:'Giao hàng thông thường',p:'Miễn phí',d:'14 – 16/08'},
+               {id:'fast',t:'Giao hàng nhanh',p:'25.000đ',d:'12 – 13/08'}];
+    let cur='std';
+    const el=$('<div></div>');
+    const paint=()=>{
+      el.innerHTML='';
+      OPT.forEach(o=>{
+        const b=$(`<button class="opt ${cur===o.id?'on':''}"><span class="rd"></span>
+          <span style="flex:1"><span class="t">${o.t} — ${o.p}</span>
+          <span class="d">Dự kiến nhận <b>${o.d}</b></span>
+          ${cur===o.id?'<span class="d2">Giao trong khung 9:00–18:00, shipper gọi trước 30 phút</span>':''}</span></button>`);
+        b.addEventListener('click',()=>{cur=o.id;paint();});
+        el.appendChild(b);
+      });
+      const o=OPT.find(x=>x.id===cur);
+      add(el, `<div style="height:12px"></div>
+        <div class="row"><span class="k">Giao hàng</span><span>${o.p}</span></div>
+        <div class="row"><span class="k">Dự kiến nhận</span><span>${o.d}</span></div>
+        <p style="font-size:12px;color:var(--muted);margin:8px 0 0">Ngày tính từ hôm nay bằng một helper chung — tóm tắt, màn Hoàn tất và cột phải desktop đọc cùng một nguồn nên không lệch nhau được.</p>`);
+    };
+    paint(); s.appendChild(el);
+  }
+},
+{
+  n:'05', title:'Thẻ chốt đơn ngay trên nút Đặt hàng',
+  now:'Khối “Giỏ hàng của bạn” mặc định <b>đóng</b> và nằm tít đầu màn; tới lúc bấm Đặt hàng khách <b>không còn thấy mình mua gì, giao cho ai</b> — với đơn ~112 triệu thì đây là khoảnh khắc dễ chột dạ nhất.',
+  effort:'vừa',
+  build(s){
+    const IM=['p8-0.jpg','p5-0.jpg','p10-0.jpg','p2-0.jpg'];
+    const el=$(`<div>
+      <div style="display:flex;gap:12px;align-items:center;border:1px solid var(--line);background:var(--line-2);border-radius:2px;padding:12px">
+        <div class="stack" style="display:flex"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;line-height:18px">Túi da Lou mini <span style="color:var(--muted);font-weight:400">và 3 sản phẩm khác</span></div>
+          <div style="font-size:12px;color:var(--muted);line-height:17px;margin-top:2px">Giao đến Nguyễn Văn A · P. Bến Nghé, TP.HCM</div>
+        </div></div>
+      <div style="height:12px"></div>
+      <button class="cta">Đặt hàng · 112.260.000đ</button>
+      <p style="font-size:12px;color:var(--muted);margin:8px 0 0;text-align:center">Bằng cách đặt hàng, bạn đồng ý với Điều khoản sử dụng</p></div>`);
+    const st=el.querySelector('.stack');
+    IM.forEach((f,i)=>st.appendChild($(`<img src="${A}${f}" alt="" style="width:44px;height:56px;object-fit:cover;border:2px solid #fff;border-radius:2px;margin-left:${i?-14:0}px">`)));
+    s.appendChild(el);
+  }
+},
+{
+  n:'06', title:'Bấm Đặt hàng: có trạng thái xử lý, không nhảy màn tức thì',
+  now:'Bấm là <b>nhảy thẳng</b> sang màn Hoàn tất trong cùng một khung hình — không có nhịp xác thực nào, chạm hai lần là ra hai đơn. Trớ trêu: file đã có sẵn cơ chế spinner <code>.spin</code> dùng cho nút đăng nhập, nhưng nút Đặt hàng không dùng.',
+  effort:'nhỏ',
+  build(s){
+    const el=$(`<div style="position:relative;min-height:150px">
+      <div class="row"><span class="k">Tổng cộng</span><span style="font-weight:500">112.260.000đ</span></div>
+      <div style="height:10px"></div><button class="cta" id="pay">Đặt hàng</button>
+      <div id="ov" style="display:none;position:absolute;inset:-14px -16px;background:rgba(255,255,255,.93);
+        align-items:center;justify-content:center;flex-direction:column;gap:10px">
+        <svg width="26" height="26" viewBox="0 0 16 16" fill="none" style="animation:spin .7s linear infinite">
+          <circle cx="8" cy="8" r="6.5" stroke="#0a0a0a" stroke-opacity=".18" stroke-width="1.4"/>
+          <path d="M14.5 8A6.5 6.5 0 008 1.5" stroke="#0a0a0a" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <div id="ovt" style="font-size:12px;letter-spacing:.14em;text-transform:uppercase"></div>
+        <div style="font-size:13px;color:var(--muted)">Vui lòng không đóng trang</div></div></div>`);
+    const ov=el.querySelector('#ov'), ovt=el.querySelector('#ovt'), btn=el.querySelector('#pay');
+    btn.addEventListener('click',()=>{
+      btn.disabled=true; ov.style.display='flex';
+      [['Đang xác thực thanh toán',0],['Đang tạo đơn hàng',450],['Đã xác nhận',900]]
+        .forEach(([t,d])=>setTimeout(()=>ovt.textContent=t,d));
+      setTimeout(()=>{ov.style.display='none';btn.disabled=false;},1400);
+    });
+    s.appendChild(el);
+    if(!document.getElementById('kf')){const st=document.createElement('style');st.id='kf';
+      st.textContent='@keyframes spin{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
+  }
+},
+{
+  n:'07', title:'Nút “Thay đổi” phải nhìn ra là nút, và đủ 44px để bấm',
+  now:'“Thay đổi” chỉ là chữ trơn <b>59×20px</b>, cùng màu cùng cỡ với tiêu đề bên cạnh — mà đây là <b>đường duy nhất</b> để quay lại sửa địa chỉ sau khi đã Xác nhận. Chuẩn vùng chạm là 44px.',
+  effort:'nhỏ',
+  build(s){
+    add(s.parentElement.querySelector('.phone') || s, '');
+    add(s, `
+      <p style="margin:0 0 6px;font-size:11px;color:var(--muted)">Hiện tại — 59×20</p>
+      <div style="border:1px dashed var(--line-3);border-radius:2px;padding:0 8px">
+        <div style="height:56px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:16px;font-weight:500">1. Thông tin giao hàng</span>
+          <span style="font-size:14px;outline:1px dashed #d62845;outline-offset:2px">Thay đổi</span></div></div>
+      <div style="height:16px"></div>
+      <p style="margin:0 0 6px;font-size:11px;color:var(--muted)">Đề xuất — 44px, gạch chân, màu phụ</p>
+      <div style="border:1px dashed var(--line-3);border-radius:2px;padding:0 8px">
+        <div style="height:56px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:16px;font-weight:500">1. Thông tin giao hàng</span>
+          <button style="font:400 14px Montserrat;color:var(--muted);text-decoration:underline;text-underline-offset:3px;
+            background:none;border:0;padding:12px 0;margin:-12px 0;cursor:pointer;outline:1px dashed #0a7c42;outline-offset:2px">Thay đổi</button></div></div>
+      <p style="font-size:12px;color:var(--muted);margin:12px 0 0">Viền nét đứt chỉ để thấy vùng bấm. Hàng tiêu đề vẫn đúng 56px theo Figma nhờ margin âm. Cùng cách nâng ô chọn tỉnh/thành và hàng “Giỏ hàng của bạn” từ 36–40px lên 44px.</p>`);
+  }
+},
+{
+  n:'08', title:'Một cách in tiền duy nhất',
+  now:'Ba định dạng cùng sống, hai cái nằm sát nhau trong <b>cùng một khối</b>: danh sách món in <code>45.066.000 ₫</code> còn dòng Tạm tính ngay dưới in <code>113,500,000đ</code> — dấu phẩy kiểu Anh, ký hiệu khác nhau. Đây cũng là chỗ để checkout khớp lại con số giỏ hàng đang hiện.',
+  effort:'nhỏ',
+  build(s){
+    let vi=true;
+    const el=$('<div></div>');
+    const paint=()=>{
+      const f=n=>vi? n.toLocaleString('vi-VN')+'₫' : n.toLocaleString('en-US')+'đ';
+      el.innerHTML=`
+        <div style="display:flex;gap:10px;align-items:center;padding:8px 0">
+          <img src="${A}p8-0.jpg" alt="" style="width:40px;height:50px;object-fit:cover">
+          <div style="flex:1;font-size:13px">Túi da Lou mini<div style="font-size:12px;color:var(--muted)">Onesize · Black</div></div>
+          <div style="font-size:13px;font-weight:500">${vi?'45.066.000₫':'45.066.000 ₫'}</div></div>
+        <div class="row"><span class="k">Tạm tính</span><span>${f(113500000)}</span></div>
+        <div class="row"><span class="k">Điểm thưởng</span><span style="color:var(--red)">-${f(1240000)}</span></div>
+        <div class="row tot"><span>Tổng cộng</span><span>${f(112260000)}</span></div>
+        <p style="font-size:12px;color:var(--muted);margin:10px 0 0">${vi
+          ?'Chuẩn Việt: dấu chấm phân nhóm, ký hiệu ₫ liền số — một hàm vnd() dùng chung, và checkout đọc đúng con số 112.260.000₫ mà giỏ đang hiện sau khi trừ điểm.'
+          :'Đang lẫn: dòng sản phẩm dùng dấu chấm + ₫, dòng tiền dùng dấu phẩy + đ, còn tổng thì in cứng 113.500.000 nên lệch với giỏ.'}</p>
+        <div style="height:10px"></div><button class="ghost" id="tg">${vi?'Xem lại kiểu hiện tại':'Xem kiểu đề xuất'}</button>`;
+      el.querySelector('#tg').addEventListener('click',()=>{vi=!vi;paint();});
+    };
+    paint(); s.appendChild(el);
+  }
+},
+];
+
+function render(list, host, approved){
+  list.forEach(d=>{
+    const card=$(`<div class="card ${approved?'ok':''}">
+      <div class="hd"><div class="n">${d.n} · ${approved?'đã duyệt':'chờ duyệt'}</div><h2>${d.title}</h2>
+        <p class="now"><b>Hiện tại:</b> ${d.now}</p>
+        <div class="tags">${approved?'<span class="tag ok">giữ</span>':'<span class="tag hi">mới</span>'}
+        <span class="tag ef">công: ${d.effort}</span></div></div>
+      <div class="stage"><p class="cap">Đề xuất — bấm thử được</p><div class="phone"></div></div></div>`);
+    d.build(card.querySelector('.phone'));
+    host.appendChild(card);
+  });
+}
+render(OK, document.getElementById('gridOk'), true);
+render(NEW, document.getElementById('gridNew'), false);
+
+/* bảng tổng hợp */
+const tbl=document.getElementById('tbl');
+const trow=(t,st,e,note)=>add(tbl,
+  `<tr><td>${t}</td><td class="c"><span class="pill ${st==='đã duyệt'?'ok':st==='chờ duyệt'?'hi':''}">${st}</span></td>
+   <td class="c"><span class="pill">${e}</span></td><td>${note}</td></tr>`);
+OK.forEach(d=>trow(`${d.n}. ${d.title}`,'đã duyệt',d.effort,d.now.replace(/<[^>]+>/g,'')));
+NEW.forEach(d=>trow(`${d.n}. ${d.title}`,'chờ duyệt',d.effort,d.now.replace(/<[^>]+>/g,'')));
+[
+ ['Desktop: khoá nút “Đặt hàng” tới khi đủ bước','chờ duyệt','nhỏ','Nút nằm ở cột tóm tắt bên phải, ngoài khối các bước, nên bấm được ngay khi vừa vào — bỏ qua toàn bộ checkout mà vẫn ra màn Hoàn tất.'],
+ ['Form giao hàng có trí nhớ + validate','chờ duyệt','vừa','4 ô địa chỉ chưa gắn state nên đăng nhập giữa chừng là mất sạch chữ đã gõ; cũng chưa validate gì. Nhân bản đúng bộ đồ nghề đã làm cho luồng nhận tại cửa hàng.'],
+ ['Bật “Xuất hóa đơn VAT” là bàn phím che ô vừa focus','chờ duyệt','nhỏ','Đo ở 390×844: tick VAT làm trang cao thêm 380px nhưng không cuộn, ô đầu rơi xuống y=768 nên bàn phím ảo che mất.'],
+ ['Phím Return nhảy ô kế + autocomplete','chờ duyệt','nhỏ','Cả 4 ô đều thiếu autocomplete/enterkeyhint nên điện thoại không gợi ý điền sẵn và Return không nhảy ô.'],
+ ['Dọn code chết: handler .pay-detail','nên làm','nhỏ','Handler chờ xổ chi tiết cho phần tử .pay-detail không bao giờ tồn tại trong markup — xoá cho sạch (đề xuất chi tiết thanh toán đã bỏ).'],
+ ['Gỡ lời hứa “Gói quà tặng” ở trang khuyến mãi','nên làm','nhỏ','Promo ghi “Chọn Gói quà tặng ở bước thanh toán” nhưng tính năng không có — nên sửa câu chữ để khỏi hứa suông.'],
+].forEach(r=>trow(...r));
+</script>
+</body>
+</html>
