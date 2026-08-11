@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Demo — Checkout theo style Gentle Monster (chưa áp vào app)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* Trang demo dựng bằng CSS viết tay (không dùng class Tailwind) để không phụ
+     thuộc bản tailwind.css đã build — đây là bản thăm dò style, chưa vào app. */
+  :root {
+    --ink:      #0a0a0a;   /* chữ chính */
+    --ink-2:    #404040;   /* chữ phụ đậm */
+    --muted:    #737373;   /* chữ phụ nhạt (GM dùng rất nhiều) */
+    --line:     #e5e5e5;   /* hairline ngăn section */
+    --line-2:   #d4d4d4;
+    --disabled: #8a8a8a;   /* nền nút CONTINUE khi chưa đủ điều kiện */
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#f4f4f5; font-family:Montserrat,sans-serif; color:var(--ink); }
+  .wrap { max-width:1320px; margin:0 auto; padding:32px 24px 72px; }
+  h1 { font-size:22px; font-weight:600; margin:0 0 6px; }
+  .lede { font-size:14px; line-height:22px; color:#52525b; margin:0 0 8px; max-width:860px; }
+  .warn { font-size:13px; line-height:20px; color:#7c2d12; background:#fff7ed; border:1px solid #fed7aa;
+          border-radius:4px; padding:10px 12px; margin:0 0 28px; max-width:860px; }
+  .cols { display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; }
+  .col { flex:0 0 auto; }
+  .col h2 { font-size:14px; font-weight:600; margin:0 0 4px; }
+  .col .sub { font-size:12px; line-height:19px; color:#52525b; margin:0 0 12px; width:390px; min-height:38px; }
+
+  .phone { width:390px; height:760px; background:#fff; border:1px solid #e4e4e7; border-radius:12px;
+           overflow:hidden; position:relative; box-shadow:0 8px 28px rgba(0,0,0,.08); }
+  .scroll { position:absolute; inset:0; overflow-y:auto; }
+  .scroll::-webkit-scrollbar { width:0 }
+
+  /* ══ Style Gentle Monster ═══════════════════════════════════════════
+     4 đặc điểm chính lấy từ ảnh tham chiếu:
+     1. chữ nhãn IN HOA + giãn chữ, cỡ nhỏ (12–13px)
+     2. các bước ĐÁNH SỐ, link EDIT canh phải
+     3. hairline trải hết bề ngang ngăn từng bước, padding dọc rộng (24px)
+     4. CTA đen trải hết bề ngang, cao 56, chữ in hoa giãn — xám khi chưa đủ đk
+     ═════════════════════════════════════════════════════════════════ */
+  .gm-head { height:56px; display:flex; align-items:center; justify-content:space-between;
+             padding:0 16px; border-bottom:1px solid var(--line); position:sticky; top:0; background:#fff; z-index:5; }
+  .gm-head .ico { width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:var(--ink); }
+  .gm-head .grp { display:flex; gap:14px; align-items:center; }
+  .gm-logo { font-size:17px; font-weight:600; letter-spacing:.12em; }
+
+  .gm-title { padding:22px 16px 18px; font-size:19px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; }
+
+  .gm-sec { padding:20px 16px 22px; border-top:1px solid var(--line); }
+  .gm-sec.first { border-top:1px solid var(--line); }
+  .gm-sec-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .gm-sec-title { font-size:13px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+  .gm-sec-title .n { margin-right:6px; }
+  .gm-edit { font-size:12px; font-weight:500; letter-spacing:.08em; text-transform:uppercase;
+             color:var(--ink); background:none; border:0; padding:0; cursor:pointer; }
+  .gm-edit:hover { text-decoration:underline; }
+  .gm-amount { font-size:13px; letter-spacing:.02em; display:flex; align-items:center; gap:6px; }
+
+  .gm-note { font-size:13px; line-height:20px; color:var(--muted); margin:12px 0 0; }
+  .gm-label { font-size:13px; font-weight:500; margin:18px 0 10px; }
+
+  /* Thẻ chọn (địa chỉ / phương thức nhận hàng / thanh toán) */
+  .gm-card { border:1px solid var(--line); border-radius:3px; padding:14px 16px; display:flex;
+             align-items:flex-start; justify-content:space-between; gap:12px; cursor:pointer;
+             background:#fff; transition:border-color .15s ease, box-shadow .15s ease; }
+  .gm-card + .gm-card { margin-top:10px; }
+  .gm-card:hover { border-color:var(--line-2); }
+  /* Trạng thái ĐANG CHỌN: viền đậm 1.5px + bóng mảnh — nổi lên chứ không tô nền */
+  .gm-card.on { border-color:var(--ink); border-width:1.5px; padding:13.5px 15.5px;
+                box-shadow:0 1px 0 rgba(10,10,10,.06); }
+  .gm-card .t { font-size:13px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
+  .gm-card .d { font-size:12px; line-height:18px; color:var(--muted); margin-top:4px; }
+  .gm-card .r { font-size:13px; font-weight:500; white-space:nowrap; }
+  .gm-add { width:100%; border:1px solid var(--line); border-radius:3px; background:#fff; cursor:pointer;
+            padding:15px 16px; text-align:left; font-family:inherit; font-size:13px; letter-spacing:.06em;
+            text-transform:uppercase; color:var(--ink); margin-top:10px; }
+  .gm-add:hover { border-color:var(--line-2); }
+
+  /* CTA */
+  .gm-cta { width:100%; height:56px; border:0; border-radius:0; margin-top:22px; cursor:pointer;
+            font-family:inherit; font-size:13px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+            background:var(--ink); color:#fff; }
+  .gm-cta[disabled] { background:var(--disabled); cursor:not-allowed; }
+
+  /* Dòng tổng tiền */
+  .gm-row { display:flex; align-items:center; justify-content:space-between; height:34px; font-size:13px; }
+  .gm-row .k { color:var(--muted); }
+  .gm-row.total { height:48px; font-size:15px; font-weight:600; letter-spacing:.02em; border-top:1px solid var(--line); margin-top:6px; }
+
+  /* Dòng sản phẩm trong ORDER SUMMARY */
+  .gm-item { display:flex; gap:12px; padding:12px 0; border-bottom:1px solid #f0f0f0; }
+  .gm-item img { width:56px; height:66px; object-fit:cover; background:#f5f5f5; flex:0 0 auto; }
+  .gm-item .b { font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
+  .gm-item .n { font-size:12px; line-height:18px; color:var(--ink-2); margin-top:2px; }
+  .gm-item .v { font-size:11px; color:var(--muted); margin-top:2px; }
+  .gm-item .p { font-size:12px; font-weight:600; margin-left:auto; white-space:nowrap; }
+
+  /* Accordion chân trang kiểu GM (+ / −) */
+  .gm-acc { border-top:1px solid var(--line); padding:18px 16px; display:flex; align-items:center;
+            justify-content:space-between; font-size:13px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; }
+  .gm-acc span { font-size:16px; font-weight:400; color:var(--muted); }
+
+  /* Bảng đối chiếu */
+  .notes { flex:1 1 340px; min-width:320px; background:#fff; border:1px solid #e4e4e7; border-radius:10px; padding:18px 20px; }
+  .notes h3 { font-size:14px; margin:0 0 10px; }
+  .notes table { width:100%; border-collapse:collapse; font-size:12.5px; line-height:19px; }
+  .notes td { padding:7px 0; border-bottom:1px solid #f0f0f0; vertical-align:top; }
+  .notes td:first-child { width:44%; color:#52525b; padding-right:12px; }
+  .notes ul { margin:12px 0 0; padding-left:18px; font-size:12.5px; line-height:20px; color:#3f3f46; }
+  .notes li { margin-bottom:5px; }
+  .notes .q { margin-top:14px; padding-top:12px; border-top:1px solid #e4e4e7; font-size:12.5px; line-height:20px; color:#3f3f46; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Checkout theo style Gentle Monster — bản thăm dò</h1>
+  <p class="lede">Dựng lại màn thanh toán của DAFC bằng ngôn ngữ thị giác của gentlemonster.com (ảnh tham chiếu bạn gửi): nhãn in hoa giãn chữ, các bước đánh số + link EDIT canh phải, hairline trải hết bề ngang, thẻ chọn viền mảnh, CTA đen trải hết bề ngang. Dữ liệu giỏ hàng lấy đúng của demo (4 SP · 113.500.000 ₫).</p>
+  <p class="warn"><b>Chưa áp vào app.</b> File này độc lập, <code>index.html</code> và <code>desktop.html</code> không đổi gì. Bấm thử được: 3 khung dưới là 3 bước của cùng một luồng, mỗi khung bấm chọn thẻ / CONTINUE để xem trạng thái.</p>
+
+  <div class="cols">
+    <div class="col">
+      <h2>Bước 2 — chọn địa chỉ</h2>
+      <p class="sub">Bước đã xong thu lại thành 1 dòng chữ xám + EDIT. CTA <b>xám</b> khi chưa chọn địa chỉ, bấm chọn thẻ là đen lên.</p>
+      <div class="phone"><div class="scroll" id="p1"></div></div>
+    </div>
+
+    <div class="col">
+      <h2>Bước 2 — chọn cách nhận hàng</h2>
+      <p class="sub">Đã có địa chỉ → hiện "Chọn cách nhận hàng". Đây là chỗ ghép luồng <b>Nhận tại cửa hàng</b> vừa làm: 2 thẻ ngang hàng thay cho cặp nút phân đoạn.</p>
+      <div class="phone"><div class="scroll" id="p2"></div></div>
+    </div>
+
+    <div class="col">
+      <h2>Bước 3 — thanh toán</h2>
+      <p class="sub">Phương thức thanh toán cũng là thẻ chọn cùng khuôn. Tổng tiền nằm ngay trên CTA, dưới cùng là 2 hàng accordion kiểu GM.</p>
+      <div class="phone"><div class="scroll" id="p3"></div></div>
+    </div>
+
+    <div class="notes">
+      <h3>Đối chiếu style</h3>
+      <table>
+        <tr><td>Nhãn / tiêu đề bước</td><td>IN HOA, 13px, <code>letter-spacing .08em</code>, weight 600</td></tr>
+        <tr><td>Bước đánh số</td><td>"1 THÔNG TIN LIÊN HỆ" — số nằm ngay trong tiêu đề</td></tr>
+        <tr><td>Link sửa</td><td>EDIT / SỬA in hoa 12px canh phải, gạch chân khi hover</td></tr>
+        <tr><td>Ngăn giữa các bước</td><td>hairline 1px <code>#e5e5e5</code> trải hết bề ngang, padding dọc 20–22px</td></tr>
+        <tr><td>Thẻ chọn</td><td>viền 1px r3; đang chọn = viền <b>đen 1.5px</b> (GM dùng viền xanh focus — đổi sang đen cho hợp DAFC)</td></tr>
+        <tr><td>CTA</td><td>trải hết bề ngang, cao 56, vuông góc, in hoa <code>.14em</code>; chưa đủ đk = nền <code>#8a8a8a</code></td></tr>
+        <tr><td>Chữ phụ</td><td><code>#737373</code>, 12–13px — GM dùng xám rất nhiều cho phần đã xác nhận</td></tr>
+        <tr><td>Nền</td><td>trắng phẳng, không thẻ bo góc lớn, không đổ bóng</td></tr>
+      </table>
+      <h3 style="margin-top:16px">Nếu áp vào <code>index.html</code> thì đụng gì</h3>
+      <ul>
+        <li>Khung 3 section hiện tại (<code>ckSection</code> + <code>paintCheckout</code>) <b>giữ nguyên cơ chế</b>, chỉ thay lớp trình bày: tiêu đề in hoa + số, nút "Thay đổi" → "SỬA" canh phải.</li>
+        <li>Cặp nút phân đoạn Giao hàng / Nhận tại cửa hàng chuyển thành <b>2 thẻ chọn</b> — hợp GM hơn và cũng bỏ được kiểu tô nền.</li>
+        <li>Radio đậm hiện tại (<code>.opt</code>) đổi thành thẻ viền; hộp giỏ hàng thu gọn thành hàng ORDER SUMMARY + số tiền.</li>
+        <li>CTA "Đặt hàng" chuyển sang khuôn cao 56 in hoa, có thêm trạng thái xám khi thiếu điều kiện (hiện tại chưa có trạng thái này).</li>
+        <li>Cần bổ sung class vào <code>tailwind.css</code> (letter-spacing, h-14…) hoặc viết CSS tay trong <code>&lt;style&gt;</code> như file này.</li>
+      </ul>
+      <p class="q"><b>Cần bạn quyết trước khi áp:</b> (1) giữ chữ tiếng Việt in hoa hay để chữ thường? tiếng Việt có dấu in hoa dễ rối; (2) thẻ đang chọn dùng viền đen như đây, hay giữ viền xanh giống GM; (3) áp cho cả <code>desktop.html</code> hay chỉ mobile.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const A = 'assets/';
+const CART = [
+  { img:'p8-0.jpg',  brand:'Versace', name:'Túi da Lou mini',                          variant:'Onesize · Black', now:'45.066.000 ₫' },
+  { img:'p5-0.jpg',  brand:'Versace', name:'Giày loafer da Manu',                      variant:'40 · Black',      now:'35.248.000 ₫' },
+  { img:'p10-0.jpg', brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm',        variant:'95 · Black',      now:'17.575.000 ₫' },
+  { img:'p2-0.jpg',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90', variant:'Onesize',         now:'15.611.000 ₫' },
+];
+const TOTAL = '113.500.000 ₫';
+
+const ICO = {
+  burger: '<svg width="20" height="14" viewBox="0 0 20 14" fill="none"><path d="M0 1h20M0 7h20M0 13h20" stroke="currentColor" stroke-width="1.2"/></svg>',
+  search: '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.2"/><path d="m14 14 5 5" stroke="currentColor" stroke-width="1.2"/></svg>',
+  user:   '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="6.5" r="3.5" stroke="currentColor" stroke-width="1.2"/><path d="M3.5 18c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5" stroke="currentColor" stroke-width="1.2"/></svg>',
+  bag:    '<svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="5.5" width="15" height="13" stroke="currentColor" stroke-width="1.2"/><text x="10" y="15" font-size="8" text-anchor="middle" fill="currentColor" font-family="Montserrat">4</text></svg>',
+  chevD:  '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="m2.5 4.5 3.5 3.5 3.5-3.5" stroke="currentColor" stroke-width="1.2"/></svg>',
+};
+
+const head = () => `
+  <div class="gm-head">
+    <div class="grp"><span class="ico">${ICO.burger}</span><span class="ico">${ICO.search}</span></div>
+    <div class="gm-logo">DAFC</div>
+    <div class="grp"><span class="ico">${ICO.user}</span><span class="ico">${ICO.bag}</span></div>
+  </div>
+  <div class="gm-title">Thanh toán</div>`;
+
+/* Hàng ORDER SUMMARY: bấm mở/đóng danh sách sản phẩm */
+const summary = open => `
+  <div class="gm-sec first">
+    <div class="gm-sec-head" data-toggle="sum" style="cursor:pointer">
+      <div class="gm-sec-title">Đơn hàng của bạn</div>
+      <div class="gm-amount">${TOTAL} <span style="display:inline-flex;transform:rotate(${open ? 180 : 0}deg)">${ICO.chevD}</span></div>
+    </div>
+    ${open ? `
+    <div style="margin-top:12px">
+      ${CART.map(c => `
+      <div class="gm-item">
+        <img src="${A}${c.img}" alt="">
+        <div>
+          <div class="b">${c.brand}</div>
+          <div class="n">${c.name}</div>
+          <div class="v">${c.variant}</div>
+        </div>
+        <div class="p">${c.now}</div>
+      </div>`).join('')}
+      <div class="gm-row" style="margin-top:8px"><span class="k">Tạm tính</span><span>${TOTAL}</span></div>
+      <div class="gm-row"><span class="k">Giao hàng</span><span>Miễn phí</span></div>
+    </div>` : ''}
+  </div>`;
+
+/* Bước đã xong: 1 dòng chữ xám + SỬA canh phải (đúng cách GM thu gọn) */
+const doneStep = (n, title, lines) => `
+  <div class="gm-sec">
+    <div class="gm-sec-head">
+      <div class="gm-sec-title"><span class="n">${n}</span>${title}</div>
+      <button class="gm-edit">Sửa</button>
+    </div>
+    ${lines.map(l => `<p class="gm-note">${l}</p>`).join('')}
+  </div>`;
+
+const card = (id, group, on, t, d, right) => `
+  <div class="gm-card${on ? ' on' : ''}" data-pick="${group}:${id}">
+    <div>
+      <div class="t">${t}</div>
+      ${d ? `<div class="d">${d}</div>` : ''}
+    </div>
+    ${right ? `<div class="r">${right}</div>` : ''}
+  </div>`;
+
+/* ── 3 khung = 3 bước của cùng luồng, mỗi khung giữ state riêng ── */
+const S = {
+  p1: { sum:false, addr:null },
+  p2: { sum:false, method:'ship' },
+  p3: { sum:false, pay:'cc' },
+};
+
+function view1(s) {
+  return `${head()}
+  ${summary(s.sum)}
+  ${doneStep(1, 'Thông tin liên hệ', ['Đang đăng nhập với <span style="color:#0a0a0a">userone@dafc.com.vn</span>'])}
+  <div class="gm-sec">
+    <div class="gm-sec-head"><div class="gm-sec-title"><span class="n">2</span>Nhận hàng</div></div>
+    <div class="gm-label">Chọn địa chỉ nhận hàng</div>
+    ${card('a1','addr', s.addr === 'a1', 'Nguyễn Văn A',
+        '123 Nam Kỳ Khởi Nghĩa, Phường Bến Thành,<br>TP. Hồ Chí Minh<br>0912 345 678', 'Sửa')}
+    ${card('a2','addr', s.addr === 'a2', 'Văn phòng',
+        '72 Lê Thánh Tôn, Phường Sài Gòn,<br>TP. Hồ Chí Minh<br>0912 345 678', 'Sửa')}
+    <button class="gm-add">+ Thêm địa chỉ mới</button>
+    <button class="gm-cta" ${s.addr ? '' : 'disabled'}>Tiếp tục</button>
+  </div>
+  ${doneStep(3, 'Thanh toán', [])}`;
+}
+
+function view2(s) {
+  const pickup = s.method === 'pickup';
+  return `${head()}
+  ${summary(s.sum)}
+  ${doneStep(1, 'Thông tin liên hệ', ['Đang đăng nhập với <span style="color:#0a0a0a">userone@dafc.com.vn</span>'])}
+  <div class="gm-sec">
+    <div class="gm-sec-head">
+      <div class="gm-sec-title"><span class="n">2</span>Nhận hàng</div>
+      <button class="gm-edit">Sửa</button>
+    </div>
+    <p class="gm-note">Giao đến Nguyễn Văn A</p>
+    <p class="gm-note" style="margin-top:2px">123 Nam Kỳ Khởi Nghĩa, Phường Bến Thành, TP. Hồ Chí Minh · 0912 345 678</p>
+
+    <div class="gm-label">Chọn cách nhận hàng</div>
+    ${card('ship','method', !pickup, 'Giao hàng tiêu chuẩn', 'Nhận hàng sau 3–4 ngày làm việc', 'Miễn phí')}
+    ${card('pickup','method', pickup, 'Nhận tại cửa hàng', 'DAFC Union Square · 171 Đồng Khởi, Phường Sài Gòn<br>Mở cửa 09:30 – 21:30', 'Miễn phí')}
+    ${pickup ? `<button class="gm-add">Đổi cửa hàng</button>` : ''}
+    <button class="gm-cta">Tiếp tục</button>
+  </div>
+  ${doneStep(3, 'Thanh toán', [])}`;
+}
+
+function view3(s) {
+  const pays = [
+    ['cc',   'Thẻ tín dụng / ghi nợ', 'Visa, Mastercard, JCB, Amex'],
+    ['qr',   'Chuyển khoản · QR code', 'Quét mã bằng ứng dụng ngân hàng'],
+    ['atm',  'Thẻ ATM nội địa', ''],
+    ['inst', 'Trả góp 0% qua thẻ tín dụng', 'Kỳ hạn 3 · 6 · 12 tháng'],
+  ];
+  return `${head()}
+  ${summary(s.sum)}
+  ${doneStep(1, 'Thông tin liên hệ', ['Đang đăng nhập với <span style="color:#0a0a0a">userone@dafc.com.vn</span>'])}
+  ${doneStep(2, 'Nhận hàng', [
+    'Nhận tại DAFC Union Square',
+    '171 Đồng Khởi, Phường Sài Gòn · Mở cửa 09:30 – 21:30',
+  ])}
+  <div class="gm-sec">
+    <div class="gm-sec-head"><div class="gm-sec-title"><span class="n">3</span>Thanh toán</div></div>
+    <div class="gm-label">Chọn phương thức</div>
+    ${pays.map(([id, t, d]) => card(id, 'pay', s.pay === id, t, d, '')).join('')}
+    <div style="margin-top:20px">
+      <div class="gm-row"><span class="k">Tạm tính</span><span>${TOTAL}</span></div>
+      <div class="gm-row"><span class="k">Nhận hàng</span><span>Tại cửa hàng</span></div>
+      <div class="gm-row total"><span>Tổng cộng</span><span>${TOTAL}</span></div>
+    </div>
+    <button class="gm-cta">Đặt hàng</button>
+  </div>
+  <div class="gm-acc">Miễn phí giao hàng &amp; đổi trả <span>+</span></div>
+  <div class="gm-acc">Cần hỗ trợ <span>+</span></div>
+  <div style="height:24px"></div>`;
+}
+
+const VIEWS = { p1: view1, p2: view2, p3: view3 };
+
+function paint(id) {
+  const host = document.getElementById(id);
+  host.innerHTML = VIEWS[id](S[id]);
+  host.querySelectorAll('[data-toggle="sum"]').forEach(el =>
+    el.addEventListener('click', () => { S[id].sum = !S[id].sum; paint(id); }));
+  host.querySelectorAll('[data-pick]').forEach(el =>
+    el.addEventListener('click', () => {
+      const [group, val] = el.dataset.pick.split(':');
+      S[id][group === 'addr' ? 'addr' : group] = val;
+      paint(id);
+    }));
+}
+['p1','p2','p3'].forEach(paint);
+</script>
+</body>
+</html>

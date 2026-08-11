@@ -336,6 +336,28 @@ window.RESP = (function () {
   /* ── Checkout sections ── */
   .ck-open, .ck-done { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .4s cubic-bezier(.22,1,.36,1), opacity .3s ease; opacity: 0; }
   .ck-open.is-open, .ck-done.is-open { grid-template-rows: 1fr; opacity: 1; }
+  /* ── Checkout: bám đúng Figma 3547:55856 (khung mobile 390) ──
+     Mỗi bước là một khối padding 8/0 có đường kẻ #f5f5f5 phía trên. Bước CHƯA
+     tới thì khối không padding mà hàng tiêu đề cao 72 (padding dọc 24) — trong
+     bản vẽ các mục "2. Phương thức vận chuyển" / "3. Thanh toán" đang chờ đều
+     cao hơn hàng tiêu đề của bước đang mở (56). */
+  .ck-sec { padding: 8px 0; border-top: 1px solid var(--general-secondary); }
+  .ck-sec.is-pending { padding: 0; }
+  .ck-sec.is-pending .ck-head { height: 72px; }
+  /* Tiêu đề màn: 18px, line-height 140% = 25px (tailwind build không có
+     leading-[25px]; leading-7 = 28 lệch 3px so với bản vẽ) */
+  .ck-h1 { line-height: 25px; }
+  /* Khối tóm tắt đơn hàng và hộp thông báo: kẻ dưới đúng 2 sắc độ của bản vẽ */
+  .ck-sum { border-bottom: 1px solid var(--general-border); }
+  .ck-notice { border-bottom: 1px solid var(--general-secondary); }
+  /* Thẻ thanh toán: Figma cho 4 thẻ CAO BẰNG NHAU 64 (thẻ "trả góp 0%" xuống
+     2 dòng kéo cả nhóm lên 64). Đặt sàn ở đây thay vì trong richRadio để thẻ
+     vận chuyển vẫn ôm sát nội dung như cũ. */
+  #payOpts .opt { min-height: 64px; }
+  /* Ô nhập sai: tailwind build sẵn không có border-destructive nên đặt tay.
+     !important vì utility .border-border trong tailwind.css nằm cùng mức
+     specificity (0,1,0) và thắng ở cascade — kể cả khi ô đang focus. */
+  .fld-err, .fld-err:focus { border-color: var(--general-destructive) !important; }
 
   /* ── Accordion ── */
   .acc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .34s cubic-bezier(.22,1,.36,1); }
@@ -399,9 +421,12 @@ window.RESP = (function () {
   .chk.on { background: #0a0a0a; border-color: #0a0a0a; }
   .chk.on svg { opacity: 1; transform: scale(1); }
   .radio-dot { transition: transform .2s cubic-bezier(.22,1,.36,1), opacity .2s ease; transform: scale(0); opacity: 0; }
-  .radio.on { border-color: #0a0a0a; }
+  /* Figma (3547:55856): vòng radio LUÔN viền 1px #d4d4d4 kể cả khi chọn — chỉ
+     chấm giữa 8px #0a0a0a hiện ra. Trước đây viền đổi sang đen khi chọn. */
   .radio.on .radio-dot { transform: scale(1); opacity: 1; }
-  .opt.on { border-color: #0a0a0a; background: #fafafa; }
+  /* Thẻ rich-radio khi chọn: chỉ ĐỔI VIỀN sang #262626, KHÔNG tô nền
+     (bản vẽ để nền trắng ở cả 2 trạng thái). */
+  .opt.on { border-color: var(--general-secondary-foreground); }
   .opt { transition: border-color .2s ease, background .2s ease; }
 
   /* ── Size / swatch chips ── */
@@ -3087,16 +3112,29 @@ function screenLOGIN() {
 const ETA = 'Thời gian nhận hàng dự kiến từ ngày 14/07 đến ngày 18/07';
 
 /* Rich radio: label + mô tả phụ */
-function richRadio(id, label, sub, on) {
+/* Figma "Rich Radio Group": thẻ p12 r2 viền 1px — #e5e5e5 thường, #262626 khi
+   chọn (đổi trong .opt.on); vòng radio 16 viền 1px #d4d4d4 KHÔNG đổi màu, chấm
+   giữa 8px. Trước đây viền vòng dày 2px và cả thẻ lẫn vòng đều chuyển đen. */
+/* icon (tuỳ chọn) = [file, width] — logo đối tác thanh toán đặt cuối hàng, cao
+   24 và giữ tỉ lệ bằng object-contain. Bề rộng lấy đúng Figma 3028:47246:
+   76 cho cặp Visa+Mastercard, 38 cho các logo đơn. Không có class w-[76px]
+   trong bản tailwind build sẵn nên đặt bằng style. */
+function richRadio(id, label, sub, on, icon) {
+  /* Có dòng phụ (phương thức vận chuyển) -> canh MÉP TRÊN để nút radio thẳng
+     hàng với dòng tiêu đề. Chỉ một dòng (phương thức thanh toán) -> canh GIỮA,
+     vì thẻ cao 64 mà chữ dính mép trên nhìn lệch hẳn so với logo vốn đã căn
+     giữa. mt-0.5 của nút radio cũng chỉ cần khi canh mép trên. */
+  const single = !sub;
   return `
-  <button class="opt ${on ? 'on' : ''} w-full flex items-start gap-2 border ${on ? 'border-primary' : 'border-border'} rounded-xs p-3 text-left press" data-opt="${id}">
-    <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border-2 ${on ? 'border-primary' : 'border-border'} flex items-center justify-center shrink-0">
+  <button class="opt ${on ? 'on' : ''} w-full flex ${single ? 'items-center' : 'items-start'} gap-2 border border-border rounded-xs p-3 text-left press" data-opt="${id}">
+    <span class="radio ${on ? 'on' : ''} w-4 h-4 ${single ? '' : 'mt-0.5 '}rounded-full border border-border-3 flex items-center justify-center shrink-0">
       <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
     </span>
     <span class="flex-1 min-w-0">
       <span class="block text-[14px] font-medium leading-5 text-foreground">${label}</span>
       ${sub ? `<span class="block text-[14px] leading-5 text-foreground">${sub}</span>` : ''}
     </span>
+    ${icon ? `<img src="${A}${icon[0]}" alt="${icon[2] || ''}" class="shrink-0 self-center h-6 object-contain" style="width:${icon[1]}px">` : ''}
   </button>`;
 }
 
@@ -3126,12 +3164,30 @@ function vatFieldRows(type) {
     </div>`).join('');
 }
 
+/* ── Cặp nút phân đoạn (segmented toggle) ──
+   Quy ước: mục ĐANG CHỌN **nổi lên** — nền trắng + đổ bóng nhẹ trên rãnh xám,
+   giống cặp đổi ngôn ngữ ở bảng Cài đặt. Kiểu cũ (tô xám đúng mục đang chọn,
+   trên nền trắng) đọc ngược: mục được chọn nhìn như bị lún xuống.
+   segBtnClass dùng chung cho cả lúc dựng markup lẫn lúc JS đổi trạng thái, để
+   2 chỗ không lệch nhau. */
+const SEG_ON  = 'bg-background text-foreground font-medium shadow-sm';
+const SEG_OFF = 'text-muted-foreground';
+const segBtnClass = (on, h = 'h-9') =>
+  `seg flex-1 ${h} rounded-xs text-[14px] leading-5 transition-colors press ` + (on ? SEG_ON : SEG_OFF);
+function segToggle(attr, items, active, h) {
+  return `
+  <div class="flex p-0.5 rounded-xs bg-secondary" role="group">
+    ${items.map(([id, label]) => `
+    <button ${attr}="${id}" class="${segBtnClass(id === active, h)}">${label}</button>`).join('')}
+  </div>`;
+}
+
 function ckSection(i, title, openBody, doneBody) {
   return `
   <div class="ck-sec" data-sec="${i}">
-    <div class="h-[56px] px-4 flex items-center justify-between">
+    <div class="ck-head h-[56px] px-4 flex items-center justify-between">
       <p class="ck-title text-[16px] font-medium leading-6 text-foreground transition-opacity duration-300">${title}</p>
-      <button class="ck-change text-[16px] font-light leading-6 text-foreground press" data-goto="${i}">Thay đổi</button>
+      <button class="ck-change text-[14px] leading-5 text-foreground press" data-goto="${i}">Thay đổi</button>
     </div>
     <div class="ck-open acc-body"><div class="acc-inner">${openBody}</div></div>
     <div class="ck-done acc-body"><div class="acc-inner">${doneBody || ''}</div></div>
@@ -3155,25 +3211,164 @@ const VN_LOCATIONS = [
 ];
 let ckProvince = '', ckWard = '';   // lựa chọn hiện tại ở form giao hàng
 
-function screenCHECKOUT() {
-  const field = (label, ph, type) => `
-    <div class="px-4 py-2 flex flex-col gap-2">
-      <label class="text-[14px] font-medium leading-5 text-foreground">${label}</label>
-      <input ${type ? `inputmode="${type}"` : ''} placeholder="${ph}" class="h-10 bg-background border border-border rounded-xs px-3 text-[14px] outline-none focus:border-primary transition-colors">
-    </div>`;
+/* ── Cửa hàng cho luồng "Nhận tại cửa hàng" ──
+   Dữ liệu DEMO (tên + địa chỉ + giờ mở cửa), gom theo thành phố đúng thứ tự
+   thao tác: chọn thành phố -> danh sách cửa hàng lọc theo thành phố đó.
+   Dùng chung cơ chế bottom sheet chọn 1 giá trị (__openPicker) với ô tỉnh/phường
+   của luồng giao hàng, nên không phát sinh kiểu UI mới. */
+const DAFC_STORES = [
+  ['TP. Hồ Chí Minh', [
+    ['DAFC Union Square',   'Union Square, 171 Đồng Khởi, Phường Sài Gòn',   '09:30 – 21:30'],
+    ['DAFC Rex',            '141 Nguyễn Huệ, Phường Sài Gòn',                '09:30 – 21:00'],
+    ['DAFC Takashimaya',    '92-94 Nam Kỳ Khởi Nghĩa, Phường Bến Thành',     '09:30 – 22:00'],
+  ]],
+  ['TP. Hà Nội', [
+    ['DAFC Tràng Tiền',     '24 Hai Bà Trưng, Phường Hoàn Kiếm',             '09:30 – 21:30'],
+    ['DAFC Metropole',      '15 Ngô Quyền, Phường Hoàn Kiếm',                '09:00 – 21:00'],
+    ['DAFC Lotte Center',   '54 Liễu Giai, Phường Ba Đình',                  '09:30 – 22:00'],
+  ]],
+  ['TP. Đà Nẵng', [
+    ['DAFC Đà Nẵng',        '86 Bạch Đằng, Phường Hải Châu',                 '09:00 – 21:00'],
+  ]],
+];
+const storesOf  = city => (DAFC_STORES.find(([c]) => c === city) || ['', []])[1];
+const storeInfo = name => {
+  for (const [, list] of DAFC_STORES) { const s = list.find(x => x[0] === name); if (s) return { name: s[0], addr: s[1], hours: s[2] }; }
+  return null;
+};
+/* ckMode: 'ship' = giao tận nơi (mặc định) · 'pickup' = nhận tại cửa hàng
+   ckHome = tỉnh/thành người nhận đang sinh sống (chỉ hỏi ở luồng nhận tại cửa
+   hàng, tách khỏi ckProvince của địa chỉ giao hàng).
+   ckName/ckPhone/ckEmail: 3 ô người nhận PHẢI có state vì phần này bị dựng lại
+   mỗi khi đổi thành phố/cửa hàng — không giữ thì gõ xong đổi cửa hàng là mất
+   trắng. Cũng là nguồn để phần tóm tắt nhắc lại người nhận sau khi Xác nhận. */
+let ckMode = 'ship', ckCity = '', ckStore = '', ckHome = '';
+let ckName = '', ckPhone = '', ckEmail = '';
 
-  /* Ô chọn địa giới: nhìn y như input ở trên (h-10, viền, r2) nhưng là button
-     mở bottom sheet — cùng cách PDP thay <select> bằng sheet chọn size. */
-  const pickField = (label, ph, key, val) => `
-    <div class="px-4 py-2 flex flex-col gap-2">
-      <label class="text-[14px] font-medium leading-5 text-foreground">${label}</label>
+/* gap-2.5 = 10 và px-2 = 8 trong ô nhập: đúng số đo Figma (nhóm field gap 10,
+   Input padding 8/8, cao 40, r2, viền #e5e5e5).
+   field/pickField để Ở NGOÀI screenCHECKOUT vì bước "Nhận tại cửa hàng" dựng
+   lại phần thân của nó nhiều lần (ckPickupOpen), không chỉ lúc render màn.
+
+   opts (đều tuỳ chọn, mọi call site cũ giữ nguyên chữ ký 3 tham số):
+     val  — giá trị đang giữ trong state, để dựng lại không mất chữ đã gõ
+     key  — khoá state (data-ckf), input handler ghi ngược lại vào biến
+     auto — autocomplete để trình duyệt/điện thoại gợi ý điền sẵn
+   id sinh bằng BỘ ĐẾM chứ không slug hoá nhãn: cùng một nhãn ("Họ và tên")
+   xuất hiện ở cả bước nhận hàng lẫn khối VAT nên slug sẽ đụng id. */
+let _fldId = 0;
+const field = (label, ph, type, opts = {}) => {
+  const id = 'fld' + (++_fldId);
+  const { val = '', key = '', auto = '' } = opts;
+  return `
+    <div class="px-4 py-2 flex flex-col gap-2.5">
+      <label for="${id}" class="text-[14px] font-medium leading-5 text-foreground">${label}</label>
+      <input id="${id}"${type ? ` type="${type}" inputmode="${type}"` : ''}${auto ? ` autocomplete="${auto}"` : ''}${key ? ` data-ckf="${key}"` : ''} value="${val}" placeholder="${ph}"
+             class="h-10 bg-background border border-border rounded-xs px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+    </div>`;
+};
+
+/* Ô chọn địa giới: nhìn y như input ở trên (h-10, viền, r2) nhưng là button
+   mở bottom sheet — cùng cách PDP thay <select> bằng sheet chọn size.
+   label[for] + id trên button: bấm vào nhãn cũng mở được sheet, và trình đọc
+   màn hình đọc được tên của nút (trước đây nút chỉ có mỗi chữ giá trị bên
+   trong). aria-haspopup="dialog" báo trước là bấm sẽ mở hộp thoại. */
+const pickField = (label, ph, key, val) => `
+    <div class="px-4 py-2 flex flex-col gap-2.5">
+      <label for="pk-${key}" class="text-[14px] font-medium leading-5 text-foreground">${label}</label>
       <div class="relative">
-        <button type="button" data-pick="${key}" class="w-full h-10 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] text-left flex items-center press transition-colors">
+        <button type="button" id="pk-${key}" data-pick="${key}" aria-haspopup="dialog" class="w-full h-10 bg-background border border-border rounded-xs pl-2 pr-9 text-[14px] text-left flex items-center press transition-colors focus:border-primary">
           <span class="pick-label truncate ${val ? 'text-foreground' : 'text-muted-foreground'}">${val || ph}</span>
         </button>
         <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
       </div>
     </div>`;
+
+/* Thẻ chọn cửa hàng — KHÔNG dùng chung richRadio vì richRadio gộp phần phụ
+   thành MỘT dòng: địa chỉ và giờ mở cửa sẽ dính nhau ở cùng cỡ chữ với tên
+   cửa hàng, và cả chuỗi gộp trở thành một text node nên i18n không dịch nổi.
+   Ở đây tách 3 dòng theo đúng thứ bậc: tên (14 Medium) · địa chỉ (13
+   #262626) · giờ (13 #737373, tách "Mở cửa" thành span riêng để dịch được).
+   Vỏ ngoài giữ nguyên .opt/.radio + data-opt để handler và CSS trạng thái
+   đang có chạy y nguyên. */
+function storeOpt(name, addr, hours, on) {
+  return `
+  <button type="button" role="radio" aria-checked="${on}" class="opt ${on ? 'on' : ''} w-full flex items-start gap-2 border border-border rounded-xs p-3 text-left press" data-opt="store:${name}">
+    <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
+      <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+    </span>
+    <span class="flex-1 min-w-0">
+      <span class="block text-[14px] font-medium leading-5 text-foreground">${name}</span>
+      <span class="block pt-0.5 text-[13px] leading-5 text-secondary-foreground">${addr}</span>
+      <span class="block text-[13px] leading-5 text-muted-foreground"><span>Mở cửa</span> <span>${hours}</span></span>
+    </span>
+  </button>`;
+}
+
+/* ── Bước "Nhận tại cửa hàng" — HIỆN DẦN theo tiến độ chọn ──
+   1) dropdown Thành phố → 2) DANH SÁCH cửa hàng của thành phố đó (thẻ chọn
+   như phương thức vận chuyển, không phải dropdown) → 3) các ô nhập của người
+   nhận. Mỗi phần chỉ hiện khi phần trước đã chọn xong, nên không đập vào mặt
+   một form dài ngay từ đầu; dòng "Bước n/3" nói trước còn mấy chặng.
+   Đổi thành phố = xoá cửa hàng đang chọn, nên phần 2 và 3 tự thu lại — nhưng
+   chữ đã gõ vẫn còn vì 3 ô nhập đọc/ghi vào state (ckName/ckPhone/ckEmail). */
+function ckPickupOpen() {
+  const step = !ckCity ? 'Bước 1/3 · Chọn thành phố'
+             : !ckStore ? 'Bước 2/3 · Chọn cửa hàng'
+             : 'Bước 3/3 · Thông tin người nhận';
+  const stores = ckCity ? storesOf(ckCity) : [];
+  return `
+    <div class="px-4 pt-3">
+      <p class="text-[12px] leading-4 text-muted-foreground">${step}</p>
+    </div>
+    ${pickField('Thành phố','Chọn thành phố','city', ckCity)}
+    ${!ckCity ? `
+    <div class="px-4 pb-2">
+      <p class="text-[13px] leading-5 text-muted-foreground">Chọn thành phố để xem các cửa hàng DAFC có thể nhận hàng.</p>
+    </div>` : `
+    <div id="ckStoreGroup" class="px-4 py-2 flex flex-col gap-2.5">
+      <div class="flex items-baseline justify-between">
+        <span id="storeOptsLbl" class="text-[14px] font-medium leading-5 text-foreground">Cửa hàng</span>
+        <span class="text-[13px] leading-5 text-muted-foreground">${stores.length} cửa hàng</span>
+      </div>
+      <div id="storeOpts" role="radiogroup" aria-labelledby="storeOptsLbl" class="flex flex-col gap-3">
+        ${stores.map(([name, addr, hours]) => storeOpt(name, addr, hours, name === ckStore)).join('')}
+      </div>
+    </div>`}
+    ${ckStore ? `
+    <div id="ckRecipient">
+      <div class="px-4 pt-4 pb-1">
+        <p class="text-[12px] leading-4 uppercase tracking-wide text-muted-foreground">Thông tin người nhận</p>
+      </div>
+      ${field('Họ và tên','Nhập họ và tên','', { val: ckName, key: 'name', auto: 'name' })}
+      ${field('Số điện thoại','0 1234 5678','tel', { val: ckPhone, key: 'phone', auto: 'tel' })}
+      ${field('Email','Nhập email','email', { val: ckEmail, key: 'email', auto: 'email' })}
+      ${pickField('Tỉnh thành sinh sống','Chọn tỉnh / thành phố','home', ckHome)}
+      <div class="px-4 pt-2">
+        <p class="text-[13px] leading-5 text-secondary-foreground">Đơn hàng được giữ tại cửa hàng trong 3 ngày kể từ khi có thông báo sẵn sàng nhận.</p>
+      </div>
+      <div class="px-4 py-4">
+        <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center" data-next="1" data-require="store">Xác nhận</button>
+      </div>
+    </div>` : ''}`;
+}
+
+/* Dựng lại nguyên màn checkout tại chỗ — dùng khi CẤU TRÚC đổi (đổi hình thức
+   nhận hàng, chọn xong thành phố, chọn cửa hàng lần đầu). Lặp lại đúng các
+   bước dọn dẹp của go() trừ phần history. */
+function rerenderCheckout(root) {
+  scrollCleanups.forEach(fn => fn());
+  scrollCleanups = [];
+  root.innerHTML = RENDER.checkout();
+  wire(root);
+  localizeNew(root);
+}
+
+function screenCHECKOUT() {
+  /* Đăng nhập xong thì router nhảy tới ckStep = 1 (bỏ qua bước địa chỉ). Ở chế
+     độ nhận tại cửa hàng, bước 1 là Thanh toán — mà chưa chọn cửa hàng thì
+     không được phép nhảy qua, nên kéo về bước 0. */
+  if (ckMode === 'pickup' && !ckStore) ckStep = 0;
 
   const notice = ckAuth
     ? `<p class="text-[14px] leading-5 text-foreground">Đăng nhập tài khoản <b class="font-medium">UserOne</b></p>`
@@ -3191,7 +3386,7 @@ function screenCHECKOUT() {
     ${field('Địa chỉ','Số nhà, tên đường')}
     <div class="px-4 pt-1">
       <label class="flex items-center gap-2 press">
-        <span class="chk w-4 h-4 border border-border flex items-center justify-center" data-check>${I.tick}</span>
+        <span class="chk w-4 h-4 rounded-xs border border-border-3 flex items-center justify-center" data-check>${I.tick}</span>
         <span class="text-[14px] leading-5 text-foreground">Lưu địa chỉ</span>
       </label>
     </div>
@@ -3199,14 +3394,29 @@ function screenCHECKOUT() {
       <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center" data-next="1">Xác nhận</button>
     </div>`;
   const s0done = `
-    <div class="px-4 pb-4 flex flex-col gap-1">
+    <div class="px-4 py-2 flex flex-col gap-1">
       <p class="text-[14px] font-medium leading-5 text-foreground">User name - 0 1234 5678</p>
       <p class="text-[14px] leading-5 text-foreground">123 Nam Kỳ Khởi Nghĩa, Phường 1, Thành phố Hồ Chí Minh</p>
     </div>`;
 
+  /* ── Section 0 bản NHẬN TẠI CỬA HÀNG ──
+     Thứ tự thao tác: thành phố -> cửa hàng trong thành phố đó -> người nhận.
+     Ô cửa hàng chỉ mở được sau khi có thành phố (chặn trong wireAddressPickers),
+     giống ràng buộc tỉnh -> phường của luồng giao hàng.
+     Khối #ckStoreInfo và #ckStoreDone cập nhật TẠI CHỖ khi chọn xong cửa hàng
+     (paintStore) — không dựng lại cả màn để khỏi mất trạng thái đang gõ. */
+  const st = storeInfo(ckStore);
+  const storeLines = s => s ? `
+    <p class="text-[13px] leading-5 text-secondary-foreground">${s.addr}</p>
+    <p class="text-[13px] leading-5 text-muted-foreground"><span>Mở cửa</span> <span>${s.hours}</span></p>` : '';
+  const p0open = `<div id="ckPickupBody">${ckPickupOpen()}</div>`;
+  const p0done = `<div id="ckStoreDone" class="px-4 py-2 flex flex-col gap-1">${ckStoreDoneHTML()}</div>`;
+
   /* ── Section 1: Phương thức vận chuyển ── */
   const s1open = `
-    <div id="shipOpts" class="px-4 flex flex-col gap-3">
+    <!-- Figma: mỗi thẻ nằm trong khung padding 8/16 -> cách nhau 16; nhóm thanh
+         toán thì các thẻ chung một khung gap 12 (xem #payOpts). -->
+    <div id="shipOpts" class="px-4 py-2 flex flex-col gap-4">
       ${richRadio('std','Giao hàng thông thường - Miễn Phí', ETA, true)}
       ${richRadio('fast','Giao hàng nhanh - 25,000đ', ETA, false)}
     </div>
@@ -3214,17 +3424,19 @@ function screenCHECKOUT() {
       <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center" data-next="2">Xác nhận</button>
     </div>`;
   const s1done = `
-    <div class="px-4 pb-4 flex flex-col gap-1">
+    <div class="px-4 py-2 flex flex-col gap-1">
       <p id="shipDoneLabel" class="text-[14px] font-medium leading-5 text-foreground">Giao hàng thông thường</p>
       <p class="text-[14px] leading-5 text-foreground">${ETA}</p>
     </div>`;
 
   /* ── Section 2: Thanh toán ── */
+  /* [id, nhãn, đang chọn, [file logo, bề rộng px, alt]] — logo lấy từ assets,
+     bề rộng theo Figma 3028:47246 (76 cho cặp Visa+Mastercard, 38 cho logo đơn) */
   const pays = [
-    ['cc','Thẻ tín dụng/Ghi nợ', true],
-    ['qr','Chuyển khoản / QR code', false],
-    ['atm','ATM', false],
-    ['inst','Thanh toán trả góp 0% qua thẻ tín dụng', false],
+    ['cc','Thẻ tín dụng/Ghi nợ', true,  ['pay-1.png', 76, 'Visa, Mastercard']],
+    ['qr','Chuyển khoản / QR code', false, ['pay-3.png', 38, 'QR code']],
+    ['atm','ATM', false, ['pay-4.png', 38, 'Napas']],
+    ['inst','Thanh toán trả góp 0% qua thẻ tín dụng', false, ['pay-2.png', 38, 'Payoo']],
   ];
   const row = (l, v) => `
     <div class="h-9 flex items-center justify-between">
@@ -3232,23 +3444,20 @@ function screenCHECKOUT() {
       <span class="text-[14px] leading-5 text-foreground">${v}</span>
     </div>`;
   const s2open = `
-    <div id="payOpts" class="px-4 flex flex-col gap-3">
-      ${pays.map(([id, l, on]) => richRadio(id, l, '', on)).join('')}
+    <div id="payOpts" class="px-4 py-2 flex flex-col gap-3">
+      ${pays.map(([id, l, on, icon]) => richRadio(id, l, '', on, icon)).join('')}
     </div>
     <!-- Xuất hóa đơn VAT (Frame 427319857) -->
     <div class="pt-4">
       <div class="px-4">
         <label id="vatToggle" class="flex items-center gap-2 press w-fit cursor-pointer">
-          <span class="chk w-4 h-4 border border-border flex items-center justify-center shrink-0">${I.tick}</span>
+          <span class="chk w-4 h-4 rounded-xs border border-border-3 flex items-center justify-center shrink-0">${I.tick}</span>
           <span class="text-[14px] font-medium leading-5 text-foreground">Xuất hóa đơn VAT</span>
         </label>
       </div>
       <div id="vatFields" class="ck-open"><div class="acc-inner">
         <div class="px-4 pt-3 flex flex-col gap-3">
-          <div class="flex">
-            <button data-vat-type="personal" class="flex-1 h-10 border border-border rounded-xs flex items-center justify-center text-[14px] font-medium press ${vatType === 'personal' ? 'bg-secondary text-secondary-foreground' : 'text-foreground'}">Cá nhân</button>
-            <button data-vat-type="company" class="-ml-px flex-1 h-10 border border-border rounded-xs flex items-center justify-center text-[14px] font-medium press ${vatType === 'company' ? 'bg-secondary text-secondary-foreground' : 'text-foreground'}">Công ty</button>
-          </div>
+          ${segToggle('data-vat-type', [['personal','Cá nhân'], ['company','Công ty']], vatType, 'h-10')}
           <p class="text-[14px] leading-5 text-secondary-foreground">Hóa đơn VAT chỉ xuất trong ngày, khách hàng có nhu cầu xuất hóa đơn vui lòng điền đầy đủ thông tin bên dưới.</p>
         </div>
         <div id="vatFieldRows">${vatFieldRows(vatType)}</div>
@@ -3256,7 +3465,7 @@ function screenCHECKOUT() {
     </div>
     <div class="px-4 pt-4">
       ${row('Tạm tính','113,500,000đ')}
-      ${row('Giao hàng','Free')}
+      ${ckMode === 'pickup' ? row('Nhận hàng','Tại cửa hàng') : row('Giao hàng','Free')}
       <div class="h-14 flex items-center justify-between">
         <span class="text-[16px] font-medium leading-6 text-foreground">Tổng cộng</span>
         <span class="text-[16px] font-medium leading-6 text-foreground">113,500,000đ</span>
@@ -3270,16 +3479,17 @@ function screenCHECKOUT() {
   <div class="w-full" data-scroller>
     ${navBar({ logoOnly: true })}
 
-    <!-- Dialog Header -->
-    <div class="py-3 px-4">
-      <p class="text-[18px] font-medium leading-7 text-foreground">Thanh toán (4)</p>
+    <!-- Dialog Header — Figma: padding 16, chữ 18/25 Medium -->
+    <div class="py-4 px-4">
+      <p class="ck-h1 text-[18px] font-medium text-foreground">Thanh toán (4)</p>
     </div>
 
-    <!-- Giỏ hàng của bạn (thu gọn / mở rộng) -->
-    <div class="px-2 pb-2">
+    <!-- Tóm tắt đơn hàng (thu gọn / mở rộng) — Figma: khối padding 16/8, hàng
+         cao 36, NHÃN thường (không đậm), số tiền mới đậm -->
+    <div class="ck-sum px-2 py-4">
       <div class="acc px-2">
-        <button class="acc-trigger w-full h-10 flex items-center justify-between press">
-          <span class="text-[14px] font-medium text-foreground">Giỏ hàng của bạn</span>
+        <button class="acc-trigger w-full h-9 flex items-center justify-between press">
+          <span class="text-[14px] text-foreground">Giỏ hàng của bạn</span>
           <span class="flex items-center gap-2"><span class="text-[14px] font-medium text-foreground">113,500,000đ</span>${I.chevR('var(--general-primary)')}</span>
         </button>
         <div class="acc-body"><div class="acc-inner">
@@ -3297,28 +3507,40 @@ function screenCHECKOUT() {
           </div>
           <div class="h-px bg-border-1"></div>
           <!-- Chưa xác nhận phương thức vận chuyển (section 1) nên phí giao hàng
-               chưa xác định — chỉ hiện Tạm tính, phần giao hàng ghi "chưa xác định". -->
+               chưa xác định — chỉ hiện Tạm tính, phần giao hàng ghi "chưa xác định".
+               Nhận tại cửa hàng thì không có phí nên ghi thẳng luôn. -->
           <div class="flex flex-col pb-2">
             ${row('Tạm tính','113,500,000đ')}
             <div class="h-9 flex items-center justify-between">
-              <span class="text-[14px] leading-5 text-foreground">Giao hàng</span>
-              <span class="text-[14px] leading-5 text-muted-foreground">Sẽ được tính sau</span>
+              <span class="text-[14px] leading-5 text-foreground">${ckMode === 'pickup' ? 'Nhận hàng' : 'Giao hàng'}</span>
+              <span class="text-[14px] leading-5 ${ckMode === 'pickup' ? 'text-foreground' : 'text-muted-foreground'}">${ckMode === 'pickup' ? 'Tại cửa hàng' : 'Sẽ được tính sau'}</span>
             </div>
           </div>
         </div></div>
       </div>
     </div>
 
-    <!-- Hộp thông báo -->
-    <div class="px-2 pb-2">
-      <div class="bg-accent-0 rounded-xs px-2 py-2 flex flex-col gap-2">${notice}</div>
+    <!-- Hộp thông báo — Figma: khối padding 8/16, hộp trong padding 8, bo 8 -->
+    <div class="ck-notice px-4 py-2">
+      <div class="bg-accent-0 rounded-md px-2 py-2 flex flex-col gap-2">${notice}</div>
     </div>
 
-    <!-- 3 section -->
+    <!-- Hình thức nhận hàng — cùng kiểu cặp nút phân đoạn với Cá nhân/Công ty
+         của khối VAT. Đổi tab là dựng lại màn (xem handler [data-ck-mode]). -->
+    <div id="ckModeTabs" class="px-4 pb-3">
+      ${segToggle('data-ck-mode', [['ship','Giao hàng'], ['pickup','Nhận tại cửa hàng']], ckMode, 'h-10')}
+    </div>
+
+    <!-- Giao tận nơi: 3 section · Nhận tại cửa hàng: 2 (không có bước chọn
+         phương thức vận chuyển), chỉ số section vẫn chạy 0,1,... nên toàn bộ
+         cơ chế ck-next / ck-change / paintCheckout dùng lại nguyên vẹn. -->
     <div id="ckSections">
+      ${ckMode === 'pickup' ? `
+      ${ckSection(0, 'Nhận tại cửa hàng', p0open, p0done)}
+      ${ckSection(1, 'Thanh toán', s2open, '')}` : `
       ${ckSection(0, 'Thông tin giao hàng', s0open, s0done)}
       ${ckSection(1, 'Phương thức vận chuyển', s1open, s1done)}
-      ${ckSection(2, 'Thanh toán', s2open, '')}
+      ${ckSection(2, 'Thanh toán', s2open, '')}`}
     </div>
     <div class="h-6"></div>
   </div>`;
@@ -3331,17 +3553,30 @@ function paintCheckout(root) {
     const state = i < ckStep ? 'done' : i === ckStep ? 'open' : 'pending';
     sec.querySelector('.ck-open').classList.toggle('is-open', state === 'open');
     sec.querySelector('.ck-done').classList.toggle('is-open', state === 'done');
+    // bước chưa tới: hàng tiêu đề cao 72 thay vì 56 (xem .ck-sec.is-pending)
+    sec.classList.toggle('is-pending', state === 'pending');
     sec.querySelector('.ck-title').style.opacity = state === 'pending' ? '0.4' : '1';
     const chg = sec.querySelector('.ck-change');
     chg.style.display = state === 'done' ? '' : 'none';
   });
+  /* Tới bước Thanh toán thì ẩn cặp Giao hàng / Nhận tại cửa hàng: lúc này hình
+     thức nhận hàng đã chốt, để đó chỉ tổ bấm nhầm — mà đổi tab là ckStep về 0,
+     tức mất sạch bước vừa làm. Muốn đổi thì bấm "Thay đổi" ở section trên, lúc
+     đó cặp nút hiện lại. Bước Thanh toán là section 1 ở luồng nhận tại cửa
+     hàng (chỉ 2 section) và section 2 ở luồng giao hàng. */
+  const tabs = root.querySelector('#ckModeTabs');
+  if (tabs) tabs.classList.toggle('hidden', ckStep >= (ckMode === 'pickup' ? 1 : 2));
 }
 
 /* ════════════════════════════════════════════════════════════════
    SCREEN: DONE
 ════════════════════════════════════════════════════════════════ */
 function screenDONE() {
-  const rows = [['Mã đơn hàng','#MG-2026-0807'],['Tổng cộng','113,500,000đ'],['Vận chuyển','Miễn phí'],['Dự kiến giao','12 – 16/08']];
+  /* Đơn nhận tại cửa hàng thì 2 dòng cuối nói về cửa hàng thay vì vận chuyển */
+  const st = storeInfo(ckStore);
+  const rows = ckMode === 'pickup'
+    ? [['Mã đơn hàng','#MG-2026-0807'],['Tổng cộng','113,500,000đ'],['Nhận tại', st ? st.name : 'Cửa hàng DAFC'],['Sẵn sàng nhận','Từ 12/08']]
+    : [['Mã đơn hàng','#MG-2026-0807'],['Tổng cộng','113,500,000đ'],['Vận chuyển','Miễn phí'],['Dự kiến giao','12 – 16/08']];
   return `
   <div class="w-full relative" data-scroller>
     <div id="confettiHost" class="absolute inset-x-0 top-0 h-full pointer-events-none overflow-hidden z-10"></div>
@@ -4458,6 +4693,25 @@ const I18N = {
   'Ngôn ngữ':'Language', 'Tiếng Việt':'Vietnamese', 'Sẽ báo bạn ngay khi có hàng':'We\u2019ll notify you when it\u2019s back',
   'Đã đăng ký · sẽ báo bạn khi có hàng':'Registered · we\u2019ll notify you when it\u2019s back',
 
+  // ── Nhận tại cửa hàng (checkout) ──
+  'Nhận tại cửa hàng':'Store pickup', 'Thành phố':'City', 'Chọn thành phố':'Select city',
+  'Email':'Email', 'Tỉnh thành sinh sống':'Province of residence',
+  'Thông tin người nhận':'Recipient details',
+  'Bước 1/3 · Chọn thành phố':'Step 1/3 · Choose a city',
+  'Bước 2/3 · Chọn cửa hàng':'Step 2/3 · Choose a store',
+  'Bước 3/3 · Thông tin người nhận':'Step 3/3 · Recipient details',
+  'Chọn thành phố để xem các cửa hàng DAFC có thể nhận hàng.':'Choose a city to see DAFC stores available for pickup.',
+  'Vui lòng nhập họ và tên':'Please enter your full name',
+  'Số điện thoại chưa đúng':'Enter a valid phone number',
+  'Email chưa đúng':'Enter a valid email address',
+  'Cửa hàng':'Store', 'Chọn cửa hàng':'Select store', 'Mở cửa':'Open',
+  'Chọn thành phố trước':'Select a city first', 'Chọn cửa hàng nhận hàng':'Select a pickup store',
+  'Chưa chọn cửa hàng':'No store selected',
+  'Đơn hàng được giữ tại cửa hàng trong 3 ngày kể từ khi có thông báo sẵn sàng nhận.':'We hold your order at the store for 3 days from the ready-for-pickup notice.',
+  'Nhận hàng':'Collection', 'Tại cửa hàng':'In store',
+  'Nhận tại':'Pick up at', 'Sẵn sàng nhận':'Ready from', 'Từ 12/08':'From 12/08',
+  'Cửa hàng DAFC':'DAFC store',
+
   // ── Cookie consent ──
   'Tùy chọn cookies':'Cookie settings',
   'Đồng ý tất cả':'Accept all', 'Từ chối tất cả':'Reject all',
@@ -4518,6 +4772,7 @@ const I18N = {
 
 // Luật cho chuỗi động
 const I18N_RE = [
+  [/^(\d+) cửa hàng$/,                '$1 stores'],
   [/^(\d+) sản phẩm$/,                '$1 products'],
   [/^(\d+) sản phẩm · (.+)$/,         '$1 items · $2'],
   [/^\+ ([\d.]+) điểm$/,              '+ $1 points'],
@@ -4539,6 +4794,7 @@ const I18N_RE = [
   [/^Đã lưu tuỳ chọn cookie · (\d+)\/(\d+) nhóm$/, 'Cookie preferences saved · $1/$2 groups'],
 ];
 const I18N_REV_RE = [
+  [/^(\d+) stores$/,                  '$1 cửa hàng'],
   [/^(\d+) products$/,                '$1 sản phẩm'],
   [/^(\d+) items · (.+)$/,            '$1 sản phẩm · $2'],
   [/^\+ ([\d.]+) points$/,            '+ $1 điểm'],
@@ -4692,11 +4948,96 @@ function setPickLabel(btn, value, placeholder) {
   lbl.classList.toggle('text-muted-foreground', !value);
 }
 
+/* ── Báo lỗi ngay dưới ô nhập ──
+   App vốn không validate gì ở checkout (xem AUDIT). Ở bước nhận tại cửa hàng
+   thì bắt buộc phải có: nhân viên cửa hàng cần đúng tên + số để giao hàng.
+   Lỗi gắn vào input bằng aria-invalid + aria-describedby (trình đọc màn hình
+   đọc được), viền đỏ bằng class .fld-err (tailwind build sẵn không có
+   border-destructive), và focus nhảy tới ô sai ĐẦU TIÊN. */
+function clearFieldErr(inp) {
+  inp.classList.remove('fld-err');
+  inp.removeAttribute('aria-invalid');
+  const id = inp.getAttribute('aria-describedby');
+  if (id) { const p = document.getElementById(id); if (p) p.remove(); inp.removeAttribute('aria-describedby'); }
+}
+function setFieldErr(inp, msg) {
+  clearFieldErr(inp);
+  inp.classList.add('fld-err');
+  inp.setAttribute('aria-invalid', 'true');
+  const eid = 'err-' + inp.id;
+  inp.setAttribute('aria-describedby', eid);
+  inp.insertAdjacentHTML('afterend', `<p id="${eid}" class="mt-1 text-[12px] leading-4 text-destructive">${msg}</p>`);
+  const p = document.getElementById(eid);
+  if (p) localizeNew(p);
+}
+function validatePickup(root) {
+  const get = k => root.querySelector(`[data-ckf="${k}"]`);
+  const rules = [
+    [get('name'),  v => !!v.trim(),                       'Vui lòng nhập họ và tên'],
+    [get('phone'), v => /^0\d{8,10}$/.test(v.replace(/\s/g, '')), 'Số điện thoại chưa đúng'],
+    [get('email'), v => !v.trim() || /^\S+@\S+\.\S+$/.test(v.trim()), 'Email chưa đúng'],
+  ];
+  let first = null;
+  rules.forEach(([inp, ok, msg]) => {
+    if (!inp) return;
+    if (ok(inp.value)) { clearFieldErr(inp); return; }
+    setFieldErr(inp, msg);
+    if (!first) first = inp;
+  });
+  if (first) { first.focus({ preventScroll: true }); first.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  return !first;
+}
+
+/* Phần tóm tắt sau khi Xác nhận: nhắc lại NGƯỜI NHẬN rồi mới tới cửa hàng —
+   trước đây chỉ hiện mỗi cửa hàng, tức là gõ họ tên/SĐT xong bấm Xác nhận là
+   không còn thấy chúng ở đâu nữa. Dùng chung 1 hàm cho cả lúc render màn
+   (p0done) lẫn lúc cập nhật tại chỗ (paintStore), nếu không sẽ lệch nhau. */
+function ckStoreDoneHTML() {
+  const s = storeInfo(ckStore);
+  const who = [ckName, ckPhone].filter(Boolean).join(' - ');
+  return `
+    ${who ? `<p class="text-[14px] font-medium leading-5 text-foreground">${who}</p>` : ''}
+    <p class="ck-store-name text-[14px] ${who ? '' : 'font-medium '}leading-5 text-foreground">${ckStore || 'Chưa chọn cửa hàng'}</p>
+    ${s ? `<p class="text-[13px] leading-5 text-secondary-foreground">${s.addr}</p>
+    <p class="text-[13px] leading-5 text-muted-foreground"><span>Mở cửa</span> <span>${s.hours}</span></p>` : ''}`;
+}
+
+/* Cập nhật TẠI CHỖ phần tóm tắt khi người dùng đổi sang cửa hàng khác — thay
+   vì dựng lại cả màn, để không mất chữ đang gõ ở ô họ tên/SĐT/email. */
+function paintStore(root) {
+  const done = root.querySelector('#ckStoreDone');
+  if (done) { done.innerHTML = ckStoreDoneHTML(); localizeNew(done); }
+}
+
 /* Ô tỉnh/thành và phường/xã: mở sheet chọn. Phường phụ thuộc tỉnh nên đổi
    tỉnh là xoá phường đang chọn — giữ lại sẽ ra địa chỉ không tồn tại. */
 function wireAddressPickers(root) {
   root.querySelectorAll('[data-pick]').forEach(btn => {
     btn.addEventListener('click', () => {
+      /* ── Nhận tại cửa hàng: thành phố -> cửa hàng ──
+         Cùng ràng buộc phụ thuộc như tỉnh -> phường: đổi thành phố là bỏ cửa
+         hàng đang chọn, vì cửa hàng cũ không thuộc thành phố mới. */
+      if (btn.dataset.pick === 'city') {
+        window.__openPicker('Chọn thành phố', DAFC_STORES.map(([c]) => c), ckCity, picked => {
+          if (picked === ckCity) return;
+          ckCity = picked; ckStore = '';
+          // đổi thành phố -> danh sách cửa hàng đổi theo, khối thông tin thu lại
+          // (chữ đã gõ vẫn còn vì 3 ô người nhận đọc/ghi vào state)
+          rerenderCheckout(root);
+          const cityBtn = root.querySelector('[data-pick="city"]');
+          if (cityBtn) cityBtn.focus({ preventScroll: true });   // trả con trỏ về đúng chỗ vừa thao tác
+        });
+        return;
+      }
+      /* Tỉnh/thành người nhận đang sinh sống — chỉ có ở luồng nhận tại cửa
+         hàng, dùng lại đúng danh sách tỉnh của địa chỉ giao hàng. */
+      if (btn.dataset.pick === 'home') {
+        window.__openPicker('Chọn tỉnh / thành phố', VN_LOCATIONS.map(([pv]) => pv), ckHome, picked => {
+          ckHome = picked;
+          setPickLabel(btn, picked, 'Chọn tỉnh / thành phố');
+        });
+        return;
+      }
       if (btn.dataset.pick === 'province') {
         window.__openPicker('Chọn tỉnh / thành phố', VN_LOCATIONS.map(([pv]) => pv), ckProvince, picked => {
           ckProvince = picked; ckWard = '';
@@ -4815,7 +5156,7 @@ function wire(root) {
     el.addEventListener('click', e => {
       e.stopPropagation();
       const t = el.dataset.nav;
-      if (el.hasAttribute('data-reset')) { cartQty = 4; history = []; ckAuth = false; ckStep = 0; }
+      if (el.hasAttribute('data-reset')) { cartQty = 4; history = []; ckAuth = false; ckStep = 0; ckMode = 'ship'; ckCity = ''; ckStore = ''; ckHome = ''; ckName = ''; ckPhone = ''; ckEmail = ''; }
       if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = ckAuth ? 1 : 0; }
       if (t === 'back') { window.history.back(); return; }
       if (el.hasAttribute('data-loading')) {
@@ -4994,11 +5335,66 @@ function wire(root) {
       const sec = root.querySelector(`.ck-sec[data-sec="${i}"]`);
       if (sec) window.scrollTo({ top: sec.getBoundingClientRect().top + window.scrollY - 56, behavior: 'smooth' });
     };
+    /* 3 ô người nhận ghi thẳng vào state mỗi lần gõ — nhờ vậy đổi thành phố /
+       cửa hàng (dựng lại phần thân) không làm mất chữ, và phần tóm tắt sau khi
+       Xác nhận có dữ liệu để nhắc lại. */
+    const CKF = { name: v => ckName = v, phone: v => ckPhone = v, email: v => ckEmail = v };
+    root.querySelectorAll('[data-ckf]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        CKF[inp.dataset.ckf] && CKF[inp.dataset.ckf](inp.value);
+        clearFieldErr(inp);
+      });
+    });
+
     root.querySelectorAll('.ck-next').forEach(btn => {
       btn.addEventListener('click', () => {
+        // Bước nhận tại cửa hàng: chưa chọn cửa hàng thì không cho đi tiếp
+        if (btn.dataset.require === 'store') {
+          if (!ckStore) { toast('Chọn cửa hàng nhận hàng'); return; }
+          if (!validatePickup(root)) return;
+          paintStore(root);   // đồng bộ tóm tắt với chữ vừa gõ trước khi thu gọn
+        }
         ckStep = +btn.dataset.next;
         paintCheckout(root);
         setTimeout(() => scrollTo(ckStep), 120);
+      });
+    });
+    /* Đổi hình thức nhận hàng: dựng lại đúng màn checkout tại chỗ (số section
+       khác nhau giữa 2 chế độ nên không thể chỉ ẩn/hiện). */
+    root.querySelectorAll('[data-ck-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (ckMode === btn.dataset.ckMode) return;
+        ckMode = btn.dataset.ckMode;
+        ckStep = 0;
+        rerenderCheckout(root);
+        window.scrollTo(0, 0);
+      });
+    });
+    /* Danh sách cửa hàng: lần chọn ĐẦU TIÊN phải dựng lại để lộ khối thông tin
+       người nhận; các lần đổi sau chỉ chuyển thẻ đang chọn — giữ nguyên chữ
+       người dùng đã gõ ở ô SĐT/email. */
+    root.querySelectorAll('#storeOpts [data-opt]').forEach(o => {
+      o.addEventListener('click', () => {
+        const name = o.dataset.opt.slice(6);      // bỏ tiền tố "store:"
+        if (name === ckStore) return;
+        const first = !ckStore;
+        ckStore = name;
+        if (first) {
+          // lần đầu: khối người nhận mới mọc ra -> đưa con trỏ vào ô đầu tiên
+          rerenderCheckout(root);
+          const inp = root.querySelector('#ckRecipient input');
+          if (inp) { inp.focus({ preventScroll: true }); }
+          const box = root.querySelector('#ckRecipient');
+          if (box) setTimeout(() => window.scrollTo({ top: box.getBoundingClientRect().top + window.scrollY - 56, behavior: 'smooth' }), 60);
+          return;
+        }
+        root.querySelectorAll('#storeOpts [data-opt]').forEach(x => {
+          x.classList.remove('on'); x.setAttribute('aria-checked', 'false');
+          x.querySelector('.radio').classList.remove('on');
+        });
+        o.classList.add('on'); o.setAttribute('aria-checked', 'true');
+        o.querySelector('.radio').classList.add('on');
+        paintStore(root);
       });
     });
     root.querySelectorAll('.ck-change').forEach(btn => {
@@ -5027,10 +5423,7 @@ function wire(root) {
         if (type === vatType) return;
         vatType = type;
         root.querySelectorAll('[data-vat-type]').forEach(b => {
-          const on = b.dataset.vatType === vatType;
-          b.classList.toggle('bg-secondary', on);
-          b.classList.toggle('text-secondary-foreground', on);
-          b.classList.toggle('text-foreground', !on);
+          b.className = segBtnClass(b.dataset.vatType === vatType, 'h-10');
         });
         const rows = root.querySelector('#vatFieldRows');
         if (rows) { rows.innerHTML = vatFieldRows(vatType); localizeNew(rows); }

@@ -456,16 +456,60 @@ window.RESP = (function () {
     transition: opacity .25s ease, visibility 0s linear .3s;
   }
   .navbar:has(.dk-sub.mega-open) .dk-scrim { opacity: 1; visibility: visible; }
-  /* ── Search dropdown dưới header ── */
-  #dkSearchWrap { position: relative; }
-  #dkSearchPanel {
-    position: absolute; top: calc(100% + 8px); right: 0; width: 420px; z-index: 60;
-    background: var(--general-background); border: 1px solid var(--general-border);
-    border-radius: 6px; box-shadow: 0 16px 48px rgba(0,0,0,.14);
-    opacity: 0; visibility: hidden; transform: translateY(4px);
-    transition: opacity .18s ease, transform .2s ease, visibility 0s linear .2s;
+  /* ── Layer tìm kiếm — mở từ nút "Tìm kiếm" trên header ──
+     Tấm trắng đổ từ mép trên xuống + nền tối phía dưới, thay cho dropdown
+     420px neo dưới ô nhập của bản trước. Nội dung bên trong bó về 600px cho
+     dễ đọc dù layer trải hết bề ngang. z-index 200 để nằm trên header (50)
+     và mega panel, nhưng dưới toast/sheet (220+). */
+  #dkSearchLayer { position: fixed; inset: 0; z-index: 200; pointer-events: none; }
+  #dkSearchLayer .ds-backdrop {
+    position: absolute; inset: 0; background: rgba(0,0,0,.45);
+    opacity: 0; transition: opacity .3s ease;
   }
-  #dkSearchPanel.open { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+  #dkSearchLayer .ds-sheet {
+    position: absolute; left: 0; right: 0; top: 0;
+    background: var(--general-background);
+    max-height: 86vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,.16);
+    transform: translateY(-100%); transition: transform .35s cubic-bezier(.22,1,.36,1);
+  }
+  #dkSearchLayer.open { pointer-events: auto; }
+  #dkSearchLayer.open .ds-backdrop { opacity: 1; }
+  #dkSearchLayer.open .ds-sheet { transform: none; }
+  /* Các số đo dưới đây không có sẵn trong tailwind.css đã build nên đặt tay.
+     Khung trong bó 1240 (cùng cỡ với khung thanh toán), riêng Ô NHẬP vẫn giữ
+     max 600 canh giữa như yêu cầu trước. */
+  #dkSearchLayer .ds-inner { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+  #dkSearchLayer .ds-field { max-width: 600px; }
+  /* 2 cột: trái = lịch sử/gợi ý + từ khóa · phải = sản phẩm nổi bật, ngăn bằng
+     đường dọc như tham chiếu Versace. */
+  #dkSearchLayer .ds-cols { display: flex; gap: 40px; }
+  #dkSearchLayer .ds-side { width: 280px; flex-shrink: 0; }
+  #dkSearchLayer .ds-main {
+    flex: 1; min-width: 0;
+    border-left: 1px solid var(--general-border); padding-left: 40px;
+  }
+  /* Dải desktop hẹp: 2 cột xếp chồng, đường ngăn dọc đổi thành ngang */
+  @media (max-width: 1023px) {
+    #dkSearchLayer .ds-cols { flex-direction: column; gap: 24px; }
+    #dkSearchLayer .ds-side { width: auto; }
+    #dkSearchLayer .ds-main {
+      border-left: 0; padding-left: 0;
+      border-top: 1px solid var(--general-border); padding-top: 24px;
+    }
+  }
+  /* Thẻ thanh toán: Figma cho 4 thẻ CAO BẰNG NHAU 64 (thẻ "trả góp 0%" xuống
+     2 dòng kéo cả nhóm lên 64). Đặt sàn ở đây thay vì trong richRadio để thẻ
+     vận chuyển vẫn ôm sát nội dung như cũ. */
+  #payOpts .opt { min-height: 64px; }
+  /* Ô nhập sai: tailwind build sẵn không có border-destructive nên đặt tay.
+     !important vì utility .border-border cùng mức specificity và thắng cascade. */
+  .fld-err, .fld-err:focus { border-color: var(--general-destructive) !important; }
+  /* Thẻ cửa hàng đang chọn: chỉ đổi viền sang #262626, KHÔNG tô nền — giống
+     bản mobile đã sửa theo Figma. Scope trong #storeOpts nên không đụng thẻ
+     vận chuyển / thanh toán của desktop (vẫn dùng .opt.on toàn cục cũ). */
+  #storeOpts .opt.on { border-color: var(--general-secondary-foreground); background: transparent; }
+
   /* ── PDP desktop: cột info dính khi cuộn gallery ── */
   .dk-sticky-info { position: sticky; top: 136px; align-self: flex-start; }
   .dk-sticky-side { position: sticky; top: 136px; align-self: flex-start; }
@@ -1067,15 +1111,15 @@ function navBar({ logoOnly = false } = {}) {
             <button class="dk-nav-arrow press w-9 h-9 rounded-xs flex items-center justify-center" data-nav-next aria-label="Xem danh mục tiếp">${I.chevR('var(--unofficial-foreground-alt)')}</button>
           </div>
         </nav>
-        <div id="dkSearchWrap" class="shrink-0 px-4">
-          <!-- Figma Input (2171:12954): 270×36, nền trắng, CHỈ viền dưới 1px #a3a3a3 -->
-          <label class="flex items-center gap-2 h-9 w-[270px] border-b border-border-4 bg-input p-2 focus-within:border-primary transition-colors">
+        <!-- Ô nhập 270px của Figma (2171:12954) đổi thành NÚT: bấm mở layer tìm
+             kiếm đè lên trang (cùng ý đồ với bản mobile — ở đó tìm kiếm là một
+             màn riêng phủ kín). Nút theo dáng Button/Ghost h-36 như mọi nút
+             tiện ích khác trên header, ô nhập thật nằm trong layer. -->
+        <div id="dkSearchWrap" class="shrink-0 px-2">
+          <button id="dkSearchBtn" class="ghost-hover h-9 px-3 rounded-xs flex items-center gap-2 press" aria-label="Tìm kiếm">
             <span class="w-4 h-4 flex items-center justify-center shrink-0 [&_svg]:w-4 [&_svg]:h-4 opacity-60">${I.search}</span>
-            <input id="dkSearchInput" type="search" placeholder="Bạn đang tìm kiếm gì" autocomplete="off" enterkeyhint="search"
-                   class="flex-1 min-w-0 outline-none text-[14px] leading-5 text-foreground placeholder:text-muted-foreground"
-                   style="background:transparent;border:0;padding:0;-webkit-appearance:none;appearance:none">
-          </label>
-          <div id="dkSearchPanel"></div>
+            <span class="text-[14px] font-medium leading-5 text-foreground-alt">Tìm kiếm</span>
+          </button>
         </div>
       </div>
       <!-- Mega panel: sibling của hàng nav (không nằm trong .dk-nav-strip có
@@ -1414,9 +1458,15 @@ function screenPLP() {
     <div class="max-w-[1440px] mx-auto w-full">
       ${dkCrumbs(['Trang chủ', 'Thương hiệu'])}
 
-      <!-- ── Brand hero (PLP-Desktop-02-ByBrand 2474:107068): cột trái 801 + ảnh 575×320 ── -->
+      <!-- ── Brand hero (PLP-Desktop-02-ByBrand 2474:107068): ảnh 575×320 + cột chữ 801 ──
+           Đảo so với Figma: ẢNH ĐỨNG TRƯỚC (trái), khối tên brand + mô tả +
+           strip danh mục nằm sau (phải). Chỉ đổi thứ tự DOM, bề rộng 2 cột giữ
+           nguyên nên bố cục là bản soi gương của thiết kế gốc. -->
       <div class="px-6">
         <div class="flex gap-4 py-4 items-start">
+          <div class="dk-brand-hero w-[575px] shrink-0 overflow-hidden bg-secondary">
+            <img src="${A}brand-hero.png" alt="Versace campaign" class="w-full h-[320px] object-cover lazy">
+          </div>
           <div class="flex-1 min-w-0 flex flex-col gap-4 reveal">
             <div class="flex flex-col gap-2">
               <div class="flex items-center justify-between py-2">
@@ -1446,9 +1496,6 @@ function screenPLP() {
               </div>
               <button data-strip-next class="w-11 h-11 shrink-0 rounded-xs border border-border bg-background flex items-center justify-center press [&_svg]:w-3.5 [&_svg]:h-3.5" aria-label="Cuộn danh mục">${I.chevR('#0a0a0a').replace('class="acc-chev" ', '')}</button>
             </div>
-          </div>
-          <div class="dk-brand-hero w-[575px] shrink-0 overflow-hidden bg-secondary">
-            <img src="${A}brand-hero.png" alt="Versace campaign" class="w-full h-[320px] object-cover lazy">
           </div>
         </div>
       </div>
@@ -2803,16 +2850,26 @@ function screenLOGIN() {
 const ETA = 'Thời gian nhận hàng dự kiến từ ngày 14/07 đến ngày 18/07';
 
 /* Rich radio: label + mô tả phụ */
-function richRadio(id, label, sub, on) {
+/* icon (tuỳ chọn) = [file, width, alt] — logo đối tác thanh toán đặt cuối hàng,
+   cao 24 và giữ tỉ lệ bằng object-contain. Bề rộng lấy đúng Figma 3028:47246:
+   76 cho cặp Visa+Mastercard, 38 cho các logo đơn. Không có class w-[76px]
+   trong bản tailwind build sẵn nên đặt bằng style. */
+function richRadio(id, label, sub, on, icon) {
+  /* Có dòng phụ (phương thức vận chuyển) -> canh MÉP TRÊN để nút radio thẳng
+     hàng với dòng tiêu đề. Chỉ một dòng (phương thức thanh toán) -> canh GIỮA,
+     vì thẻ cao 64 mà chữ dính mép trên nhìn lệch hẳn so với logo vốn đã căn
+     giữa. mt-0.5 của nút radio cũng chỉ cần khi canh mép trên. */
+  const single = !sub;
   return `
-  <button class="opt ${on ? 'on' : ''} w-full flex items-start gap-2 border ${on ? 'border-primary' : 'border-border'} rounded-xs p-3 text-left press" data-opt="${id}">
-    <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border-2 ${on ? 'border-primary' : 'border-border'} flex items-center justify-center shrink-0">
+  <button class="opt ${on ? 'on' : ''} w-full flex ${single ? 'items-center' : 'items-start'} gap-2 border ${on ? 'border-primary' : 'border-border'} rounded-xs p-3 text-left press" data-opt="${id}">
+    <span class="radio ${on ? 'on' : ''} w-4 h-4 ${single ? '' : 'mt-0.5 '}rounded-full border-2 ${on ? 'border-primary' : 'border-border'} flex items-center justify-center shrink-0">
       <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
     </span>
     <span class="flex-1 min-w-0">
       <span class="block text-[14px] font-medium leading-5 text-foreground">${label}</span>
       ${sub ? `<span class="block text-[14px] leading-5 text-foreground">${sub}</span>` : ''}
     </span>
+    ${icon ? `<img src="${A}${icon[0]}" alt="${icon[2] || ''}" class="shrink-0 self-center h-6 object-contain" style="width:${icon[1]}px">` : ''}
   </button>`;
 }
 
@@ -2840,6 +2897,24 @@ function vatFieldRows(type) {
       <label class="text-[14px] font-medium leading-5 text-foreground">${lb}</label>
       <input ${im ? `inputmode="${im}"` : ''} placeholder="${ph}" class="h-10 bg-background border border-border rounded-xs px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
     </div>`).join('');
+}
+
+/* ── Cặp nút phân đoạn (segmented toggle) — đồng bộ với index.html ──
+   Quy ước: mục ĐANG CHỌN **nổi lên** — nền trắng + đổ bóng nhẹ trên rãnh xám,
+   giống cặp đổi ngôn ngữ ở bảng Cài đặt. Kiểu cũ (viền hộp, tô xám đúng mục
+   đang chọn) đọc ngược: mục được chọn nhìn như bị lún xuống.
+   segBtnClass là nguồn class duy nhất, dùng cho cả lúc dựng markup lẫn lúc JS
+   đổi trạng thái, để 2 chỗ không lệch nhau. */
+const SEG_ON  = 'bg-background text-foreground font-medium shadow-sm';
+const SEG_OFF = 'text-muted-foreground';
+const segBtnClass = (on, h = 'h-9') =>
+  `seg flex-1 ${h} rounded-xs text-[14px] leading-5 transition-colors press ` + (on ? SEG_ON : SEG_OFF);
+function segToggle(attr, items, active, h) {
+  return `
+  <div class="flex p-0.5 rounded-xs bg-secondary" role="group">
+    ${items.map(([id, label]) => `
+    <button ${attr}="${id}" class="${segBtnClass(id === active, h)}">${label}</button>`).join('')}
+  </div>`;
 }
 
 function ckSection(i, title, openBody, doneBody) {
@@ -2872,25 +2947,163 @@ const VN_LOCATIONS = [
 ];
 let ckProvince = '', ckWard = '';   // lựa chọn hiện tại ở form giao hàng
 
-function screenCHECKOUT() {
-  const field = (label, ph, type) => `
-    <div class="px-4 py-2 flex flex-col gap-2">
-      <label class="text-[14px] font-medium leading-5 text-foreground">${label}</label>
-      <input ${type ? `inputmode="${type}"` : ''} placeholder="${ph}" class="h-10 bg-background border border-border rounded-xs px-3 text-[14px] outline-none focus:border-primary transition-colors">
-    </div>`;
+/* ── Cửa hàng cho luồng "Nhận tại cửa hàng" (đồng bộ với index.html) ──
+   Dữ liệu DEMO gom theo thành phố đúng thứ tự thao tác: chọn thành phố ->
+   danh sách cửa hàng lọc theo thành phố đó. Dùng chung dialog chọn 1 giá trị
+   (__openPicker) với ô tỉnh/phường nên không phát sinh kiểu UI mới. */
+const DAFC_STORES = [
+  ['TP. Hồ Chí Minh', [
+    ['DAFC Union Square',   'Union Square, 171 Đồng Khởi, Phường Sài Gòn',   '09:30 – 21:30'],
+    ['DAFC Rex',            '141 Nguyễn Huệ, Phường Sài Gòn',                '09:30 – 21:00'],
+    ['DAFC Takashimaya',    '92-94 Nam Kỳ Khởi Nghĩa, Phường Bến Thành',     '09:30 – 22:00'],
+  ]],
+  ['TP. Hà Nội', [
+    ['DAFC Tràng Tiền',     '24 Hai Bà Trưng, Phường Hoàn Kiếm',             '09:30 – 21:30'],
+    ['DAFC Metropole',      '15 Ngô Quyền, Phường Hoàn Kiếm',                '09:00 – 21:00'],
+    ['DAFC Lotte Center',   '54 Liễu Giai, Phường Ba Đình',                  '09:30 – 22:00'],
+  ]],
+  ['TP. Đà Nẵng', [
+    ['DAFC Đà Nẵng',        '86 Bạch Đằng, Phường Hải Châu',                 '09:00 – 21:00'],
+  ]],
+];
+const storesOf  = city => (DAFC_STORES.find(([c]) => c === city) || ['', []])[1];
+const storeInfo = name => {
+  for (const [, list] of DAFC_STORES) { const s = list.find(x => x[0] === name); if (s) return { name: s[0], addr: s[1], hours: s[2] }; }
+  return null;
+};
+/* ckMode: 'ship' = giao tận nơi (mặc định) · 'pickup' = nhận tại cửa hàng
+   ckHome = tỉnh/thành người nhận đang sinh sống (chỉ hỏi ở luồng nhận tại cửa
+   hàng, tách khỏi ckProvince của địa chỉ giao hàng).
+   ckName/ckPhone/ckEmail: 3 ô người nhận PHẢI có state vì phần này bị dựng lại
+   mỗi khi đổi thành phố/cửa hàng — không giữ thì gõ xong đổi cửa hàng là mất
+   trắng. Cũng là nguồn để phần tóm tắt nhắc lại người nhận sau khi Xác nhận. */
+let ckMode = 'ship', ckCity = '', ckStore = '', ckHome = '';
+let ckName = '', ckPhone = '', ckEmail = '';
 
-  /* Ô chọn địa giới: nhìn y như input ở trên (h-10, viền, r2) nhưng là button
-     mở dialog chọn — cùng cách PDP thay <select> bằng sheet chọn size. */
-  const pickField = (label, ph, key, val) => `
+/* field/pickField để Ở NGOÀI screenCHECKOUT vì bước "Nhận tại cửa hàng" dựng
+   lại phần thân của nó nhiều lần (ckPickupOpen), không chỉ lúc render màn.
+
+   opts (đều tuỳ chọn, mọi call site cũ giữ nguyên chữ ký 3 tham số):
+     val  — giá trị đang giữ trong state, để dựng lại không mất chữ đã gõ
+     key  — khoá state (data-ckf), input handler ghi ngược lại vào biến
+     auto — autocomplete để trình duyệt gợi ý điền sẵn
+   id sinh bằng bộ đếm chứ không slug hoá nhãn: cùng một nhãn xuất hiện ở
+   nhiều khối (pickup và VAT) nên slug sẽ đụng id. */
+let _fldId = 0;
+const field = (label, ph, type, opts = {}) => {
+  const id = 'fld' + (++_fldId);
+  const { val = '', key = '', auto = '' } = opts;
+  return `
     <div class="px-4 py-2 flex flex-col gap-2">
-      <label class="text-[14px] font-medium leading-5 text-foreground">${label}</label>
+      <label for="${id}" class="text-[14px] font-medium leading-5 text-foreground">${label}</label>
+      <input id="${id}"${type ? ` type="${type}" inputmode="${type}"` : ''}${auto ? ` autocomplete="${auto}"` : ''}${key ? ` data-ckf="${key}"` : ''} value="${val}" placeholder="${ph}"
+             class="h-10 bg-background border border-border rounded-xs px-3 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+    </div>`;
+};
+
+/* Ô chọn địa giới: nhìn y như input ở trên (h-10, viền, r2) nhưng là button
+   mở dialog chọn — cùng cách PDP thay <select> bằng sheet chọn size.
+   label[for] + id trên button: bấm nhãn cũng mở được dialog và trình đọc màn
+   hình đọc được tên nút; aria-haspopup báo trước là sẽ mở hộp thoại. */
+const pickField = (label, ph, key, val) => `
+    <div class="px-4 py-2 flex flex-col gap-2">
+      <label for="pk-${key}" class="text-[14px] font-medium leading-5 text-foreground">${label}</label>
       <div class="relative">
-        <button type="button" data-pick="${key}" class="w-full h-10 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] text-left flex items-center press transition-colors">
+        <button type="button" id="pk-${key}" data-pick="${key}" aria-haspopup="dialog" class="w-full h-10 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] text-left flex items-center press transition-colors focus:border-primary">
           <span class="pick-label truncate ${val ? 'text-foreground' : 'text-muted-foreground'}">${val || ph}</span>
         </button>
         <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
       </div>
     </div>`;
+
+/* Thẻ chọn cửa hàng — KHÔNG dùng chung richRadio vì richRadio gộp phần phụ
+   thành MỘT dòng: địa chỉ và giờ mở cửa dính nhau ở cùng cỡ chữ với tên cửa
+   hàng, và cả chuỗi gộp thành một text node nên i18n không dịch nổi. Ở đây
+   tách 3 dòng theo đúng thứ bậc. Vỏ ngoài giữ .opt/.radio + data-opt để
+   handler và CSS trạng thái đang có chạy y nguyên. */
+function storeOpt(name, addr, hours, on) {
+  return `
+  <button type="button" role="radio" aria-checked="${on}" class="opt ${on ? 'on' : ''} w-full flex items-start gap-2 border border-border rounded-xs p-3 text-left press" data-opt="store:${name}">
+    <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
+      <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+    </span>
+    <span class="flex-1 min-w-0">
+      <span class="block text-[14px] font-medium leading-5 text-foreground">${name}</span>
+      <span class="block pt-0.5 text-[13px] leading-5 text-secondary-foreground">${addr}</span>
+      <span class="block text-[13px] leading-5 text-muted-foreground"><span>Mở cửa</span> <span>${hours}</span></span>
+    </span>
+  </button>`;
+}
+
+/* ── Bước "Nhận tại cửa hàng" — HIỆN DẦN theo tiến độ chọn (đồng bộ index.html) ──
+   1) dropdown Thành phố → 2) DANH SÁCH cửa hàng của thành phố đó (thẻ chọn,
+   không phải dropdown) → 3) các ô nhập của người nhận. Dòng "Bước n/3" nói
+   trước còn mấy chặng. Đổi thành phố = xoá cửa hàng đang chọn nên phần 2 và 3
+   tự thu lại, nhưng chữ đã gõ vẫn còn (state ckName/ckPhone/ckEmail).
+   Khác bản mobile: danh sách cửa hàng xếp 2 cột, SĐT/email chia cột. */
+function ckPickupOpen() {
+  const step = !ckCity ? 'Bước 1/3 · Chọn thành phố'
+             : !ckStore ? 'Bước 2/3 · Chọn cửa hàng'
+             : 'Bước 3/3 · Thông tin người nhận';
+  const stores = ckCity ? storesOf(ckCity) : [];
+  return `
+    <div class="px-4 pt-3">
+      <p class="text-[12px] leading-4 text-muted-foreground">${step}</p>
+    </div>
+    <div class="grid grid-cols-2">
+      ${pickField('Thành phố','Chọn thành phố','city', ckCity)}
+    </div>
+    ${!ckCity ? `
+    <div class="px-4 pb-2">
+      <p class="text-[13px] leading-5 text-muted-foreground">Chọn thành phố để xem các cửa hàng DAFC có thể nhận hàng.</p>
+    </div>` : `
+    <div id="ckStoreGroup" class="px-4 py-2 flex flex-col gap-2">
+      <div class="flex items-baseline justify-between">
+        <span id="storeOptsLbl" class="text-[14px] font-medium leading-5 text-foreground">Cửa hàng</span>
+        <span class="text-[13px] leading-5 text-muted-foreground">${stores.length} cửa hàng</span>
+      </div>
+      <div id="storeOpts" role="radiogroup" aria-labelledby="storeOptsLbl" class="grid grid-cols-2 gap-3">
+        ${stores.map(([name, addr, hours]) => storeOpt(name, addr, hours, name === ckStore)).join('')}
+      </div>
+    </div>`}
+    ${ckStore ? `
+    <div id="ckRecipient">
+      <div class="px-4 pt-4 pb-1">
+        <p class="text-[12px] leading-4 uppercase tracking-wide text-muted-foreground">Thông tin người nhận</p>
+      </div>
+      ${field('Họ và tên','Nhập họ và tên','', { val: ckName, key: 'name', auto: 'name' })}
+      <div class="grid grid-cols-2">
+        ${field('Số điện thoại','0 1234 5678','tel', { val: ckPhone, key: 'phone', auto: 'tel' })}
+        ${field('Email','Nhập email','email', { val: ckEmail, key: 'email', auto: 'email' })}
+      </div>
+      <div class="grid grid-cols-2">
+        ${pickField('Tỉnh thành sinh sống','Chọn tỉnh / thành phố','home', ckHome)}
+      </div>
+      <div class="px-4 pt-2">
+        <p class="text-[13px] leading-5 text-secondary-foreground">Đơn hàng được giữ tại cửa hàng trong 3 ngày kể từ khi có thông báo sẵn sàng nhận.</p>
+      </div>
+      <div class="px-4 py-4">
+        <button class="ck-next h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] press inline-flex items-center justify-center" data-next="1" data-require="store">Xác nhận</button>
+      </div>
+    </div>` : ''}`;
+}
+
+/* Dựng lại nguyên màn checkout tại chỗ — dùng khi CẤU TRÚC đổi (đổi hình thức
+   nhận hàng, chọn xong thành phố, chọn cửa hàng lần đầu). */
+function rerenderCheckout(root) {
+  scrollCleanups.forEach(fn => fn());
+  scrollCleanups = [];
+  root.innerHTML = RENDER.checkout();
+  wire(root);
+  localizeNew(root);
+}
+
+function screenCHECKOUT() {
+
+  /* Đăng nhập xong router nhảy tới ckStep = 1 (bỏ qua bước địa chỉ). Ở chế độ
+     nhận tại cửa hàng, bước 1 là Thanh toán — chưa chọn cửa hàng thì không
+     được nhảy qua, nên kéo về bước 0. */
+  if (ckMode === 'pickup' && !ckStore) ckStep = 0;
 
   const notice = ckAuth
     ? `<p class="text-[14px] leading-5 text-foreground">Đăng nhập tài khoản <b class="font-medium">UserOne</b></p>`
@@ -2923,6 +3136,21 @@ function screenCHECKOUT() {
       <p class="text-[14px] font-medium leading-5 text-foreground">User name - 0 1234 5678</p>
       <p class="text-[14px] leading-5 text-foreground">123 Nam Kỳ Khởi Nghĩa, Phường 1, Thành phố Hồ Chí Minh</p>
     </div>`;
+
+  /* ── Section 0 bản NHẬN TẠI CỬA HÀNG (port từ index.html 11/08/2026) ──
+     Thứ tự thao tác: thành phố -> cửa hàng trong thành phố đó -> người nhận.
+     Ô cửa hàng chỉ mở được sau khi có thành phố (chặn trong wireAddressPickers),
+     giống ràng buộc tỉnh -> phường của luồng giao hàng. Khối #ckStoreInfo và
+     #ckStoreDone cập nhật TẠI CHỖ khi chọn xong (paintStore) — không dựng lại
+     cả màn để khỏi mất chữ đang gõ. Khác bản mobile: 2 ô chọn nằm 1 hàng 2 cột
+     và 3 ô người nhận cũng chia cột như form giao hàng, đúng khuôn desktop. */
+  const st = storeInfo(ckStore);
+  const storeLines = s => s ? `
+    <p class="text-[13px] leading-5 text-secondary-foreground">${s.addr}</p>
+    <p class="text-[13px] leading-5 text-muted-foreground"><span>Mở cửa</span> <span>${s.hours}</span></p>` : '';
+  const p0open = `<div id="ckPickupBody">${ckPickupOpen()}</div>`;
+  const p0done = `<div id="ckStoreDone" class="px-4 pb-4 flex flex-col gap-1">${ckStoreDoneHTML()}</div>`;
+
   /* ── Section 1: Phương thức vận chuyển ── */
   const s1open = `
     <div id="shipOpts" class="px-4 flex flex-col gap-3">
@@ -2938,11 +3166,13 @@ function screenCHECKOUT() {
       <p class="text-[14px] leading-5 text-foreground">${ETA}</p>
     </div>`;
   /* ── Section 2: Thanh toán ── */
+  /* [id, nhãn, đang chọn, [file logo, bề rộng px, alt]] — logo lấy từ assets,
+     bề rộng theo Figma 3028:47246 (76 cho cặp Visa+Mastercard, 38 cho logo đơn) */
   const pays = [
-    ['cc','Thẻ tín dụng/Ghi nợ', true],
-    ['qr','Chuyển khoản / QR code', false],
-    ['atm','ATM', false],
-    ['inst','Thanh toán trả góp 0% qua thẻ tín dụng', false],
+    ['cc','Thẻ tín dụng/Ghi nợ', true,  ['pay-1.png', 76, 'Visa, Mastercard']],
+    ['qr','Chuyển khoản / QR code', false, ['pay-3.png', 38, 'QR code']],
+    ['atm','ATM', false, ['pay-4.png', 38, 'Napas']],
+    ['inst','Thanh toán trả góp 0% qua thẻ tín dụng', false, ['pay-2.png', 38, 'Payoo']],
   ];
   const row = (l, v) => `
     <div class="h-9 flex items-center justify-between">
@@ -2951,7 +3181,7 @@ function screenCHECKOUT() {
     </div>`;
   const s2open = `
     <div id="payOpts" class="px-4 flex flex-col gap-3">
-      ${pays.map(([id, l, on]) => richRadio(id, l, '', on)).join('')}
+      ${pays.map(([id, l, on, icon]) => richRadio(id, l, '', on, icon)).join('')}
     </div>
     <!-- Xuất hóa đơn VAT -->
     <div class="pt-4 pb-4">
@@ -2963,9 +3193,8 @@ function screenCHECKOUT() {
       </div>
       <div id="vatFields" class="ck-open"><div class="acc-inner">
         <div class="px-4 pt-3 flex flex-col gap-3">
-          <div class="flex max-w-[360px]">
-            <button data-vat-type="personal" class="flex-1 h-10 border border-border rounded-xs flex items-center justify-center text-[14px] font-medium press ${vatType === 'personal' ? 'bg-secondary text-secondary-foreground' : 'text-foreground'}">Cá nhân</button>
-            <button data-vat-type="company" class="-ml-px flex-1 h-10 border border-border rounded-xs flex items-center justify-center text-[14px] font-medium press ${vatType === 'company' ? 'bg-secondary text-secondary-foreground' : 'text-foreground'}">Công ty</button>
+          <div class="max-w-[360px]">
+            ${segToggle('data-vat-type', [['personal','Cá nhân'], ['company','Công ty']], vatType, 'h-10')}
           </div>
           <p class="text-[14px] leading-5 text-secondary-foreground">Hóa đơn VAT chỉ xuất trong ngày, khách hàng có nhu cầu xuất hóa đơn vui lòng điền đầy đủ thông tin bên dưới.</p>
         </div>
@@ -2984,10 +3213,23 @@ function screenCHECKOUT() {
         <!-- ── CỘT TRÁI: 3 section tự đóng/mở ── -->
         <div class="flex-1 min-w-0">
           <div class="rounded-xs px-3 py-3 flex flex-col gap-2 mb-4" style="background:var(--unofficial-accent-0)">${notice}</div>
+
+          <!-- Hình thức nhận hàng — cùng cặp nút phân đoạn với Cá nhân/Công ty
+               của khối VAT. Đổi tab là dựng lại màn (handler [data-ck-mode]). -->
+          <div id="ckModeTabs" class="max-w-[360px] mb-4">
+            ${segToggle('data-ck-mode', [['ship','Giao hàng'], ['pickup','Nhận tại cửa hàng']], ckMode, 'h-10')}
+          </div>
+
+          <!-- Giao tận nơi: 3 section · Nhận tại cửa hàng: 2 (bỏ bước chọn
+               phương thức vận chuyển). Chỉ số vẫn chạy 0,1,... nên ck-next /
+               ck-change / paintCheckout dùng lại nguyên vẹn. -->
           <div id="ckSections" class="border border-border-1 rounded-md overflow-hidden">
+            ${ckMode === 'pickup' ? `
+            ${ckSection(0, 'Nhận tại cửa hàng', p0open, p0done)}
+            ${ckSection(1, 'Thanh toán', s2open, '')}` : `
             ${ckSection(0, 'Thông tin giao hàng', s0open, s0done)}
             ${ckSection(1, 'Phương thức vận chuyển', s1open, s1done)}
-            ${ckSection(2, 'Thanh toán', s2open, '')}
+            ${ckSection(2, 'Thanh toán', s2open, '')}`}
           </div>
         </div>
 
@@ -3011,9 +3253,10 @@ function screenCHECKOUT() {
           <div class="px-4 pb-4 flex flex-col">
             <div class="h-px bg-border-1 mb-2"></div>
             ${row('Tạm tính','113,500,000đ')}
+            <!-- Nhận tại cửa hàng thì không có phí nên ghi thẳng, không "tính sau" -->
             <div class="h-9 flex items-center justify-between">
-              <span class="text-[14px] leading-5 text-foreground">Giao hàng</span>
-              <span class="text-[14px] leading-5 text-muted-foreground">Sẽ được tính sau</span>
+              <span class="text-[14px] leading-5 text-foreground">${ckMode === 'pickup' ? 'Nhận hàng' : 'Giao hàng'}</span>
+              <span class="text-[14px] leading-5 ${ckMode === 'pickup' ? 'text-foreground' : 'text-muted-foreground'}">${ckMode === 'pickup' ? 'Tại cửa hàng' : 'Sẽ được tính sau'}</span>
             </div>
             <div class="h-12 flex items-center justify-between border-t border-border-1 mt-2">
               <span class="text-[16px] font-medium leading-6 text-foreground">Tổng cộng</span>
@@ -3039,13 +3282,24 @@ function paintCheckout(root) {
     const chg = sec.querySelector('.ck-change');
     chg.style.display = state === 'done' ? '' : 'none';
   });
+  /* Tới bước Thanh toán thì ẩn cặp Giao hàng / Nhận tại cửa hàng: lúc này hình
+     thức nhận hàng đã chốt, để đó chỉ tổ bấm nhầm — mà đổi tab là ckStep về 0,
+     tức mất sạch bước vừa làm. Muốn đổi thì bấm "Thay đổi" ở section trên, lúc
+     đó cặp nút hiện lại. Bước Thanh toán là section 1 ở luồng nhận tại cửa
+     hàng (chỉ 2 section) và section 2 ở luồng giao hàng. */
+  const tabs = root.querySelector('#ckModeTabs');
+  if (tabs) tabs.classList.toggle('hidden', ckStep >= (ckMode === 'pickup' ? 1 : 2));
 }
 
 /* ════════════════════════════════════════════════════════════════
    SCREEN: DONE
 ════════════════════════════════════════════════════════════════ */
 function screenDONE() {
-  const rows = [['Mã đơn hàng','#MG-2026-0807'],['Tổng cộng','113,500,000đ'],['Vận chuyển','Miễn phí'],['Dự kiến giao','12 – 16/08']];
+  /* Đơn nhận tại cửa hàng thì 2 dòng cuối nói về cửa hàng thay vì vận chuyển */
+  const st = storeInfo(ckStore);
+  const rows = ckMode === 'pickup'
+    ? [['Mã đơn hàng','#MG-2026-0807'],['Tổng cộng','113,500,000đ'],['Nhận tại', st ? st.name : 'Cửa hàng DAFC'],['Sẵn sàng nhận','Từ 12/08']]
+    : [['Mã đơn hàng','#MG-2026-0807'],['Tổng cộng','113,500,000đ'],['Vận chuyển','Miễn phí'],['Dự kiến giao','12 – 16/08']];
   return `
   <div class="w-full relative" data-scroller>
     <div id="confettiHost" class="absolute inset-x-0 top-0 h-[70vh] pointer-events-none overflow-hidden z-10"></div>
@@ -4131,10 +4385,53 @@ const I18N = {
   'Cookie cần thiết không thể tắt':'Essential cookies can’t be turned off',
   'Đã chấp nhận tất cả cookie':'All cookies accepted',
   'Đã từ chối cookies tùy chọn':'Optional cookies rejected',
+
+  // ── Nhận tại cửa hàng (checkout) — port từ index.html ──
+  'Nhận tại cửa hàng':'Store pickup', 'Thành phố':'City', 'Chọn thành phố':'Select city',
+  'Email':'Email', 'Tỉnh thành sinh sống':'Province of residence',
+  'Thông tin người nhận':'Recipient details',
+  'Bước 1/3 · Chọn thành phố':'Step 1/3 · Choose a city',
+  'Bước 2/3 · Chọn cửa hàng':'Step 2/3 · Choose a store',
+  'Bước 3/3 · Thông tin người nhận':'Step 3/3 · Recipient details',
+  'Chọn thành phố để xem các cửa hàng DAFC có thể nhận hàng.':'Choose a city to see DAFC stores available for pickup.',
+  'Vui lòng nhập họ và tên':'Please enter your full name',
+  'Số điện thoại chưa đúng':'Enter a valid phone number',
+  'Email chưa đúng':'Enter a valid email address',
+  'Cửa hàng':'Store', 'Chọn cửa hàng':'Select store', 'Mở cửa':'Open',
+  'Chọn thành phố trước':'Select a city first', 'Chọn cửa hàng nhận hàng':'Select a pickup store',
+  'Chưa chọn cửa hàng':'No store selected',
+  'Đơn hàng được giữ tại cửa hàng trong 3 ngày kể từ khi có thông báo sẵn sàng nhận.':'We hold your order at the store for 3 days from the ready-for-pickup notice.',
+  'Nhận hàng':'Collection', 'Tại cửa hàng':'In store',
+  'Nhận tại':'Pick up at', 'Sẵn sàng nhận':'Ready from', 'Từ 12/08':'From 12/08',
+  'Cửa hàng DAFC':'DAFC store',
+
+  // ── Vá 20 chuỗi desktop hiển thị nhưng thiếu bản dịch (quét 11/08/2026) ──
+  // Bản dịch lấy nguyên từ index.html để 2 bản không lệch chữ.
+  'Phường xã':'Ward', 'Giày':'Shoes',
+  '1. Thu thập thông tin':'1. Information we collect',
+  '2. Mục đích sử dụng':'2. How we use it',
+  '3. Bảo mật thông tin':'3. Data security',
+  '4. Chia sẻ thông tin':'4. Information sharing',
+  '5. Quyền của khách hàng':'5. Your rights',
+  '6. Liên hệ':'6. Contact',
+  '1. Điều khoản chung':'1. General terms',
+  '2. Tài khoản người dùng':'2. User accounts',
+  '3. Đặt hàng và thanh toán':'3. Orders and payment',
+  '4. Vận chuyển và giao hàng':'4. Shipping and delivery',
+  '5. Sở hữu trí tuệ':'5. Intellectual property',
+  '6. Giới hạn trách nhiệm':'6. Limitation of liability',
+  '7. Liên hệ':'7. Contact',
+  '1. Điều kiện đổi trả':'1. Return conditions',
+  '2. Trường hợp được đổi trả':'2. Eligible for return',
+  '3. Trường hợp không được đổi trả':'3. Not eligible for return',
+  '4. Quy trình đổi trả':'4. Return process',
+  '5. Chính sách hoàn tiền':'5. Refund policy',
+  '6. Liên hệ hỗ trợ':'6. Support contact',
 };
 
 // Luật cho chuỗi động
 const I18N_RE = [
+  [/^(\d+) cửa hàng$/,                '$1 stores'],
   [/^(\d+) sản phẩm$/,                '$1 products'],
   [/^(\d+) sản phẩm · (.+)$/,         '$1 items · $2'],
   [/^\+ ([\d.]+) điểm$/,              '+ $1 points'],
@@ -4158,6 +4455,7 @@ const I18N_RE = [
   [/^Bộ lọc \((\d+)\)$/,              'Filter ($1)'],
 ];
 const I18N_REV_RE = [
+  [/^(\d+) stores$/,                  '$1 cửa hàng'],
   [/^(\d+) products$/,                '$1 sản phẩm'],
   [/^(\d+) items · (.+)$/,            '$1 sản phẩm · $2'],
   [/^\+ ([\d.]+) points$/,            '+ $1 điểm'],
@@ -4191,7 +4489,7 @@ Object.assign(I18N, {
   /* ── Facet bộ lọc ── */
   'Nguyên giá':'Full-priced',
   'Trên 70%':'From 70%',
-  'Bảng kích thước':'Size guide',
+  'Bảng kích thước':'Size guide', 'Bảng kích thước →':'Size guide →',
   'Mở bảng kích thước':'Open size guide',
   /* ── Bảng size ── */
   'Số đo sản phẩm có thể chênh lệch từ 1-3cm tùy theo từng chất liệu và thiết kế. Vui lòng liên hệ Nhân viên tư vấn để được hỗ trợ tốt nhất.':'Measurements may vary by 1-3cm depending on the material and design. Please contact our client advisor for the best assistance.',
@@ -4526,9 +4824,94 @@ function setPickLabel(btn, value, placeholder) {
 
 /* Ô tỉnh/thành và phường/xã: mở sheet chọn. Phường phụ thuộc tỉnh nên đổi
    tỉnh là xoá phường đang chọn — giữ lại sẽ ra địa chỉ không tồn tại. */
+/* ── Báo lỗi ngay dưới ô nhập ──
+   App vốn không validate gì ở checkout (xem AUDIT). Ở bước nhận tại cửa hàng
+   thì bắt buộc phải có: nhân viên cửa hàng cần đúng tên + số để giao hàng.
+   Lỗi gắn vào input bằng aria-invalid + aria-describedby, viền đỏ bằng class
+   .fld-err (tailwind build sẵn không có border-destructive), focus nhảy tới
+   ô sai ĐẦU TIÊN. */
+function clearFieldErr(inp) {
+  inp.classList.remove('fld-err');
+  inp.removeAttribute('aria-invalid');
+  const id = inp.getAttribute('aria-describedby');
+  if (id) { const p = document.getElementById(id); if (p) p.remove(); inp.removeAttribute('aria-describedby'); }
+}
+function setFieldErr(inp, msg) {
+  clearFieldErr(inp);
+  inp.classList.add('fld-err');
+  inp.setAttribute('aria-invalid', 'true');
+  const eid = 'err-' + inp.id;
+  inp.setAttribute('aria-describedby', eid);
+  inp.insertAdjacentHTML('afterend', `<p id="${eid}" class="mt-1 text-[12px] leading-4 text-destructive">${msg}</p>`);
+  const p = document.getElementById(eid);
+  if (p) localizeNew(p);
+}
+function validatePickup(root) {
+  const get = k => root.querySelector(`[data-ckf="${k}"]`);
+  const rules = [
+    [get('name'),  v => !!v.trim(),                       'Vui lòng nhập họ và tên'],
+    [get('phone'), v => /^0\d{8,10}$/.test(v.replace(/\s/g, '')), 'Số điện thoại chưa đúng'],
+    [get('email'), v => !v.trim() || /^\S+@\S+\.\S+$/.test(v.trim()), 'Email chưa đúng'],
+  ];
+  let first = null;
+  rules.forEach(([inp, ok, msg]) => {
+    if (!inp) return;
+    if (ok(inp.value)) { clearFieldErr(inp); return; }
+    setFieldErr(inp, msg);
+    if (!first) first = inp;
+  });
+  if (first) { first.focus({ preventScroll: true }); first.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  return !first;
+}
+
+/* Phần tóm tắt sau khi Xác nhận: nhắc lại NGƯỜI NHẬN rồi mới tới cửa hàng —
+   trước đây chỉ hiện mỗi cửa hàng, tức gõ họ tên/SĐT xong bấm Xác nhận là
+   không còn thấy chúng ở đâu. Dùng chung 1 hàm cho cả lúc render màn (p0done)
+   lẫn lúc cập nhật tại chỗ (paintStore), nếu không sẽ lệch nhau. */
+function ckStoreDoneHTML() {
+  const s = storeInfo(ckStore);
+  const who = [ckName, ckPhone].filter(Boolean).join(' - ');
+  return `
+    ${who ? `<p class="text-[14px] font-medium leading-5 text-foreground">${who}</p>` : ''}
+    <p class="ck-store-name text-[14px] ${who ? '' : 'font-medium '}leading-5 text-foreground">${ckStore || 'Chưa chọn cửa hàng'}</p>
+    ${s ? `<p class="text-[13px] leading-5 text-secondary-foreground">${s.addr}</p>
+    <p class="text-[13px] leading-5 text-muted-foreground"><span>Mở cửa</span> <span>${s.hours}</span></p>` : ''}`;
+}
+
+/* Cập nhật TẠI CHỖ phần tóm tắt khi người dùng đổi sang cửa hàng khác — thay
+   vì dựng lại cả màn, để không mất chữ đang gõ ở ô họ tên/SĐT/email. */
+function paintStore(root) {
+  const done = root.querySelector('#ckStoreDone');
+  if (done) { done.innerHTML = ckStoreDoneHTML(); localizeNew(done); }
+}
+
 function wireAddressPickers(root) {
   root.querySelectorAll('[data-pick]').forEach(btn => {
     btn.addEventListener('click', () => {
+      /* ── Nhận tại cửa hàng: thành phố -> cửa hàng ──
+         Cùng ràng buộc phụ thuộc như tỉnh -> phường: đổi thành phố là bỏ cửa
+         hàng đang chọn, vì cửa hàng cũ không thuộc thành phố mới. */
+      if (btn.dataset.pick === 'city') {
+        window.__openPicker('Chọn thành phố', DAFC_STORES.map(([c]) => c), ckCity, picked => {
+          if (picked === ckCity) return;
+          ckCity = picked; ckStore = '';
+          // đổi thành phố -> danh sách cửa hàng đổi theo, khối thông tin thu lại
+          // (chữ đã gõ vẫn còn vì 3 ô người nhận đọc/ghi vào state)
+          rerenderCheckout(root);
+          const cityBtn = root.querySelector('[data-pick="city"]');
+          if (cityBtn) cityBtn.focus({ preventScroll: true });
+        });
+        return;
+      }
+      /* Tỉnh/thành người nhận đang sinh sống — chỉ có ở luồng nhận tại cửa
+         hàng, dùng lại đúng danh sách tỉnh của địa chỉ giao hàng. */
+      if (btn.dataset.pick === 'home') {
+        window.__openPicker('Chọn tỉnh / thành phố', VN_LOCATIONS.map(([pv]) => pv), ckHome, picked => {
+          ckHome = picked;
+          setPickLabel(btn, picked, 'Chọn tỉnh / thành phố');
+        });
+        return;
+      }
       if (btn.dataset.pick === 'province') {
         window.__openPicker('Chọn tỉnh / thành phố', VN_LOCATIONS.map(([pv]) => pv), ckProvince, picked => {
           ckProvince = picked; ckWard = '';
@@ -4651,7 +5034,7 @@ function wire(root) {
       // Đổi dept phải ghi TRƯỚC khi điều hướng: navBar() dựng lại ngay trong go()
       // và subheader đọc dkDept để chọn bộ danh mục (thời trang vs làm đẹp).
       if (el.dataset.dkdept) dkDept = el.dataset.dkdept;
-      if (el.hasAttribute('data-reset')) { cartQty = 4; history = []; ckAuth = false; ckStep = 0; }
+      if (el.hasAttribute('data-reset')) { cartQty = 4; history = []; ckAuth = false; ckStep = 0; ckMode = 'ship'; ckCity = ''; ckStore = ''; ckHome = ''; ckName = ''; ckPhone = ''; ckEmail = ''; }
       if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = ckAuth ? 1 : 0; }
       if (t === 'back') { window.history.back(); return; }
       if (el.hasAttribute('data-loading')) {
@@ -4672,64 +5055,11 @@ function wire(root) {
     });
   });
 
-  // ── Desktop header: search dropdown ──
-  const dkIn = root.querySelector('#dkSearchInput');
-  if (dkIn) {
-    const dkPanel = root.querySelector('#dkSearchPanel');
-    const goSearch = term => {
-      if (!searchHistory.includes(term)) searchHistory = [term, ...searchHistory].slice(0, 8);
-      searchQuery = term;
-      goPlp({ type: 'search', query: term, title: `Kết quả tìm kiếm của “${term}”` });
-    };
-    const renderDkPanel = () => {
-      const q = dkIn.value.trim();
-      if (q) {
-        const sug = searchSuggestions(q);
-        dkPanel.innerHTML = `
-          <div class="py-3">
-            <p class="px-4 pb-1 text-[12px] leading-4 text-muted-foreground">Gợi ý</p>
-            ${sug.length
-              ? sug.map(s => `<button class="w-full text-left px-4 py-2 text-[13px] leading-5 text-foreground hover:bg-secondary transition-colors press" data-suggest="${s}">${highlightMatch(s, q)}</button>`).join('')
-              : `<p class="px-4 py-2 text-[13px] leading-5 font-medium text-foreground">Không tìm thấy kết quả</p>`}
-          </div>`;
-      } else {
-        dkPanel.innerHTML = `
-          ${searchHistory.length ? `
-          <div class="pt-3">
-            <p class="px-4 pb-1 text-[12px] leading-4 text-muted-foreground">Vừa tìm kiếm</p>
-            ${searchHistory.slice(0, 5).map(h => `
-            <div class="flex items-center hover:bg-secondary transition-colors">
-              <button class="flex-1 min-w-0 text-left px-4 py-2 text-[13px] leading-5 text-foreground truncate press" data-suggest="${h}">${h}</button>
-              <button class="w-8 h-8 mr-1 flex items-center justify-center shrink-0 press [&_svg]:w-2.5 [&_svg]:h-2.5" data-remove="${h}" aria-label="Xoá &quot;${h}&quot; khỏi lịch sử">${I.close}</button>
-            </div>`).join('')}
-          </div>` : ''}
-          <div class="py-3 ${searchHistory.length ? 'border-t border-border-1' : ''}">
-            <p class="px-4 pb-2 text-[12px] leading-4 text-muted-foreground">Từ khóa phổ biến</p>
-            <div class="px-4 flex flex-wrap gap-2 pb-1">
-              ${['Versace','Túi xách da','Giày loafer','Khăn lụa','Thắt lưng'].map(k => `
-                <button class="h-8 px-3 rounded-full border border-border text-[12px] leading-4 text-foreground-alt hover:border-primary hover:text-foreground transition-colors press" data-suggest="${k}">${k}</button>`).join('')}
-            </div>
-          </div>`;
-      }
-      dkPanel.querySelectorAll('[data-suggest]').forEach(b => b.addEventListener('click', () => goSearch(b.dataset.suggest)));
-      dkPanel.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', e => {
-        e.stopPropagation();
-        searchHistory = searchHistory.filter(h => h !== b.dataset.remove);
-        renderDkPanel();
-      }));
-      localizeNew(dkPanel);
-    };
-    dkIn.addEventListener('focus', () => { renderDkPanel(); dkPanel.classList.add('open'); });
-    dkIn.addEventListener('input', renderDkPanel);
-    dkIn.addEventListener('keydown', e => {
-      if (e.key !== 'Enter') return;
-      const q = dkIn.value.trim();
-      if (q) goSearch(q);
-    });
-    const onDocSearch = e => { if (!e.target.closest('#dkSearchWrap')) dkPanel.classList.remove('open'); };
-    document.addEventListener('click', onDocSearch);
-    scrollCleanups.push(() => document.removeEventListener('click', onDocSearch));
-  }
+  // ── Desktop header: nút mở layer tìm kiếm ──
+  // Layer + toàn bộ logic gợi ý dựng MỘT LẦN ở cuối file (window.__openDkSearch)
+  // vì nó nằm ngoài #viewport; ở đây chỉ nối nút của header đang render.
+  const dkSearchBtn = root.querySelector('#dkSearchBtn');
+  if (dkSearchBtn) dkSearchBtn.addEventListener('click', () => window.__openDkSearch && window.__openDkSearch());
 
   // ── Desktop header: nút đổi ngôn ngữ (toggle VI ↔ EN, tái dùng flow settings panel) ──
   root.querySelectorAll('[data-dklang]').forEach(b => b.addEventListener('click', () => {
@@ -4911,11 +5241,66 @@ function wire(root) {
       const sec = root.querySelector(`.ck-sec[data-sec="${i}"]`);
       if (sec) window.scrollTo({ top: sec.getBoundingClientRect().top + window.scrollY - 56, behavior: 'smooth' });
     };
+    /* 3 ô người nhận ghi thẳng vào state mỗi lần gõ — nhờ vậy đổi thành phố /
+       cửa hàng (dựng lại phần thân) không làm mất chữ, và phần tóm tắt sau khi
+       Xác nhận có dữ liệu để nhắc lại. */
+    const CKF = { name: v => ckName = v, phone: v => ckPhone = v, email: v => ckEmail = v };
+    root.querySelectorAll('[data-ckf]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        CKF[inp.dataset.ckf] && CKF[inp.dataset.ckf](inp.value);
+        clearFieldErr(inp);
+      });
+    });
+
     root.querySelectorAll('.ck-next').forEach(btn => {
       btn.addEventListener('click', () => {
+        // Bước nhận tại cửa hàng: chưa chọn cửa hàng thì không cho đi tiếp
+        if (btn.dataset.require === 'store') {
+          if (!ckStore) { toast('Chọn cửa hàng nhận hàng'); return; }
+          if (!validatePickup(root)) return;
+          paintStore(root);   // đồng bộ tóm tắt với chữ vừa gõ trước khi thu gọn
+        }
         ckStep = +btn.dataset.next;
         paintCheckout(root);
         setTimeout(() => scrollTo(ckStep), 120);
+      });
+    });
+    /* Đổi hình thức nhận hàng: dựng lại đúng màn checkout tại chỗ (số section
+       khác nhau giữa 2 chế độ nên không thể chỉ ẩn/hiện). */
+    root.querySelectorAll('[data-ck-mode]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (ckMode === btn.dataset.ckMode) return;
+        ckMode = btn.dataset.ckMode;
+        ckStep = 0;
+        rerenderCheckout(root);
+        window.scrollTo(0, 0);
+      });
+    });
+    /* Danh sách cửa hàng: lần chọn ĐẦU TIÊN phải dựng lại để lộ khối thông tin
+       người nhận; các lần đổi sau chỉ chuyển thẻ đang chọn — giữ nguyên chữ
+       người dùng đã gõ ở ô SĐT/email. */
+    root.querySelectorAll('#storeOpts [data-opt]').forEach(o => {
+      o.addEventListener('click', () => {
+        const name = o.dataset.opt.slice(6);      // bỏ tiền tố "store:"
+        if (name === ckStore) return;
+        const first = !ckStore;
+        ckStore = name;
+        if (first) {
+          // lần đầu: khối người nhận mới mọc ra -> đưa con trỏ vào ô đầu tiên
+          rerenderCheckout(root);
+          const inp = root.querySelector('#ckRecipient input');
+          if (inp) inp.focus({ preventScroll: true });
+          const box = root.querySelector('#ckRecipient');
+          if (box) setTimeout(() => window.scrollTo({ top: box.getBoundingClientRect().top + window.scrollY - 56, behavior: 'smooth' }), 60);
+          return;
+        }
+        root.querySelectorAll('#storeOpts [data-opt]').forEach(x => {
+          x.classList.remove('on'); x.setAttribute('aria-checked', 'false');
+          x.querySelector('.radio').classList.remove('on');
+        });
+        o.classList.add('on'); o.setAttribute('aria-checked', 'true');
+        o.querySelector('.radio').classList.add('on');
+        paintStore(root);
       });
     });
     root.querySelectorAll('.ck-change').forEach(btn => {
@@ -4944,10 +5329,7 @@ function wire(root) {
         if (type === vatType) return;
         vatType = type;
         root.querySelectorAll('[data-vat-type]').forEach(b => {
-          const on = b.dataset.vatType === vatType;
-          b.classList.toggle('bg-secondary', on);
-          b.classList.toggle('text-secondary-foreground', on);
-          b.classList.toggle('text-foreground', !on);
+          b.className = segBtnClass(b.dataset.vatType === vatType, 'h-10');
         });
         const rows = root.querySelector('#vatFieldRows');
         if (rows) { rows.innerHTML = vatFieldRows(vatType); localizeNew(rows); }
@@ -6427,6 +6809,156 @@ document.body.insertAdjacentHTML('beforeend', `
     }
   });
   window.__openSizeSheet = openSZ;
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   LAYER TÌM KIẾM — mở từ nút "Tìm kiếm" trên header
+   Bản mobile để tìm kiếm thành một MÀN riêng (screenSearch) phủ kín; desktop
+   không đổi cả trang mà đổ một tấm trắng từ mép trên xuống, đè lên nội dung.
+   Bố cục 2 cột (tham chiếu overlay tìm kiếm của versace.com), NỘI DUNG lấy
+   đúng bộ của bản mobile:
+   · cột trái  = "Vừa tìm kiếm" (đang gõ thì đổi thành "Gợi ý") + "Từ khóa phổ biến"
+   · cột phải  = "Sản phẩm nổi bật" — productCard như mọi lưới khác (ảnh +
+                 thương hiệu + tên + giá), nên thẻ ở đây hành xử y hệt ở PLP.
+   Ô nhập vẫn bó 600px canh giữa; khung ngoài rộng 1240 để đủ chỗ 2 cột.
+   Dựng ở body (ngoài #viewport) nên router không xoá mất; nút trên header
+   render lại mỗi lần go() thì wire() nối lại qua window.__openDkSearch.
+════════════════════════════════════════════════════════════════ */
+const DK_SEARCH_HOT = ['Versace', 'Túi xách da', 'Giày loafer', 'Khăn lụa', 'Thắt lưng'];
+document.body.insertAdjacentHTML('beforeend', `
+  <div id="dkSearchLayer" aria-hidden="true">
+    <div class="ds-backdrop"></div>
+    <div class="ds-sheet" role="dialog" aria-modal="true" aria-label="Tìm kiếm">
+      <div class="ds-inner">
+        <!-- Hàng ô nhập: field canh giữa (max 600), nút đóng neo mép phải để
+             không ăn vào bề rộng field. -->
+        <div class="relative flex items-center justify-center pt-8 pb-6">
+          <label class="ds-field w-full flex items-center gap-3 h-12 border-b border-border-4 focus-within:border-primary transition-colors">
+            <span class="w-5 h-5 flex items-center justify-center shrink-0 [&_svg]:w-5 [&_svg]:h-5 opacity-60">${I.search}</span>
+            <input id="dkSearchInput" type="search" placeholder="Bạn đang tìm kiếm gì" autocomplete="off" enterkeyhint="search"
+                   class="flex-1 min-w-0 outline-none text-[16px] leading-6 text-foreground placeholder:text-muted-foreground"
+                   style="background:transparent;border:0;padding:0;-webkit-appearance:none;appearance:none">
+            <button id="dkSearchClear" type="button" class="shrink-0 text-[14px] leading-5 text-muted-foreground press" style="display:none">Xóa</button>
+          </label>
+          <button id="dkSearchClose" class="absolute right-0 top-8 w-9 h-9 rounded-xs flex items-center justify-center ghost-hover press [&_svg]:w-3.5 [&_svg]:h-3.5" aria-label="Đóng tìm kiếm">${I.close}</button>
+        </div>
+
+        <div class="ds-cols pb-10">
+          <div class="ds-side flex flex-col gap-8">
+            <div id="dkSearchTerms"></div>
+            <div id="dkSearchHot"></div>
+          </div>
+          <div class="ds-main">
+            <p class="text-[12px] leading-4 text-muted-foreground pb-3">Sản phẩm nổi bật</p>
+            <div id="dkSearchProducts" class="grid grid-cols-4 gap-2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`);
+(() => {
+  const layer = document.getElementById('dkSearchLayer');
+  const input = document.getElementById('dkSearchInput');
+  const clear = document.getElementById('dkSearchClear');
+  const terms = document.getElementById('dkSearchTerms');
+  const hot   = document.getElementById('dkSearchHot');
+  const prods = document.getElementById('dkSearchProducts');
+
+  /* Chọn/gõ xong -> đóng layer rồi mới điều hướng, vì goPlp() dựng lại màn và
+     khoá cuộn phải được nhả trước đó. */
+  const goSearch = term => {
+    if (!searchHistory.includes(term)) searchHistory = [term, ...searchHistory].slice(0, 8);
+    searchQuery = term;
+    close();
+    goPlp({ type: 'search', query: term, title: `Kết quả tìm kiếm của “${term}”` });
+  };
+
+  /* Cột trái. Chưa gõ -> lịch sử tìm kiếm (như pane rỗng của bản mobile);
+     đang gõ -> danh sách gợi ý. Cột phải KHÔNG đổi theo phím gõ để ảnh sản
+     phẩm không nhấp nháy — cùng lý do bản mobile tách 2 pane. */
+  const renderTerms = () => {
+    const q = input.value.trim();
+    clear.style.display = q ? '' : 'none';
+    if (q) {
+      const sug = searchSuggestions(q);
+      terms.innerHTML = `
+        <p class="text-[12px] leading-4 text-muted-foreground pb-2">Gợi ý</p>
+        ${sug.length
+          ? sug.map(s => `<button class="w-full text-left px-2 py-2.5 rounded-xs text-[14px] leading-5 text-foreground hover:bg-secondary transition-colors press" data-suggest="${s}">${highlightMatch(s, q)}</button>`).join('')
+          : `<p class="px-2 py-2 text-[14px] leading-5 font-medium text-foreground">Không tìm thấy kết quả</p>`}`;
+    } else if (searchHistory.length) {
+      terms.innerHTML = `
+        <p class="text-[12px] leading-4 text-muted-foreground pb-2">Vừa tìm kiếm</p>
+        ${searchHistory.slice(0, 6).map(h => `
+        <div class="flex items-center rounded-xs hover:bg-secondary transition-colors">
+          <button class="flex-1 min-w-0 text-left px-2 py-2.5 text-[14px] leading-5 text-foreground truncate press" data-suggest="${h}">${h}</button>
+          <button class="w-8 h-8 flex items-center justify-center shrink-0 press [&_svg]:w-2.5 [&_svg]:h-2.5" data-remove="${h}" aria-label="Xoá &quot;${h}&quot; khỏi lịch sử">${I.close}</button>
+        </div>`).join('')}`;
+    } else {
+      terms.innerHTML = '';   // chưa tìm gì lần nào -> chỉ còn khối từ khóa phổ biến
+    }
+    terms.querySelectorAll('[data-suggest]').forEach(b => b.addEventListener('click', () => goSearch(b.dataset.suggest)));
+    terms.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', e => {
+      e.stopPropagation();
+      searchHistory = searchHistory.filter(h => h !== b.dataset.remove);
+      renderTerms();
+    }));
+    localizeNew(terms);
+  };
+
+  /* Từ khóa phổ biến + lưới sản phẩm: dựng 1 lần khi mở, không đụng lúc gõ */
+  const renderStatic = () => {
+    hot.innerHTML = `
+      <p class="text-[12px] leading-4 text-muted-foreground pb-2">Từ khóa phổ biến</p>
+      ${DK_SEARCH_HOT.map(k => `
+      <button class="w-full flex items-center gap-2.5 px-2 py-2.5 rounded-xs text-left text-[14px] leading-5 text-foreground hover:bg-secondary transition-colors press" data-suggest="${k}">
+        <span class="w-4 h-4 flex items-center justify-center shrink-0 [&_svg]:w-3.5 [&_svg]:h-3.5 opacity-50">${I.search}</span>
+        <span class="flex-1 min-w-0 truncate">${k}</span>
+      </button>`).join('')}`;
+    hot.querySelectorAll('[data-suggest]').forEach(b => b.addEventListener('click', () => goSearch(b.dataset.suggest)));
+
+    prods.innerHTML = PRODUCTS.slice(0, 4).map((p, i) => productCard(p, i, { w: 'w-full', noColors: true })).join('');
+    prods.querySelectorAll('[data-product]').forEach(el => el.addEventListener('click', e => {
+      const qa = e.target.closest('.quick-add');
+      const i = el.dataset.product;
+      close();                                    // đóng layer trước, y như goSearch
+      if (qa) { if (window.__openQuickAdd) window.__openQuickAdd(+qa.dataset.quick); return; }
+      go(i === '1' ? 'pdp2' : i === '2' ? 'pdp3' : i === '3' ? 'pdp4' : i === '4' ? 'pdp5' : i === '5' ? 'pdp6' : 'pdp');
+    }));
+    localizeNew(hot); localizeNew(prods);
+  };
+
+  const render = () => { renderTerms(); renderStatic(); };
+
+  const open = () => {
+    if (layer.classList.contains('open')) return;
+    input.value = searchQuery || '';
+    render();
+    layer.classList.add('open');
+    layer.setAttribute('aria-hidden', 'false');
+    lockBodyScroll();
+    // đợi tấm trắng bắt đầu đổ xuống rồi mới focus, tránh giật cuộn
+    setTimeout(() => input.focus(), 120);
+  };
+  function close() {
+    if (!layer.classList.contains('open')) return;
+    layer.classList.remove('open');
+    layer.setAttribute('aria-hidden', 'true');
+    unlockBodyScroll();
+  }
+
+  input.addEventListener('input', renderTerms);   // chỉ cột trái đổi theo phím gõ
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { const q = input.value.trim(); if (q) goSearch(q); }
+    if (e.key === 'Escape') close();
+  });
+  clear.addEventListener('click', () => { input.value = ''; renderTerms(); input.focus(); });
+  layer.querySelector('.ds-backdrop').addEventListener('click', close);
+  document.getElementById('dkSearchClose').addEventListener('click', close);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+  localizeNew(layer);
+  window.__openDkSearch = open;
 })();
 
 /* ════════════════════════════════════════════════════════════════

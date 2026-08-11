@@ -255,6 +255,82 @@ Bản desktop dựng theo khung Figma 1440 với nhiều cột px cứng, nên c
 
 Bộ chọn cố tình kèm luôn class `w-[…]` gốc (`.dk-sticky-info.w-\[451px\]`) để đọc là thấy ngay trần của từng cột. Đã đo lại: không màn nào tràn ngang ở 768 / 1024 / 1280, và ở 1280/1440/1600 mọi số đo trùng khớp bản gốc.
 
+## Đối chiếu checkout với Figma (11/08/2026)
+
+Nguồn: `Test MCP - nam v2` › `📐 Wireframes - Redesign` › `05 — Cart + Mini-cart / Mobile` › **Section 4 (`3547:55856`)** — 6 frame 390px là 6 trạng thái của màn Thanh toán. Đã trích spec bằng Figma plugin bridge rồi sửa `index.html` cho khớp:
+
+| Chỗ | Figma | Code trước | Đã sửa |
+|---|---|---|---|
+| Tiêu đề màn | padding 16, chữ 18/**25** Medium | padding 12/16, 18/**28** | `py-4` + `.ck-h1{line-height:25px}` |
+| Hàng "Tóm tắt đơn hàng" | cao **36**, nhãn **Regular** | cao 40, nhãn Medium | `h-9`, bỏ `font-medium` |
+| Khối tóm tắt | padding 16/8 + kẻ dưới `#e5e5e5` | padding 0/8/8, không kẻ | `.ck-sum px-2 py-4` |
+| Hộp thông báo | padding 8/16, hộp trong bo **8** | padding 0/8/8, bo 2 | `.ck-notice px-4 py-2` + `rounded-md` |
+| Khối mỗi bước | padding 8/0 + kẻ trên `#f5f5f5` | không padding, không kẻ | `.ck-sec` |
+| Tiêu đề bước **chưa tới** | cao **72** (padding 24) | luôn 56 | `.ck-sec.is-pending .ck-head` + toggle trong `paintCheckout` |
+| Link "Thay đổi" | **14/20** Regular | 16px Light | `text-[14px] leading-5` |
+| Nhóm field | gap **10** | gap 8 | `gap-2.5` |
+| Ô nhập | padding ngang **8** | 12 | `px-2` |
+| Thẻ rich-radio khi chọn | viền **#262626**, nền **trắng** | viền #0a0a0a + nền #fafafa | `.opt.on` |
+| Vòng radio | viền **1px #d4d4d4** kể cả khi chọn | 2px, đổi sang đen khi chọn | `border border-border-3`, bỏ `.radio.on{border-color}` |
+| Checkbox | viền **#d4d4d4**, bo 2 | viền #e5e5e5 | `border-border-3 rounded-xs` |
+| Khoảng cách thẻ vận chuyển | **16** (mỗi thẻ trong khung padding 8) | 12 | `#shipOpts py-2 gap-4` |
+
+Khớp sẵn, không phải sửa: nút CTA (48 · r2 · `#0a0a0a` · chữ 16 Regular `#fafafa`), tiêu đề bước 16/24 Medium, nhãn field 14/20 Medium, ô nhập cao 40 bo 2 viền `#e5e5e5`, placeholder `#737373`, hàng tiền cao 36, dòng "Tổng cộng" cao 56 chữ 16/24 Medium, ghi chú VAT `#262626`. Token `tokens.css` trùng khít hex của Figma (`#e5e5e5` = `--general-border`, `#f5f5f5` = `--general-secondary`, `#262626` = `--general-secondary-foreground`, `#d4d4d4` = `--unofficial-border-3`, `#d62845` = `--general-destructive`).
+
+**Cố ý KHÔNG theo Figma:**
+- Cặp nút **Cá nhân/Công ty**: bản vẽ để mục đang chọn nền đen 5% + viền 1.5px (kiểu "lún"), nhưng ngày 11/08/2026 user yêu cầu đổi sang kiểu **nổi lên** — giữ theo yêu cầu mới, xem "Quy ước segmented toggle".
+- Nhãn hàng tóm tắt: bản vẽ ghi "Tóm tắt đơn hàng", code đang là "Giỏ hàng của bạn" (khác **nội dung**, không phải style) — chưa đổi.
+- Các dòng giảm giá `#d62845` (JUNE900, voucher, dùng điểm) có trong bản vẽ nhưng demo chưa có tính năng mã giảm giá.
+
+## Logo đối tác thanh toán (11/08/2026)
+
+4 file `assets/pay-1..4.png` nằm sẵn trong repo từ trước nhưng **chưa được map** vào checkout — mục thanh toán chỉ có radio + chữ. Nay map theo Figma `3028:47246` (khối Thanh toán của checkout mobile), áp cho **cả 2 bản**:
+
+| Phương thức | File | Bề rộng |
+|---|---|---|
+| Thẻ tín dụng/Ghi nợ | `pay-1.png` (Visa + Mastercard) | **76**×24 |
+| Chuyển khoản / QR code | `pay-3.png` | 38×24 |
+| ATM | `pay-4.png` (napas) | 38×24 |
+| Trả góp 0% | `pay-2.png` (Payoo) | 38×24 |
+
+- `richRadio()` nhận thêm tham số **tuỳ chọn** `icon = [file, width, alt]`; không truyền thì render y như cũ (thẻ vận chuyển không có logo). Ảnh `h-6 object-contain`, bề rộng đặt bằng `style` vì `w-[76px]`/`w-[38px]` không có trong `tailwind.css` build sẵn.
+- Figma cho 4 thẻ **cao bằng nhau 64** (thẻ "trả góp 0%" xuống 2 dòng kéo cả nhóm lên). Đặt sàn bằng `#payOpts .opt { min-height: 64px }` — scope trong `#payOpts` để thẻ vận chuyển vẫn ôm sát nội dung.
+- `alt` ghi tên đối tác (Visa, Mastercard / QR code / Napas / Payoo) vì logo mang thông tin nhãn chữ không nói.
+- **Canh dọc theo số dòng**: `richRadio` tự chọn `items-center` khi thẻ chỉ có nhãn (phương thức thanh toán) và `items-start` + `mt-0.5` cho nút radio khi có dòng phụ (phương thức vận chuyển — radio phải thẳng hàng với dòng tiêu đề). Trước đây mọi thẻ đều `items-start` nên chữ 1 dòng dính mép trên của thẻ cao 64, lệch hẳn so với logo vốn đã căn giữa.
+- **Thứ tự trong Figma là** cc → trả góp → QR → ATM, code đang là cc → QR → ATM → trả góp. Chưa đổi vì đây là thay đổi nội dung chứ không phải icon/kích thước.
+
+## Quy ước segmented toggle (mobile, 11/08/2026)
+
+Mọi cặp nút chọn-1-trong-N (Cá nhân/Công ty, Giao hàng/Nhận tại cửa hàng) dùng chung `segToggle(attr, items, active, h)`:
+
+- **Mục đang chọn NỔI LÊN**: nền trắng + `shadow-sm` + chữ đậm, đặt trên rãnh `bg-secondary` `p-0.5`. Mục không chọn: nền trong suốt + chữ `text-muted-foreground`.
+- Kiểu cũ (viền hộp, tô xám đúng mục đang chọn trên nền trắng) đã bỏ — nó đọc **ngược**: mục được chọn nhìn như bị lún xuống. Cặp đổi ngôn ngữ ở bảng Cài đặt vốn đã dùng kiểu nổi này, giờ cả app thống nhất.
+- `segBtnClass(on, h)` là nguồn class **duy nhất**, dùng cho cả lúc dựng markup lẫn lúc JS đổi trạng thái (handler `[data-vat-type]`), nên hai chỗ không thể lệch nhau.
+- Không áp cho: dòng danh sách trong bottom sheet (chọn size / chọn tỉnh) — nền xám ở đó là highlight **dòng đang chọn của một danh sách**, không phải tab.
+
+## Checkout: nhận tại cửa hàng (mobile, 11/08/2026)
+
+Ngay trên khối 3 section của màn `checkout` có cặp nút chọn hình thức nhận hàng (**Giao hàng** | **Nhận tại cửa hàng**, cùng kiểu phân đoạn với Cá nhân/Công ty của khối VAT). State ở `ckMode` (`'ship'` mặc định · `'pickup'`), kèm `ckCity` / `ckStore`.
+
+- **Số section đổi theo chế độ**: giao tận nơi 3 section như cũ; nhận tại cửa hàng còn **2** — bỏ bước "Phương thức vận chuyển" (không có gì để chọn). Chỉ số vẫn chạy 0,1,… nên `ckSection` / `ck-next` / `ck-change` / `paintCheckout` dùng lại nguyên vẹn, không cần cơ chế riêng.
+- **Hiện dần theo tiến độ** (`ckPickupOpen()`, 11/08/2026): mở ra chỉ có **dropdown Thành phố** → chọn xong mới hiện **DANH SÁCH cửa hàng** của thành phố đó (`#storeOpts`, thẻ chọn — không phải dropdown) → chọn cửa hàng xong mới hiện **các ô nhập của người nhận**: Họ và tên · SĐT · Email · Tỉnh thành sinh sống (`ckHome`, tách khỏi `ckProvince` của địa chỉ giao hàng) + nút Xác nhận. Không đập vào mặt một form dài ngay từ đầu; dòng **"Bước n/3"** trên cùng nói trước còn mấy chặng, và khi chưa chọn thành phố có 1 dòng hướng dẫn thay cho khoảng trống.
+- **Thẻ cửa hàng dùng `storeOpt()` riêng, KHÔNG dùng `richRadio`**: richRadio gộp phần phụ thành một dòng nên địa chỉ + giờ dính nhau ở cùng cỡ chữ với tên cửa hàng, và cả chuỗi gộp thành **một text node** nên i18n không dịch nổi. `storeOpt` tách 3 dòng: tên 14 Medium · địa chỉ 13 `#262626` · giờ 13 `#737373` (tách `<span>Mở cửa</span>` riêng để dịch được). Vỏ ngoài giữ `.opt`/`.radio` + `data-opt` nên handler và CSS trạng thái cũ chạy y nguyên.
+- **A11y**: `field()`/`pickField()` giờ sinh `id` + `label[for]` (bấm nhãn là focus/mở được sheet), input có `type` + `autocomplete` (name/tel/email) và `placeholder:text-muted-foreground` (trước đó rơi về màu preflight `#9ca3af`, tương phản 2.5:1 — trượt WCAG); nhóm cửa hàng là `role="radiogroup"` + `aria-labelledby`, mỗi thẻ `role="radio"` + `aria-checked` cập nhật khi bấm; nút mở picker có `aria-haspopup="dialog"`.
+- **Validate khi bấm Xác nhận** (`validatePickup`): họ tên bắt buộc · SĐT `^0\d{8,10}$` (bỏ khoảng trắng trước khi kiểm) · email để trống được, có thì phải đúng dạng. Lỗi hiện **ngay dưới ô** kèm `aria-invalid` + `aria-describedby`, viền đỏ bằng class `.fld-err` (tailwind build sẵn không có `border-destructive`, và cần `!important` vì `.border-border` cùng specificity), focus nhảy tới ô sai đầu tiên. Gõ lại là lỗi tự mất.
+- **Tóm tắt sau khi Xác nhận nhắc lại người nhận**: `ckStoreDoneHTML()` dựng "Họ tên - SĐT" rồi mới tới cửa hàng/địa chỉ/giờ. Dùng chung 1 hàm cho `p0done` và `paintStore` — trước đây 2 chỗ dựng markup riêng nên đổi cửa hàng sau khi xác nhận là mất dòng người nhận.
+- **Focus theo bước**: chọn xong cửa hàng lần đầu → con trỏ vào ô Họ và tên + cuộn khối người nhận vào tầm mắt; đổi thành phố → trả focus về chính nút Thành phố.
+- **Tới bước Thanh toán thì ẩn luôn cặp nút Giao hàng / Nhận tại cửa hàng** (`#ckModeTabs`, toggle trong `paintCheckout`): hình thức nhận hàng đã chốt, để đó chỉ tổ bấm nhầm — mà đổi tab là `ckStep` về 0, mất sạch bước vừa làm. Bấm "Thay đổi" ở section trên thì cặp nút hiện lại. Mốc ẩn khác nhau theo luồng: **section 1** ở nhận tại cửa hàng (chỉ 2 section) và **section 2** ở giao hàng.
+- Đổi thành phố thì **xoá cửa hàng đang chọn** (cửa hàng cũ không thuộc thành phố mới) nên 2 phần sau tự thu lại.
+- **Dựng lại màn chỉ khi CẤU TRÚC đổi** (`rerenderCheckout`): chọn thành phố, chọn cửa hàng **lần đầu**, đổi tab hình thức nhận hàng. Đổi sang cửa hàng khác khi các ô đã hiện thì chỉ chuyển thẻ đang chọn — **giữ nguyên chữ đã gõ** ở SĐT/email.
+- `field`/`pickField` phải để **ngoài** `screenCHECKOUT` vì `ckPickupOpen()` dựng lại phần thân nhiều lần, không chỉ lúc render màn.
+- Ô thành phố + ô tỉnh sinh sống dùng lại bottom sheet `__openPicker` của địa chỉ giao hàng — không phát sinh kiểu UI mới.
+- Nút Xác nhận mang `data-require="store"`; chưa chọn cửa hàng thì chặn kèm `toast('Chọn cửa hàng nhận hàng')`.
+- Địa chỉ + giờ mở cửa hiện ở 2 chỗ (`#ckStoreInfo` dưới ô chọn, `#ckStoreDone` ở phần tóm tắt khi đã xác nhận) và được `paintStore()` cập nhật **tại chỗ** — không dựng lại cả màn để không mất chữ đang gõ ở ô tên/điện thoại.
+- Dữ liệu ở `DAFC_STORES` (demo): `[thành phố, [[tên, địa chỉ, giờ mở cửa], …]]` — HCM 3 · Hà Nội 3 · Đà Nẵng 1. Helper `storesOf(city)` / `storeInfo(name)`.
+- Đổi tab thì **dựng lại màn tại chỗ** (`root.innerHTML = RENDER.checkout()` + `wire` + `localizeNew`, có chạy `scrollCleanups` như `go()`) vì số section khác nhau; `ckStep` về 0.
+- Đăng nhập giữa chừng đặt `ckStep = 1`; ở chế độ pickup bước 1 là Thanh toán nên `screenCHECKOUT()` **kéo lại `ckStep = 0` khi chưa chọn cửa hàng**.
+- Tóm tắt tiền: dòng "Giao hàng — Free" đổi thành "Nhận hàng — Tại cửa hàng"; màn `done` đổi 2 dòng cuối thành "Nhận tại — *tên cửa hàng*" và "Sẵn sàng nhận — Từ 12/08". Nút "Tiếp tục mua sắm" (`data-reset`) trả `ckMode/ckCity/ckStore` về mặc định.
+
 ## Mobile web thật
 
 Không có khung điện thoại, không giới hạn chiều cao — trang cuộn bằng **body**.
@@ -268,8 +344,8 @@ Không có khung điện thoại, không giới hạn chiều cao — trang cu�
 
 Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI-EN / settings FAB / luồng auth-OTP; chỉ viết lại layout theo các frame desktop 1440px trong Figma:
 
-- **Header 3 tầng** (Figma `2171:13006`, 1440×144): promo bar 32 (tái dùng slider `PROMO_MESSAGES`) + main nav 60 (dept trái · logo giữa · đổi ngôn ngữ/cửa hàng/tài khoản/giỏ phải) + subheader 52 (category nav + ô tìm kiếm 270px). Sticky `top-[-32px]` — promo bar cuộn trôi, 112px còn lại dính.
-  - Ô tìm kiếm (`2171:12954`) **chỉ có viền dưới** 1px `#a3a3a3` trên nền trắng — không phải hộp viền 4 cạnh (`strokeWeight` của Figma là mixed: `[0,0,1,0]`).
+- **Header 3 tầng** (Figma `2171:13006`, 1440×144): promo bar 32 (tái dùng slider `PROMO_MESSAGES`) + main nav 60 (dept trái · logo giữa · đổi ngôn ngữ/cửa hàng/tài khoản/giỏ phải) + subheader 52 (category nav + nút Tìm kiếm). Sticky `top-[-32px]` — promo bar cuộn trôi, 112px còn lại dính.
+  - **Ô nhập 270px của Figma (`2171:12954`) đã đổi thành NÚT "Tìm kiếm" + icon (11/08/2026)** — bấm mở layer tìm kiếm đè lên trang, xem mục "Layer tìm kiếm". Nút theo dáng Button/Ghost h-36 như các nút tiện ích khác; ô nhập thật nằm trong layer.
   - Dept đang chọn (`Nam` = State Active trong Figma) tô `#0a0a0a`, các dept khác `#404040`; state giữ ở biến `dkDept`.
   - **Hàng dept = 3 ngành hàng ngang cấp** `Nam · Nữ · Làm đẹp` (`DK_DEPTS`, 10/08/2026). "Làm đẹp" là ngành hàng riêng chứ không phải danh mục con của Nam/Nữ nên nó nằm ở tầng này và đã bỏ khỏi subheader. Cả 3 dept là link phẳng (không mega panel).
   - **Subheader ĐỔI THEO DEPT** (`dkNavCats()`) — tương đương bấm tab Nam/Nữ/Làm đẹp ở menu mobile. Nam/Nữ dùng `DK_NAV_CATS` cố định; Làm đẹp sinh thẳng từ `MENU_DATA['Làm đẹp'].cats` nên 2 bản luôn khớp (sửa cây beauty 1 chỗ là cả mobile lẫn desktop đổi theo). Mỗi nhóm beauty có mega panel **1 cột** (nhánh `item.sub` — ngành này không tách giới tính).
@@ -287,7 +363,22 @@ Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI
   - Figma để nhãn `Store location` + placeholder `What are you looking for?` bằng tiếng Anh giữa bản tiếng Việt — code **giữ chuỗi tiếng Việt** vì màn hình chạy qua i18n VI↔EN.
 - **Mega menu** hover thuần CSS (`.dk-nav-item:hover`), cột Nam/Nữ sinh từ `MENU_DATA`, cột brands từ `MENU_BRANDS`; click điều hướng PLP chế độ danh mục qua `data-plp-title/-crumbs`.
   - **Hiệu ứng hover kiểu Farfetch (10/08/2026)**: **KHÔNG gạch chân** (đối chứng cả Farfetch lẫn component Button trong Figma — không state nào có underline). Hover theo đúng 2 biến thể Button: hàng giới tính + nút tiện ích là **Ghost** → "nhún" nền đen 5% (`.ghost-hover`, Button/Ghost/Hover: fill #000 5% + label #0a0a0a, r2); danh mục subheader là **Ghost Muted** → chỉ đậm chữ #404040→#0a0a0a, không nền. Panel + **scrim tối `rgba(0,0,0,.45)`** phủ phần trang bên dưới mở sau **120ms** (hover-intent — lướt ngang thanh menu không nháy panel). Scrim là `div.dk-scrim` fixed `z:-1` NẰM TRONG `.navbar` (stacking context z-50) nên đè lên nội dung trang nhưng dưới 3 tầng header + panel; bật bằng `.navbar:has(.dk-nav-item:hover > .dk-mega)` — mục không có panel (Pre-loved, Khuyến mãi) không làm tối trang. Độ tối .45 cùng tông mọi backdrop khác của app.
-- **Search**: dropdown dưới ô tìm kiếm header (gợi ý + lịch sử + từ khóa phổ biến) → Enter/click ra trang kết quả (PLP search mode). Màn `search` cũ vẫn giữ (cột giữa 720px).
+- **Layer tìm kiếm** (`#dkSearchLayer`, 11/08/2026 — thay dropdown 420px neo dưới ô nhập): bấm nút Tìm kiếm ở subheader → tấm trắng đổ từ mép trên xuống + nền tối `rgba(0,0,0,.45)` phía dưới, cùng ý đồ với bản mobile (ở đó tìm kiếm là **màn riêng** `screenSearch` phủ kín).
+  - **Bố cục 2 cột** (tham chiếu overlay tìm kiếm của versace.com), nội dung lấy đúng bộ của bản mobile:
+
+    | Khối | Nội dung |
+    |---|---|
+    | Hàng trên | ô nhập `.ds-field` **max 600 canh giữa**, nút ✕ neo mép phải (`absolute`) nên không ăn vào bề rộng field |
+    | Cột trái `.ds-side` 280px | `#dkSearchTerms` — "Vừa tìm kiếm" (lịch sử), đang gõ thì đổi thành "Gợi ý" · `#dkSearchHot` — "Từ khóa phổ biến" (5 chip dòng, có icon kính lúp) |
+    | Cột phải `.ds-main` | "Sản phẩm nổi bật" — 4 `productCard` (ảnh + thương hiệu + tên + giá) trong `grid-cols-4`, ngăn với cột trái bằng đường dọc |
+
+  - Khung ngoài `.ds-inner` bó **1240px**; `max-w-[1240px]`/`max-w-[600px]` không có trong `tailwind.css` đã build nên các số đo này đặt tay trong `<style>`.
+  - **Gõ phím chỉ re-render cột trái** (`renderTerms`), cột phải dựng 1 lần lúc mở (`renderStatic`) — cùng lý do bản mobile tách 2 pane: re-mount product card làm ảnh nhấp nháy.
+  - Thẻ sản phẩm trong layer nối tay lại `[data-product]` / `.quick-add` (layer nằm ngoài `#viewport` nên `wire()` không chạm tới): **đóng layer trước** rồi mới `go()` / `__openQuickAdd`, để khoá cuộn được nhả đúng thứ tự.
+  - Layer dựng **1 lần ở body** nên router không xoá mất; nút trên header render lại mỗi `go()` thì `wire()` nối lại qua `window.__openDkSearch`.
+  - Đóng bằng: nền tối · nút ✕ · phím Esc. Chọn gợi ý / Enter thì **đóng layer trước rồi mới `goPlp()`**.
+  - Mở lại thì ô nhập điền sẵn `searchQuery` đang có; `z-index: 200` (trên header 50 và mega panel, dưới sheet/toast 220+). Ở ≤1023px hai cột **xếp chồng**, đường ngăn dọc đổi thành ngang.
+- Màn `search` cũ (kiểu mobile, cột giữa 720px) vẫn giữ trong `RENDER` nhưng không còn lối vào từ header.
 - **PLP** — bám cả nhóm `PLP · Product Listing` (`2084:159`), 6 frame = 6 trạng thái của cùng một màn:
 
   | Frame | Trạng thái | Dựng ở đâu |
@@ -301,7 +392,7 @@ Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI
 
   - **Breadcrumb** (`2903:45117`): hàng 36px, ngăn cách bằng **chấm tròn 16px** (không phải dấu `/`), chữ 14/20 `#737373`, luôn 2 đoạn — thiếu `crumbs` thì lấy tiêu đề, chế độ tìm kiếm dùng nhãn ngắn "Kết quả tìm kiếm".
   - **Heading** (`2903:45118`): tiêu đề Light 24/32 + số sản phẩm 14/20 canh đáy, `gap-2`, `py-6`.
-  - **Brand hero** (`2474:107068`): cột trái 801 (logo 149×28 + mô tả + strip danh mục 150px + nút cuộn 44px) · ảnh hero 575×320.
+  - **Brand hero** (`2474:107068`): ảnh hero 575×320 · cột chữ 801 (logo 149×28 + mô tả + strip danh mục 150px + nút cuộn 44px). **Đảo so với Figma (11/08/2026)**: ảnh đứng TRƯỚC (bên trái), khối tên brand + mô tả + strip sang phải — chỉ đổi thứ tự DOM, bề rộng 2 cột giữ nguyên nên là bản soi gương của thiết kế gốc.
   - **Filter bar 80px** (`2903:45194`): `Bộ lọc (n)` outline 48/24 · chip ghost 48/24 (chip trùng danh mục đang xem = State Active, chữ `#0a0a0a`) · density 4/3 cột — icon 20px, nút không chọn `opacity-50` · nhãn nút sắp xếp = **giá trị đang chọn** (mặc định `relevance` vẫn hiện "Sắp xếp").
   - **Hàng chip bộ lọc đang áp dụng** (`2910:111376`): chip Secondary 48/24 nền `#f5f5f5` + ✕, cuối hàng "Xóa tất cả" (Figma ghi sai chính tả "Xoát"). State thật ở `plpFilters`, sinh từ nút Áp dụng của drawer Bộ lọc; bỏ chip / xóa tất cả đều re-render lưới.
   - **Grid**: `gap-x-1` row 16px, 4 cột (card 345×590, có swatch) hoặc 3 cột (card 461×695). Figma dùng 2 variant Card-item khác nhau (3 cột là bản `Default` không có swatch) — code **giữ swatch ở cả hai** vì `v2` là bản mới hơn.
@@ -387,6 +478,17 @@ npx tailwindcss@3.4.17 -c tailwind.config.js -i in.css -o tailwind.css --minify
 Hai bản **tách rời có chủ ý** — không tự động đồng bộ (đợt 10/08/2026 đã kéo desktop bắt kịp mobile một lần, xem bên dưới). Mặc định mọi thay đổi chỉ áp vào `index.html`; `desktop.html` chỉ cập nhật khi được yêu cầu rõ ràng ("làm bản desktop"). Nghĩa là hai file sẽ lệch nhau dần, và đó là bình thường.
 
 Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫn trùng nhau giữa hai file, mỗi thay đổi ở mobile cần ghi lại bên dưới để lần port sang desktop không bỏ sót.
+
+### Chờ port sang desktop
+
+- **13 chỉnh theo Figma `3547:55856`** (xem "Đối chiếu checkout với Figma") mới áp cho mobile. Desktop còn: vòng radio 2px đổi đen khi chọn, `.opt.on` tô nền `#fafafa`, checkbox viền `#e5e5e5`, ô nhập padding 12, nhóm field gap 8, link "Thay đổi" 16px Light, tiêu đề màn 18/28, thiếu kẻ ngăn `#f5f5f5` + bước chờ cao 72.
+- **Lệch NGƯỢC — bộ lọc PLP**: desktop lọc thật (`plpFilters` + chip đang áp dụng), **mobile vẫn chỉ toast**.
+
+### Đã đồng bộ sang desktop (11/08/2026)
+
+- **Nhận tại cửa hàng ở checkout** — port nguyên luồng: `DAFC_STORES` / `storesOf` / `storeInfo`, state `ckMode/ckCity/ckStore`, tab hình thức nhận hàng, 2 section (bỏ bước vận chuyển), chặn Xác nhận khi chưa chọn cửa hàng, `paintStore` cập nhật tại chỗ, dòng "Nhận hàng — Tại cửa hàng" ở tóm tắt, màn done đổi 2 dòng cuối, `data-reset` trả về mặc định. Khác bản mobile đúng một điểm theo khuôn desktop: 2 ô chọn (thành phố · cửa hàng) và 2 ô tên/họ xếp **2 cột** thay vì dọc.
+- **Segmented toggle kiểu "nổi lên"** — `segToggle`/`segBtnClass` copy từ mobile, áp cho cặp Cá nhân/Công ty (VAT) và tab hình thức nhận hàng.
+- **20 chuỗi i18n còn thiếu** — "Phường xã", "Bảng kích thước →", chip "Giày" và 19 tiêu đề mục của 3 trang chính sách; bản dịch lấy nguyên từ `index.html` để 2 bản không lệch chữ.
 
 ### Đã port sang desktop (10/08/2026)
 

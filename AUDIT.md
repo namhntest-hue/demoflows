@@ -1,6 +1,46 @@
-# AUDIT — index.html (mobile) · 07/08/2026
+# AUDIT — index.html (mobile) + desktop.html · 07/08/2026, quét lại 11/08/2026
 
 > **Cập nhật 07/08 (đợt "sync đoạn thoại" + data thật):** các finding sau ĐÃ XỬ LÝ ở bản mobile — quảng cáo mã JUL nhưng chỉ nhận JUNE (map giờ nhận cả 2); TUMI còn sót ở 4 PDP + cart (đã gỡ, title đổi "(5)"→"(3)"); 7 vs 14 ngày đổi trả (chốt 7); typo "Thay doi/Giao hang nhanh/Chuyển khoảng/Lavancaza"; nhãn tóm tắt ship "Chuyển phát nhanh" sai với option đã chọn; badge "Đang giao" vs timeline steps:2 (→3); GHN vs TIKINOW (→TKN); ngày promo/đơn hàng quá hạn (→08/2026); 'Sản phẩm (2)' thiếu bản (1); các cặp I18N_REV trùng value (Phương thức vận chuyển, Phí vận chuyển, Chọn size, Đăng ký nhận thông báo, Xuất xứ, Mức giảm, Ưu đãi, Bảo quản sản phẩm); 12/18 SP sai PDP **chưa** sửa routing nhưng data/ảnh đã thật; quick add beauty rơi về size giày (hết — beauty giờ có dung tích thật). Các finding hành vi (validation, cart động, wire() double-bind, scroll/back...) vẫn nguyên — xem kế hoạch Đợt 1–4.
+
+> ## Cập nhật 11/08/2026 — quét lại toàn bộ + mở rộng sang bản desktop
+>
+> Đã dò lại **85 điểm kiểm** trên code hiện tại (grep theo evidence gốc, các mục nghi ngờ soi tay lại). Số dòng trong phần thân bên dưới là của bản 07/08 nên **đã xê dịch**, nhưng nội dung mô tả vẫn đúng với các mục còn mở.
+>
+> ### ĐÃ XỬ LÝ (13 — đã xác minh lại từng cái)
+>
+> | Finding gốc | Bằng chứng đã sửa |
+> |---|---|
+> | Bộ lọc PLP → *(chỉ desktop)* | `plpFilters` có thật ở `desktop.html` (9 chỗ) — **mobile vẫn chưa**, xem mục "lệch ngược" bên dưới |
+> | 'Bảng kích thước' 6 PDP là toast stub | giờ là `data-size-chart` → `openSizeChart()` mở sheet thật |
+> | PLP brand đếm 18 nhưng grid 10 | đổi sang `plpProducts().length` / `list.length` |
+> | Quảng cáo mã JUL nhưng chỉ nhận JUNE | map nhận **cả 6 mã** JUL500/1000/1500 + JUNE500/900/2000 |
+> | Tỉnh/Phường là input text stub | có `data-pick` + `__openPicker` (VN_LOCATIONS 2 cấp) |
+> | Nhãn tóm tắt vận chuyển sai | map đúng 'Giao hàng nhanh' / 'Giao hàng thông thường' |
+> | Typo 'Thay doi' / 'Giao hang nhanh' / 'Chuyển khoảng' | hết, đã có dấu đầy đủ |
+> | Typo badge 'Lavancaza' | hết |
+> | Mã vận đơn GHN vs TIKINOW | còn mỗi TIKINOW |
+> | 7 vs 14 ngày đổi trả | thống nhất **7 ngày** toàn bộ |
+> | Badge 'Đang giao' vs timeline steps:2 | `steps: 3` |
+> | Chương trình TUMI sai thương hiệu | gỡ khỏi PROMOS/cart; chỉ còn trong danh sách brand + dòng loại trừ (đúng) |
+> | Deep-link/hash route | **một phần**: router giờ đọc `#screen=…&lang=…&font=…` (cầu nối responsive 768px), nhưng hash bị dọn ngay sau khi nhận nên vẫn chưa share link tới 1 màn được |
+>
+> ### VẪN CÒN (65) — không mục nào trong phần thân dưới đây bị xoá
+>
+> Đếm theo cụm: **PLP 7** (bộ lọc mobile, 12/18 SP sai PDP, tab search, 25 brand cùng trang, i18n sort/promo, newsletter, footer 14 link tĩnh) · **PDP 7** (add khi chưa chọn size, mất tầng oos, pre-order 15/08 + sheet "đã thêm giỏ", setCta không dịch, không wishlist/share, notify không validate format) · **Cart 9** (thêm giỏ không đẩy vào `CART`, tiền tĩnh, giỏ rỗng vẫn đặt được, `refreshCartCount` gọi `wire(root)`, gift picker chết, Chọn tất cả, phiếu mua hàng, thumbnail đều `data-product="7"`, i18n cart) · **Auth 12** (không validate ở login/OTP/reginfo/setpass/SĐT, icon user về login, resend không mờ, OTP không paste, terms stub, hint mật khẩu, popup leak, social) · **Checkout 9** (không validate địa chỉ, `s0done` hardcode, 7 chỗ tiền hardcode, `.pay-detail` mồ côi, VAT đổi tab mất data, `ckStep` không reset khi logout, back sau done đặt lại được, theo dõi đơn = toast, i18n done) · **Account 7** (đổi tab gọi `wire(root)` + không `localizeNew`, không guard auth, thiếu empty state, sửa thông tin/địa chỉ/hành động đơn đều stub, không đổi mật khẩu) · **Hạ tầng 9** (mất vị trí cuộn khi back, back không đóng sheet, `I18N_REV` trùng value, JS `textContent` không dịch, thiếu 2 trang chính sách, aria-label, toast bị cookie gate che z200<z400, back Account về PLP brand, social icon không href) · **Journey 5** (homepage, wishlist, review, rail "Đã xem gần đây", thẻ đã lưu).
+>
+> Riêng **`showMore` vẫn gọi `wire(root)`** và vẫn append `PRODUCTS.slice(0,4)` — đây là mục nặng nhất còn lại của cụm PLP.
+>
+> ### MỚI PHÁT SINH 11/08 (audit gốc chưa có — 2 bản đã lệch nhau)
+>
+> Audit này viết cho `index.html`; nay có thêm `desktop.html` chạy song song qua cầu nối responsive 768px, nên bổ sung 5 mục lệch. **Mục 1–3 đã đồng bộ xong cùng ngày** (xem README "Đã đồng bộ sang desktop"), mục 4–5 còn mở.
+>
+> 1. ~~**[high][i18n] Desktop còn 22 chuỗi không dịch**~~ → **ĐÃ VÁ**: thêm 20 key ("Phường xã", chip "Giày", 19 tiêu đề mục 3 trang chính sách) + "Bảng kích thước →"; quét lại ở EN trên plp/pdp/pdp2/checkout/privacy/terms/returns còn **0 chuỗi sót**.
+> 2. ~~**[medium] "Nhận tại cửa hàng" chỉ có ở mobile**~~ → **ĐÃ PORT** nguyên luồng sang desktop (2 ô chọn + 2 ô tên/họ xếp 2 cột theo khuôn desktop; phần còn lại giống hệt mobile).
+> 3. ~~**[medium] Segmented toggle 2 bản khác kiểu**~~ → **ĐÃ ĐỒNG BỘ**: desktop dùng chung `segToggle`/`segBtnClass`, mục đang chọn nổi lên (nền trắng + shadow trên rãnh xám).
+> 4. **[medium][inconsistency] 13 chỉnh theo Figma `3547:55856` chỉ áp cho mobile** — desktop còn: vòng radio 2px đổi đen khi chọn (Figma: 1px `#d4d4d4` cố định), thẻ `.opt.on` tô nền `#fafafa` (Figma: nền trắng, viền `#262626`), checkbox viền `#e5e5e5` (Figma `#d4d4d4`), ô nhập padding 12 (Figma 8), nhóm field gap 8 (Figma 10), link "Thay đổi" 16px Light (Figma 14/20 Regular), tiêu đề màn 18/28 (Figma 18/25), thiếu kẻ ngăn `#f5f5f5` giữa các bước + bước chờ cao 72.
+> 5. **[medium][inconsistency] Lệch NGƯỢC: bộ lọc PLP** — desktop lọc thật (`plpFilters` + chip "đang áp dụng"), **mobile vẫn chỉ toast** (`#filterApply` không gọi `renderPlpGrid`). Đây là finding `[high][dead-end]` đầu tiên của audit này, desktop đã vượt lên còn mobile thì chưa.
+>
+> *Không lệch:* nội dung + nút cookie, cầu nối responsive (code y hệt, khác 2 hằng), 104 hàm dùng chung, token màu, dữ liệu sản phẩm/giỏ. Các thứ chỉ desktop có (layer tìm kiếm, mega menu, brand hero, dải hẹp 768–1279, thẻ cookie góc trái) là **cố ý theo khuôn desktop**.
 
 Ket qua ra soat toan bo luong cua demo mobile, moi phat hien deu duoc mot agent phan bien doc lai code de xac nhan (tag `confirmed` / `adjusted`; cum journey doi chieu bang grep, tag `no-verify`). So dong tinh tai thoi diem audit — co the xe dich sau khi sua.
 
