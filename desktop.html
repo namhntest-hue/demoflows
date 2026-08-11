@@ -4,6 +4,79 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Demo — E-commerce Flow (Desktop)</title>
+<!-- ══ CẦU NỐI RESPONSIVE — mốc 768px ═══════════════════════════════════════
+     Demo gồm 2 file rời: index.html (bản mobile, < 768px) và desktop.html
+     (bản desktop, ≥ 768px, nội dung bó trong max-w 1440). Đoạn này đặt ngay
+     sau <title> — TRƯỚC cả link font/CSS — để nếu đang mở nhầm bản thì
+     chuyển ngay khi trang chưa kịp tải gì nặng.
+     · Đo bằng matchMedia nên cả 2 file dùng CHUNG một phép đo, hai điều kiện
+       bù trừ nhau tuyệt đối -> không thể lặp vô hạn qua lại.
+     · location.replace (không phải assign) để lần chuyển KHÔNG thêm entry
+       vào history — bấm back không bị kẹt giữa 2 file.
+     · Trạng thái mang theo qua hash: màn đang xem + ngôn ngữ + phông chữ;
+       phần đọc/ghi hash nằm ở cuối <script> chính (tìm "RESP.swapped").
+     ═════════════════════════════════════════════════════════════════════ -->
+<script>
+window.RESP = (function () {
+  var BP = 768, IS_DESKTOP = true, OTHER = 'index.html';
+  var mq = window.matchMedia('(min-width:' + BP + 'px)');
+  var R = {
+    bp: BP, other: OTHER, isDesktop: IS_DESKTOP, swapped: false,
+
+    /* bản đang mở có khớp bề ngang hiện tại không */
+    fits: function () { return mq.matches === IS_DESKTOP; },
+
+    /* gói trạng thái thành hash; giá trị mặc định thì bỏ qua cho URL gọn */
+    hash: function (screen, lang, font) {
+      var p = [];
+      if (screen && screen !== 'plp') p.push('screen=' + encodeURIComponent(screen));
+      if (lang && lang !== 'vi')      p.push('lang=' + encodeURIComponent(lang));
+      if (font && font !== 'montserrat') p.push('font=' + encodeURIComponent(font));
+      return p.length ? '#' + p.join('&') : '';
+    },
+
+    /* đọc hash file kia để lại */
+    read: function () {
+      var out = {};
+      (location.hash || '').replace(/^#/, '').split('&').forEach(function (kv) {
+        if (!kv) return;
+        var i = kv.indexOf('=');
+        out[i < 0 ? kv : kv.slice(0, i)] = i < 0 ? '' : decodeURIComponent(kv.slice(i + 1));
+      });
+      return out;
+    },
+
+    /* chuyển sang bản kia; ẩn trang trong lúc chuyển để không nháy bản sai,
+       kèm hẹn giờ mở lại phòng khi điều hướng thất bại (thiếu file) */
+    swap: function (screen, lang, font) {
+      if (R.swapped) return;
+      R.swapped = true;
+      document.documentElement.style.visibility = 'hidden';
+      setTimeout(function () { document.documentElement.style.visibility = ''; }, 2000);
+      location.replace(OTHER + R.hash(screen, lang, font));
+    },
+
+    /* Theo dõi kéo giãn cửa sổ qua mốc; state() trả [screen, lang, font].
+       Nghe CẢ hai nguồn: matchMedia('change') là đường chính, còn 'resize'
+       (gộp nhịp bằng timer) là lưới an toàn — vài môi trường đổi kích thước
+       bằng emulation/devtools không bắn 'change'. Cờ swapped chặn gọi trùng. */
+    watch: function (state) {
+      var fire = function () { if (!R.fits()) { var s = state ? state() : []; R.swap(s[0], s[1], s[2]); } };
+      if (mq.addEventListener) mq.addEventListener('change', fire); else mq.addListener(fire);
+      var t = 0;
+      window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(fire, 150); });
+    }
+  };
+  /* Mở thẳng nhầm bản: chuyển ngay, giữ nguyên hash để bản kia đọc lại */
+  if (!R.fits()) {
+    R.swapped = true;
+    document.documentElement.style.visibility = 'hidden';
+    setTimeout(function () { document.documentElement.style.visibility = ''; }, 2000);
+    location.replace(OTHER + (location.hash || ''));
+  }
+  return R;
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -268,7 +341,37 @@
   #loginSheet.hidden-sheet #loginCard { transform: translateY(24px) scale(.97); opacity: 0; }
 
   /* ════════════════ DESKTOP OVERRIDES ════════════════ */
-  body { min-width: 1280px; }
+  /* KHÔNG đặt min-width cho body: dưới 768 đã có cầu nối chuyển sang bản
+     mobile, còn ngay tại 768 thì vùng nội dung chỉ còn ~753px vì thanh cuộn
+     dọc chiếm chỗ — đặt sàn 768 là tự tạo tràn ngang 15px. Bố cục co giãn
+     tự do từ 768 lên, nội dung bó lại ở max-w 1440. */
+
+  /* ════════════════ DẢI DESKTOP HẸP (768 → 1279) ════════════════
+     Trang dựng theo khung Figma 1440: cột phải của PDP/giỏ/thanh toán là
+     px cứng, lưới sản phẩm 4-5 cột. Từ 1280 trở lên GIỮ NGUYÊN thiết kế;
+     hẹp hơn thì các cột cứng co theo vw (clamp: sàn - tỉ lệ - trần đúng
+     bằng số px thiết kế) và lưới bớt cột. Bộ chọn để kèm luôn class
+     w-[…] gốc nên đọc là thấy ngay trần của từng cột.
+     Dưới 768 không cần lo: cầu nối đã chuyển sang bản mobile. */
+  @media (max-width: 1279px) {
+    .dk-sticky-info.w-\[451px\] { width: clamp(292px, 34vw, 451px); }   /* cột thông tin PDP */
+    .dk-sticky-side.w-\[427px\] { width: clamp(280px, 32vw, 427px); }   /* tóm tắt giỏ / thanh toán */
+    .dk-sticky-side.w-\[280px\] { width: clamp(216px, 22vw, 280px); }
+    .dk-policy-aside            { width: clamp(200px, 22vw, 280px); }   /* menu trang chính sách */
+    .dk-brand-hero              { width: clamp(240px, 38vw, 575px); }   /* ảnh campaign dải thương hiệu */
+  }
+  @media (max-width: 1023px) {
+    /* Lưới sản phẩm: 4 cột ở dải này chỉ còn ~170px/thẻ nên rút về 3.
+       !important vì nút đổi 3/4 cột của PLP set class trực tiếp lên #plpGrid;
+       ở ≥1024 nút vẫn hoạt động bình thường. */
+    #plpGrid            { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+    .grid.grid-cols-5   { grid-template-columns: repeat(3, minmax(0, 1fr)); }  /* carousel gợi ý */
+    .dk-commit-grid     { grid-template-columns: repeat(2, minmax(0, 1fr)); }  /* 4 cam kết DAFC */
+  }
+  @media (max-width: 899px) {
+    /* Ảnh PDP: 2 cột ở đây chỉ còn ~180px/ảnh, về 1 cột cho ra tấm ảnh thật */
+    #pdpGallery { grid-template-columns: minmax(0, 1fr); }
+  }
   /* ── Modal desktop: tái dùng bottom sheet mobile nhưng hiện GIỮA màn hình.
      Class `translate-y-full` vẫn được JS toggle làm cờ đóng/mở — ở đây map nó
      sang trạng thái mờ + thu nhỏ thay vì trượt xuống đáy. Đặt sau tailwind.css
@@ -284,16 +387,17 @@
   }
   .dk-modal.translate-y-full { transform: translate(-50%, -46%) scale(.97); opacity: 0; }
   .dk-modal .safe-b { padding-bottom: 0; }
-  /* ── Cookie bar ──
-     Desktop không dùng cổng chặn như mobile: đây là THANH trải hết bề ngang
-     dán đáy, trang vẫn xem và cuộn được phía sau (không nền tối). Nội dung
-     bên trong vẫn bó về khung 1440 như mọi dải khác của trang. */
+  /* ── Cookie card ──
+     Desktop không dùng cổng chặn như mobile: đây là THẺ vuông góc dưới-trái
+     (kiểu ARKET), trang vẫn xem và cuộn được phía sau (không nền tối). Đặt
+     bên trái để không chèn nút chat/lên đầu trang thường nằm góc phải. */
   #cookieBar {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 190;
+    /* min(): ở dải desktop hẹp thẻ vẫn chừa mép 32px mỗi bên */
+    position: fixed; left: 32px; bottom: 32px; width: min(420px, calc(100vw - 64px)); z-index: 190;
     background: var(--general-background);
-    border-top: 1px solid var(--general-border);
-    box-shadow: 0 -8px 30px rgba(0,0,0,.10);
-    transform: translateY(100%); transition: transform .4s ease-in-out;
+    border: 1px solid var(--general-border);
+    box-shadow: 0 18px 48px rgba(0,0,0,.16);
+    transform: translateY(calc(100% + 48px)); transition: transform .45s cubic-bezier(.22,1,.36,1);
     pointer-events: none;
   }
   #cookieBar.open { transform: translateY(0); pointer-events: auto; }
@@ -306,21 +410,32 @@
     border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25);
     transition: transform .2s ease; }
   .cg-sw[aria-checked="true"] i { transform: translateX(16px); }
-  /* ── Mega menu (CSS hover) — hiệu ứng kiểu Farfetch ──
-     Hover mục có panel: label gạch chân NGAY (phản hồi tức thì), còn panel +
-     scrim tối mở sau 120ms (hover-intent — lướt ngang qua thanh menu không làm
-     panel/scrim nháy). Rê chuột xuống panel vẫn giữ trạng thái mở vì panel là
-     con của .dk-nav-item. */
-  .dk-nav-item > .dk-mega {
+  /* ── Mega menu — hiệu ứng kiểu Farfetch ──
+     Panel KHÔNG còn nằm trong .dk-nav-item mà là sibling của thanh cuộn: thanh
+     danh mục có overflow-x (để có mũi tên trượt) sẽ CẮT MẤT panel nếu panel là
+     con của nó. Vì tách ra nên hover-intent 120ms chuyển sang JS
+     (wireSubheader) thay vì transition-delay. */
+  .dk-mega {
     opacity: 0; visibility: hidden; pointer-events: none;
     transform: translateY(6px);
     transition: opacity .18s ease, transform .22s cubic-bezier(.22,1,.36,1), visibility 0s linear .2s;
   }
-  .dk-nav-item:hover > .dk-mega, .dk-nav-item:focus-within > .dk-mega {
+  .dk-mega.open {
     opacity: 1; visibility: visible; pointer-events: auto;
-    transform: none;
-    transition-delay: .12s, .12s, .12s;   /* hover-intent */
+    transform: none; transition-delay: 0s;
   }
+  /* Mục đang mở panel: chữ đậm lên như state hover (Ghost Muted) */
+  .dk-nav-item.on .dk-nav-link { color: var(--general-foreground); }
+
+  /* Mũi tên trượt thanh danh mục — chỉ hiện khi tràn (ngành Làm đẹp 11 mục).
+     Cùng khuôn Icon Button 36×36 ghost của Figma. */
+  .dk-nav-strip { scroll-behavior: smooth; }
+  /* CHỈ khai hover/disabled ở đây. Kích thước + display để utility trong markup:
+     rule này nằm SAU tailwind.css nên nếu khai `display:flex` thì nó cùng
+     specificity (0,1,0) mà đứng sau -> đè luôn `.hidden{display:none}`, khiến
+     2 mũi tên vẫn chiếm chỗ dù JS đã gắn class hidden. */
+  .dk-nav-arrow { transition: background-color .15s ease; }
+  .dk-nav-arrow:hover { background: rgba(0,0,0,.05); }
   /* KHÔNG gạch chân khi hover (đối chứng Farfetch + component Button trong
      Figma: không state nào có underline). Thay vào đó theo đúng 2 biến thể:
      · Ghost (hàng giới tính + nút tiện ích) → hover "nhún" nền đen 5%
@@ -332,19 +447,15 @@
   /* Scrim tối phủ nội dung trang khi panel mở (chữ ký của Farfetch).
      Nằm TRONG stacking context z-50 của .navbar nên vẫn đè lên nội dung trang,
      nhưng z:-1 để 3 tầng header + panel (sibling vẽ sau) nổi lên trên.
-     Chỉ kích hoạt với mục CÓ panel (:has > .dk-mega) — Pre-loved/Khuyến mãi
-     không có panel thì không làm tối trang. */
+     Chỉ bật khi thật sự có panel đang mở (.dk-sub.mega-open do JS gắn) —
+     Pre-loved/Khuyến mãi không có panel thì không làm tối trang. */
   .dk-scrim {
     position: fixed; inset: 0; z-index: -1;
     background: rgba(0,0,0,.45);          /* cùng độ tối với các backdrop khác của app */
     opacity: 0; visibility: hidden; pointer-events: none;
     transition: opacity .25s ease, visibility 0s linear .3s;
   }
-  .navbar:has(.dk-nav-item:hover > .dk-mega) .dk-scrim,
-  .navbar:has(.dk-nav-item:focus-within > .dk-mega) .dk-scrim {
-    opacity: 1; visibility: visible;
-    transition-delay: .12s, .12s;         /* mở cùng nhịp hover-intent với panel */
-  }
+  .navbar:has(.dk-sub.mega-open) .dk-scrim { opacity: 1; visibility: visible; }
   /* ── Search dropdown dưới header ── */
   #dkSearchWrap { position: relative; }
   #dkSearchPanel {
@@ -656,8 +767,26 @@ const money = n => n.toLocaleString('en-US').replace(/,/g, ',') + 'đ';
 ════════════════════════════════════════════════════════════════ */
 const MENU_BRANDS = ['A.P.C.','BALMAIN','Burberry','Christian Louboutin','DAFC','Dolce&Gabbana','Emporio Armani','FERRAGAMO','Gianvito Rossi','MCM','MessyWeekend','MISBHV','Montblanc','Moschino','Moschino Jeans','MSGM','Palm Angels','PAUL&SHARK','Santoni','Stand Oil','Stefano Ricci','TUMI','Versace','Versace Jeans Couture','ZIMMERMANN'];
 const MENU_BRAND_SUB = { title:'Thương hiệu', all:'Tất cả thương hiệu', items:MENU_BRANDS, login:true };
+const MENU_NEW_COLLECTIONS = [
+  { header: 'Bộ sưu tập mới' },
+  'MCM: Meet the AW26',
+  'Stefano Ricci: The Lifestyle Sartorial',
+  'Dolce&Gabbana: Maiolica 2026',
+];
+
 const MENU_DATA = {
+  /* 'Sản phẩm mới' đứng ĐẦU mỗi tab (vị trí "New In" của Farfetch — Figma Menu
+     3358:54912 chưa có dòng này). Submenu lấy theo menu THẬT của shop.dafc.com.vn
+     nhưng BỎ tầng giới tính vì tab Nam/Nữ/Làm đẹp đã là giới tính rồi:
+     [Bộ sưu tập mới ×3] + danh mục của giới tính đang chọn + Quà tặng.
+     Site thật không có mục làm đẹp trong Sản phẩm mới -> tab Làm đẹp giữ
+     sub null, bấm là sang thẳng PLP (cơ chế của Khuyến mãi/PRE-LOVED). */
   'Nam': { home:'Trang chủ nam', cats:[
+    ['Sản phẩm mới', { title:'Sản phẩm mới', all:'Tất cả sản phẩm mới', items:[
+      ...MENU_NEW_COLLECTIONS,
+      { header: 'Danh mục' },
+      'Quần áo','Giày dép','Túi xách','Phụ kiện','Quà tặng',
+    ] }],
     ['Quần áo',  { title:'Quần áo',  all:'Tất cả quần áo',  items:['Áo polo','Áo thun','Áo sơ mi','Áo khoác','Quần jean','Quần tây','Quần short','Đồ bộ'] }],
     ['Giày dép', { title:'Giày dép', all:'Tất cả giày dép', items:['Giày thể thao','Giày tây','Giày lười','Sandal','Dép'] }],
     ['Túi xách', { title:'Túi xách', all:'Tất cả túi',      items:['Túi xách','Ba lô','Ví','Túi đeo chéo','Cặp công sở'] }],
@@ -667,6 +796,11 @@ const MENU_DATA = {
     ['Thương hiệu', MENU_BRAND_SUB],
   ]},
   'Nữ': { home:'Trang chủ nữ', cats:[
+    ['Sản phẩm mới', { title:'Sản phẩm mới', all:'Tất cả sản phẩm mới', items:[
+      ...MENU_NEW_COLLECTIONS,
+      { header: 'Danh mục' },
+      'Quần áo','Giày dép','Túi xách','Phụ kiện','Trang sức','Quà tặng',
+    ] }],
     ['Quần áo',  { title:'Quần áo',  all:'Tất cả quần áo nữ',  items:['Áo','Quần','Chân váy','Đầm','Áo khoác','Jumpsuit','Đồ bộ','Đồ bơi'] }],
     ['Giày dép', { title:'Giày dép', all:'Tất cả giày dép nữ', items:['Giày cao gót','Giày bệt','Giày thể thao','Sandal','Dép','Boots'] }],
     ['Túi xách', { title:'Túi xách', all:'Tất cả túi nữ',      items:['Túi xách tay','Túi đeo chéo','Ba lô','Ví & Clutch','Túi tote'] }],
@@ -682,6 +816,7 @@ const MENU_DATA = {
      trong file trở thành bản dịch EN ở I18N. FILTER_CATS dùng đúng bộ nhãn
      này — sửa một bên thì sửa cả hai. */
   'Làm đẹp': { home:'Trang chủ làm đẹp', cats:[
+    ['Sản phẩm mới', null],
     ['Tắm & dưỡng thể',       { title:'Tắm & dưỡng thể',       all:'Tất cả tắm & dưỡng thể',       items:['Sữa tắm','Sữa tắm dạng refill','Chai Infinite','Sữa dưỡng thể','Kem dưỡng thể (refill được)','Tẩy tế bào chết cơ thể','Dầu tắm & muối tắm'] }],
     ['Chăm sóc tay',          { title:'Chăm sóc tay',          all:'Tất cả chăm sóc tay',          items:['Nước rửa tay','Nước rửa tay dạng refill','Chai thuỷ tinh Infinite','Sữa dưỡng tay','Kem dưỡng tay'] }],
     ['Nước hoa',              { title:'Nước hoa',              all:'Tất cả nước hoa',              items:['Eau de Parfum','Eau de Toilette','Nước hoa du lịch','Set khám phá'] }],
@@ -716,16 +851,39 @@ const IcoGlobe = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" st
 const IcoPin = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--general-primary)" stroke-width="1.4"><path d="M12 21.25s-7.25-5.5-7.25-11A7.25 7.25 0 0 1 12 3a7.25 7.25 0 0 1 7.25 7.25c0 5.5-7.25 11-7.25 11Z"/><circle cx="12" cy="10.25" r="2.75"/></svg>`;
 
 /* Cấu hình subheader: label hiển thị + nguồn dữ liệu mega menu */
+/* Hàng dept (tầng nav trên) = 3 NGÀNH HÀNG ngang cấp: Nam · Nữ · Làm đẹp.
+   "Làm đẹp" là ngành hàng riêng chứ không phải danh mục con của Nam/Nữ, nên nó
+   nằm ở đây và đã được BỎ khỏi subheader — subheader giờ chỉ còn danh mục thuộc
+   ngành thời trang. Cả 3 dept đều là link phẳng (không mega panel) để đồng nhất;
+   cây danh mục Làm đẹp vẫn vào được từ bộ lọc của PLP beauty. */
+const DK_DEPTS = ['Nam', 'Nữ', 'Làm đẹp'];
+
 const DK_NAV_CATS = [
+  /* "Sản phẩm mới" đứng đầu như menu thật shop.dafc.com.vn + bản mobile.
+     Header component Figma 2171:13006 chưa có mục này — xem README. */
+  { label:'Sản phẩm mới', newIn:true    },
   { label:'Quần áo',     cat:'Quần áo'  },
   { label:'Giày dép',    cat:'Giày dép' },
   { label:'Túi xách',    cat:'Túi xách' },
   { label:'Phụ kiện',    cat:'Phụ kiện' },
-  { label:'Làm đẹp',     beauty:true    },
   { label:'Pre-loved'                   },
   { label:'Thương hiệu', brands:true    },
   { label:'Khuyến mãi',  sale:true      },
 ];
+
+/* Subheader ĐỔI THEO DEPT đang chọn — tương đương việc bấm tab Nam/Nữ/Làm đẹp
+   ở menu mobile. Ngành thời trang (Nam/Nữ) dùng bộ danh mục cố định phía trên;
+   ngành Làm đẹp sinh thẳng từ MENU_DATA['Làm đẹp'].cats nên 2 bản luôn khớp
+   nhau — sửa cây beauty một chỗ là cả mobile lẫn desktop đổi theo. */
+function dkNavCats() {
+  if (dkDept !== 'Làm đẹp') return DK_NAV_CATS;
+  return MENU_DATA['Làm đẹp'].cats.map(([label, sub]) => {
+    if (label === 'Thương hiệu') return { label, brands: true };
+    if (label === 'Khuyến mãi')  return { label, sale: true };
+    // nhóm có cây con -> mega panel 1 cột; không có -> link phẳng (vd Sản phẩm mới)
+    return sub ? { label, dept: 'Làm đẹp', sub } : { label };
+  });
+}
 
 /* attrs điều hướng PLP chế độ danh mục (dùng chung với hàng menu mobile) */
 const dkCatAttrs = (title, crumbs = []) =>
@@ -740,10 +898,40 @@ function dkMegaCol(title, allLabel, allAttrs, items, itemAttrs) {
   </div>`;
 }
 
-/* Panel mega menu cho 1 mục subheader — cột nội dung + teaser ảnh phải */
-function dkMegaPanel(item) {
+/* Tách mảng items có phần tử {header} thành các nhóm [{title, items}] —
+   MENU_DATA khai chung với mobile (submenu 1 cột, header xen giữa), desktop
+   dựng lại thành nhiều CỘT nên phải cắt theo header. */
+function splitByHeader(items) {
+  const out = [];
+  let cur = { title: '', items: [] };
+  for (const it of items) {
+    if (it && it.header) { if (cur.items.length) out.push(cur); cur = { title: it.header, items: [] }; }
+    else cur.items.push(it);
+  }
+  if (cur.items.length) out.push(cur);
+  return out;
+}
+
+/* Panel mega menu cho 1 mục subheader — cột nội dung + teaser ảnh phải.
+   `id` khớp với data-mega của nút tương ứng: panel render tách khỏi thanh cuộn
+   nên không còn quan hệ cha-con để CSS :hover bắt được, phải nối bằng id. */
+function dkMegaPanel(item, id) {
   let cols = '';
-  if (item.brands) {
+  if (item.newIn) {
+    /* Sản phẩm mới — theo menu thật shop.dafc.com.vn: [Bộ sưu tập mới] + cột
+       NAM + cột NỮ. Mobile bỏ tầng giới tính vì tab đã là giới tính; desktop
+       GIỮ vì subheader không gắn giới tính và mọi mục khác cũng dựng 2 cột
+       Nam/Nữ. Nguồn data vẫn là MENU_DATA dùng chung với mobile. */
+    const subOf = dept => MENU_DATA[dept].cats.find(([lb]) => lb === 'Sản phẩm mới')[1];
+    const colls = splitByHeader(subOf('Nam').items).find(g => g.title === 'Bộ sưu tập mới');
+    cols = dkMegaCol('Bộ sưu tập mới', '', '', colls ? colls.items : [], it => dkCatAttrs(it, ['Sản phẩm mới']))
+      + ['Nam', 'Nữ'].map(dept => {
+          const sub = subOf(dept);
+          const cats = splitByHeader(sub.items).find(g => g.title === 'Danh mục');
+          return dkMegaCol(dept, sub.all, dkCatAttrs(sub.all, [dept, 'Sản phẩm mới']),
+            cats ? cats.items : [], it => dkCatAttrs(it, [dept, 'Sản phẩm mới']));
+        }).join('');
+  } else if (item.brands) {
     const n = 3, split = [[], [], []];
     MENU_BRANDS.forEach((b, i) => split[i % n].push(b));
     cols = `
@@ -753,11 +941,19 @@ function dkMegaPanel(item) {
         ${col.map(b => `<button data-nav="plp" class="text-left text-[13px] leading-5 text-foreground-alt hover:text-foreground transition-colors press">${b}</button>`).join('')}
       </div>`).join('')}`;
   } else if (item.beauty) {
+    /* Nhánh này hiện KHÔNG mục nào trong DK_NAV_CATS dùng — "Làm đẹp" đã lên
+       hàng dept dạng link phẳng. Giữ lại để bật lại panel beauty ở subheader
+       chỉ bằng cách thêm { label:'Làm đẹp', beauty:true } vào DK_NAV_CATS. */
     const cats = MENU_DATA['Làm đẹp'].cats.filter(([, sub]) => sub);
     cols = cats.map(([, sub]) =>
       dkMegaCol(sub.title, sub.all, dkCatAttrs(sub.all, ['Làm đẹp', sub.title]),
         sub.items, it => dkCatAttrs(it, ['Làm đẹp', sub.title]))
     ).join('');
+  } else if (item.sub) {
+    /* 1 nhóm của ngành Làm đẹp — chỉ 1 cột vì ngành này không tách giới tính */
+    const sub = item.sub;
+    cols = dkMegaCol(sub.title, sub.all, dkCatAttrs(sub.all, [item.dept, sub.title]),
+      sub.items, it => dkCatAttrs(it, [item.dept, sub.title]));
   } else if (item.cat) {
     cols = ['Nam', 'Nữ'].map(dept => {
       const hit = MENU_DATA[dept].cats.find(([lb]) => lb === item.cat);
@@ -770,7 +966,7 @@ function dkMegaPanel(item) {
     return '';
   }
   return `
-  <div class="dk-mega absolute left-0 right-0 top-full bg-background border-b border-border shadow-xl z-50">
+  <div class="dk-mega absolute left-0 right-0 top-full bg-background border-b border-border shadow-xl z-50" data-mega="${id}">
     <div class="max-w-[1440px] mx-auto px-6 py-8 flex gap-14">
       <!-- flex-wrap: cây Làm đẹp có 8 danh mục, 1 hàng sẽ tràn 1440 -> xuống 2 hàng -->
       <div class="flex-1 flex flex-wrap gap-x-14 gap-y-8">${cols}</div>
@@ -799,8 +995,13 @@ function navBar({ logoOnly = false } = {}) {
   // dept trái — label 14 medium #404040, pad 8/16 (Figma Frame 41)
   // dept đang chọn dùng State=Active của Button: label #0a0a0a
   // hover = Button/Ghost/Hover: nền đen 5% "nhún màu" + chữ đậm (ghost-hover)
-  const dept = Object.keys(MENU_DATA).map(d => `
-    <button ${dkCatAttrs(d)} data-dkdept="${d}" class="ghost-hover h-9 px-4 rounded-xs flex items-center text-[14px] font-medium leading-5 transition-colors press ${d === dkDept ? 'text-foreground' : 'text-foreground-alt hover:text-foreground'}">${d}</button>`).join('');
+  /* Dựng panel 1 lần rồi dùng lại cho cả nút (data-mega) lẫn khối panel bên dưới */
+  const dkCats = dkNavCats().map((item, i) => ({ item, i, panel: dkMegaPanel(item, i) }));
+
+  /* crumbs = [dept] chứ không để rỗng: `isBeautyPlp()` nhận diện ngành hàng qua
+     crumbs[0], thiếu thì bấm "Làm đẹp" ra nhầm hàng thời trang + bộ lọc sai facet. */
+  const dept = DK_DEPTS.map(d => `
+    <button ${dkCatAttrs(d, [d])} data-dkdept="${d}" class="ghost-hover h-9 px-4 rounded-xs flex items-center text-[14px] font-medium leading-5 transition-colors press ${d === dkDept ? 'text-foreground' : 'text-foreground-alt hover:text-foreground'}">${d}</button>`).join('');
 
   return `
   <div class="navbar sticky top-[-32px] z-50">
@@ -840,15 +1041,31 @@ function navBar({ logoOnly = false } = {}) {
       </div>
     </div>
 
-    <!-- subheader (1440×52): category nav + mega menu + search -->
-    <div class="glass-95 backdrop-blur-[7.5px] relative">
+    <!-- subheader (1440×52): category nav + mega menu + search.
+         Nút giữ ĐÚNG size Figma (Button/Ghost Muted/Regular: h-36, padding 8/16
+         = h-9 px-4). Ngành Làm đẹp có 11 mục nên tràn -> thanh cuộn ngang +
+         2 mũi tên kiểu Farfetch, KHÔNG bóp padding nút. Mega panel render NGOÀI
+         thanh cuộn (sibling) vì overflow-x sẽ cắt mất panel nếu để bên trong. -->
+    <div class="dk-sub glass-95 backdrop-blur-[7.5px] relative">
       <div class="max-w-[1440px] mx-auto h-[52px] px-2 flex items-center justify-between gap-4">
-        <nav class="flex items-center h-full">
-          ${DK_NAV_CATS.map(item => `
-          <div class="dk-nav-item h-full flex items-center">
-            <button ${dkCatAttrs(item.label)} class="dk-nav-link h-9 px-4 rounded-xs flex items-center text-[14px] font-medium leading-5 press ${item.sale ? 'text-destructive' : 'text-foreground-alt hover:text-foreground transition-colors'}">${item.label}</button>
-            ${dkMegaPanel(item)}
-          </div>`).join('')}
+        <!-- Mũi tên là OVERLAY ở 2 mép (kiểu Farfetch), không nằm trong luồng:
+             ẩn/hiện chúng không đổi bề rộng thanh cuộn nên danh mục không bị
+             nhảy khi cuộn. Mỗi bên chỉ hiện khi hướng đó CÒN nội dung. -->
+        <nav class="flex-1 min-w-0 relative flex items-center h-full">
+          <div class="dk-nav-strip flex-1 min-w-0 flex items-center h-full overflow-x-auto no-scrollbar">
+            ${dkCats.map(({ item, i, panel }) => `
+            <div class="dk-nav-item h-full flex items-center shrink-0"${panel ? ` data-mega="${i}"` : ''}>
+              <button ${item.dept ? dkCatAttrs(item.label, [item.dept]) : dkCatAttrs(item.label)} class="dk-nav-link h-9 px-4 rounded-xs flex items-center text-[14px] font-medium leading-5 whitespace-nowrap press ${item.sale ? 'text-destructive' : 'text-foreground-alt hover:text-foreground transition-colors'}">${item.label}</button>
+            </div>`).join('')}
+          </div>
+          <div data-nav-prev-wrap class="hidden absolute left-0 top-0 bottom-0 z-10 items-center pr-8"
+               style="background:linear-gradient(to right,var(--general-background),var(--general-background) 55%,transparent)">
+            <button class="dk-nav-arrow press w-9 h-9 rounded-xs flex items-center justify-center" data-nav-prev aria-label="Xem danh mục trước">${I.chevL}</button>
+          </div>
+          <div data-nav-next-wrap class="hidden absolute right-0 top-0 bottom-0 z-10 items-center pl-8"
+               style="background:linear-gradient(to left,var(--general-background),var(--general-background) 55%,transparent)">
+            <button class="dk-nav-arrow press w-9 h-9 rounded-xs flex items-center justify-center" data-nav-next aria-label="Xem danh mục tiếp">${I.chevR('var(--unofficial-foreground-alt)')}</button>
+          </div>
         </nav>
         <div id="dkSearchWrap" class="shrink-0 px-4">
           <!-- Figma Input (2171:12954): 270×36, nền trắng, CHỈ viền dưới 1px #a3a3a3 -->
@@ -861,6 +1078,10 @@ function navBar({ logoOnly = false } = {}) {
           <div id="dkSearchPanel"></div>
         </div>
       </div>
+      <!-- Mega panel: sibling của hàng nav (không nằm trong .dk-nav-strip có
+           overflow-x). Vẫn absolute top-full bám .dk-sub nên rơi đúng dưới
+           subheader như cũ. JS nối nút <-> panel qua data-mega. -->
+      ${dkCats.map(({ panel }) => panel).join('')}
     </div>
   </div>`;
 }
@@ -877,7 +1098,7 @@ function camKetSection() {
   return `
   <div class="max-w-[1440px] mx-auto px-6">
     <!-- không kẻ border ngăn với block trên: khoảng trắng py-12 là thứ ngăn cách -->
-    <div class="grid grid-cols-4 gap-8 py-12 reveal">
+    <div class="dk-commit-grid grid grid-cols-4 gap-8 py-12 reveal">
       ${CAM_KET.map(([ico, t, d]) => `
       <div class="flex gap-3.5 items-start">
         <span class="w-5 h-5 flex items-center justify-center shrink-0">${I[ico]}</span>
@@ -1226,7 +1447,7 @@ function screenPLP() {
               <button data-strip-next class="w-11 h-11 shrink-0 rounded-xs border border-border bg-background flex items-center justify-center press [&_svg]:w-3.5 [&_svg]:h-3.5" aria-label="Cuộn danh mục">${I.chevR('#0a0a0a').replace('class="acc-chev" ', '')}</button>
             </div>
           </div>
-          <div class="w-[575px] shrink-0 overflow-hidden bg-secondary">
+          <div class="dk-brand-hero w-[575px] shrink-0 overflow-hidden bg-secondary">
             <img src="${A}brand-hero.png" alt="Versace campaign" class="w-full h-[320px] object-cover lazy">
           </div>
         </div>
@@ -1579,8 +1800,17 @@ function dkScreenPDP(kind) {
             </div>
           </div>
 
-          <!-- variants -->
-          <div class="flex flex-col gap-4 py-2 rise">
+          <!-- variants —
+               BẮT BUỘC có relative z-30 (KHÔNG dùng dấu backtick trong comment này:
+               cả khối nằm trong template literal, backtick sẽ đứt string).
+               Class .rise dùng animation-fill-mode:both nên transform:translateY(0)
+               còn dính lại => mỗi block .rise là 1 stacking context riêng với
+               z-index:auto. Cùng z-index thì thứ tự DOM quyết định, nên #pdpCta
+               (block .rise NẰM SAU) vẽ đè lên dropdown chọn size, dù dropdown đã
+               z-40 — z-40 chỉ có tác dụng BÊN TRONG stacking context của chính
+               block này. Cùng lý do #sortMenu ở PLP sống được nhờ #plpFilterAnchor
+               có z-40, và hàng tab trang chính sách phải có z-30. -->
+          <div class="relative z-30 flex flex-col gap-4 py-2 rise">
             ${D.noColors ? '' : `
             <div class="flex flex-col gap-2">
               <div class="flex gap-2">
@@ -1600,12 +1830,15 @@ function dkScreenPDP(kind) {
                 <button data-size-chart aria-label="Mở bảng kích thước" class="text-[12px] leading-4 text-foreground press">Bảng kích thước →</button>
               </div>
               ${D.dropdown ? `
-              <!-- Select & Combobox (Figma 3111:33591, 358×44 r4) -> mở picker "Chọn size" (3281:40140) -->
-              <div class="relative">
-                <button type="button" data-size-trigger="${kind}" class="w-full h-11 bg-input border border-border rounded-sm pl-3 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left press">
+              <!-- Select & Combobox (Figma 3111:33591, 358×44 r4). Bản desktop xổ
+                   DROPDOWN ngay dưới ô chọn (không mở popup giữa màn như mobile) —
+                   danh sách dựng trong wire(), nguồn SIZE_SHEET_OPTIONS. -->
+              <div class="relative" data-size-dd>
+                <button type="button" data-size-trigger="${kind}" aria-expanded="false" aria-haspopup="listbox" class="w-full h-11 bg-input border border-border rounded-sm pl-3 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left press">
                   <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
                 </button>
-                <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
+                <span data-size-caret class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200">${I.chevD('var(--general-primary)')}</span>
+                <div data-size-list role="listbox" class="hidden absolute left-0 right-0 top-full mt-1 max-h-[260px] overflow-y-auto no-scrollbar bg-background border border-border rounded-sm shadow-lg z-40"></div>
               </div>` : `
               <div class="grid gap-2 ${D.sizes.length > 2 ? 'grid-cols-4' : 'grid-cols-2'}">
                 ${D.sizes.map((s, si) => `
@@ -3354,7 +3587,7 @@ function screenPOLICY(key) {
       ${dkCrumbs(['Trang chủ', p.title])}
 
       <div class="flex gap-6 px-6 pt-2 pb-12 items-start">
-        <aside class="w-[280px] shrink-0 sticky top-[128px] flex flex-col gap-6 rise">
+        <aside class="dk-policy-aside w-[280px] shrink-0 sticky top-[128px] flex flex-col gap-6 rise">
           <div class="flex flex-col py-2">
             ${POLICY_TABS.map(([k, label]) => k === key
               ? `<span class="h-11 px-3 flex items-center text-[14px] font-medium leading-5 text-foreground bg-secondary rounded-xs">${label}</span>`
@@ -3544,6 +3777,70 @@ function bindActiveFilterChips(root) {
     afClear.dataset.bound = '1';
     afClear.addEventListener('click', () => { plpFilters = []; refreshActiveFilters(root); });
   }
+}
+
+/* Subheader: mega menu (hover-intent) + mũi tên trượt khi danh mục tràn.
+   · Panel nằm NGOÀI .dk-nav-strip nên không bị overflow-x cắt -> phải nối
+     nút <-> panel bằng data-mega và tự đóng/mở bằng JS thay cho CSS :hover.
+   · 120ms trễ khi mở: lướt ngang qua thanh menu không làm panel nháy; đóng
+     cũng trễ 120ms để còn kịp rê chuột từ nút xuống panel.
+   · Mũi tên chỉ hiện khi scrollWidth > clientWidth (ngành Làm đẹp 11 mục). */
+function wireSubheader(root) {
+  const sub = root.querySelector('.dk-sub');
+  if (!sub) return;
+  const strip = sub.querySelector('.dk-nav-strip');
+  const items = [...sub.querySelectorAll('.dk-nav-item')];
+  const panels = [...sub.querySelectorAll('.dk-mega')];
+  let timer = null;
+
+  const setOpen = id => {
+    panels.forEach(p => p.classList.toggle('open', p.dataset.mega === id));
+    items.forEach(it => it.classList.toggle('on', it.dataset.mega === id));
+    sub.classList.toggle('mega-open', id != null);
+  };
+  const openLater  = id => { clearTimeout(timer); timer = setTimeout(() => setOpen(id), 120); };
+  const closeLater = () => { clearTimeout(timer); timer = setTimeout(() => setOpen(null), 120); };
+
+  items.forEach(it => {
+    const id = it.dataset.mega;
+    it.addEventListener('mouseenter', () => id ? openLater(id) : closeLater());
+    it.addEventListener('mouseleave', closeLater);
+    it.addEventListener('focusin',  () => id ? setOpen(id) : setOpen(null));
+  });
+  panels.forEach(p => {
+    p.addEventListener('mouseenter', () => clearTimeout(timer));
+    p.addEventListener('mouseleave', closeLater);
+  });
+  sub.addEventListener('focusout', e => { if (!sub.contains(e.relatedTarget)) setOpen(null); });
+
+  /* ── mũi tên trượt ──
+     Mỗi bên CHỈ hiện khi hướng đó còn nội dung: ở đầu danh sách không có nút
+     trái, cuộn sang phải rồi nút trái mới xuất hiện (và nút phải biến mất khi
+     đã tới cuối) — không bày nút bấm vào chẳng làm gì.
+     Vì là overlay absolute nên ẩn/hiện không đổi bề rộng strip => đo `over`
+     một lần là đủ, không lo kẹt trạng thái như bản cũ. */
+  const prevWrap = sub.querySelector('[data-nav-prev-wrap]');
+  const nextWrap = sub.querySelector('[data-nav-next-wrap]');
+  // hidden <-> flex: wrapper mang sẵn items-center nên khi hiện phải là flex
+  const show = (el, on) => { el.classList.toggle('hidden', !on); el.classList.toggle('flex', on); };
+  const sync = () => {
+    const over = strip.scrollWidth > strip.clientWidth + 1;
+    if (!over) { strip.scrollLeft = 0; show(prevWrap, false); show(nextWrap, false); return; }
+    show(prevWrap, strip.scrollLeft > 1);
+    show(nextWrap, strip.scrollLeft < strip.scrollWidth - strip.clientWidth - 1);
+  };
+  const prev = prevWrap.querySelector('[data-nav-prev]');
+  const next = nextWrap.querySelector('[data-nav-next]');
+  const step = () => Math.max(160, Math.round(strip.clientWidth * 0.6));
+  prev.addEventListener('click', () => { strip.scrollLeft -= step(); });
+  next.addEventListener('click', () => { strip.scrollLeft += step(); });
+  strip.addEventListener('scroll', sync, { passive: true });
+  window.addEventListener('resize', sync, { passive: true });
+  scrollCleanups.push(() => window.removeEventListener('resize', sync));
+  sync();
+  /* Montserrat tải từ Google Fonts: nếu font về SAU lần đo đầu thì bề rộng chữ
+     đổi mà trạng thái mũi tên vẫn cũ -> đo lại khi font sẵn sàng. */
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(sync);
 }
 
 /* Vẽ lại hàng chip bộ lọc + số trên nút "Bộ lọc (n)" */
@@ -3818,21 +4115,22 @@ const I18N = {
   'Đã đăng ký · sẽ báo bạn khi có hàng':'Registered · we\u2019ll notify you when it\u2019s back',
 
   // ── Cookie ──
-  'Chúng tôi sử dụng cookie để đảm bảo bạn có trải nghiệm mua sắm tốt nhất khi truy cập trang web của chúng tôi. Bằng cách nhấp vào “Tôi Đồng Ý” hoặc tiếp tục sử dụng trang web, bạn đồng ý với tất cả cookie của chúng tôi. Bạn có thể thay đổi tuỳ chọn bất kỳ lúc nào thông qua':'We use cookies to ensure you get the best shopping experience on our website. By clicking “I Agree” or continuing to use our website, you consent to all our cookies. You can change your preferences at any time via our',
-  'Chính sách Cookie':'Cookie Policy', 'Chính sách bảo mật':'Privacy Policy',
-  ', hoặc xem thêm tại':', or read more in our',
-  'Tôi Đồng Ý':'I Agree', 'Thay Đổi Tuỳ Chọn':'Change Preferences',
-  'Tuỳ chọn cookie':'Cookie preferences', 'Chấp nhận tất cả':'Accept all', 'Lưu lựa chọn':'Save choices',
-  'Cookie cần thiết':'Essential cookies',
-  'Giữ cho trang hoạt động: giỏ hàng, đăng nhập, bảo mật. Không thể tắt.':'Keeps the site working: cart, sign-in, security. Cannot be turned off.',
-  'Cookie phân tích':'Analytics cookies',
-  'Giúp chúng tôi hiểu cách bạn dùng trang để cải thiện trải nghiệm.':'Helps us understand how you use the site so we can improve it.',
-  'Cookie cá nhân hoá':'Personalisation cookies',
-  'Ghi nhớ tuỳ chọn và gợi ý sản phẩm phù hợp với bạn.':'Remembers your preferences and suggests products that suit you.',
-  'Cookie quảng cáo':'Advertising cookies',
-  'Hiển thị quảng cáo phù hợp trên nền tảng của các đối tác.':'Shows relevant ads on our partners’ platforms.',
+  'DAFC sử dụng Cookie và các công nghệ tương tự để vận hành website, nâng cao trải nghiệm người dùng, phân tích hiệu quả hoạt động và cung cấp nội dung phù hợp với nhu cầu của Quý khách.':'DAFC uses cookies and similar technologies to operate this website, enhance your experience, analyse performance and deliver content relevant to your needs.',
+  'Trước khi Quý khách đồng ý, chỉ các Cookie cần thiết để website hoạt động mới được sử dụng. Bạn có thể chấp nhận hoặc từ chối các cookie tùy chọn bên dưới. Bạn cũng có thể thay đổi lựa chọn bất kỳ lúc nào thông qua':'Before you give your consent, only the cookies strictly necessary for the website to work are used. You can accept or reject optional cookies below. You can also change your choice at any time via our',
+  'Chính sách Cookie':'Cookie Policy',
+  'Tùy chọn cookies':'Cookie settings', 'Lưu lựa chọn':'Save choices',
+  'Đồng ý tất cả':'Accept all', 'Từ chối tất cả':'Reject all',
+  'Cookies cần thiết':'Strictly necessary cookies',
+  'Giữ cho website hoạt động: giỏ hàng, đăng nhập, bảo mật. Không thể tắt.':'Keeps the website working: cart, sign-in, security. Cannot be turned off.',
+  'Cookies hiệu năng & phân tích':'Performance & analytics cookies',
+  'Đo lường lượt truy cập và hiệu quả hoạt động để cải thiện trải nghiệm.':'Measures traffic and performance so we can improve your experience.',
+  'Cookies chức năng':'Functional cookies',
+  'Ghi nhớ tuỳ chọn của Quý khách: ngôn ngữ, cửa hàng, sản phẩm đã xem.':'Remembers your choices: language, store and recently viewed products.',
+  'Cookies quảng cáo & tiếp thị':'Advertising & marketing cookies',
+  'Hiển thị nội dung và quảng cáo phù hợp trên nền tảng của các đối tác.':'Shows relevant content and ads on our partners’ platforms.',
   'Cookie cần thiết không thể tắt':'Essential cookies can’t be turned off',
   'Đã chấp nhận tất cả cookie':'All cookies accepted',
+  'Đã từ chối cookies tùy chọn':'Optional cookies rejected',
 };
 
 // Luật cho chuỗi động
@@ -3884,6 +4182,8 @@ const I18N_REV_RE = [
 ];
 /* ── Bổ sung từ điển cho các chuỗi riêng của bản DESKTOP ── */
 Object.assign(I18N, {
+  'Thêm':'More',
+  'Tất cả sản phẩm mới':'All new arrivals',
   'Hiện mật khẩu':'Show password',
   'Ẩn mật khẩu':'Hide password',
   'Chọn tỉnh / thành phố trước':'Select a province / city first',
@@ -4060,7 +4360,7 @@ Object.assign(I18N, {
   'Vệ sinh bằng khăn vải cotton mềm. Tránh tiếp xúc với chất lỏng, hoá chất và các sản phẩm có màu đậm. Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao. Không dùng máy sấy khi sản phẩm bị ẩm ướt.':'Clean with a soft cotton cloth. Avoid contact with liquids, chemicals and dark-coloured items. Keep away from high temperatures and humidity. Do not tumble dry if damp.',
   'Ưu đãi khuyến mãi': 'Offers & promotions',
   'Tóm tắt đơn hàng': 'Order summary',
-  'Bộ sưu tập mới': 'New collection',
+  'Bộ sưu tập mới': 'New collections',
   'Từ khóa phổ biến': 'Popular searches',
   'Thanh toán an toàn & bảo mật': 'Safe & secure checkout',
   'Quay lại tài khoản': 'Back to account',
@@ -4348,6 +4648,9 @@ function wire(root) {
     el.addEventListener('click', e => {
       e.stopPropagation();
       const t = el.dataset.nav;
+      // Đổi dept phải ghi TRƯỚC khi điều hướng: navBar() dựng lại ngay trong go()
+      // và subheader đọc dkDept để chọn bộ danh mục (thời trang vs làm đẹp).
+      if (el.dataset.dkdept) dkDept = el.dataset.dkdept;
       if (el.hasAttribute('data-reset')) { cartQty = 4; history = []; ckAuth = false; ckStep = 0; }
       if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = ckAuth ? 1 : 0; }
       if (t === 'back') { window.history.back(); return; }
@@ -4674,20 +4977,8 @@ function wire(root) {
     });
   });
 
-  // size trigger → bottom sheet (thay <select> gốc)
-  root.querySelectorAll('[data-size-trigger]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const kind = btn.dataset.sizeTrigger;
-      const label = btn.querySelector('.size-trigger-label');
-      if (window.__openSizeSheet) {
-        window.__openSizeSheet(kind, label.textContent, picked => {
-          label.textContent = picked;
-          label.classList.remove('text-muted-foreground');
-          label.classList.add('text-foreground');
-        });
-      }
-    });
-  });
+  // (ô chọn size của PDP dropdown giờ xổ dropdown inline — xem khối [data-size-dd]
+  //  bên dưới; không còn gọi __openSizeSheet / popup giữa màn như bản mobile)
 
   // checkbox
   root.querySelectorAll('[data-check]').forEach(c => {
@@ -4715,10 +5006,13 @@ function wire(root) {
   });
 
   // PDP: sizes / swatches / gallery
+  // Chạy cho CẢ 2 kiểu chọn size — chip grid (pdp/pdp4) lẫn dropdown
+  // (pdp2/3/5/6) — để cả hai cùng dùng setCta cập nhật nút CTA chính.
   const sizeBtns = [...root.querySelectorAll('[data-size]')];
-  if (sizeBtns.length) {
-    // dòng cảnh báo dưới chips (Figma: Regular 12 #d62845)
-    const chipRow = sizeBtns[0].parentElement;
+  const sizeDD   = root.querySelector('[data-size-dd]');
+  if (sizeBtns.length || sizeDD) {
+    // dòng cảnh báo dưới chips / dưới ô dropdown (Figma: Regular 12 #d62845)
+    const chipRow = sizeBtns.length ? sizeBtns[0].parentElement : sizeDD;
     let note = root.querySelector('#sizeNote');
     if (!note) {
       note = document.createElement('p');
@@ -4774,6 +5068,53 @@ function wire(root) {
         setCta(b.dataset.oos || '', b.dataset.size);   // '' | 'oos' | 'notify' — lấy thẳng từ size
       });
     });
+
+    /* ── Dropdown chọn size (pdp2/3/5/6) ──
+       Xổ ngay dưới ô chọn thay vì mở popup giữa màn như mobile. Hàng nào hết
+       hàng thì gạch ngang + "Nhận thông báo"; chọn xong đóng dropdown và để
+       CTA chính của PDP đổi trạng thái qua setCta — y như nhánh chip. */
+    if (sizeDD) {
+      const trigger = sizeDD.querySelector('[data-size-trigger]');
+      const caret   = sizeDD.querySelector('[data-size-caret]');
+      const listBox = sizeDD.querySelector('[data-size-list]');
+      const label   = trigger.querySelector('.size-trigger-label');
+      const opts    = SIZE_SHEET_OPTIONS[trigger.dataset.sizeTrigger] || [];
+      let picked = null;
+
+      const paint = () => {
+        listBox.innerHTML = opts.map(o => {
+          const status = o.oos ? 'Nhận thông báo' : (o.left ? `Còn ${o.left} sản phẩm` : '');
+          return `
+          <button type="button" role="option" aria-selected="${o.label === picked}" data-size-opt="${o.label}"
+                  class="w-full min-h-11 flex items-center gap-1 px-3 py-2 text-left transition-colors press ${o.label === picked ? 'bg-secondary' : 'hover:bg-secondary'}">
+            <span class="flex-1 min-w-0 text-[14px] leading-5 ${o.oos ? 'text-muted-foreground line-through' : 'text-foreground'}">${o.label}</span>
+            ${status ? `<span class="text-[12px] leading-4 text-muted-foreground shrink-0">${status}</span>` : ''}
+          </button>`;
+        }).join('');
+        listBox.querySelectorAll('[data-size-opt]').forEach(b => b.addEventListener('click', () => {
+          picked = b.dataset.sizeOpt;
+          const o = opts.find(x => x.label === picked);
+          label.textContent = picked;
+          label.classList.remove('text-muted-foreground');
+          label.classList.add('text-foreground');
+          close();
+          // oos là boolean trong SIZE_SHEET_OPTIONS -> map về 'oos' | 'notify' như chip
+          setCta(o && o.oos ? (OOS_MODE[picked] || 'oos') : '', picked);
+        }));
+        localizeNew(listBox);
+      };
+      const open  = () => { paint(); listBox.classList.remove('hidden'); trigger.setAttribute('aria-expanded', 'true'); caret.style.transform = 'translateY(-50%) rotate(180deg)'; };
+      const close = () => { listBox.classList.add('hidden'); trigger.setAttribute('aria-expanded', 'false'); caret.style.transform = ''; };
+
+      trigger.addEventListener('click', e => {
+        e.stopPropagation();
+        listBox.classList.contains('hidden') ? open() : close();
+      });
+      listBox.addEventListener('click', e => e.stopPropagation());
+      document.addEventListener('click', close);
+      scrollCleanups.push(() => document.removeEventListener('click', close));
+      trigger.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
 
     // 'notify' -> mở form điền email + SĐT
     [mainBtn, stickyBtn].forEach(btn => {
@@ -5142,9 +5483,8 @@ function wire(root) {
   //  splice chạy 2 lượt sẽ xoá nhầm chip kế bên)
   bindActiveFilterChips(root);
 
-  // Dept ở hàng nav trên — ghi nhớ dept đang chọn để tô đậm sau khi render lại
-  root.querySelectorAll('[data-dkdept]').forEach(b =>
-    b.addEventListener('click', () => { dkDept = b.dataset.dkdept; }));
+  // (dkDept được ghi trong chính handler [data-nav] ở trên — phải trước go())
+  wireSubheader(root);
 
   // Dòng khuyến mãi ở PDP2 — mở info sheet với bảng chi tiết (nội dung HTML)
   root.querySelectorAll('[data-promo]').forEach(btn => {
@@ -5966,9 +6306,11 @@ document.body.insertAdjacentHTML('beforeend', `
 
 /* Sản phẩm đang xem theo màn PDP — dùng cho sheet xác nhận thêm giỏ */
 const SCREEN_PRODUCT = { pdp: 0, pdp2: 1, pdp3: 2, pdp4: 3, pdp5: 4, pdp6: 5 };
-/* ── Size sheet — thay cho <select> gốc của trình duyệt (PDP2/3/5/6) ──
-   Drawer 3281:53948: bo 10, handle 50×3 đè trên header 52px ("Chọn size" 20/1.4 + ✕ 12px),
-   hàng size 36px, link "Hướng dẫn chọn size" dưới list, CTA 48px chữ 16 */
+/* ── Size sheet (Drawer 3281:53948) — HIỆN KHÔNG DÙNG Ở BẢN DESKTOP ──
+   PDP dropdown (pdp2/3/5/6) đã đổi sang dropdown inline xổ ngay dưới ô chọn
+   (khối [data-size-dd] trong wire()). Giữ nguyên khối này + `__openSizeSheet`
+   để bật lại kiểu popup chỉ bằng cách gọi lại hàm đó, và vì bản mobile vẫn
+   dùng đúng markup/logic này. */
 document.body.insertAdjacentHTML('beforeend', `
   <div id="sizeSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
     <div class="sz-backdrop absolute inset-0 bg-black/60 opacity-0 transition-opacity duration-300"></div>
@@ -6088,37 +6430,43 @@ document.body.insertAdjacentHTML('beforeend', `
 })();
 
 /* ════════════════════════════════════════════════════════════════
-   COOKIE — thanh đáy trải hết bề ngang + modal tuỳ chọn
+   COOKIE — thẻ góc dưới-trái + modal tuỳ chọn
    Khác bản mobile (index.html) ở hai điểm do khuôn desktop:
-   · banner là THANH ngang (chữ trái · nút phải), không nền tối, không khoá
-     cuộn — trang vẫn dùng được, đúng kiểu cookie bar của site thời trang;
+   · banner là THẺ neo góc dưới-trái (kiểu ARKET), không nền tối, không khoá
+     cuộn — trang vẫn dùng được trong lúc đọc;
    · phần chọn từng nhóm tách ra thành .dk-modal giữa màn hình, vì nhồi 4
-     nhóm + công tắc vào một thanh cao 88px thì không đọc được.
+     nhóm + công tắc vào thẻ 420px thì thẻ dài quá màn hình.
    Nhóm "Cần thiết" luôn bật và khoá; 3 nhóm còn lại mặc định TẮT. Demo không
    lưu lựa chọn (project không dùng localStorage) nên tải lại là hiện lại.
 ════════════════════════════════════════════════════════════════ */
 const COOKIE_CATS = [
-  ['need',  'Cookie cần thiết',    'Giữ cho trang hoạt động: giỏ hàng, đăng nhập, bảo mật. Không thể tắt.', true],
-  ['stats', 'Cookie phân tích',    'Giúp chúng tôi hiểu cách bạn dùng trang để cải thiện trải nghiệm.',     false],
-  ['pref',  'Cookie cá nhân hoá',  'Ghi nhớ tuỳ chọn và gợi ý sản phẩm phù hợp với bạn.',                   false],
-  ['ads',   'Cookie quảng cáo',    'Hiển thị quảng cáo phù hợp trên nền tảng của các đối tác.',             false],
+  ['need',  'Cookies cần thiết',              'Giữ cho website hoạt động: giỏ hàng, đăng nhập, bảo mật. Không thể tắt.',   true],
+  ['stats', 'Cookies hiệu năng & phân tích',  'Đo lường lượt truy cập và hiệu quả hoạt động để cải thiện trải nghiệm.',    false],
+  ['pref',  'Cookies chức năng',              'Ghi nhớ tuỳ chọn của Quý khách: ngôn ngữ, cửa hàng, sản phẩm đã xem.',      false],
+  ['ads',   'Cookies quảng cáo & tiếp thị',   'Hiển thị nội dung và quảng cáo phù hợp trên nền tảng của các đối tác.',     false],
 ];
 document.body.insertAdjacentHTML('beforeend', `
   <div id="cookieBar" aria-hidden="true" role="region" aria-label="Cookie">
-    <div class="max-w-[1440px] mx-auto px-6 py-5 flex items-center gap-10">
-      <p class="flex-1 min-w-0 text-[13px] font-light leading-5 text-foreground">Chúng tôi sử dụng cookie để đảm bảo bạn có trải nghiệm mua sắm tốt nhất khi truy cập trang web của chúng tôi. Bằng cách nhấp vào “Tôi Đồng Ý” hoặc tiếp tục sử dụng trang web, bạn đồng ý với tất cả cookie của chúng tôi. Bạn có thể thay đổi tuỳ chọn bất kỳ lúc nào thông qua <button data-cg-prefs class="underline text-foreground press">Chính sách Cookie</button>, hoặc xem thêm tại <button data-cg-policy class="underline text-foreground press">Chính sách bảo mật</button>.</p>
-      <div class="shrink-0 flex gap-3">
-        <button data-cg-prefs class="h-11 px-6 rounded-xs border border-border text-foreground text-[12px] font-medium tracking-wider uppercase press hover:bg-accent-0 transition-colors">Thay Đổi Tuỳ Chọn</button>
-        <button data-cg-all class="h-11 px-8 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium tracking-wider uppercase press">Tôi Đồng Ý</button>
+    <!-- chỉ dùng lớp spacing đã có sẵn trong tailwind.css (px-7/py-7 không được
+         build ra nên thẻ sẽ mất padding) -->
+    <div class="px-6 py-6 flex flex-col gap-5">
+      <div class="flex flex-col gap-3">
+        <p class="text-[13px] font-light leading-5 text-foreground">DAFC sử dụng Cookie và các công nghệ tương tự để vận hành website, nâng cao trải nghiệm người dùng, phân tích hiệu quả hoạt động và cung cấp nội dung phù hợp với nhu cầu của Quý khách.</p>
+        <p class="text-[13px] font-light leading-5 text-foreground">Trước khi Quý khách đồng ý, chỉ các Cookie cần thiết để website hoạt động mới được sử dụng. Bạn có thể chấp nhận hoặc từ chối các cookie tùy chọn bên dưới. Bạn cũng có thể thay đổi lựa chọn bất kỳ lúc nào thông qua <button data-cg-prefs class="underline text-foreground press">Chính sách Cookie</button></p>
+      </div>
+      <div class="flex flex-col gap-2">
+        <button data-cg-all class="h-11 w-full rounded-xs bg-primary text-primary-foreground text-[12px] font-medium tracking-wider uppercase press">Đồng ý tất cả</button>
+        <button data-cg-none class="h-11 w-full rounded-xs border border-border text-foreground text-[12px] font-medium tracking-wider uppercase press hover:bg-accent-0 transition-colors">Từ chối tất cả</button>
+        <button data-cg-prefs class="h-11 w-full text-[12px] font-medium tracking-wider uppercase underline text-foreground press">Tùy chọn cookies</button>
       </div>
     </div>
   </div>
   <div id="cookiePrefs" class="fixed inset-0 z-[220] pointer-events-none" aria-hidden="true">
     <div class="cp-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
     <div class="cp-panel dk-modal absolute bg-background translate-y-full flex flex-col"
-         style="width:520px" role="dialog" aria-label="Tuỳ chọn cookie">
+         style="width:520px" role="dialog" aria-label="Tùy chọn cookies">
       <div class="h-[52px] px-5 flex items-center justify-between shrink-0" style="border-bottom:1px solid var(--general-border)">
-        <p class="text-[16px] font-medium leading-6 text-foreground">Tuỳ chọn cookie</p>
+        <p class="text-[16px] font-medium leading-6 text-foreground">Tùy chọn cookies</p>
         <button data-cp-close class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
       </div>
       <div class="flex-1 min-h-0 overflow-y-auto px-5 flex flex-col">
@@ -6134,8 +6482,9 @@ document.body.insertAdjacentHTML('beforeend', `
           </div>`).join('')}
       </div>
       <div class="shrink-0 px-5 py-4 flex justify-end gap-3">
-        <button data-cg-all class="h-11 px-6 rounded-xs border border-border text-foreground text-[12px] font-medium tracking-wider uppercase press hover:bg-accent-0 transition-colors">Chấp nhận tất cả</button>
-        <button data-cg-save class="h-11 px-8 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium tracking-wider uppercase press">Lưu lựa chọn</button>
+        <button data-cg-none class="h-11 px-5 rounded-xs border border-border text-foreground text-[12px] font-medium tracking-wider uppercase press hover:bg-accent-0 transition-colors">Từ chối tất cả</button>
+        <button data-cg-all class="h-11 px-5 rounded-xs border border-border text-foreground text-[12px] font-medium tracking-wider uppercase press hover:bg-accent-0 transition-colors">Đồng ý tất cả</button>
+        <button data-cg-save class="h-11 px-6 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium tracking-wider uppercase press">Lưu lựa chọn</button>
       </div>
     </div>
   </div>`);
@@ -6168,19 +6517,19 @@ document.body.insertAdjacentHTML('beforeend', `
     if (s.getAttribute('aria-disabled') === 'true') { toast('Cookie cần thiết không thể tắt'); return; }
     s.setAttribute('aria-checked', s.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
   }));
-  /* 2 lối mở modal: nút "Thay Đổi Tuỳ Chọn" và link "Chính sách Cookie" */
+  /* 2 lối mở modal: nút "Tùy chọn cookies" và link "Chính sách Cookie" */
   bar.querySelectorAll('[data-cg-prefs]').forEach(b => b.addEventListener('click', openMD));
   md.querySelector('[data-cp-close]').addEventListener('click', closeMD);
   md.querySelector('.cp-backdrop').addEventListener('click', closeMD);
   document.querySelectorAll('#cookieBar [data-cg-all], #cookiePrefs [data-cg-all]').forEach(b =>
     b.addEventListener('click', () => { setAll(true); closeMD(); closeBar(); toast('Đã chấp nhận tất cả cookie'); }));
+  /* Từ chối tất cả = tắt hết nhóm tuỳ chọn, chỉ giữ nhóm cần thiết đang khoá */
+  document.querySelectorAll('#cookieBar [data-cg-none], #cookiePrefs [data-cg-none]').forEach(b =>
+    b.addEventListener('click', () => { setAll(false); closeMD(); closeBar(); toast('Đã từ chối cookies tùy chọn'); }));
   md.querySelector('[data-cg-save]').addEventListener('click', () => {
     const n = chosen(); closeMD(); closeBar();
     toast(n === sws.length ? 'Đã chấp nhận tất cả cookie' : `Đã lưu tuỳ chọn cookie · ${n}/${sws.length} nhóm`);
   });
-  // Link "Chính sách bảo mật" trên cookie bar mở thẳng trang thật; thanh vẫn ở
-  // lại để người dùng còn phải chọn nhóm cookie.
-  bar.querySelector('[data-cg-policy]').addEventListener('click', () => go('privacy'));
 
   localizeNew(bar); localizeNew(md);
   setTimeout(openBar, 700);
@@ -6275,8 +6624,56 @@ document.body.insertAdjacentHTML('beforeend', `
 wirePasswordToggles(document.getElementById('loginPop'));
 
 wireFilter();
-window.history.replaceState({ screen: 'plp' }, '');
-go('plp');
+
+/* ── Khởi động: nhận trạng thái từ bản kia (nếu vừa đổi bản qua mốc 768) ──
+   RESP dựng ở <head>. Khi trang đang bị chuyển sang file kia thì KHÔNG dựng
+   màn hình nào nữa — đỡ vẽ thừa một trang sắp bị bỏ.
+   Ngôn ngữ/phông lặp lại đúng các bước của nút trong bảng Cài đặt, chỉ bỏ
+   toast vì đây là khôi phục trạng thái chứ không phải người dùng vừa bấm.
+   Đặt LANG trước go() nên nhãn đổi ngôn ngữ trên header desktop (render theo
+   LANG) cũng ra đúng chiều, không cần sửa tay. */
+if (!RESP.swapped) {
+  const st = RESP.read();
+
+  if (st.lang === 'en') {
+    applyLang(document.body, 'en');
+    LANG = 'en';
+    document.querySelectorAll('#settingsPanel [data-lang]').forEach(x => {
+      x.className = 'langopt flex-1 h-8 rounded-full text-[13px] leading-5 transition-colors press '
+        + (x.dataset.lang === 'en' ? 'bg-background text-foreground font-medium shadow-sm' : 'text-muted-foreground');
+    });
+  }
+
+  const f = FONTS.find(x => x[0] === st.font);
+  if (f) {
+    currentFont = f[0];
+    document.documentElement.style.setProperty('--font-app', f[2]);
+    document.documentElement.classList.add('font-override');
+    document.querySelectorAll('#settingsPanel [data-font]').forEach(x =>
+      x.querySelector('.fo-tick').classList.toggle('opacity-0', x.dataset.font !== f[0]));
+  }
+
+  /* hasOwnProperty chứ không phải RENDER[...] trực tiếp: hash là dữ liệu ngoài,
+     mà key kế thừa từ Object.prototype (#screen=__proto__, =constructor) cũng
+     "truthy" — lọt vào go() là ném lỗi giữa boot, trang trắng và mất luôn
+     RESP.watch() bên dưới (hết chuyển bản khi kéo cửa sổ). */
+  const first = Object.prototype.hasOwnProperty.call(RENDER, st.screen) ? st.screen : 'plp';
+  window.history.replaceState({ screen: first }, '');
+  /* fromPopstate: chặn go() push thêm một entry TRÙNG với replaceState vừa rồi
+     — nếu không, mỗi lần tải trang để lại 2 entry cùng state và cú bấm back
+     đầu tiên không làm gì (go() thoát sớm vì name === current). */
+  go(first, { fromPopstate: true });
+
+  /* Hash chỉ là kênh chuyển giao MỘT LẦN — dọn ngay sau khi nhận, để lát nữa
+     người dùng đi sang màn khác rồi tải lại trang thì không bị kéo ngược về
+     màn cũ. Bọc try vì một số trình duyệt chặn đổi URL trên file://. */
+  if (location.hash) {
+    try { window.history.replaceState({ screen: first }, '', location.pathname + location.search); } catch (e) {}
+  }
+
+  /* Thu cửa sổ hẹp < 768 -> sang bản mobile, mang theo màn + cài đặt */
+  RESP.watch(() => [current, LANG, currentFont]);
+}
 </script>
 </body>
 </html>

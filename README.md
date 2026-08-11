@@ -2,13 +2,13 @@
 
 Demo e-commerce flow cho **DAFC** (nhà phân phối đa thương hiệu luxury tại Việt Nam), dựng bằng HTML + Tailwind CSS thuần, không dùng framework. Nội dung sản phẩm là **dữ liệu thật** scrape từ `shop.dafc.com.vn` (re-scrape 07/08/2026): 16 SP thời trang Versace + 8 nước hoa (Versace/D&G/Montblanc/Moschino), kèm **ảnh thật tải từ `cdn.dafc.com.vn`** (1200×1484, đặt tên `pN-*.jpg` / `x*.jpg` / `b*.jpg` trong `assets/` — chỉ bản mobile dùng; desktop vẫn dùng bộ `p*.png` cũ). Giá giảm/badge -% là dữ liệu tự tạo để demo.
 
-Hai phiên bản độc lập, dùng chung assets/tokens/tailwind.css:
-- `index.html` — bản **mobile** (viewport 360–412px)
-- `desktop.html` — bản **desktop** 1440px (xem mục "Bản desktop" bên dưới)
+Hai phiên bản dùng chung assets/tokens/tailwind.css, **nối với nhau ở mốc 768px** (xem "Cầu nối responsive"):
+- `index.html` — bản **mobile**, dùng khi bề ngang **< 768px** (thiết kế theo 360–412px)
+- `desktop.html` — bản **desktop**, dùng khi bề ngang **≥ 768px**, nội dung bó trong max-w 1440 (xem mục "Bản desktop")
 
 ## Chạy
 
-Mở `index.html` (mobile) hoặc `desktop.html` (desktop) bằng trình duyệt là xong — không cần build, không cần internet (Tailwind đã biên dịch sẵn vào `tailwind.css`).
+Mở `index.html` **hoặc** `desktop.html` bằng trình duyệt là xong — không cần build, không cần internet (Tailwind đã biên dịch sẵn vào `tailwind.css`). Mở file nào cũng được: cầu nối sẽ tự đưa sang bản đúng với bề ngang cửa sổ.
 
 > Nếu mở bằng `file://` mà ảnh không hiện, chạy server tĩnh:
 > ```bash
@@ -20,7 +20,7 @@ Mở `index.html` (mobile) hoặc `desktop.html` (desktop) bằng trình duyệt
 ```
 demo-flow/
 ├── index.html          — bản MOBILE (router, state, tất cả screens)
-├── desktop.html         — bản DESKTOP 1440px (fork từ index.html, giữ nguyên state/router/i18n)
+├── desktop.html         — bản DESKTOP ≥768px, khung thiết kế 1440 (fork từ index.html, giữ nguyên state/router/i18n)
 ├── in.css              — input Tailwind (3 directive @tailwind)
 ├── tailwind.css         — CSS đã compile (build từ in.css, quét CẢ 2 file html, PHẢI commit)
 ├── tokens.css            — biến CSS design token (build ra từ tokens07.json, PHẢI commit)
@@ -42,7 +42,8 @@ Ngoài luồng mua hàng còn 3 trang tĩnh vào từ footer: `privacy` · `term
 - Đăng ký kiểu OTP-first (Figma `3107:50758` + `3354:47931`): nhập SĐT → **Gửi mã OTP** → xác thực 6 ô (nút "Nhận lại mã (60s)" đếm ngược; link "thay đổi số điện thoại" quay lại bước trước, giữ nguyên số đã nhập) → màn `reginfo` mới điền Họ tên / Email / Mật khẩu → tạo tài khoản + đăng nhập luôn. Quên mật khẩu dùng chung màn OTP, phân nhánh bằng state `authFlow` (`register` → reginfo, `forgot` → setpass).
 - 6 biến thể PDP, mỗi bản gắn 1 sản phẩm khác nhau (SP#1–SP#6), khác nhau về layout size (chip vs dropdown), vị trí Payment Offer, hiệu ứng gallery/lightbox, font (Inter cho pdp6)...
 - Picker "Chọn size" (dùng cho các PDP dropdown) theo Figma `3281:40140` — hàng 52px, nền mờ 60%, hàng hết hàng gạch ngang + "Nhận thông báo", link "Hướng dẫn chọn size", CTA 48px. **Markup giống nhau ở cả 2 bản** (mobile = bottom sheet, desktop = dialog giữa màn hình).
-- Menu mobile (`MENU_DATA`): mỗi tab Nam/Nữ/Làm đẹp mở đầu bằng **"Sản phẩm mới"** (bổ sung 10/08/2026 theo yêu cầu — vị trí "New In" của Farfetch, Figma Menu `3358:54912` chưa có dòng này). Bấm vào mở **submenu theo menu THẬT của shop.dafc.com.vn nhưng BỎ tầng giới tính** (tab đã là giới tính rồi): nhóm "Bộ sưu tập mới" (`MENU_NEW_COLLECTIONS` — MCM AW26 / Stefano Ricci / D&G Maiolica 2026, data thật 10/08/2026) + nhóm "Danh mục" theo giới tính đang chọn (Nữ thêm Trang sức, đúng site thật) + Quà tặng. Submenu hỗ trợ item dạng `{header}` — tiêu đề nhóm 12px muted, không bấm được. Site thật không có mục làm đẹp trong Sản phẩm mới → tab Làm đẹp giữ `sub=null`, bấm là sang thẳng PLP. **Chỉ mới có ở mobile** — `MENU_DATA` của desktop là bản copy riêng, chưa thêm.
+- Menu mobile (`MENU_DATA`): mỗi tab Nam/Nữ/Làm đẹp mở đầu bằng **"Sản phẩm mới"** (bổ sung 10/08/2026 theo yêu cầu — vị trí "New In" của Farfetch, Figma Menu `3358:54912` chưa có dòng này). Bấm vào mở **submenu theo menu THẬT của shop.dafc.com.vn nhưng BỎ tầng giới tính** (tab đã là giới tính rồi): nhóm "Bộ sưu tập mới" (`MENU_NEW_COLLECTIONS` — MCM AW26 / Stefano Ricci / D&G Maiolica 2026, data thật 10/08/2026) + nhóm "Danh mục" theo giới tính đang chọn (Nữ thêm Trang sức, đúng site thật) + Quà tặng. Submenu hỗ trợ item dạng `{header}` — tiêu đề nhóm 12px muted, không bấm được. Site thật không có mục làm đẹp trong Sản phẩm mới → tab Làm đẹp giữ `sub=null`, bấm là sang thẳng PLP.
+- **Desktop đã chuẩn hoá theo (10/08/2026)**: `MENU_DATA` + `MENU_NEW_COLLECTIONS` copy y hệt mobile; subheader thêm mục **"Sản phẩm mới" đứng đầu** (`DK_NAV_CATS` → `{newIn:true}`, Header component Figma `2171:13006` chưa có mục này). Mega panel dựng 3 cột: **Bộ sưu tập mới · Nam · Nữ** — desktop **GIỮ tầng giới tính** (khác mobile) vì subheader không gắn giới tính và mọi mục khác cũng dựng 2 cột Nam/Nữ; đúng luôn với menu thật của DAFC. Helper `splitByHeader()` cắt mảng `items` (khai 1 cột kiểu mobile, có `{header}` xen giữa) thành nhóm để đổ ra cột.
 - i18n VI/EN thật: từ điển 2 chiều + regex cho chuỗi có số, áp dụng qua `applyLang()`, gọi lại mỗi khi render màn mới.
 - Settings FAB (góc phải dưới): đổi ngôn ngữ + đổi font (Montserrat/Inter/Plus Jakarta Sans).
 
@@ -223,6 +224,37 @@ Khớp Figma: hàng "Áo kiểu" (`3228:33369`) có 2 frame `leaf`, divider ở 
 
 Icon `091-warning` trong `Checkbox Group` của Figma đang `visible: false` → không render. Checkbox dùng `rounded-xs` (Figma r=2).
 
+## Cầu nối responsive (mốc 768px)
+
+Hai file vẫn là 2 build riêng, nhưng với người dùng thì chúng là **một trang responsive**: mở file nào cũng tự nhảy sang bản khớp bề ngang cửa sổ, kéo giãn cửa sổ qua mốc cũng nhảy theo.
+
+- **Mốc: 768px.** `< 768` → `index.html`; `≥ 768` → `desktop.html`. Đo bằng `matchMedia('(min-width:768px)')` ở **cả 2 file** nên hai điều kiện bù trừ tuyệt đối — không có kẽ hở lẫn vòng lặp qua lại. Lưu ý phép đo này tính **cả thanh cuộn dọc**: ở cửa sổ đúng 768 thì vùng nội dung thật chỉ còn ~753px (vì vậy `body` của desktop **không** được đặt `min-width`).
+- **Đặt ở đâu**: khối `window.RESP` trong `<head>` (ngay sau `<title>`, trước cả link font/CSS để chuyển sớm nhất có thể) + đoạn khởi động cuối `<script>` chính (tìm `RESP.swapped`). Hai file dùng **cùng một khối code**, chỉ khác `IS_DESKTOP` / `OTHER`.
+- **Mang trạng thái theo qua hash**: `#screen=<route>&lang=en&font=<id>` — màn đang xem, ngôn ngữ, phông chữ. Giá trị mặc định (`plp` / `vi` / `montserrat`) được bỏ cho URL gọn; route lạ thì rơi về `plp`. Bên nhận lặp lại đúng các bước của nút trong bảng Cài đặt (bỏ toast) và **đặt `LANG` trước `go()`** nên nhãn đổi ngôn ngữ trên header desktop cũng ra đúng chiều. Hash là kênh **một lần**: nhận xong là dọn khỏi URL (trừ `file://` — replaceState đổi URL bị chặn).
+- **`location.replace`, không phải `assign`**: lần chuyển không thêm entry vào history nên nút back không bị kẹt giữa 2 file. Trang được ẩn (`visibility:hidden`) trong lúc chuyển để không nháy bản sai, kèm hẹn 2s mở lại phòng khi điều hướng hỏng (thiếu file).
+- **Đang bị chuyển thì không dựng gì**: cờ `RESP.swapped` khiến đoạn boot bỏ qua `go()` — đỡ vẽ nguyên một màn sắp bị bỏ.
+- **Theo dõi resize nghe 2 nguồn**: `matchMedia('change')` là đường chính, cộng `resize` (gộp nhịp 150ms) làm lưới an toàn vì vài môi trường đổi kích thước bằng emulation/devtools không bắn `change`.
+- **Route đọc từ hash phải lọc bằng `hasOwnProperty`**, không dùng `RENDER[st.screen]` trực tiếp: key kế thừa từ `Object.prototype` (`#screen=__proto__`, `=constructor`) cũng truthy, lọt vào `go()` là ném lỗi giữa boot → trang trắng và **mất luôn `RESP.watch()`** (kéo cửa sổ không đổi bản nữa).
+- **Boot gọi `go(first, { fromPopstate: true })`**: `replaceState` ngay trên đã ghi entry rồi, để `go()` push thêm một entry trùng state thì cú **back đầu tiên không làm gì** (`go()` thoát sớm vì `name === current`). Lỗi này có sẵn từ trước cầu nối, sửa luôn ở đây.
+
+**Chưa xử lý (chấp nhận được với demo):**
+- **Back xuyên qua lần đổi bản**: các entry `pushState` sinh ra *trước* khi đổi vẫn trỏ về file cũ và không mang hash, nên back sâu qua mốc đó sẽ nạp lại file kia rồi rơi về `plp` thay vì đúng màn. Muốn chuẩn thì mọi `pushState` phải ghi kèm URL `RESP.hash(...)` — đổi lại URL lúc nào cũng có hash.
+- **Chỉ mang 3 thứ**: màn hình + ngôn ngữ + phông. Từ khóa đang tìm, view con của luồng auth (otp/setpass…), số lượng giỏ, bộ lọc PLP… đều reset khi đổi bản.
+- Ở dải **600–767px** người dùng thấy bản mobile bị kéo giãn (mobile dựng cho 360–412) — đúng ý đồ của mốc 768, không phải lỗi layout.
+
+### Dải desktop hẹp (768 → 1279)
+
+Bản desktop dựng theo khung Figma 1440 với nhiều cột px cứng, nên có thêm một khối media query (trong `<style>`, mục "DẢI DESKTOP HẸP"):
+
+| Dải | Thay đổi |
+|---|---|
+| ≥ 1280 | **giữ nguyên** thiết kế 1440, không rule nào chạm vào |
+| ≤ 1279 | cột cứng co theo `clamp(sàn, vw, trần)` — trần đúng bằng số px thiết kế: PDP info 451 · tóm tắt giỏ/thanh toán 427 · aside chính sách 280 · ảnh campaign 575 |
+| ≤ 1023 | lưới PLP về 3 cột (`!important` vì nút đổi 3/4 cột set class trực tiếp), carousel 5 → 3 card, 4 cam kết → 2 cột |
+| ≤ 899 | gallery PDP về 1 cột (2 cột ở dải này chỉ còn ~180px/ảnh) |
+
+Bộ chọn cố tình kèm luôn class `w-[…]` gốc (`.dk-sticky-info.w-\[451px\]`) để đọc là thấy ngay trần của từng cột. Đã đo lại: không màn nào tràn ngang ở 768 / 1024 / 1280, và ở 1280/1440/1600 mọi số đo trùng khớp bản gốc.
+
 ## Mobile web thật
 
 Không có khung điện thoại, không giới hạn chiều cao — trang cuộn bằng **body**.
@@ -239,6 +271,17 @@ Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI
 - **Header 3 tầng** (Figma `2171:13006`, 1440×144): promo bar 32 (tái dùng slider `PROMO_MESSAGES`) + main nav 60 (dept trái · logo giữa · đổi ngôn ngữ/cửa hàng/tài khoản/giỏ phải) + subheader 52 (category nav + ô tìm kiếm 270px). Sticky `top-[-32px]` — promo bar cuộn trôi, 112px còn lại dính.
   - Ô tìm kiếm (`2171:12954`) **chỉ có viền dưới** 1px `#a3a3a3` trên nền trắng — không phải hộp viền 4 cạnh (`strokeWeight` của Figma là mixed: `[0,0,1,0]`).
   - Dept đang chọn (`Nam` = State Active trong Figma) tô `#0a0a0a`, các dept khác `#404040`; state giữ ở biến `dkDept`.
+  - **Hàng dept = 3 ngành hàng ngang cấp** `Nam · Nữ · Làm đẹp` (`DK_DEPTS`, 10/08/2026). "Làm đẹp" là ngành hàng riêng chứ không phải danh mục con của Nam/Nữ nên nó nằm ở tầng này và đã bỏ khỏi subheader. Cả 3 dept là link phẳng (không mega panel).
+  - **Subheader ĐỔI THEO DEPT** (`dkNavCats()`) — tương đương bấm tab Nam/Nữ/Làm đẹp ở menu mobile. Nam/Nữ dùng `DK_NAV_CATS` cố định; Làm đẹp sinh thẳng từ `MENU_DATA['Làm đẹp'].cats` nên 2 bản luôn khớp (sửa cây beauty 1 chỗ là cả mobile lẫn desktop đổi theo). Mỗi nhóm beauty có mega panel **1 cột** (nhánh `item.sub` — ngành này không tách giới tính).
+  - **Nút giữ ĐÚNG size Figma** — `Button/Ghost Muted/Regular`: h-36 + padding 8/16 (`h-9 px-4`). Không được bóp padding để nhét thêm mục; đo lại thực tế khớp component: Quần áo 92/93 · Túi xách 91/91 · Phụ kiện 96/96 · Khuyến mãi 118/118.
+  - **`wireSubheader()` — thanh cuộn + mũi tên kiểu Farfetch.** `.dk-nav-strip` cuộn ngang (`no-scrollbar`), mỗi lần trượt 60% bề rộng. Mũi tên là **overlay `absolute` ở 2 mép** (không nằm trong luồng) kèm gradient fade, nên ẩn/hiện không đổi bề rộng strip → danh mục không nhảy khi cuộn, và `sync()` chỉ cần đo `over` một lần.
+    - **Mỗi bên chỉ hiện khi hướng đó CÒN nội dung**: đầu danh sách không có nút trái, cuộn sang phải mới hiện; tới cuối thì nút phải biến mất. Không bày nút bấm vào chẳng làm gì (bỏ hẳn state `disabled` mờ 25% của bản trước).
+    - Trước đây `body` có `min-width:1280px` nên strip luôn ≥ 1091px → ngành thời trang (849px) không bao giờ hiện mũi tên. **Từ khi có cầu nối responsive, min-width đã bỏ**, nên ở dải hẹp (768–1279) ngành thời trang cũng có lúc hiện mũi tên — đúng ý đồ, `sync()` vốn đã đo theo bề rộng thật.
+    - **`.dk-nav-arrow` KHÔNG được khai `display` trong `<style>`.** Khối style inline nằm SAU `tailwind.css` mà cùng specificity (0,1,0), nên `display:flex` ở đó **đè luôn `.hidden{display:none}`** — JS gắn class `hidden` mà nút vẫn hiện nguyên (bug 10/08/2026: ngành Nam/Nữ đủ chỗ nhưng vẫn thấy 2 mũi tên). Kích thước/display để utility trong markup, `sync()` bật tắt bằng cặp `hidden` ⇄ `flex`; CSS chỉ giữ `:hover` và `[disabled]`. Quy ước chung: **rule trong `<style>` đừng khai lại thuộc tính mà Tailwind utility đang điều khiển động.**
+    - Đo lại khi `document.fonts.ready`: Montserrat tải từ Google Fonts, nếu font về sau lần đo đầu thì bề rộng chữ đổi mà trạng thái mũi tên vẫn cũ.
+  - **Mega panel render NGOÀI thanh cuộn** (sibling của hàng nav, trong `.dk-sub`): `overflow-x` sẽ cắt mất panel nếu panel là con của strip. Vì mất quan hệ cha-con nên **hover-intent chuyển từ CSS sang JS** — nút và panel nối nhau bằng `data-mega`, mở/đóng đều trễ 120ms (đóng trễ để kịp rê chuột từ nút xuống panel). Scrim đổi sang `.navbar:has(.dk-sub.mega-open)`; mục đang mở panel thêm class `.on` để đậm chữ.
+  - `dkDept` phải ghi **trong handler `[data-nav]`**, trước khi `go()` chạy — `navBar()` dựng lại ngay trong `go()` và subheader đọc `dkDept` để chọn bộ danh mục.
+  - **Nút dept phải truyền `crumbs=[dept]`** (`dkCatAttrs(d, [d])`). `isBeautyPlp()` nhận diện ngành hàng qua `crumbs[0]`; để rỗng như trước thì bấm "Làm đẹp" ra nhầm 16 SP thời trang và bộ lọc hiện facet Màu sắc/Kích thước thay vì Dung tích/Ưu đãi.
   - Icon tài khoản / giỏ hàng 16px (Icon Button 44×44), khớp `Size=16` của Icon-Cpn.
   - **Không có viền dưới** ở cả hàng nav lẫn subheader — xem "Quy ước border"; `.navbar::after` và khối JS toggle `.merged` đã bỏ, chỉ `.filterbar::after` còn lại.
   - Figma để nhãn `Store location` + placeholder `What are you looking for?` bằng tiếng Anh giữa bản tiếng Việt — code **giữ chuỗi tiếng Việt** vì màn hình chạy qua i18n VI↔EN.
@@ -265,7 +308,13 @@ Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI
   - **Tiến độ + Xem thêm** (`2237:18725` + Frame 46): "Bạn đã xem X trong Y sản phẩm" 14/20 `#737373` + track 240×2, rồi nút Xem thêm outline canh giữa. `PLP_TOTAL = 152` là tổng catalog demo.
   - Bỏ `camKetSection()` khỏi PLP — không frame nào trong nhóm có khối cam kết.
 - **PDP** (`PDP-Desktop-01-Default` 2190:14530): 1 layout dùng chung cho cả 6 route `pdp..pdp6` (data từng SP gom vào `PDP_DATA`) — gallery 2 cột (cell 469:579, zoom lightbox) + info panel 451px sticky (giá/swatch 44px/chọn size/CTA/box ưu đãi/accordion ±) + 3 carousel 5 card.
-  - Chọn size giữ đúng 2 biến thể như bản mobile, bật/tắt bằng cờ `dropdown` trong `PDP_DATA`: **chip grid** cho `pdp`/`pdp4`, **dropdown** (Select & Combobox `3111:33591`) cho `pdp2`/`pdp3`/`pdp5`/`pdp6` → mở picker "Chọn size".
+  - Chọn size giữ đúng 2 biến thể như bản mobile, bật/tắt bằng cờ `dropdown` trong `PDP_DATA`: **chip grid** cho `pdp`/`pdp4`, **dropdown** (Select & Combobox `3111:33591`) cho `pdp2`/`pdp3`/`pdp5`/`pdp6`.
+  - **Dropdown xổ INLINE ngay dưới ô chọn (10/08/2026)** — không mở popup giữa màn như mobile. Danh sách `[data-size-list]` dựng trong `wire()` từ `SIZE_SHEET_OPTIONS`, cùng bề rộng ô, `mt-1`, cao tối đa 260px; hàng hết hàng gạch ngang + "Nhận thông báo", hàng sắp hết ghi "Còn X sản phẩm"; caret xoay 180° khi mở; bấm ra ngoài / `Esc` thì đóng.
+    - Chọn xong **đóng dropdown và để CTA chính của PDP đổi trạng thái qua `setCta`** — giống hệt nhánh chip, thay vì có CTA riêng trong popup. Muốn vậy thì khối `setCta` trong `wire()` phải chạy cho cả 2 kiểu: điều kiện đổi từ `if (sizeBtns.length)` sang `if (sizeBtns.length || sizeDD)`, và `chipRow` (mốc chèn dòng "*Tạm hết hàng") fallback sang chính ô dropdown.
+    - `SIZE_SHEET_OPTIONS` để `oos` dạng **boolean**, còn `setCta` cần `'oos' | 'notify'` → map qua `OOS_MODE[label] || 'oos'` cho khớp nhánh chip.
+    - **Khối "variants" bọc dropdown BẮT BUỘC có `relative z-30`.** Không có thì dropdown bị `#pdpCta` vẽ đè lên dù đã `z-40` — `.rise` dùng `animation-fill-mode:both` nên `transform:translateY(0)` còn dính lại, mỗi block `.rise` thành một stacking context `z-index:auto`; cùng z-index thì **thứ tự DOM thắng**, mà `#pdpCta` là block `.rise` nằm sau. `z-40` của dropdown chỉ có tác dụng *bên trong* stacking context của chính khối variants. Cùng bệnh với `#sortMenu` ở PLP (sống nhờ `#plpFilterAnchor` có `z-40`) và hàng tab trang chính sách (`z-30`).
+    - Comment đặt trong khối markup này **không được chứa dấu backtick** — cả khối nằm trong template literal, backtick sẽ đứt string (đã dính lỗi này một lần).
+    - `#sizeSheet` + `__openSizeSheet` **giữ nguyên nhưng không còn được gọi** ở desktop (bản mobile vẫn dùng) — muốn quay lại kiểu popup chỉ cần gọi lại hàm đó.
 - **Cart**: khung 2 cột lấy từ `multi-gift-4-desktop` (2775:61994) — trái list item + quà tặng (khi đăng nhập) + CTKM peek; phải "Tóm tắt đơn hàng" sticky. **Ruột đã đồng bộ lại theo bản mobile (10/08/2026)** vì `item-cart` (2851:28601) chỉ có variant 358px, tức bản mobile là thiết kế mới nhất:
   - Row theo `item-cart` 2851:28705: checkbox 16 canh giữa · thumb **100×133** (bỏ badge -% đè ảnh) · brand 14 Medium + nút xoá 14 cùng hàng · name 14 · variant 12 · giá 14 Medium + badge -% nền subtle **cạnh giá** · stepper ghost không viền [− 12][02 12 Medium][+ 12] cao 24 ghim đáy phải · **không** `border-b` giữa các hàng, không bọc card viền quanh list/selectAll (quy ước border).
   - CTKM: card viền `border-border rounded-md py-2 px-3`, title 16 Medium (bỏ nền accent-0 của frame desktop cũ 2775:62093).

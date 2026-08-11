@@ -6,6 +6,79 @@
      iOS 10+ vẫn cho người dùng pinch-zoom thủ công nên không mất khả năng phóng to. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
 <title>Demo — E-commerce Flow (Mobile)</title>
+<!-- ══ CẦU NỐI RESPONSIVE — mốc 768px ═══════════════════════════════════════
+     Demo gồm 2 file rời: index.html (bản mobile, < 768px) và desktop.html
+     (bản desktop, ≥ 768px, nội dung bó trong max-w 1440). Đoạn này đặt ngay
+     sau <title> — TRƯỚC cả link font/CSS — để nếu đang mở nhầm bản thì
+     chuyển ngay khi trang chưa kịp tải gì nặng.
+     · Đo bằng matchMedia nên cả 2 file dùng CHUNG một phép đo, hai điều kiện
+       bù trừ nhau tuyệt đối -> không thể lặp vô hạn qua lại.
+     · location.replace (không phải assign) để lần chuyển KHÔNG thêm entry
+       vào history — bấm back không bị kẹt giữa 2 file.
+     · Trạng thái mang theo qua hash: màn đang xem + ngôn ngữ + phông chữ;
+       phần đọc/ghi hash nằm ở cuối <script> chính (tìm "RESP.swapped").
+     ═════════════════════════════════════════════════════════════════════ -->
+<script>
+window.RESP = (function () {
+  var BP = 768, IS_DESKTOP = false, OTHER = 'desktop.html';
+  var mq = window.matchMedia('(min-width:' + BP + 'px)');
+  var R = {
+    bp: BP, other: OTHER, isDesktop: IS_DESKTOP, swapped: false,
+
+    /* bản đang mở có khớp bề ngang hiện tại không */
+    fits: function () { return mq.matches === IS_DESKTOP; },
+
+    /* gói trạng thái thành hash; giá trị mặc định thì bỏ qua cho URL gọn */
+    hash: function (screen, lang, font) {
+      var p = [];
+      if (screen && screen !== 'plp') p.push('screen=' + encodeURIComponent(screen));
+      if (lang && lang !== 'vi')      p.push('lang=' + encodeURIComponent(lang));
+      if (font && font !== 'montserrat') p.push('font=' + encodeURIComponent(font));
+      return p.length ? '#' + p.join('&') : '';
+    },
+
+    /* đọc hash file kia để lại */
+    read: function () {
+      var out = {};
+      (location.hash || '').replace(/^#/, '').split('&').forEach(function (kv) {
+        if (!kv) return;
+        var i = kv.indexOf('=');
+        out[i < 0 ? kv : kv.slice(0, i)] = i < 0 ? '' : decodeURIComponent(kv.slice(i + 1));
+      });
+      return out;
+    },
+
+    /* chuyển sang bản kia; ẩn trang trong lúc chuyển để không nháy bản sai,
+       kèm hẹn giờ mở lại phòng khi điều hướng thất bại (thiếu file) */
+    swap: function (screen, lang, font) {
+      if (R.swapped) return;
+      R.swapped = true;
+      document.documentElement.style.visibility = 'hidden';
+      setTimeout(function () { document.documentElement.style.visibility = ''; }, 2000);
+      location.replace(OTHER + R.hash(screen, lang, font));
+    },
+
+    /* Theo dõi kéo giãn cửa sổ qua mốc; state() trả [screen, lang, font].
+       Nghe CẢ hai nguồn: matchMedia('change') là đường chính, còn 'resize'
+       (gộp nhịp bằng timer) là lưới an toàn — vài môi trường đổi kích thước
+       bằng emulation/devtools không bắn 'change'. Cờ swapped chặn gọi trùng. */
+    watch: function (state) {
+      var fire = function () { if (!R.fits()) { var s = state ? state() : []; R.swap(s[0], s[1], s[2]); } };
+      if (mq.addEventListener) mq.addEventListener('change', fire); else mq.addListener(fire);
+      var t = 0;
+      window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(fire, 150); });
+    }
+  };
+  /* Mở thẳng nhầm bản: chuyển ngay, giữ nguyên hash để bản kia đọc lại */
+  if (!R.fits()) {
+    R.swapped = true;
+    document.documentElement.style.visibility = 'hidden';
+    setTimeout(function () { document.documentElement.style.visibility = ''; }, 2000);
+    location.replace(OTHER + (location.hash || ''));
+  }
+  return R;
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -4386,24 +4459,23 @@ const I18N = {
   'Đã đăng ký · sẽ báo bạn khi có hàng':'Registered · we\u2019ll notify you when it\u2019s back',
 
   // ── Cookie consent ──
-  'Chúng tôi sử dụng cookie':'We use cookies',
-  'DAFC dùng cookie để trang hoạt động ổn định, ghi nhớ tuỳ chọn và cá nhân hoá nội dung. Bạn có thể chọn nhóm cookie muốn cho phép.':'DAFC uses cookies to keep the site running, remember your preferences and personalise content. You can choose which groups to allow.',
-  'Chấp nhận tất cả':'Accept all', 'Tuỳ chọn cookie':'Cookie preferences',
-  'Tôi Đồng Ý':'I Agree', 'Thay Đổi Tuỳ Chọn':'Change Preferences',
-  'Chúng tôi sử dụng cookie để đảm bảo bạn có trải nghiệm mua sắm tốt nhất khi truy cập trang web của chúng tôi. Bằng cách nhấp vào “Tôi Đồng Ý” hoặc tiếp tục sử dụng trang web, bạn đồng ý với tất cả cookie của chúng tôi. Bạn có thể thay đổi tuỳ chọn bất kỳ lúc nào thông qua':'We use cookies to ensure you get the best shopping experience on our website. By clicking “I Agree” or continuing to use our website, you consent to all our cookies. You can change your preferences at any time via our',
+  'Tùy chọn cookies':'Cookie settings',
+  'Đồng ý tất cả':'Accept all', 'Từ chối tất cả':'Reject all',
+  'DAFC sử dụng Cookie và các công nghệ tương tự để vận hành website, nâng cao trải nghiệm người dùng, phân tích hiệu quả hoạt động và cung cấp nội dung phù hợp với nhu cầu của Quý khách.':'DAFC uses cookies and similar technologies to operate this website, enhance your experience, analyse performance and deliver content relevant to your needs.',
+  'Trước khi Quý khách đồng ý, chỉ các Cookie cần thiết để website hoạt động mới được sử dụng. Bạn có thể chấp nhận hoặc từ chối các cookie tùy chọn bên dưới. Bạn cũng có thể thay đổi lựa chọn bất kỳ lúc nào thông qua':'Before you give your consent, only the cookies strictly necessary for the website to work are used. You can accept or reject optional cookies below. You can also change your choice at any time via our',
   'Chính sách Cookie':'Cookie Policy',
-  ', hoặc xem thêm tại':', or read more in our',
   'Lưu lựa chọn':'Save choices',
-  'Cookie cần thiết':'Essential cookies',
-  'Giữ cho trang hoạt động: giỏ hàng, đăng nhập, bảo mật. Không thể tắt.':'Keeps the site working: cart, sign-in, security. Cannot be turned off.',
-  'Cookie phân tích':'Analytics cookies',
-  'Giúp chúng tôi hiểu cách bạn dùng trang để cải thiện trải nghiệm.':'Helps us understand how you use the site so we can improve it.',
-  'Cookie cá nhân hoá':'Personalisation cookies',
-  'Ghi nhớ tuỳ chọn và gợi ý sản phẩm phù hợp với bạn.':'Remembers your preferences and suggests products that suit you.',
-  'Cookie quảng cáo':'Advertising cookies',
-  'Hiển thị quảng cáo phù hợp trên nền tảng của các đối tác.':'Shows relevant ads on our partners’ platforms.',
+  'Cookies cần thiết':'Strictly necessary cookies',
+  'Giữ cho website hoạt động: giỏ hàng, đăng nhập, bảo mật. Không thể tắt.':'Keeps the website working: cart, sign-in, security. Cannot be turned off.',
+  'Cookies hiệu năng & phân tích':'Performance & analytics cookies',
+  'Đo lường lượt truy cập và hiệu quả hoạt động để cải thiện trải nghiệm.':'Measures traffic and performance so we can improve your experience.',
+  'Cookies chức năng':'Functional cookies',
+  'Ghi nhớ tuỳ chọn của Quý khách: ngôn ngữ, cửa hàng, sản phẩm đã xem.':'Remembers your choices: language, store and recently viewed products.',
+  'Cookies quảng cáo & tiếp thị':'Advertising & marketing cookies',
+  'Hiển thị nội dung và quảng cáo phù hợp trên nền tảng của các đối tác.':'Shows relevant content and ads on our partners’ platforms.',
   'Cookie cần thiết không thể tắt':'Essential cookies can’t be turned off',
   'Đã chấp nhận tất cả cookie':'All cookies accepted',
+  'Đã từ chối cookies tùy chọn':'Optional cookies rejected',
 
   // ── Làm đẹp: cây danh mục 2 cấp (Filter - Beauty cate demo.xlsx) ──
   // EN = nguyên văn cột Category / Product Type trong file.
@@ -6456,31 +6528,37 @@ document.body.insertAdjacentHTML('beforeend', `
 
 /* ════════════════════════════════════════════════════════════════
    COOKIE CONSENT — cổng hỏi đồng ý cookie khi mở trang
-   2 view trong cùng một panel: "intro" (Chấp nhận tất cả / Cài đặt) và
+   2 view trong cùng một panel: "intro" (Đồng ý / Từ chối / Tuỳ chọn) và
    "prefs" (4 nhóm cookie + công tắc). Nhóm "Cần thiết" luôn bật và khoá;
    3 nhóm còn lại MẶC ĐỊNH TẮT — không tick sẵn cookie không thiết yếu.
    Demo không lưu lựa chọn (project không dùng localStorage), nên mỗi lần
    tải lại trang cổng sẽ hiện lại — đúng ý đồ trình diễn.
 ════════════════════════════════════════════════════════════════ */
 const COOKIE_CATS = [
-  ['need',  'Cookie cần thiết',    'Giữ cho trang hoạt động: giỏ hàng, đăng nhập, bảo mật. Không thể tắt.', true],
-  ['stats', 'Cookie phân tích',    'Giúp chúng tôi hiểu cách bạn dùng trang để cải thiện trải nghiệm.',     false],
-  ['pref',  'Cookie cá nhân hoá',  'Ghi nhớ tuỳ chọn và gợi ý sản phẩm phù hợp với bạn.',                   false],
-  ['ads',   'Cookie quảng cáo',    'Hiển thị quảng cáo phù hợp trên nền tảng của các đối tác.',             false],
+  ['need',  'Cookies cần thiết',              'Giữ cho website hoạt động: giỏ hàng, đăng nhập, bảo mật. Không thể tắt.',   true],
+  ['stats', 'Cookies hiệu năng & phân tích',  'Đo lường lượt truy cập và hiệu quả hoạt động để cải thiện trải nghiệm.',    false],
+  ['pref',  'Cookies chức năng',              'Ghi nhớ tuỳ chọn của Quý khách: ngôn ngữ, cửa hàng, sản phẩm đã xem.',      false],
+  ['ads',   'Cookies quảng cáo & tiếp thị',   'Hiển thị nội dung và quảng cáo phù hợp trên nền tảng của các đối tác.',     false],
 ];
 document.body.insertAdjacentHTML('beforeend', `
   <div id="cookieGate" aria-hidden="true">
     <div class="cg-backdrop"></div>
     <div class="cg-panel" role="dialog" aria-modal="true" aria-label="Cookie">
-      <!-- view 1 — banner một đoạn: không tiêu đề, 2 link gạch chân nằm ngay
-           trong câu, 2 nút ngang hàng (viền | đặc). Các đoạn chữ bị link cắt
-           thành nhiều text node nên MỖI ĐOẠN phải là một key i18n riêng; câu
-           kết thúc bằng dấu "." đứng một mình để không phải dịch mảnh vụn. -->
+      <!-- view 1 — banner 2 đoạn: không tiêu đề, link "Chính sách Cookie" nằm
+           cuối câu. Đoạn bị link cắt thành nhiều text node nên MỖI ĐOẠN phải là
+           một key i18n riêng. 3 lựa chọn xếp theo mức ưu tiên: đồng ý (đặc) ·
+           từ chối · tuỳ chọn — từ chối phải dễ bấm ngang với đồng ý. -->
       <div class="cg-view cg-intro flex flex-col gap-5 px-4 pt-5 pb-4">
-        <p class="text-[13px] font-light leading-5 text-foreground">Chúng tôi sử dụng cookie để đảm bảo bạn có trải nghiệm mua sắm tốt nhất khi truy cập trang web của chúng tôi. Bằng cách nhấp vào “Tôi Đồng Ý” hoặc tiếp tục sử dụng trang web, bạn đồng ý với tất cả cookie của chúng tôi. Bạn có thể thay đổi tuỳ chọn bất kỳ lúc nào thông qua <button data-cg-prefs class="underline text-foreground press">Chính sách Cookie</button>, hoặc xem thêm tại <button data-cg-policy class="underline text-foreground press">Chính sách bảo mật</button>.</p>
-        <div class="flex gap-3">
-          <button data-cg-prefs class="flex-1 h-12 rounded-xs border border-border text-foreground text-[13px] font-medium press">Thay Đổi Tuỳ Chọn</button>
-          <button data-cg-all class="flex-1 h-12 rounded-xs bg-primary text-primary-foreground text-[13px] font-medium press">Tôi Đồng Ý</button>
+        <div class="flex flex-col gap-3">
+          <p class="text-[13px] font-light leading-5 text-foreground">DAFC sử dụng Cookie và các công nghệ tương tự để vận hành website, nâng cao trải nghiệm người dùng, phân tích hiệu quả hoạt động và cung cấp nội dung phù hợp với nhu cầu của Quý khách.</p>
+          <p class="text-[13px] font-light leading-5 text-foreground">Trước khi Quý khách đồng ý, chỉ các Cookie cần thiết để website hoạt động mới được sử dụng. Bạn có thể chấp nhận hoặc từ chối các cookie tùy chọn bên dưới. Bạn cũng có thể thay đổi lựa chọn bất kỳ lúc nào thông qua <button data-cg-prefs class="underline text-foreground press">Chính sách Cookie</button></p>
+        </div>
+        <div class="flex flex-col gap-2">
+          <button data-cg-all class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[13px] font-medium press">Đồng ý tất cả</button>
+          <div class="flex gap-2">
+            <button data-cg-none class="flex-1 h-12 rounded-xs border border-border text-foreground text-[13px] font-medium press">Từ chối tất cả</button>
+            <button data-cg-prefs class="flex-1 h-12 rounded-xs border border-border text-foreground text-[13px] font-medium press">Tùy chọn cookies</button>
+          </div>
         </div>
       </div>
 
@@ -6488,7 +6566,7 @@ document.body.insertAdjacentHTML('beforeend', `
       <div class="cg-view cg-prefs hidden flex-col min-h-0">
         <div class="px-4 pt-5 pb-3 flex items-center gap-2 shrink-0">
           <button data-cg-back class="w-6 h-6 flex items-center justify-center shrink-0 press [&_svg]:w-3.5 [&_svg]:h-3.5" aria-label="Quay lại">${I.chevL}</button>
-          <p class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground truncate">Tuỳ chọn cookie</p>
+          <p class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground truncate">Tùy chọn cookies</p>
         </div>
         <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 flex flex-col">
           ${COOKIE_CATS.map(([id, name, desc, locked]) => `
@@ -6503,10 +6581,13 @@ document.body.insertAdjacentHTML('beforeend', `
             </div>`).join('')}
         </div>
         <!-- Ở view này hành động chính là LƯU lựa chọn vừa bật/tắt, nên nó giữ
-             nút primary; "Chấp nhận tất cả" xuống ghost như nút "Cài đặt". -->
+             nút primary; đồng ý/từ chối tất cả xuống hàng ghost bên dưới. -->
         <div class="shrink-0 px-4 pt-4 pb-4 flex flex-col gap-1">
           <button data-cg-save class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press">Lưu lựa chọn</button>
-          <button data-cg-all class="w-full h-11 text-[13px] font-medium text-foreground press">Chấp nhận tất cả</button>
+          <div class="flex">
+            <button data-cg-all class="flex-1 h-11 text-[13px] font-medium text-foreground press">Đồng ý tất cả</button>
+            <button data-cg-none class="flex-1 h-11 text-[13px] font-medium text-foreground press">Từ chối tất cả</button>
+          </div>
         </div>
       </div>
 
@@ -6530,19 +6611,20 @@ document.body.insertAdjacentHTML('beforeend', `
     if (s.getAttribute('aria-disabled') === 'true') { toast('Cookie cần thiết không thể tắt'); return; }
     s.setAttribute('aria-checked', s.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
   }));
-  /* 2 chỗ mở view tuỳ chọn: nút "Thay Đổi Tuỳ Chọn" và link "Chính sách Cookie" */
+  /* 2 chỗ mở view tuỳ chọn: nút "Tùy chọn cookies" và link "Chính sách Cookie" */
   g.querySelectorAll('[data-cg-prefs]').forEach(b => b.addEventListener('click', () => view('prefs')));
   g.querySelector('[data-cg-back]').addEventListener('click', () => view('intro'));
   g.querySelectorAll('[data-cg-all]').forEach(b => b.addEventListener('click', () => {
     setAll(true); closeG(); toast('Đã chấp nhận tất cả cookie');
   }));
+  /* Từ chối tất cả = tắt hết nhóm tuỳ chọn, chỉ giữ nhóm cần thiết đang khoá */
+  g.querySelectorAll('[data-cg-none]').forEach(b => b.addEventListener('click', () => {
+    setAll(false); closeG(); toast('Đã từ chối cookies tùy chọn');
+  }));
   g.querySelector('[data-cg-save]').addEventListener('click', () => {
     const n = chosen(); closeG();
     toast(n === sws.length ? 'Đã chấp nhận tất cả cookie' : `Đã lưu tuỳ chọn cookie · ${n}/${sws.length} nhóm`);
   });
-  /* Link chính sách: đóng cổng rồi mở trang thật của demo. Cổng không hiện
-     lại trong phiên này — chấp nhận được vì demo không lưu trạng thái. */
-  g.querySelector('[data-cg-policy]').addEventListener('click', () => { closeG(); go('privacy'); });
 
   localizeNew(g);
   /* chờ màn đầu vẽ xong rồi mới trượt lên, cho giống banner thật */
@@ -6639,8 +6721,54 @@ document.body.insertAdjacentHTML('beforeend', `
 wirePasswordToggles(document.getElementById('loginPop'));
 
 wireFilter();
-window.history.replaceState({ screen: 'plp' }, '');
-go('plp');
+
+/* ── Khởi động: nhận trạng thái từ bản kia (nếu vừa đổi bản qua mốc 768) ──
+   RESP dựng ở <head>. Khi trang đang bị chuyển sang file kia thì KHÔNG dựng
+   màn hình nào nữa — đỡ vẽ thừa một trang sắp bị bỏ.
+   Ngôn ngữ/phông lặp lại đúng các bước của nút trong bảng Cài đặt, chỉ bỏ
+   toast vì đây là khôi phục trạng thái chứ không phải người dùng vừa bấm. */
+if (!RESP.swapped) {
+  const st = RESP.read();
+
+  if (st.lang === 'en') {
+    applyLang(document.body, 'en');
+    LANG = 'en';
+    document.querySelectorAll('#settingsPanel [data-lang]').forEach(x => {
+      x.className = 'langopt flex-1 h-8 rounded-full text-[13px] leading-5 transition-colors press '
+        + (x.dataset.lang === 'en' ? 'bg-background text-foreground font-medium shadow-sm' : 'text-muted-foreground');
+    });
+  }
+
+  const f = FONTS.find(x => x[0] === st.font);
+  if (f) {
+    currentFont = f[0];
+    document.documentElement.style.setProperty('--font-app', f[2]);
+    document.documentElement.classList.add('font-override');
+    document.querySelectorAll('#settingsPanel [data-font]').forEach(x =>
+      x.querySelector('.fo-tick').classList.toggle('opacity-0', x.dataset.font !== f[0]));
+  }
+
+  /* hasOwnProperty chứ không phải RENDER[...] trực tiếp: hash là dữ liệu ngoài,
+     mà key kế thừa từ Object.prototype (#screen=__proto__, =constructor) cũng
+     "truthy" — lọt vào go() là ném lỗi giữa boot, trang trắng và mất luôn
+     RESP.watch() bên dưới (hết chuyển bản khi kéo cửa sổ). */
+  const first = Object.prototype.hasOwnProperty.call(RENDER, st.screen) ? st.screen : 'plp';
+  window.history.replaceState({ screen: first }, '');
+  /* fromPopstate: chặn go() push thêm một entry TRÙNG với replaceState vừa rồi
+     — nếu không, mỗi lần tải trang để lại 2 entry cùng state và cú bấm back
+     đầu tiên không làm gì (go() thoát sớm vì name === current). */
+  go(first, { fromPopstate: true });
+
+  /* Hash chỉ là kênh chuyển giao MỘT LẦN — dọn ngay sau khi nhận, để lát nữa
+     người dùng đi sang màn khác rồi tải lại trang thì không bị kéo ngược về
+     màn cũ. Bọc try vì một số trình duyệt chặn đổi URL trên file://. */
+  if (location.hash) {
+    try { window.history.replaceState({ screen: first }, '', location.pathname + location.search); } catch (e) {}
+  }
+
+  /* Kéo cửa sổ rộng ≥ 768 -> sang bản desktop, mang theo màn + cài đặt */
+  RESP.watch(() => [current, LANG, currentFont]);
+}
 </script>
 </body>
 </html>
