@@ -29,11 +29,12 @@ window.RESP = (function () {
     fits: function () { return mq.matches === IS_DESKTOP; },
 
     /* gói trạng thái thành hash; giá trị mặc định thì bỏ qua cho URL gọn */
-    hash: function (screen, lang, font) {
+    hash: function (screen, lang, font, theme) {
       var p = [];
       if (screen && screen !== 'plp') p.push('screen=' + encodeURIComponent(screen));
       if (lang && lang !== 'vi')      p.push('lang=' + encodeURIComponent(lang));
       if (font && font !== 'montserrat') p.push('font=' + encodeURIComponent(font));
+      if (theme && theme !== 'd')     p.push('theme=' + encodeURIComponent(theme));
       return p.length ? '#' + p.join('&') : '';
     },
 
@@ -50,20 +51,20 @@ window.RESP = (function () {
 
     /* chuyển sang bản kia; ẩn trang trong lúc chuyển để không nháy bản sai,
        kèm hẹn giờ mở lại phòng khi điều hướng thất bại (thiếu file) */
-    swap: function (screen, lang, font) {
+    swap: function (screen, lang, font, theme) {
       if (R.swapped) return;
       R.swapped = true;
       document.documentElement.style.visibility = 'hidden';
       setTimeout(function () { document.documentElement.style.visibility = ''; }, 2000);
-      location.replace(OTHER + R.hash(screen, lang, font));
+      location.replace(OTHER + R.hash(screen, lang, font, theme));
     },
 
-    /* Theo dõi kéo giãn cửa sổ qua mốc; state() trả [screen, lang, font].
+    /* Theo dõi kéo giãn cửa sổ qua mốc; state() trả [screen, lang, font, theme].
        Nghe CẢ hai nguồn: matchMedia('change') là đường chính, còn 'resize'
        (gộp nhịp bằng timer) là lưới an toàn — vài môi trường đổi kích thước
        bằng emulation/devtools không bắn 'change'. Cờ swapped chặn gọi trùng. */
     watch: function (state) {
-      var fire = function () { if (!R.fits()) { var s = state ? state() : []; R.swap(s[0], s[1], s[2]); } };
+      var fire = function () { if (!R.fits()) { var s = state ? state() : []; R.swap(s[0], s[1], s[2], s[3]); } };
       if (mq.addEventListener) mq.addEventListener('change', fire); else mq.addListener(fire);
       var t = 0;
       window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(fire, 150); });
@@ -118,13 +119,80 @@ window.RESP = (function () {
   .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1); }
   .reveal.in { opacity: 1; transform: translateY(0); }
 
+  /* ══ THEME — chuyển được trong popover Cài đặt (như đổi phông chữ) ══
+     Mode "D+ improved" vừa tạo trong Figma (collection `theme`, mode thứ 3).
+     Đặt ở đây thay vì tokens.css vì tokens.css là FILE SINH TỰ ĐỘNG
+     ("Không sửa tay - chạy lại gen_tokens.py"). Khi nào export lại
+     tokens07.json + sửa gen_tokens.py cho duyệt mode động thì khối này
+     chuyển về tokens.css và xoá khỏi đây.
+     Nằm SAU tokens.css nên cùng specificity (0,1,0) vẫn thắng :root.
+
+     5 thay đổi so với mode D, mỗi cái có số đo:
+       accent            #09090b -> #292524  stone/800 warm black. Cũ cách
+                         primary đúng 1.00 (không phân biệt được) -> role chết.
+                         Mới cách 1.31, ĐÚNG bằng độ tách của promo bar hiện
+                         tại nên không đổi trọng lượng thị giác; ấm R-B +5 đọc
+                         như mực in thay vì xám màn hình. Việc của nó: MẶT TỐI
+                         LỚN không tương tác (promo bar, thẻ hội viên, footer).
+       focus-ring        #22aa99 -> #737373  1.48:1 -> 4.74:1 trên trắng và
+                         4.18:1 trên nút đen (ring cũ của component là #d4d4d4,
+                         không đạt ngưỡng 3:1 của WCAG 2.2 SC 2.4.13)
+       focus-ring-error  #f8a9af -> #d62845  1.86:1 -> 4.94:1
+       muted-foreground  #737373 -> #525252  4.74:1 -> 7.81:1
+       outline           #ffffff1a -> #ffffff  khớp component (nền Outline đục)
+     CỐ Ý KHÔNG đổi border-3 (giữ #d4d4d4): ưu tiên cảm giác luxury, hairline
+     vẫn mảnh, để FOCUS gánh phần dễ thấy thay vì làm nặng trạng thái nghỉ. */
+  /* 2 biến GIÁN TIẾP để theme thực sự có hiệu lực mà KHÔNG phá bản mặc định:
+     · --btn-focus-ring: mặc định trỏ #d4d4d4 (đúng component Button), theme D+
+       trỏ sang --focus-ring đã nâng lên #737373.
+     · --surface-dark: mặt tối lớn. Mặc định giữ đúng màu promo bar đang dùng,
+       theme D+ trỏ sang --unofficial-accent (warm black) — đó là việc của accent. */
+  :root { --btn-focus-ring: var(--unofficial-border-3); --surface-dark: var(--general-secondary-foreground); }
+  .theme-dplus {
+    --btn-focus-ring: var(--focus-ring);
+    --surface-dark: var(--unofficial-accent);
+    --unofficial-accent: #292524;
+    --focus-ring: #737373;
+    --focus-ring-error: #d62845;
+    --general-muted-foreground: #525252;
+    --unofficial-outline: #ffffff;
+  }
+
   /* ── Press feedback ── */
   /* Phản hồi khi chạm: CHỈ mờ đi, KHÔNG scale. Bản cũ có scale(.97) — nó co cả
      khối nên chữ bên trong bị xê dịch, thấy rõ nhất ở nút full-width và hàng
      danh mục dài trong menu. Thêm nữa .press được gắn khắp nơi kể cả các hàng
      list, nên chữ nhảy vặt mỗi lần chạm. */
-  .press { transition: opacity .12s ease; }
-  .press:active { opacity: .9; }
+  /* transition LONGHAND (không dùng dạng gộp) để không RESET transition-property
+     và ăn mất transition-colors của Tailwind — khối này nằm sau tailwind.css. */
+  .press { transition-property: opacity, background-color, border-color, color, box-shadow;
+           transition-duration: .12s; transition-timing-function: ease; }
+
+  /* ══ STATE CỦA BUTTON — theo component Figma "Button" (set 10:11763) ══
+     CỐ Ý KHÔNG làm :hover ở bản mobile: đây là thiết bị cảm ứng, :hover dính lại
+     sau khi nhấc tay nên nút trông như đang được trỏ vào. Chỉ làm Active (state
+     mà cảm ứng cần nhất), Focus (bàn phím ngoài / accessibility) và Disabled.
+       Primary   active #171717 · Secondary active #e5e5e5
+       Outline   active: viền -> #0a0a0a · Destructive active #b91c3a
+       Ghost / Ghost Muted  active: chữ đậm lên #0a0a0a
+       Focus: shadow spread 3px #d4d4d4 (Destructive #fca5a5 -> dùng --focus-ring-error)
+       Disabled: opacity .5, màu KHÔNG đổi.
+     Bản trước chỉ có opacity .9 cho mọi nút — sai hướng với hợp đồng: nút
+     secondary #f5f5f5 ở .9 trên nền trắng ra #f6f6f6 (SÁNG hơn), trong khi
+     token secondary-active đòi TỐI đi (#e5e5e5). */
+  .press:active            { opacity: .9; }
+  .btn-p:active            { background: var(--general-primary-active); opacity: 1; }
+  .btn-s:active            { background: var(--unofficial-secondary-active); opacity: 1; }
+  /* Outline: Default nền TRẮNG ĐỤC (#ffffff) -> nút tự khai bg-background.
+     Active viền #0a0a0a DÀY 2px. Disabled nền #f5f5f5. (Không có hover — cảm ứng.) */
+  .btn-o:active            { border-color: var(--general-primary); border-width: 2px; opacity: 1; }
+  .btn-o:focus-visible     { border-color: var(--unofficial-border-4); }
+  .btn-o[disabled]         { background: var(--general-secondary); }
+  .btn-d:active            { background: var(--unofficial-destructive-active); opacity: 1; }
+  .btn-gm:active           { color: var(--general-primary); opacity: 1; }
+  .press:focus-visible     { outline: none; box-shadow: 0 0 0 3px var(--btn-focus-ring); }
+  .btn-d:focus-visible     { box-shadow: 0 0 0 3px var(--focus-ring-error); }
+  button[disabled], [aria-disabled="true"] { opacity: .5; }
 
   /* ── Skeleton shimmer ── */
   @keyframes shimmer { 100% { transform: translateX(100%); } }
@@ -694,6 +762,12 @@ const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login
    ICONS
 ════════════════════════════════════════════════════════════════ */
 const I = {
+  /* Icon mật độ lưới — Figma 2903:44753 (Platform=mb), icon 16x16.
+     2 cột = fi-tr-grid-two-alt (2 tấm dọc, path lấy nguyên từ Figma, dạng FILL)
+     1 cột = 1 ô 16x16 bo 5 nét 1px INSIDE (nên SVG thụt .5, rx 4.5).
+     Cả 2 dùng currentColor; trạng thái không chọn giảm opacity như bản vẽ. */
+  gridCols2: '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M 6.333333333333333 0 L 3 0 C 1.3460000356038413 0 0 1.3460000356038413 0 3 L 0 13 C 0 14.653999964396158 1.3460000356038413 16 3 16 L 6.333333333333333 16 C 6.884666681289673 16 7.333333333333333 15.551333347956339 7.333333333333333 15 L 7.333333333333333 1 C 7.333333333333333 0.4486666520436605 6.884666681289673 0 6.333333333333333 0 Z M 6.666666666666666 15 C 6.666666666666666 15.183333337306976 6.5173333287239075 15.333333333333332 6.333333333333333 15.333333333333332 L 3 15.333333333333332 C 1.7133333683013916 15.333333333333332 0.6666666666666666 14.286666631698608 0.6666666666666666 13 L 0.6666666666666666 3 C 0.6666666666666666 1.7133333683013916 1.7133333683013916 0.6666666666666666 3 0.6666666666666666 L 6.333333333333333 0.6666666666666666 C 6.5173333287239075 0.6666666666666666 6.666666666666666 0.8166666626930237 6.666666666666666 1 L 6.666666666666666 15 Z M 13 0 L 9.666666666666666 0 C 9.115333318710327 0 8.666666666666666 0.4486666520436605 8.666666666666666 1 L 8.666666666666666 15 C 8.666666666666666 15.551333347956339 9.115333318710327 16 9.666666666666666 16 L 13 16 C 14.653999964396158 16 16 14.653999964396158 16 13 L 16 3 C 16 1.3460000356038413 14.653999964396158 0 13 0 Z M 15.333333333333332 13 C 15.333333333333332 14.286666631698608 14.286666631698608 15.333333333333332 13 15.333333333333332 L 9.666666666666666 15.333333333333332 C 9.482666671276093 15.333333333333332 9.333333333333332 15.183333337306976 9.333333333333332 15 L 9.333333333333332 1 C 9.333333333333332 0.8166666626930237 9.482666671276093 0.6666666666666666 9.666666666666666 0.6666666666666666 L 13 0.6666666666666666 C 14.286666631698608 0.6666666666666666 15.333333333333332 1.7133333683013916 15.333333333333332 3 L 15.333333333333332 13 Z"/></svg>',
+  gridCols1: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1"><rect x=".5" y=".5" width="15" height="15" rx="4.5"/></svg>',
   grid2: '<svg width="16" height="16" viewBox="-0.25 -0.25 24.5 24.5" fill="currentColor"><path d="M7,0h-3C1.794,0,0,1.794,0,4v3c0,2.206,1.794,4,4,4h3c2.206,0,4-1.794,4-4v-3C11,1.794,9.206,0,7,0Zm3,7c0,1.654-1.346,3-3,3h-3c-1.654,0-3-1.346-3-3v-3c0-1.654,1.346-3,3-3h3c1.654,0,3,1.346,3,3v3ZM20,0h-3c-2.206,0-4,1.794-4,4v3c0,2.206,1.794,4,4,4h3c2.206,0,4-1.794,4-4v-3c0-2.206-1.794-4-4-4Zm3,7c0,1.654-1.346,3-3,3h-3c-1.654,0-3-1.346-3-3v-3c0-1.654,1.346-3,3-3h3c1.654,0,3,1.346,3,3v3ZM7,13h-3c-2.206,0-4,1.794-4,4v3c0,2.206,1.794,4,4,4h3c2.206,0,4-1.794,4-4v-3c0-2.206-1.794-4-4-4Zm3,7c0,1.654-1.346,3-3,3h-3c-1.654,0-3-1.346-3-3v-3c0-1.654,1.346-3,3-3h3c1.654,0,3,1.346,3,3v3Zm10-7h-3c-2.206,0-4,1.794-4,4v3c0,2.206,1.794,4,4,4h3c2.206,0,4-1.794,4-4v-3c0-2.206-1.794-4-4-4Zm3,7c0,1.654-1.346,3-3,3h-3c-1.654,0-3-1.346-3-3v-3c0-1.654,1.346-3,3-3h3c1.654,0,3,1.346,3,3v3Z"/></svg>',
   grid1: '<svg width="16" height="16" viewBox="-0.25 1.75 24.5 20.5" fill="currentColor"><path d="M19.5,2H4.5C2.019,2,0,4.019,0,6.5v11c0,2.481,2.019,4.5,4.5,4.5h15c2.481,0,4.5-2.019,4.5-4.5V6.5c0-2.481-2.019-4.5-4.5-4.5Zm3.5,4.5v4.5H6V3h13.5c1.93,0,3.5,1.57,3.5,3.5ZM1,17.5V6.5c0-1.93,1.57-3.5,3.5-3.5h.5V21h-.5c-1.93,0-3.5-1.57-3.5-3.5Zm18.5,3.5H6V12H23v5.5c0,1.93-1.57,3.5-3.5,3.5Z"/></svg>',
   /* Header WAP — path gốc bộ Flaticon uicons thin-rounded 4.0 (fi-tr-*) */
@@ -923,7 +997,7 @@ function footer() {
       <p class="text-[14px] leading-5 text-mid-alt">Nhận ngay thông tin về các bộ sưu tập hoặc các chương trình ưu đãi mới nhất.</p>
       <div class="flex">
         <input type="email" placeholder="Your email" class="flex-1 h-9 bg-background border border-border px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-        <button data-toast="Đăng ký thành công" class="h-9 px-4 bg-primary text-[14px] font-medium text-primary-foreground press">Đăng ký</button>
+        <button data-toast="Đăng ký thành công" class="h-9 px-4 bg-primary text-[14px] font-medium text-primary-foreground btn-p press">Đăng ký</button>
       </div>
     </div>
     <div class="h-px bg-border mx-2"></div>
@@ -1015,7 +1089,7 @@ function stickyCta(label, target, sub) {
   return `
   <div class="sticky bottom-0 z-50 bg-gradient-to-t from-white via-white to-white/0 pt-4 pb-4 px-4">
     ${sub ? `<div class="flex justify-between items-baseline mb-2"><span class="text-[12px] text-muted-foreground">Tổng cộng</span><span class="text-[16px] font-semibold text-foreground">${sub}</span></div>` : ''}
-    <button data-nav="${target}" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-semibold tracking-wide press flex items-center justify-center gap-2">
+    <button data-nav="${target}" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-semibold tracking-wide btn-p press flex items-center justify-center gap-2">
       ${label}
     </button>
   </div>`;
@@ -1062,7 +1136,7 @@ function plpProducts() {
 function screenPLPList() {
   const m = plpMode;
   const list = plpProducts();
-  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'NEW' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
+  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'New' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
   const crumbs = ['Trang chủ', ...(m.crumbs || [])];
   return `
   <div class="w-full" data-scroller>
@@ -1087,13 +1161,13 @@ function screenPLPList() {
     <div class="flex items-center justify-between pl-4 pr-2 h-12 bg-background">
       <p data-plp-count class="text-[16px] font-light leading-6 text-foreground">${sortedProducts().length} sản phẩm</p>
       <div class="flex items-center">
-        ${[['2', I.grid2], ['1', I.grid1]].map(([n, ico]) => `
-          <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press ${n==='2' ? 'text-foreground' : 'text-border-4'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
+        ${[['2', I.gridCols2], ['1', I.gridCols1]].map(([n, ico]) => `
+          <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press text-foreground transition-opacity ${n === '2' ? '' : 'opacity-50'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
       </div>
     </div>
 
     <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex items-center justify-between px-4 h-[52px] backdrop-blur-[7.5px]">
-      <button data-sheet="filter" class="flex items-center gap-2 px-4 h-9 rounded-xs border border-border text-[14px] font-medium text-foreground press">${I.sliders} Bộ lọc</button>
+      <button data-sheet="filter" class="flex items-center gap-2 px-4 h-9 rounded-xs border border-border bg-background text-[14px] font-medium text-foreground btn-o press">${I.sliders} Bộ lọc</button>
       <div class="relative">
         <button id="sortBtn" class="flex items-center gap-1.5 px-4 h-9 text-[14px] font-medium text-foreground-alt press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
         <div id="sortMenu" class="hidden absolute mt-1 bg-background border border-border shadow-lg z-50" style="right:0;top:100%;width:240px">
@@ -1131,7 +1205,7 @@ function screenPLPList() {
 
 function screenPLP() {
   if (plpMode.type !== 'brand') return screenPLPList();
-  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'NEW' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
+  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'New' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
 
   return `
   <div class="w-full" data-scroller>
@@ -1199,13 +1273,13 @@ function screenPLP() {
     <div class="flex items-center justify-between pl-4 pr-2 h-12 bg-background">
       <p data-plp-count class="text-[16px] font-light leading-6 text-foreground">${sortedProducts().length} sản phẩm</p>
       <div class="flex items-center">
-        ${[['2', I.grid2], ['1', I.grid1]].map(([n, ico]) => `
-          <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press ${n==='2' ? 'text-foreground' : 'text-border-4'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
+        ${[['2', I.gridCols2], ['1', I.gridCols1]].map(([n, ico]) => `
+          <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press text-foreground transition-opacity ${n === '2' ? '' : 'opacity-50'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
       </div>
     </div>
 
     <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex items-center justify-between px-4 h-[52px] backdrop-blur-[7.5px]">
-      <button data-sheet="filter" class="flex items-center gap-2 px-4 h-9 rounded-xs border border-border text-[14px] font-medium text-foreground press">${I.sliders} Bộ lọc</button>
+      <button data-sheet="filter" class="flex items-center gap-2 px-4 h-9 rounded-xs border border-border bg-background text-[14px] font-medium text-foreground btn-o press">${I.sliders} Bộ lọc</button>
       <div class="relative">
         <button id="sortBtn" class="flex items-center gap-1.5 px-4 h-9 text-[14px] font-medium text-foreground-alt press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
         <div id="sortMenu" class="hidden absolute mt-1 bg-background border border-border shadow-lg z-50" style="right:0;top:100%;width:240px">
@@ -1427,7 +1501,7 @@ function screenPDP() {
 
     <!-- in-flow CTA -->
     <div id="pdpCta" class="flex flex-col gap-2 px-4 py-4 rise">
-      <button data-add="pdp" class="w-full min-h-[56px] py-2 rounded-xs bg-primary text-primary-foreground press flex flex-col items-center justify-center gap-0.5">
+      <button data-add="pdp" class="w-full min-h-[56px] py-2 rounded-xs bg-primary text-primary-foreground btn-p press flex flex-col items-center justify-center gap-0.5">
         <span class="text-[16px] leading-5">Đặt trước</span>
         <span class="text-[12px] leading-4 text-primary-foreground/80">Dự kiến giao hàng vào ngày 15/08/2026</span>
       </button>
@@ -1463,7 +1537,7 @@ function screenPDP() {
 
   <!-- sticky CTA -->
   <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
-    <button data-add="pdp" class="w-full min-h-[48px] py-1.5 rounded-xs bg-primary text-primary-foreground press flex flex-col items-center justify-center">
+    <button data-add="pdp" class="w-full min-h-[48px] py-1.5 rounded-xs bg-primary text-primary-foreground btn-p press flex flex-col items-center justify-center">
       <span class="text-[16px] leading-5">Đặt trước</span>
       <span class="text-[12px] leading-4 text-primary-foreground/80">Dự kiến giao 15/08/2026</span>
     </button>
@@ -1563,7 +1637,7 @@ function promoCardGrouped(keys) {
   return `
     <div class="px-4 pb-2 rise">
       <div class="bg-accent-0 rounded-sm p-2 flex flex-col gap-2">
-        <p class="h-5 text-[14px] font-medium leading-5 text-foreground">KHUYẾN MÃI</p>
+        <p class="h-5 text-[14px] font-medium leading-5 text-foreground">Khuyến mãi</p>
         ${keys.map(k => `
           <button data-promo="${k}" class="flex items-start gap-2 text-left press">
             <span class="w-2 shrink-0 text-[12px] font-medium leading-4 text-secondary-foreground">·</span>
@@ -1592,7 +1666,7 @@ function promoCardsSplit(keys) {
               </div>`).join('');
   return `
     <div class="px-4 pb-2 flex flex-col gap-2 rise">
-      <p class="text-[14px] font-medium leading-5 text-foreground">KHUYẾN MÃI</p>
+      <p class="text-[14px] font-medium leading-5 text-foreground">Khuyến mãi</p>
       ${keys.map(k => `
         <div class="acc bg-accent-0 rounded-sm">
           <button class="acc-trigger w-full p-2 flex items-start gap-2 text-left press">
@@ -1681,7 +1755,7 @@ function screenPDP2() {
           <button data-size-chart class="text-[12px] leading-4 text-[#171717] underline">Bảng kích thước</button>
         </div>
         <div class="relative">
-          <button type="button" data-size-trigger="pdp2" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] outline-none focus:border-primary transition-colors flex items-center text-left press">
+          <button type="button" data-size-trigger="pdp2" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] outline-none focus:border-primary transition-colors flex items-center text-left btn-o press">
             <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
           </button>
           <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
@@ -1691,7 +1765,7 @@ function screenPDP2() {
 
     <!-- Sticky CTA (in-flow) -->
     <div id="pdpCta" class="flex flex-col gap-2 px-4 pt-4 pb-4 rise">
-      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center">Thêm vào giỏ hàng</button>
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press flex items-center justify-center">Thêm vào giỏ hàng</button>
     </div>
 
     <!-- KHUYẾN MÃI — layout A: 1 card gộp (Figma 2275:505057) -->
@@ -1732,7 +1806,7 @@ function screenPDP2() {
   </div>
 
   <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
-    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[16px] press">Thêm vào giỏ hàng</button>
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press">Thêm vào giỏ hàng</button>
   </div>`;
 }
 
@@ -1813,7 +1887,7 @@ function screenPDP3() {
           <button data-size-chart class="text-[12px] leading-4 text-[#171717] underline">Bảng kích thước</button>
         </div>
         <div class="relative">
-          <button type="button" data-size-trigger="pdp3" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] outline-none focus:border-primary transition-colors flex items-center text-left press">
+          <button type="button" data-size-trigger="pdp3" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] outline-none focus:border-primary transition-colors flex items-center text-left btn-o press">
             <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
           </button>
           <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
@@ -1823,7 +1897,7 @@ function screenPDP3() {
 
     <!-- Sticky CTA (in-flow) — Button + Payment Offer ngay dưới, căn giữa (mockup 3111:33554) -->
     <div id="pdpCta" class="flex flex-col gap-2 px-4 pt-4 pb-4 rise">
-      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center gap-2">Thêm vào giỏ hàng</button>
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press flex items-center justify-center gap-2">Thêm vào giỏ hàng</button>
     </div>
 
     <!-- accordions -->
@@ -1852,7 +1926,7 @@ function screenPDP3() {
   </div>
 
   <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
-    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[16px] press">Thêm vào giỏ hàng</button>
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press">Thêm vào giỏ hàng</button>
   </div>`;
 }
 
@@ -1945,7 +2019,7 @@ function screenPDP4() {
 
     <!-- in-flow CTA -->
     <div id="pdpCta" class="flex flex-col gap-2 px-4 py-4 rise">
-      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center gap-2">Thêm vào giỏ hàng</button>
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press flex items-center justify-center gap-2">Thêm vào giỏ hàng</button>
     </div>
 
     <!-- promos -->
@@ -1985,7 +2059,7 @@ function screenPDP4() {
 
   <!-- sticky CTA -->
   <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
-    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[16px] press">Thêm vào giỏ hàng</button>
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press">Thêm vào giỏ hàng</button>
   </div>`;
 }
 
@@ -2146,8 +2220,8 @@ function accAddress() {
 function accLoyalty() {
   return `
     <div class="px-5 pt-4 flex flex-col gap-4">
-      <div class="rounded-lg bg-primary text-primary-foreground p-5 flex flex-col gap-2">
-        <span class="text-[12px] tracking-[0.2em] uppercase opacity-70">DAFC Membership</span>
+      <div class="rounded-lg text-primary-foreground p-5 flex flex-col gap-2" style="background:var(--surface-dark)">
+        <span class="text-[12px] tracking-[0.2em] opacity-70">DAFC Membership</span>
         <span class="text-[24px] font-light leading-8">Hạng Vàng</span>
         <span class="text-[13px] leading-5 opacity-80">UserOne · 0909 *** 123</span>
         <div class="mt-2 pt-3 border-t border-white/20 flex items-center justify-between">
@@ -2316,10 +2390,10 @@ function screenORDER() {
     <!-- hành động -->
     <div class="px-5 py-4 flex flex-col gap-2">
       ${o.tone==='warning'
-        ? `<button data-toast="Theo dõi đơn TKN284917" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press">Theo dõi đơn hàng</button>
-           <button data-toast="Đã gửi yêu cầu huỷ" class="w-full h-11 rounded-xs border border-border text-mid-alt text-[14px] font-medium press">Huỷ đơn hàng</button>`
-        : `<button data-toast="Đã thêm lại vào giỏ" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press">Mua lại</button>
-           <button data-toast="Xuất hoá đơn" class="w-full h-11 rounded-xs border border-border text-foreground text-[14px] font-medium press">Xuất hoá đơn</button>`}
+        ? `<button data-toast="Theo dõi đơn TKN284917" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium btn-p press">Theo dõi đơn hàng</button>
+           <button data-toast="Đã gửi yêu cầu huỷ" class="w-full h-11 rounded-xs border border-border bg-background text-mid-alt text-[14px] font-medium btn-o press">Huỷ đơn hàng</button>`
+        : `<button data-toast="Đã thêm lại vào giỏ" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium btn-p press">Mua lại</button>
+           <button data-toast="Xuất hoá đơn" class="w-full h-11 rounded-xs border border-border bg-background text-foreground text-[14px] font-medium btn-o press">Xuất hoá đơn</button>`}
       <button data-toast="Liên hệ CSKH 1900 2666" class="w-full h-11 text-[13px] text-muted-foreground press">Cần hỗ trợ? Liên hệ CSKH</button>
     </div>
   </div>`;
@@ -2413,7 +2487,7 @@ function screenPDP5() {
           <button data-size-chart class="text-[12px] leading-4 text-[#171717] underline press">Bảng kích thước</button>
         </div>
         <div class="relative">
-          <button type="button" data-size-trigger="pdp5" class="w-full h-11 bg-input border border-border rounded-sm pl-2 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left press">
+          <button type="button" data-size-trigger="pdp5" class="w-full h-11 bg-input border border-border rounded-sm pl-2 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left btn-o press">
             <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
           </button>
           <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
@@ -2424,7 +2498,7 @@ function screenPDP5() {
     <!-- Sticky CTA (in-flow): gap 8 · pad 0,16,16,16 · bg card · stroke sw=0 (không viền) -->
     <div id="pdpCta" class="flex flex-col gap-2 px-4 pb-4 bg-card rise">
       <!-- Button/Primary Large: 358x48 · rounded-4 · pad 8,24 -->
-      <button data-add="pdp" class="w-full h-12 rounded-sm bg-primary text-primary-foreground text-[14px] font-medium leading-5 press flex items-center justify-center gap-2 px-6">Thêm vào giỏ hàng</button>
+      <button data-add="pdp" class="w-full h-12 rounded-sm bg-primary text-primary-foreground text-[14px] font-medium leading-5 btn-p press flex items-center justify-center gap-2 px-6">Thêm vào giỏ hàng</button>
     </div>
 
     <!-- CTKM: pad 8,16 · Frame 28 pad 12 · bg neutral/100 · rounded-4 -->
@@ -2466,7 +2540,7 @@ function screenPDP5() {
 
   <!-- Sticky CTA (fixed): 64px · pad 0,16 · bg card · _btn 358x44 bg primary · Medium 12 -->
   <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
-    <button data-add="pdp" class="w-full h-11 rounded-sm bg-primary text-primary-foreground text-[14px] font-medium leading-5 press">Thêm vào giỏ hàng</button>
+    <button data-add="pdp" class="w-full h-11 rounded-sm bg-primary text-primary-foreground text-[14px] font-medium leading-5 btn-p press">Thêm vào giỏ hàng</button>
   </div>`;
 }
 
@@ -2542,7 +2616,7 @@ function screenPDP6() {
         </div>
         <!-- Select & Combobox: 358x44 · pad 9.5,8 · stroke #e5e5e5 · r4 -->
         <div class="relative">
-          <button type="button" data-size-trigger="pdp6" class="w-full h-11 bg-input border border-border rounded-sm pl-2 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left press">
+          <button type="button" data-size-trigger="pdp6" class="w-full h-11 bg-input border border-border rounded-sm pl-2 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left btn-o press">
             <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
           </button>
           <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
@@ -2553,7 +2627,7 @@ function screenPDP6() {
     <!-- Button slot: pad 16 · gap 8 · stroke sw=0 -->
     <div id="pdpCta" class="flex flex-col gap-2 p-4 rise">
       <!-- Button 358x48 · r2 · pad 8,24 · Label Medium 14/20 ls .2% #fafafa CENTER -->
-      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary px-6 flex items-center justify-center gap-2 press">
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary px-6 flex items-center justify-center gap-2 btn-p press">
         <span class="text-[14px] font-medium leading-5 tracking-[0.002em] text-primary-foreground text-center">Thêm vào giỏ hàng</span>
       </button>
     </div>
@@ -2597,7 +2671,7 @@ function screenPDP6() {
 
   <!-- Sticky CTA: 64px · pad 0,16 · _btn 358x44 bg #0a0a0a · Medium 12 ls .4% -->
   <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
-    <button data-add="pdp" class="w-full h-11 bg-primary flex items-center justify-center press">
+    <button data-add="pdp" class="w-full h-11 bg-primary flex items-center justify-center btn-p press">
       <span class="text-[14px] font-medium leading-5 tracking-[0.002em] text-primary-foreground">Thêm vào giỏ hàng</span>
     </button>
   </div>`;
@@ -2766,7 +2840,7 @@ function discountPanel(cartTotalNow) {
           <p class="text-[14px] font-medium leading-5 text-foreground">Mã giảm giá</p>
           <div class="flex gap-1">
             <input id="voucher" placeholder="Nhập voucher" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-            <button id="applyVoucher" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
+            <button id="applyVoucher" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground btn-s press">Áp dụng</button>
           </div>
           <div id="voucherChipSlot" class="${cartVoucherCode ? 'flex gap-2 flex-wrap' : 'hidden'}">${voucherChip()}</div>
         </div>
@@ -2809,7 +2883,7 @@ function screenCART() {
   const row = (c, i) => `
     <div class="cart-row flex gap-2 px-4 py-4" data-row="${i}">
       <div class="w-4 shrink-0 flex items-center">
-        <button class="chk on w-4 h-4 border border-border-3 rounded-xs shadow-sm flex items-center justify-center press" data-check>${I.tick}</button>
+        <button class="chk on w-4 h-4 border border-border bg-background-3 rounded-xs shadow-sm flex items-center justify-center btn-o press" data-check>${I.tick}</button>
       </div>
       <div class="w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
         <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
@@ -2904,7 +2978,7 @@ function screenCART() {
          đãi giảm giá, nên đặt bên dưới nút Đặt hàng (theo Figma 3428:55499,
          Frame 427319741) thay vì chung nhóm với Rewards/Mã giảm giá phía trên. -->
     <div id="cartCta" class="px-4 py-4 flex flex-col gap-4">
-      <button data-checkout class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center">Đặt hàng</button>
+      <button data-checkout class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press flex items-center justify-center">Đặt hàng</button>
       <div class="acc">
         <button class="acc-trigger w-full h-9 flex items-center justify-between press">
           <span class="text-[14px] font-medium leading-5 text-foreground">Bạn có phiếu mua hàng?</span>
@@ -2915,7 +2989,7 @@ function screenCART() {
             <p class="text-[12px] leading-4 text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
             <div class="flex gap-1">
               <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-              <button id="applyPbh" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
+              <button id="applyPbh" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground btn-s press">Áp dụng</button>
             </div>
             <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
           </div>
@@ -2929,7 +3003,7 @@ function screenCART() {
   </div>
 
   <div id="cartStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
-    <button data-checkout class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-semibold tracking-wide press">Đặt hàng</button>
+    <button data-checkout class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-semibold tracking-wide btn-p press">Đặt hàng</button>
   </div>`;
 }
 
@@ -2975,7 +3049,7 @@ const afield = (label, attrs, ph, extra = '', labelCls = 'text-muted-foreground'
 
 /* nút chính: 358x40-44, r2, label Medium 14 #fafafa */
 const abtn = (label, attrs, h = 'h-11') => `
-  <button ${attrs} class="w-full ${h} rounded-xs bg-primary text-primary-foreground text-[14px] font-medium tracking-wide press flex items-center justify-center gap-2">${label}</button>`;
+  <button ${attrs} class="w-full ${h} rounded-xs bg-primary text-primary-foreground text-[14px] font-medium tracking-wide btn-p press flex items-center justify-center gap-2">${label}</button>`;
 
 /* Nav của luồng auth. Trước đây hàng này là [back] + tiêu đề, nhưng MỌI view
    đều có sẵn h2 cùng nội dung ngay bên dưới ("Đăng nhập", "Xác thực OTP"…) nên
@@ -3059,7 +3133,7 @@ function viewOtp() {
     </div>
     <div class="flex flex-col gap-4">
       ${abtn('Xác nhận', 'data-auth-verify', 'h-10')}
-      <button id="otpResend" class="w-full h-10 rounded-xs bg-secondary border border-border text-[14px] font-medium text-foreground press" disabled>Nhận lại mã (<span id="otpTimer">60</span>s)</button>
+      <button id="otpResend" class="w-full h-10 rounded-xs bg-secondary border border-border text-[14px] font-medium text-foreground btn-s press" disabled>Nhận lại mã (<span id="otpTimer">60</span>s)</button>
     </div>
     <div class="flex items-center justify-center gap-1">
       <span class="text-[14px] leading-5 text-muted-foreground">Đã có tài khoản?</span>
@@ -3109,7 +3183,7 @@ function viewSetPass() {
       </div>
       <p id="pwHint" class="text-[12px] leading-4 text-muted-foreground">Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật</p>
     </div>
-    ${abtn('CẬP NHẬT MẬT KHẨU', 'data-login-submit')}
+    ${abtn('Cập nhật mật khẩu', 'data-login-submit')}
   </div>`;
 }
 
@@ -3142,7 +3216,7 @@ function richRadio(id, label, sub, on, icon) {
      giữa. mt-0.5 của nút radio cũng chỉ cần khi canh mép trên. */
   const single = !sub;
   return `
-  <button class="opt ${on ? 'on' : ''} w-full flex ${single ? 'items-center' : 'items-start'} gap-2 border border-border rounded-xs p-3 text-left press" data-opt="${id}">
+  <button class="opt ${on ? 'on' : ''} w-full flex ${single ? 'items-center' : 'items-start'} gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-opt="${id}">
     <span class="radio ${on ? 'on' : ''} w-4 h-4 ${single ? '' : 'mt-0.5 '}rounded-full border border-border-3 flex items-center justify-center shrink-0">
       <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
     </span>
@@ -3300,7 +3374,7 @@ const pickField = (label, ph, key, val) => `
     <div class="px-4 py-2 flex flex-col gap-2.5">
       <label for="pk-${key}" class="text-[14px] font-medium leading-5 text-foreground">${label}</label>
       <div class="relative">
-        <button type="button" id="pk-${key}" data-pick="${key}" aria-haspopup="dialog" class="w-full h-10 bg-background border border-border rounded-xs pl-2 pr-9 text-[14px] text-left flex items-center press transition-colors focus:border-primary">
+        <button type="button" id="pk-${key}" data-pick="${key}" aria-haspopup="dialog" class="w-full h-10 bg-background border border-border rounded-xs pl-2 pr-9 text-[14px] text-left flex items-center btn-o press transition-colors focus:border-primary">
           <span class="pick-label truncate ${val ? 'text-foreground' : 'text-muted-foreground'}">${val || ph}</span>
         </button>
         <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
@@ -3316,7 +3390,7 @@ const pickField = (label, ph, key, val) => `
    đang có chạy y nguyên. */
 function storeOpt(name, addr, hours, on) {
   return `
-  <button type="button" role="radio" aria-checked="${on}" class="opt ${on ? 'on' : ''} w-full flex items-start gap-2 border border-border rounded-xs p-3 text-left press" data-opt="store:${name}">
+  <button type="button" role="radio" aria-checked="${on}" class="opt ${on ? 'on' : ''} w-full flex items-start gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-opt="store:${name}">
     <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
       <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
     </span>
@@ -3361,7 +3435,7 @@ function ckPickupOpen() {
     ${ckStore ? `
     <div id="ckRecipient">
       <div class="px-4 pt-4 pb-1">
-        <p class="text-[12px] leading-4 uppercase tracking-wide text-muted-foreground">Thông tin người nhận</p>
+        <p class="text-[12px] leading-4 tracking-wide text-muted-foreground">Thông tin người nhận</p>
       </div>
       ${field('Họ và tên','Nhập họ và tên','', { val: ckName, key: 'name', auto: 'name' })}
       ${field('Số điện thoại','0 1234 5678','tel', { val: ckPhone, key: 'phone', auto: 'tel' })}
@@ -3371,7 +3445,7 @@ function ckPickupOpen() {
         <p class="text-[13px] leading-5 text-secondary-foreground">Đơn hàng được giữ tại cửa hàng trong 3 ngày kể từ khi có thông báo sẵn sàng nhận.</p>
       </div>
       <div class="px-4 py-4">
-        <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center" data-next="1" data-require="store">Xác nhận</button>
+        <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press flex items-center justify-center" data-next="1" data-require="store">Xác nhận</button>
       </div>
     </div>` : ''}`;
 }
@@ -3398,8 +3472,8 @@ function screenCHECKOUT() {
       <p class="text-[18px] font-medium leading-7 text-foreground">Đơn ${ckOrderId} đã được đặt</p>
       <p class="text-[14px] leading-5 text-muted-foreground">Đơn hàng đang được xử lý. Bạn không cần đặt lại.</p>
       <div class="w-full flex flex-col gap-2 pt-2">
-        <button data-order="0" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press">Xem chi tiết đơn hàng</button>
-        <button data-nav="plp" data-reset class="w-full h-12 rounded-xs border border-border text-foreground text-[14px] font-medium press">Tiếp tục mua sắm</button>
+        <button data-order="0" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press">Xem chi tiết đơn hàng</button>
+        <button data-nav="plp" data-reset class="w-full h-12 rounded-xs border border-border bg-background text-foreground text-[14px] font-medium btn-o press">Tiếp tục mua sắm</button>
       </div>
     </div>
   </div>`;
@@ -3435,7 +3509,7 @@ function screenCHECKOUT() {
   const s0open = ckAuth ? `
     <div class="px-4 py-2 flex flex-col gap-3" id="addrOpts">
       ${ADDRESSES.map((a, i) => `
-      <button class="opt ${ckAddr === i ? 'on' : ''} w-full flex items-start gap-2 border border-border rounded-xs p-3 text-left press" data-addr="${i}">
+      <button class="opt ${ckAddr === i ? 'on' : ''} w-full flex items-start gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-addr="${i}">
         <span class="radio ${ckAddr === i ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
           <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
         </span>
@@ -3444,7 +3518,7 @@ function screenCHECKOUT() {
           <span class="block text-[13px] leading-5 text-secondary-foreground">${a.line}</span>
         </span>
       </button>`).join('')}
-      <button class="opt ${ckAddr === 'new' ? 'on' : ''} w-full flex items-center gap-2 border border-border rounded-xs p-3 text-left press" data-addr="new">
+      <button class="opt ${ckAddr === 'new' ? 'on' : ''} w-full flex items-center gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-addr="new">
         <span class="radio ${ckAddr === 'new' ? 'on' : ''} w-4 h-4 rounded-full border border-border-3 flex items-center justify-center shrink-0">
           <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
         </span>
@@ -3453,11 +3527,11 @@ function screenCHECKOUT() {
     </div>
     ${ckAddr === 'new' ? addrForm : ''}
     <div class="px-4 py-4">
-      <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center" data-next="1">Xác nhận</button>
+      <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press flex items-center justify-center" data-next="1">Xác nhận</button>
     </div>` : `
     ${addrForm}
     <div class="px-4 py-4">
-      <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center" data-next="1">Xác nhận</button>
+      <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press flex items-center justify-center" data-next="1">Xác nhận</button>
     </div>`;
   const s0done = `<div id="ckShipDone" class="px-4 py-2 flex flex-col gap-1">${ckShipDoneHTML()}</div>`;
 
@@ -3483,7 +3557,7 @@ function screenCHECKOUT() {
       ${richRadio('fast','Giao hàng nhanh - 25,000đ', ETA, false)}
     </div>
     <div class="px-4 py-4">
-      <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center" data-next="2">Xác nhận</button>
+      <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press flex items-center justify-center" data-next="2">Xác nhận</button>
     </div>`;
   const s1done = `
     <div class="px-4 py-2 flex flex-col gap-1">
@@ -3534,7 +3608,7 @@ function screenCHECKOUT() {
       </div>
     </div>
     <div class="px-4 pb-4">
-      <button data-nav="done" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] press flex items-center justify-center">Đặt hàng</button>
+      <button data-nav="done" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press flex items-center justify-center">Đặt hàng</button>
     </div>`;
 
   return `
@@ -3662,7 +3736,7 @@ function screenDONE() {
           </svg>
         </div>
         <div class="rise">
-          <p class="text-[10px] tracking-[0.22em] uppercase text-muted-foreground mb-1.5">Xác nhận</p>
+          <p class="text-[10px] tracking-[0.22em] text-muted-foreground mb-1.5">Xác nhận</p>
           <h2 class="text-[22px] font-medium text-foreground leading-snug mb-2">Đặt hàng thành công</h2>
           <p class="text-[13px] text-muted-foreground leading-relaxed">Đơn hàng đang được xử lý.<br>Cảm ơn bạn đã tin tưởng mua sắm.</p>
         </div>
@@ -3680,8 +3754,8 @@ function screenDONE() {
       </div>
 
       <div class="w-full flex flex-col gap-2.5 rise">
-        <button data-nav="plp" data-reset class="w-full text-primary-foreground text-[13px] font-semibold py-3.5 rounded-xs tracking-wider bg-primary press">Tiếp tục mua sắm</button>
-        <button data-order="0" class="w-full text-[13px] font-medium py-3.5 rounded-xs tracking-wider border border-border text-mid-alt press hover:bg-accent-0 transition-colors">Theo dõi đơn hàng</button>
+        <button data-nav="plp" data-reset class="w-full text-primary-foreground text-[13px] font-semibold py-3.5 rounded-xs tracking-wider bg-primary btn-p press">Tiếp tục mua sắm</button>
+        <button data-order="0" class="w-full text-[13px] font-medium py-3.5 rounded-xs tracking-wider border border-border text-mid-alt btn-o press hover:bg-accent-0 transition-colors">Theo dõi đơn hàng</button>
       </div>
     </div>
   </div>`;
@@ -3798,7 +3872,7 @@ function plpFilterEmptyHTML() {
     <div class="col-span-full py-14 px-4 flex flex-col items-center gap-3 text-center">
       <p class="text-[16px] font-light leading-6 text-foreground">Không có sản phẩm nào khớp bộ lọc</p>
       <p class="text-[14px] leading-5 text-muted-foreground">Thử bỏ một vài điều kiện để xem thêm sản phẩm.</p>
-      <button data-clear-filters class="h-9 px-4 rounded-xs border border-border text-[14px] font-medium leading-5 text-foreground press">Xóa tất cả bộ lọc</button>
+      <button data-clear-filters class="h-9 px-4 rounded-xs border border-border bg-background text-[14px] font-medium leading-5 text-foreground btn-o press">Xóa tất cả bộ lọc</button>
     </div>`;
 }
 /* Nội dung #plpGrid: thẻ sản phẩm, hoặc khối 0-kết-quả khi bộ lọc lọc sạch. */
@@ -3955,7 +4029,7 @@ function filterBody(beauty) {
   /* chip dung tích dùng đúng class .fsize để tái dụng luôn handler chọn nhiều.
      w-full vì container là grid 5 cột (sizeGrid), không còn flex-wrap. */
   const chips = (arr) => arr.map(s => `
-    <button class="fsize chip w-full h-9 px-1 rounded-xs border border-border text-[14px] font-medium text-foreground press" data-size>${s}</button>`).join('');
+    <button class="fsize chip w-full h-9 px-1 rounded-xs border border-border bg-background text-[14px] font-medium text-foreground btn-o press" data-size>${s}</button>`).join('');
   /* Tối đa 5 ô/dòng — giống lưới size ở PDP (repeat(5,1fr)) */
   const sizeGrid = inner => `<div class="px-4 pb-6 grid gap-2" style="grid-template-columns:repeat(5,1fr)">${inner}</div>`;
   const sizes   = chips(FILTER_SIZES);
@@ -4022,8 +4096,8 @@ function filterSheet() {
            Áp dụng: kèm SỐ KẾT QUẢ, cập nhật mỗi lần tick — số lấy từ matchProducts()
            nên khớp đúng lưới. (KHÔNG dùng backtick trong comment: template literal.) -->
       <div class="shrink-0 bg-background px-4 pt-4 safe-b flex gap-3">
-        <button id="filterReset" class="hidden h-12 px-6 rounded-xs bg-background border border-border text-[16px] text-foreground press shrink-0">Đặt lại</button>
-        <button id="filterApply" class="h-12 flex-1 rounded-xs bg-primary text-primary-foreground text-[16px] press">Áp dụng<span id="filterApplyCount"></span></button>
+        <button id="filterReset" class="hidden h-12 px-6 rounded-xs bg-background border border-border text-[16px] text-foreground btn-o press shrink-0">Đặt lại</button>
+        <button id="filterApply" class="h-12 flex-1 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press">Áp dụng<span id="filterApplyCount"></span></button>
       </div>
     </div>
   </div>`;
@@ -4325,8 +4399,7 @@ function wireFilterBody(sh) {
    vào screenPOLICY(key) + POLICY_DATA, giống cách desktop gom PDP_DATA.
 
    Số đo lấy đúng Figma: container VERTICAL gap 24, pad 24/16/48/16 —
-   [tab pill cuộn ngang h28 r-full pad 6/12, 12px] → [tiêu đề 24 SemiBold
-   uppercase lh32 + "Cập nhật lần cuối" 12 muted] → [mục lục pad-y 8,
+   [tab pill cuộn ngang h28 r-full pad 6/12, 12px] → [tiêu đề 24 SemiBold  lh32 + "Cập nhật lần cuối" 12 muted] → [mục lục pad-y 8,
    viền TRÊN+DƯỚI 1px #e5e5e5, item h24 pad-y 4 gap 8, 12px muted] →
    [stack section gap 32; mỗi section gap 12].
 
@@ -4420,12 +4493,12 @@ function screenPOLICY(key) {
         <div class="drag-x flex-1 min-w-0 flex gap-2 overflow-x-auto no-scrollbar">
           ${POLICY_TABS.map(([k, label]) => k === key
             ? `<span class="shrink-0 h-7 px-3 rounded-full bg-primary flex items-center text-[12px] font-semibold leading-4 text-primary-foreground">${label}</span>`
-            : `<button data-nav="${k}" class="shrink-0 h-7 px-3 rounded-full bg-secondary flex items-center text-[12px] font-medium leading-4 text-secondary-foreground press">${label}</button>`
+            : `<button data-nav="${k}" class="shrink-0 h-7 px-3 rounded-full bg-secondary flex items-center text-[12px] font-medium leading-4 text-secondary-foreground btn-s press">${label}</button>`
           ).join('')}
         </div>
         <div class="relative shrink-0">
           <button id="policyMore" aria-label="Xem tất cả trang chính sách" aria-expanded="false"
-                  class="w-7 h-7 rounded-full bg-secondary flex items-center justify-center press">${I.chevD('#0a0a0a')}</button>
+                  class="w-7 h-7 rounded-full bg-secondary flex items-center justify-center btn-s press">${I.chevD('#0a0a0a')}</button>
           <div id="policyMenu" class="hidden absolute mt-1 bg-background border border-border shadow-lg z-50" style="right:0;top:100%;width:220px">
             ${POLICY_TABS.map(([k, label]) => k === key
               ? `<button data-policy-close class="w-full text-left px-4 h-11 flex items-center justify-between text-[14px] font-medium text-foreground">
@@ -4620,7 +4693,7 @@ function wireProductCards(root) {
 function renderPlpGrid(root) {
   const grid = root.querySelector('#plpGrid');
   if (!grid) return;
-  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'NEW' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
+  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'New' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
   const list = sortedProducts();
   grid.innerHTML = plpGridInner(list, card);
   if (list.length) wireProductCards(grid);
@@ -4649,7 +4722,7 @@ const I18N = {
   'Không có sản phẩm nào khớp bộ lọc':'No products match your filters',
   'Thử bỏ một vài điều kiện để xem thêm sản phẩm.':'Try removing a few filters to see more products.',
   'Xóa tất cả bộ lọc':'Clear all filters',
-  'Áp dụng':'Apply', 'Xác nhận':'Confirm', 'XÁC NHẬN':'CONFIRM', 'Hoàn tất':'Done', 'Chi tiết':'Details',
+  'Áp dụng':'Apply', 'Xác nhận':'Confirm', 'Hoàn tất':'Done', 'Chi tiết':'Details',
   'Thu gọn':'Show less', 'Xem thêm':'Show more', 'Xem chi tiết':'See details', 'Chọn tất cả':'Select all', 'Mặc định':'Default',
   'Từ':'From', 'Đến':'To', 'Còn':'Only', 'và':'and', 'Khác':'Other', 'Miễn phí':'Free',
   'Hiển thị 1 cột':'Show 1 column', 'Hiển thị 2 cột':'Show 2 columns',
@@ -4805,7 +4878,7 @@ const I18N = {
   'Đặt mật khẩu mới':'Set a new password', 'Mật khẩu mới':'New password', 'Nhập mật khẩu mới':'Enter new password',
   'Xác nhận mật khẩu mới':'Confirm new password', 'Nhập lại mật khẩu mới':'Re-enter new password',
   'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.':'Password must be at least 8 characters with uppercase, lowercase and a number.',
-  'Độ mạnh mật khẩu:':'Password strength:', 'CẬP NHẬT MẬT KHẨU':'UPDATE PASSWORD',
+  'Độ mạnh mật khẩu:':'Password strength:', 'Cập nhật mật khẩu':'Update password',
   'Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật':'Medium — add a special character to strengthen it',
   'Đăng nhập thành công':'Signed in successfully', 'Đăng ký thành công':'Account created',
   'Để tận hưởng những ưu đãi độc quyền, Quý khách vui lòng sử dụng số điện thoại đã đăng ký chương trình Khách hàng thân thiết tại hệ thống cửa hàng DAFC khi mua sắm trực tuyến tại DAFC Online.':'To enjoy exclusive privileges, please use the phone number registered with the DAFC loyalty programme at our stores when shopping online at DAFC Online.',
@@ -4905,7 +4978,6 @@ const I18N = {
   // 'Xem chi tiết' (đã có -> 'See details'): entry sau đè entry trước, khai
   // lại là đổi luôn bản dịch của menu. Tiêu đề card vì vậy dùng dạng IN HOA
   // "KHUYẾN MÃI" cho cả 2 layout — trùng với Figma 2275:505057 luôn.
-  'KHUYẾN MÃI':'PROMOTIONS',
   'Mua 2 giảm thêm 5%, mua 3 giảm thêm 10%':'Buy 2 for an extra 5% off, buy 3 for an extra 10% off',
   'Mua càng nhiều, giảm càng sâu':'Buy more, save more', 'Mức giảm':'Discount amount',
   'Voucher đến 1.5tr cho đơn từ 8 triệu':'Vouchers up to 1.5M on orders over 8 million',
@@ -5412,6 +5484,23 @@ function wireAddressPickers(root) {
   });
 }
 
+/* ── Chặn bấm 2 lần khi nút đang "loading" ──
+   10 handler trước đây gán spinner vào innerHTML rồi setTimeout 700ms mà KHÔNG
+   disabled, nên bấm 2 lần là chạy 2 lần (đặt 2 đơn, gửi 2 OTP...). Giờ state
+   Disabled của component (opacity .5) mới có ý nghĩa thực: btnBusy() trả về true
+   nếu nút đang bận -> handler return sớm; btnDone() trả nút về bình thường. */
+function btnBusy(btn) {
+  if (!btn || btn.dataset.busy) return true;
+  btn.dataset.busy = '1';
+  btn.disabled = true;
+  return false;
+}
+function btnDone(btn) {
+  if (!btn) return;
+  delete btn.dataset.busy;
+  btn.disabled = false;
+}
+
 /* ── Wire behaviour for a screen ── */
 function wire(root) {
   wirePasswordToggles(root);
@@ -5527,9 +5616,10 @@ function wire(root) {
       if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = ckAuth ? 1 : 0; ckMaxStep = ckStep; }
       if (t === 'back') { window.history.back(); return; }
       if (el.hasAttribute('data-loading')) {
+        if (btnBusy(el)) return;
         const txt = el.innerHTML;
         el.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#fff" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>`;
-        setTimeout(() => { el.innerHTML = txt; go(t); }, 700);
+        setTimeout(() => { el.innerHTML = txt; btnDone(el); go(t); }, 700);
         return;
       }
       if (t === 'plp') { goPlp({ type: 'brand' }); return; } // logo/link chung -> PLP brand mặc định
@@ -5660,10 +5750,11 @@ function wire(root) {
     root.querySelectorAll('[data-login-submit]').forEach(btn => {
     btn.addEventListener('click', () => {
       ckAuth = true; ckStep = 1; ckMaxStep = Math.max(ckMaxStep, 1);
+      if (btnBusy(btn)) return;
       const html = btn.innerHTML;
       btn.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
       const back = loginFrom || 'checkout'; // luôn trả về đúng màn đã mở đăng nhập, không ép về checkout
-      setTimeout(() => { btn.innerHTML = html; authView = 'login'; go(back); toast(back === 'checkout' ? 'Đăng nhập thành công' : 'Đã đăng nhập · UserOne'); }, 700);
+      setTimeout(() => { btn.innerHTML = html; btnDone(btn); authView = 'login'; go(back); toast(back === 'checkout' ? 'Đăng nhập thành công' : 'Đã đăng nhập · UserOne'); }, 700);
     });
   });
 
@@ -6346,10 +6437,10 @@ function wire(root) {
         plpGrid.classList.toggle('grid-cols-2', cols === '2');
         plpGrid.classList.toggle('grid-cols-1', cols === '1');
       }
+      /* Figma 2903:44753: nút không chọn = opacity .5, KHÔNG đổi màu chữ
+         (trước đây toggle text-foreground/text-border-4). */
       root.querySelectorAll('[data-grid]').forEach(x => {
-        const on = x.dataset.grid === cols;
-        x.classList.toggle('text-foreground', on);
-        x.classList.toggle('text-border-4', !on);
+        x.classList.toggle('opacity-50', x.dataset.grid !== cols);
       });
     });
   });
@@ -6384,7 +6475,7 @@ function cartEmptyHTML() {
   return `<div class="flex flex-col items-center gap-3 py-16 px-8 text-center">
       ${I.bag}<p class="text-[15px] font-medium text-foreground">Giỏ hàng trống</p>
       <p class="text-[13px] text-muted-foreground">Hãy khám phá bộ sưu tập mới nhất.</p>
-      <button data-nav="plp" class="mt-2 h-10 px-6 bg-primary text-primary-foreground text-[13px] font-semibold rounded-xs press">Tiếp tục mua sắm</button></div>`;
+      <button data-nav="plp" class="mt-2 h-10 px-6 bg-primary text-primary-foreground text-[13px] font-semibold rounded-xs btn-p press">Tiếp tục mua sắm</button></div>`;
 }
 
 function refreshCartCount(root) {
@@ -6496,6 +6587,30 @@ const FONTS = [
 ];
 let currentFont = 'montserrat';
 
+/* ── Theme (đổi trong popover Cài đặt, cùng kiểu với phông chữ) ──
+   [id, nhãn, class trên <html>, mô tả ngắn]. Class rỗng = mode D mặc định
+   (:root trong tokens.css). `theme-gm` là mode thứ 2 vốn đã có sẵn trong
+   tokens.css nhưng chưa ai bật — đưa vào đây luôn để so 3 bản cạnh nhau. */
+const THEMES = [
+  ['d',     'Mặc định',      '',             'Mode D — bản đang dùng'],
+  ['dplus', 'D+ improved',   'theme-dplus',  'Accent warm black, focus rõ hơn'],
+  ['gm',    'GM (nền xám)',  'theme-gm',     'Mode thứ 2 có sẵn trong tokens.css'],
+];
+let currentTheme = 'd';
+/* Gỡ mọi class theme rồi gắn class của theme đích. Gọi cả lúc bấm chọn lẫn
+   lúc khôi phục từ hash khi đổi bản mobile/desktop. */
+function applyTheme(id) {
+  const t = THEMES.find(x => x[0] === id);
+  if (!t) return null;
+  currentTheme = t[0];
+  const html = document.documentElement;
+  THEMES.forEach(x => { if (x[2]) html.classList.remove(x[2]); });
+  if (t[2]) html.classList.add(t[2]);
+  document.querySelectorAll('#settingsPanel [data-theme]').forEach(x =>
+    x.querySelector('.th-tick').classList.toggle('opacity-0', x.dataset.theme !== t[0]));
+  return t;
+}
+
 document.body.insertAdjacentHTML('beforeend', `
   <button id="settingsFab" aria-label="Cài đặt hiển thị">
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -6508,7 +6623,7 @@ document.body.insertAdjacentHTML('beforeend', `
     <div class="sp-backdrop"></div>
     <div class="sp-card" role="dialog" aria-label="Cài đặt phông chữ">
       <div class="px-3 pt-3 pb-2">
-        <p class="text-[11px] tracking-[0.12em] uppercase text-muted-foreground">Ngôn ngữ</p>
+        <p class="text-[11px] tracking-[0.12em] text-muted-foreground">Ngôn ngữ</p>
       </div>
       <div class="px-3 pb-3">
         <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Ngôn ngữ">
@@ -6518,7 +6633,23 @@ document.body.insertAdjacentHTML('beforeend', `
       </div>
       <div class="h-px bg-border mx-3"></div>
       <div class="px-3 pt-3 pb-2">
-        <p class="text-[11px] tracking-[0.12em] uppercase text-muted-foreground">Phông chữ</p>
+        <p class="text-[11px] tracking-[0.12em] text-muted-foreground">Giao diện</p>
+      </div>
+      <div id="themeList" class="pb-2">
+        ${THEMES.map(([id, label, cls, note]) => `
+          <button data-theme="${id}" class="themeopt w-full min-h-11 px-3 py-2 flex items-center justify-between gap-3 press">
+            <span class="flex flex-col items-start min-w-0">
+              <span class="text-[14px] leading-5 text-foreground">${label}</span>
+              <span class="text-[11px] leading-4 text-muted-foreground truncate">${note}</span>
+            </span>
+            <span class="th-tick w-4 h-4 shrink-0 ${id === currentTheme ? '' : 'opacity-0'}">
+              <svg viewBox="0 0 16 16" fill="none"><path d="m3.5 8.5 3 3 6-7" stroke="var(--general-foreground)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </button>`).join('')}
+      </div>
+      <div class="h-px bg-border mx-3"></div>
+      <div class="px-3 pt-3 pb-2">
+        <p class="text-[11px] tracking-[0.12em] text-muted-foreground">Phông chữ</p>
       </div>
       <div id="fontList" class="pb-2">
         ${FONTS.map(([id, label, stack]) => `
@@ -6553,6 +6684,15 @@ document.body.insertAdjacentHTML('beforeend', `
       });
       closeP();
       toast(to === 'en' ? 'Switched to English' : 'Đã chuyển sang Tiếng Việt');
+    });
+  });
+
+  panel.querySelectorAll('[data-theme]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = applyTheme(btn.dataset.theme);
+      if (!t) return;
+      closeP();
+      toast('Giao diện: ' + t[1]);
     });
   });
 
@@ -6797,7 +6937,7 @@ document.body.insertAdjacentHTML('beforeend', `
         <p id="nsErr" class="text-[12px] leading-4 text-destructive hidden">Vui lòng nhập email hoặc số điện thoại.</p>
       </div>
       <div class="shrink-0 px-4 pt-4 pb-4 flex flex-col gap-4">
-        <button id="nsSubmit" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press">Đăng ký nhận thông báo</button>
+        <button id="nsSubmit" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium btn-p press">Đăng ký nhận thông báo</button>
         <p class="text-[11px] leading-4 text-muted-foreground text-center">Thông tin chỉ dùng để báo hàng về, không dùng cho mục đích khác.</p>
       </div>
       <div class="safe-b"></div>
@@ -6913,7 +7053,7 @@ function quickAddBody(p, idx, sel = 0) {
              cho ô màu hex 36px trước đây — để quick add và PDP nhìn như một. -->
         <div class="flex gap-2" data-qa-colors>
           ${p.colors.map((c, ci) => `
-            <button class="sw w-11 h-11 rounded-xs overflow-hidden shrink-0 border ${ci===sel ? 'on' : 'border-transparent'} bg-secondary press" data-cw="${ci}" data-name="${c.name}">
+            <button class="sw w-11 h-11 rounded-xs overflow-hidden shrink-0 border ${ci===sel ? 'on' : 'border-transparent'} bg-secondary btn-s press" data-cw="${ci}" data-name="${c.name}">
               <img src="${A}${gallery[ci] || p.img}" class="w-full h-full object-cover" alt="${c.name}">
             </button>`).join('')}
         </div>
@@ -6942,7 +7082,7 @@ function quickAddBody(p, idx, sel = 0) {
 function quickAddCta(p) {
   return `
     <div class="px-4 pt-4 pb-4">
-      <button id="qaAdd" data-quick-img="${A}${p.img}" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium press">Thêm vào giỏ hàng</button>
+      <button id="qaAdd" data-quick-img="${A}${p.img}" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium btn-p press">Thêm vào giỏ hàng</button>
     </div>`;
 }
 
@@ -7050,11 +7190,11 @@ document.body.insertAdjacentHTML('beforeend', `
           <button id="lpForgot" class="w-full text-right text-[12px] leading-4 underline text-foreground press">Quên mật khẩu?</button>
         </div>
         <div class="p-4">
-          <button id="lpLogin" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium press flex items-center justify-center">Đăng nhập</button>
+          <button id="lpLogin" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium btn-p press flex items-center justify-center">Đăng nhập</button>
         </div>
         <p class="px-4 text-center text-[14px] font-medium leading-5 text-foreground">Hoặc</p>
         <div class="p-4">
-          <button id="lpGuest" class="w-full h-12 rounded-xs border border-border text-[16px] leading-5 font-medium text-foreground press flex items-center justify-center" style="background:var(--unofficial-outline)">Mua hàng không đăng nhập</button>
+          <button id="lpGuest" class="w-full h-12 rounded-xs border border-border bg-background text-[16px] leading-5 font-medium text-foreground btn-o press flex items-center justify-center" style="background:var(--unofficial-outline)">Mua hàng không đăng nhập</button>
         </div>
         <div class="safe-b"></div>
       </div>
@@ -7083,10 +7223,11 @@ document.body.insertAdjacentHTML('beforeend', `
   // Đăng nhập: như flow login-từ-giỏ (ckAuth + sang checkout)
   lp.querySelector('#lpLogin').addEventListener('click', () => {
     const btn = lp.querySelector('#lpLogin');
+    if (btnBusy(btn)) return;
     const html = btn.innerHTML;
     btn.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
     setTimeout(() => {
-      btn.innerHTML = html;
+      btn.innerHTML = html; btnDone(btn);
       ckAuth = true; ckStep = 1; ckMaxStep = Math.max(ckMaxStep, 1);
       closeLP();
       go('checkout');
@@ -7134,7 +7275,7 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>
       </div>
       <div class="px-4 pt-2 pb-4 flex flex-col gap-2.5 shrink-0">
-        <button id="ccGoCart" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium press">Xem giỏ hàng</button>
+        <button id="ccGoCart" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium btn-p press">Xem giỏ hàng</button>
         <button id="ccContinue" class="w-full h-9 rounded-xs text-[14px] leading-5 font-medium press" style="color:var(--unofficial-ghost-foreground)">Tiếp tục mua sắm</button>
       </div>
       <div class="safe-b"></div>
@@ -7207,7 +7348,7 @@ document.body.insertAdjacentHTML('beforeend', `
       <div id="szList" class="flex-1 min-h-0 flex flex-col overflow-y-auto no-scrollbar"></div>
       <button id="szGuide" class="w-full min-h-9 px-4 py-2 text-left text-[14px] leading-5 text-secondary-foreground underline press shrink-0">Bảng kích thước</button>
       <div class="p-4 shrink-0">
-        <button id="szAdd" disabled class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 press" style="opacity:.4">Thêm vào giỏ hàng</button>
+        <button id="szAdd" disabled class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 btn-p press">Thêm vào giỏ hàng</button>
       </div>
       <div class="safe-b"></div>
     </div>
@@ -7349,10 +7490,10 @@ document.body.insertAdjacentHTML('beforeend', `
           <p class="text-[13px] font-light leading-5 text-foreground">Trước khi Quý khách đồng ý, chỉ các Cookie cần thiết để website hoạt động mới được sử dụng. Bạn có thể chấp nhận hoặc từ chối các cookie tùy chọn bên dưới. Bạn cũng có thể thay đổi lựa chọn bất kỳ lúc nào thông qua <button data-cg-prefs class="underline text-foreground press">Chính sách Cookie</button></p>
         </div>
         <div class="flex flex-col gap-2">
-          <button data-cg-all class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[13px] font-medium press">Đồng ý tất cả</button>
+          <button data-cg-all class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[13px] font-medium btn-p press">Đồng ý tất cả</button>
           <div class="flex gap-2">
-            <button data-cg-none class="flex-1 h-12 rounded-xs border border-border text-foreground text-[13px] font-medium press">Từ chối tất cả</button>
-            <button data-cg-prefs class="flex-1 h-12 rounded-xs border border-border text-foreground text-[13px] font-medium press">Tùy chọn cookies</button>
+            <button data-cg-none class="flex-1 h-12 rounded-xs border border-border bg-background text-foreground text-[13px] font-medium btn-o press">Từ chối tất cả</button>
+            <button data-cg-prefs class="flex-1 h-12 rounded-xs border border-border bg-background text-foreground text-[13px] font-medium btn-o press">Tùy chọn cookies</button>
           </div>
         </div>
       </div>
@@ -7378,7 +7519,7 @@ document.body.insertAdjacentHTML('beforeend', `
         <!-- Ở view này hành động chính là LƯU lựa chọn vừa bật/tắt, nên nó giữ
              nút primary; đồng ý/từ chối tất cả xuống hàng ghost bên dưới. -->
         <div class="shrink-0 px-4 pt-4 pb-4 flex flex-col gap-1">
-          <button data-cg-save class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press">Lưu lựa chọn</button>
+          <button data-cg-save class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium btn-p press">Lưu lựa chọn</button>
           <div class="flex">
             <button data-cg-all class="flex-1 h-11 text-[13px] font-medium text-foreground press">Đồng ý tất cả</button>
             <button data-cg-none class="flex-1 h-11 text-[13px] font-medium text-foreground press">Từ chối tất cả</button>
@@ -7543,6 +7684,8 @@ if (!RESP.swapped) {
     });
   }
 
+  if (st.theme) applyTheme(st.theme);
+
   const f = FONTS.find(x => x[0] === st.font);
   if (f) {
     currentFont = f[0];
@@ -7571,7 +7714,7 @@ if (!RESP.swapped) {
   }
 
   /* Kéo cửa sổ rộng ≥ 768 -> sang bản desktop, mang theo màn + cài đặt */
-  RESP.watch(() => [current, LANG, currentFont]);
+  RESP.watch(() => [current, LANG, currentFont, currentTheme]);
 }
 </script>
 </body>

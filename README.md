@@ -407,6 +407,12 @@ Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI
     - **Size Regular, KHÔNG phải Large (đổi 12/08/2026 theo yêu cầu user, kèm link node `2903:44753`)**: trước đó dùng 48/24 + chữ 16 nên thanh filter nặng hơn cả nav. Giờ cả thanh cùng một bậc `h-9 px-4` — trùng `Button/Ghost Muted/Regular` của subheader nav (h-36, padding 8/16) và trùng luôn nút Sắp xếp / density vốn đã là h-9 từ đầu (bar này trước đây tự lệch bậc giữa nửa trái và nửa phải). Bar cao 80 → **68** (`py-4` + 36). Chip cũng gọn lại nên ở 1440 hết cần cuộn ngang (666px content vs 849px trước).
     - **Hàng chip "đang áp dụng" (`#plpActiveFilters`) VẪN Large 48/24** — đó là frame Figma riêng (`2910:111376`), không nằm trong yêu cầu này. Nếu muốn đồng bộ xuống Regular thì nói rõ.
     - ⚠️ Comment trong `filterBar()` **không được chứa dấu backtick** — cả khối là template literal, backtick sẽ cắt chuỗi và làm chết toàn bộ script (đã mắc đúng lỗi này khi ghi tên component `Button/Ghost Muted/Regular` vào comment).
+    - **Icon mật độ lưới vẽ lại theo Figma `2903:44753` (12/08/2026, cả 2 bản)** — đọc trực tiếp qua figma-console (Desktop Bridge), không đoán từ ảnh. Component set `plp` có 3 variant: `Platform=mb/Filter-bar` (390×96), `Platform=web/Filter-bar` và `Platform=web/Filtering` (đều 1440×**68** — xác nhận chiều cao 68 ở trên là đúng).
+      - **Desktop** (`I.gridCols4` / `I.gridCols3`, icon **20×20 nét 1px**, thay `I.grid2`/`I.grid1` vốn là icon của bản mobile): 4 cột = **2×2 ô 9.5 bo 2, cách nhau 1**; 3 cột = **3 cột dọc w6.11 bo 1.67, cách .83, cao hết 20**. Figma dùng stroke INSIDE nên SVG phải thụt `0.5` (rect 8.5 tại .5/11 · rect 5.11 tại .5/7.44/14.39) để nét 1px không bị cắt ở mép viewBox — đo lại mép ngoài khớp đúng 0..9.5/10.5..20 và 0..6.11/6.94..13.06/13.89..20.
+      - **Mobile** (`I.gridCols2` / `I.gridCols1`, icon **16×16**): 2 cột = `fi-tr-grid-two-alt` **dạng FILL**, path lấy nguyên từ Figma (2 tấm dọc); 1 cột = **1 ô 16×16 bo 5 nét 1px** (SVG: rect 15 tại .5, rx 4.5).
+      - Nhóm nút: Figma cho **2 nút 36×36 LIỀN NHAU (gap 0)** — desktop trước đây có `gap-2` nên nhóm rộng 96 thay vì 88; đã bỏ. Nhóm desktop 88 = pad 8 + 72 + pad 8 + gạch chia 1px bên phải (CSS ra 89 vì `border-r` cộng thêm 1px, lệch không thấy được). Nhóm mobile 72 = 2×36, gap 0, pad 0.
+      - Trạng thái không chọn = **`opacity-50`** ở cả 2 bản (mobile trước đây đổi màu chữ `text-foreground` ⇄ `text-border-4`, không đúng bản vẽ).
+      - ⚠️ Khi verify: nút có `transition-opacity` nên `getComputedStyle(...).opacity` bị đóng băng lúc pane không composite — kiểm bằng `classList.contains('opacity-50')`, đừng kết luận "state không đổi".
   - **Hàng chip bộ lọc đang áp dụng** (`2910:111376`): chip Secondary 48/24 nền `#f5f5f5` + ✕, cuối hàng "Xóa tất cả" (Figma ghi sai chính tả "Xoát"). State thật ở `plpFilters`, sinh từ nút Áp dụng của drawer Bộ lọc; bỏ chip / xóa tất cả đều re-render lưới.
   - **Grid**: `gap-x-1` row 16px, 4 cột (card 345×590, có swatch) hoặc 3 cột (card 461×695). Figma dùng 2 variant Card-item khác nhau (3 cột là bản `Default` không có swatch) — code **giữ swatch ở cả hai** vì `v2` là bản mới hơn.
   - **Tiến độ + Xem thêm** (`2237:18725` + Frame 46): "Bạn đã xem X trong Y sản phẩm" 14/20 `#737373` + track 240×2, rồi nút Xem thêm outline canh giữa. `PLP_TOTAL = 152` là tổng catalog demo.
@@ -452,6 +458,64 @@ Cỡ chữ **không** nằm trong `tokens07.json` — viết thẳng bằng util
 (Code dùng thêm 11 / 13 / 15 cho vài chỗ chữ phụ dày đặc — có sẵn từ trước, chưa rà.)
 
 **Không dùng 20px và 22px** — không có trong thang. Tiêu đề cấp section (h2 trong trang: "Giỏ hàng", "Thanh toán", "Bộ lọc", tên brand ở PDP, tiêu đề bottom sheet) dùng **18px**; tiêu đề trang full-screen (auth) dùng **24px Light**. Riêng heading section trong 3 trang chính sách dùng **16px** — xem mục "Trang tĩnh / chính sách".
+
+### State của Button — theo component Figma (12/08/2026)
+
+Nguồn: component set **Button** `10:11763` (trang tài liệu `10:11468`), đọc qua figma-console. **240 variant** = 2 `Roundness` × 6 `Variant` × 4 `Size` × 5 `State`.
+
+| Variant | Default | Hover | Active | Focus | Disabled |
+|---|---|---|---|---|---|
+| Primary | `#0a0a0a` / chữ `#fafafa` | `#262626` | `#171717` | + ring | opacity .5 |
+| Secondary | `#f5f5f5` / chữ `#262626` | `#fafafa` | `#e5e5e5` | + ring | opacity .5 |
+| Outline | nền **`#ffffff` đục**, viền `#e5e5e5` | **bỏ nền**, viền `#737373` | viền `#0a0a0a` **2px** | viền `#a3a3a3` + ring | nền `#f5f5f5`, opacity .5 |
+| Ghost | trong suốt, chữ **`#525252`** | nền đen **5%** + chữ `#0a0a0a` | chữ `#0a0a0a` | + ring | opacity .5 |
+| Ghost Muted | trong suốt, chữ `#525252` | **chỉ đổi chữ** → `#0a0a0a` | chữ `#0a0a0a` | + ring | opacity .5 |
+| Destructive | `#d62845` / chữ `#ffffff` | **KHÔNG đổi** | `#b91c3a` | + ring `#fca5a5` | opacity .5 |
+
+**Focus ring** = `DROP_SHADOW` radius 0, offset 0, **spread 3** → viết bằng `box-shadow: 0 0 0 3px`. Màu `#d4d4d4` (`--unofficial-border-3`), riêng Destructive `#fca5a5` (**không có token**, dùng `--focus-ring-error` #f8a9af xấp xỉ).
+
+**Size** (radius 2 ở cả 4): Regular h36 pad 8/16 chữ **14/20 Medium** · Large h48 pad 8/24 chữ **16/20 Regular** · Small h32 pad 5.5/12 chữ 14/20 Medium · **Mini h24 pad 3/8 chữ 12/16 Medium** (chưa dùng trong code). `Roundness=Round` cũng cho radius 2 — nghi Figma chưa set, cần xác nhận.
+
+#### ⚠️ 4 chỗ file token (D.tokens.json) và component NÓI KHÁC NHAU — đã lấy COMPONENT làm chuẩn
+1. **Chữ nút Ghost**: token `ghost foreground` = `#404040`, component = **`#525252`** (`mid-alt`).
+2. **Hover nút Outline**: token `outline hover` = nền `#00000008`, component = **đổi viền sang `#737373`, không có nền**.
+3. **Focus**: token `focus ring` = `#22aa99` (xanh ngọc), component = **`#d4d4d4`** xám trung tính.
+4. **Nền Outline mặc định**: token `outline` = `#ffffff1a`, component = **`#ffffff` đục**.
+
+Nên cân nhắc sửa lại file token cho khớp component, kẻo lần sau lại lệch.
+
+#### Đã implement (cả 2 file)
+Khai 6 class trong khối `<style>`: `.btn-p` `.btn-s` `.btn-o` `.btn-d` `.btn-gm` + `.ghost-hover` (đã có). Gắn tự động theo pattern: **desktop 22 primary · 9→5 secondary · 24 outline**, **mobile 35 primary · 6 secondary · 22 outline**; 0 nút `bg-destructive` (toàn badge).
+- **Mobile CỐ Ý không có `:hover`** — cảm ứng, hover dính lại sau khi nhấc tay. Chỉ Active + Focus + Disabled.
+- `.press` đổi sang **transition longhand** — dạng gộp `transition:` reset `transition-property` và (vì khối style nằm sau tailwind.css, cùng specificity) **ăn mất `transition-colors`** của Tailwind → hover đổi màu bị giật.
+- Bỏ `opacity: .9` khỏi nút primary/secondary khi nhấn: nó làm nút **sáng lên**, ngược hướng mọi token active (secondary `#f5f5f5`→`#f6f6f6` sáng thêm, trong khi token đòi `#e5e5e5` tối đi). `.press:active{opacity:.9}` chỉ còn cho hàng list.
+- **Disabled `.4` → `.5`** theo component; bỏ 7 chỗ `style="opacity:.4"` inline (inline sẽ thắng rule).
+- Sửa 11 chỗ hover sai token: 3 nút outline dùng `hover:bg-accent-0` (bậc surface, không phải token state) và 6 nút/hàng ghost dùng `hover:bg-secondary` (`#f5f5f5` đục, đè nền kính mờ) → về `.btn-o` / `.ghost-hover`.
+- Dropdown chọn size: `hover:bg-secondary` **trùng y hệt** màu dòng đang chọn → đổi hover sang `ghost-hover`.
+
+#### Đợt 2 — adapt nốt cho ĐÚNG component (12/08/2026, cả 2 file)
+
+- **Chữ nút Ghost / Ghost Muted → `#525252`** (`text-mid-alt`), trước là `#404040` (`text-foreground-alt`). Trạng thái active/đang chọn vẫn `#0a0a0a`. Ảnh hưởng: dept nav, chip danh mục filter, "Xóa tất cả", nút đổi ngôn ngữ / cửa hàng, hàng gợi ý tìm kiếm. `.dk-nav-link` thêm class `.btn-gm` để có state Active.
+- **Nền Outline mặc định = `#ffffff` đục** (component ghi `#ffffff`, KHÔNG phải `--unofficial-outline` #ffffff1a như file token). Đã thêm `bg-background` cho **18 nút desktop + 15 nút mobile**. Hệ quả có ý nghĩa: nút outline đặt trên panel xám giờ là ô trắng thật, và `:hover` bỏ nền nên lộ lại màu panel — đúng như bản vẽ.
+- **Outline bổ sung 3 state**: `:active` viền `#0a0a0a` **2px** · `:focus-visible` viền `#a3a3a3` · `[disabled]` nền `#f5f5f5`.
+- **`#lpGuest` bị phân loại sai** — nó là Outline nhưng đang mang cả `.ghost-hover` (hover 5% đen) và `bg-transparent`. Đã bỏ cả hai, về `bg-background` + `.btn-o`.
+- **Chặn bấm 2 lần khi loading** — thêm `btnBusy()` / `btnDone()`; 6 handler (3 mỗi file) giờ `disabled = true` suốt lúc có spinner, nên state **Disabled (opacity .5)** của component mới có ý nghĩa thực. Test: bấm 3 lần liên tiếp vào "Đăng nhập" → chỉ chạy 1 lần.
+
+Đo lại sau khi sửa: Outline default `#ffffff` + viền `#e5e5e5` ✓ · Ghost/Ghost Muted `rgb(82,82,82)` = `#525252` ✓ · dept đang chọn `#0a0a0a` ✓ · nút loading `disabled` + opacity `.5` ✓ · console sạch cả 2 bản.
+
+### KHÔNG dùng UPPERCASE (chỉ đạo user 12/08/2026)
+
+**Mọi text trong website chỉ viết hoa chữ cái đầu** — không viết hoa toàn bộ, kể cả nhãn nút. Áp cho **cả 2 file**. Cấm cả 2 đường: class `uppercase` (CSS) và chuỗi viết hoa nguyên văn trong JS/i18n.
+
+Đợt dọn đã bỏ **19 chỗ** (14 `desktop.html` + 5 `index.html`):
+- **Popup cookies** — 6 nút (`Đồng ý tất cả` · `Từ chối tất cả` · `Tùy chọn cookies` ở thẻ cookie, và 3 nút trong modal tuỳ chọn). Đây là chỗ user chỉ ra.
+- Eyebrow/label: tiêu đề cột mega menu, `DAFC Membership` (thẻ hạng), `Thông tin người nhận` (checkout nhận tại cửa hàng), `Xác nhận` (màn Hoàn tất), `Ngôn ngữ`/`Phông chữ` (panel settings demo).
+- Chuỗi nguyên văn: badge `NEW` → **New** (6 call site), nút `CẬP NHẬT MẬT KHẨU` → **Cập nhật mật khẩu**, tiêu đề `KHUYẾN MÃI` ở PDP → **Khuyến mãi**.
+- **I18N cũng phải theo**: `'CẬP NHẬT MẬT KHẨU':'UPDATE PASSWORD'` → `'Cập nhật mật khẩu':'Update password'`; xoá 2 entry chết `'KHUYẾN MÃI':'PROMOTIONS'` và `'XÁC NHẬN':'CONFIRM'`.
+
+**Ngoại lệ hợp lệ — đừng "sửa"**: wordmark thương hiệu và mã kỹ thuật vốn viết hoa — `DAFC`, `VISA`/`MASTER`/`JCB`/`AMEX`/`MOMO`, `TIKINOW`, mã vận đơn `TKN284917`, mã voucher `JUL500`.
+
+Cách kiểm sau khi sửa UI: chạy trong browser `[...document.querySelectorAll('*')].filter(e=>getComputedStyle(e).textTransform==='uppercase'&&e.textContent.trim())` — phải **rỗng**. `grep -c uppercase` trên file chỉ còn được hit ở chuỗi nội dung nói *về* chữ hoa (luật mật khẩu).
 
 **18px LUÔN đi với `font-medium`** — cả 23 chỗ dùng `text-[18px]` trong `index.html` đều Medium (500), không có 18px Light / Regular. Đây là **quyết định của design, cố ý khác Figma** (Figma để 18 Regular ở tiêu đề giỏ hàng và heading newsletter footer) — đừng "sửa lại theo Figma". Thêm chỗ 18px mới thì nhớ kèm `font-medium`.
 

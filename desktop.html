@@ -27,11 +27,12 @@ window.RESP = (function () {
     fits: function () { return mq.matches === IS_DESKTOP; },
 
     /* gói trạng thái thành hash; giá trị mặc định thì bỏ qua cho URL gọn */
-    hash: function (screen, lang, font) {
+    hash: function (screen, lang, font, theme) {
       var p = [];
       if (screen && screen !== 'plp') p.push('screen=' + encodeURIComponent(screen));
       if (lang && lang !== 'vi')      p.push('lang=' + encodeURIComponent(lang));
       if (font && font !== 'montserrat') p.push('font=' + encodeURIComponent(font));
+      if (theme && theme !== 'd')     p.push('theme=' + encodeURIComponent(theme));
       return p.length ? '#' + p.join('&') : '';
     },
 
@@ -48,20 +49,20 @@ window.RESP = (function () {
 
     /* chuyển sang bản kia; ẩn trang trong lúc chuyển để không nháy bản sai,
        kèm hẹn giờ mở lại phòng khi điều hướng thất bại (thiếu file) */
-    swap: function (screen, lang, font) {
+    swap: function (screen, lang, font, theme) {
       if (R.swapped) return;
       R.swapped = true;
       document.documentElement.style.visibility = 'hidden';
       setTimeout(function () { document.documentElement.style.visibility = ''; }, 2000);
-      location.replace(OTHER + R.hash(screen, lang, font));
+      location.replace(OTHER + R.hash(screen, lang, font, theme));
     },
 
-    /* Theo dõi kéo giãn cửa sổ qua mốc; state() trả [screen, lang, font].
+    /* Theo dõi kéo giãn cửa sổ qua mốc; state() trả [screen, lang, font, theme].
        Nghe CẢ hai nguồn: matchMedia('change') là đường chính, còn 'resize'
        (gộp nhịp bằng timer) là lưới an toàn — vài môi trường đổi kích thước
        bằng emulation/devtools không bắn 'change'. Cờ swapped chặn gọi trùng. */
     watch: function (state) {
-      var fire = function () { if (!R.fits()) { var s = state ? state() : []; R.swap(s[0], s[1], s[2]); } };
+      var fire = function () { if (!R.fits()) { var s = state ? state() : []; R.swap(s[0], s[1], s[2], s[3]); } };
       if (mq.addEventListener) mq.addEventListener('change', fire); else mq.addListener(fire);
       var t = 0;
       window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(fire, 150); });
@@ -110,9 +111,83 @@ window.RESP = (function () {
   /* ── Reveal on scroll ── */
   .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1); }
   .reveal.in { opacity: 1; transform: translateY(0); }
+  /* ══ THEME — chuyển được trong popover Cài đặt (như đổi phông chữ) ══
+     Mode "D+ improved" vừa tạo trong Figma (collection `theme`, mode thứ 3).
+     Đặt ở đây thay vì tokens.css vì tokens.css là FILE SINH TỰ ĐỘNG
+     ("Không sửa tay - chạy lại gen_tokens.py"). Khi nào export lại
+     tokens07.json + sửa gen_tokens.py cho duyệt mode động thì khối này
+     chuyển về tokens.css và xoá khỏi đây.
+     Nằm SAU tokens.css nên cùng specificity (0,1,0) vẫn thắng :root.
+
+     5 thay đổi so với mode D, mỗi cái có số đo:
+       accent            #09090b -> #292524  stone/800 warm black. Cũ cách
+                         primary đúng 1.00 (không phân biệt được) -> role chết.
+                         Mới cách 1.31, ĐÚNG bằng độ tách của promo bar hiện
+                         tại nên không đổi trọng lượng thị giác; ấm R-B +5 đọc
+                         như mực in thay vì xám màn hình. Việc của nó: MẶT TỐI
+                         LỚN không tương tác (promo bar, thẻ hội viên, footer).
+       focus-ring        #22aa99 -> #737373  1.48:1 -> 4.74:1 trên trắng và
+                         4.18:1 trên nút đen (ring cũ của component là #d4d4d4,
+                         không đạt ngưỡng 3:1 của WCAG 2.2 SC 2.4.13)
+       focus-ring-error  #f8a9af -> #d62845  1.86:1 -> 4.94:1
+       muted-foreground  #737373 -> #525252  4.74:1 -> 7.81:1
+       outline           #ffffff1a -> #ffffff  khớp component (nền Outline đục)
+     CỐ Ý KHÔNG đổi border-3 (giữ #d4d4d4): ưu tiên cảm giác luxury, hairline
+     vẫn mảnh, để FOCUS gánh phần dễ thấy thay vì làm nặng trạng thái nghỉ. */
+  /* 2 biến GIÁN TIẾP để theme thực sự có hiệu lực mà KHÔNG phá bản mặc định:
+     · --btn-focus-ring: mặc định trỏ #d4d4d4 (đúng component Button), theme D+
+       trỏ sang --focus-ring đã nâng lên #737373.
+     · --surface-dark: mặt tối lớn. Mặc định giữ đúng màu promo bar đang dùng,
+       theme D+ trỏ sang --unofficial-accent (warm black) — đó là việc của accent. */
+  :root { --btn-focus-ring: var(--unofficial-border-3); --surface-dark: var(--general-secondary-foreground); }
+  .theme-dplus {
+    --btn-focus-ring: var(--focus-ring);
+    --surface-dark: var(--unofficial-accent);
+    --unofficial-accent: #292524;
+    --focus-ring: #737373;
+    --focus-ring-error: #d62845;
+    --general-muted-foreground: #525252;
+    --unofficial-outline: #ffffff;
+  }
+
   /* ── Press feedback ── */
-  .press { transition: transform .12s ease, opacity .12s ease; }
-  .press:active { transform: scale(.97); opacity: .9; }
+  /* transition LONGHAND, không dùng dạng gộp: khối <style> nằm SAU tailwind.css
+     và cùng specificity nên `transition:` gộp sẽ RESET transition-property, ăn
+     mất transition-colors của Tailwind -> hover đổi màu bị giật. */
+  .press { transition-property: transform, opacity, background-color, border-color, color, box-shadow;
+           transition-duration: .12s; transition-timing-function: ease; }
+  .press:active { transform: scale(.97); }
+
+  /* ══ STATE CỦA BUTTON — theo component Figma "Button" (set 10:11763, 240 variant) ══
+     Trục: Roundness · Variant · Size · State(Default/Hover/Focus/Active/Disabled).
+     Bảng dưới lấy trực tiếp từ Roundness=Default, Size=Regular:
+       Primary      hover #262626 · active #171717
+       Secondary    hover #fafafa · active #e5e5e5
+       Outline      hover: BỎ nền, viền -> #737373 · active: viền #0a0a0a 2px
+       Ghost        hover: nền đen 5% + chữ đậm lên #0a0a0a
+       Ghost Muted  hover: CHỈ chữ đậm lên (nền vẫn trong suốt)
+       Destructive  hover: KHÔNG đổi (đúng bản vẽ) · active #b91c3a
+       Focus (mọi variant): shadow spread 3px, radius 0, offset 0 -> #d4d4d4;
+                            riêng Destructive -> #fca5a5 (dùng --focus-ring-error #f8a9af, xấp xỉ)
+       Disabled: opacity .5, màu KHÔNG đổi.
+     LƯU Ý: component KHÔNG dùng --focus-ring (#22aa99) mà dùng xám #d4d4d4;
+     cũng KHÔNG dùng --unofficial-outline-hover cho nút outline mà đổi viền. */
+  .btn-p:hover  { background: var(--general-primary-hover); }
+  .btn-p:active { background: var(--general-primary-active); }
+  .btn-s:hover  { background: var(--unofficial-secondary-hover); }
+  .btn-s:active { background: var(--unofficial-secondary-active); }
+  /* Outline: Default nền TRẮNG ĐỤC (component ghi #ffffff, không phải trong suốt)
+     -> nút tự khai bg-background. Hover BỎ nền để lộ nền phía sau + viền #737373.
+     Active viền #0a0a0a DÀY 2px. Focus viền #a3a3a3. Disabled nền #f5f5f5. */
+  .btn-o:hover  { background: transparent; border-color: var(--unofficial-border-5); }
+  .btn-o:active { border-color: var(--general-primary); border-width: 2px; }
+  .btn-o:focus-visible { border-color: var(--unofficial-border-4); }
+  .btn-o[disabled] { background: var(--general-secondary); }
+  .btn-d:active { background: var(--unofficial-destructive-active); }
+  .btn-gm:hover { color: var(--general-primary); }
+  .press:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--btn-focus-ring); }
+  .btn-d:focus-visible { box-shadow: 0 0 0 3px var(--focus-ring-error); }
+  button[disabled], [aria-disabled="true"] { opacity: .5; }
   /* ── Skeleton shimmer ── */
   @keyframes shimmer { 100% { transform: translateX(100%); } }
   .skel { position: relative; overflow: hidden; background: var(--general-secondary); }
@@ -451,7 +526,7 @@ window.RESP = (function () {
      · Ghost Muted (danh mục subheader)     → hover chỉ đậm chữ #404040→#0a0a0a,
        không nền — markup đã có hover:text-foreground, không cần rule thêm */
   .ghost-hover { transition: background-color .15s ease; }
-  .ghost-hover:hover { background: var(--unofficial-ghost-hover); }
+  .ghost-hover:hover { background: var(--unofficial-ghost-hover); color: var(--general-primary); }
   /* Scrim tối phủ nội dung trang khi panel mở (chữ ký của Farfetch).
      Nằm TRONG stacking context z-50 của .navbar nên vẫn đè lên nội dung trang,
      nhưng z:-1 để 3 tầng header + panel (sibling vẽ sau) nổi lên trên.
@@ -768,6 +843,12 @@ const LABELS = { plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login
    ICONS
 ════════════════════════════════════════════════════════════════ */
 const I = {
+  /* Icon mật độ lưới — Figma 2903:44753 (Platform=web), icon 20x20 nét 1px.
+     4 cột = 2x2 ô 9.5 bo 2 cách nhau 1 · 3 cột = 3 cột dọc w6.11 bo 1.67 cách .83.
+     Nét INSIDE trong Figma nên SVG thụt 0.5 để 1px không bị cắt ở mép viewBox.
+     Dùng currentColor: nút cha cấp màu, trạng thái không chọn chỉ giảm opacity. */
+  gridCols4: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1"><rect x=".5" y=".5" width="8.5" height="8.5" rx="1.5"/><rect x="11" y=".5" width="8.5" height="8.5" rx="1.5"/><rect x=".5" y="11" width="8.5" height="8.5" rx="1.5"/><rect x="11" y="11" width="8.5" height="8.5" rx="1.5"/></svg>',
+  gridCols3: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1"><rect x=".5" y=".5" width="5.11" height="19" rx="1.17"/><rect x="7.44" y=".5" width="5.11" height="19" rx="1.17"/><rect x="14.39" y=".5" width="5.11" height="19" rx="1.17"/></svg>',
   grid2: '<svg width="16" height="16" viewBox="-0.25 -0.25 24.5 24.5" fill="currentColor"><path d="M7,0h-3C1.794,0,0,1.794,0,4v3c0,2.206,1.794,4,4,4h3c2.206,0,4-1.794,4-4v-3C11,1.794,9.206,0,7,0Zm3,7c0,1.654-1.346,3-3,3h-3c-1.654,0-3-1.346-3-3v-3c0-1.654,1.346-3,3-3h3c1.654,0,3,1.346,3,3v3ZM20,0h-3c-2.206,0-4,1.794-4,4v3c0,2.206,1.794,4,4,4h3c2.206,0,4-1.794,4-4v-3c0-2.206-1.794-4-4-4Zm3,7c0,1.654-1.346,3-3,3h-3c-1.654,0-3-1.346-3-3v-3c0-1.654,1.346-3,3-3h3c1.654,0,3,1.346,3,3v3ZM7,13h-3c-2.206,0-4,1.794-4,4v3c0,2.206,1.794,4,4,4h3c2.206,0,4-1.794,4-4v-3c0-2.206-1.794-4-4-4Zm3,7c0,1.654-1.346,3-3,3h-3c-1.654,0-3-1.346-3-3v-3c0-1.654,1.346-3,3-3h3c1.654,0,3,1.346,3,3v3Zm10-7h-3c-2.206,0-4,1.794-4,4v3c0,2.206,1.794,4,4,4h3c2.206,0,4-1.794,4-4v-3c0-2.206-1.794-4-4-4Zm3,7c0,1.654-1.346,3-3,3h-3c-1.654,0-3-1.346-3-3v-3c0-1.654,1.346-3,3-3h3c1.654,0,3,1.346,3,3v3Z"/></svg>',
   grid1: '<svg width="16" height="16" viewBox="-0.25 1.75 24.5 20.5" fill="currentColor"><path d="M19.5,2H4.5C2.019,2,0,4.019,0,6.5v11c0,2.481,2.019,4.5,4.5,4.5h15c2.481,0,4.5-2.019,4.5-4.5V6.5c0-2.481-2.019-4.5-4.5-4.5Zm3.5,4.5v4.5H6V3h13.5c1.93,0,3.5,1.57,3.5,3.5ZM1,17.5V6.5c0-1.93,1.57-3.5,3.5-3.5h.5V21h-.5c-1.93,0-3.5-1.57-3.5-3.5Zm18.5,3.5H6V12H23v5.5c0,1.93-1.57,3.5-3.5,3.5Z"/></svg>',
   /* Header WAP — path gốc bộ Flaticon uicons thin-rounded 4.0 (fi-tr-*) */
@@ -947,7 +1028,7 @@ const dkCatAttrs = (title, crumbs = []) =>
 function dkMegaCol(title, allLabel, allAttrs, items, itemAttrs) {
   return `
   <div class="flex flex-col gap-2 min-w-[168px]">
-    <p class="text-[12px] font-medium leading-4 tracking-[0.08em] uppercase text-muted-foreground pb-1">${title}</p>
+    <p class="text-[12px] font-medium leading-4 tracking-[0.08em] text-muted-foreground pb-1">${title}</p>
     ${allLabel ? `<button ${allAttrs} class="text-left text-[13px] font-medium leading-5 text-foreground underline underline-offset-2 press">${allLabel}</button>` : ''}
     ${items.map(it => `<button ${itemAttrs(it)} class="text-left text-[13px] leading-5 text-foreground-alt hover:text-foreground transition-colors press">${it}</button>`).join('')}
   </div>`;
@@ -1056,14 +1137,14 @@ function navBar({ logoOnly = false } = {}) {
   /* crumbs = [dept] chứ không để rỗng: `isBeautyPlp()` nhận diện ngành hàng qua
      crumbs[0], thiếu thì bấm "Làm đẹp" ra nhầm hàng thời trang + bộ lọc sai facet. */
   const dept = DK_DEPTS.map(d => `
-    <button ${dkCatAttrs(d, [d])} data-dkdept="${d}" class="ghost-hover h-9 px-4 rounded-xs flex items-center text-[14px] font-medium leading-5 transition-colors press ${d === dkDept ? 'text-foreground' : 'text-foreground-alt hover:text-foreground'}">${d}</button>`).join('');
+    <button ${dkCatAttrs(d, [d])} data-dkdept="${d}" class="ghost-hover h-9 px-4 rounded-xs flex items-center text-[14px] font-medium leading-5 transition-colors press ${d === dkDept ? 'text-foreground' : 'text-mid-alt'}">${d}</button>`).join('');
 
   return `
   <div class="navbar sticky top-[-32px] z-50">
     <!-- scrim Farfetch: position fixed nên đặt đầu khối, không ảnh hưởng layout -->
     <div class="dk-scrim" aria-hidden="true"></div>
     <!-- promo bar #262626 (Frame 42) — dùng lại slider PROMO_MESSAGES của mobile -->
-    <div class="h-8 bg-secondary-foreground overflow-hidden relative" style="background:var(--general-secondary-foreground)">
+    <div class="h-8 overflow-hidden relative" style="background:var(--surface-dark)">
       <div id="promoSlider" class="flex h-full transition-transform ease-in-out" style="transition-duration:.5s">
         ${PROMO_MESSAGES.map(msg => `
           <div class="w-full h-full shrink-0 flex items-center justify-center px-4">
@@ -1079,11 +1160,11 @@ function navBar({ logoOnly = false } = {}) {
         <div class="flex-1 flex items-center justify-start">${dept}</div>
         <img src="${A}logo.png" alt="DAFC" class="h-5 w-[93px] object-contain cursor-pointer press shrink-0" data-nav="plp">
         <div class="flex-1 flex items-center justify-end px-0.5">
-          <button data-dklang class="ghost-hover h-9 px-4 rounded-xs flex items-center gap-2 text-[14px] font-medium leading-5 text-foreground-alt hover:text-foreground transition-colors press">
+          <button data-dklang class="ghost-hover h-9 px-4 rounded-xs flex items-center gap-2 text-[14px] font-medium leading-5 text-mid-alt transition-colors press">
             <span class="w-4 h-4 flex items-center justify-center [&_svg]:w-4 [&_svg]:h-4">${IcoGlobe}</span>
             <span class="dklang-label">${LANG === 'vi' ? 'English' : 'Tiếng Việt'}</span>
           </button>
-          <button data-toast="Danh sách cửa hàng" class="ghost-hover h-9 px-4 rounded-xs flex items-center gap-2 text-[14px] font-medium leading-5 text-foreground-alt hover:text-foreground transition-colors press">
+          <button data-toast="Danh sách cửa hàng" class="ghost-hover h-9 px-4 rounded-xs flex items-center gap-2 text-[14px] font-medium leading-5 text-mid-alt transition-colors press">
             <span class="w-4 h-4 flex items-center justify-center [&_svg]:w-4 [&_svg]:h-4">${IcoPin}</span>
             <span>Danh sách cửa hàng</span>
           </button>
@@ -1110,7 +1191,7 @@ function navBar({ logoOnly = false } = {}) {
           <div class="dk-nav-strip flex-1 min-w-0 flex items-center h-full overflow-x-auto no-scrollbar">
             ${dkCats.map(({ item, i, panel }) => `
             <div class="dk-nav-item h-full flex items-center shrink-0"${panel ? ` data-mega="${i}"` : ''}>
-              <button ${item.dept ? dkCatAttrs(item.label, [item.dept]) : dkCatAttrs(item.label)} class="dk-nav-link h-9 px-4 rounded-xs flex items-center text-[14px] font-medium leading-5 whitespace-nowrap press ${item.sale ? 'text-destructive' : 'text-foreground-alt hover:text-foreground transition-colors'}">${item.label}</button>
+              <button ${item.dept ? dkCatAttrs(item.label, [item.dept]) : dkCatAttrs(item.label)} class="dk-nav-link btn-gm h-9 px-4 rounded-xs flex items-center text-[14px] font-medium leading-5 whitespace-nowrap press ${item.sale ? 'text-destructive' : 'text-mid-alt hover:text-foreground transition-colors'}">${item.label}</button>
             </div>`).join('')}
           </div>
           <div data-nav-prev-wrap class="hidden absolute left-0 top-0 bottom-0 z-10 items-center pr-8"
@@ -1196,7 +1277,7 @@ function footer() {
         <p class="text-[16px] font-light leading-6 text-mid-alt">Nhận ngay thông tin về các bộ sưu tập hoặc các chương trình ưu đãi mới nhất.</p>
         <div class="flex w-[480px]">
           <input type="email" placeholder="Your email" class="flex-1 min-w-0 h-10 bg-input border border-border p-2 text-[14px] font-light leading-6 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-          <button data-toast="Đăng ký thành công" class="h-10 px-4 bg-primary text-[14px] font-medium leading-5 text-primary-foreground press shrink-0">Đăng ký</button>
+          <button data-toast="Đăng ký thành công" class="h-10 px-4 bg-primary text-[14px] font-medium leading-5 text-primary-foreground btn-p press shrink-0">Đăng ký</button>
         </div>
       </div>
 
@@ -1322,14 +1403,16 @@ function dkFilterBar(count) {
              16) nên thanh filter trông nặng hơn cả nav.
              (Không dùng dấu backtick trong comment này — cả khối nằm trong
              template literal của filterBar(), backtick sẽ cắt đứt chuỗi.) -->
-        <button data-sheet="filter" class="h-9 px-4 shrink-0 rounded-xs border border-border flex items-center gap-2 text-[14px] font-medium leading-5 text-foreground press">${I.sliders} <span id="filterBtnLabel">Bộ lọc${plpFilters.length ? ` (${plpFilters.length})` : ''}</span></button>
+        <button data-sheet="filter" class="h-9 px-4 shrink-0 rounded-xs border border-border bg-background flex items-center gap-2 text-[14px] font-medium leading-5 text-foreground btn-o press">${I.sliders} <span id="filterBtnLabel">Bộ lọc${plpFilters.length ? ` (${plpFilters.length})` : ''}</span></button>
         <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
-          ${chips.map(c => `<button ${dkCatAttrs(c)} class="h-9 px-4 shrink-0 rounded-xs flex items-center text-[14px] font-medium leading-5 hover:bg-secondary transition-colors press ${c === activeChip ? 'text-foreground' : 'text-foreground-alt'}">${c}</button>`).join('')}
+          ${chips.map(c => `<button ${dkCatAttrs(c)} class="h-9 px-4 shrink-0 rounded-xs flex items-center text-[14px] font-medium leading-5 ghost-hover press ${c === activeChip ? 'text-foreground' : 'text-mid-alt'}">${c}</button>`).join('')}
         </div>
       </div>
       <div class="flex items-center shrink-0">
-        <div class="flex items-center gap-2 px-2 border-r border-border">
-          ${[['4', I.grid2], ['3', I.grid1]].map(([n, ico]) => `
+        <!-- Figma 2903:44753: nhóm 88x36 = pad 8 + 2 nút 36 LIỀN NHAU (gap 0) + pad 8,
+             gạch chia 1px bên PHẢI. Trước đây có gap-2 nên nhóm rộng 96. -->
+        <div class="flex items-center px-2 border-r border-border">
+          ${[['4', I.gridCols4], ['3', I.gridCols3]].map(([n, ico]) => `
             <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press text-foreground transition-opacity [&_svg]:w-5 [&_svg]:h-5 ${n === plpCols ? '' : 'opacity-50'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
         </div>
         <div class="relative">
@@ -1351,13 +1434,19 @@ function dkFilterBar(count) {
    (Figma ghi "Xoát tất cả" — sửa chính tả khi đưa vào code.) ── */
 function dkActiveFilters() {
   if (!plpFilters.length) return '';
+  /* Size SMALL (12/08/2026 — yêu cầu user; Figma 2910:111376 đã đổi theo, hàng
+     giờ 1440x64 thay vì 80). Chip = Button/Secondary/Size=Small: cao 32, pad
+     ngang 12, gap 8, bo 2, nền #f5f5f5, chữ 14/20 Medium #262626, dấu ✕ 12px.
+     "Xóa tất cả" = Button/Ghost/Size=Small, chữ 14/20 Medium #404040.
+     Hàng giữ nguyên pad 16/24 + gap 10 (đã khớp Figma từ trước) nên chiều cao
+     tự về 64 = 16 + 32 + 16. */
   return `
   <div id="plpActiveFilters" class="max-w-[1440px] mx-auto px-6 py-4 flex items-center gap-2.5 flex-wrap">
     ${plpFilters.map((f, i) => `
-      <button class="af-chip h-12 px-6 rounded-xs bg-secondary flex items-center gap-2 text-[16px] leading-5 text-secondary-foreground press [&_svg]:w-4 [&_svg]:h-4" data-af="${i}">
+      <button class="af-chip h-8 px-3 rounded-xs bg-secondary flex items-center gap-2 text-[14px] font-medium leading-5 text-secondary-foreground btn-s press [&_svg]:w-3 [&_svg]:h-3" data-af="${i}">
         <span>${f}</span>${I.close}
       </button>`).join('')}
-    <button id="afClear" class="h-12 px-6 rounded-xs flex items-center text-[16px] leading-5 text-foreground-alt hover:bg-secondary transition-colors press">Xóa tất cả</button>
+    <button id="afClear" class="h-8 px-3 rounded-xs flex items-center text-[14px] font-medium leading-5 text-mid-alt ghost-hover press">Xóa tất cả</button>
   </div>`;
 }
 
@@ -1382,7 +1471,7 @@ function dkProductGrid(list, card) {
     </div>
   </div>
   <div class="flex justify-center py-4">
-    <button id="showMore" class="h-12 px-6 rounded-xs border border-border text-[16px] leading-5 text-foreground press flex items-center gap-2">Xem thêm</button>
+    <button id="showMore" class="h-12 px-6 rounded-xs border border-border bg-background text-[16px] leading-5 text-foreground btn-o press flex items-center gap-2">Xem thêm</button>
   </div>`;
 }
 
@@ -1390,7 +1479,7 @@ function dkProductGrid(list, card) {
 function screenPLPList() {
   const m = plpMode;
   const list = plpProducts();
-  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'NEW' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
+  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'New' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
   // Figma 04/05: breadcrumb luôn 2 đoạn ("Trang chủ • Nam") — thiếu crumbs thì lấy tiêu đề;
   // riêng chế độ tìm kiếm dùng nhãn ngắn "Kết quả tìm kiếm" (Figma 01)
   const tail = (m.crumbs && m.crumbs.length) ? m.crumbs
@@ -1430,7 +1519,7 @@ function screenPLPList() {
 
 function screenPLP() {
   if (plpMode.type !== 'brand') return screenPLPList();
-  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'NEW' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
+  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'New' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
 
   return `
   <div class="w-full" data-scroller>
@@ -1475,7 +1564,7 @@ function screenPLP() {
                     </div>
                   </button>`).join('')}
               </div>
-              <button data-strip-next class="w-11 h-11 shrink-0 rounded-xs border border-border bg-background flex items-center justify-center press [&_svg]:w-3.5 [&_svg]:h-3.5" aria-label="Cuộn danh mục">${I.chevR().replace('class="acc-chev" ', '')}</button>
+              <button data-strip-next class="w-11 h-11 shrink-0 rounded-xs border border-border bg-background flex items-center justify-center btn-o press [&_svg]:w-3.5 [&_svg]:h-3.5" aria-label="Cuộn danh mục">${I.chevR().replace('class="acc-chev" ', '')}</button>
             </div>
           </div>
         </div>
@@ -1680,7 +1769,7 @@ function promoCardGrouped(keys) {
   return `
     <div class="pb-2 rise">
       <div class="bg-accent-0 rounded-sm p-2 flex flex-col gap-2">
-        <p class="h-5 text-[14px] font-medium leading-5 text-foreground">KHUYẾN MÃI</p>
+        <p class="h-5 text-[14px] font-medium leading-5 text-foreground">Khuyến mãi</p>
         ${keys.map(k => `
           <button data-promo="${k}" class="flex items-start gap-2 text-left press">
             <span class="w-2 shrink-0 text-[12px] font-medium leading-4 text-secondary-foreground">·</span>
@@ -1700,7 +1789,7 @@ function promoCardsSplit(keys) {
               </div>`).join('');
   return `
     <div class="pb-2 flex flex-col gap-2 rise">
-      <p class="text-[14px] font-medium leading-5 text-foreground">KHUYẾN MÃI</p>
+      <p class="text-[14px] font-medium leading-5 text-foreground">Khuyến mãi</p>
       ${keys.map(k => `
         <div class="acc bg-accent-0 rounded-sm">
           <button class="acc-trigger w-full p-2 flex items-start gap-2 text-left press">
@@ -1786,11 +1875,11 @@ function dkScreenPDP(kind) {
   const gallery = all.slice(0, 6);
 
   const cta = D.preorder ? `
-      <button data-add="pdp" class="w-full min-h-[56px] py-2 rounded-xs bg-primary text-primary-foreground press flex flex-col items-center justify-center gap-0.5">
+      <button data-add="pdp" class="w-full min-h-[56px] py-2 rounded-xs bg-primary text-primary-foreground btn-p press flex flex-col items-center justify-center gap-0.5">
         <span class="text-[16px] leading-5">Đặt trước</span>
         <span class="text-[12px] leading-4 text-primary-foreground opacity-80">Dự kiến giao hàng vào ngày 15/08/2026</span>
       </button>` : `
-      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium leading-6 press flex items-center justify-center">Thêm vào giỏ hàng</button>`;
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium leading-6 btn-p press flex items-center justify-center">Thêm vào giỏ hàng</button>`;
 
   return `
   <div class="w-full" data-scroller>
@@ -1862,7 +1951,7 @@ function dkScreenPDP(kind) {
                    DROPDOWN ngay dưới ô chọn (không mở popup giữa màn như mobile) —
                    danh sách dựng trong wire(), nguồn SIZE_SHEET_OPTIONS. -->
               <div class="relative" data-size-dd>
-                <button type="button" data-size-trigger="${kind}" aria-expanded="false" aria-haspopup="listbox" class="w-full h-11 bg-input border border-border rounded-sm pl-3 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left press">
+                <button type="button" data-size-trigger="${kind}" aria-expanded="false" aria-haspopup="listbox" class="w-full h-11 bg-input border border-border rounded-sm pl-3 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left btn-o press">
                   <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
                 </button>
                 <span data-size-caret class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200">${I.chevD('var(--general-primary)')}</span>
@@ -2096,8 +2185,8 @@ function accAddress() {
 function accLoyalty() {
   return `
     <div class="px-5 pt-4 flex flex-col gap-4">
-      <div class="rounded-lg bg-primary text-primary-foreground p-5 flex flex-col gap-2">
-        <span class="text-[12px] tracking-[0.2em] uppercase opacity-70">DAFC Membership</span>
+      <div class="rounded-lg text-primary-foreground p-5 flex flex-col gap-2" style="background:var(--surface-dark)">
+        <span class="text-[12px] tracking-[0.2em] opacity-70">DAFC Membership</span>
         <span class="text-[24px] font-light leading-8">Hạng Vàng</span>
         <span class="text-[13px] leading-5 opacity-80">UserOne · 0909 *** 123</span>
         <div class="mt-2 pt-3 border-t border-white/20 flex items-center justify-between">
@@ -2264,10 +2353,10 @@ function screenORDER() {
           <!-- hành động -->
           <div class="px-6 py-5 flex items-center gap-3">
             ${o.tone==='warning'
-              ? `<button data-toast="Theo dõi đơn GHN284917" class="h-12 px-8 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press">Theo dõi đơn hàng</button>
-                 <button data-toast="Đã gửi yêu cầu huỷ" class="h-12 px-8 rounded-xs border border-border text-mid-alt text-[14px] font-medium press">Huỷ đơn hàng</button>`
-              : `<button data-toast="Đã thêm lại vào giỏ" class="h-12 px-8 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press">Mua lại</button>
-                 <button data-toast="Xuất hoá đơn" class="h-12 px-8 rounded-xs border border-border text-foreground text-[14px] font-medium press">Xuất hoá đơn</button>`}
+              ? `<button data-toast="Theo dõi đơn GHN284917" class="h-12 px-8 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium btn-p press">Theo dõi đơn hàng</button>
+                 <button data-toast="Đã gửi yêu cầu huỷ" class="h-12 px-8 rounded-xs border border-border bg-background text-mid-alt text-[14px] font-medium btn-o press">Huỷ đơn hàng</button>`
+              : `<button data-toast="Đã thêm lại vào giỏ" class="h-12 px-8 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium btn-p press">Mua lại</button>
+                 <button data-toast="Xuất hoá đơn" class="h-12 px-8 rounded-xs border border-border bg-background text-foreground text-[14px] font-medium btn-o press">Xuất hoá đơn</button>`}
             <button data-toast="Liên hệ CSKH 1900 2666" class="h-12 px-4 text-[13px] text-muted-foreground press ml-auto">Cần hỗ trợ? Liên hệ CSKH</button>
           </div>
         </div>
@@ -2320,7 +2409,7 @@ function giftPicker() {
       </div>
       <div id="giftOpts" class="flex gap-2 pt-1">
         ${GIFTS.map((g, i) => `
-          <button class="opt ${i === 0 ? 'on' : ''} flex-1 min-w-0 flex gap-3 items-center border border-border rounded-xs p-2 text-left press" data-opt="gift${i}">
+          <button class="opt ${i === 0 ? 'on' : ''} flex-1 min-w-0 flex gap-3 items-center border border-border bg-background rounded-xs p-2 text-left btn-o press" data-opt="gift${i}">
             <span class="radio ${i === 0 ? 'on' : ''} w-4 h-4 rounded-full border border-border-3 flex items-center justify-center shrink-0">
               <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
             </span>
@@ -2353,7 +2442,7 @@ function dafcRewards() {
   const opt = (id, title, sub) => {
     const on = cartReward === id;
     return `
-    <button class="opt ${on ? 'on' : ''} w-full flex gap-2 items-start border border-border rounded-xs px-3 py-2 press text-left" data-reward="${id}">
+    <button class="opt ${on ? 'on' : ''} w-full flex gap-2 items-start border border-border bg-background rounded-xs px-3 py-2 btn-o press text-left" data-reward="${id}">
       <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
         <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
       </span>
@@ -2445,7 +2534,7 @@ function discountPanel(cartTotalNow) {
           <p class="text-[14px] font-medium leading-5 text-foreground">Mã giảm giá</p>
           <div class="flex gap-1">
             <input id="voucher" placeholder="Nhập voucher" class="flex-1 min-w-0 h-10 bg-input border border-border rounded-xs px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-            <button id="applyVoucher" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
+            <button id="applyVoucher" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground btn-s press">Áp dụng</button>
           </div>
           <div id="voucherChipSlot" class="${cartVoucherCode ? 'flex gap-2 flex-wrap' : 'hidden'}">${voucherChip()}</div>
         </div>
@@ -2492,7 +2581,7 @@ function screenCART() {
   const row = (c, i) => `
     <div class="cart-row flex gap-2 px-4 py-4" data-row="${i}">
       <div class="w-4 shrink-0 flex items-center">
-        <button class="chk on w-4 h-4 border border-border-3 rounded-xs shadow-sm flex items-center justify-center press" data-check>${I.tick}</button>
+        <button class="chk on w-4 h-4 border border-border bg-background-3 rounded-xs shadow-sm flex items-center justify-center btn-o press" data-check>${I.tick}</button>
       </div>
       <div class="w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
         <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
@@ -2595,7 +2684,7 @@ function screenCART() {
                 <p class="text-[14px] font-medium leading-5 text-foreground">Mã giảm giá</p>
                 <div class="flex gap-2">
                   <input id="voucher" placeholder="Nhập voucher" class="flex-1 min-w-0 h-10 bg-input border border-border rounded-xs p-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-                  <button id="applyVoucher" disabled class="h-10 px-6 shrink-0 bg-background border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
+                  <button id="applyVoucher" disabled class="h-10 px-6 shrink-0 bg-background border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground btn-o press">Áp dụng</button>
                 </div>
                 <div id="voucherChipSlot" class="${cartVoucherCode ? 'flex gap-2 flex-wrap' : 'hidden'}">${voucherChip()}</div>
               </div>
@@ -2612,7 +2701,7 @@ function screenCART() {
                   ? 'Hoàn tất đơn hàng để nhận ngay <b class="font-bold">1.135</b> điểm thưởng'
                   : '<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b class="font-bold">1.135</b> điểm thưởng'}</p>
               </div>
-              <button data-checkout class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium press flex items-center justify-center">Đặt hàng</button>
+              <button data-checkout class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium btn-p press flex items-center justify-center">Đặt hàng</button>
 
               <!-- "Bạn có phiếu mua hàng?" — coi là 1 phương thức mua hàng, không
                    phải ưu đãi giảm giá, nên đặt BÊN DƯỚI nút Đặt hàng (theo Figma
@@ -2627,7 +2716,7 @@ function screenCART() {
                     <p class="text-[12px] leading-4 text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
                     <div class="flex gap-1">
                       <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="flex-1 min-w-0 h-10 bg-input border border-border rounded-xs px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-                      <button id="applyPbh" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground press" style="opacity:.4">Áp dụng</button>
+                      <button id="applyPbh" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground btn-s press">Áp dụng</button>
                     </div>
                     <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
                   </div>
@@ -2688,7 +2777,7 @@ const afield = (label, attrs, ph, extra = '', labelCls = 'text-muted-foreground'
 
 /* nút chính: 358x40-44, r2, label Medium 14 #fafafa */
 const abtn = (label, attrs, h = 'h-11') => `
-  <button ${attrs} class="w-full ${h} rounded-xs bg-primary text-primary-foreground text-[14px] font-medium tracking-wide press flex items-center justify-center gap-2">${label}</button>`;
+  <button ${attrs} class="w-full ${h} rounded-xs bg-primary text-primary-foreground text-[14px] font-medium tracking-wide btn-p press flex items-center justify-center gap-2">${label}</button>`;
 
 function authNav(title) {
   return `
@@ -2761,7 +2850,7 @@ function viewOtp() {
     </div>
     <div class="flex flex-col gap-4">
       ${abtn('Xác nhận', 'data-auth-verify', 'h-10')}
-      <button id="otpResend" class="w-full h-10 rounded-xs bg-secondary border border-border text-[14px] font-medium text-foreground press" disabled>Nhận lại mã (<span id="otpTimer">60</span>s)</button>
+      <button id="otpResend" class="w-full h-10 rounded-xs bg-secondary border border-border text-[14px] font-medium text-foreground btn-s press" disabled>Nhận lại mã (<span id="otpTimer">60</span>s)</button>
     </div>
     <div class="flex items-center justify-center gap-1">
       <span class="text-[14px] leading-5 text-muted-foreground">Đã có tài khoản?</span>
@@ -2809,7 +2898,7 @@ function viewSetPass() {
       </div>
       <p id="pwHint" class="text-[12px] leading-4 text-muted-foreground">Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật</p>
     </div>
-    ${abtn('CẬP NHẬT MẬT KHẨU', 'data-login-submit')}
+    ${abtn('Cập nhật mật khẩu', 'data-login-submit')}
   </div>`;
 }
 
@@ -2851,7 +2940,7 @@ function richRadio(id, label, sub, on, icon) {
      giữa. mt-0.5 của nút radio cũng chỉ cần khi canh mép trên. */
   const single = !sub;
   return `
-  <button class="opt ${on ? 'on' : ''} w-full flex ${single ? 'items-center' : 'items-start'} gap-2 border border-border rounded-xs p-3 text-left press" data-opt="${id}">
+  <button class="opt ${on ? 'on' : ''} w-full flex ${single ? 'items-center' : 'items-start'} gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-opt="${id}">
     <span class="radio ${on ? 'on' : ''} w-4 h-4 ${single ? '' : 'mt-0.5 '}rounded-full border border-border-3 flex items-center justify-center shrink-0">
       <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
     </span>
@@ -3006,7 +3095,7 @@ const pickField = (label, ph, key, val) => `
     <div class="px-4 py-2 flex flex-col gap-2">
       <label for="pk-${key}" class="text-[14px] font-medium leading-5 text-foreground">${label}</label>
       <div class="relative">
-        <button type="button" id="pk-${key}" data-pick="${key}" aria-haspopup="dialog" class="w-full h-10 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] text-left flex items-center press transition-colors focus:border-primary">
+        <button type="button" id="pk-${key}" data-pick="${key}" aria-haspopup="dialog" class="w-full h-10 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] text-left flex items-center btn-o press transition-colors focus:border-primary">
           <span class="pick-label truncate ${val ? 'text-foreground' : 'text-muted-foreground'}">${val || ph}</span>
         </button>
         <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
@@ -3020,7 +3109,7 @@ const pickField = (label, ph, key, val) => `
    handler và CSS trạng thái đang có chạy y nguyên. */
 function storeOpt(name, addr, hours, on) {
   return `
-  <button type="button" role="radio" aria-checked="${on}" class="opt ${on ? 'on' : ''} w-full flex items-start gap-2 border border-border rounded-xs p-3 text-left press" data-opt="store:${name}">
+  <button type="button" role="radio" aria-checked="${on}" class="opt ${on ? 'on' : ''} w-full flex items-start gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-opt="store:${name}">
     <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
       <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
     </span>
@@ -3066,7 +3155,7 @@ function ckPickupOpen() {
     ${ckStore ? `
     <div id="ckRecipient">
       <div class="px-4 pt-4 pb-1">
-        <p class="text-[12px] leading-4 uppercase tracking-wide text-muted-foreground">Thông tin người nhận</p>
+        <p class="text-[12px] leading-4 tracking-wide text-muted-foreground">Thông tin người nhận</p>
       </div>
       ${field('Họ và tên','Nhập họ và tên','', { val: ckName, key: 'name', auto: 'name' })}
       <div class="grid grid-cols-2">
@@ -3080,7 +3169,7 @@ function ckPickupOpen() {
         <p class="text-[13px] leading-5 text-secondary-foreground">Đơn hàng được giữ tại cửa hàng trong 3 ngày kể từ khi có thông báo sẵn sàng nhận.</p>
       </div>
       <div class="px-4 py-4">
-        <button class="ck-next h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] press inline-flex items-center justify-center" data-next="1" data-require="store">Xác nhận</button>
+        <button class="ck-next h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press inline-flex items-center justify-center" data-next="1" data-require="store">Xác nhận</button>
       </div>
     </div>` : ''}`;
 }
@@ -3106,8 +3195,8 @@ function screenCHECKOUT() {
       <p class="text-[24px] font-light leading-8 text-foreground">Đơn ${ckOrderId} đã được đặt</p>
       <p class="text-[14px] leading-5 text-muted-foreground">Đơn hàng đang được xử lý. Bạn không cần đặt lại.</p>
       <div class="flex gap-3 pt-2">
-        <button data-order="0" class="h-12 px-8 rounded-xs bg-primary text-primary-foreground text-[16px] press">Xem chi tiết đơn hàng</button>
-        <button data-nav="plp" data-reset class="h-12 px-8 rounded-xs border border-border text-foreground text-[14px] font-medium press">Tiếp tục mua sắm</button>
+        <button data-order="0" class="h-12 px-8 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press">Xem chi tiết đơn hàng</button>
+        <button data-nav="plp" data-reset class="h-12 px-8 rounded-xs border border-border bg-background text-foreground text-[14px] font-medium btn-o press">Tiếp tục mua sắm</button>
       </div>
     </div>
   </div>`;
@@ -3145,12 +3234,12 @@ function screenCHECKOUT() {
     </div>`;
   const ckNextBtn = `
     <div class="px-4 py-4">
-      <button class="ck-next h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] press inline-flex items-center justify-center" data-next="1">Xác nhận</button>
+      <button class="ck-next h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press inline-flex items-center justify-center" data-next="1">Xác nhận</button>
     </div>`;
   const s0open = ckAuth ? `
     <div class="px-4 py-2 grid grid-cols-2 gap-3" id="addrOpts">
       ${ADDRESSES.map((a, i) => `
-      <button class="opt ${ckAddr === i ? 'on' : ''} w-full flex items-start gap-2 border border-border rounded-xs p-3 text-left press" data-addr="${i}">
+      <button class="opt ${ckAddr === i ? 'on' : ''} w-full flex items-start gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-addr="${i}">
         <span class="radio ${ckAddr === i ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
           <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
         </span>
@@ -3159,7 +3248,7 @@ function screenCHECKOUT() {
           <span class="block text-[13px] leading-5 text-secondary-foreground">${a.line}</span>
         </span>
       </button>`).join('')}
-      <button class="opt ${ckAddr === 'new' ? 'on' : ''} w-full flex items-center gap-2 border border-border rounded-xs p-3 text-left press" data-addr="new">
+      <button class="opt ${ckAddr === 'new' ? 'on' : ''} w-full flex items-center gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-addr="new">
         <span class="radio ${ckAddr === 'new' ? 'on' : ''} w-4 h-4 rounded-full border border-border-3 flex items-center justify-center shrink-0">
           <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
         </span>
@@ -3191,7 +3280,7 @@ function screenCHECKOUT() {
       ${richRadio('fast','Giao hàng nhanh - 25,000đ', ETA, false)}
     </div>
     <div class="px-4 py-4">
-      <button class="ck-next h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] press inline-flex items-center justify-center" data-next="2">Xác nhận</button>
+      <button class="ck-next h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press inline-flex items-center justify-center" data-next="2">Xác nhận</button>
     </div>`;
   const s1done = `
     <div class="px-4 pb-4 flex flex-col gap-1">
@@ -3295,7 +3384,7 @@ function screenCHECKOUT() {
               <span class="text-[16px] font-medium leading-6 text-foreground">Tổng cộng</span>
               <span class="text-[16px] font-medium leading-6 text-foreground">113,500,000đ</span>
             </div>
-            <button data-nav="done" class="w-full h-12 mt-2 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium press flex items-center justify-center">Đặt hàng</button>
+            <button data-nav="done" class="w-full h-12 mt-2 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium btn-p press flex items-center justify-center">Đặt hàng</button>
             <p class="pt-3 text-[12px] leading-4 text-muted-foreground text-center">${ETA}</p>
           </div>
         </div>
@@ -3357,10 +3446,11 @@ function screenDONE() {
           </svg>
         </div>
         <div class="rise">
-          <!-- Thang chữ desktop: eyebrow 12/16 uppercase, tiêu đề trang 24/32
+          <!-- Thang chữ desktop: eyebrow 12/16 (KHÔNG uppercase — xem quy ước
+               chữ hoa trong README), tiêu đề trang 24/32
                Light (dùng ở cả 16 heading 24px khác), body 13/20. Khối này port
                từ mobile nên từng giữ 10px + font-medium + leading-snug/relaxed. -->
-          <p class="text-[12px] leading-4 tracking-[0.2em] uppercase text-muted-foreground mb-1.5">Xác nhận</p>
+          <p class="text-[12px] leading-4 tracking-[0.2em] text-muted-foreground mb-1.5">Xác nhận</p>
           <h2 class="text-[24px] font-light leading-8 text-foreground mb-2">Đặt hàng thành công</h2>
           <p class="text-[13px] leading-5 text-muted-foreground">Đơn hàng đang được xử lý.<br>Cảm ơn bạn đã tin tưởng mua sắm.</p>
         </div>
@@ -3378,8 +3468,8 @@ function screenDONE() {
       </div>
 
       <div class="w-full flex gap-2.5 rise">
-        <button data-nav="plp" data-reset class="flex-1 text-primary-foreground text-[13px] font-semibold py-3.5 rounded-xs tracking-wider bg-primary press">Tiếp tục mua sắm</button>
-        <button data-order="0" class="flex-1 text-[13px] font-medium py-3.5 rounded-xs tracking-wider border border-border text-mid-alt press transition-colors">Theo dõi đơn hàng</button>
+        <button data-nav="plp" data-reset class="flex-1 text-primary-foreground text-[13px] font-semibold py-3.5 rounded-xs tracking-wider bg-primary btn-p press">Tiếp tục mua sắm</button>
+        <button data-order="0" class="flex-1 text-[13px] font-medium py-3.5 rounded-xs tracking-wider border border-border bg-background text-mid-alt btn-o press transition-colors">Theo dõi đơn hàng</button>
       </div>
     </div>
 
@@ -3513,7 +3603,7 @@ function plpFilterEmptyHTML() {
     <div class="col-span-full py-14 px-4 flex flex-col items-center gap-3 text-center">
       <p class="text-[16px] font-light leading-6 text-foreground">Không có sản phẩm nào khớp bộ lọc</p>
       <p class="text-[14px] leading-5 text-muted-foreground">Thử bỏ một vài điều kiện để xem thêm sản phẩm.</p>
-      <button data-clear-filters class="h-9 px-4 rounded-xs border border-border text-[14px] font-medium leading-5 text-foreground press">Xóa tất cả bộ lọc</button>
+      <button data-clear-filters class="h-9 px-4 rounded-xs border border-border bg-background text-[14px] font-medium leading-5 text-foreground btn-o press">Xóa tất cả bộ lọc</button>
     </div>`;
 }
 /* Nội dung #plpGrid: thẻ sản phẩm, hoặc khối 0-kết-quả khi bộ lọc lọc sạch. */
@@ -3747,7 +3837,7 @@ function filterBody(beauty) {
   /* chip dung tích dùng đúng class .fsize để tái dụng luôn handler chọn nhiều.
      w-full vì container là grid 5 cột (xem `sizeGrid`), không còn flex-wrap. */
   const chips = (arr) => arr.map(s => `
-    <button class="fsize chip w-full h-9 px-1 rounded-xs border border-border text-[14px] font-medium text-foreground press" data-size>${s}</button>`).join('');
+    <button class="fsize chip w-full h-9 px-1 rounded-xs border border-border bg-background text-[14px] font-medium text-foreground btn-o press" data-size>${s}</button>`).join('');
   /* Tối đa 5 ô/dòng — giống lưới size ở PDP (index.html: repeat(5,1fr)) */
   const sizeGrid = inner => `<div class="px-4 pb-6 grid gap-2" style="grid-template-columns:repeat(5,1fr)">${inner}</div>`;
   const sizes   = chips(FILTER_SIZES);
@@ -3813,8 +3903,8 @@ function filterSheet() {
            mỗi lần tick — số này lấy từ matchProducts() nên khớp đúng lưới.
            (KHÔNG dùng backtick trong comment này — cả khối là template literal.) -->
       <div class="shrink-0 bg-background border-t border-border px-4 pt-4 safe-b flex gap-3">
-        <button id="filterReset" class="hidden h-12 px-6 rounded-xs bg-background border border-border text-[16px] text-foreground press shrink-0">Đặt lại</button>
-        <button id="filterApply" class="h-12 flex-1 rounded-xs bg-primary text-primary-foreground text-[16px] press">Áp dụng<span id="filterApplyCount"></span></button>
+        <button id="filterReset" class="hidden h-12 px-6 rounded-xs bg-background border border-border text-[16px] text-foreground btn-o press shrink-0">Đặt lại</button>
+        <button id="filterApply" class="h-12 flex-1 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press">Áp dụng<span id="filterApplyCount"></span></button>
       </div>
     </div>
   </div>`;
@@ -4267,7 +4357,7 @@ function plpSkeletonCards(n) {
 function renderPlpGrid(root, { skeleton = false } = {}) {
   const grid = root.querySelector('#plpGrid');
   if (!grid) return;
-  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'NEW' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
+  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'New' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
   const paint = () => {
     const list = sortedProducts();
     grid.innerHTML = plpGridInner(list, card);
@@ -4415,7 +4505,7 @@ let LANG = 'vi';
 const I18N = {
   // ── Điều hướng & chung ──
   'Trang chủ':'Home', 'Quay lại':'Back', 'Bộ lọc':'Filter', 'Sắp xếp':'Sort', 'Đặt lại':'Reset',
-  'Áp dụng':'Apply', 'Xác nhận':'Confirm', 'XÁC NHẬN':'CONFIRM', 'Hoàn tất':'Done', 'Chi tiết':'Details',
+  'Áp dụng':'Apply', 'Xác nhận':'Confirm', 'Hoàn tất':'Done', 'Chi tiết':'Details',
   'Thu gọn':'Show less', 'Xem thêm':'Show more', 'Xem chi tiết':'See details', 'Chọn tất cả':'Select all', 'Mặc định':'Default',
   'Xóa tất cả':'Clear all', 'Kết quả tìm kiếm':'Search results',
   // Bộ lọc lọc thật -> empty state riêng khi 0 kết quả (12/08/2026)
@@ -4550,7 +4640,7 @@ const I18N = {
   'Đặt mật khẩu mới':'Set a new password', 'Mật khẩu mới':'New password', 'Nhập mật khẩu mới':'Enter new password',
   'Xác nhận mật khẩu mới':'Confirm new password', 'Nhập lại mật khẩu mới':'Re-enter new password',
   'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.':'Password must be at least 8 characters with uppercase, lowercase and a number.',
-  'Độ mạnh mật khẩu:':'Password strength:', 'CẬP NHẬT MẬT KHẨU':'UPDATE PASSWORD',
+  'Độ mạnh mật khẩu:':'Password strength:', 'Cập nhật mật khẩu':'Update password',
   'Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật':'Medium — add a special character to strengthen it',
   'Đăng nhập thành công':'Signed in successfully', 'Đăng ký thành công':'Account created',
   'Để tận hưởng những ưu đãi độc quyền, Quý khách vui lòng sử dụng số điện thoại đã đăng ký chương trình Khách hàng thân thiết tại hệ thống cửa hàng DAFC khi mua sắm trực tuyến tại DAFC Online.':'To enjoy exclusive privileges, please use the phone number registered with the DAFC loyalty programme at our stores when shopping online at DAFC Online.',
@@ -4804,7 +4894,6 @@ Object.assign(I18N, {
   'Bảng quy đổi':'Conversion',
   'Eo (CM)':'Waist (CM)',
   'Hông (CM)':'Hip (CM)',
-  'KHUYẾN MÃI':'PROMOTIONS',
   /* ── Catalogue chương trình khuyến mãi ở PDP ── */
   'Giảm thêm 10% cho thành viên DAFC Insider':'Extra 10% off for DAFC Insider members',
   'Ưu đãi thành viên DAFC Insider':'DAFC Insider member benefit',
@@ -5096,6 +5185,23 @@ function unlockBodyScroll() {
     window.scrollTo(0, __scrollLockY);
   }
 }
+/* ── Chặn bấm 2 lần khi nút đang "loading" ──
+   10 handler trước đây gán spinner vào innerHTML rồi setTimeout 700ms mà KHÔNG
+   disabled, nên bấm 2 lần là chạy 2 lần (đặt 2 đơn, gửi 2 OTP...). Giờ state
+   Disabled của component (opacity .5) mới có ý nghĩa thực: btnBusy() trả về true
+   nếu nút đang bận -> handler return sớm; btnDone() trả nút về bình thường. */
+function btnBusy(btn) {
+  if (!btn || btn.dataset.busy) return true;
+  btn.dataset.busy = '1';
+  btn.disabled = true;
+  return false;
+}
+function btnDone(btn) {
+  if (!btn) return;
+  delete btn.dataset.busy;
+  btn.disabled = false;
+}
+
 /* ── Wire behaviour for a screen ── */
 /* Nối nút mắt: đổi type input + đổi icon. Tách riêng vì ngoài các màn (wire)
    còn có popup đăng nhập nhanh nằm ngoài .screen, dựng 1 lần lúc khởi động. */
@@ -5391,9 +5497,10 @@ function wire(root) {
       if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = ckAuth ? 1 : 0; ckMaxStep = ckStep; }
       if (t === 'back') { window.history.back(); return; }
       if (el.hasAttribute('data-loading')) {
+        if (btnBusy(el)) return;
         const txt = el.innerHTML;
         el.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-        setTimeout(() => { el.innerHTML = txt; go(t); }, 700);
+        setTimeout(() => { el.innerHTML = txt; btnDone(el); go(t); }, 700);
         return;
       }
       if (t === 'plp') {
@@ -5552,10 +5659,11 @@ function wire(root) {
     root.querySelectorAll('[data-login-submit]').forEach(btn => {
     btn.addEventListener('click', () => {
       ckAuth = true; ckStep = 1; ckMaxStep = Math.max(ckMaxStep, 1);
+      if (btnBusy(btn)) return;
       const html = btn.innerHTML;
       btn.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
       const back = loginFrom || 'checkout'; // luôn trả về đúng màn đã mở đăng nhập, không ép về checkout
-      setTimeout(() => { btn.innerHTML = html; authView = 'login'; go(back); toast(back === 'checkout' ? 'Đăng nhập thành công' : 'Đã đăng nhập · UserOne'); }, 700);
+      setTimeout(() => { btn.innerHTML = html; btnDone(btn); authView = 'login'; go(back); toast(back === 'checkout' ? 'Đăng nhập thành công' : 'Đã đăng nhập · UserOne'); }, 700);
     });
   });
 
@@ -5848,7 +5956,7 @@ function wire(root) {
           const status = o.oos ? 'Nhận thông báo' : (o.left ? `Còn ${o.left} sản phẩm` : '');
           return `
           <button type="button" role="option" aria-selected="${o.label === picked}" data-size-opt="${o.label}"
-                  class="w-full min-h-11 flex items-center gap-1 px-3 py-2 text-left transition-colors press ${o.label === picked ? 'bg-secondary' : 'hover:bg-secondary'}">
+                  class="w-full min-h-11 flex items-center gap-1 px-3 py-2 text-left transition-colors press ${o.label === picked ? 'bg-secondary' : 'ghost-hover'}">
             <span class="flex-1 min-w-0 text-[14px] leading-5 ${o.oos ? 'text-muted-foreground line-through' : 'text-foreground'}">${o.label}</span>
             ${status ? `<span class="text-[12px] leading-4 text-muted-foreground shrink-0">${status}</span>` : ''}
           </button>`;
@@ -6310,7 +6418,7 @@ function cartEmptyHTML() {
   return `<div class="flex flex-col items-center gap-3 py-16 px-8 text-center">
       ${I.bag}<p class="text-[15px] font-medium text-foreground">Giỏ hàng trống</p>
       <p class="text-[13px] text-muted-foreground">Hãy khám phá bộ sưu tập mới nhất.</p>
-      <button data-nav="plp" class="mt-2 h-10 px-6 bg-primary text-primary-foreground text-[13px] font-semibold rounded-xs press">Tiếp tục mua sắm</button></div>`;
+      <button data-nav="plp" class="mt-2 h-10 px-6 bg-primary text-primary-foreground text-[13px] font-semibold rounded-xs btn-p press">Tiếp tục mua sắm</button></div>`;
 }
 
 function refreshCartCount(root) {
@@ -6416,6 +6524,30 @@ const FONTS = [
 ];
 let currentFont = 'montserrat';
 
+/* ── Theme (đổi trong popover Cài đặt, cùng kiểu với phông chữ) ──
+   [id, nhãn, class trên <html>, mô tả ngắn]. Class rỗng = mode D mặc định
+   (:root trong tokens.css). `theme-gm` là mode thứ 2 vốn đã có sẵn trong
+   tokens.css nhưng chưa ai bật — đưa vào đây luôn để so 3 bản cạnh nhau. */
+const THEMES = [
+  ['d',     'Mặc định',      '',             'Mode D — bản đang dùng'],
+  ['dplus', 'D+ improved',   'theme-dplus',  'Accent warm black, focus rõ hơn'],
+  ['gm',    'GM (nền xám)',  'theme-gm',     'Mode thứ 2 có sẵn trong tokens.css'],
+];
+let currentTheme = 'd';
+/* Gỡ mọi class theme rồi gắn class của theme đích. Gọi cả lúc bấm chọn lẫn
+   lúc khôi phục từ hash khi đổi bản mobile/desktop. */
+function applyTheme(id) {
+  const t = THEMES.find(x => x[0] === id);
+  if (!t) return null;
+  currentTheme = t[0];
+  const html = document.documentElement;
+  THEMES.forEach(x => { if (x[2]) html.classList.remove(x[2]); });
+  if (t[2]) html.classList.add(t[2]);
+  document.querySelectorAll('#settingsPanel [data-theme]').forEach(x =>
+    x.querySelector('.th-tick').classList.toggle('opacity-0', x.dataset.theme !== t[0]));
+  return t;
+}
+
 document.body.insertAdjacentHTML('beforeend', `
   <button id="settingsFab" aria-label="Cài đặt hiển thị">
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -6428,7 +6560,7 @@ document.body.insertAdjacentHTML('beforeend', `
     <div class="sp-backdrop"></div>
     <div class="sp-card" role="dialog" aria-label="Cài đặt phông chữ">
       <div class="px-3 pt-3 pb-2">
-        <p class="text-[11px] tracking-[0.12em] uppercase text-muted-foreground">Ngôn ngữ</p>
+        <p class="text-[11px] tracking-[0.12em] text-muted-foreground">Ngôn ngữ</p>
       </div>
       <div class="px-3 pb-3">
         <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Ngôn ngữ">
@@ -6438,7 +6570,23 @@ document.body.insertAdjacentHTML('beforeend', `
       </div>
       <div class="h-px bg-border mx-3"></div>
       <div class="px-3 pt-3 pb-2">
-        <p class="text-[11px] tracking-[0.12em] uppercase text-muted-foreground">Phông chữ</p>
+        <p class="text-[11px] tracking-[0.12em] text-muted-foreground">Giao diện</p>
+      </div>
+      <div id="themeList" class="pb-2">
+        ${THEMES.map(([id, label, cls, note]) => `
+          <button data-theme="${id}" class="themeopt w-full min-h-11 px-3 py-2 flex items-center justify-between gap-3 press">
+            <span class="flex flex-col items-start min-w-0">
+              <span class="text-[14px] leading-5 text-foreground">${label}</span>
+              <span class="text-[11px] leading-4 text-muted-foreground truncate">${note}</span>
+            </span>
+            <span class="th-tick w-4 h-4 shrink-0 ${id === currentTheme ? '' : 'opacity-0'}">
+              <svg viewBox="0 0 16 16" fill="none"><path d="m3.5 8.5 3 3 6-7" stroke="var(--general-foreground)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </button>`).join('')}
+      </div>
+      <div class="h-px bg-border mx-3"></div>
+      <div class="px-3 pt-3 pb-2">
+        <p class="text-[11px] tracking-[0.12em] text-muted-foreground">Phông chữ</p>
       </div>
       <div id="fontList" class="pb-2">
         ${FONTS.map(([id, label, stack]) => `
@@ -6473,6 +6621,15 @@ document.body.insertAdjacentHTML('beforeend', `
       });
       closeP();
       toast(to === 'en' ? 'Switched to English' : 'Đã chuyển sang Tiếng Việt');
+    });
+  });
+
+  panel.querySelectorAll('[data-theme]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = applyTheme(btn.dataset.theme);
+      if (!t) return;
+      closeP();
+      toast('Giao diện: ' + t[1]);
     });
   });
 
@@ -6703,7 +6860,7 @@ document.body.insertAdjacentHTML('beforeend', `
                  class="h-11 bg-input border border-border rounded-sm px-3 text-[14px] text-foreground outline-none focus:border-primary transition-colors">
         </label>
         <p id="nsErr" class="text-[12px] leading-4 text-destructive hidden">Vui lòng nhập email hoặc số điện thoại.</p>
-        <button id="nsSubmit" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium press">Đăng ký nhận thông báo</button>
+        <button id="nsSubmit" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium btn-p press">Đăng ký nhận thông báo</button>
         <p class="text-[11px] leading-4 text-muted-foreground text-center">Thông tin chỉ dùng để báo hàng về, không dùng cho mục đích khác.</p>
       </div>
       <div class="safe-b"></div>
@@ -6768,7 +6925,7 @@ document.body.insertAdjacentHTML('beforeend', `
 function quickAddCta(p) {
   return `
     <div class="px-4 pt-4 pb-4">
-      <button id="qaAdd" data-quick-img="${A}${p.img}" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium press">Thêm vào giỏ hàng</button>
+      <button id="qaAdd" data-quick-img="${A}${p.img}" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium btn-p press">Thêm vào giỏ hàng</button>
     </div>`;
 }
 
@@ -6816,7 +6973,7 @@ function quickAddBody(p, idx, sel = 0) {
              cho ô màu hex 36px trước đây — để quick add và PDP nhìn như một. -->
         <div class="flex gap-2" data-qa-colors>
           ${p.colors.map((c, ci) => `
-            <button class="sw w-11 h-11 rounded-xs overflow-hidden shrink-0 border ${ci===sel ? 'on' : 'border-transparent'} bg-secondary press" data-cw="${ci}" data-name="${c.name}">
+            <button class="sw w-11 h-11 rounded-xs overflow-hidden shrink-0 border ${ci===sel ? 'on' : 'border-transparent'} bg-secondary btn-s press" data-cw="${ci}" data-name="${c.name}">
               <img src="${A}${gallery[ci] || p.img}" class="w-full h-full object-cover" alt="${c.name}">
             </button>`).join('')}
         </div>
@@ -6944,14 +7101,14 @@ document.body.insertAdjacentHTML('beforeend', `
           </div>
         </div>
         <div class="flex flex-col gap-4">
-          <button id="lpLogin" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium press flex items-center justify-center">Đăng nhập</button>
+          <button id="lpLogin" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium btn-p press flex items-center justify-center">Đăng nhập</button>
           <!-- "Hoặc" thành gạch phân cách: tách rõ nhánh chính (đăng nhập) và nhánh phụ (mua không đăng nhập) -->
           <div class="flex items-center gap-3">
             <span class="flex-1 h-px bg-border"></span>
             <span class="text-[12px] leading-4 text-muted-foreground">Hoặc</span>
             <span class="flex-1 h-px bg-border"></span>
           </div>
-          <button id="lpGuest" class="w-full h-12 rounded-xs border border-border bg-transparent ghost-hover text-[16px] leading-5 font-medium text-foreground press flex items-center justify-center">Mua hàng không đăng nhập</button>
+          <button id="lpGuest" class="w-full h-12 rounded-xs border border-border bg-background text-[16px] leading-5 font-medium text-foreground btn-o press flex items-center justify-center">Mua hàng không đăng nhập</button>
         </div>
         <p class="text-center text-[14px] leading-5 text-muted-foreground">Chưa có tài khoản?
           <button id="lpRegister" class="font-medium underline text-foreground press">Đăng ký ngay</button>
@@ -6995,10 +7152,11 @@ document.body.insertAdjacentHTML('beforeend', `
   // Đăng nhập: như flow login-từ-giỏ (ckAuth + sang checkout)
   lp.querySelector('#lpLogin').addEventListener('click', () => {
     const btn = lp.querySelector('#lpLogin');
+    if (btnBusy(btn)) return;
     const html = btn.innerHTML;
     btn.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
     setTimeout(() => {
-      btn.innerHTML = html;
+      btn.innerHTML = html; btnDone(btn);
       ckAuth = true; ckStep = 1; ckMaxStep = Math.max(ckMaxStep, 1);
       closeLP();
       go('checkout');
@@ -7050,7 +7208,7 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>
       </div>
       <div class="px-4 pt-2 pb-4 flex flex-col gap-2.5 shrink-0">
-        <button id="ccGoCart" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium press">Xem giỏ hàng</button>
+        <button id="ccGoCart" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium btn-p press">Xem giỏ hàng</button>
         <button id="ccContinue" class="w-full h-9 rounded-xs text-[14px] leading-5 font-medium press" style="color:var(--unofficial-ghost-foreground)">Tiếp tục mua sắm</button>
       </div>
       <div class="safe-b"></div>
@@ -7118,7 +7276,7 @@ document.body.insertAdjacentHTML('beforeend', `
       <div id="szList" class="flex flex-col overflow-y-auto no-scrollbar"></div>
       <button id="szGuide" class="w-full min-h-9 px-4 py-2 text-left text-[14px] leading-5 text-secondary-foreground underline press shrink-0">Hướng dẫn chọn size</button>
       <div class="p-4 shrink-0">
-        <button id="szAdd" disabled class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 press" style="opacity:.4">Thêm vào giỏ hàng</button>
+        <button id="szAdd" disabled class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 btn-p press">Thêm vào giỏ hàng</button>
       </div>
       <div class="safe-b"></div>
     </div>
@@ -7296,7 +7454,7 @@ document.body.insertAdjacentHTML('beforeend', `
       terms.innerHTML = `
         <p class="text-[12px] leading-4 text-muted-foreground pb-2">Gợi ý</p>
         ${sug.length
-          ? sug.map(s => `<button class="w-full text-left px-2 py-2.5 rounded-xs text-[14px] leading-5 text-foreground hover:bg-secondary transition-colors press" data-suggest="${s}">${highlightMatch(s, q)}</button>`).join('')
+          ? sug.map(s => `<button class="w-full text-left px-2 py-2.5 rounded-xs text-[14px] leading-5 text-mid-alt ghost-hover press" data-suggest="${s}">${highlightMatch(s, q)}</button>`).join('')
           : `<p class="px-2 py-2 text-[14px] leading-5 font-medium text-foreground">Không tìm thấy kết quả</p>`}`;
     } else if (searchHistory.length) {
       terms.innerHTML = `
@@ -7323,7 +7481,7 @@ document.body.insertAdjacentHTML('beforeend', `
     hot.innerHTML = `
       <p class="text-[12px] leading-4 text-muted-foreground pb-2">Từ khóa phổ biến</p>
       ${DK_SEARCH_HOT.map(k => `
-      <button class="w-full flex items-center gap-2.5 px-2 py-2.5 rounded-xs text-left text-[14px] leading-5 text-foreground hover:bg-secondary transition-colors press" data-suggest="${k}">
+      <button class="w-full flex items-center gap-2.5 px-2 py-2.5 rounded-xs text-left text-[14px] leading-5 text-foreground ghost-hover press" data-suggest="${k}">
         <span class="w-4 h-4 flex items-center justify-center shrink-0 [&_svg]:w-3.5 [&_svg]:h-3.5 opacity-50">${I.search}</span>
         <span class="flex-1 min-w-0 truncate">${k}</span>
       </button>`).join('')}`;
@@ -7399,9 +7557,9 @@ document.body.insertAdjacentHTML('beforeend', `
         <p class="text-[13px] font-light leading-5 text-foreground">Trước khi Quý khách đồng ý, chỉ các Cookie cần thiết để website hoạt động mới được sử dụng. Bạn có thể chấp nhận hoặc từ chối các cookie tùy chọn bên dưới. Bạn cũng có thể thay đổi lựa chọn bất kỳ lúc nào thông qua <button data-cg-prefs class="underline text-foreground press">Chính sách Cookie</button></p>
       </div>
       <div class="flex flex-col gap-2">
-        <button data-cg-all class="h-11 w-full rounded-xs bg-primary text-primary-foreground text-[12px] font-medium tracking-wider uppercase press">Đồng ý tất cả</button>
-        <button data-cg-none class="h-11 w-full rounded-xs border border-border text-foreground text-[12px] font-medium tracking-wider uppercase press hover:bg-accent-0 transition-colors">Từ chối tất cả</button>
-        <button data-cg-prefs class="h-11 w-full text-[12px] font-medium tracking-wider uppercase underline text-foreground press">Tùy chọn cookies</button>
+        <button data-cg-all class="h-11 w-full rounded-xs bg-primary text-primary-foreground text-[12px] font-medium tracking-wider btn-p press">Đồng ý tất cả</button>
+        <button data-cg-none class="h-11 w-full rounded-xs border border-border bg-background text-foreground text-[12px] font-medium tracking-wider btn-o press">Từ chối tất cả</button>
+        <button data-cg-prefs class="h-11 w-full text-[12px] font-medium tracking-wider underline text-foreground press">Tùy chọn cookies</button>
       </div>
     </div>
   </div>
@@ -7426,9 +7584,9 @@ document.body.insertAdjacentHTML('beforeend', `
           </div>`).join('')}
       </div>
       <div class="shrink-0 px-5 py-4 flex justify-end gap-3">
-        <button data-cg-none class="h-11 px-5 rounded-xs border border-border text-foreground text-[12px] font-medium tracking-wider uppercase press hover:bg-accent-0 transition-colors">Từ chối tất cả</button>
-        <button data-cg-all class="h-11 px-5 rounded-xs border border-border text-foreground text-[12px] font-medium tracking-wider uppercase press hover:bg-accent-0 transition-colors">Đồng ý tất cả</button>
-        <button data-cg-save class="h-11 px-6 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium tracking-wider uppercase press">Lưu lựa chọn</button>
+        <button data-cg-none class="h-11 px-5 rounded-xs border border-border bg-background text-foreground text-[12px] font-medium tracking-wider btn-o press">Từ chối tất cả</button>
+        <button data-cg-all class="h-11 px-5 rounded-xs border border-border bg-background text-foreground text-[12px] font-medium tracking-wider btn-o press">Đồng ý tất cả</button>
+        <button data-cg-save class="h-11 px-6 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium tracking-wider btn-p press">Lưu lựa chọn</button>
       </div>
     </div>
   </div>`);
@@ -7588,6 +7746,8 @@ if (!RESP.swapped) {
     });
   }
 
+  if (st.theme) applyTheme(st.theme);
+
   const f = FONTS.find(x => x[0] === st.font);
   if (f) {
     currentFont = f[0];
@@ -7616,7 +7776,7 @@ if (!RESP.swapped) {
   }
 
   /* Thu cửa sổ hẹp < 768 -> sang bản mobile, mang theo màn + cài đặt */
-  RESP.watch(() => [current, LANG, currentFont]);
+  RESP.watch(() => [current, LANG, currentFont, currentTheme]);
 }
 </script>
 </body>
