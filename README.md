@@ -403,7 +403,10 @@ Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI
   - **Breadcrumb** (`2903:45117`): hàng 36px, ngăn cách bằng **chấm tròn 16px** (không phải dấu `/`), chữ 14/20 `#737373`, luôn 2 đoạn — thiếu `crumbs` thì lấy tiêu đề, chế độ tìm kiếm dùng nhãn ngắn "Kết quả tìm kiếm".
   - **Heading** (`2903:45118`): tiêu đề Light 24/32 + số sản phẩm 14/20 canh đáy, `gap-2`, `py-6`.
   - **Brand hero** (`2474:107068`): ảnh hero 575×320 · cột chữ 801 (logo 149×28 + mô tả + strip danh mục 150px + nút cuộn 44px). **Đảo so với Figma (11/08/2026)**: ảnh đứng TRƯỚC (bên trái), khối tên brand + mô tả + strip sang phải — chỉ đổi thứ tự DOM, bề rộng 2 cột giữ nguyên nên là bản soi gương của thiết kế gốc.
-  - **Filter bar 80px** (`2903:45194`): `Bộ lọc (n)` outline 48/24 · chip ghost 48/24 (chip trùng danh mục đang xem = State Active, chữ `#0a0a0a`) · density 4/3 cột — icon 20px, nút không chọn `opacity-50` · nhãn nút sắp xếp = **giá trị đang chọn** (mặc định `relevance` vẫn hiện "Sắp xếp").
+  - **Filter bar 68px** (`2903:45194`): `Bộ lọc (n)` outline **36/16** · chip ghost **36/16**, chữ **14/20 Medium** (chip trùng danh mục đang xem = State Active, chữ `#0a0a0a`) · density 4/3 cột — icon 20px, nút không chọn `opacity-50` · nhãn nút sắp xếp = **giá trị đang chọn** (mặc định `relevance` vẫn hiện "Sắp xếp").
+    - **Size Regular, KHÔNG phải Large (đổi 12/08/2026 theo yêu cầu user, kèm link node `2903:44753`)**: trước đó dùng 48/24 + chữ 16 nên thanh filter nặng hơn cả nav. Giờ cả thanh cùng một bậc `h-9 px-4` — trùng `Button/Ghost Muted/Regular` của subheader nav (h-36, padding 8/16) và trùng luôn nút Sắp xếp / density vốn đã là h-9 từ đầu (bar này trước đây tự lệch bậc giữa nửa trái và nửa phải). Bar cao 80 → **68** (`py-4` + 36). Chip cũng gọn lại nên ở 1440 hết cần cuộn ngang (666px content vs 849px trước).
+    - **Hàng chip "đang áp dụng" (`#plpActiveFilters`) VẪN Large 48/24** — đó là frame Figma riêng (`2910:111376`), không nằm trong yêu cầu này. Nếu muốn đồng bộ xuống Regular thì nói rõ.
+    - ⚠️ Comment trong `filterBar()` **không được chứa dấu backtick** — cả khối là template literal, backtick sẽ cắt chuỗi và làm chết toàn bộ script (đã mắc đúng lỗi này khi ghi tên component `Button/Ghost Muted/Regular` vào comment).
   - **Hàng chip bộ lọc đang áp dụng** (`2910:111376`): chip Secondary 48/24 nền `#f5f5f5` + ✕, cuối hàng "Xóa tất cả" (Figma ghi sai chính tả "Xoát"). State thật ở `plpFilters`, sinh từ nút Áp dụng của drawer Bộ lọc; bỏ chip / xóa tất cả đều re-render lưới.
   - **Grid**: `gap-x-1` row 16px, 4 cột (card 345×590, có swatch) hoặc 3 cột (card 461×695). Figma dùng 2 variant Card-item khác nhau (3 cột là bản `Default` không có swatch) — code **giữ swatch ở cả hai** vì `v2` là bản mới hơn.
   - **Tiến độ + Xem thêm** (`2237:18725` + Frame 46): "Bạn đã xem X trong Y sản phẩm" 14/20 `#737373` + track 240×2, rồi nút Xem thêm outline canh giữa. `PLP_TOTAL = 152` là tổng catalog demo.
@@ -423,7 +426,7 @@ Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI
   - Summary: "Mã giảm giá" 14 Medium, bỏ 2 divider quanh khối tổng, "Tổng cộng" 16 Medium, dòng điểm thưởng 14/20; **"Bạn có phiếu mua hàng?" chuyển xuống DƯỚI nút Đặt hàng** (Figma 3428:55499: là phương thức mua hàng, không phải ưu đãi).
 - **Checkout**: 2 cột theo note Figma `2084:165` — form 3 section tự đóng/mở bên trái, summary sticky + CTA bên phải; header rút gọn (logo + "Thanh toán an toàn & bảo mật").
 - **Auth**: card 440px giữa trang trên nền xám (đủ 6 view login/register/otp/reginfo/setpass/forgot). **Account**: sidebar 280px + nội dung 720px. **Order**: card 860px với timeline. **Done**: xác nhận giữa trang + cross-sell 5 card.
-- **Bottom sheet mobile → dialog desktop**: quick-add / xác nhận thêm giỏ / chọn size / nhận thông báo / info sheet thành modal giữa màn hình (class `.dk-modal`, tái dùng nguyên JS mở/đóng); riêng Bộ lọc thành drawer trượt phải 420px.
+- **Bottom sheet mobile → dialog desktop**: quick-add / xác nhận thêm giỏ / chọn size / nhận thông báo / info sheet thành modal giữa màn hình (class `.dk-modal`, tái dùng nguyên JS mở/đóng); riêng Bộ lọc thành drawer 420px **trượt vào từ mép TRÁI** (đổi 12/08/2026 theo yêu cầu — nút "Bộ lọc" nằm bên trái thanh filterbar nên panel mọc ra cùng phía; shadow đổ sang phải `12px 0 40px`).
 - Từ điển i18n bổ sung riêng cho chuỗi desktop qua `Object.assign(I18N, …)` (đặt trước khi build `I18N_REV`).
 
 ## Design system (tokens07.json)
@@ -452,7 +455,7 @@ Cỡ chữ **không** nằm trong `tokens07.json` — viết thẳng bằng util
 
 **18px LUÔN đi với `font-medium`** — cả 23 chỗ dùng `text-[18px]` trong `index.html` đều Medium (500), không có 18px Light / Regular. Đây là **quyết định của design, cố ý khác Figma** (Figma để 18 Regular ở tiêu đề giỏ hàng và heading newsletter footer) — đừng "sửa lại theo Figma". Thêm chỗ 18px mới thì nhớ kèm `font-medium`.
 
-> Ngoại lệ còn lại: "Đặt hàng thành công" ở màn `done` vẫn 22px — Figma `2084:166` chưa có nội dung màn này nên chưa có số để bám.
+> Ngoại lệ còn lại: "Đặt hàng thành công" ở màn `done` vẫn 22px — Figma `2084:166` chưa có nội dung màn này nên chưa có số để bám. Bản **desktop** thì heading này đã về đúng thang `24px Light leading-8` như 16 heading 24px khác (12/08/2026) — đừng port ngược 22px/Medium sang.
 
 ### Quy ước border
 
@@ -491,8 +494,99 @@ Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫ
 
 ### Chờ port sang desktop
 
-- **13 chỉnh theo Figma `3547:55856`** (xem "Đối chiếu checkout với Figma") mới áp cho mobile. Desktop còn: vòng radio 2px đổi đen khi chọn, `.opt.on` tô nền `#fafafa`, checkbox viền `#e5e5e5`, ô nhập padding 12, nhóm field gap 8, link "Thay đổi" 16px Light, tiêu đề màn 18/28, thiếu kẻ ngăn `#f5f5f5` + bước chờ cao 72.
-- **Lệch NGƯỢC — bộ lọc PLP**: desktop lọc thật (`plpFilters` + chip đang áp dụng), **mobile vẫn chỉ toast**.
+- **13 chỉnh theo Figma `3547:55856`** (xem "Đối chiếu checkout với Figma") mới áp cho mobile. Desktop còn: checkbox viền `#e5e5e5`, ô nhập padding 12, nhóm field gap 8, link "Thay đổi" 16px Light, tiêu đề màn 18/28, thiếu kẻ ngăn `#f5f5f5` + bước chờ cao 72. (Vòng radio + `.opt.on` đã port 12/08 — xem mục dưới.)
+- ~~**Lệch NGƯỢC — bộ lọc PLP**: desktop lọc thật, mobile chỉ toast.~~ → **đã đồng bộ 12/08/2026**, xem "Bộ lọc lọc thật + 4 hành vi mới" bên dưới. Còn lệch duy nhất: **hàng chip "đang áp dụng" chỉ có ở desktop** (mobile bỏ/tắt bộ lọc trong sheet).
+
+### Bộ lọc lọc thật + 4 hành vi mới — CẢ 2 BẢN (12/08/2026)
+
+Theo yêu cầu user (áp cho `index.html` và `desktop.html`):
+
+1. **Chip size tối đa 5 ô/dòng** — container thành `grid-template-columns:repeat(5,1fr)` (helper `sizeGrid`), chip từ `min-w-[52px] px-2` → `w-full px-1`. Giống lưới size PDP. Áp cho cả Kích thước (thời trang) và Dung tích (beauty) vì dùng chung helper `chips()`.
+2. **Màu sắc chọn NHIỀU** — bỏ chọn-1; mở ra **không ô nào được chọn** (trước đây ô đầu bị tô sẵn nên phải có cờ `dataset.colorPicked` để phân biệt "tô sẵn" với "user đã chọn" — cờ đó đã xoá). Helper `setColorChip(btn, on)` dùng chung cho handler và nút Đặt lại.
+3. **"Đặt lại" chỉ hiện khi đã áp dụng trước đó** — mặc định `class="hidden"`, `syncFilterFooter()` toggle theo `plpFilters.length`. Lưu ý: theo **đã áp**, không theo tick hiện tại.
+4. **"Áp dụng" kèm số kết quả** — `<span id="filterApplyCount">`, cập nhật mỗi lần tick.
+
+**Kéo theo: lưới PLP giờ LỌC THẬT.** Số trên nút buộc phải khớp lưới nên không thể bịa:
+- Nguồn duy nhất vẫn là `plpFilters` (mảng **NHÃN**); facet **suy ra từ nhãn** → xoá chip ngoài PLP là lưới tự cập nhật, không cần state thứ hai.
+- `matchProducts(list, labels)` lọc: thương hiệu · màu · Đang giảm giá (`p.off`) · Hàng mới về (`p.tag`). Màu sản phẩm mang tên tiếng Ý (Nero/Bianco/Cuoio) nên quy về ô màu bộ lọc **gần nhất theo khoảng cách RGB** (`colorBucketOf`, có cache).
+- **KHÔNG lọc được**: Size (PRODUCTS không mang size — chỉ PDP_DATA có), Danh mục, Ưu đãi beauty. Các nhãn này vẫn vào chip nhưng không thu hẹp lưới. Thêm `sizes`/`cat` vào PRODUCTS thì bổ sung vào `matchProducts()`.
+- **Bỏ pre-tick 2 thương hiệu** (`fchk(i < 2)` → `fchk(false)`): từ khi lọc thật, 2 ô tick sẵn cho đẹp ảnh làm số kết quả mở ra đã là 0.
+- **Empty state mới** khi lọc ra 0 kết quả + nút "Xóa tất cả bộ lọc" (empty state của tìm kiếm `2918:46100` bám từ khóa, không dùng lại được) + 3 khoá i18n.
+
+**3 bẫy đã sập và cách chống — đừng làm lại:**
+- **Nhãn phải lấy từ ATTRIBUTE, không lấy `textContent`.** `applyLang` dịch text node nên ở EN "Đang giảm giá" → "On sale", `matchProducts` so với `FILTER_FLAGS` tiếng Việt sẽ trượt và **bộ lọc câm lặng**. Đã thêm giá trị vào `data-sub` / `data-brand` / `data-other` / `data-flabel` và `pickedLabels()`/`syncFilterToDom()` đọc attribute trước, chỉ fallback textContent. (`data-color` vốn đã mang tên VI nên màu không bị.)
+- **Đổi ngành hàng phải PRUNE nhãn.** `renderFilterBody()` dựng lại thân khi đổi ngành, ticks mất nhưng `plpFilters` còn → áp màu Đen ở thời trang rồi sang beauty (beauty **không có** mục Màu sắc): lưới 0 sản phẩm mà nút vẫn báo tổng, user không thấy đâu mà tắt. `pruneFiltersToBody(sh)` bỏ nhãn không còn ô tương ứng rồi render lại lưới.
+- **Xoá filter từ NGOÀI sheet phải sync ngược vào DOM.** Nút "Xóa tất cả bộ lọc" ở empty state (và chip ở desktop) xoá `plpFilters` nhưng ticks trong sheet vẫn còn → mở lại thấy tick không còn hiệu lực, số lệch hẳn với lưới. Dùng `syncFilterToDom()` (có ở **cả 2 bản**).
+- ⚠️ Comment trong các hàm dựng markup (`filterSheet`, `filterBar`…) **không được chứa backtick** — cả khối là template literal.
+
+#### 9 lỗi phát hiện qua review đối kháng — đã sửa cùng ngày
+
+Review 4 góc (state-lifecycle · parity · counting · i18n+DOM) trên chính bản vừa làm, 28 cáo buộc thật gom về 9 gốc:
+
+1. **Empty state phải nằm ở CẢ đường render màn**, không chỉ `renderPlpGrid()`. Template màn đổ lưới trực tiếp nên hễ điều hướng sang PLP khác (hoặc vào lại chính nó) trong khi bộ lọc ra 0 kết quả là lưới **trắng trơn, không đường thoát**. Đã tách `plpFilterEmptyHTML()` + `plpGridInner(list, card)` dùng ở cả template và `renderPlpGrid`; nút xoá đổi từ `id` sang **`data-clear-filters` + listener uỷ quyền ở document** nên không cần bind lại sau mỗi lần vẽ.
+2. **Prune phải chạy lúc ĐIỀU HƯỚNG, không chờ mở drawer.** Bản đầu `pruneFiltersToBody(sh)` đọc DOM của sheet nên chỉ chạy khi `openFilter()` → nhãn mồ côi vẫn lọc lưới suốt từ lúc vào trang. Đã đổi thành `facetLabelsFor(beauty)` + `pruneFilters()` **thuần dữ liệu**, gọi ngay trong `goPlp()`.
+3. **`openFilter()` phải `syncFilterToDom()`**, không chỉ `syncFilterFooter()`. Tick rồi đóng bằng ✕/backdrop (không Áp dụng) để lại tick "mồ côi": mở lại thấy tick, số kết quả tính theo tick nên lệch lưới, mà "Đặt lại" lại ẩn vì `plpFilters` vẫn rỗng. Giờ mở ra luôn phản ánh trạng thái **đã áp**.
+4. **Số "N sản phẩm" ở header** in `plpProducts()` (chưa lọc) và không có hook cập nhật → header nói 16 trong khi nút hứa 6 và lưới đúng 6. Thêm `[data-plp-count]` + `updatePlpCount()`, dùng số **đã lọc**.
+5. **"Xem thêm"/"Show more" nhồi `PRODUCTS.slice(0,4)` thô** — bỏ qua bộ lọc và cả ngành hàng, kể cả chèn 4 thẻ ngay dưới câu "không khớp bộ lọc". Đổi sang `sortedProducts().slice(0,4)`.
+6. **Ánh xạ màu: bỏ khoảng cách RGB, dùng HSL.** RGB không phân biệt sắc nên "gần nhất" gán #a5d48c (xanh lá) vào **Xám**, #f5d6e0 (hồng) vào **Beige**, còn Đỏ/Navy **không bao giờ** khớp gì. Giờ tách nhóm trung tính (S < .15, so theo độ sáng) vs có sắc (so theo hue, ngưỡng 40°, quá xa → `null`), cộng **phạt độ sáng ×60** để tách Nâu khỏi Beige (2 ô gần cùng hue 18°/33°, chỉ khác độ sáng). Kết quả đo: xanh lá/mint → không khớp ô nào; hồng → Đỏ; cuoio + nero oro → Nâu.
+7. **Dung tích LỌC THẬT** — comment cũ của tôi ("PRODUCTS không mang size") **sai**: 8 sản phẩm beauty có field `sizes` trùng khít `FILTER_VOLUMES`. Đã thêm vào `matchProducts()`. (Size thời trang thì vẫn không lọc được — đúng là chỉ `PDP_DATA` có.)
+8. **Nhãn dung tích không gắn tiền tố "Size "** — chip dung tích dùng chung class `.fsize` nên `plpFilters` từng chứa `"Size 100 ml"`. Sửa ở cả 3 nơi: `pickedLabels`, `syncFilterToDom`, `pruneFilters`-present-set.
+9. **Hai lệch parity**: mobile hardcode `fSection('Thương hiệu (2)')` — di sản thời pre-tick, luôn hiện "(2)" dù 0 ô tick (I18N còn dịch thành "Brand (2)") → bỏ số; desktop `refreshActiveFilters()` ghi `Bộ lọc (n)` mà không `localizeNew` nên UI tiếng Anh vẫn hiện tiếng Việt → thêm localize. Cũng bỏ alias thừa `FILTER_COLOR_HEX` chỉ desktop có.
+
+**Còn lại chưa làm** (không thuộc 4 yêu cầu, ghi để không quên): mobile **không có badge (n)** trên nút Bộ lọc và không có hàng chip đang-áp-dụng, nên sau khi áp bộ lọc rồi rời trang thì không có chỉ dấu nào; mobile cũng **chưa có số đếm động theo section** (`[data-fscount]` + `syncSectionCounts` chỉ desktop có); checkbox danh mục cha vẫn tick toàn bộ con nên 1 cú bấm sinh ~16 nhãn (Danh mục vốn không lọc nên lưới không đổi, chỉ số chip trông vô lý); skeleton desktop lấy `grid.children.length` nên vẽ lại từ trạng thái empty chỉ hiện 1 khung xương.
+
+### Chuẩn hóa màu theo design token — chỉ desktop (12/08/2026)
+
+Nguồn sự thật mới: bản export DTCG mode D của user (`Downloads/D.tokens.json`).
+`tokens.css` vá tay 2 chỗ (accent `#ff6600`→`#09090b` theo Figma — không đổi UI vì
+không ai dùng `bg/text-accent` DEFAULT; thêm `--general-body-text` +
+`--unofficial-foreground-alt-2`, đều `#404040`, code chưa dùng). **`tailwind.css`
+đã rebuild** — trước đó build 10/08 thiếu `bg-transparent`, `bg-success`,
+`bg-warning-subtle`, `accent-primary`.
+
+- **Bug hiển thị thật đã sửa**: `I.tick` hardcode `fill="#fff"` → `currentColor`,
+  kèm `color` vào `.chk.on` — trước đó tick **vô hình** ở bullet "Đặc quyền hạng
+  Vàng" (account/loyalty) và vòng tròn màn `ckPlaced` (đều nền trắng). Vòng tròn
+  ckPlaced thêm `text-primary`. Bản mobile đã sửa cùng cách 12/08/2026
+  (index.html: tick + `.chk.on` + vòng tròn ckPlaced; `.chk.on` mobile vẫn giữ
+  nền `#0a0a0a` cứng vì chuẩn hóa token nền/viền mới làm ở desktop).
+- Semantic: badge "Quà tặng" chữ `text-destructive-subtle`→`text-primary-foreground`;
+  pill trạng thái đơn warning `bg-destructive-subtle`→`bg-warning-subtle`; lịch sử
+  điểm `text-emerald-600`→`text-success` (×3); thanh độ mạnh mật khẩu
+  `bg-emerald-500`→`bg-success`; checkbox điều khoản `accent-black`→`accent-primary`.
+- Input: newsletter bỏ viền `border-border-5`→`border-border`; 4 input
+  `bg-background`→`bg-input` (cùng trắng, đúng token ô nhập).
+- Bộ lọc PLP: ring swatch `border-[#010101]`/`border-[#e0e0e0]` → `border-primary`/
+  `border-border` (sửa CẢ 2 `classList.replace` trong JS — literal bake cứng);
+  hairline swatch trắng → `border-border-3` (khớp card PLP); gạch nối khoảng giá
+  `bg-[#e0e0e0]`→`bg-border`. `#e0e0e0` đã sạch khỏi file.
+- SVG/CSS: spinner data-loading + nút ✕ zoom hết `#fff` cứng (currentColor /
+  `--general-primary-foreground`); chevron helper default + call site → `var()`;
+  `.chk.on`/`.chip.on`/`.sw.on`/`.ghost-hover`/`.dk-nav-arrow`/`.cg-sw i` hết hex
+  literal; nút quick-add sửa 2 biến không tồn tại (`--2`→`--spacing-2`,
+  `--rounded-infinite`→`--radius-infinite`) + bỏ hex fallback.
+- `text-primary-foreground/80` (class chết — cú pháp `/alpha` không hoạt động với
+  token dạng `var()`) → `text-primary-foreground opacity-80`.
+- Viền card: chỉ sửa 2 chỗ có bằng chứng nội bộ rõ — `#ckSections` về `border-border`
+  (khớp cột tóm tắt đứng cạnh) + header `#infoSheet` về `border-border` (khớp mọi
+  overlay header). KHÔNG bulk-đổi `border-border-1` còn lại: Figma để description
+  của `border 1` và `border 2` trùng nhau nguyên văn, không có căn cứ phân xử.
+- Xoá code chết mang style lệch hệ: `orderSummaryRow`/`miniCart`/`stickyCta`
+  (không call site) + handler `.brand-chip` mồ côi.
+- **Cố ý KHÔNG sửa (chờ chốt)**: backdrop `.45` (token ghi `0.6` trong description —
+  đổi là tối hơn thấy rõ 10 overlay); viền input `#e5e5e5` (token ghi `border 3
+  #d4d4d4` là "input borders default" nhưng component spec 3547:55856 + toàn bộ code
+  đang dùng `#e5e5e5` — hai nguồn Figma tự mâu thuẫn); `.chip.off`
+  (`#a3a3a3`/`rgba .04` — không có token chữ disabled); `#d9d9d9` rail cây danh mục
+  (giá trị Figma spec, có comment); shadow các loại (tokens.css không có token shadow).
+
+### Đã đồng bộ sang desktop (12/08/2026)
+
+Hai lệch "nhìn thấy ngay" tìm ra khi soát lại độ dày line/text toàn bản desktop:
+
+- **Radio theo Figma `3547:55856`** — bỏ `.radio.on { border-color }` nên vòng radio giữ **1px `#d4d4d4` ở cả 2 trạng thái**, chỉ chấm 8px hiện ra; `.opt.on` còn **đổi viền `#262626`, không tô nền** (`#fafafa` đã bỏ). Markup 3 chỗ còn dùng `border-2` + tráo `border-primary` đổi hết sang `border border-border-3` tĩnh: `richRadio()` (vận chuyển + thanh toán), quà tặng ở giỏ, `dafcRewards()`. Trước đó màn checkout có **2 loại radio cạnh nhau** — vòng 2px đổi đen ở vận chuyển/thanh toán, vòng 1px ở thẻ cửa hàng + sổ địa chỉ.
+  - Kéo theo: xoá override riêng `#storeOpts .opt.on` (giờ trùng luật chung) và các `classList.replace('border-primary','border-border')` trong handler radio/rewards — màu viền thẻ do **`.opt.on` cấp một chỗ duy nhất**, JS chỉ bật/tắt `.on`.
+- **Heading màn Hoàn tất** — `text-[24px] font-medium leading-snug` → **`font-light leading-8`**, khớp 16 heading 24px còn lại; eyebrow "Xác nhận" 10px → **12/16** (thang eyebrow của trang), body `leading-relaxed` → **13/20**. Kèm 2 khoá i18n còn thiếu cho 2 câu body (tách bằng `<br>` nên `applyLang` phải có khoá riêng từng câu, không dùng được khoá câu dài của màn `ckPlaced`).
 
 ### Đã đồng bộ sang desktop (11/08/2026)
 
