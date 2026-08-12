@@ -459,6 +459,47 @@ Cỡ chữ **không** nằm trong `tokens07.json` — viết thẳng bằng util
 
 **Không dùng 20px và 22px** — không có trong thang. Tiêu đề cấp section (h2 trong trang: "Giỏ hàng", "Thanh toán", "Bộ lọc", tên brand ở PDP, tiêu đề bottom sheet) dùng **18px**; tiêu đề trang full-screen (auth) dùng **24px Light**. Riêng heading section trong 3 trang chính sách dùng **16px** — xem mục "Trang tĩnh / chính sách".
 
+### Switcher theme trong popover Cài đặt (12/08/2026)
+
+Áp mode **`D+ improved`** (vừa tạo trong Figma, collection `theme`, mode thứ 3) vào code, đổi được ngay trong popover Cài đặt — **cùng khuôn với switcher phông chữ**. Cả 2 file.
+
+Popover giờ có 3 mục: **Ngôn ngữ · Giao diện · Phông chữ**. Mục Giao diện có 3 lựa chọn:
+
+| id | Nhãn | Class trên `<html>` |
+|---|---|---|
+| `d` | Mặc định | *(không có — `:root`)* |
+| `dplus` | D+ improved | `.theme-dplus` |
+| `gm` | GM (nền xám) | `.theme-gm` — mode thứ 2 **vốn đã có** trong `tokens.css` mà chưa ai bật |
+
+`THEMES` + `applyTheme(id)` đặt ngay cạnh `FONTS`/`currentFont`. `applyTheme` gỡ mọi class theme trước khi gắn class đích nên không bị cộng dồn.
+
+**Không viết vào `tokens.css`** — file đó có header *"Không sửa tay, chạy lại `gen_tokens.py`"*. Khối `.theme-dplus` nằm trong `<style>` của từng file (nằm sau `tokens.css`, cùng specificity 0,1,0 nên vẫn thắng `:root`). Khi nào export lại `tokens07.json` **và** sửa `gen_tokens.py` cho duyệt mode động thì khối này chuyển về `tokens.css`.
+
+#### 2 biến gián tiếp — để theme có hiệu lực mà KHÔNG phá bản mặc định
+Nếu trỏ thẳng vào token thì hoặc theme không có tác dụng, hoặc bản mặc định bị đổi. Nên:
+
+| Biến | Mặc định | `.theme-dplus` |
+|---|---|---|
+| `--btn-focus-ring` | `--unofficial-border-3` `#d4d4d4` (đúng component Button) | `--focus-ring` `#737373` (**4.74:1**) |
+| `--surface-dark` | `--general-secondary-foreground` `#262626` (đúng màu promo bar đang có) | `--unofficial-accent` `#292524` (warm black) |
+
+Lý do cần `--btn-focus-ring`: CSS focus của button dùng `--unofficial-border-3` cho khớp component, nên nếu chỉ nâng `--focus-ring` trong theme thì **ring không đổi gì** — đúng lỗi này đã xảy ra lúc làm và phải sửa lại.
+
+**Accent giờ có việc thật**: `--surface-dark` được gắn cho **promo bar** và **thẻ hội viên** — hai mặt tối lớn không tương tác. Trước đó promo bar lấy `--general-secondary-foreground`, tức **token CHỮ dùng làm NỀN** (lỗi đảo vai trò đã báo ở đợt audit màu).
+
+#### Giữ theme khi kéo cửa sổ đổi bản
+`RESP.hash()` / `swap()` / `watch()` nhận thêm tham số thứ 4 `theme`; `state()` trả `[current, LANG, currentFont, currentTheme]`; khối khôi phục gọi `applyTheme(st.theme)`. Mặc định `d` thì bỏ khỏi hash cho URL gọn (cùng quy ước với `lang=vi` / `font=montserrat`).
+
+#### Đo được sau khi làm
+| | Mặc định | D+ improved |
+|---|---|---|
+| promo bar + thẻ hội viên | `rgb(38,38,38)` | **`rgb(41,37,36)`** |
+| chữ phụ (`muted-foreground`) | `rgb(115,115,115)` | **`rgb(82,82,82)`** |
+| ring focus | `#d4d4d4` | **`#737373`** |
+| `accent` | `#09090b` | **`#292524`** |
+
+Đổi qua lại 3 theme → class trên `<html>` gỡ/gắn đúng, **về Mặc định thì class rỗng hoàn toàn** và mọi giá trị trở lại y như trước. Hash `#theme=dplus` khôi phục đúng cả giá trị lẫn dấu tick trong popover.
+
 ### State của Button — theo component Figma (12/08/2026)
 
 Nguồn: component set **Button** `10:11763` (trang tài liệu `10:11468`), đọc qua figma-console. **240 variant** = 2 `Roundness` × 6 `Variant` × 4 `Size` × 5 `State`.
