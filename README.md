@@ -539,7 +539,7 @@ Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI
   - **Không có viền dưới** ở cả hàng nav lẫn subheader — xem "Quy ước border"; `.navbar::after` và khối JS toggle `.merged` đã bỏ, chỉ `.filterbar::after` còn lại.
   - Figma để nhãn `Store location` + placeholder `What are you looking for?` bằng tiếng Anh giữa bản tiếng Việt — code **giữ chuỗi tiếng Việt** vì màn hình chạy qua i18n VI↔EN.
 - **Mega menu** hover thuần CSS (`.dk-nav-item:hover`), cột Nam/Nữ sinh từ `MENU_DATA`, cột brands từ `MENU_BRANDS`; click điều hướng PLP chế độ danh mục qua `data-plp-title/-crumbs`.
-  - **Hiệu ứng hover kiểu Farfetch (10/08/2026)**: **KHÔNG gạch chân** (đối chứng cả Farfetch lẫn component Button trong Figma — không state nào có underline). Hover theo đúng 2 biến thể Button: hàng giới tính + nút tiện ích là **Ghost** → "nhún" nền đen 5% (`.ghost-hover`, Button/Ghost/Hover: fill #000 5% + label #0a0a0a, r2); danh mục subheader là **Ghost Muted** → chỉ đậm chữ #404040→#0a0a0a, không nền. Panel + **scrim tối `rgba(0,0,0,.45)`** phủ phần trang bên dưới mở sau **120ms** (hover-intent — lướt ngang thanh menu không nháy panel). Scrim là `div.dk-scrim` fixed `z:-1` NẰM TRONG `.navbar` (stacking context z-50) nên đè lên nội dung trang nhưng dưới 3 tầng header + panel; bật bằng `.navbar:has(.dk-nav-item:hover > .dk-mega)` — mục không có panel (Pre-loved, Khuyến mãi) không làm tối trang. Độ tối .45 cùng tông mọi backdrop khác của app.
+  - **Hiệu ứng hover kiểu Farfetch (10/08/2026)**: **KHÔNG gạch chân** (đối chứng cả Farfetch lẫn component Button trong Figma — không state nào có underline). Hover theo đúng 2 biến thể Button: hàng giới tính + nút tiện ích là **Ghost** → "nhún" nền đen 5% (`.ghost-hover`, r2); danh mục subheader là **Ghost Muted** → chỉ đậm chữ, không nền. **MÀU chữ của cả 2 hàng giờ do thang mực 3 bậc của nav cấp** (#737373 → hover #404040 → đang chọn #0a0a0a), xem mục "Nav desktop: state đang chọn". Panel + **scrim tối `rgba(0,0,0,.45)`** phủ phần trang bên dưới mở sau **120ms** (hover-intent — lướt ngang thanh menu không nháy panel). Scrim là `div.dk-scrim` fixed `z:-1` NẰM TRONG `.navbar` (stacking context z-50) nên đè lên nội dung trang nhưng dưới 3 tầng header + panel; bật bằng `.navbar:has(.dk-nav-item:hover > .dk-mega)` — mục không có panel (Pre-loved, Khuyến mãi) không làm tối trang. Độ tối .45 cùng tông mọi backdrop khác của app.
 - **Layer tìm kiếm** (`#dkSearchLayer`, 11/08/2026 — thay dropdown 420px neo dưới ô nhập): bấm nút Tìm kiếm ở subheader → tấm trắng đổ từ mép trên xuống + nền tối `rgba(0,0,0,.45)` phía dưới, cùng ý đồ với bản mobile (ở đó tìm kiếm là **màn riêng** `screenSearch` phủ kín).
   - **Bố cục 2 cột** (tham chiếu overlay tìm kiếm của versace.com), nội dung lấy đúng bộ của bản mobile:
 
@@ -743,6 +743,48 @@ Cách kiểm sau khi sửa UI: chạy trong browser `[...document.querySelectorA
 **18px LUÔN đi với `font-medium`** — cả 23 chỗ dùng `text-[18px]` trong `index.html` đều Medium (500), không có 18px Light / Regular. Đây là **quyết định của design, cố ý khác Figma** (Figma để 18 Regular ở tiêu đề giỏ hàng và heading newsletter footer) — đừng "sửa lại theo Figma". Thêm chỗ 18px mới thì nhớ kèm `font-medium`.
 
 > Ngoại lệ còn lại: "Đặt hàng thành công" ở màn `done` vẫn 22px — Figma `2084:166` chưa có nội dung màn này nên chưa có số để bám. Bản **desktop** thì heading này đã về đúng thang `24px Light leading-8` như 16 heading 24px khác (12/08/2026) — đừng port ngược 22px/Medium sang.
+
+### Nav desktop: state "đang chọn" (13/08/2026, feedback khách)
+
+Khách phản hồi nút nav **default và active chưa khác biệt đủ**. Đã điều tra và **không hạ tone default** — dựng state riêng cho nav. Hai lý do, lý do thứ hai mới là lý do thật:
+
+1. **Token không hạ được**: `--unofficial-mid-alt` `#525252` có 20 chỗ dùng, chỉ 4 là nút nav. Hạ xuống `#737373` (bậc duy nhất còn lại) làm đoạn copy newsletter 16/300 trên `#f5f5f5` **trượt WCAG AA** (7.17:1 → 4.35:1), làm nhạt nhãn 2 nút outline thật ("Huỷ đơn hàng", "Theo dõi đơn hàng"), **đảo thang xám** trong `.theme-dplus` (ở theme đó `muted-foreground` đã là `#525252`), và token dùng chung với `index.html` (8/8 chỗ ở mobile đều không phải nav).
+2. **Hạ default cũng KHÔNG sửa được lỗi**: hover đã chiếm `#0a0a0a` (`.ghost-hover:hover`, `.btn-gm:hover`, `hover:text-foreground`, `.dk-nav-item.on .dk-nav-link` — cả 4 đều ra `#0a0a0a`), nên hạ default nới **cả** default↔active lẫn default↔hover đúng bằng nhau. Ở hàng dept còn **bị đảo**: hover được thêm nền đen 5% nên nút *chỉ đang hover* trông "được chọn" hơn nút đang chọn thật.
+
+**Vòng 1 (đã loại)**: giữ default, cho mục đang chọn nền pill đen 10% + weight 600. User loại vì xấu.
+
+**Vòng 2 — bản đang dùng: hạ tone default, đọc spec thật từ Figma.** Đã lấy trực tiếp qua MCP (`figma_execute`) từ component `Button` (`10:11763`) và `Header` (`2171:13006`):
+
+| Component · state | Label | Weight | Nền |
+|---|---|---|---|
+| Ghost / Ghost Muted · Default | `#525252` (`unofficial/ghost foreground`) | Medium | trong suốt |
+| Ghost / Ghost Muted · Hover | `#0a0a0a` | Medium | Ghost: đen 5% · Ghost Muted: trong suốt |
+| Ghost / Ghost Muted · **Active** | `#0a0a0a` | Medium | **trong suốt — KHÔNG có pill** |
+| Header: dept đang chọn "Nam" | `#0a0a0a` | Regular | trong suốt |
+
+→ Component chốt: **state đang chọn chỉ đổi màu chữ**, không nền, không đổi độ đậm. Vậy muốn khoảng cách đủ nhìn thì phải **hạ tone default**, đúng như user chỉ đạo.
+
+Thang mực riêng của nav, 3 bậc:
+
+| | Màu | Token | Ghi chú |
+|---|---|---|---|
+| Nghỉ | `#737373` | `--general-muted-foreground` (= neutral/500) | 4.74:1 trên trắng — **còn đạt WCAG AA** |
+| Hover | `#404040` | `--unofficial-foreground-alt` | bậc trung gian |
+| Đang chọn | `#0a0a0a` | `--general-primary` | đậm nhất |
+
+Khoảng cách default↔active giãn từ **2.53:1 lên 4.18:1**. **Phải chèn bậc hover riêng**: hover của component cũng là `#0a0a0a`, giữ nguyên thì mục *chỉ đang hover* trông y hệt mục đang chọn (ở hàng dept còn đậm hơn vì được thêm nền 5%).
+
+Nhóm tiện ích cùng thanh (English / Danh sách cửa hàng) **hạ theo luôn** — trong component chúng dùng chung mức với dept ở trạng thái nghỉ, hạ mỗi dept thì hàng tiện ích bỗng đậm hơn menu, trông như lỗi căn mức.
+
+**Riêng hàng giới tính + Làm đẹp có thêm kênh độ dày** (chỉ đạo user 13/08/2026): nghỉ **400**, đang chọn **600** (nhảy 2 bậc cho rõ; Montserrat đã nạp đủ 300/400/500/600/700 nên không bị giả đậm). Con số 400 lấy đúng component `Header` — dept row là **Regular**, khác hàng danh mục subheader là **Medium**. Trước đó markup đặt `font-medium` cho cả 3 nút nên "nâng active lên 500" sẽ không tạo ra khác biệt nào; giờ độ dày **và** màu cùng khoá theo `aria-current` trong CSS, không để 2 cơ chế đánh nhau trên cùng thuộc tính. Danh mục subheader giữ Medium ở mọi state.
+
+Tất cả rule scope trong `.navbar` — **không hạ token** `--unofficial-mid-alt`: token đó còn gánh copy footer 16/300 trên `#f5f5f5` (hạ 1 bậc là trượt AA), nhãn 2 nút outline "Huỷ đơn hàng"/"Theo dõi đơn hàng", và 8 chỗ non-nav ở `index.html`. Rule **cố ý không khai `box-shadow`** vì `.press:focus-visible` đang dùng `box-shadow` làm vòng focus duy nhất của nav.
+
+**State chỉ nằm ở 1 nơi: `aria-current`** — bỏ ternary màu trong class. Dept dùng `aria-current="true"` (lựa chọn dính, còn sáng ở cart/checkout/account), danh mục dùng `aria-current="page"` (đúng nghĩa trang hiện tại) và **suy từ `plpMode`**, không thêm biến state: xét `crumbs[1]` **trước** `title` — panel "Sản phẩm mới" liệt kê lại chính 'Quần áo'/'Giày dép' làm item, xét `title` trước sẽ **sáng 2 mục**.
+
+> Kéo theo (sửa luôn vì state càng nổi thì lệch càng lộ): bấm 1 mục trong **cột "Nữ"** của mega panel giờ đổi luôn dept đang sáng sang "Nữ" — trước đây `data-dkdept` chỉ có ở 3 nút dept nên hàng dept vẫn sáng "Nam". Chỗ đồng bộ phải đặt **trước** `goPlp()`/`go()` vì `navBar()` dựng lại trong `go()` và đọc `dkDept`.
+
+> **Chưa phủ** (chấp nhận): PLP "Thương hiệu" — nút brand trong panel chỉ có `data-nav="plp"` trơn nên `goPlp` ra `type:'brand'`, không mang title/crumbs → subheader không sáng mục nào. Chip danh mục ở filterbar cố ý không đổi (nằm trong `.filterbar`, không phải `.navbar`).
 
 ### Quy ước border
 

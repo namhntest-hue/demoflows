@@ -563,6 +563,57 @@ window.RESP = (function () {
        không nền — markup đã có hover:text-foreground, không cần rule thêm */
   .ghost-hover { transition: background-color .15s ease; }
   .ghost-hover:hover { background: var(--unofficial-ghost-hover); color: var(--general-primary); }
+  /* ── Nav: thang mực 3 bậc (chỉ đạo user 13/08/2026, theo component) ──
+     Khách thấy default và đang chọn chưa khác nhau đủ. Đã đọc thật component
+     `Button` (10:11763) và `Header` (2171:13006) trong Figma qua MCP:
+       Ghost / Ghost Muted · Default : #525252 (unofficial/ghost foreground)
+       Ghost / Ghost Muted · Hover   : #0a0a0a (+ nền đen 5% chỉ ở Ghost)
+       Ghost / Ghost Muted · Active  : #0a0a0a, NỀN TRONG SUỐT — KHÔNG có pill
+       Header: dept đang chọn "Nam" #0a0a0a, 2 dept còn lại #525252
+     => Chốt theo component: state đang chọn CHỈ đổi màu chữ, không nền, không
+     đổi độ đậm. Để khoảng cách đủ nhìn thì HẠ TONE DEFAULT thay vì tô thêm
+     nền cho state (bản pill trước đó user đã loại).
+
+     Thang mực riêng của nav, 3 bậc rõ rệt:
+       nghỉ  #737373 (general/muted foreground = neutral/500)  — 4.74:1, còn đạt AA
+       hover #404040 (unofficial/foreground-alt)                — bậc trung gian
+       đang chọn #0a0a0a (general/primary)                     — đậm nhất
+     Phải chèn bậc hover riêng: hover của component cũng là #0a0a0a, giữ nguyên
+     thì mục chỉ-đang-hover trông y hệt mục đang chọn (ở hàng dept còn đậm hơn vì
+     được thêm nền 5%).
+
+     TẤT CẢ scope trong .navbar — KHÔNG hạ token --unofficial-mid-alt: token đó
+     còn gánh copy footer 16/300 trên #f5f5f5 (hạ 1 bậc là trủt WCAG AA), nhãn 2
+     nút outline "Huỷ đơn hàng"/"Theo dõi đơn hàng", và 8 chỗ non-nav ở index.html.
+     KHÔNG khai box-shadow — .press:focus-visible đang dùng box-shadow làm vòng
+     focus duy nhất của nav. */
+  .navbar .dk-dept,
+  .navbar .dk-nav-link:not(.text-destructive),
+  /* Kéo theo cả nhóm tiện ích cùng thanh (English / Danh sách cửa hàng): trong
+     component chúng DÙNG CHUNG mức với dept ở trạng thái nghỉ, hạ mỗi dept thì
+     hàng tiện ích bỗng dưng đậm hơn menu — trông như lỗi căn mức. */
+  .navbar .text-mid-alt { color: var(--general-muted-foreground); }
+  .navbar .dk-dept:hover,
+  .navbar .dk-nav-link:not(.text-destructive):hover { color: var(--unofficial-foreground-alt); }
+  .navbar .dk-dept[aria-current],
+  .navbar .dk-nav-link[aria-current] { color: var(--general-primary); }
+  /* Hàng giới tính + Làm đếp còn thêm KÊNH ĐỘ DÀY (chỉ đạo user 13/08/2026):
+     nghỉ 400 — đúng component Header (dept row là Regular, khác hàng danh mục
+     subheader là Medium) — và đang chọn 600 (chốt lại 13/08/2026, nhảy 2 bậc
+     cho rõ; Montserrat đã nạp đủ 300/400/500/600/700 nên không bị giả đậm). Trước đó markup đặt font-medium
+     cho CẢ 3 nút nên "nâng active lên 500" không tạo ra khác biệt nào.
+     Để ở CSS thay vì class để độ dày và màu cùng nằm 1 chỗ, khóa theo
+     aria-current — không để 2 cơ chế đánh nhau trên cùng thuộc tính.
+     Chỉ hàng dept: danh mục subheader giữ Medium ở mọi state theo component. */
+  .navbar .dk-dept { font-weight: 400; }
+  .navbar .dk-dept[aria-current] { font-weight: 600; }
+  /* "Khuyến mãi" là mục duy nhất có màu riêng — component ghi rõ Destructive
+     KHÔNG đổi màu khi hover, mà .btn-gm:hover đang bôi đen nó. Giữ đỏ ở mọi
+     state; đang chọn thì chỉ đậm hơn bằng độ dày (không có bậc mực nào đậm hơn
+     đỏ để dùng). */
+  .navbar .dk-nav-link.text-destructive,
+  .navbar .dk-nav-link.text-destructive:hover { color: var(--general-destructive); }
+  .navbar .dk-nav-link.text-destructive[aria-current] { font-weight: 600; }
   /* Scrim tối phủ nội dung trang khi panel mở (chữ ký của Farfetch).
      Nằm TRONG stacking context z-50 của .navbar nên vẫn đè lên nội dung trang,
      nhưng z:-1 để 3 tầng header + panel (sibling vẽ sau) nổi lên trên.
@@ -1169,7 +1220,7 @@ function dkMegaPanel(item, id) {
   </div>`;
 }
 
-function navBar({ logoOnly = false } = {}) {
+function navBar({ logoOnly = false, plp = false } = {}) {
   // Checkout: header rút gọn — logo + cam kết bảo mật
   if (logoOnly) {
     return `
@@ -1181,16 +1232,38 @@ function navBar({ logoOnly = false } = {}) {
     </div>`;
   }
 
-  // dept trái — label 14 medium #404040, pad 8/16 (Figma Frame 41)
-  // dept đang chọn dùng State=Active của Button: label #0a0a0a
-  // hover = Button/Ghost/Hover: nền đen 5% "nhún màu" + chữ đậm (ghost-hover)
+  /* dept trái — pad 8/16, 14px medium (component Button/Ghost). MÀU do CSS cấp
+     hết (thang 3 bậc #737373 / #404040 / #0a0a0a, xem khối <style>), markup chỉ
+     mang `aria-current` để state nằm đúng 1 nơi. Nền giữ ghost hover 5%. */
   /* Dựng panel 1 lần rồi dùng lại cho cả nút (data-mega) lẫn khối panel bên dưới */
   const dkCats = dkNavCats().map((item, i) => ({ item, i, panel: dkMegaPanel(item, i) }));
 
   /* crumbs = [dept] chứ không để rỗng: `isBeautyPlp()` nhận diện ngành hàng qua
      crumbs[0], thiếu thì bấm "Làm đẹp" ra nhầm hàng thời trang + bộ lọc sai facet. */
+  /* Danh mục ĐANG XEM cho subheader — KHÔNG thêm biến state, suy từ plpMode
+     (cùng cách isBeautyPlp() đang làm).
+     · crumbs[1] LÀ tầng danh mục: link trong mega panel đóng dấu [dept, sub.title]
+       và sub.title trùng nhãn subheader.
+     · Phải xét crumbs[1] TRƯỚC title, không thì SÁNG 2 MỤC: panel "Sản phẩm mới"
+       liệt kê lại chính 'Quần áo'/'Giày dép'/... làm item, bấm vào thì title là
+       'Quần áo' nhưng crumbs=['Nam','Sản phẩm mới'] — đúng là chỉ sáng
+       'Sản phẩm mới'.
+     · crumbs=[dept] mà title===dept là nút hàng dept -> subheader không sáng gì.
+     · Cờ `plp` do screenPLPList truyền: KHÔNG dùng được `current` vì go() gán nó
+       SAU khi RENDER[name]() chạy, và goPlp() còn set current = null.
+     KHÔNG đặt tên biến là dkCrumbs — đó là TÊN HÀM breadcrumb, che mất là vỡ.
+     CHƯA PHỦ (chấp nhận): 'Thương hiệu' — nút brand trong panel chỉ có
+     data-nav="plp" trơn nên goPlp ra type:'brand', không mang title/crumbs. */
+  const curCrumbs = plpMode.crumbs || [];
+  const dkCurCat = (!plp || plpMode.type !== 'category') ? ''
+    : curCrumbs.length >= 2 ? curCrumbs[1]
+    : curCrumbs.length === 1
+      ? (curCrumbs[0] === plpMode.title ? ''
+         : (DK_DEPTS.includes(curCrumbs[0]) ? (plpMode.title || '') : curCrumbs[0]))
+      : (plpMode.title || '');
+
   const dept = DK_DEPTS.map(d => `
-    <button ${dkCatAttrs(d, [d])} data-dkdept="${d}" class="ghost-hover h-9 px-4 rounded-xs flex items-center text-[14px] font-medium leading-5 transition-colors press ${d === dkDept ? 'text-foreground' : 'text-mid-alt'}">${d}</button>`).join('');
+    <button ${dkCatAttrs(d, [d])} data-dkdept="${d}"${d === dkDept ? ' aria-current="true"' : ''} class="dk-dept ghost-hover h-9 px-4 rounded-xs flex items-center text-[14px] leading-5 transition-colors press">${d}</button>`).join('');
 
   return `
   <div class="navbar sticky top-[-32px] z-50">
@@ -1244,7 +1317,7 @@ function navBar({ logoOnly = false } = {}) {
           <div class="dk-nav-strip flex-1 min-w-0 flex items-center h-full overflow-x-auto no-scrollbar">
             ${dkCats.map(({ item, i, panel }) => `
             <div class="dk-nav-item h-full flex items-center shrink-0"${panel ? ` data-mega="${i}"` : ''}>
-              <button ${item.dept ? dkCatAttrs(item.label, [item.dept]) : dkCatAttrs(item.label)} class="dk-nav-link btn-gm h-9 px-4 rounded-xs flex items-center text-[14px] font-medium leading-5 whitespace-nowrap press ${item.sale ? 'text-destructive' : 'text-mid-alt hover:text-foreground transition-colors'}">${item.label}</button>
+              <button ${item.dept ? dkCatAttrs(item.label, [item.dept]) : dkCatAttrs(item.label)}${dkCurCat && item.label === dkCurCat ? ' aria-current="page"' : ''} class="dk-nav-link btn-gm h-9 px-4 rounded-xs flex items-center text-[14px] font-medium leading-5 whitespace-nowrap press transition-colors ${item.sale ? 'text-destructive' : ''}">${item.label}</button>
             </div>`).join('')}
           </div>
           <div data-nav-prev-wrap class="hidden absolute left-0 top-0 bottom-0 z-10 items-center pr-8"
@@ -1541,7 +1614,7 @@ function screenPLPList() {
   const crumbs = ['Trang chủ', ...tail];
   return `
   <div class="w-full" data-scroller>
-    ${navBar()}
+    ${navBar({ plp: true })}
     <div class="max-w-[1440px] mx-auto w-full">
       ${dkCrumbs(crumbs)}
 
@@ -5834,6 +5907,14 @@ function wire(root) {
       // Đổi dept phải ghi TRƯỚC khi điều hướng: navBar() dựng lại ngay trong go()
       // và subheader đọc dkDept để chọn bộ danh mục (thời trang vs làm đẹp).
       if (el.dataset.dkdept) dkDept = el.dataset.dkdept;
+      /* Link trong mega panel / breadcrumb không có data-dkdept, nhưng crumbs[0]
+         LÀ ngành hàng -> đồng bộ dept đang sáng. Trước đây bấm 'Quần áo' dưới cột
+         'Nứ' mà hàng dept vẫn sáng 'Nam'; state đang chọn càng nổi thì cái lệch này
+         càng lộ. Phải ở TRƯỚC goPlp()/go() vì navBar() dựng lại trong go() và đọc dkDept. */
+      else {
+        const c0 = (el.dataset.plpCrumbs || '').split('|')[0];
+        if (DK_DEPTS.includes(c0)) dkDept = c0;
+      }
       /* Reset để lặp lại demo: KHÔNG đụng ckAuth nữa — trước đây nút "Tiếp tục
          mua sắm" ở màn Hoàn tất âm thầm đăng xuất người đang đăng nhập. */
       if (el.hasAttribute('data-reset')) {
