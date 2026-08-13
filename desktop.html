@@ -86,7 +86,10 @@ window.RESP = (function () {
 <link rel="stylesheet" href="tailwind.css">
 <style>
   html { background: var(--general-background); -webkit-text-size-adjust: 100%; }
-  body { background: var(--general-background); min-height: 100dvh; overflow-x: hidden; }
+  /* nền TRANG dùng body-background (mặc định #ffffff, y như trước); tách khỏi
+     --general-background để theme kiểu Gentle Monster có thể để trang xám mà
+     thẻ/modal vẫn trắng. */
+  body { background: var(--unofficial-body-background); min-height: 100dvh; overflow-x: hidden; }
   .safe-b { padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); }
   * { -webkit-tap-highlight-color: transparent; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -108,9 +111,22 @@ window.RESP = (function () {
   .screen.active .rise:nth-child(1) { animation-delay: .02s } .screen.active .rise:nth-child(2) { animation-delay: .06s }
   .screen.active .rise:nth-child(3) { animation-delay: .10s } .screen.active .rise:nth-child(4) { animation-delay: .14s }
   .screen.active .rise:nth-child(5) { animation-delay: .18s } .screen.active .rise:nth-child(6) { animation-delay: .22s }
+  /* Quá 6 khối thì shorthand ở trên đưa delay về 0 -> khối cuối trang lại vào
+     TRƯỚC tiêu đề. Chặn đuôi để thứ tự luôn từ trên xuống. */
+  .screen.active .rise:nth-child(n+7) { animation-delay: .26s }
   /* ── Reveal on scroll ── */
   .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1); }
   .reveal.in { opacity: 1; transform: translateY(0); }
+
+  /* ── Quà tặng vừa đủ điều kiện thì hiện tại chỗ ──
+     CỐ Ý không dùng .reveal: .reveal đứng ở opacity 0 cho tới khi
+     IntersectionObserver gắn .in, mà observer chỉ quét lúc wire() — dòng quà
+     chèn vào SAU đó sẽ nằm im vô hình. Đây là animation tự chạy 1 lần. */
+  @keyframes giftIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  /* CỐ Ý không có 'both': trạng thái nghỉ phải là NHÌN THẤY ĐƯỢC. Nếu animation
+     không chạy (tắt hiệu ứng, trình duyệt lạ) thì dòng quà vẫn hiện bình thường
+     — với 'both' nó sẽ đứng lại ở khung hình đầu, tức opacity 0. */
+  .gift-in { animation: giftIn .32s cubic-bezier(.22,1,.36,1); }
   /* ══ THEME — chuyển được trong popover Cài đặt (như đổi phông chữ) ══
      Mode "D+ improved" vừa tạo trong Figma (collection `theme`, mode thứ 3).
      Đặt ở đây thay vì tokens.css vì tokens.css là FILE SINH TỰ ĐỘNG
@@ -149,6 +165,7 @@ window.RESP = (function () {
     --general-muted-foreground: #525252;
     --unofficial-outline: #ffffff;
   }
+
 
   /* ── Press feedback ── */
   /* transition LONGHAND, không dùng dạng gộp: khối <style> nằm SAU tailwind.css
@@ -246,6 +263,25 @@ window.RESP = (function () {
   #settingsPanel.open { pointer-events: auto; }
   #settingsPanel.open .sp-backdrop { opacity: 1; }
   #settingsPanel.open .sp-card { opacity: 1; transform: translateY(0) scale(1); }
+  /* ── Nút về đầu trang ──
+     Xếp NGAY TRÊN #settingsFab (96 + 40 + 8 = 144) nên bottom của 2 nút cách
+     nhau đúng 48; z-index 70 để dưới #settingsPanel (71): popover Cài đặt mở
+     ra đúng chỗ này nên khi mở thì ẩn nút đi (html.sp-open), không chỉ che. */
+  #topFab {
+    position: fixed; right: 12px; bottom: 144px; z-index: 70;
+    width: 40px; height: 40px; border-radius: 9999px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--general-background);
+    border: 1px solid var(--general-border);
+    box-shadow: 0 2px 12px rgba(0,0,0,.10);
+    opacity: 0; transform: translateY(8px); pointer-events: none;
+    transition: opacity .22s ease, transform .22s ease;
+  }
+  #topFab.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  #topFab:hover { box-shadow: 0 4px 18px rgba(0,0,0,.14); }
+  #topFab:active { transform: scale(.92); }
+  #topFab svg { width: 20px; height: 20px; }
+  html.sp-open #topFab { opacity: 0; pointer-events: none; }
   /* ── Shimmer lazy-load (versace images-shimmer) ── */
   .shimmer { position: relative; overflow: hidden; }
   .shimmer::after {
@@ -803,13 +839,24 @@ const CATEGORIES = [
 
 /* CART_BASE = bản gốc để dựng lại giỏ khi bấm "Tiếp tục mua sắm" (đặt hàng
    xong thì CART bị dọn rỗng). CART vẫn là mảng được sửa tại chỗ như cũ. */
+/* `sel` = đang tick chọn để đặt hàng; `gift` = key trong GIFT_PROGRAMS (chương
+   trình tặng quà, không phải món quà). Xem README "Quà tặng trong giỏ". */
 const CART_BASE = [
-  { img:'p8-0.jpg', brand:'Versace', name:'Túi da Lou mini',            variant:'Onesize , Black', off:'', was:'', now:'45.066.000 ₫', qty:1 },
-  { img:'p5-0.jpg', brand:'Versace', name:'Giày loafer da Manu',        variant:'40 , Black',      off:'', was:'', now:'35.248.000 ₫', qty:1 },
-  { img:'p10-0.jpg',brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm', variant:'95 , Black', off:'', was:'', now:'17.575.000 ₫', qty:1 },
-  { img:'p2-0.jpg', brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant:'Onesize', off:'', was:'', now:'15.611.000 ₫', qty:1 },
+  { img:'p8-0.jpg', brand:'Versace', name:'Túi da Lou mini',            variant:'Onesize , Black', off:'', was:'', now:'45.066.000 ₫', qty:1, sel:true, gift:'bagBundle' },
+  { img:'p5-0.jpg', brand:'Versace', name:'Giày loafer da Manu',        variant:'40 , Black',      off:'', was:'', now:'35.248.000 ₫', qty:1, sel:true },
+  { img:'p10-0.jpg',brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm', variant:'95 , Black', off:'', was:'', now:'17.575.000 ₫', qty:1, sel:true },
+  { img:'p2-0.jpg', brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant:'Onesize', off:'', was:'', now:'15.611.000 ₫', qty:1, sel:true },
 ];
 const CART = CART_BASE.map(c => ({ ...c }));
+
+/* ── Tiền: 2 định dạng CÓ SẴN trong project, giữ nguyên cả 2 ──
+   · dòng sản phẩm dùng kiểu Việt "45.066.000 ₫" (dấu chấm, có khoảng trắng + ₫)
+   · khối tóm tắt dùng kiểu "113,500,000đ" (dấu phẩy, đ dính số)
+   vndNum bóc số từ cả 2 kiểu để tính toán. */
+const vndNum = s => +String(s).replace(/\D/g, '') || 0;
+const vndDot = n => n.toLocaleString('vi-VN') + ' ₫';
+const vndCom = n => n.toLocaleString('en-US') + 'đ';
+
 
 
 const SIZES = ['39','40','41','42','43','44'];
@@ -2369,16 +2416,83 @@ function screenORDER() {
 /* ════════════════════════════════════════════════════════════════
    SCREEN: CART
 ════════════════════════════════════════════════════════════════ */
-/* ── Cart · khối chỉ dành cho thành viên đã đăng nhập (multi gift 5) ── */
-const GIFTS = [
-  { img:'g2.jpg',   brand:'Versace', name:'Khăn lụa Broken Jewels 84 x 5 cm', variant:'Onesize', was:'6,775,000đ' },
-  { img:'p6-v2.jpg',brand:'Versace', name:'Giày thể thao Greca Court trắng',  variant:'Onesize , White', was:'21,502,000đ' },
+/* ════════════════════════════════════════════════════════════════
+   QUÀ TẶNG TRONG GIỎ — 2 cơ chế (yêu cầu user 13/08/2026)
+
+   1) QUÀ THEO SẢN PHẨM — item nào có field `gift` thì dòng quà nằm NGAY DƯỚI
+      dòng sản phẩm đó. Điều kiện duy nhất: item đang được TICK CHỌN (bỏ tick =
+      không nằm trong đơn nữa nên quà rút theo).
+   2) QUÀ THEO ĐƠN — mốc giá trị đơn trong ORDER_GIFT_TIERS, tính trên các item
+      ĐANG TICK × số lượng. Vừa chạm mốc là quà hiện ngay tại chỗ (tăng số lượng
+      hoặc tick thêm sản phẩm), tụt xuống dưới mốc thì quà rút đi.
+
+   Cả 2 cơ chế dùng chung 1 khuôn THẺ QUÀ (giftCard) và cùng danh mục quà; mỗi quà
+   nằm trong 1 nhóm mang tên chương trình (giftGroupHTML).
+   Giá gạch ngang là giá gốc để thấy "được tặng bao nhiêu", giá thật luôn 0 ₫ —
+   quà KHÔNG cộng vào tạm tính.
+
+   Mốc chọn quanh giá trị giỏ mặc định (113.500.000 ₫ khi tick đủ 4 item) để
+   demo được cả 2 chiều: mốc 1 đã đạt sẵn (bỏ tick 1 món là rớt), mốc 2 chỉ cần
+   tăng thêm 1 số lượng là chạm.
+════════════════════════════════════════════════════════════════ */
+const GIFT_CATALOG = {
+  mini:    { img:'b1.jpg',    brand:'Versace', name:'Nước hoa Crystal Noir EDP 5 ml',   variant:'5 ml',            was:'1.150.000 ₫' },
+  edt:     { img:'b2.jpg',    brand:'Versace', name:'Nước hoa Eros Energy EDP 5 ml',    variant:'5 ml',            was:'1.050.000 ₫' },
+  scarf:   { img:'g2.jpg',    brand:'Versace', name:'Khăn lụa Broken Jewels 84 x 5 cm', variant:'Onesize',         was:'6.775.000 ₫' },
+  sneaker: { img:'p6-v2.jpg', brand:'Versace', name:'Giày thể thao Greca Court trắng',  variant:'Onesize , White', was:'21.502.000 ₫' },
+};
+
+/* Quà luôn thuộc về MỘT CHƯƠNG TRÌNH, không đứng lẻ: thẻ quà nào cũng có nhãn
+   tên chương trình phía trên. Ngoài việc nói rõ "quà này từ đâu ra", đây còn là
+   chỗ để đổi quà — chương trình có nhiều hơn 1 lựa chọn thì hiện nút "Đổi quà"
+   và danh sách chọn ngay trong nhóm (yêu cầu user 13/08/2026).
+   `gifts[0]` là quà mặc định; lựa chọn của user lưu ở giftPick. */
+const GIFT_PROGRAMS = {
+  bagBundle: { name: 'Quà tặng kèm túi Lou mini',  gifts: ['mini', 'edt'] },
+  tier100:   { name: 'Ưu đãi đơn từ 100 triệu',    gifts: ['scarf', 'edt'] },
+  tier150:   { name: 'Ưu đãi đơn từ 150 triệu',    gifts: ['sneaker'] },
+};
+let giftPick = {};        // {chương trình: key quà đang chọn} — rỗng = lấy gifts[0]
+
+const ORDER_GIFT_TIERS = [
+  { min: 100000000, program: 'tier100' },
+  { min: 150000000, program: 'tier150' },
 ];
+const giftOf = pk => GIFT_CATALOG[giftPick[pk] || (GIFT_PROGRAMS[pk] || {}).gifts?.[0]];
+
+/* Tạm tính SỐNG: chỉ cộng item đang tick, nhân số lượng. Thay cho hằng số
+   CART_SUBTOTAL cũ (in cứng 113.500.000) — nếu còn in cứng thì tăng số lượng
+   hay bỏ tick sẽ không đổi tổng, và điều kiện nhận quà theo đơn vô nghĩa. */
+/* `removed` = đã bấm thùng rác. Không splice khỏi CART vì dòng DOM còn tham
+   chiếu chỉ số qua data-row (splice là mọi chỉ số sau đó lệch 1). */
+const cartItems = () => CART.filter(c => !c.removed);
+/* NHỮNG MÓN THỰC SỰ ĐANG MUA = chưa xoá VÀ đang tick. cartItems() (chỉ lọc
+   `removed`) chỉ dùng để DỰNG MÀN GIỎ — nơi món bỏ tick vẫn phải hiện ra để
+   tick lại. Mọi chỗ coi giỏ là "đơn hàng" (thanh toán, tóm tắt, chốt đơn) phải
+   dùng cartSelected(), không thì màn thanh toán liệt kê 4 món mà chỉ tính tiền
+   3 món. */
+const cartSelected = () => CART.filter(c => !c.removed && c.sel !== false);
+/* Điểm thưởng của đơn: demo dùng đúng tỉ lệ 1 điểm / 100.000 ₫ (giỏ mặc định
+   113.500.000 ₫ -> 1.135 điểm, khớp con số vốn in cứng ở 4 màn). */
+const rewardPointsEarned = () => Math.floor(cartSubtotal() / 100000);
+function cartSubtotal() {
+  return cartItems().reduce((s, c) => s + (c.sel === false ? 0 : vndNum(c.now) * (c.qty || 1)), 0);
+}
+/* Mốc đã đạt (theo thứ tự mốc) và mốc kế tiếp chưa đạt — dùng cho khối quà
+   theo đơn và dòng gợi ý "mua thêm ... để nhận ...". */
+function orderGiftState() {
+  const sub = cartSubtotal();
+  const tiers = [...ORDER_GIFT_TIERS].sort((a, b) => a.min - b.min);
+  return {
+    sub,
+    earned: tiers.filter(t => sub >= t.min),
+    next:   tiers.find(t => sub < t.min) || null,
+  };
+}
 
 /* Ưu đãi chương trình DAFC Rewards — chọn 1 trong 2 (radio, không phải checkbox):
    giảm giá thành viên 4% HOẶC dùng điểm thưởng (tối đa 10%). Mặc định theo Figma
    (2843:45231): "Sử dụng điểm thưởng" được chọn sẵn. */
-const CART_SUBTOTAL = 113500000;   // = tổng đúng 4 item trong CART (45.066 + 35.248 + 17.575 + 15.611 triệu)
 const REWARD_POINTS = 1240;      // = "Điểm thưởng hiện có" ở tab Điểm thưởng (accPoints) — 2 nơi phải cùng 1 số
 const REWARD_POINT_VALUE = 1000;
 let cartReward = 'points';       // 'member' | 'points'
@@ -2387,50 +2501,199 @@ let cartVoucherCode = '';        // mã đang active (để hiện chip + gỡ) 
 let cartPbh = [];                // [{code, amount}] — phiếu mua hàng đang áp, có thể nhiều mã cùng lúc
 
 function rewardAmount(kind) {
-  if (kind === 'member') return Math.round(CART_SUBTOTAL * 0.04);
-  if (kind === 'points') return Math.min(REWARD_POINTS * REWARD_POINT_VALUE, Math.round(CART_SUBTOTAL * 0.10));
+  const sub = cartSubtotal();
+  if (kind === 'member') return Math.round(sub * 0.04);
+  if (kind === 'points') return Math.min(REWARD_POINTS * REWARD_POINT_VALUE, Math.round(sub * 0.10));
   return 0;
 }
 
-function giftPicker() {
+/* ── Thẻ quà tặng ──
+   Yêu cầu user 13/08/2026: thẻ quà dùng ĐÚNG khuôn thẻ sản phẩm trong giỏ
+   (ảnh 100×133, brand 14 Medium, tên 14, phân loại 12, giá 14 Medium ghim đáy)
+   — chỉ khác 3 chỗ, và cả 3 đều có lý do:
+     · KHÔNG có ô tick: quà không phải thứ người dùng chọn mua, nó theo điều
+       kiện. Vẫn chừa đúng cột 16px + gap 8 để ảnh quà thẳng hàng với ảnh sản
+       phẩm phía trên.
+     · KHÔNG có nút xoá và KHÔNG có stepper: số lượng luôn 01, in tĩnh ở đúng
+       vị trí stepper để không thủng bố cục.
+     · Giá 0 ₫ kèm giá gốc gạch ngang, để thấy được tặng bao nhiêu.
+   Badge "Quà tặng" đè góc trên trái ảnh — chỗ mà thẻ sản phẩm để badge -%. */
+function giftCard(g) {
   return `
-  <!-- Đồng bộ style mobile (multi gift 5): card viền border-border rounded-xs
-       p-3, title 14 Medium + phụ đề 12, "Thay đổi" chữ gạch chân 12; option
-       thumb 52×60 + brand/name/variant + cột giá [gạch ngang / 0đ / 01].
-       Khác mobile duy nhất: 2 option nằm NGANG vì cột trái desktop đủ rộng. -->
-  <div class="px-4 py-4 rise">
-    <div class="border border-border rounded-xs p-3 flex flex-col gap-2">
-      <div class="flex items-start justify-between gap-2">
-        <div class="min-w-0">
-          <p class="text-[14px] font-medium leading-5 text-foreground-alt">Bạn đã đủ điều kiện nhận 2 quà</p>
-          <p class="text-[12px] leading-4 text-muted-foreground">Hãy chọn quà tặng của bạn</p>
-        </div>
-        <button data-toast="Đổi quà tặng" class="shrink-0 text-[12px] font-medium leading-4 text-secondary-foreground underline press">Thay đổi</button>
-      </div>
-      <div id="giftOpts" class="flex gap-2 pt-1">
-        ${GIFTS.map((g, i) => `
-          <button class="opt ${i === 0 ? 'on' : ''} flex-1 min-w-0 flex gap-3 items-center border border-border bg-background rounded-xs p-2 text-left btn-o press" data-opt="gift${i}">
-            <span class="radio ${i === 0 ? 'on' : ''} w-4 h-4 rounded-full border border-border-3 flex items-center justify-center shrink-0">
-              <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
-            </span>
-            <span class="relative w-[52px] h-[60px] shrink-0 bg-secondary overflow-hidden">
-              <img src="${A}${g.img}" class="w-full h-full object-cover lazy" alt="">
-              <span class="absolute top-0 left-0 bg-primary text-[10px] font-semibold leading-3 text-primary-foreground px-1">Quà tặng</span>
-            </span>
-            <span class="flex-1 min-w-0">
-              <span class="block text-[14px] font-medium leading-5 text-foreground truncate">${g.brand}</span>
-              <span class="block text-[14px] leading-5 text-secondary-foreground truncate">${g.name}</span>
-              <span class="block text-[12px] leading-4 text-muted-foreground">${g.variant}</span>
-            </span>
-            <span class="text-right shrink-0">
-              <span class="block text-[12px] leading-4 text-muted-foreground line-through">${g.was}</span>
-              <span class="block text-[14px] font-medium leading-5 text-foreground">0đ</span>
-              <span class="block text-[12px] font-medium leading-4 text-foreground-alt">01</span>
-            </span>
-          </button>`).join('')}
-      </div>
-    </div>
+  <div class="flex gap-2 px-4 pb-4">
+    <span class="w-4 shrink-0" aria-hidden="true"></span>
+    <span class="relative w-[100px] h-[133px] shrink-0 bg-background overflow-hidden">
+      <img src="${A}${g.img}" class="w-full h-full object-cover lazy" alt="">
+      <span class="absolute top-0 left-0 bg-primary text-[10px] font-semibold leading-3 text-primary-foreground px-1 py-0.5">Quà tặng</span>
+    </span>
+    <span class="flex-1 min-w-0 flex flex-col justify-between">
+      <span class="block">
+        <span class="block pb-2">
+          <span class="block text-[14px] font-medium leading-5 text-foreground truncate">${g.brand}</span>
+          <span class="block text-[14px] leading-5 text-secondary-foreground truncate">${g.name}</span>
+        </span>
+        <span class="block text-[12px] leading-4 text-muted-foreground">${g.variant}</span>
+      </span>
+      <span class="flex items-end justify-between gap-0.5">
+        <span class="pt-1 flex flex-col justify-end min-w-0">
+          <span class="block text-[14px] font-medium leading-5 text-foreground">0 ₫</span>
+          <span class="block text-[12px] leading-4 text-muted-foreground line-through">${g.was}</span>
+        </span>
+        <!-- Số lượng in tĩnh, KHÔNG có nút +/−. margin-right 28px = đúng bề ngang
+             nút "+" của thẻ sản phẩm (12px icon + px-2), để con số của thẻ quà
+             thẳng cột với con số của thẻ sản phẩm phía trên. -->
+        <span class="w-7 min-h-6 flex items-center justify-center shrink-0 text-[12px] font-medium leading-4" style="color:var(--unofficial-ghost-foreground);margin-right:28px">01</span>
+      </span>
+    </span>
   </div>`;
+}
+
+/* Danh sách đổi quà — chỉ dựng khi chương trình có nhiều hơn 1 lựa chọn.
+   Dùng lại đúng khuôn .opt/.radio của project (vòng radio 1px, card đang chọn
+   đổi viền, không tô nền — quy ước 12/08/2026). */
+function giftOptionsHTML(pk) {
+  const p = GIFT_PROGRAMS[pk];
+  const cur = giftPick[pk] || p.gifts[0];
+  return `
+  <div class="px-4 pb-4 flex flex-col gap-2">
+    ${p.gifts.map(k => {
+      const g = GIFT_CATALOG[k], on = k === cur;
+      return `
+      <button data-gift-opt="${k}" data-gift-prog="${pk}" class="opt ${on ? 'on' : ''} w-full flex gap-3 items-center border ${on ? 'border-border-5' : 'border-border'} rounded-xs p-2 bg-background text-left press">
+        <span class="radio ${on ? 'on' : ''} w-4 h-4 rounded-full border border-border-3 flex items-center justify-center shrink-0">
+          <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+        </span>
+        <!-- 52×60: kích thước thumb CÓ SẮN trong tailwind.css (mini cart dùng chung).
+               w-[40px]/h-[46px] KHÔNG được build — dùng là ảnh bụng ra kích thước gốc 1200×1484. -->
+          <span class="w-[52px] h-[60px] shrink-0 bg-secondary overflow-hidden">
+          <img src="${A}${g.img}" class="w-full h-full object-cover lazy" alt="">
+        </span>
+        <span class="flex-1 min-w-0">
+          <span class="block text-[14px] leading-5 text-foreground truncate">${g.name}</span>
+          <span class="block text-[12px] leading-4 text-muted-foreground">${g.variant}</span>
+        </span>
+        <span class="text-right shrink-0">
+          <span class="block text-[12px] leading-4 text-muted-foreground line-through">${g.was}</span>
+          <span class="block text-[14px] font-medium leading-5 text-foreground">0 ₫</span>
+        </span>
+      </button>`;
+    }).join('')}
+  </div>`;
+}
+
+/* Nhóm quà = [tên chương trình + nút Đổi quà] + [thẻ quà] + [danh sách đổi].
+   Luôn có nhãn chương trình, kể cả chương trình chỉ tặng 1 món: quà phải nói
+   được nó từ đâu ra, và đây là chỗ móc sẵn cho việc đổi quà. */
+function giftGroupHTML(pk, attrs = '', tone = 'tint') {
+  const p = GIFT_PROGRAMS[pk], g = giftOf(pk);
+  if (!p || !g) return '';
+  const many = p.gifts.length > 1;
+  /* tone='tint' : tự mang nền (quà kèm sản phẩm — dải riêng dính ngay dưới dòng hàng)
+     tone='bare' : không nền (quà theo đơn — nằm trong dải chung cùng nhãn section,
+                   xem orderGiftInner; nếu tự tô nền nữa thì xám đè xám) */
+  return `
+  <div class="gift-group ${tone === 'tint' ? 'bg-accent-0' : ''}" data-gift-prog="${pk}" data-sig="${pk}|${giftPick[pk] || p.gifts[0]}" ${attrs}>
+    <!-- Chừa đúng cột 16px + gap 8 như thẻ quà bên dưới để nhãn chương trình
+         THẲNG HÀNG VỚI ẢNH, không thò ra sát mép (yêu cầu user 13/08/2026).
+         Nút "Đổi quà" vẫn ở mép phải, thẳng cột giá của thẻ. -->
+    <div class="flex items-center gap-2 px-4 pt-3 pb-2">
+      <span class="w-4 shrink-0" aria-hidden="true"></span>
+      <p class="min-w-0 flex-1 text-[12px] font-medium leading-4 text-foreground-alt truncate">${p.name}</p>
+      ${many ? `<button data-gift-swap="${pk}" class="shrink-0 text-[12px] font-medium leading-4 text-secondary-foreground underline press">Đổi quà</button>` : ''}
+    </div>
+    ${giftCard(g)}
+  </div>`;
+}
+
+/* Nhóm quà theo sản phẩm — chỉ dựng khi item đang tick. `data-gift-of` trỏ về
+   chỉ số dòng sản phẩm để refreshCartGifts() biết chèn/gỡ ở đâu. */
+function productGiftHTML(c, i) {
+  if (!c.gift || !GIFT_PROGRAMS[c.gift] || c.sel === false) return '';
+  return giftGroupHTML(c.gift, `data-gift-of="${i}"`);
+}
+
+/* Ruột khối quà theo đơn — tách khỏi vỏ để cập nhật tại chỗ mỗi lần đổi số
+   lượng / tick mà không dựng lại cả màn.
+   3 trạng thái: chưa đạt mốc nào (chỉ dòng gợi ý) · đã đạt (danh sách quà +
+   gợi ý mốc kế tiếp nếu còn) · giỏ rỗng (không hiện gì). */
+function orderGiftInner() {
+  const { sub, earned, next } = orderGiftState();
+  if (!cartItems().length) return '';
+  /* Câu gợi ý tách làm 2 text node để applyLang dịch được: vế trái khớp luật
+     regex (có số tiền), tên quà là key riêng trong I18N. Nhét cả câu vào 1 node
+     thì tên quà không bao giờ được dịch. */
+  const hint = next ? `
+    <div class="px-4 pb-3 flex flex-col gap-1.5">
+      <p class="text-[12px] leading-4 text-muted-foreground">
+        <span>Mua thêm ${vndDot(next.min - sub)} để nhận</span>
+        <span class="font-medium text-foreground">${giftOf(next.program).name}</span>
+      </p>
+      <span class="block h-0.5 w-full bg-border overflow-hidden">
+        <span class="block h-0.5 bg-primary" style="width:${Math.min(100, Math.round(sub / next.min * 100))}%"></span>
+      </span>
+    </div>` : '';
+  /* Chưa đạt mốc nào: vẫn dùng ĐÚNG DẢI đó (chỉ có nhãn + dòng gợi ý) để lúc
+     vừa chạm mốc khối không nhảy từ nền trắng sang nền xám. */
+  if (!earned.length) return `
+    <div class="pt-3">
+      <div class="bg-accent-0">
+        <p class="px-4 pt-3 pb-1 text-[14px] font-medium leading-5 text-foreground">Quà tặng theo đơn hàng</p>
+        ${hint}
+      </div>
+    </div>`;
+  /* MỘT DẢI DUY NHẤT cho cả nhóm: nhãn section + mọi quà theo đơn nằm chung 1 nền
+     (yêu cầu user 13/08/2026 — trước đây nhãn nằm trên nền trắng còn từng quà là một
+     khối xám riêng, đọc ra 3 mảnh rối rời thay vì 1 nhóm). Nhiều quà thì ngăn
+     nhau bằng kẻ 1px border-1 — kẻ BÊN TRONG một khối, không phải kẻ giữa các
+     block (xem README "Quy ước border"). */
+  return `
+    <div class="pt-3">
+      <div class="bg-accent-0">
+        <div class="flex items-baseline justify-between gap-2 px-4 pt-3 pb-1">
+          <p class="text-[14px] font-medium leading-5 text-foreground">Quà tặng theo đơn hàng</p>
+          <p class="text-[12px] leading-4 text-muted-foreground shrink-0">${earned.length} quà</p>
+        </div>
+        ${earned.map((t, i) => `<div class="${i ? 'border-t border-border-1' : ''}">${giftGroupHTML(t.program, `data-gift-tier="${t.min}"`, 'bare')}</div>`).join('')}
+        ${next ? hint : ''}
+      </div>
+    </div>`;
+}
+
+/* Mọi quà đang được nhận, đúng thứ tự người dùng thấy ở giỏ: quà kèm từng sản
+   phẩm đang tick trước, rồi đến quà theo mốc đơn đã đạt. Dùng cho màn Thanh toán
+   và (qua ckOrderGifts) màn Hoàn tất. */
+function activeGifts() {
+  const list = [];
+  cartSelected().forEach(c => { if (c.gift && GIFT_PROGRAMS[c.gift]) list.push(c.gift); });
+  orderGiftState().earned.forEach(t => list.push(t.program));
+  return list;
+}
+
+/* 1 dòng quà trong TÓM TẮT ĐƠN (thanh toán / hoàn tất) — cùng khuôn dòng sản phẩm
+   của tóm tắt (thumb 52×60, chữ 13/12/12) để đọc liền mạch; khác 3 chỗ: badge
+   "Quà tặng" trên ảnh, dòng thứ 3 là TÊN CHƯƠNG TRÌNH thay cho "phân loại · SL",
+   và giá 0 ₫. `g` truyền vào khi đọc từ bản chốt lúc đặt hàng (giỏ đã dọn rỗng). */
+function giftSummaryRow(pk, g) {
+  const p = GIFT_PROGRAMS[pk];
+  g = g || giftOf(pk);
+  if (!p || !g) return '';
+  return `
+              <div class="flex gap-3 items-center">
+                <span class="relative w-[52px] h-[60px] shrink-0 bg-secondary">
+                  <img src="${A}${g.img}" class="w-full h-full object-cover lazy" alt="">
+                  <span class="absolute top-0 left-0 bg-primary text-[10px] font-semibold leading-3 text-primary-foreground px-1 whitespace-nowrap">Quà tặng</span>
+                </span>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[13px] font-medium text-foreground truncate">${g.brand}</p>
+                  <p class="text-[12px] text-secondary-foreground truncate">${g.name}</p>
+                  <p class="text-[12px] text-muted-foreground truncate">${p.name}</p>
+                </div>
+                <p class="text-[13px] font-medium text-foreground shrink-0">0 ₫</p>
+              </div>`;
+}
+
+function orderGiftBox() {
+  return `<div id="orderGift" class="rise">${orderGiftInner()}</div>`;
 }
 
 function dafcRewards() {
@@ -2500,15 +2763,30 @@ function discountLinesHTML() {
       <span class="text-[16px] font-light leading-6 ${isDiscount ? 'text-destructive' : 'text-muted-foreground'}">${label}</span>
       <span class="text-[16px] font-light leading-6 ${isDiscount ? 'text-destructive' : 'text-foreground'} shrink-0">${isDiscount ? '-' : ''}${amount.toLocaleString('en-US')}đ</span>
     </div>`;
-  const rows = [line('Tạm tính', CART_SUBTOTAL, false)];
-  if (ckAuth) {
-    const amt = rewardAmount(cartReward);
-    if (amt > 0) rows.push(line(cartReward === 'points' ? `Dùng ${REWARD_POINTS} điểm` : 'Giảm giá thành viên', amt, true));
+  const sub = cartSubtotal();
+  const rows = [line('Tạm tính', sub, false)];
+  /* Không còn món nào được chọn thì KHÔNG in dòng giảm giá nào: "Tạm tính 0đ"
+     kèm "Giảm giá(JUNE2000) -2.000.000đ" rồi "Tổng cộng 0đ" là 3 dòng không
+     cộng lại thành nhau — mã vẫn giữ nguyên, tick lại món là hiện lại. */
+  if (sub > 0) {
+    if (ckAuth) {
+      const amt = rewardAmount(cartReward);
+      if (amt > 0) rows.push(line(cartReward === 'points' ? `Dùng ${REWARD_POINTS} điểm` : 'Giảm giá thành viên', amt, true));
+    }
+    if (cartVoucherDiscount > 0) rows.push(line(`Giảm giá(${cartVoucherCode})`, cartVoucherDiscount, true));
+    cartPbh.forEach(p => rows.push(line(`Giảm giá(${p.code})`, p.amount, true)));
   }
-  if (cartVoucherDiscount > 0) rows.push(line(`Giảm giá(${cartVoucherCode})`, cartVoucherDiscount, true));
-  cartPbh.forEach(p => rows.push(line(`Giảm giá(${p.code})`, p.amount, true)));
   return rows.join('');
 }
+
+/* Tổng ưu đãi đang áp, CHẶN TRẦN theo tạm tính (giỏ teo lại vì bỏ tick / xoá
+   món thì ưu đãi không được lớn hơn tiền hàng) + tổng phải trả. Tách riêng để
+   lúc dựng màn và lúc cập nhật tại chỗ dùng chung đúng 1 công thức. */
+function cartDiscountTotal() {
+  const reward = ckAuth ? rewardAmount(cartReward) : 0;
+  return Math.min(reward + cartVoucherDiscount + cartPbhTotal(), cartSubtotal());
+}
+function cartTotalNow() { return Math.max(0, cartSubtotal() - cartDiscountTotal()); }
 
 /* Khối hợp nhất theo Figma 3458:56933 (đọc lại lần 4 — user xác nhận "chưa
    đúng thiết kế", bỏ hẳn kiểu "card nổi bo góc" của 2 vòng trước): panel giờ
@@ -2519,7 +2797,7 @@ function discountLinesHTML() {
    trên (358px, không phải 342px). "Chương trình khuyến mãi" vẫn để ngoài
    khối này. "Bạn có phiếu mua hàng?" ở #cartCta (screenCART()), gap với nút
    "Đặt hàng" tăng 8px→16px theo số liệu mới. */
-function discountPanel(cartTotalNow) {
+function discountPanel() {
   const rewardsCard = ckAuth ? `
     <div class="bg-background border border-border-1 rounded-md p-3 flex flex-col gap-4">
       <p class="text-[16px] font-medium leading-6 text-foreground">Ưu đãi chương trình DAFC Rewards</p>
@@ -2545,11 +2823,11 @@ function discountPanel(cartTotalNow) {
       <div id="discountLines" class="flex flex-col">${discountLinesHTML()}</div>
       <div class="border-t border-border flex justify-between items-center h-14">
         <span class="text-[16px] font-medium leading-6 text-foreground">Tổng cộng</span>
-        <span id="cartTotal" class="text-[16px] font-medium leading-6 text-foreground">${cartTotalNow.toLocaleString('en-US')}đ</span>
+        <span id="cartTotal" class="text-[16px] font-medium leading-6 text-foreground">${vndCom(cartTotalNow())}</span>
       </div>
       <p class="text-[14px] leading-5 text-secondary-foreground">${ckAuth
-        ? 'Hoàn tất đơn hàng để nhận ngay <b class="font-bold">1.135</b> điểm thưởng'
-        : '<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b class="font-bold">1.135</b> điểm thưởng'}</p>
+        ? `Hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`
+        : `<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`}</p>
     </div>
   </div>`;
 }
@@ -2569,9 +2847,7 @@ function promoRule(headline, scheme, tnc) {
 
 function screenCART() {
   // Tổng tiền: ưu đãi hội viên (chỉ khi đã đăng nhập) + mã giảm giá + N phiếu mua hàng
-  const rewardDiscount = ckAuth ? rewardAmount(cartReward) : 0;
-  const totalDiscount = rewardDiscount + cartVoucherDiscount + cartPbhTotal();
-  const cartTotalNow = Math.max(0, CART_SUBTOTAL - totalDiscount);
+  // Tổng tiền: xem cartDiscountTotal()/cartTotalNow() — ưu đãi chặn trần theo tạm tính
 
   /* item-cart — đồng bộ với component 2851:28705 của bản mobile (bản mới nhất,
      không có variant desktop): [checkbox 16 canh giữa] [ảnh 100×133] [thông tin]
@@ -2581,7 +2857,7 @@ function screenCART() {
   const row = (c, i) => `
     <div class="cart-row flex gap-2 px-4 py-4" data-row="${i}">
       <div class="w-4 shrink-0 flex items-center">
-        <button class="chk on w-4 h-4 border border-border bg-background-3 rounded-xs shadow-sm flex items-center justify-center btn-o press" data-check>${I.tick}</button>
+        <button class="chk ${c.sel === false ? '' : 'on'} w-4 h-4 border border-border bg-background-3 rounded-xs shadow-sm flex items-center justify-center btn-o press" data-check>${I.tick}</button>
       </div>
       <div class="w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
         <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
@@ -2625,22 +2901,27 @@ function screenCART() {
         <!-- ── CỘT TRÁI: danh sách giỏ hàng ── -->
         <div class="flex-1 min-w-0">
           <div class="py-4 rise">
-            <h2 class="text-[24px] font-light leading-8 text-foreground">Giỏ hàng <span id="cartCount" class="text-muted-foreground">(4)</span></h2>
+            <h2 class="text-[24px] font-light leading-8 text-foreground">Giỏ hàng <span id="cartCount" class="text-muted-foreground">(${cartItems().length})</span></h2>
           </div>
 
           <!-- Không bọc card viền quanh selectAll / danh sách — đồng bộ quy ước
                "giữa các block không kẻ border" của bản mobile (2851:28697) -->
           <div class="flex items-center justify-between gap-3 px-4 py-2 rise">
             <button id="selectAll" class="flex items-center gap-2 press">
-              <span class="chk on w-4 h-4 border border-border-3 rounded-xs shadow-sm flex items-center justify-center">${I.tick}</span>
-              <span class="text-[14px] font-medium leading-5 text-foreground">${ckAuth ? 'Chọn tất cả ( 4 sản phẩm )' : 'Chọn tất cả'}</span>
+              <!-- Ô tick tổng SUY TỪ STATE (không in cứng "on"): tick chọn là state sống
+                   qua các lần vào/ra màn -->
+              <span class="chk ${cartItems().length && cartItems().every(c => c.sel !== false) ? 'on' : ''} w-4 h-4 border border-border-3 rounded-xs shadow-sm flex items-center justify-center">${I.tick}</span>
+              <span id="selAllLabel" class="text-[14px] font-medium leading-5 text-foreground">${ckAuth ? `Chọn tất cả ( ${cartItems().length} sản phẩm )` : 'Chọn tất cả'}</span>
             </button>
             ${ckAuth ? '' : '<button id="delSelected" class="text-[14px] font-medium text-muted-foreground press">Xóa sản phẩm đã chọn</button>'}
           </div>
 
           <div class="rise">
-            <div id="cartList">${CART.length ? CART.map((c, i) => row(c, i)).join('') : cartEmptyHTML()}</div>
-            ${ckAuth ? giftPicker() : ''}
+            <!-- Bỏ qua món đã xoá NHƯNG GIỮ NGUYÊN chỉ số i (data-row trỏ vào CART) -->
+            <div id="cartList">${cartItems().length ? CART.map((c, i) => c.removed ? '' : row(c, i) + productGiftHTML(c, i)).join('') : cartEmptyHTML()}</div>
+            <!-- Quà theo mốc giá trị đơn — hiện cho cả khách vãng lai (điều kiện là
+                 giá trị đơn, không phải trạng thái đăng nhập) -->
+            ${orderGiftBox()}
           </div>
 
           <!-- Chương trình khuyến mãi — đồng bộ style mobile (Figma 2851:28697):
@@ -2695,11 +2976,11 @@ function screenCART() {
                 <div id="discountLines" class="flex flex-col">${discountLinesHTML()}</div>
                 <div class="flex justify-between items-center h-14">
                   <span class="text-[16px] font-medium leading-6 text-foreground">Tổng cộng</span>
-                  <span id="cartTotal" class="text-[16px] font-medium leading-6 text-foreground">${cartTotalNow.toLocaleString('en-US')}đ</span>
+                  <span id="cartTotal" class="text-[16px] font-medium leading-6 text-foreground">${vndCom(cartTotalNow())}</span>
                 </div>
                 <p class="text-[14px] leading-5 text-secondary-foreground">${ckAuth
-                  ? 'Hoàn tất đơn hàng để nhận ngay <b class="font-bold">1.135</b> điểm thưởng'
-                  : '<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b class="font-bold">1.135</b> điểm thưởng'}</p>
+                  ? `Hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`
+                  : `<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`}</p>
               </div>
               <button data-checkout class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium btn-p press flex items-center justify-center">Đặt hàng</button>
 
@@ -3064,7 +3345,8 @@ let ckName = '', ckPhone = '', ckEmail = '';
 let ckAddr = 0, ckShipName = '', ckShipPhone = '', ckShipLine = '';
 /* Đã đặt hàng xong: khoá không cho đặt lại đơn thứ hai khi bấm back, và giữ
    mã đơn vừa sinh để màn Hoàn tất / Chi tiết đơn cùng đọc một nguồn. */
-let ckPlaced = false, ckOrderId = '';
+let ckPlaced = false, ckOrderId = '', ckOrderTotal = '', ckOrderPoints = '';   // tổng + điểm chốt lúc đặt hàng (giỏ bị dọn ngay sau đó)
+let ckOrderGifts = [];   // [{pk, g}] quà của đơn vừa đặt — chốt luôn cả MÓN đang chọn, không chỉ key chương trình
 
 /* field/pickField để Ở NGOÀI screenCHECKOUT vì bước "Nhận tại cửa hàng" dựng
    lại phần thân của nó nhiều lần (ckPickupOpen), không chỉ lúc render màn.
@@ -3209,7 +3491,7 @@ function screenCHECKOUT() {
   const notice = ckAuth
     ? `<p class="text-[14px] leading-5 text-foreground">Đăng nhập tài khoản <b class="font-medium">UserOne</b></p>`
     : `<p class="text-[14px] font-medium leading-5 text-foreground">Bạn đang thanh toán không đăng nhập</p>
-       <p class="text-[14px] leading-5 text-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-medium">1.135 điểm thưởng</b></p>
+       <p class="text-[14px] leading-5 text-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-medium">${rewardPointsEarned().toLocaleString('vi-VN')} điểm thưởng</b></p>
        <button data-nav="login" class="self-start text-[14px] font-medium leading-5 text-foreground underline press">Đăng nhập</button>`;
   /* ── Section 0: Thông tin giao hàng ──
      Khách ĐÃ ĐĂNG NHẬP thì mở ra là sổ địa chỉ đã lưu (chọn 1 chạm là xong
@@ -3329,7 +3611,7 @@ function screenCHECKOUT() {
     ${navBar({ logoOnly: true })}
 
     <div class="max-w-[1240px] mx-auto w-full px-6 pt-8 pb-20">
-      <p class="text-[24px] font-light leading-8 text-foreground pb-6">Thanh toán (4)</p>
+      <p class="text-[24px] font-light leading-8 text-foreground pb-6">Thanh toán (${cartSelected().length})</p>
 
       <div class="flex items-start gap-10">
         <!-- ── CỘT TRÁI: 3 section tự đóng/mở ── -->
@@ -3361,7 +3643,9 @@ function screenCHECKOUT() {
             <p class="text-[24px] font-light leading-8 text-foreground">Tóm tắt đơn hàng</p>
           </div>
           <div class="px-4 py-4 flex flex-col gap-3">
-            ${CART.map(c => `
+            <!-- Quà hiện đúng thứ tự như ở giỏ: quà kèm sản phẩm nằm NGAY DƯỚI sản phẩm
+                 đó, quà theo mốc đơn xếp cuối danh sách. -->
+            ${cartSelected().map(c => `
               <div class="flex gap-3 items-center">
                 <img src="${A}${c.img}" class="w-[52px] h-[60px] object-cover bg-secondary lazy" alt="">
                 <div class="flex-1 min-w-0">
@@ -3370,11 +3654,13 @@ function screenCHECKOUT() {
                   <p class="text-[12px] text-muted-foreground">${c.variant} · SL ${c.qty}</p>
                 </div>
                 <p class="text-[13px] font-medium text-foreground shrink-0">${c.now}</p>
-              </div>`).join('')}
+              </div>` + (c.gift && GIFT_PROGRAMS[c.gift] ? giftSummaryRow(c.gift) : '')).join('')}
+            ${orderGiftState().earned.map(t => giftSummaryRow(t.program)).join('')}
           </div>
           <div class="px-4 pb-4 flex flex-col">
             <div class="h-px bg-border-1 mb-2"></div>
-            ${row('Tạm tính','113,500,000đ')}
+            ${row('Tạm tính', vndCom(cartSubtotal()))}
+            ${cartDiscountTotal() > 0 ? row('Giảm giá', '-' + vndCom(cartDiscountTotal())) : ''}
             <!-- Nhận tại cửa hàng thì không có phí nên ghi thẳng, không "tính sau" -->
             <div class="h-9 flex items-center justify-between">
               <span class="text-[14px] leading-5 text-foreground">${ckMode === 'pickup' ? 'Nhận hàng' : 'Giao hàng'}</span>
@@ -3382,7 +3668,7 @@ function screenCHECKOUT() {
             </div>
             <div class="h-12 flex items-center justify-between border-t border-border-1 mt-2">
               <span class="text-[16px] font-medium leading-6 text-foreground">Tổng cộng</span>
-              <span class="text-[16px] font-medium leading-6 text-foreground">113,500,000đ</span>
+              <span class="text-[16px] font-medium leading-6 text-foreground">${vndCom(cartTotalNow())}</span>
             </div>
             <button data-nav="done" class="w-full h-12 mt-2 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium btn-p press flex items-center justify-center">Đặt hàng</button>
             <p class="pt-3 text-[12px] leading-4 text-muted-foreground text-center">${ETA}</p>
@@ -3428,10 +3714,14 @@ function paintCheckout(root) {
 function screenDONE() {
   /* Đơn nhận tại cửa hàng thì 2 dòng cuối nói về cửa hàng thay vì vận chuyển */
   const st = storeInfo(ckStore);
-  const oid = ckOrderId || 'DAFC102939';   // mã sinh lúc bấm Đặt hàng (placeOrder)
+  const oid = ckOrderId || 'DAFC102939';
+  const total  = ckOrderTotal || vndCom(cartSubtotal());    // tổng đã chốt lúc đặt hàng
+  const points = ckOrderPoints || rewardPointsEarned().toLocaleString('vi-VN');
+  /* Quà đã chốt lúc đặt hàng; vào thẳng màn này mà chưa đặt (demo) thì lấy tạm từ giỏ */
+  const gifts = ckOrderGifts.length ? ckOrderGifts : activeGifts().map(pk => ({ pk, g: giftOf(pk) }));   // mã sinh lúc bấm Đặt hàng (placeOrder)
   const rows = ckMode === 'pickup'
-    ? [['Mã đơn hàng', oid],['Tổng cộng','113,500,000đ'],['Nhận tại', st ? st.name : 'Cửa hàng DAFC'],['Sẵn sàng nhận','Từ 12/08']]
-    : [['Mã đơn hàng', oid],['Tổng cộng','113,500,000đ'],['Vận chuyển','Miễn phí'],['Dự kiến giao','12 – 16/08']];
+    ? [['Mã đơn hàng', oid],['Tổng cộng', total],['Nhận tại', st ? st.name : 'Cửa hàng DAFC'],['Sẵn sàng nhận','Từ 12/08']]
+    : [['Mã đơn hàng', oid],['Tổng cộng', total],['Vận chuyển','Miễn phí'],['Dự kiến giao','12 – 16/08']];
   return `
   <div class="w-full relative" data-scroller>
     <div id="confettiHost" class="absolute inset-x-0 top-0 h-[70vh] pointer-events-none overflow-hidden z-10"></div>
@@ -3463,8 +3753,20 @@ function screenDONE() {
           </div>`).join('')}
       </div>
 
+      <!-- Quà của đơn — chốt lúc bấm Đặt hàng (giỏ bị dọn rỗng ngay sau đó nên
+           không thể tính lại từ giỏ). Dùng chung khuôn dòng quà của màn Thanh toán. -->
+      ${gifts.length ? `
+      <div class="w-full flex flex-col gap-2 rise">
+        <div class="flex items-baseline justify-between gap-2">
+          <p class="text-[13px] font-medium text-foreground">Quà tặng kèm đơn</p>
+          <p class="text-[12px] text-muted-foreground shrink-0">${gifts.length} quà</p>
+        </div>
+        <div class="w-full rounded-xs border border-border overflow-hidden flex flex-col">
+          ${gifts.map((x, i) => `<div class="px-4 py-3 ${i ? 'border-t border-border-1' : ''}">${giftSummaryRow(x.pk, x.g)}</div>`).join('')}
+        </div>
+      </div>` : ''}
       <div class="flex items-center gap-2 text-[12px] text-muted-foreground w-full px-4 py-3 rounded-xs rise" style="background:var(--unofficial-accent-0)">
-        ${I.gift}<span>Bạn nhận được <strong class="text-foreground-alt">1.135 điểm thưởng</strong> từ đơn hàng này</span>
+        ${I.gift}<span>Bạn nhận được <strong class="text-foreground-alt">${points} điểm thưởng</strong> từ đơn hàng này</span>
       </div>
 
       <div class="w-full flex gap-2.5 rise">
@@ -4188,9 +4490,15 @@ const POLICY_DATA = {
 };
 
 /* Trang chính sách bản desktop — cùng data với mobile, layout theo mẫu 2 cột
-   sẵn có của màn Tài khoản: sidebar 280px (3 trang + mục lục dính) · nội dung
+   sẵn có của màn Tài khoản: sidebar 280px (chỉ còn 3 trang, dính) · nội dung
    720px. Không cần dropdown "policyMore" như mobile — ở 1440 cả 3 tab nằm
-   thoải mái trong sidebar nên hàng pill cuộn ngang là thừa. */
+   thoải mái trong sidebar nên hàng pill cuộn ngang là thừa.
+
+   MỤC LỤC ĐÃ RỜI SIDEBAR (yêu cầu user 12/08/2026): giờ nằm ngay trên nội
+   dung, cùng cột đọc. Ở sidebar nó phải cạnh tranh chú ý với 3 link chuyển
+   trang và mắt phải nhảy sang cột trái mới thấy; đặt trên nội dung thì thứ tự
+   đọc là tiêu đề → các mục → chữ. Chia 2 cột để 6-7 mục không đẩy đoạn đầu
+   xuống quá sâu. Cỡ chữ 14 Medium, khớp mục lục bản mobile. */
 function screenPOLICY(key) {
   const p = POLICY_DATA[key];
 
@@ -4207,19 +4515,12 @@ function screenPOLICY(key) {
       ${dkCrumbs(['Trang chủ', p.title])}
 
       <div class="flex gap-6 px-6 pt-2 pb-12 items-start">
-        <aside class="dk-policy-aside w-[280px] shrink-0 sticky top-[128px] flex flex-col gap-6 rise">
+        <aside class="dk-policy-aside w-[280px] shrink-0 sticky top-[128px] flex flex-col rise">
           <div class="flex flex-col py-2">
             ${POLICY_TABS.map(([k, label]) => k === key
               ? `<span class="h-11 px-3 flex items-center text-[14px] font-medium leading-5 text-foreground bg-secondary rounded-xs">${label}</span>`
               : `<button data-nav="${k}" class="h-11 px-3 flex items-center text-[14px] leading-5 text-foreground-alt hover:text-foreground transition-colors press">${label}</button>`
             ).join('')}
-          </div>
-          <div class="flex flex-col gap-1 pt-4 border-t border-border">
-            ${p.sections.map(([h], i) => `
-              <button data-policy-toc="${i}" class="flex items-start gap-2 py-1 px-3 text-left press">
-                <span class="text-[12px] leading-4 text-muted-foreground">${i + 1}.</span>
-                <span class="flex-1 min-w-0 text-[12px] leading-4 text-muted-foreground hover:text-foreground transition-colors">${h}</span>
-              </button>`).join('')}
           </div>
         </aside>
 
@@ -4228,6 +4529,21 @@ function screenPOLICY(key) {
             <h1 class="text-[24px] font-light leading-8 text-foreground">${p.title}</h1>
             <p class="text-[12px] leading-4 text-muted-foreground">${POLICY_UPDATED}</p>
           </div>
+
+          <!-- mục lục — viền trên/dưới giống bản mobile, bấm để nhảy tới section -->
+          <div class="flex flex-col gap-3 py-4 border-y border-border rise">
+            <p class="text-[12px] leading-4 tracking-[0.12em] text-muted-foreground">Mục lục</p>
+            <!-- column-gap inline: tailwind.css build sẵn không có gap-x-8, và
+                 hàng đã tự cao 32px nhờ py-1.5 nên không cần row-gap -->
+            <div class="grid grid-cols-2" style="column-gap:32px">
+              ${p.sections.map(([h], i) => `
+                <button data-policy-toc="${i}" class="flex items-start gap-2 py-1.5 text-left press">
+                  <span class="text-[14px] font-medium leading-5 text-muted-foreground">${i + 1}.</span>
+                  <span class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-muted-foreground hover:text-foreground transition-colors">${h}</span>
+                </button>`).join('')}
+            </div>
+          </div>
+
           ${p.sections.map(([h, txt], i) => `
             <div data-policy-sec="${i}" class="flex flex-col gap-3 scroll-mt-[128px] reveal">
               <h2 class="text-[16px] font-medium leading-6 text-foreground">${i + 1}. ${h}</h2>
@@ -4588,7 +4904,20 @@ const I18N = {
 
   // ── Giỏ hàng & thanh toán ──
   'Giỏ hàng':'Bag', 'Giỏ hàng của bạn':'Your bag', 'Đặt hàng':'Checkout', 'Thanh toán':'Payment',
-  'Thanh toán (4)':'Payment (4)', 'Tạm tính':'Subtotal', 'Giảm giá':'Discount', 'Tổng cộng':'Total',
+  'Tạm tính':'Subtotal', 'Giảm giá':'Discount', 'Tổng cộng':'Total',
+  /* "Thanh toán (4)" / "Giỏ hàng của bạn (4)" / "Chọn tất cả ( 4 sản phẩm )" giờ
+     mang số ĐỘNG (xoá bớt món là đổi) nên chuyển sang luật regex I18N_RE bên
+     dưới — để key cứng ở đây thì chỉ đúng đúng 1 con số 4. */
+  // ── Quà tặng trong giỏ ── ('Quà tặng' đã có key ở khối Khuyến mãi, không khai lại)
+  'Quà tặng theo đơn hàng':'Order gifts', 'Đổi quà':'Change gift', 'Đóng':'Close',
+  'Quà tặng kèm đơn':'Gifts with this order', 'Đổi quà tặng':'Change your gift',
+  'Quà tặng kèm túi Lou mini':'Gift with Lou mini bag',
+  'Ưu đãi đơn từ 100 triệu':'Orders from 100 million',
+  'Ưu đãi đơn từ 150 triệu':'Orders from 150 million',
+  'Đã đổi quà tặng':'Gift changed',
+  'Nước hoa Eros Energy EDP 5 ml':'Eros Energy EDP 5 ml',
+  'Nước hoa Crystal Noir EDP 5 ml':'Crystal Noir EDP 5 ml',
+  'Tạm tính':'Subtotal', 'Giảm giá':'Discount', 'Tổng cộng':'Total',
   'Phí vận chuyển':'Shipping fee', 'Vận chuyển':'Shipping', 'Giao hàng':'Delivery',
   'Mã giảm giá':'Promo code', 'Nhập voucher':'Enter voucher', 'Bạn có phiếu mua hàng?':'Have a gift voucher?',
   'DAFC Phiếu mua hàng':'DAFC Gift Voucher', 'Xóa sản phẩm đã chọn':'Remove selected',
@@ -4613,7 +4942,7 @@ const I18N = {
   'Chọn tỉnh / thành phố':'Select province / city', 'Chọn phường / xã':'Select ward',
   'Lưu địa chỉ':'Save address', 'Thời gian nhận hàng dự kiến từ ngày 14/07 đến ngày 18/07':'Estimated delivery between 14/07 and 18/07',
   'Đăng nhập và hoàn tất đơn hàng để nhận ngay':'Sign in and complete your order to earn',
-  '1.135 điểm thưởng':'1,135 reward points', 'Đặt hàng thành công':'Order placed',
+  'Đặt hàng thành công':'Order placed',
   'Hoàn tất đơn hàng để nhận ngay':'Complete your order to earn',
   'và hoàn tất đơn hàng để nhận ngay':'and complete your order to earn',
   'điểm thưởng':'reward points', 'Hoặc':'Or',
@@ -4748,6 +5077,9 @@ const I18N = {
   'Đặc quyền giao nhận tận nơi hoàn toàn miễn phí cho thành viên DAFC':'Complimentary door-to-door delivery for DAFC members',
 
   // ── Cài đặt ──
+  // 'Về đầu trang' chỉ nằm ở aria-label nút #topFab (applyLang dịch cả
+  // aria-label) — nút icon-only nên không có chữ nào hiện ra để dịch.
+  'Về đầu trang':'Back to top',
   'Cài đặt hiển thị':'Display settings', 'Cài đặt phông chữ':'Font settings', 'Phông chữ':'Font',
   'Ngôn ngữ':'Language', 'Tiếng Việt':'Vietnamese', 'Sẽ báo bạn ngay khi có hàng':'We\u2019ll notify you when it\u2019s back',
   'Đã đăng ký · sẽ báo bạn khi có hàng':'Registered · we\u2019ll notify you when it\u2019s back',
@@ -4845,6 +5177,14 @@ const I18N_RE = [
   [/^Đã lưu tuỳ chọn cookie · (\d+)\/(\d+) nhóm$/, 'Cookie preferences saved · $1/$2 groups'],
   [/^Bạn đã xem (\d+) trong (\d+) sản phẩm$/, 'You have viewed $1 of $2 products'],
   [/^Bộ lọc \((\d+)\)$/,              'Filter ($1)'],
+  // giỏ hàng: số món / số quà thay đổi được nên phải là luật động
+  [/^Thanh toán \((\d+)\)$/,          'Payment ($1)'],
+  [/^([\d.]+) điểm thưởng$/,          '$1 reward points'],
+  [/^Giỏ hàng của bạn \((\d+)\)$/,    'Your bag ($1)'],
+  [/^Chọn tất cả \( (\d+) sản phẩm \)$/, 'Select all ( $1 products )'],
+  [/^1 quà$/,                         '1 gift'],
+  [/^(\d+) quà$/,                     '$1 gifts'],
+  [/^Mua thêm ([\d.]+ ₫) để nhận$/,   'Spend $1 more to get'],
 ];
 const I18N_REV_RE = [
   [/^(\d+) stores$/,                  '$1 cửa hàng'],
@@ -4869,6 +5209,13 @@ const I18N_REV_RE = [
   [/^Cookie preferences saved · (\d+)\/(\d+) groups$/, 'Đã lưu tuỳ chọn cookie · $1/$2 nhóm'],
   [/^You have viewed (\d+) of (\d+) products$/, 'Bạn đã xem $1 trong $2 sản phẩm'],
   [/^Filter \((\d+)\)$/,              'Bộ lọc ($1)'],
+  [/^Payment \((\d+)\)$/,             'Thanh toán ($1)'],
+  [/^([\d.]+) reward points$/,        '$1 điểm thưởng'],
+  [/^Your bag \((\d+)\)$/,            'Giỏ hàng của bạn ($1)'],
+  [/^Select all \( (\d+) products \)$/, 'Chọn tất cả ( $1 sản phẩm )'],
+  [/^1 gift$/,                        '1 quà'],
+  [/^(\d+) gifts$/,                   '$1 quà'],
+  [/^Spend ([\d.]+ ₫) more to get$/,  'Mua thêm $1 để nhận'],
 ];
 /* ── Bổ sung từ điển cho các chuỗi riêng của bản DESKTOP ── */
 Object.assign(I18N, {
@@ -4939,6 +5286,7 @@ Object.assign(I18N, {
   'Không áp dụng cho Stefano Ricci, TUMI, Montblanc, Phiếu Quà Tặng và New Season.':'Not valid on Stefano Ricci, TUMI, Montblanc, Gift Vouchers or New Season.',
   /* ── 3 trang chính sách ── */
   'Cập nhật lần cuối: 01/08/2026':'Last updated: 01/08/2026',
+  'Mục lục':'Contents',           // nhãn khối mục lục (chỉ bản desktop có)
   'Điều khoản Dịch vụ':'Terms of Service',
   'Chính sách Đổi trả':'Return Policy',
   'CHÍNH SÁCH BẢO MẬT':'PRIVACY POLICY',
@@ -5293,12 +5641,17 @@ function ckStoreDoneHTML() {
 function placeOrder() {
   ckPlaced = true;
   ckOrderId = 'DAFC1029' + (39 + ORDERS.length - 3);
+  /* Chốt tổng NGAY: ngay dưới đây giỏ bị dọn rỗng nên cartSubtotal() về 0 */
+  const orderSub = cartSubtotal(), orderDisc = cartDiscountTotal(), orderTotal = cartTotalNow();
+  ckOrderTotal = vndCom(orderTotal);
+  ckOrderPoints = rewardPointsEarned().toLocaleString('vi-VN');
+  ckOrderGifts = activeGifts().map(pk => ({ pk, g: giftOf(pk) }));
   const a = (ckAuth && ckAddr !== 'new') ? ADDRESSES[ckAddr] : null;
   const st = storeInfo(ckStore);
   ORDERS.unshift({
     id: ckOrderId, status: 'Đã xác nhận', tone: 'info', date: '11/08/2026',
-    items: CART.map(c => ({ img: c.img, name: c.name, variant: c.variant, qty: c.qty, price: c.now })),
-    sub: '113.500.000 ₫', ship: 'Miễn phí', discount: '', total: '113.500.000 ₫',
+    items: cartSelected().map(c => ({ img: c.img, name: c.name, variant: c.variant, qty: c.qty, price: c.now })),
+    sub: vndDot(orderSub), ship: 'Miễn phí', discount: orderDisc ? '− ' + vndDot(orderDisc) : '', total: vndDot(orderTotal),
     payment: 'Thẻ tín dụng/Ghi nợ',
     method: ckMode === 'pickup' ? 'Nhận tại cửa hàng' : 'Giao hàng thông thường',
     address: ckMode === 'pickup'
@@ -5386,11 +5739,7 @@ function wire(root) {
     b.addEventListener('click', e => { e.stopPropagation(); openSizeChart(); }));
 
   // images fade-in
-  root.querySelectorAll('img.lazy').forEach(img => {
-    if (img.complete) img.classList.add('loaded');
-    else img.addEventListener('load', () => img.classList.add('loaded'));
-    img.addEventListener('error', () => { img.style.background = 'var(--general-secondary)'; img.classList.add('loaded'); });
-  });
+  wireLazy(root);
 
   // ── Search screen ──
   const searchInput = root.querySelector('#searchInput');
@@ -5488,7 +5837,8 @@ function wire(root) {
         history = []; ckStep = 0; ckMaxStep = 0; ckMode = 'ship';
         ckCity = ''; ckStore = ''; ckHome = ''; ckName = ''; ckPhone = ''; ckEmail = '';
         ckAddr = 0; ckShipName = ''; ckShipPhone = ''; ckShipLine = '';
-        ckPlaced = false; ckOrderId = '';
+        ckPlaced = false; ckOrderId = ''; ckOrderTotal = ''; ckOrderPoints = ''; ckOrderGifts = [];
+        giftPick = {};   // demo chạy lại từ đầu thì quà cũng về mặc định
       }
       /* Bấm "Đặt hàng": chốt đơn lại. Sinh mã theo hệ DAFC1029xx của màn Đơn
          hàng, đẩy đơn vào ORDERS để tab Đơn hàng thấy ngay, rồi DỌN GIỎ —
@@ -5851,7 +6201,19 @@ function wire(root) {
 
   // checkbox
   root.querySelectorAll('[data-check]').forEach(c => {
-    c.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); c.classList.toggle('on'); });
+    c.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      c.classList.toggle('on');
+      /* Riêng ô tick trong giỏ: tick = "sản phẩm này nằm trong đơn". Bỏ tick là
+         rời tạm tính -> quà kèm sản phẩm rút theo và quà theo đơn tính lại
+         (có thể rớt mốc). Các màn khác không có .cart-row nên không dính. */
+      const row = c.closest('.cart-row');
+      if (!row) return;
+      const item = CART[+row.dataset.row];
+      if (!item) return;
+      item.sel = c.classList.contains('on');
+      refreshCartAll(root);
+    });
   });
 
   // radio option groups
@@ -6065,7 +6427,7 @@ function wire(root) {
     });
   }
 
-  // Cart: qty steppers
+  // Cart: qty steppers — số lượng là STATE (CART[i].qty), không chỉ chữ trong DOM
   root.querySelectorAll('.qty-btn').forEach(b => {
     b.addEventListener('click', () => {
       const row = b.closest('.cart-row'), el = row.querySelector('.qty');
@@ -6073,6 +6435,10 @@ function wire(root) {
       v = Math.max(1, Math.min(99, v));
       el.textContent = String(v).padStart(2, '0');
       el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+      const item = CART[+row.dataset.row];
+      if (!item) return;
+      item.qty = v;
+      refreshCartAll(root);      // tăng đủ mốc là quà theo đơn hiện ngay ở đây
     });
   });
 
@@ -6080,6 +6446,13 @@ function wire(root) {
   root.querySelectorAll('.del').forEach(b => {
     b.addEventListener('click', () => {
       const row = b.closest('.cart-row');
+      /* Đánh dấu removed NGAY (không chờ animation xong) để tạm tính + điều kiện
+         quà phản ánh đúng lúc người dùng thấy dòng bắt đầu trượt đi. Không splice
+         khỏi CART vì các dòng sau còn tham chiếu chỉ số qua data-row. */
+      const item = CART[+row.dataset.row];
+      if (item) { item.removed = true; item.sel = false; }
+      const giftEl = row.nextElementSibling;   // dòng quà kèm của chính item này
+      if (giftEl && giftEl.dataset.giftOf === row.dataset.row) giftEl.remove();
       row.style.transition = 'opacity .28s ease, transform .28s ease, max-height .32s ease, padding .32s ease';
       row.style.maxHeight = row.offsetHeight + 'px';
       requestAnimationFrame(() => {
@@ -6087,15 +6460,42 @@ function wire(root) {
         row.style.maxHeight = '0'; row.style.paddingTop = '0'; row.style.paddingBottom = '0';
       });
       setTimeout(() => { row.remove(); refreshCartCount(root); }, 330);
+      refreshCartAll(root);
       toast('Đã xóa sản phẩm');
     });
   });
 
-  // Cart: select all
+  /* Cart: đổi quà — UỶ QUYỀN ở gốc màn vì nhóm quà bị chèn/dựng lại lúc chạy,
+     bind trực tiếp thì nút của nhóm dựng sau không có handler. Cờ trên root để
+     không gắn chồng nếu wire() chạy lại. */
+  if (root.querySelector('#cartList') && !root.dataset.giftWired) {
+    root.dataset.giftWired = '1';
+    root.addEventListener('click', e => {
+      const sw = e.target.closest('[data-gift-swap]');
+      if (!sw || !window.__openGiftSheet) return;
+      const pk = sw.dataset.giftSwap;
+      window.__openGiftSheet(pk, key => {
+        if (key === (giftPick[pk] || GIFT_PROGRAMS[pk].gifts[0])) return;   // chọn lại chính món đang có -> không báo gì
+        giftPick[pk] = key;
+        refreshCartGifts(root);
+        toast('Đã đổi quà tặng');
+      });
+    });
+  }
+
+  /* Cart: chọn tất cả — trước đây KHÔNG tự đổi trạng thái ô tick của chính nó
+     nên bấm mấy lần cũng chỉ tick lại tất cả, không bỏ tick được. Giờ đảo trạng
+     thái rồi mới áp xuống các dòng (bỏ qua dòng đã xoá). */
   const selAll = root.querySelector('#selectAll');
   if (selAll) selAll.addEventListener('click', () => {
-    const on = selAll.querySelector('.chk').classList.contains('on');
+    /* Trạng thái đích suy từ STATE (không đọc class của chính ô tổng): đang
+       chọn hết -> bỏ hết, còn lại -> chọn hết. Đọc class thì sau khi bỏ tick 1
+       dòng, cú bấm đầu tiên lại đi bỏ tick nốt phần còn lại. */
+    const items = cartItems();
+    const on = !(items.length && items.every(c => c.sel !== false));
     root.querySelectorAll('.cart-row .chk').forEach(c => c.classList.toggle('on', on));
+    items.forEach(c => { c.sel = on; });
+    refreshCartAll(root);
   });
   const delSel = root.querySelector('#delSelected');
   if (delSel) delSel.addEventListener('click', () => {
@@ -6107,7 +6507,15 @@ function wire(root) {
   // hàng ở Account — trước đây trùng attribute nên bấm "Đặt hàng" cũng bị dính
   // luôn handler go('order') ở dưới, đẩy sang sai trang chi tiết đơn hàng.)
   root.querySelectorAll('[data-checkout]').forEach(b => b.addEventListener('click', () => {
+    /* Không còn món nào được tick thì không cho sang thanh toán: trước khi giỏ
+       có state thật, tạm tính là hằng số nên chuyện này không xảy ra được; giờ
+       bỏ tick hết là đơn 0 đ với đủ 4 món in ra. */
+    if (root.querySelector('#cartList') && !cartSelected().length) {
+      toast('Hãy chọn ít nhất 1 sản phẩm');
+      return;
+    }
     if (ckAuth) go('checkout');
+
     else if (window.__openLoginPop) window.__openLoginPop();
   }));
 
@@ -6398,18 +6806,111 @@ function spinnerSVG() {
   return '<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 }
 
+/* ── 1 điểm vào duy nhất sau MỌI thay đổi giỏ (tick / số lượng / xoá) ──
+   Thứ tự bắt buộc: tính lại tiền TRƯỚC rồi mới dựng quà, vì quà theo đơn đọc
+   cartSubtotal(). Gọi hàm này thay vì rải rác từng chỗ để không bao giờ có
+   trạng thái "tổng đã đổi mà quà chưa đổi". */
+function refreshCartAll(root) {
+  if (!root || !root.querySelector('#cartList')) return;   // không phải màn giỏ
+  refreshCartSummary(root);
+  refreshCartGifts(root);
+  const items = cartItems();
+  const cnt = root.querySelector('#cartCount');
+  if (cnt) cnt.textContent = `(${items.length})`;
+  // ô tick tổng luôn nói đúng: chỉ "on" khi còn món và MỌI món đang được chọn
+  const master = root.querySelector('#selectAll .chk');
+  if (master) master.classList.toggle('on', items.length > 0 && items.every(c => c.sel !== false));
+  const lbl = root.querySelector('#selAllLabel');
+  if (lbl && ckAuth) {
+    lbl.textContent = `Chọn tất cả ( ${items.length} sản phẩm )`;
+    if (LANG === 'en') applyLang(lbl, 'en');
+  }
+}
+
+/* Dựng lại phần quà cho khớp state hiện tại.
+   · quà theo sản phẩm: chèn/gỡ ngay sau đúng dòng item (không đụng dòng khác)
+   · quà theo đơn: vẽ lại ruột khối #orderGift
+   Chỉ chạy animation .gift-in cho quà VỪA XUẤT HIỆN — quà đang có sẵn mà nháy
+   lại mỗi lần bấm +/- thì rối mắt. */
+function refreshCartGifts(root) {
+  const list = root.querySelector('#cartList');
+  if (list) {
+    CART.forEach((c, i) => {
+      const rowEl = list.querySelector(`.cart-row[data-row="${i}"]`);
+      const cur   = list.querySelector(`.gift-group[data-gift-of="${i}"]`);
+      const want  = !!(c.gift && GIFT_PROGRAMS[c.gift] && !c.removed && c.sel !== false && rowEl);
+      if (want && !cur) {
+        rowEl.insertAdjacentHTML('afterend', productGiftHTML(c, i));
+        giftAppear(rowEl.nextElementSibling);
+      } else if (!want && cur) {
+        cur.remove();
+      } else if (want && cur) {
+        /* Đã có nhóm rồi nhưng nội dung có thể đổi (đổi quà, mở/đóng danh sách)
+           -> dựng lại tại chỗ, KHÔNG chạy animation vì quà không mới xuất hiện.
+           So bằng CHỮ KÝ (data-sig) chứ KHÔNG so outerHTML: wireLazy() đóng thêm
+           class .loaded + data-lazy-wired vào thẻ <img> ngay sau khi chèn, nên
+           outerHTML không bao giờ còn bằng chuỗi vừa sinh -> nhóm bị đập đi dựng
+           lại mỗi lần bấm bất kỳ đâu trong giỏ (mất animation đang chạy, mất focus). */
+        const sig = `${c.gift}|${giftPick[c.gift] || GIFT_PROGRAMS[c.gift].gifts[0]}`;
+        if (cur.dataset.sig !== sig) {
+          cur.outerHTML = productGiftHTML(c, i).trim();
+          const el = list.querySelector(`.gift-group[data-gift-of="${i}"]`);
+          wireLazy(el);
+          if (LANG === 'en') applyLang(el, 'en');
+        }
+      }
+    });
+  }
+  const box = root.querySelector('#orderGift');
+  if (box) {
+    const had = [...box.querySelectorAll('[data-gift-tier]')].map(el => el.dataset.giftTier);
+    box.innerHTML = orderGiftInner();
+    wireLazy(box);                       // ảnh vừa dựng lại cũng cần .loaded
+    if (LANG === 'en') applyLang(box, 'en');
+    box.querySelectorAll('[data-gift-tier]').forEach(el => {
+      if (!had.includes(el.dataset.giftTier)) giftAppear(el, true);
+    });
+  }
+}
+
+/* img.lazy đứng ở opacity 0 cho tới khi có class .loaded. Chỗ gắn class đó nằm
+   trong wire() — chỉ chạy lúc dựng màn — nên MỌI ảnh chèn lúc chạy (dòng quà)
+   phải gọi lại hàm này, không thì ảnh quà trong suốt vĩnh viễn. */
+function wireLazy(root) {
+  root.querySelectorAll('img.lazy').forEach(img => {
+    if (img.dataset.lazyWired) return;
+    img.dataset.lazyWired = '1';
+    if (img.complete) img.classList.add('loaded');
+    else img.addEventListener('load', () => img.classList.add('loaded'));
+    img.addEventListener('error', () => { img.style.background = 'var(--general-secondary)'; img.classList.add('loaded'); });
+  });
+}
+
+/* Cho dòng quà chạy animation xuất hiện (và dịch sang EN nếu đang ở EN).
+   skipLang khi phần tử vừa được localize cả cụm ở trên. */
+function giftAppear(el, skipLang) {
+  if (!el) return;
+  wireLazy(el);
+  if (!skipLang && LANG === 'en') applyLang(el, 'en');
+  el.classList.remove('gift-in'); void el.offsetWidth; el.classList.add('gift-in');
+}
+
 /* Cộng ưu đãi hội viên (đã đăng nhập) + mã giảm giá + N phiếu mua hàng -> render
    lại toàn bộ #discountLines (số dòng thay đổi động theo số phiếu đang áp) +
    cập nhật Tổng cộng / Tiết kiệm, không reload lại cả màn cart. */
 function refreshCartSummary(root) {
   const dl = root.querySelector('#discountLines');
-  if (dl) dl.innerHTML = discountLinesHTML();
-
-  const reward = ckAuth ? rewardAmount(cartReward) : 0;
-  const total = Math.max(0, CART_SUBTOTAL - reward - cartVoucherDiscount - cartPbhTotal());
+  /* discountLinesHTML() sinh chữ TIẾNG VIỆT nên phải dịch lại ngay sau khi dựng:
+     hàm này giờ chạy sau mọi thao tác giỏ (trước đây chỉ chạy khi đổi mã/ưu đãi),
+     thiếu chỗ này thì đang xem bản EN mà bấm +/- là khối tiền lật về tiếng Việt. */
+  if (dl) { dl.innerHTML = discountLinesHTML(); localizeNew(dl); }
 
   const ct = root.querySelector('#cartTotal');
-  if (ct) ct.textContent = total.toLocaleString('en-US') + 'đ';
+  if (ct) ct.textContent = vndCom(cartTotalNow());
+
+  // điểm thưởng hứa hẹn phải theo tổng thật, không đứng yên ở con số của giỏ mặc định
+  const pts = root.querySelector('#cartPointsVal');
+  if (pts) pts.textContent = rewardPointsEarned().toLocaleString('vi-VN');
 }
 
 /* Trạng thái giỏ rỗng — tách ra hàm riêng vì giờ có 2 đường tới: xoá hết item
@@ -6428,9 +6929,14 @@ function refreshCartCount(root) {
   cartQty = n;
   document.querySelectorAll('.cart-badge').forEach(b => b.textContent = n);
   if (n === 0) {
-    root.querySelector('#cartList').innerHTML = cartEmptyHTML();
-    wire(root);
+    /* CHỈ nối lại khối vừa dựng. wire(root) sẽ gắn CHỒNG listener lên mọi thứ
+       còn sống của màn (nút CTKM bấm 1 lần đóng-mở 2 lần, popup đăng nhập khoá
+       scroll 2 lần nên đóng xong trang không cuộn được nữa). */
+    const list = root.querySelector('#cartList');
+    list.innerHTML = cartEmptyHTML();
+    wire(list);
   }
+  refreshCartAll(root);   // giỏ rỗng thì khối quà theo đơn cũng phải trống theo
 }
 /* ── Kéo ngang carousel bằng chuột (mobile đã có vuốt native) ── */
 function dragScroll(el) {
@@ -6526,12 +7032,13 @@ let currentFont = 'montserrat';
 
 /* ── Theme (đổi trong popover Cài đặt, cùng kiểu với phông chữ) ──
    [id, nhãn, class trên <html>, mô tả ngắn]. Class rỗng = mode D mặc định
-   (:root trong tokens.css). `theme-gm` là mode thứ 2 vốn đã có sẵn trong
-   tokens.css nhưng chưa ai bật — đưa vào đây luôn để so 3 bản cạnh nhau. */
+   (:root trong tokens.css).
+   Lưu ý: tokens.css vẫn còn khối `.theme-gm` sinh tự động, nhưng KHÔNG có lựa
+   chọn nào gắn class đó nữa nên nó nằm im — sẽ tự biến mất ở lần chạy lại
+   gen_tokens.py sau khi export lại tokens07.json. */
 const THEMES = [
   ['d',     'Mặc định',      '',             'Mode D — bản đang dùng'],
   ['dplus', 'D+ improved',   'theme-dplus',  'Accent warm black, focus rõ hơn'],
-  ['gm',    'GM (nền xám)',  'theme-gm',     'Mode thứ 2 có sẵn trong tokens.css'],
 ];
 let currentTheme = 'd';
 /* Gỡ mọi class theme rồi gắn class của theme đích. Gọi cả lúc bấm chọn lẫn
@@ -6603,8 +7110,10 @@ document.body.insertAdjacentHTML('beforeend', `
 (() => {
   const fab = document.getElementById('settingsFab');
   const panel = document.getElementById('settingsPanel');
-  const openP  = () => { panel.classList.add('open'); panel.setAttribute('aria-hidden', 'false'); };
-  const closeP = () => { panel.classList.remove('open'); panel.setAttribute('aria-hidden', 'true'); };
+  /* html.sp-open: nhường chỗ cho popover — thẻ #topFab nằm đúng vị trí popover
+     sổ ra (bottom 144), xem CSS */
+  const openP  = () => { panel.classList.add('open'); panel.setAttribute('aria-hidden', 'false'); document.documentElement.classList.add('sp-open'); };
+  const closeP = () => { panel.classList.remove('open'); panel.setAttribute('aria-hidden', 'true'); document.documentElement.classList.remove('sp-open'); };
   fab.addEventListener('click', e => { e.stopPropagation(); panel.classList.contains('open') ? closeP() : openP(); });
   panel.querySelector('.sp-backdrop').addEventListener('click', closeP);
   // ── đổi ngôn ngữ: dịch thật toàn bộ UI ──
@@ -6648,6 +7157,33 @@ document.body.insertAdjacentHTML('beforeend', `
     });
   });
 })();
+
+/* ── Nút về đầu trang ──
+   Dựng 1 lần ở cuối <body>, NGOÀI #viewport: router (go) thay sạch nội dung
+   viewport mỗi lần chuyển màn, đặt trong đó thì mỗi màn phải tự nối lại. Nhờ
+   vậy chỉ có duy nhất 1 listener scroll cho cả app và không cần dọn trong
+   scrollCleanups.
+
+   Ngưỡng hiện = nửa chiều cao màn hình (tính lại mỗi lần cuộn nên không cần
+   nghe resize). Khi modal/sheet mở, lockBodyScroll() gắn position:fixed cho
+   body → scrollY về 0 → nút tự ẩn, đúng ý: lúc đó "đầu trang" không phải việc
+   người dùng đang làm. */
+document.body.insertAdjacentHTML('beforeend', `
+  <button id="topFab" aria-label="Về đầu trang">
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M10 15.5V5m0 0 4.4 4.4M10 5 5.6 9.4" stroke="var(--general-foreground)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>`);
+
+(() => {
+  const btn = document.getElementById('topFab');
+  const onScroll = () => btn.classList.toggle('show',
+    (window.scrollY || document.documentElement.scrollTop || 0) > window.innerHeight * 0.5);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  onScroll();
+})();
+
 (() => {
   const ms = document.getElementById('menuSheet');
   const panel = ms.querySelector('.ms-panel');
@@ -7380,6 +7916,66 @@ document.body.insertAdjacentHTML('beforeend', `
   });
   window.__openSizeSheet = openSZ;
 })();
+
+/* ── Sheet đổi quà tặng (yêu cầu user 13/08/2026) ──
+   Trước đây danh sách đổi quà xổ INLINE ngay trong nhóm quà — nó đẩy cả danh
+   sách giỏ xuống và lẫn với chính thẻ quà đang hiển thị. Giờ tách hẳn ra:
+   MOBILE trượt lên từ đáy, DESKTOP là popup giữa màn (class .dk-modal) — cùng
+   khuôn #sizeSheet/#pickSheet sẵn có nên dùng lại được cả markup lẫn cách mở/đóng.
+   Chạm 1 dòng là chọn xong + đóng (không có nút xác nhận) — giống #pickSheet,
+   vì đây là chọn 1 giá trị chứ không phải hành động mua. */
+document.body.insertAdjacentHTML('beforeend', `
+  <div id="giftSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
+    <div class="gf-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
+    <div class="gf-panel dk-modal absolute bg-background translate-y-full flex flex-col"
+         style="width:480px" role="dialog" aria-label="Đổi quà tặng">
+      <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
+        <p class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">Đổi quà tặng</p>
+        <button id="gfClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
+      </div>
+      <p id="gfProg" class="px-4 pb-3 text-[12px] leading-4 text-muted-foreground shrink-0"></p>
+      <div id="gfList" class="flex-1 min-h-0 overflow-y-auto no-scrollbar"></div>
+      <div class="safe-b"></div>
+    </div>
+  </div>`);
+
+(() => {
+  const gf = document.getElementById('giftSheet');
+  const panel = gf.querySelector('.gf-panel');
+  const list = gf.querySelector('#gfList');
+  let onPick = null, curPk = null;
+
+  const closeGF = () => {
+    gf.querySelector('.gf-backdrop').classList.add('opacity-0');
+    panel.classList.add('translate-y-full');
+    gf.classList.add('pointer-events-none');
+    unlockBodyScroll();
+    setTimeout(() => gf.setAttribute('aria-hidden', 'true'), 300);
+  };
+  const openGF = (pk, cb) => {
+    const p = GIFT_PROGRAMS[pk];
+    if (!p) return;
+    curPk = pk; onPick = cb;
+    gf.querySelector('#gfProg').textContent = p.name;
+    list.innerHTML = giftOptionsHTML(pk);       // dùng lại đúng khuôn hàng lựa chọn
+    wireLazy(list);
+    localizeNew(panel);
+    list.querySelectorAll('[data-gift-opt]').forEach(b => b.addEventListener('click', () => {
+      const k = b.dataset.giftOpt;
+      closeGF();
+      if (onPick) onPick(k);
+    }));
+    list.scrollTop = 0;
+    gf.classList.remove('pointer-events-none'); gf.setAttribute('aria-hidden', 'false');
+    gf.querySelector('.gf-backdrop').classList.remove('opacity-0');
+    panel.classList.remove('translate-y-full');
+    lockBodyScroll();
+  };
+  gf.querySelector('.gf-backdrop').addEventListener('click', closeGF);
+  gf.querySelector('#gfClose').addEventListener('click', closeGF);
+  window.__openGiftSheet = openGF;
+})();
+
 
 /* ════════════════════════════════════════════════════════════════
    LAYER TÌM KIẾM — mở từ nút "Tìm kiếm" trên header

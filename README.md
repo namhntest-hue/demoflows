@@ -46,6 +46,145 @@ Ngoài luồng mua hàng còn 3 trang tĩnh vào từ footer: `privacy` · `term
 - **Desktop đã chuẩn hoá theo (10/08/2026)**: `MENU_DATA` + `MENU_NEW_COLLECTIONS` copy y hệt mobile; subheader thêm mục **"Sản phẩm mới" đứng đầu** (`DK_NAV_CATS` → `{newIn:true}`, Header component Figma `2171:13006` chưa có mục này). Mega panel dựng 3 cột: **Bộ sưu tập mới · Nam · Nữ** — desktop **GIỮ tầng giới tính** (khác mobile) vì subheader không gắn giới tính và mọi mục khác cũng dựng 2 cột Nam/Nữ; đúng luôn với menu thật của DAFC. Helper `splitByHeader()` cắt mảng `items` (khai 1 cột kiểu mobile, có `{header}` xen giữa) thành nhóm để đổ ra cột.
 - i18n VI/EN thật: từ điển 2 chiều + regex cho chuỗi có số, áp dụng qua `applyLang()`, gọi lại mỗi khi render màn mới.
 - Settings FAB (góc phải dưới): đổi ngôn ngữ + đổi font (Montserrat/Inter/Plus Jakarta Sans).
+- **Nút về đầu trang `#topFab`** (góc phải dưới, ngay trên Settings FAB) — mọi màn, cả 2 bản. Xem mục "Nút về đầu trang".
+
+## Quà tặng trong giỏ (13/08/2026, CẢ 2 BẢN)
+
+Hai cơ chế theo yêu cầu user, **cùng chạy trong màn Giỏ hàng**:
+
+| Cơ chế | Điều kiện | Thẻ quà nằm ở đâu |
+|---|---|---|
+| **Theo sản phẩm** | item có field `gift` **và đang được tick** | NGAY DƯỚI đúng dòng sản phẩm đó (`[data-gift-of="<index>"]`) |
+| **Theo đơn hàng** | tạm tính (item đang tick × số lượng) chạm mốc trong `ORDER_GIFT_TIERS` | khối `#orderGift` ngay dưới danh sách giỏ (`[data-gift-tier="<mốc>"]`) |
+
+### Thẻ quà = thẻ sản phẩm trừ 3 thứ
+
+Theo chỉ đạo user: thẻ quà dùng **đúng khuôn thẻ sản phẩm** trong giỏ (ảnh 100×133, brand 14 Medium, tên 14, phân loại 12, giá ghim đáy) — chỉ khác:
+
+| Bỏ đi | Vì sao |
+|---|---|
+| ô tick | quà không phải thứ người dùng chọn mua, nó theo điều kiện. Vẫn chừa đúng cột 16px + gap 8 để **ảnh quà thẳng hàng với ảnh sản phẩm** phía trên |
+| nút xoá | quà không tự bỏ được — muốn bỏ thì bỏ điều kiện (bỏ tick sản phẩm / giảm số lượng) |
+| stepper | số lượng luôn 01, in tĩnh với `margin-right:28px` = đúng bề ngang nút "+" nên **con số thẳng cột** với số lượng của thẻ sản phẩm |
+
+Giá in `0 ₫` kèm giá gốc gạch ngang; badge "Quà tặng" đè góc trên trái ảnh — đúng chỗ thẻ sản phẩm để badge `-%`. Nhãn tên chương trình chừa đúng cột 16px + gap 8 như thẻ quà nên **thẳng hàng với ảnh**, không thò ra sát mép.
+
+### Nền quà: `#fafafa`, không phải `#f5f5f5` (13/08/2026)
+
+Thang xám của project chỉ có 4 bậc: `#ffffff` → **`#fafafa`** (`bg-accent-0`) → `#f5f5f5` (`bg-secondary` / `border-1`) → `#e5e5e5` (`border`).
+
+Ban đầu thẻ quà dùng `bg-secondary` `#f5f5f5` — **cùng đúng tông với panel tổng tiền** (`discountPanel`, full-bleed `py-6`). Hệ quả: một dải xám cao 185px nằm giữa danh sách sản phẩm trắng mang **cùng sức nặng thị giác với cả khối tóm tắt đơn**, trong khi nó chỉ là phần đính kèm của 1 dòng hàng. Đã hạ 1 bậc xuống `bg-accent-0` `#fafafa` — vẫn tách được khỏi nền trắng nhưng không còn tranh vai với panel tổng.
+
+3 phương án đã cân, ghi lại để không phải cân lại:
+
+| | Cách làm | Vì sao không chọn / chọn |
+|---|---|---|
+| A | `#fafafa` full-bleed | **ĐANG DÙNG.** Giữ được tính "dính vào dòng hàng phía trên" (full-bleed, không margin), nhẹ đi 1 bậc, không thêm viền nào nên không phạm "Quy ước border" |
+| B | Nền trắng + card viền bao (kiểu card CTKM) | Viền 4 cạnh là hợp quy ước, nhưng card có margin ngang → thẻ quà **tách rời** khỏi dòng sản phẩm, mất đúng thứ cần nói: "quà này của món ở trên" |
+| C | Bỏ nền, dùng rail dọc 1px bên trái | Nhẹ nhất, đúng ngôn ngữ rail của cây danh mục bộ lọc, nhưng quà **theo đơn** không thuộc dòng nào nên rail vô nghĩa ở nửa số trường hợp |
+
+**Quà theo đơn gom thành MỘT DẢI** (yêu cầu user): nhãn section + mọi thẻ quà + dòng gợi ý mốc kế tiếp nằm chung 1 nền `#fafafa`; nhiều quà thì ngăn nhau bằng kẻ 1px `border-border-1` (kẻ **bên trong** một khối, không phải kẻ giữa các block). Trước đó nhãn nằm trên nền trắng còn từng quà là một khối xám riêng → đọc ra 3 mảnh rời. Trạng thái **chưa đạt mốc** cũng dùng đúng dải đó, để lúc vừa chạm mốc khối không nhảy từ trắng sang xám.
+
+Hai loại quà khác nhau đúng 1 chỗ: quà kèm sản phẩm là **dải riêng dính ngay dưới dòng hàng** (`tone='tint'`, tự mang nền), quà theo đơn **nằm trong dải chung** (`tone='bare'`, không tự tô nền — nếu tô nữa thì xám đè xám).
+
+### Mỗi quà nằm trong một nhóm mang tên chương trình
+
+Quà không đứng lẻ: `GIFT_PROGRAMS` gom quà theo chương trình, nhãn tên chương trình nằm ngay trên thẻ quà (`Quà tặng kèm túi Lou mini` · `Ưu đãi đơn từ 100 triệu` · `Ưu đãi đơn từ 150 triệu`). Nhóm là chỗ để **đổi quà**: chương trình nào có nhiều hơn 1 lựa chọn thì hiện nút **"Đổi quà"**.
+
+**`#giftSheet` — mobile trượt lên từ đáy, desktop popup giữa màn** (yêu cầu user 13/08/2026). Trước đó danh sách xổ *inline* ngay trong nhóm: nó đẩy cả danh sách giỏ xuống và lẫn với chính thẻ quà đang hiển thị. Giờ tách hẳn ra sheet riêng, dùng đúng khuôn `#sizeSheet`/`#pickSheet` sẵn có nên desktop chỉ cần thêm class **`.dk-modal`** vào panel là thành popup 480px giữa màn (bo 8, nền mờ, `max-width: calc(100vw - 64px)` nên dải hẹp 768 vẫn chừa mép). **Chạm 1 dòng là chọn xong + đóng**, không có nút xác nhận — giống `#pickSheet`, vì đây là chọn 1 giá trị chứ không phải hành động mua. Chọn lại đúng món đang dùng thì **không toast**. Ruột sheet dùng lại `giftOptionsHTML()` nên hàng lựa chọn chỉ có 1 nguồn markup.
+
+```js
+GIFT_PROGRAMS = {
+  bagBundle: { name:'Quà tặng kèm túi Lou mini', gifts:['mini','edt'] },   // 2 lựa chọn -> đổi được
+  tier100:   { name:'Ưu đãi đơn từ 100 triệu',   gifts:['scarf','edt'] },
+  tier150:   { name:'Ưu đãi đơn từ 150 triệu',   gifts:['sneaker'] },      // 1 món -> không có nút đổi
+}
+giftPick = {}   // {chương trình: quà đang chọn}, rỗng = gifts[0]
+```
+
+`CART_BASE[i].gift` và `ORDER_GIFT_TIERS[].program` đều trỏ tới **key chương trình**, không phải key món quà — đổi quà là đổi trong chương trình, không phải đổi chương trình.
+
+> Nút "Đổi quà" và danh sách chọn được **uỷ quyền ở gốc màn** (`root.dataset.giftWired` chống gắn chồng): nhóm quà bị chèn/dựng lại lúc chạy nên bind trực tiếp thì nhóm dựng sau không có handler.
+
+> **2 bẫy đã sập khi làm nhóm quà, đừng lặp lại:**
+> - Thumb trong danh sách đổi quà từng dùng `w-[40px] h-[46px]` — **2 class này không có trong `tailwind.css` build sẵn** nên ảnh bung ra kích thước gốc 1200×1484, đẩy nút radio ra ngoài màn hình và làm tính năng đổi quà không dùng được ở CẢ 2 BẢN. Đã đổi sang `w-[52px] h-[60px]` (kích thước đã có sẵn, mini cart dùng chung). **Class tuỳ ý mới phải kiểm tra trong `tailwind.css` trước khi dùng.**
+> - Nhóm quà dựng lại theo so sánh `outerHTML` là **luôn luôn khác**: `wireLazy()` đóng thêm `.loaded` + `data-lazy-wired` vào `<img>` ngay sau khi chèn, nên chuỗi vừa sinh không bao giờ khớp DOM hiện tại → nhóm bị đập đi dựng lại mỗi lần bấm bất kỳ đâu trong giỏ (mất animation đang chạy, mất focus). Giờ so bằng **chữ ký `data-sig`** = `chương trình|quà đang chọn`.
+
+```js
+GIFT_CATALOG     = { mini | edt | scarf | sneaker }   // 4 món quà, kèm giá gốc để gạch ngang
+ORDER_GIFT_TIERS = [ {min:100tr, program:'tier100'}, {min:150tr, program:'tier150'} ]
+CART_BASE[0].gift = 'bagBundle'                       // Túi da Lou mini kèm chương trình bagBundle
+```
+
+3 hàm lọc giỏ, **đừng dùng lẫn**:
+
+| Hàm | Nghĩa | Dùng ở |
+|---|---|---|
+| `CART` | mảng gốc, giữ cả món đã xoá | chỉ để tra theo chỉ số `data-row` |
+| `cartItems()` | chưa xoá (kể cả đang bỏ tick) | dựng màn giỏ, đếm số món trong giỏ |
+| `cartSelected()` | chưa xoá **và** đang tick = **đơn hàng thật** | checkout, `miniCart`, `placeOrder` |
+
+**Điều kiện thay đổi là quà đổi NGAY**, không cần reload/điều hướng: tăng số lượng đủ mốc → quà mốc đó hiện tại chỗ; bỏ tick / giảm số lượng / xoá món → rớt mốc thì quà rút đi. Mốc đặt quanh giá trị giỏ mặc định (113.500.000 ₫) nên demo được cả 2 chiều: **mốc 100tr đã đạt sẵn** (bỏ tick 1 món là rớt), **mốc 150tr chỉ cần +1 số lượng** là chạm.
+
+### Kéo theo: giỏ hàng giờ có STATE THẬT
+
+Đây là điều kiện bắt buộc để có cơ chế 2 — trước đây không thể làm:
+
+- `CART[i].qty` **trước đây chỉ nằm trong DOM** (stepper sửa chữ, không ai đọc lại) và `CART_SUBTOTAL` là **hằng số in cứng 113.500.000**. Giờ: `qty` + `sel` (tick) + `removed` (đã xoá) là state, `cartSubtotal()` cộng động, `cartItems()` = các món chưa xoá.
+- Mọi thao tác đổi giỏ gọi **`refreshCartAll(root)`** — thứ tự bắt buộc: tính tiền trước (`refreshCartSummary`), dựng quà sau (`refreshCartGifts`), vì quà theo đơn đọc `cartSubtotal()`.
+- `refreshCartGifts` chỉ chèn/gỡ đúng dòng quà cần đổi và **chỉ chạy animation cho quà VỪA xuất hiện** (so danh sách `data-gift-tier` trước/sau) — quà đang có mà nháy lại mỗi lần bấm +/− thì rối mắt.
+- Dòng quà mới dùng class **`.gift-in`**, KHÔNG dùng `.reveal`: `.reveal` đứng ở `opacity: 0` cho tới khi IntersectionObserver gắn `.in`, mà observer chỉ quét lúc `wire()` → chèn sau đó là dòng quà **nằm im vô hình**. `.gift-in` cũng cố ý **không có `animation-fill-mode: both`** để trạng thái nghỉ luôn là nhìn thấy được.
+- Chèn DOM lúc chạy → gọi `applyLang(el, 'en')` cho phần vừa chèn khi đang ở EN, không thì dòng quà mới hiện tiếng Việt giữa giao diện tiếng Anh.
+
+**Sửa theo các lỗi lộ ra khi làm việc này** (không nằm trong yêu cầu nhưng cùng đường đi — 22 phát hiện qua review đối kháng đã gom về đây):
+
+| Lỗi | Người dùng thấy gì | Cách sửa |
+|---|---|---|
+| `cartItems()` chỉ lọc `removed`, không lọc `sel` | Bỏ tick 1 món: giỏ tính đúng 3 món nhưng **màn Thanh toán vẫn liệt kê 4 món** với tổng của 3, đơn đã đặt cũng lưu 4 món | Thêm **`cartSelected()`** (chưa xoá **và** đang tick) dùng ở checkout/`miniCart`/`placeOrder`; `cartItems()` chỉ để dựng màn giỏ |
+| "Chọn tất cả" không tự đảo trạng thái ô tick của chính nó, lại còn in cứng `chk on` | Bấm bao nhiêu lần cũng chỉ tick lại tất cả; bỏ tick 1 dòng rồi quay lại màn thì ô tổng vẫn tick | Ô tổng **suy từ state** (`every(sel)`) lúc dựng lẫn trong `refreshCartAll`; handler tính đích từ state chứ không đọc class của chính nó |
+| Xoá món chỉ gỡ DOM, `CART` không đổi | Tổng tiền / checkout / đơn đã đặt vẫn tính đủ 4 món | Đánh dấu `removed` (không `splice` vì các dòng sau còn tham chiếu chỉ số qua `data-row`) |
+| `#cartCount` in cứng `(4)` | Xoá 1 món rồi rời màn quay lại: tiêu đề "Giỏ hàng (4)" nằm trên 3 dòng, badge 3, nhãn "Chọn tất cả ( 3 sản phẩm )" — 3 con số đá nhau | Đếm sống lúc dựng + cập nhật trong `refreshCartAll` |
+| `refreshCartSummary` dựng lại `#discountLines` mà **không dịch lại** | Đang xem bản EN, bấm +/− một cái là khối tiền lật về tiếng Việt giữa giao diện Anh | `localizeNew(dl)` ngay sau `innerHTML` |
+| `1.135 điểm thưởng` in cứng ở 4 màn | Tăng số lượng lên 158 triệu vẫn hứa "1.135 điểm"; bỏ tick hết thì "0đ" nhưng vẫn hứa 1.135 điểm | `rewardPointsEarned()` = tạm tính / 100.000 (đúng tỉ lệ ngầm của demo), chốt `ckOrderPoints` lúc đặt hàng cho màn Hoàn tất |
+| Ưu đãi không chặn trần theo tạm tính | Bỏ tick hết: "Tạm tính 0đ · Giảm giá(JUNE2000) −2.000.000đ · Tổng cộng 0đ" — 3 dòng không cộng lại thành nhau | `cartDiscountTotal()` chặn trần; tạm tính 0 thì **không in dòng giảm giá nào** (mã vẫn giữ, tick lại là hiện lại) |
+| Không chặn đặt hàng khi chưa chọn món nào | Bỏ tick hết vẫn bấm "Đặt hàng" được → đơn 4 món giá 0 ₫, màn Hoàn tất in "Tổng cộng 0đ" | `[data-checkout]` chặn + toast khi `cartSelected()` rỗng |
+| `refreshCartCount` gọi `wire(root)` cho **cả màn** khi giỏ về rỗng | Xoá hết món: nút "Xem tất cả 3 chương trình" bấm 1 lần mở-rồi-đóng ngay (2 listener), popup đăng nhập khoá scroll 2 lần nên đóng xong cả trang không cuộn được | Chỉ `wire(list)` đúng khối vừa dựng |
+| Badge "Quà tặng" 10px không đủ chỗ trong thumb 52px | Nhãn bị bẻ 2 dòng thành khối đen che 40% ảnh quà | `whitespace-nowrap` + bỏ `overflow-hidden` ở thẻ bọc để nhãn tràn vài px sang `gap-2` |
+| `.rise` quá 6 khối thì `animation-delay` về 0 (`#orderGift` giờ luôn có mặt nên panel tổng bị đẩy xuống vị trí 7) | Vào màn giỏ ngắn: khối tổng tiền màu xám bay lên **trước** cả tiêu đề, đảo ngược thứ tự trên-xuống | Thêm `.rise:nth-child(n+7) { animation-delay: .26s }` chặn đuôi |
+
+### Tổng tiền đã nối thông suốt
+
+Màn Thanh toán và đơn đã đặt giờ dùng **cùng một nguồn tiền với giỏ**: thêm dòng `Giảm giá` khi có ưu đãi và "Tổng cộng" lấy `cartTotalNow()`. Trước đó giỏ trừ ưu đãi Rewards còn thanh toán lấy `cartSubtotal()` → bấm "Đặt hàng" là tổng **tăng lên** đúng bằng phần vừa được giảm, và đơn lưu lại cũng mất luôn dòng giảm giá.
+
+`113,500,000đ` từng được in cứng ở 6 chỗ. Giờ tất cả đọc `cartSubtotal()`: `miniCart()` (số món + tổng), checkout (header "Thanh toán (n)", 2 dòng Tạm tính, Tổng cộng, dòng tổng thu gọn), `placeOrder()` (`sub`/`total` của đơn mới) và màn Hoàn tất. Riêng màn **Hoàn tất phải dùng `ckOrderTotal`** — tổng chốt lúc bấm Đặt hàng, vì ngay sau đó giỏ bị dọn rỗng nên `cartSubtotal()` về 0.
+
+Các chuỗi mang số động (`Thanh toán (4)`, `Giỏ hàng của bạn (4)`, `Chọn tất cả ( 4 sản phẩm )`, `N quà`, `Mua thêm ... để nhận`) chuyển từ key cứng sang **luật regex `I18N_RE`/`I18N_REV_RE`**. Câu gợi ý mốc kế tiếp tách làm **2 text node** (vế có số tiền + tên quà) để tên quà dịch được bằng key riêng.
+
+> **Khác bản cũ**: khối quà trước đây (`giftPicker`, "multi gift 5") chỉ hiện khi **đã đăng nhập** và luôn nói "Bạn đã đủ điều kiện nhận 2 quà" dù giỏ có gì — 2 radio chọn quà thì **chưa từng được nối handler**, bấm không ăn. Nay điều kiện là **giá trị đơn**, không phải trạng thái đăng nhập, nên khách vãng lai cũng thấy; không còn chọn 1-trong-2 vì mỗi mốc tặng đúng 1 món.
+
+### Quà hiện suốt luồng đặt hàng (13/08/2026, cả 2 bản)
+
+Không dừng ở giỏ nữa — quà đi hết luồng:
+
+| Màn | Hiện gì | Nguồn |
+|---|---|---|
+| Giỏ hàng | thẻ quà đầy đủ (khuôn thẻ sản phẩm) + nhóm chương trình + đổi quà | state sống |
+| **Thanh toán** | dòng quà trong "Tóm tắt đơn hàng", **quà kèm sản phẩm nằm ngay dưới sản phẩm đó**, quà theo mốc xếp cuối | `activeGifts()` |
+| **Hoàn tất** | khối "Quà tặng kèm đơn (N quà)" dưới bảng thông tin đơn | `ckOrderGifts` |
+
+Dòng quà ở tóm tắt dùng **`giftSummaryRow()`** — cùng khuôn dòng sản phẩm của tóm tắt (thumb 52×60, chữ 13/12/12) nên đọc liền mạch; khác 3 chỗ: badge "Quà tặng" trên ảnh, dòng thứ 3 là **tên chương trình** thay cho "phân loại · SL", giá `0 ₫`.
+
+> **Màn Hoàn tất bắt buộc dùng bản chốt.** `placeOrder()` dọn giỏ rỗng ngay sau khi tạo đơn, nên `activeGifts()` lúc đó trả về rỗng. Chốt **cả món quà đang chọn** (`ckOrderGifts = [{pk, g}]`) chứ không chỉ key chương trình — người dùng đổi quà xong mới đặt hàng thì màn Hoàn tất phải in đúng món họ đã chọn. Cùng lý do với `ckOrderTotal` / `ckOrderPoints`.
+
+> Quà **không cộng vào tiền** (0 ₫) nên không đụng "Tạm tính"/"Tổng cộng", và **không tính vào số món** ở "Thanh toán (n)" — n vẫn là `cartSelected().length`. Quà hiện cho cả khách vãng lai.
+
+### Bản desktop (13/08/2026)
+
+Đã port **nguyên cụm** sang `desktop.html` theo yêu cầu user — cùng data, cùng hàm dựng, cùng handler, cùng luật i18n, cùng CSS `.gift-in` + đuôi stagger `.rise`. Khác duy nhất là bố cục sẵn có của desktop (giỏ 2 cột, tóm tắt sticky bên phải): thẻ quà rộng bằng đúng dòng sản phẩm ở cả 1440 lẫn dải hẹp 1024/768.
+
+**Kèm theo: sửa "Chọn tất cả" bản desktop** (user báo "hình như không hoạt động") — đúng lỗi mà bản mobile vừa sửa: handler đọc class của **chính ô tick tổng** thay vì đọc state, mà ô đó lại in cứng `chk on` nên bấm bao nhiêu lần cũng chỉ đi tick lại tất cả, không bao giờ bỏ tick được. Giờ trạng thái đích suy từ state (`items.every(sel)`), ô tổng cũng dựng từ state.
+
+> **Chưa làm** (ngoài phạm vi yêu cầu): màn **Chi tiết đơn hàng** (Tài khoản → Đơn hàng) chưa liệt kê quà — `ORDERS[]` không mang field quà, chỉ có `ckOrderGifts` của đơn vừa đặt; thêm sản phẩm từ PDP vẫn **không tạo dòng giỏ mới** (chỉ tăng badge + mở sheet xác nhận) nên "chọn thêm sản phẩm" chỉ tick/tăng trong giỏ; danh sách đổi quà là inline trong nhóm, **chưa có sheet/modal riêng**.
 
 ## Quick add to cart (`#quickAddSheet`)
 
@@ -185,9 +324,11 @@ Khớp sản phẩm bằng **tên + giá trùng khít** với `PRODUCTS`:
 | `terms` | `3380:56273` terms-of-service-mobile | ĐIỀU KHOẢN DỊCH VỤ (7 mục) |
 | `returns` | `3380:56449` return-policy-mobile | CHÍNH SÁCH ĐỔI TRẢ (6 mục) |
 
-Layout: `[tab pill cuộn ngang + nút mũi tên] → [tiêu đề 24 SemiBold + mốc cập nhật 12] → [mục lục viền trên/dưới, 12] → [các section gap 32: heading 16/24 Medium + body 14/20 Light]`.
+Layout: `[tab pill cuộn ngang + nút mũi tên] → [tiêu đề 24 SemiBold + mốc cập nhật 12] → [mục lục viền trên/dưới, 14 Medium] → [các section gap 32: heading 16/24 Medium + body 14/20 Light]`.
 
-> Chữ nội dung **cố ý hạ 1 bậc so với Figma** cho trang dài dễ đọc: heading section 18 → **16**, body 16 → **14** (leading đi kèm 25→24 và 24→20, đều là cặp size/leading có sẵn trong project). Tiêu đề trang vẫn 24; mốc cập nhật và mục lục vẫn 12 vì đã ở đáy thang chữ. Mục lục bấm được → `scrollIntoView` tới section (`scroll-mt-[64px]` trừ sẵn navbar 48px). Dòng bullet dùng `pl-4 -indent-4` để thụt treo. Không có `cam-ket-section` (Figma 3 frame này chỉ có Nav + Main + Footer).
+> Chữ nội dung **cố ý hạ 1 bậc so với Figma** cho trang dài dễ đọc: heading section 18 → **16**, body 16 → **14** (leading đi kèm 25→24 và 24→20, đều là cặp size/leading có sẵn trong project). Tiêu đề trang vẫn 24; mốc cập nhật vẫn 12. Mục lục bấm được → `scrollIntoView` tới section (`scroll-mt-[64px]` trừ sẵn navbar 48px). Dòng bullet dùng `pl-4 -indent-4` để thụt treo. Không có `cam-ket-section` (Figma 3 frame này chỉ có Nav + Main + Footer).
+
+> **Mục lục 14 Medium (yêu cầu user 12/08/2026, cả 2 bản)** — đi NGƯỢC hướng "hạ 1 bậc" nói trên: Figma cho 12 Regular muted, nhưng đây là khối điều hướng duy nhất của một trang rất dài nên 12px muted chìm quá so với vai trò. Hàng theo đó cao 32px (`py-1.5` thay `py-1`), vẫn giữ màu `text-muted-foreground` và viền `border-y` của Figma.
 
 **Nút mũi tên `#policyMore`** nằm bên phải hàng tab, bấm sổ dropdown `#policyMenu` liệt kê đủ danh sách trang. Cần nó vì 3 pill cộng lại 447px > 358px vùng nội dung nên tab cuối luôn bị cắt. Figma có gợi ý icon `fi-tr-angle-down` (`3479:46946`) đặt cạnh nhóm 3 frame nhưng **không thiết kế dropdown** — phần dropdown dựng theo mẫu `#sortBtn`/`#sortMenu` ở PLP cho đồng bộ (`w-220px`, item `h-11` 14px, trang đang xem có dấu tick). Icon bare 24px của Figma đổi thành pill tròn `w-7 h-7 bg-secondary` để ăn cùng ngôn ngữ với các tab pill. Mũi tên quay 180° khi mở (`#policyMore.open svg`).
 
@@ -428,7 +569,7 @@ Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI
 - **Cart**: khung 2 cột lấy từ `multi-gift-4-desktop` (2775:61994) — trái list item + quà tặng (khi đăng nhập) + CTKM peek; phải "Tóm tắt đơn hàng" sticky. **Ruột đã đồng bộ lại theo bản mobile (10/08/2026)** vì `item-cart` (2851:28601) chỉ có variant 358px, tức bản mobile là thiết kế mới nhất:
   - Row theo `item-cart` 2851:28705: checkbox 16 canh giữa · thumb **100×133** (bỏ badge -% đè ảnh) · brand 14 Medium + nút xoá 14 cùng hàng · name 14 · variant 12 · giá 14 Medium + badge -% nền subtle **cạnh giá** · stepper ghost không viền [− 12][02 12 Medium][+ 12] cao 24 ghim đáy phải · **không** `border-b` giữa các hàng, không bọc card viền quanh list/selectAll (quy ước border).
   - CTKM: card viền `border-border rounded-md py-2 px-3`, title 16 Medium (bỏ nền accent-0 của frame desktop cũ 2775:62093).
-  - Quà tặng: style card mobile (viền rounded-xs p-3, title 14 + phụ đề 12, "Thay đổi" gạch chân, option thumb 52×60 + cột giá gạch ngang/0đ/01) — chỉ khác là 2 option nằm ngang vì cột trái đủ rộng.
+  - ~~Quà tặng: style card mobile (viền rounded-xs p-3, title 14 + phụ đề 12, "Thay đổi" gạch chân, option thumb 52×60)~~ — **khối tĩnh này đã bị thay ở CẢ 2 BẢN (13/08/2026)** bằng quà theo sản phẩm + quà theo mốc đơn hàng, thẻ quà dựng theo khuôn thẻ sản phẩm. Xem "Quà tặng trong giỏ".
   - Summary: "Mã giảm giá" 14 Medium, bỏ 2 divider quanh khối tổng, "Tổng cộng" 16 Medium, dòng điểm thưởng 14/20; **"Bạn có phiếu mua hàng?" chuyển xuống DƯỚI nút Đặt hàng** (Figma 3428:55499: là phương thức mua hàng, không phải ưu đãi).
 - **Checkout**: 2 cột theo note Figma `2084:165` — form 3 section tự đóng/mở bên trái, summary sticky + CTA bên phải; header rút gọn (logo + "Thanh toán an toàn & bảo mật").
 - **Auth**: card 440px giữa trang trên nền xám (đủ 6 view login/register/otp/reginfo/setpass/forgot). **Account**: sidebar 280px + nội dung 720px. **Order**: card 860px với timeline. **Done**: xác nhận giữa trang + cross-sell 5 card.
@@ -463,13 +604,12 @@ Cỡ chữ **không** nằm trong `tokens07.json` — viết thẳng bằng util
 
 Áp mode **`D+ improved`** (vừa tạo trong Figma, collection `theme`, mode thứ 3) vào code, đổi được ngay trong popover Cài đặt — **cùng khuôn với switcher phông chữ**. Cả 2 file.
 
-Popover giờ có 3 mục: **Ngôn ngữ · Giao diện · Phông chữ**. Mục Giao diện có 3 lựa chọn:
+Popover giờ có 3 mục: **Ngôn ngữ · Giao diện · Phông chữ**. Mục Giao diện có 2 lựa chọn:
 
 | id | Nhãn | Class trên `<html>` |
 |---|---|---|
 | `d` | Mặc định | *(không có — `:root`)* |
 | `dplus` | D+ improved | `.theme-dplus` |
-| `gm` | GM (nền xám) | `.theme-gm` — mode thứ 2 **vốn đã có** trong `tokens.css` mà chưa ai bật |
 
 `THEMES` + `applyTheme(id)` đặt ngay cạnh `FONTS`/`currentFont`. `applyTheme` gỡ mọi class theme trước khi gắn class đích nên không bị cộng dồn.
 
@@ -486,6 +626,22 @@ Nếu trỏ thẳng vào token thì hoặc theme không có tác dụng, hoặc 
 Lý do cần `--btn-focus-ring`: CSS focus của button dùng `--unofficial-border-3` cho khớp component, nên nếu chỉ nâng `--focus-ring` trong theme thì **ring không đổi gì** — đúng lỗi này đã xảy ra lúc làm và phải sửa lại.
 
 **Accent giờ có việc thật**: `--surface-dark` được gắn cho **promo bar** và **thẻ hội viên** — hai mặt tối lớn không tương tác. Trước đó promo bar lấy `--general-secondary-foreground`, tức **token CHỮ dùng làm NỀN** (lỗi đảo vai trò đã báo ở đợt audit màu).
+
+#### Theme `gm` — đã THỬ rồi BỎ (12/08/2026)
+
+Từng dựng `.theme-gm` theo số đo trực tiếp trên **gentlemonster.com** (nền trang `#f3f4f6` xám lạnh · thẻ/modal `#ffffff` · chữ `#111111` · chữ phụ `#343434` · chữ mờ `#858585` · viền `#d1d1d1`/`#bbbbbb` · nút chính `#111111`/`#ffffff`). User xem xong **chốt bỏ**, chỉ giữ `D+ improved`. Đã gỡ khỏi danh sách `THEMES` và gỡ khối CSS tinh chỉnh khỏi `<style>` của cả 2 file.
+
+Hai thứ giữ lại từ đợt đó vì vẫn đúng:
+
+1. **`body {}` đọc `--unofficial-body-background`** thay vì `--general-background`. Tách nền TRANG khỏi nền BỀ MẶT (thẻ/dropdown/modal/drawer). Ở theme mặc định biến này là `#ffffff` nên **không đổi gì**; nhưng nó làm token `--unofficial-body-background` thôi bị bỏ không (trước đó dùng **0 lần**), và bất kỳ theme sau này muốn "trắng trên xám" chỉ cần đặt 1 biến. Muốn quay lại y như cũ thì đổi 1 dòng.
+2. **Ghi nhận 3 giá trị hỏng trong khối `.theme-gm` mà `gen_tokens.py` sinh ra** — vẫn còn trong `tokens.css`, sẽ tái xuất nếu mode đó được bật lại:
+   - `--unofficial-backdrop: #010101` — **mất alpha**, lớp phủ modal đục kín, che hết trang (đúng phải `#00000099`)
+   - `--unofficial-ghost: #f5f5f5` — nút ghost bị **tô nền**, đúng ra trong suốt (`#ffffff00`)
+   - `--unofficial-destructive-subtle: #7f1d1d` — **đỏ tối**, giá trị dark mode lọt vào bản sáng (`#fef2f2`)
+
+   Đây là lỗi ở **nguồn** (mode đó trong Figma), không phải ở code — nếu bật lại mode này thì phải sửa trong Figma trước.
+
+`tokens.css` vẫn còn khối `.theme-gm` sinh tự động, nhưng **không lựa chọn nào gắn class đó nữa** nên nó nằm im; sẽ tự biến mất ở lần chạy lại `gen_tokens.py` sau khi export lại `tokens07.json`.
 
 #### Giữ theme khi kéo cửa sổ đổi bản
 `RESP.hash()` / `swap()` / `watch()` nhận thêm tham số thứ 4 `theme`; `state()` trả `[current, LANG, currentFont, currentTheme]`; khối khôi phục gọi `applyTheme(st.theme)`. Mặc định `d` thì bỏ khỏi hash cho URL gọn (cùng quy ước với `lang=vi` / `font=montserrat`).
@@ -601,6 +757,7 @@ Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫ
 
 - **13 chỉnh theo Figma `3547:55856`** (xem "Đối chiếu checkout với Figma") mới áp cho mobile. Desktop còn: checkbox viền `#e5e5e5`, ô nhập padding 12, nhóm field gap 8, link "Thay đổi" 16px Light, tiêu đề màn 18/28, thiếu kẻ ngăn `#f5f5f5` + bước chờ cao 72. (Vòng radio + `.opt.on` đã port 12/08 — xem mục dưới.)
 - ~~**Lệch NGƯỢC — bộ lọc PLP**: desktop lọc thật, mobile chỉ toast.~~ → **đã đồng bộ 12/08/2026**, xem "Bộ lọc lọc thật + 4 hành vi mới" bên dưới. Còn lệch duy nhất: **hàng chip "đang áp dụng" chỉ có ở desktop** (mobile bỏ/tắt bộ lọc trong sheet).
+- ~~**Quà tặng trong giỏ + state giỏ thật (13/08/2026)** — chỉ mobile.~~ → **đã port sang desktop cùng ngày** (yêu cầu user), xem "Quà tặng trong giỏ · Bản desktop". Kèm sửa "Chọn tất cả" bản desktop.
 
 ### Bộ lọc lọc thật + 4 hành vi mới — CẢ 2 BẢN (12/08/2026)
 
@@ -639,6 +796,31 @@ Review 4 góc (state-lifecycle · parity · counting · i18n+DOM) trên chính b
 9. **Hai lệch parity**: mobile hardcode `fSection('Thương hiệu (2)')` — di sản thời pre-tick, luôn hiện "(2)" dù 0 ô tick (I18N còn dịch thành "Brand (2)") → bỏ số; desktop `refreshActiveFilters()` ghi `Bộ lọc (n)` mà không `localizeNew` nên UI tiếng Anh vẫn hiện tiếng Việt → thêm localize. Cũng bỏ alias thừa `FILTER_COLOR_HEX` chỉ desktop có.
 
 **Còn lại chưa làm** (không thuộc 4 yêu cầu, ghi để không quên): mobile **không có badge (n)** trên nút Bộ lọc và không có hàng chip đang-áp-dụng, nên sau khi áp bộ lọc rồi rời trang thì không có chỉ dấu nào; mobile cũng **chưa có số đếm động theo section** (`[data-fscount]` + `syncSectionCounts` chỉ desktop có); checkbox danh mục cha vẫn tick toàn bộ con nên 1 cú bấm sinh ~16 nhãn (Danh mục vốn không lọc nên lưới không đổi, chỉ số chip trông vô lý); skeleton desktop lấy `grid.children.length` nên vẽ lại từ trạng thái empty chỉ hiện 1 khung xương.
+
+### Nút về đầu trang + mục lục trang chính sách — CẢ 2 BẢN (12/08/2026)
+
+Theo yêu cầu user, 3 việc (áp cho `index.html` và `desktop.html`):
+
+**1. Mục lục trang chính sách 12 → 14 Medium** (cả 3 trang, vì dùng chung `screenPOLICY`) — xem giải thích ở mục "Trang tĩnh / chính sách".
+
+**2. Desktop: mục lục rời sidebar, lên trên nội dung.** Sidebar giờ chỉ còn 3 link chuyển trang; mục lục nằm trong **cột nội dung 860px**, giữa khối tiêu đề và section đầu, có nhãn "Mục lục" (12, tracking `.12em`) + viền `border-y` như bản mobile. **2 cột** để 6-7 mục không đẩy đoạn đầu xuống quá sâu: `grid grid-cols-2` + `style="column-gap:32px"` — **`gap-x-8` không có trong `tailwind.css` build sẵn**, dùng inline style thay vì rebuild (cùng cách `sizeGrid` đang làm với `grid-template-columns`). Hàng tự cao 32px nhờ `py-1.5` nên không cần row-gap. Ở dải desktop hẹp 768px, 2 nhãn dài nhất của trang Đổi trả xuống 2 dòng (52px) — chấp nhận, tổng chiều cao gần như không đổi so với 1 cột.
+
+> `wire()` tìm `[data-policy-toc]` bằng `root.querySelectorAll` (root = cả màn) nên đổi chỗ khối mục lục **không cần sửa handler**; `scroll-mt-[128px]` trên section vẫn trừ đúng navbar desktop.
+
+**3. Nút về đầu trang `#topFab`** — mọi màn, dựng **1 lần lúc boot ở cuối `<body>`, NGOÀI `#viewport`**: `go()` thay sạch nội dung viewport mỗi lần chuyển màn, đặt trong đó thì mỗi màn phải tự nối lại listener. Nhờ vậy cả app chỉ có **1 listener `scroll`** và không cần dọn trong `scrollCleanups`.
+
+| Điểm | Giá trị |
+|---|---|
+| Vị trí | `right: 12px` · `bottom: 144px` — ngay trên `#settingsFab` (96 + 40 + 8), cách 8px |
+| z-index | `70` — dưới `#settingsPanel` (71) và `#settingsFab` (72), trên thanh CTA dính đáy (z-50) |
+| Ngưỡng hiện | cuộn quá **nửa chiều cao màn hình** (tính lại mỗi lần cuộn nên không cần nghe `resize`) |
+| Ẩn/hiện | class `.show` → `opacity` + `translateY(8px)` + `pointer-events`, transition .22s |
+| Nhãn | `aria-label="Về đầu trang"` (icon-only), có key i18n → "Back to top" |
+
+- **Popover Cài đặt sổ ra đúng chỗ nút này** (`.sp-card` cũng `bottom: 144px`) nên `openP`/`closeP` bật/tắt class **`sp-open` trên `<html>`**, CSS `html.sp-open #topFab` ẩn nút đi — che bằng z-index thì vẫn thấy nút nhô ra cạnh thẻ.
+- **Bottom sheet mở → nút tự ẩn**, không cần thêm code: `lockBodyScroll()` gắn `position: fixed` cho `<body>` → `scrollY` về 0 → dưới ngưỡng. Lúc đó "đầu trang" cũng không phải việc người dùng đang làm.
+- Thanh CTA dính đáy cao nhất là `#cartStickyCta` 88px (top 724 ở màn 812) → **không chạm** đáy nút ở 668.
+- Cookie bar desktop vốn đã đặt **bên trái** với lý do ghi thẳng trong comment: "để không chèn nút chat/lên đầu trang thường nằm góc phải" — đúng chỗ đang đặt nút này.
 
 ### Chuẩn hóa màu theo design token — chỉ desktop (12/08/2026)
 
@@ -726,8 +908,9 @@ Toàn bộ backlog "chờ port" bên dưới đã chạy xong trong một đợt
   route thật qua `FOOTER_ROUTES`.
 - **3 trang chính sách** — `POLICY_TABS` / `POLICY_UPDATED` / `POLICY_DATA` dùng
   chung với mobile; `screenPOLICY()` dựng **layout desktop riêng**: sidebar 280px
-  (3 trang + mục lục dính) + nội dung 860px, không có dropdown `#policyMore` vì ở
+  (chỉ 3 trang, dính) + nội dung 860px, không có dropdown `#policyMore` vì ở
   1440 cả 3 tab nằm thoải mái trong sidebar. Link cookie bar cũng mở trang thật.
+  **Mục lục đã rời sidebar (12/08/2026)** — xem mục dưới.
 - **Khối KHUYẾN MÃI ở PDP** — `PROMOS` / `PDP_PROMOS` + `promoCardGrouped` (pdp2)
   và `promoCardsSplit` (pdp), bỏ wrapper `px-4` vì panel info 427px đã có padding.
   `#isBody` đổi `<p>` → `<div>`, `__openInfoSheet(title, body, asHTML, full)`.
