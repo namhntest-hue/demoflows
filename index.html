@@ -2928,48 +2928,44 @@ function productGiftHTML(c, i) {
 
 /* Ruột khối quà theo đơn — tách khỏi vỏ để cập nhật tại chỗ mỗi lần đổi số
    lượng / tick mà không dựng lại cả màn.
-   3 trạng thái: chưa đạt mốc nào (chỉ dòng gợi ý) · đã đạt (danh sách quà +
-   gợi ý mốc kế tiếp nếu còn) · giỏ rỗng (không hiện gì). */
+
+   MỖI MỐC LÀ MỘT Ô RIÊNG mang đúng tên chương trình (yêu cầu user 13/08/2026):
+   KHÔNG còn title lớn "Quà tặng theo đơn hàng" và số đếm "N quà" — tên promo chi
+   tiết ("Ưu đãi đơn từ 100 triệu") nói đủ việc rồi, thêm 1 tầng tiêu đề nữa chỉ
+   làm loãng. Thoả thêm 1 mốc => thêm 1 ô y hệt, xếp dưới, cách nhau 8px.
+
+   Mốc KẾ TIẾP chưa đạt cũng là 1 ô cùng khuôn (cùng nhãn tên chương trình), chỉ
+   thay thẻ quà bằng dòng "mua thêm ..." + thanh tiến độ — nhìn ra ngay phải mua
+   thêm bao nhiêu thì ô đó "sáng" lên thành quà thật. */
 function orderGiftInner() {
   const { sub, earned, next } = orderGiftState();
   if (!cartItems().length) return '';
   /* Câu gợi ý tách làm 2 text node để applyLang dịch được: vế trái khớp luật
      regex (có số tiền), tên quà là key riêng trong I18N. Nhét cả câu vào 1 node
      thì tên quà không bao giờ được dịch. */
-  const hint = next ? `
-    <div class="px-4 pb-3 flex flex-col gap-1.5">
-      <p class="text-[12px] leading-4 text-muted-foreground">
-        <span>Mua thêm ${vndDot(next.min - sub)} để nhận</span>
-        <span class="font-medium text-foreground">${giftOf(next.program).name}</span>
-      </p>
-      <span class="block h-0.5 w-full bg-border overflow-hidden">
-        <span class="block h-0.5 bg-primary" style="width:${Math.min(100, Math.round(sub / next.min * 100))}%"></span>
-      </span>
+  const teaser = next ? `
+    <div class="gift-group bg-accent-0" data-gift-next="${next.min}">
+      <div class="flex items-center gap-2 px-4 pt-3 pb-2">
+        <span class="w-4 shrink-0" aria-hidden="true"></span>
+        <p class="min-w-0 flex-1 text-[12px] font-medium leading-4 text-foreground-alt truncate">${GIFT_PROGRAMS[next.program].name}</p>
+      </div>
+      <div class="flex gap-2 px-4 pb-4">
+        <span class="w-4 shrink-0" aria-hidden="true"></span>
+        <span class="flex-1 min-w-0 flex flex-col gap-1.5">
+          <span class="block text-[12px] leading-4 text-muted-foreground">
+            <span>Mua thêm ${vndDot(next.min - sub)} để nhận</span>
+            <span class="font-medium text-foreground">${giftOf(next.program).name}</span>
+          </span>
+          <span class="block h-0.5 w-full bg-border overflow-hidden">
+            <span class="block h-0.5 bg-primary" style="width:${Math.min(100, Math.round(sub / next.min * 100))}%"></span>
+          </span>
+        </span>
+      </div>
     </div>` : '';
-  /* Chưa đạt mốc nào: vẫn dùng ĐÚNG DẢI đó (chỉ có nhãn + dòng gợi ý) để lúc
-     vừa chạm mốc khối không nhảy từ nền trắng sang nền xám. */
-  if (!earned.length) return `
-    <div class="pt-3">
-      <div class="bg-accent-0">
-        <p class="px-4 pt-3 pb-1 text-[14px] font-medium leading-5 text-foreground">Quà tặng theo đơn hàng</p>
-        ${hint}
-      </div>
-    </div>`;
-  /* MỘT DẢI DUY NHẤT cho cả nhóm: nhãn section + mọi quà theo đơn nằm chung 1 nền
-     (yêu cầu user 13/08/2026 — trước đây nhãn nằm trên nền trắng còn từng quà là một
-     khối xám riêng, đọc ra 3 mảnh rối rời thay vì 1 nhóm). Nhiều quà thì ngăn
-     nhau bằng kẻ 1px border-1 — kẻ BÊN TRONG một khối, không phải kẻ giữa các
-     block (xem README "Quy ước border"). */
   return `
-    <div class="pt-3">
-      <div class="bg-accent-0">
-        <div class="flex items-baseline justify-between gap-2 px-4 pt-3 pb-1">
-          <p class="text-[14px] font-medium leading-5 text-foreground">Quà tặng theo đơn hàng</p>
-          <p class="text-[12px] leading-4 text-muted-foreground shrink-0">${earned.length} quà</p>
-        </div>
-        ${earned.map((t, i) => `<div class="${i ? 'border-t border-border-1' : ''}">${giftGroupHTML(t.program, `data-gift-tier="${t.min}"`, 'bare')}</div>`).join('')}
-        ${next ? hint : ''}
-      </div>
+    <div class="flex flex-col gap-2 pt-2">
+      ${earned.map(t => giftGroupHTML(t.program, `data-gift-tier="${t.min}"`)).join('')}
+      ${teaser}
     </div>`;
 }
 

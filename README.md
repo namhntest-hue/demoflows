@@ -83,9 +83,20 @@ Ban đầu thẻ quà dùng `bg-secondary` `#f5f5f5` — **cùng đúng tông v�
 | B | Nền trắng + card viền bao (kiểu card CTKM) | Viền 4 cạnh là hợp quy ước, nhưng card có margin ngang → thẻ quà **tách rời** khỏi dòng sản phẩm, mất đúng thứ cần nói: "quà này của món ở trên" |
 | C | Bỏ nền, dùng rail dọc 1px bên trái | Nhẹ nhất, đúng ngôn ngữ rail của cây danh mục bộ lọc, nhưng quà **theo đơn** không thuộc dòng nào nên rail vô nghĩa ở nửa số trường hợp |
 
-**Quà theo đơn gom thành MỘT DẢI** (yêu cầu user): nhãn section + mọi thẻ quà + dòng gợi ý mốc kế tiếp nằm chung 1 nền `#fafafa`; nhiều quà thì ngăn nhau bằng kẻ 1px `border-border-1` (kẻ **bên trong** một khối, không phải kẻ giữa các block). Trước đó nhãn nằm trên nền trắng còn từng quà là một khối xám riêng → đọc ra 3 mảnh rời. Trạng thái **chưa đạt mốc** cũng dùng đúng dải đó, để lúc vừa chạm mốc khối không nhảy từ trắng sang xám.
+### Quà theo đơn: mỗi mốc là một ô, không có title lớn
 
-Hai loại quà khác nhau đúng 1 chỗ: quà kèm sản phẩm là **dải riêng dính ngay dưới dòng hàng** (`tone='tint'`, tự mang nền), quà theo đơn **nằm trong dải chung** (`tone='bare'`, không tự tô nền — nếu tô nữa thì xám đè xám).
+Chỉ đạo user (13/08/2026): **bỏ title lớn "Quà tặng theo đơn hàng" và số đếm "N quà"** — tên promo chi tiết ("Ưu đãi đơn từ 100 triệu") đã nói đủ việc, thêm một tầng tiêu đề nữa chỉ làm loãng. **Thoả thêm 1 mốc thì thêm 1 ô y hệt**, xếp dưới, cách nhau 8px.
+
+| Trạng thái mốc | Ô hiển thị gì |
+|---|---|
+| Đã đạt | nhãn tên promo + thẻ quà đầy đủ (`[data-gift-tier]`) |
+| Chưa đạt (mốc kế tiếp) | **cùng khuôn ô đó**, cùng nhãn tên promo, chỉ thay thẻ quà bằng dòng "Mua thêm X ₫ để nhận …" + thanh tiến độ (`[data-gift-next]`) |
+
+Nhờ dùng chung một khuôn ô, lúc chạm mốc người dùng thấy đúng cái ô đang theo dõi "sáng" lên thành quà thật, chứ không phải một khối lạ mọc ra.
+
+> Đây là vòng thứ 3 của khối này, ghi lại để không lặp: (1) mỗi quà một khối xám riêng + nhãn section trên nền trắng → rời rạc; (2) gom tất cả vào **một dải chung** kèm title lớn + số đếm; (3) **bản hiện tại** — bỏ hẳn title lớn, mỗi mốc là một ô độc lập mang tên promo. Cả 3 lần đều chỉ đổi `orderGiftInner()`, thẻ quà (`giftCard`) không đụng tới.
+
+Hai loại quà giờ dùng **đúng cùng một khuôn ô**: quà kèm sản phẩm dính ngay dưới dòng hàng của nó, quà theo đơn xếp trong khối `#orderGift` — đều là `giftGroupHTML()` với `tone='tint'` (tự mang nền). `tone='bare'` (không tự tô nền) giữ lại cho trường hợp cần lồng vào một dải có nền khác.
 
 ### Mỗi quà nằm trong một nhóm mang tên chương trình
 
