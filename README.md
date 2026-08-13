@@ -65,7 +65,9 @@ Theo chỉ đạo user: thẻ quà dùng **đúng khuôn thẻ sản phẩm** tr
 |---|---|
 | ô tick | quà không phải thứ người dùng chọn mua, nó theo điều kiện. Vẫn chừa đúng cột 16px + gap 8 để **ảnh quà thẳng hàng với ảnh sản phẩm** phía trên |
 | nút xoá | quà không tự bỏ được — muốn bỏ thì bỏ điều kiện (bỏ tick sản phẩm / giảm số lượng) |
-| stepper | số lượng luôn 01, in tĩnh với `margin-right:28px` = đúng bề ngang nút "+" nên **con số thẳng cột** với số lượng của thẻ sản phẩm |
+| stepper | số lượng luôn 01, in tĩnh và **nằm sát mép phải** — thẳng cột với mép ngoài stepper của thẻ sản phẩm và với nút "Đổi quà" ở hàng nhãn |
+
+> Số "01" từng có `margin-right:28px` để gióng theo **con số** của stepper. Đã bỏ (chỉ đạo user 13/08/2026): quà không tăng giảm số lượng được, chừa sẵn chỗ cho một nút "+" không tồn tại chỉ làm thẻ quà trông như bị thiếu mất nút.
 
 Giá in `0 ₫` kèm giá gốc gạch ngang; badge "Quà tặng" đè góc trên trái ảnh — đúng chỗ thẻ sản phẩm để badge `-%`. Nhãn tên chương trình chừa đúng cột 16px + gap 8 như thẻ quà nên **thẳng hàng với ảnh**, không thò ra sát mép.
 
@@ -126,6 +128,19 @@ GIFT_CATALOG     = { mini | edt | scarf | sneaker }   // 4 món quà, kèm giá 
 ORDER_GIFT_TIERS = [ {min:100tr, program:'tier100'}, {min:150tr, program:'tier150'} ]
 CART_BASE[0].gift = 'bagBundle'                       // Túi da Lou mini kèm chương trình bagBundle
 ```
+
+### Giỏ demo: 2/4 món có khuyến mãi (13/08/2026)
+
+`item-cart` có 2 trạng thái giá mà trước đây giỏ demo không dùng tới trạng thái nào: giá đen trơn, và **giá đỏ + badge `-%` + giá gốc gạch ngang**. Giờ 2 trong 4 món mang `off`/`was` để thấy đủ cả hai.
+
+Số **không bịa** — lấy đúng `off`/`was` của chính SKU đó trong `PRODUCTS`:
+
+| Món | Promo | Nguồn |
+|---|---|---|
+| Giày loafer da Manu | `-30%` · gốc 50.354.000 ₫ | đã có sẵn trong `PRODUCTS` — **trước đây PLP/PDP hiện -30% nhưng vào giỏ lại thành nguyên giá** |
+| Thắt lưng da mặt khóa tròn 3.5 cm | `-15%` · gốc 20.676.000 ₫ | thêm mới vào **cả `PRODUCTS` lẫn `CART_BASE`** để 2 nơi không lệch |
+
+> **Giá bán (`now`/`price`) giữ nguyên** — chỉ thêm phần trang trí `off`/`was`. Nhờ vậy tạm tính vẫn đúng 113.500.000 ₫ và **các mốc quà theo đơn không phải chỉnh lại**. Màn Thanh toán vẫn chỉ in giá phải trả (tóm tắt gọn, không mang badge) nên mọi con số tiền không đổi.
 
 3 hàm lọc giỏ, **đừng dùng lẫn**:
 
