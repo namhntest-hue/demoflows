@@ -577,7 +577,11 @@ const A = 'assets/';
    (1200×1484). `colors` khai đúng các phiên bản màu THẬT đang bán —
    colors[i] ứng với PRODUCT_GALLERY[idx][i]; sản phẩm 1 màu chỉ có 1 swatch. */
 const PRODUCTS = [
-  { img:'p1-0.jpg',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫', tag:'Best seller', colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
+  /* `preorder` = ngày nhận hàng dự kiến (dd/mm/yyyy) — NGUỒN DUY NHẤT cho mọi chỗ
+     hiện pre-order: badge + dòng ETA ở PDP, dòng trong giỏ, sheet xác nhận thêm giỏ.
+     Đổi ngày chỉ sửa ở đây (trước 14/08/2026 ngày này in cứng 15/08/2026 trong
+     markup PDP — demo sau ngày đó là hiện ngày quá khứ, xem AUDIT). */
+  { img:'p1-0.jpg',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫', tag:'Best seller', preorder:'30/09/2026', colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
   { img:'p2-0.jpg',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', price:'15.611.000 ₫', colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
   { img:'p3-0.jpg',  brand:'Versace', name:'Túi đeo vai da Emblème',                     price:'50.957.000 ₫', off:'-15%', was:'59.949.000 ₫', colors:[{name:'Verde Menta',hex:'#b9dfc6'},{name:'Rosa',hex:'#f5d6e0'}] },
   { img:'p4-0.jpg',  brand:'Versace', name:'Giày cao gót da nappa Gianni 90',            price:'45.066.000 ₫', tag:'New arrival', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Oro',hex:'#c9a94b'}] },
@@ -758,7 +762,7 @@ const CATEGORIES = [
 
 /* CART_BASE = bản gốc để dựng lại giỏ khi bấm "Tiếp tục mua sắm" (đặt hàng
    xong thì CART bị dọn rỗng). CART vẫn là mảng được sửa tại chỗ như cũ. */
-/* KHUYẾN MÃI: 2/4 món có `off`+`was` để demo đủ 2 trạng thái giá của item-cart
+/* KHUYẾN MÃI: 3/5 món có `off`+`was` để demo đủ 2 trạng thái giá của item-cart
    (giá đen trơn vs giá đỏ + badge % + giá gạch ngang). Số KHÔNG bịa: lấy đúng
    `off`/`was` của chính SKU đó trong PRODUCTS — trước đây giày loafer hiện -30%
    ở PLP/PDP nhưng vào giỏ lại thành nguyên giá. Thắt lưng được thêm -15% ở CẢ
@@ -769,8 +773,13 @@ const CATEGORIES = [
    và điều kiện nhận quà đều tính từ đây — xem cartSubtotal().
    `gift` = key trong GIFT_PROGRAMS (CHƯƠNG TRÌNH, không phải món quà — chương
    trình có thể cho đổi giữa nhiều món): sản phẩm này có quà kèm, nhóm quà nằm
-   ngay dưới dòng sản phẩm khi item được tick (xem "Quà tặng trong giỏ"). */
+   ngay dưới dòng sản phẩm khi item được tick (xem "Quà tặng trong giỏ").
+   `preorder` = ngày nhận dự kiến, lấy thẳng từ PRODUCTS (không chép tay để 2 nơi
+   không lệch nhau): thẻ giỏ vẫn là khuôn thường, chỉ thêm badge "Pre-order" trên
+   ảnh + 1 dòng ngày nhận dưới phân loại (yêu cầu user 14/08/2026). Đầm lụa đứng
+   ĐẦU danh sách theo kịch bản "vừa bấm Đặt trước ở PDP xong vào giỏ". */
 const CART_BASE = [
+  { img:'p1-0.jpg', brand:'Versace', name:'Đầm lụa mini Broken Jewels', variant:'Broken Jewels , 39', off:'-20%', was:'90.696.000 ₫', now:'72.557.000 ₫', qty:1, sel:true, preorder: PRODUCTS[0].preorder },
   { img:'p8-0.jpg', brand:'Versace', name:'Túi da Lou mini',            variant:'Onesize , Black', off:'', was:'', now:'45.066.000 ₫', qty:1, sel:true, gift:'bagBundle' },
   { img:'p5-0.jpg', brand:'Versace', name:'Giày loafer da Manu',        variant:'40 , Black',      off:'-30%', was:'50.354.000 ₫', now:'35.248.000 ₫', qty:1, sel:true },
   { img:'p10-0.jpg',brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm', variant:'95 , Black', off:'-15%', was:'20.676.000 ₫', now:'17.575.000 ₫', qty:1, sel:true },
@@ -1499,6 +1508,7 @@ function screenPDP() {
           </div>`).join('')}
       </div>
       <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
+        ${P.preorder ? '<span data-i18n-skip class="bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
         <span class="bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">New Season</span>
         <span class="bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">La Vacanza</span>
       </div>
@@ -1555,12 +1565,13 @@ function screenPDP() {
       </div>
     </div>
 
-    <!-- in-flow CTA -->
+    <!-- in-flow CTA — dòng ngày dự kiến nằm TRÊN nút, không còn nằm trong nút
+         (yêu cầu user 14/08/2026); nút về khuôn 1 dòng h-12 như 5 PDP kia.
+         Ngày đọc từ PRODUCTS.preorder, i18n dịch bằng luật regex nên đổi ngày
+         không phải sửa từ điển. -->
     <div id="pdpCta" class="flex flex-col gap-2 px-4 py-4 rise">
-      <button data-add="pdp" class="w-full min-h-[56px] py-2 rounded-xs bg-primary text-primary-foreground btn-p press flex flex-col items-center justify-center gap-0.5">
-        <span class="text-[16px] leading-5">Đặt trước</span>
-        <span class="text-[12px] leading-4 text-primary-foreground/80">Dự kiến giao hàng vào ngày 15/08/2026</span>
-      </button>
+      <p class="text-[12px] leading-4 text-secondary-foreground text-center">Dự kiến giao hàng vào ngày ${P.preorder}</p>
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press flex items-center justify-center">Đặt trước</button>
     </div>
 
     <!-- KHUYẾN MÃI — layout B: mỗi chương trình 1 card, cuối dòng "Xem chi tiết" -->
@@ -1593,10 +1604,8 @@ function screenPDP() {
 
   <!-- sticky CTA -->
   <div id="pdpStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6 bg-gradient-to-t from-white via-white/95 to-white/0" style="opacity:0;transform:translateY(10px);pointer-events:none">
-    <button data-add="pdp" class="w-full min-h-[48px] py-1.5 rounded-xs bg-primary text-primary-foreground btn-p press flex flex-col items-center justify-center">
-      <span class="text-[16px] leading-5">Đặt trước</span>
-      <span class="text-[12px] leading-4 text-primary-foreground/80">Dự kiến giao 15/08/2026</span>
-    </button>
+    <p class="text-[12px] leading-4 text-secondary-foreground text-center pb-1.5">Dự kiến giao ${P.preorder}</p>
+    <button data-add="pdp" class="w-full h-11 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press">Đặt trước</button>
   </div>`;
 }
 
@@ -2751,9 +2760,10 @@ function screenPDP6() {
    Giá gạch ngang là giá gốc để thấy "được tặng bao nhiêu", giá thật luôn 0 ₫ —
    quà KHÔNG cộng vào tạm tính.
 
-   Mốc chọn quanh giá trị giỏ mặc định (113.500.000 ₫ khi tick đủ 4 item) để
-   demo được cả 2 chiều: mốc 1 đã đạt sẵn (bỏ tick 1 món là rớt), mốc 2 chỉ cần
-   tăng thêm 1 số lượng là chạm.
+   Mốc chọn quanh giá trị giỏ mặc định (186.057.000 ₫ khi tick đủ 5 item — đã
+   gồm đầm pre-order 72.557.000 ₫ từ 14/08/2026) để demo được cả 2 chiều: mốc 1
+   (150tr) đã đạt sẵn (bỏ tick đầm hoặc túi Lou là rớt), mốc 2 (200tr) chỉ cần
+   tăng thêm 1 số lượng bất kỳ là chạm (món rẻ nhất 15,6tr cũng đủ).
 ════════════════════════════════════════════════════════════════ */
 const GIFT_CATALOG = {
   mini:    { img:'b1.jpg',    brand:'Versace', name:'Nước hoa Crystal Noir EDP 5 ml',   variant:'5 ml',            was:'1.150.000 ₫' },
@@ -2769,14 +2779,14 @@ const GIFT_CATALOG = {
    `gifts[0]` là quà mặc định; lựa chọn của user lưu ở giftPick. */
 const GIFT_PROGRAMS = {
   bagBundle: { name: 'Quà tặng kèm túi Lou mini',  gifts: ['mini', 'edt'] },
-  tier100:   { name: 'Ưu đãi đơn từ 100 triệu',    gifts: ['scarf', 'edt'] },
-  tier150:   { name: 'Ưu đãi đơn từ 150 triệu',    gifts: ['sneaker'] },
+  tier150:   { name: 'Ưu đãi đơn từ 150 triệu',    gifts: ['scarf', 'edt'] },
+  tier200:   { name: 'Ưu đãi đơn từ 200 triệu',    gifts: ['sneaker'] },
 };
 let giftPick = {};        // {chương trình: key quà đang chọn} — rỗng = lấy gifts[0]
 
 const ORDER_GIFT_TIERS = [
-  { min: 100000000, program: 'tier100' },
   { min: 150000000, program: 'tier150' },
+  { min: 200000000, program: 'tier200' },
 ];
 const giftOf = pk => GIFT_CATALOG[giftPick[pk] || (GIFT_PROGRAMS[pk] || {}).gifts?.[0]];
 
@@ -2793,7 +2803,8 @@ const cartItems = () => CART.filter(c => !c.removed);
    3 món. */
 const cartSelected = () => CART.filter(c => !c.removed && c.sel !== false);
 /* Điểm thưởng của đơn: demo dùng đúng tỉ lệ 1 điểm / 100.000 ₫ (giỏ mặc định
-   113.500.000 ₫ -> 1.135 điểm, khớp con số vốn in cứng ở 4 màn). */
+   186.057.000 ₫ khi tick đủ 5 món -> 1.860 điểm; con số tự tính nên thêm/bớt
+   món là các màn tự khớp theo). */
 const rewardPointsEarned = () => Math.floor(cartSubtotal() / 100000);
 function cartSubtotal() {
   return cartItems().reduce((s, c) => s + (c.sel === false ? 0 : vndNum(c.now) * (c.qty || 1)), 0);
@@ -2939,7 +2950,7 @@ function productGiftHTML(c, i) {
 
    MỖI MỐC LÀ MỘT Ô RIÊNG mang đúng tên chương trình (yêu cầu user 13/08/2026):
    KHÔNG còn title lớn "Quà tặng theo đơn hàng" và số đếm "N quà" — tên promo chi
-   tiết ("Ưu đãi đơn từ 100 triệu") nói đủ việc rồi, thêm 1 tầng tiêu đề nữa chỉ
+   tiết ("Ưu đãi đơn từ 150 triệu") nói đủ việc rồi, thêm 1 tầng tiêu đề nữa chỉ
    làm loãng. Thoả thêm 1 mốc => thêm 1 ô y hệt, xếp dưới, cách nhau 8px.
 
    Mốc KẾ TIẾP chưa đạt cũng là 1 ô cùng khuôn (cùng nhãn tên chương trình), chỉ
@@ -3168,14 +3179,19 @@ function screenCART() {
   // Tổng tiền: ưu đãi hội viên (chỉ khi đã đăng nhập) + mã giảm giá + N phiếu
   // mua hàng, chặn trần theo tạm tính — xem cartDiscountTotal()/cartTotalNow()
 
-  /* item-cart — 358×165: [checkbox 16 canh giữa] [ảnh 100×133] [thông tin 226] */
+  /* item-cart — 358×165: [checkbox 16 canh giữa] [ảnh 100×133] [thông tin 226]
+     Hàng pre-order (c.preorder) vẫn là ĐÚNG khuôn thẻ này, chỉ thêm 2 chỗ
+     (yêu cầu user 14/08/2026): badge "Pre-order" đè góc trên trái ảnh — cùng
+     style badge New Season ở PDP (bg-secondary, 12 medium) — và 1 dòng ngày
+     nhận dự kiến ngay dưới dòng phân loại. */
   const row = (c, i) => `
     <div class="cart-row flex gap-2 px-4 py-4" data-row="${i}">
       <div class="w-4 shrink-0 flex items-center">
         <button class="chk ${c.sel === false ? '' : 'on'} w-4 h-4 border border-border bg-background-3 rounded-xs shadow-sm flex items-center justify-center btn-o press" data-check>${I.tick}</button>
       </div>
-      <div class="w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
+      <div class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
         <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
+        ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
       </div>
       <div class="flex-1 min-w-0 flex flex-col justify-between">
         <div class="flex flex-col">
@@ -3187,6 +3203,7 @@ function screenCART() {
             <p class="text-[14px] leading-5 text-secondary-foreground truncate">${c.name}</p>
           </div>
           <p class="text-[12px] leading-4 text-muted-foreground">${c.variant}</p>
+          ${c.preorder ? `<p class="text-[12px] leading-4 text-foreground-alt pt-1">Pre-order · Nhận hàng dự kiến ${c.preorder}</p>` : ''}
         </div>
         <!-- giá + stepper ghim đáy ô, giá thường đen / giá khuyến mãi đỏ (item-cart 2851:28705) -->
         <div class="flex items-end justify-between gap-0.5">
@@ -4876,7 +4893,7 @@ const RENDER = {
 };
 
 const viewport = document.getElementById('viewport');
-let current = null, cartQty = 4, history = [], plpSort = 'relevance';
+let current = null, cartQty = 5, history = [], plpSort = 'relevance';
 
 const SORT_OPTIONS = [
   ['relevance', 'Phù hợp nhất'],
@@ -5114,7 +5131,8 @@ const I18N = {
   'Xuất xứ thương hiệu':'Brand origin', 'Sản xuất tại':'Made in', 'Ý':'Italy',
   'Thành phần chất liệu':'Composition', 'Thành phần vải':'Fabric composition',
   'Chiều cao gót giày':'Heel height',
-  'Dự kiến giao hàng vào ngày 15/08/2026':'Estimated delivery 15/08/2026', 'Dự kiến giao 15/08/2026':'Est. delivery 15/08/2026',
+  // Pre-order: các chuỗi có NGÀY (đọc từ PRODUCTS.preorder) dịch bằng luật regex
+  // trong I18N_RE/I18N_REV_RE — không giữ key ngày in cứng ở đây kẻo đổi ngày là chết dịch.
   'Đã thêm vào giỏ':'Added to bag', 'Đã thêm vào giỏ hàng':'Added to your bag',
   'Xem giỏ hàng':'Go to cart', 'Tiếp tục mua sắm':'Continue shopping',
   'Đổi trả trong 7 ngày với sản phẩm còn nguyên tem mác.':'Returns accepted within 7 days with tags attached.',
@@ -5159,8 +5177,8 @@ const I18N = {
   'Quà tặng theo đơn hàng':'Order gifts', 'Đổi quà':'Change gift', 'Đóng':'Close',
   'Quà tặng kèm đơn':'Gifts with this order', 'Đổi quà tặng':'Change your gift',
   'Quà tặng kèm túi Lou mini':'Gift with Lou mini bag',
-  'Ưu đãi đơn từ 100 triệu':'Orders from 100 million',
   'Ưu đãi đơn từ 150 triệu':'Orders from 150 million',
+  'Ưu đãi đơn từ 200 triệu':'Orders from 200 million',
   'Đã đổi quà tặng':'Gift changed',
   'Nước hoa Eros Energy EDP 5 ml':'Eros Energy EDP 5 ml',
   'Nước hoa Crystal Noir EDP 5 ml':'Crystal Noir EDP 5 ml',
@@ -5529,6 +5547,10 @@ const I18N_RE = [
   [/^1 quà$/,                         '1 gift'],      // số ít: đặt TRƯỚC luật chung (tr trả về luật khớp đầu tiên)
   [/^(\d+) quà$/,                     '$1 gifts'],
   [/^Mua thêm ([\d.]+ ₫) để nhận$/,   'Spend $1 more to get'],
+  // pre-order: ngày là data (PRODUCTS.preorder) nên phải là luật động — đổi ngày không sửa từ điển
+  [/^Dự kiến giao hàng vào ngày (\d{2}\/\d{2}\/\d{4})$/, 'Estimated delivery $1'],
+  [/^Dự kiến giao (\d{2}\/\d{2}\/\d{4})$/, 'Est. delivery $1'],
+  [/^Pre-order · Nhận hàng dự kiến (\d{2}\/\d{2}\/\d{4})$/, 'Pre-order · Estimated arrival $1'],
 ];
 const I18N_REV_RE = [
   [/^(\d+) stores$/,                  '$1 cửa hàng'],
@@ -5558,6 +5580,9 @@ const I18N_REV_RE = [
   [/^1 gift$/,                        '1 quà'],
   [/^(\d+) gifts$/,                   '$1 quà'],
   [/^Spend ([\d.]+ ₫) more to get$/,  'Mua thêm $1 để nhận'],
+  [/^Estimated delivery (\d{2}\/\d{2}\/\d{4})$/, 'Dự kiến giao hàng vào ngày $1'],
+  [/^Est\. delivery (\d{2}\/\d{2}\/\d{4})$/, 'Dự kiến giao $1'],
+  [/^Pre-order · Estimated arrival (\d{2}\/\d{2}\/\d{4})$/, 'Pre-order · Nhận hàng dự kiến $1'],
 ];
 
 const I18N_REV = Object.fromEntries(Object.entries(I18N).map(([k, v]) => [v, k]));
@@ -5572,7 +5597,13 @@ function tr(t, to) {
 
 function applyLang(root, to) {
   if (!root) return;
-  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  /* [data-i18n-skip] = wordmark giữ nguyên ở MỌI ngôn ngữ (badge "Pre-order"…).
+     Phải chặn ở đây vì dịch ngược EN→VN tra I18N_REV theo text node: badge
+     "Pre-order" trùng chuỗi với nút "Đặt trước" đã dịch nên bị kéo theo. */
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: n => n.parentElement && n.parentElement.closest('[data-i18n-skip]')
+      ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+  });
   const nodes = [];
   while (w.nextNode()) nodes.push(w.currentNode);
   nodes.forEach(n => {
@@ -5961,7 +5992,7 @@ function wire(root) {
       /* Reset để lặp lại demo: KHÔNG đụng ckAuth nữa — trước đây nút "Tiếp tục
          mua sắm" ở màn Hoàn tất âm thầm đăng xuất người đang đăng nhập. */
       if (el.hasAttribute('data-reset')) {
-        cartQty = 4; CART.length = 0; CART.push(...CART_BASE.map(c => ({ ...c })));
+        cartQty = CART_BASE.length; CART.length = 0; CART.push(...CART_BASE.map(c => ({ ...c })));
         history = []; ckStep = 0; ckMaxStep = 0; ckMode = 'ship';
         ckCity = ''; ckStore = ''; ckHome = ''; ckName = ''; ckPhone = ''; ckEmail = '';
         ckAddr = 0; ckShipName = ''; ckShipPhone = ''; ckShipLine = '';
@@ -6137,7 +6168,7 @@ function wire(root) {
       const variant = [colorEl ? colorEl.textContent.trim() : '', size].filter(Boolean).join(' , ');
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
         img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
-        price: p.price, off: p.off, was: p.was,
+        price: p.price, off: p.off, was: p.was, preorder: p.preorder,
       }), 450);
     });
   });
@@ -7672,7 +7703,7 @@ function quickAddCta(p) {
       // đợi sheet quick-add trượt xuống xong rồi mở sheet xác nhận
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
         img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
-        price: p.price, off: p.off, was: p.was,
+        price: p.price, off: p.off, was: p.was, preorder: p.preorder,
       }), 350);
     });
     // nút ghost "Xem chi tiết" -> đóng sheet, mở đúng PDP của sản phẩm
@@ -7810,6 +7841,7 @@ document.body.insertAdjacentHTML('beforeend', `
           <p id="ccBrand" class="text-[14px] font-medium leading-5 text-foreground truncate"></p>
           <p id="ccName" class="text-[14px] leading-5 text-secondary-foreground truncate"></p>
           <p id="ccVariant" class="text-[12px] leading-4 text-muted-foreground pt-0.5"></p>
+          <p id="ccPre" class="text-[12px] leading-4 text-foreground-alt pt-0.5 hidden"></p>
           <div class="flex gap-1 items-center pt-1">
             <p id="ccPrice" class="text-[14px] font-medium leading-5 text-foreground"></p>
             <span id="ccOff" class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0 hidden"></span>
@@ -7835,6 +7867,12 @@ document.body.insertAdjacentHTML('beforeend', `
     const va = cc.querySelector('#ccVariant');
     va.textContent = d.variant || '';
     va.classList.toggle('hidden', !d.variant);
+    /* Hàng pre-order: nhắc lại ngày nhận ngay trong sheet — trước đây bấm
+       "Đặt trước" xong sheet nói y hệt hàng thường, mất dấu vết pre-order
+       (finding trong AUDIT 14/08/2026). */
+    const pre = cc.querySelector('#ccPre');
+    pre.textContent = d.preorder ? `Pre-order · Nhận hàng dự kiến ${d.preorder}` : '';
+    pre.classList.toggle('hidden', !d.preorder);
     const price = cc.querySelector('#ccPrice');
     price.textContent = d.price || '';
     price.classList.toggle('text-destructive', !!d.off);
@@ -7999,7 +8037,7 @@ document.body.insertAdjacentHTML('beforeend', `
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
         img: (ctx && ctx.img) ? ctx.img.getAttribute('src') : `${A}${p.img}`,
         brand: p.brand, name: p.name, variant,
-        price: p.price, off: p.off, was: p.was,
+        price: p.price, off: p.off, was: p.was, preorder: p.preorder,
       }), 350);
     }
   });

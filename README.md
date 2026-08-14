@@ -129,9 +129,9 @@ ORDER_GIFT_TIERS = [ {min:100tr, program:'tier100'}, {min:150tr, program:'tier15
 CART_BASE[0].gift = 'bagBundle'                       // Túi da Lou mini kèm chương trình bagBundle
 ```
 
-### Giỏ demo: 2/4 món có khuyến mãi (13/08/2026)
+### Giỏ demo: 3/5 món có khuyến mãi (13/08/2026, +đầm pre-order 14/08/2026)
 
-`item-cart` có 2 trạng thái giá mà trước đây giỏ demo không dùng tới trạng thái nào: giá đen trơn, và **giá đỏ + badge `-%` + giá gốc gạch ngang**. Giờ 2 trong 4 món mang `off`/`was` để thấy đủ cả hai.
+`item-cart` có 2 trạng thái giá mà trước đây giỏ demo không dùng tới trạng thái nào: giá đen trơn, và **giá đỏ + badge `-%` + giá gốc gạch ngang**. Giờ 3 trong 5 món mang `off`/`was` để thấy đủ cả hai (món thứ 5 là đầm pre-order thêm 14/08/2026 — xem section "Pre-order").
 
 Số **không bịa** — lấy đúng `off`/`was` của chính SKU đó trong `PRODUCTS`:
 
@@ -140,7 +140,7 @@ Số **không bịa** — lấy đúng `off`/`was` của chính SKU đó trong `
 | Giày loafer da Manu | `-30%` · gốc 50.354.000 ₫ | đã có sẵn trong `PRODUCTS` — **trước đây PLP/PDP hiện -30% nhưng vào giỏ lại thành nguyên giá** |
 | Thắt lưng da mặt khóa tròn 3.5 cm | `-15%` · gốc 20.676.000 ₫ | thêm mới vào **cả `PRODUCTS` lẫn `CART_BASE`** để 2 nơi không lệch |
 
-> **Giá bán (`now`/`price`) giữ nguyên** — chỉ thêm phần trang trí `off`/`was`. Nhờ vậy tạm tính vẫn đúng 113.500.000 ₫ và **các mốc quà theo đơn không phải chỉnh lại**. Màn Thanh toán vẫn chỉ in giá phải trả (tóm tắt gọn, không mang badge) nên mọi con số tiền không đổi.
+> **Giá bán (`now`/`price`) giữ nguyên** — chỉ thêm phần trang trí `off`/`was`. Màn Thanh toán vẫn chỉ in giá phải trả (tóm tắt gọn, không mang badge). Từ 14/08/2026 giỏ mặc định là **186.057.000 ₫** (5 món, gồm đầm pre-order 72.557.000 ₫) — các mốc quà theo đơn đã dời 100/150tr → **150/200tr** để giữ nguyên kịch bản demo.
 
 3 hàm lọc giỏ, **đừng dùng lẫn**:
 
@@ -150,7 +150,7 @@ Số **không bịa** — lấy đúng `off`/`was` của chính SKU đó trong `
 | `cartItems()` | chưa xoá (kể cả đang bỏ tick) | dựng màn giỏ, đếm số món trong giỏ |
 | `cartSelected()` | chưa xoá **và** đang tick = **đơn hàng thật** | checkout, `miniCart`, `placeOrder` |
 
-**Điều kiện thay đổi là quà đổi NGAY**, không cần reload/điều hướng: tăng số lượng đủ mốc → quà mốc đó hiện tại chỗ; bỏ tick / giảm số lượng / xoá món → rớt mốc thì quà rút đi. Mốc đặt quanh giá trị giỏ mặc định (113.500.000 ₫) nên demo được cả 2 chiều: **mốc 100tr đã đạt sẵn** (bỏ tick 1 món là rớt), **mốc 150tr chỉ cần +1 số lượng** là chạm.
+**Điều kiện thay đổi là quà đổi NGAY**, không cần reload/điều hướng: tăng số lượng đủ mốc → quà mốc đó hiện tại chỗ; bỏ tick / giảm số lượng / xoá món → rớt mốc thì quà rút đi. Mốc đặt quanh giá trị giỏ mặc định (186.057.000 ₫ từ 14/08/2026) nên demo được cả 2 chiều: **mốc 150tr đã đạt sẵn** (bỏ tick đầm pre-order hoặc túi Lou là rớt), **mốc 200tr chỉ cần +1 số lượng** bất kỳ là chạm (món rẻ nhất 15,6tr cũng đủ).
 
 ### Kéo theo: giỏ hàng giờ có STATE THẬT
 
@@ -211,6 +211,16 @@ Dòng quà ở tóm tắt dùng **`giftSummaryRow()`** — cùng khuôn dòng s�
 **Kèm theo: sửa "Chọn tất cả" bản desktop** (user báo "hình như không hoạt động") — đúng lỗi mà bản mobile vừa sửa: handler đọc class của **chính ô tick tổng** thay vì đọc state, mà ô đó lại in cứng `chk on` nên bấm bao nhiêu lần cũng chỉ đi tick lại tất cả, không bao giờ bỏ tick được. Giờ trạng thái đích suy từ state (`items.every(sel)`), ô tổng cũng dựng từ state.
 
 > **Chưa làm** (ngoài phạm vi yêu cầu): màn **Chi tiết đơn hàng** (Tài khoản → Đơn hàng) chưa liệt kê quà — `ORDERS[]` không mang field quà, chỉ có `ckOrderGifts` của đơn vừa đặt; thêm sản phẩm từ PDP vẫn **không tạo dòng giỏ mới** (chỉ tăng badge + mở sheet xác nhận) nên "chọn thêm sản phẩm" chỉ tick/tăng trong giỏ; danh sách đổi quà là inline trong nhóm, **chưa có sheet/modal riêng**.
+
+## Pre-order (14/08/2026, chỉ mobile)
+
+Hàng pre-order duy nhất là **SP#1 đầm lụa mini Broken Jewels** — ngày nhận dự kiến khai MỘT LẦN ở `PRODUCTS[0].preorder` (dd/mm/yyyy). Mọi nơi khác đọc từ đó, đổi ngày chỉ sửa 1 chỗ (ngày cũ 15/08/2026 in cứng trong markup đã suýt quá hạn — AUDIT ghi nhận):
+
+- **PDP v1**: badge "Pre-order" xếp trên "New Season" ở gallery (cùng style pill); dòng "Dự kiến giao hàng vào ngày …" **nằm trên nút**, không còn nằm trong nút (yêu cầu user 14/08/2026) — nút về khuôn 1 dòng h-12 như 5 PDP kia, sticky CTA cũng vậy (dòng rút gọn "Dự kiến giao …").
+- **Giỏ hàng**: đầm đứng đầu `CART_BASE` (kịch bản "vừa đặt trước xong vào giỏ"), thẻ vẫn đúng khuôn item-cart, chỉ thêm badge "Pre-order" đè góc trên trái ảnh + 1 dòng "Pre-order · Nhận hàng dự kiến …" dưới phân loại.
+- **Sheet xác nhận thêm giỏ** (`#ccPre`): nhắc lại đúng dòng ngày nhận — cả đường bấm từ PDP lẫn quick add PLP; hàng thường thì ẩn (fix finding AUDIT "Đặt trước và Thêm vào giỏ ra cùng một kết quả").
+- **i18n**: chuỗi mang ngày dịch bằng **luật regex** (`Dự kiến giao hàng vào ngày …` ↔ `Estimated delivery …`, `Pre-order · Nhận hàng dự kiến …` ↔ `Pre-order · Estimated arrival …`) — không giữ key ngày cứng trong từ điển. Badge "Pre-order" mang **`data-i18n-skip`** (cơ chế mới trong `applyLang`): wordmark giữ nguyên ở mọi ngôn ngữ, không có nó thì lượt dịch ngược EN→VN biến badge thành "Đặt trước" (trùng chuỗi với nút).
+- **Checkout**: CHƯA đánh dấu pre-order — 3 phương án đang chờ chốt, xem `PREORDER.md`.
 
 ## Quick add to cart (`#quickAddSheet`)
 
@@ -826,6 +836,7 @@ Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫ
 - **13 chỉnh theo Figma `3547:55856`** (xem "Đối chiếu checkout với Figma") mới áp cho mobile. Desktop còn: checkbox viền `#e5e5e5`, ô nhập padding 12, nhóm field gap 8, link "Thay đổi" 16px Light, tiêu đề màn 18/28, thiếu kẻ ngăn `#f5f5f5` + bước chờ cao 72. (Vòng radio + `.opt.on` đã port 12/08 — xem mục dưới.)
 - ~~**Lệch NGƯỢC — bộ lọc PLP**: desktop lọc thật, mobile chỉ toast.~~ → **đã đồng bộ 12/08/2026**, xem "Bộ lọc lọc thật + 4 hành vi mới" bên dưới. Còn lệch duy nhất: **hàng chip "đang áp dụng" chỉ có ở desktop** (mobile bỏ/tắt bộ lọc trong sheet).
 - ~~**Quà tặng trong giỏ + state giỏ thật (13/08/2026)** — chỉ mobile.~~ → **đã port sang desktop cùng ngày** (yêu cầu user), xem "Quà tặng trong giỏ · Bản desktop". Kèm sửa "Chọn tất cả" bản desktop.
+- **Pre-order (14/08/2026)** — chỉ mobile, xem section "Pre-order": `PRODUCTS[0].preorder` + đầm vào `CART_BASE` (giỏ 4→5 món, tạm tính 113,5tr→186tr), mốc quà 100/150tr→150/200tr (đổi cả tên chương trình + 2 key i18n), badge/dòng ngày ở PDP v1 + giỏ + `#ccPre` ở sheet xác nhận, 6 luật regex i18n mới, cơ chế `data-i18n-skip` trong `applyLang`, `cartQty` khởi tạo 5 (reset đọc `CART_BASE.length`). Desktop có PDP_DATA gộp nên khi port cần gắn theo `idx===0`, không copy markup thẳng.
 
 ### Bộ lọc lọc thật + 4 hành vi mới — CẢ 2 BẢN (12/08/2026)
 
@@ -1022,7 +1033,7 @@ Toàn bộ backlog "chờ port" bên dưới đã chạy xong trong một đợt
 - ~~Ảnh sản phẩm thật từ CDN DAFC bị chặn~~ → **ĐÃ XONG cho mobile (07/08/2026)**: CDN `cdn.dafc.com.vn` truy cập được, đã tải ~80 ảnh thật về `assets/` (`pN-*.jpg`, `x*.jpg`, `b*.jpg`, `g2.jpg`) và thay toàn bộ placeholder trong `index.html`. Desktop.html cũng đã dùng bộ ảnh thật này từ 10/08/2026.
 - **`--unofficial-accent`**: mode D = cam `#ff6600`, mode GM = đen `#0a0a0a` — chưa dùng ở đâu, chưa quyết định giữ/đổi.
 - **Luồng hết hàng 2 tầng** (size tạm hết / nhận thông báo khi có hàng): PDP dùng chip (pdp, pdp4) xử lý ngay trên chip; PDP dùng dropdown (pdp2/pdp3/pdp5/pdp6) xử lý trong picker "Chọn size" — hàng hết gạch ngang + nhãn "Nhận thông báo", CTA đổi thành "Nhận thông báo khi có hàng". Áp dụng cho **cả 2 bản**.
-- **PDP v1 (pdp) — layout Pre-order**: ngày giao hàng "15/08/2026" đang hardcode. ~~"Chỉ còn 01 sản phẩm" vẫn hiện dù đã là pre-order~~ → **ĐÃ CHỐT (07/08, chỉ đạo của user)**: dòng `#lowStock` mặc định ẨN, chỉ hiện khi bấm đúng size sắp hết hàng (tra `SIZE_LOW_STOCK`, hiện chỉ có size 42) — áp cho cả `pdp` lẫn `pdp4`; bấm size thường/hết hàng thì ẩn lại. Cùng nguồn dữ liệu với dòng "Còn 1 sản phẩm" trong size picker nên 2 nơi không lệch nhau được. Desktop chưa áp hành vi này (xem "Chờ port sang desktop").
+- **PDP v1 (pdp) — layout Pre-order**: ~~ngày giao hàng "15/08/2026" đang hardcode~~ → **ĐÃ XONG (14/08/2026)**: ngày dời về data `PRODUCTS[0].preorder` (hiện 30/09/2026), xem section "Pre-order". Câu hỏi còn treo với khách: chính sách đặt cọc (BRIEF-GAP câu 10) và cách thể hiện ở checkout (`PREORDER.md`). ~~"Chỉ còn 01 sản phẩm" vẫn hiện dù đã là pre-order~~ → **ĐÃ CHỐT (07/08, chỉ đạo của user)**: dòng `#lowStock` mặc định ẨN, chỉ hiện khi bấm đúng size sắp hết hàng (tra `SIZE_LOW_STOCK`, hiện chỉ có size 42) — áp cho cả `pdp` lẫn `pdp4`; bấm size thường/hết hàng thì ẩn lại. Cùng nguồn dữ liệu với dòng "Còn 1 sản phẩm" trong size picker nên 2 nơi không lệch nhau được. Desktop chưa áp hành vi này (xem "Chờ port sang desktop").
 - **Account**: 9 màn theo Figma gốc (Info/Info-Error/Address/Address-Empty/Orders/Orders-Empty/Loyalty/Points/Points-Empty) đã gộp thành 1 trang 6-tab — chưa có trạng thái Empty/Error riêng.
 - **Màn "Hoàn tất đăng ký" (`reginfo`)**: chưa có frame Figma riêng — đang tự dựng theo style 2 màn đăng ký mới. Lưu ý frame thiết kế màn "Tạo tài khoản" (chỉ SĐT) trong Figma mang tên `Account-Mobile-03b-ForgotPassword-Alt` (3107:50758, có vẻ đặt nhầm tên khi copy); frame `Account-Mobile-02-Register` (2379:21218) vẫn là bản form dài cũ.
 
