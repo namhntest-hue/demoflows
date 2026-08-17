@@ -579,6 +579,15 @@ window.RESP = (function () {
     opacity: 1; visibility: visible; pointer-events: auto;
     transform: none; transition-delay: 0s;
   }
+  /* ── ĐỔI GIỮA CÁC MỤC SUBHEADER cho liền mạch kiểu Farfetch (17/08/2026) ──
+     Mỗi mục là MỘT panel riêng, nên bản cũ đổi mục = panel cũ fade-out trong khi
+     panel mới fade-in TỪ 0 + trượt 6px, lại chờ hover-intent 120ms lần nữa =>
+     nhìn ra một nhịp "tắt rồi bật", chưa kể chiều cao nhảy tới 144px.
+     Nay: nội dung đổi NGAY (class .mega-swap khoá transition opacity/transform,
+     chỉ để `height` chạy) — mặt phẳng đứng yên, chỉ cao thấp đổi mượt.
+     `overflow: hidden` để lúc cao đang chạy nội dung bị cắt gọn thay vì tràn. */
+  .dk-mega { overflow: hidden; }
+  .dk-mega.mega-swap { transition: height .26s cubic-bezier(.22,1,.36,1) !important; }
   /* ── Lưới mega menu: 4 CỘT ĐỀU NHAU — 3 cột nội dung + 1 cột ảnh ──
      Chốt 17/08/2026 (yêu cầu user). Trước đó cột nội dung tự co theo số nhóm
      (flex-wrap, mỗi cột min 168px) còn ảnh cố định 264px, nên mỗi mục menu ra
@@ -5213,17 +5222,49 @@ function wireSubheader(root) {
   const strip = sub.querySelector('.dk-nav-strip');
   const items = [...sub.querySelectorAll('.dk-nav-item')];
   const panels = [...sub.querySelectorAll('.dk-mega')];
-  let timer = null;
+  let timer = null, swapT = null;
+  const isOpen = () => panels.some(p => p.classList.contains('open'));
 
   const setOpen = id => {
     /* Mở mega panel thì đóng lớp tìm kiếm: 2 lớp phủ cùng lúc vừa rối vừa để
        lại khoá cuộn của lớp tìm kiếm mà không còn nút đóng nào nhìn thấy. */
     if (id != null && window.__closeDkSearch) window.__closeDkSearch();
-    panels.forEach(p => p.classList.toggle('open', p.dataset.mega === id));
+    const cur  = panels.find(p => p.classList.contains('open'));
+    const next = id == null ? null : panels.find(p => p.dataset.mega === id);
+    /* ĐANG MỞ mà đổi sang mục khác = "swap": đổi nội dung tức thì, chỉ cho chiều
+       cao chạy từ cao cũ sang cao mới. Đo được panel cao lệch nhau 324→468px nên
+       không làm việc này là mỗi lần đổi mục thấy khối giật một nhịp.
+       `visibility: hidden` vẫn giữ layout nên đo offsetHeight của panel đang đóng
+       ra số thật, không cần hiện nó lên để đo. */
+    const swapping = !!(cur && next && cur !== next);
+    let to = 0;
+    if (swapping) {
+      const from = cur.offsetHeight;
+      to = next.offsetHeight;
+      cur.classList.add('mega-swap'); next.classList.add('mega-swap');
+      next.style.height = from + 'px';
+      void next.offsetHeight;   // ép layout ở mốc `from` để transition có chỗ chạy
+    }
+    panels.forEach(p => p.classList.toggle('open', p === next));
     items.forEach(it => it.classList.toggle('on', it.dataset.mega === id));
     sub.classList.toggle('mega-open', id != null);
+    if (swapping) {
+      next.style.height = to + 'px';
+      clearTimeout(swapT);
+      swapT = setTimeout(() => {
+        next.style.height = '';                                  // trả về cao tự nhiên
+        panels.forEach(p => p.classList.remove('mega-swap'));    // mở/đóng lần sau lại có fade
+      }, 300);
+    }
   };
-  const openLater  = id => { clearTimeout(timer); timer = setTimeout(() => setOpen(id), 120); };
+  /* Hover-intent 120ms CHỈ cho lần mở đầu (lướt ngang thanh menu không nháy
+     panel). Khi panel ĐANG MỞ thì đổi mục là đổi ngay — chờ thêm 120ms mỗi lần
+     rê chuột chính là cảm giác "dính, không mượt" mà user chỉ ra. */
+  const openLater  = id => {
+    clearTimeout(timer);
+    if (isOpen()) { setOpen(id); return; }
+    timer = setTimeout(() => setOpen(id), 120);
+  };
   const closeLater = () => { clearTimeout(timer); timer = setTimeout(() => setOpen(null), 120); };
 
   items.forEach(it => {
