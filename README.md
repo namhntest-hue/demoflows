@@ -262,6 +262,18 @@ Khách gửi nguyên văn 2 block, cả `index.html` lẫn `desktop.html` chép 
 - **Chặn trần chiều cao thẻ**: chữ mới dài gấp đôi nên `#cookieBar` thành flex-col `max-height: min(600px, calc(100vh - 64px))`, phần chữ `flex-1 overflow-y-auto`, cụm nút `shrink-0`. Đo ở 1440×800: thẻ 420×**514** (sau khi xếp 2 nút ngang hàng), chữ chưa cần cuộn; ở 1440×520: thẻ chạm trần 456, chữ cuộn trong 262px, nút vẫn đủ chỗ. Không có bước này thẻ leo ~740px.
 - **Nút "Lưu lựa chọn" trong modal neo phải** (`justify-end`, `h-11 px-6`) đúng chuẩn footer modal desktop, mobile thì full-width h-12 — cùng cấp, khác khuôn theo bản. Nói chung 2 bản **trùng nhau về thứ tự nút và cấp nút**, chỉ khác thang cỡ vốn có của từng bản: desktop `h-11` / 12px / `tracking-wider`, mobile `h-12` / 13px.
 
+## Back từ PDP về PLP giữ nguyên vị trí cuộn (17/08/2026, CẢ 2 BẢN)
+
+Yêu cầu user. Trước đó `go()` luôn `window.scrollTo(0, 0)` nên back từ PDP là văng lên đầu danh sách, phải cuộn lại từ đầu để tìm sản phẩm vừa xem.
+
+- **`SCROLL_MEM[man] = curScrollY()`** chốt ngay đầu `go()`, **trước khi xoá DOM**. `curScrollY()` đọc `__scrollLockY` khi đang khoá cuộn (sheet mở thì `window.scrollY` = 0, đọc thẳng là nhớ nhầm số 0).
+- **Chỉ khôi phục khi đi LÙI** (`opts.back` — nút back trình duyệt / vuốt back → popstate). Đi tới vẫn về đầu trang.
+- **`goPlp()` xoá `SCROLL_MEM.plp`**: đổi danh mục/ngành hàng là nội dung khác hẳn, giữ toạ độ cũ thì lượt back sau trả về một chỗ vô nghĩa.
+- **`restoreScrollY()` phải BÁM LẠI vài khung hình, không đặt một phát là xong.** Đo lúc chạy: ngay sau khi thay DOM trang mới chỉ cao ~2072px (sau đó nở ra 5046px) nên `scrollTo(0, 1400)` bị kẹp còn **1260**. Hàm này đặt lại mỗi khung tới khi toạ độ dính (tối đa 20 khung) **+ 2 mốc `setTimeout` 80/250ms dự phòng** cho trường hợp `requestAnimationFrame` bị đóng băng (tab nền, cửa sổ ẩn — đúng môi trường lúc kiểm). Dừng ngay khi người dùng `wheel`/`touchstart`/`keydown` — không giành scroll với họ.
+- `history.scrollRestoration = 'manual'` (nếu trình duyệt có): router tự dựng lại DOM nên toạ độ trình duyệt nhớ theo entry là của cây DOM đã biến mất.
+- Đo sau khi sửa: mobile cuộn 1400 → PDP → back = **1400**; cuộn 2200 → back = **2200**; desktop 1800 → back = **1800**; đi tới PLP từ màn khác vẫn = **0**.
+- **Giới hạn đã biết**: nếu đã bấm "Show more" (chèn thêm 4 thẻ thẳng vào DOM, không lưu state) rồi mới vào PDP thì lượt back dựng lại danh sách NGẮN hơn, toạ độ cũ bị kẹp về đáy. Muốn đúng tuyệt đối thì phải đưa số thẻ đang hiện vào state của PLP.
+
 ## Khuôn chung cho MỌI lớp nổi (17/08/2026, CẢ 2 BẢN)
 
 Yêu cầu user: *"toàn bộ các popup, bottom up phải chung 1 style có border"*. Trước đó mỗi mặt một kiểu — 9 bottom sheet mobile **không có cả viền lẫn bóng** (nền trắng nằm trên nền trắng, chỉ đọc ra mép nhờ backdrop tối), desktop thì có **5 giá trị bóng khác nhau** (`.22` `.18` `.16` `.16` `.14`) cộng `shadow-lg`/`shadow-xl` của Tailwind ở các menu, và chỉ 2 mặt có viền.

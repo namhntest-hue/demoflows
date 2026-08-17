@@ -1571,6 +1571,9 @@ let plpCols    = '4';   // mật độ lưới: '4' (02/03/05) | '3' (04-Grid3)
 function goPlp(mode) {
   plpMode = (mode && mode.type) ? mode : { type: 'brand' };
   pruneFilters();   // ngành mới có thể không còn facet của nhãn đang áp
+  /* Đổi danh sách = nội dung khác hẳn -> vị trí cuộn cũ vô nghĩa, xoá đi kẻo
+     lượt back sau đó trả về một toạ độ của danh sách khác (xem SCROLL_MEM) */
+  delete SCROLL_MEM.plp;
 
   if (current === 'plp') { history.push('plp'); current = null; } // ép render lại khi đang ở PLP
   go('plp');
@@ -5897,9 +5900,45 @@ function rerenderLogin() {
   localizeNew(el);
 }
 
+/* ── Nhớ vị trí cuộn của từng màn (17/08/2026, yêu cầu user — CẢ 2 BẢN) ──
+   Bấm back từ PDP về PLP mà văng lên đầu danh sách thì người xem phải cuộn
+   lại từ đầu để tìm chỗ cũ — lỗi cơ bản của mọi trang danh sách.
+   CHỈ khôi phục khi đi LÙI (`opts.back`: nút back trình duyệt -> popstate);
+   đi TỚI vẫn về đầu trang như cũ.
+   Lúc modal/drawer đang khoá cuộn thì `window.scrollY` = 0, vị trí thật nằm ở
+   `__scrollLockY` — đọc nhầm là nhớ số 0. */
+const SCROLL_MEM = {};
+const curScrollY = () => (__scrollLockCount > 0 ? __scrollLockY
+  : (window.scrollY || document.documentElement.scrollTop || 0));
+
+/* Cuộn tới `y` rồi BÁM LẠI vài khung hình. Lý do: ngay sau khi thay DOM, trang
+   mới chưa cao đủ (đo thật lúc chạy bản mobile: 2072px, một lúc sau mới nở ra
+   5046px) nên cú scrollTo đầu tiên bị trình duyệt KẸP về đáy hiện có — nhớ
+   1400 mà về tới nơi chỉ còn 1260. Đặt lại mỗi khung cho tới khi toạ độ dính.
+   Dừng ngay khi người dùng tự cuộn/chạm/gõ phím — không giành scroll với họ. */
+function restoreScrollY(y) {
+  window.scrollTo(0, y);
+  if (!y) return;
+  const EVS = ['wheel', 'touchstart', 'keydown'];
+  let n = 0, stop = false;
+  const bail = () => { stop = true; EVS.forEach(ev => window.removeEventListener(ev, bail)); };
+  EVS.forEach(ev => window.addEventListener(ev, bail, { once: true, passive: true }));
+  const put = () => { if (!stop && Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y); };
+  const tick = () => {
+    if (stop || n++ > 20 || Math.abs(window.scrollY - y) <= 1) { bail(); return; }
+    put();
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  /* 2 mốc thời gian dự phòng: tab nền / cửa sổ ẩn thì requestAnimationFrame bị
+     đóng băng, vòng bám ở trên không chạy lấy một khung nào. */
+  setTimeout(put, 80); setTimeout(put, 250);
+}
+
 function go(name, opts = {}) {
   if (name === current) return;
   if (current && !opts.back) history.push(current);
+  if (current) SCROLL_MEM[current] = curScrollY();   // phải chốt TRƯỚC khi xoá DOM
 
   if (name === 'login' && current !== 'login') { loginFrom = current; if (!authViewIntent) authView = 'login'; authViewIntent = false; }
 
@@ -5912,8 +5951,9 @@ function go(name, opts = {}) {
   el.dataset.screen = name;
   el.innerHTML = RENDER[name]();
   viewport.appendChild(el);
-  window.scrollTo(0, 0);
-  void el.offsetWidth;
+  void el.offsetWidth;   // ép tính layout trước khi cuộn
+  if (opts.back) restoreScrollY(SCROLL_MEM[name] || 0);
+  else window.scrollTo(0, 0);
   el.classList.add('active');
 
   current = name;
@@ -5928,6 +5968,11 @@ function go(name, opts = {}) {
     window.history.pushState({ screen: name }, '');
   }
 }
+
+/* Tắt khôi phục cuộn tự động của trình duyệt: router tự dựng lại DOM nên toạ độ
+   trình duyệt nhớ theo entry là của một cây DOM đã biến mất — để 'auto' thì nó
+   ghi đè lên vị trí SCROLL_MEM vừa khôi phục. */
+if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
 
 // Nút back của trình duyệt hoặc thao tác vuốt back (mobile) sẽ bắn sự kiện
 // này — tra state đã lưu và render lại đúng màn trước đó trong router nội bộ.
