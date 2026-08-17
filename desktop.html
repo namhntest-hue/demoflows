@@ -653,15 +653,33 @@ window.RESP = (function () {
      KHÔNG khai box-shadow — .press:focus-visible đang dùng box-shadow làm vòng
      focus duy nhất của nav. */
   .navbar .dk-dept,
-  .navbar .dk-nav-link:not(.text-destructive),
   /* Kéo theo cả nhóm tiện ích cùng thanh (English / Danh sách cửa hàng): trong
      component chúng DÙNG CHUNG mức với dept ở trạng thái nghỉ, hạ mỗi dept thì
      hàng tiện ích bỗng dưng đậm hơn menu — trông như lỗi căn mức. */
   .navbar .text-mid-alt { color: var(--general-muted-foreground); }
-  .navbar .dk-dept:hover,
-  .navbar .dk-nav-link:not(.text-destructive):hover { color: var(--unofficial-foreground-alt); }
+  .navbar .dk-dept:hover { color: var(--unofficial-foreground-alt); }
   .navbar .dk-dept[aria-current],
   .navbar .dk-nav-link[aria-current] { color: var(--general-primary); }
+  /* ── SUBHEADER: mặc định secondary-foreground, hover thì LÀM MỜ CÁC MỤC KHÁC ──
+     Chốt 17/08/2026 (yêu cầu user). Trước đây subheader dùng chung thang mực 3
+     bậc với hàng dept (nghỉ #737373 → hover #404040), tức phải HOVER mới đọc rõ.
+     Nay: nghỉ đã là #262626 cho dễ đọc; hover vào thanh thì mọi mục tụt về
+     #737373 và mục đang trỏ ĐẬM LÊN #0a0a0a (chốt lại 17/08/2026 — bản đầu giữ
+     mục đang trỏ ở #262626, user chê chưa đủ tối so với phần còn lại).
+     => Hover ăn 2 chiều một lúc: mục đang trỏ đen nhất, các mục kia mờ nhất,
+     khoảng cách 3 bậc mực nên nhìn ra ngay đang trỏ vào đâu.
+     · `:not([aria-current])` để mục đang xem vẫn đứng ở #0a0a0a, không mờ theo.
+     · `:not(.text-destructive)` để "Khuyến mãi" giữ màu đỏ ở mọi state (đúng
+       component Destructive). */
+  .navbar .dk-nav-link:not(.text-destructive) { color: var(--general-secondary-foreground); }
+  /* `:not(:hover)` trong rule làm mờ là BẮT BUỘC, không phải cho đẹp: bản đầu
+     viết `.dk-nav-strip:hover .dk-nav-link:not(.text-destructive):not([aria-current])`
+     (specificity 5) còn rule cho mục đang trỏ là `.dk-nav-strip .dk-nav-link:not(...):hover`
+     (specificity 4) -> rule mờ THẮNG luôn cả mục đang trỏ, nên hover vào thì cả
+     thanh mờ đều, không mục nào đen lên (đúng lỗi user báo). Loại thẳng mục đang
+     trỏ ra khỏi rule mờ thì hết phải đấu specificity. */
+  .dk-nav-strip:hover .dk-nav-link:not(:hover):not(.text-destructive):not([aria-current]) { color: var(--general-muted-foreground); }
+  .dk-nav-strip .dk-nav-link:not(.text-destructive):hover { color: var(--general-primary); }
   /* Hàng giới tính + Làm đếp còn thêm KÊNH ĐỘ DÀY (chỉ đạo user 13/08/2026):
      nghỉ 400 — đúng component Header (dept row là Regular, khác hàng danh mục
      subheader là Medium) — và đang chọn 600 (chốt lại 13/08/2026, nhảy 2 bậc
@@ -1293,15 +1311,22 @@ const dkCatAttrs = (title, crumbs = []) =>
    đường dẫn danh mục, trước đây đậm + gạch chân thành ra hút mắt hơn cả tên
    nhóm phía trên. */
 function dkMegaCol(title, allLabel, allAttrs, items, itemAttrs) {
-  const link = 'text-left text-[14px] leading-5 text-foreground-alt hover:text-foreground transition-colors press';
+  /* Cỡ chữ nav lên 16 và tiêu đề cột lên 14 (17/08/2026, yêu cầu user) — đều
+     nằm trong thang text style, xem README mục "Thang chữ". */
+  const link = 'text-left text-[16px] leading-6 text-foreground-alt hover:text-foreground transition-colors press';
   return `
   <div class="flex flex-col gap-3 min-w-0">
     ${title
-      ? `<p class="text-[12px] font-medium leading-4 tracking-[0.08em] text-muted-foreground pb-4">${title}</p>`
+      /* UPPERCASE bằng CLASS `uppercase`, KHÔNG viết hoa trong chuỗi: chuỗi gốc
+         là key i18n ("Nam"/"Nữ"/"Thương hiệu"…), gõ hoa vào là mất bản dịch.
+         Đây là NGOẠI LỆ có chủ ý của quy ước "không dùng uppercase" (yêu cầu
+         user 17/08/2026) — chỉ áp cho nhãn nhóm mute trong mega panel.
+         Weight về regular (400), giữ tracking .08em cho chữ hoa đỡ bí. */
+      ? `<p class="text-[14px] font-normal leading-5 tracking-[0.08em] uppercase text-muted-foreground pb-4">${title}</p>`
       /* Cột không có tiêu đề (2 cột thương hiệu sau) vẫn phải chừa ĐÚNG khối
          tiêu đề để dòng chữ đầu thẳng hàng với các cột khác — dùng lại chính
          class ở trên nên sửa nhịp 1 chỗ là cả 2 nhánh đi theo. */
-      : `<p class="text-[12px] leading-4 pb-4" aria-hidden="true">&nbsp;</p>`}
+      : `<p class="text-[14px] leading-5 pb-4" aria-hidden="true">&nbsp;</p>`}
     ${allLabel ? `<button ${allAttrs} class="${link}">${allLabel}</button>` : ''}
     ${items.map(it => `<button ${itemAttrs(it)} class="${link}">${it}</button>`).join('')}
   </div>`;
@@ -1441,7 +1466,7 @@ function navBar({ logoOnly = false, plp = false } = {}) {
       : (plpMode.title || '');
 
   const dept = DK_DEPTS.map(d => `
-    <button ${dkCatAttrs(d, [d])} data-dkdept="${d}"${d === dkDept ? ' aria-current="true"' : ''} class="dk-dept ghost-hover h-9 px-4 rounded-xs flex items-center text-[14px] leading-5 transition-colors press">${d}</button>`).join('');
+    <button ${dkCatAttrs(d, [d])} data-dkdept="${d}"${d === dkDept ? ' aria-current="true"' : ''} class="dk-dept ghost-hover h-9 px-4 rounded-xs flex items-center text-[16px] leading-6 transition-colors press">${d}</button>`).join('');
 
   return `
   <div class="navbar sticky top-[-32px] z-50">
@@ -1504,7 +1529,7 @@ function navBar({ logoOnly = false, plp = false } = {}) {
           <div class="dk-nav-strip flex-1 min-w-0 flex items-center h-full overflow-x-auto no-scrollbar">
             ${dkCats.map(({ item, i, panel }) => `
             <div class="dk-nav-item h-full flex items-center shrink-0"${panel ? ` data-mega="${i}"` : ''}>
-              <button ${item.dept ? dkCatAttrs(item.label, [item.dept]) : dkCatAttrs(item.label)}${dkCurCat && item.label === dkCurCat ? ' aria-current="page"' : ''} class="dk-nav-link btn-gm h-9 px-4 rounded-xs flex items-center text-[14px] font-medium leading-5 whitespace-nowrap press transition-colors ${item.sale ? 'text-destructive' : ''}">${item.label}</button>
+              <button ${item.dept ? dkCatAttrs(item.label, [item.dept]) : dkCatAttrs(item.label)}${dkCurCat && item.label === dkCurCat ? ' aria-current="page"' : ''} class="dk-nav-link btn-gm h-9 px-4 rounded-xs flex items-center text-[16px] font-medium leading-6 whitespace-nowrap press transition-colors ${item.sale ? 'text-destructive' : ''}">${item.label}</button>
             </div>`).join('')}
           </div>
           <div data-nav-prev-wrap class="hidden absolute left-0 top-0 bottom-0 z-10 items-center pr-8"
@@ -1681,13 +1706,16 @@ function plpProducts() {
   const beauty = isBeautyPlp();
   return all.filter(({ p }) => (p.dept === 'beauty') === beauty);
 }
-/* ── Breadcrumb desktop — component Breadcrumb (2903:45117): hàng cao 36,
-   ngăn cách bằng chấm tròn 16×16 (fi-ts-single dot), chữ 14/20 #737373.
-   Mỗi đoạn 1 span để i18n dịch được. ── */
+/* ── Breadcrumb desktop — component Breadcrumb (2903:45117) ──
+   Ngăn cách bằng chấm tròn 16×16 (fi-ts-single dot), mỗi đoạn 1 span để i18n
+   dịch được. Chữ 14/20.
+   ĐỔI 17/08/2026 (yêu cầu user): hàng cao 36 → 40 (`h-10`) và màu lên một tông,
+   `text-muted-foreground` #737373 → `text-secondary-foreground` #262626 — dùng
+   cho cả PLP lẫn PDP. ── */
 const IcoCrumbDot = `<svg width="16" height="16" viewBox="0 0 16 16" class="shrink-0" aria-hidden="true"><circle cx="8" cy="8" r="1.5" fill="currentColor"/></svg>`;
 function dkCrumbs(parts) {
   return `
-  <div class="flex gap-1 items-center px-6 h-9 text-[14px] leading-5 text-muted-foreground">
+  <div class="flex gap-1 items-center px-6 h-10 text-[14px] leading-5 text-secondary-foreground">
     ${parts.map((t, i) => `${i ? IcoCrumbDot : ''}<span>${t}</span>`).join('')}
   </div>`;
 }
@@ -2220,7 +2248,11 @@ function dkScreenPDP(kind) {
           <!-- header -->
           <div class="flex flex-col pb-4 rise">
             <div class="flex flex-col gap-2 pb-4">
-              <h1 class="text-[24px] font-light leading-8 text-foreground">${P.brand}</h1>
+              <!-- Tên thương hiệu: MEDIUM ở mọi chỗ (chốt 17/08/2026, yêu cầu user).
+             Chỗ này trước là 24 Light theo quy ước "tiêu đề trang dùng Light" —
+             nhưng brand name xuất hiện ở 7 chỗ khác đều Medium, để Light riêng ở
+             PDP thành ra lệch nhất giữa các màn. -->
+        <h1 class="text-[24px] font-medium leading-8 text-foreground">${P.brand}</h1>
               <p class="text-[14px] leading-5 text-foreground-alt">${P.name}</p>
             </div>
             <div class="flex flex-col gap-2">
