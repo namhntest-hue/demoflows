@@ -5968,14 +5968,23 @@ let __scrollLockCount = 0, __scrollLockY = 0;
 function lockBodyScroll() {
   if (__scrollLockCount === 0) {
     __scrollLockY = window.scrollY || document.documentElement.scrollTop || 0;
-    Object.assign(document.body.style, { position: 'fixed', top: `-${__scrollLockY}px`, left: '0', right: '0', width: '100%' });
+    /* BÙ CHỖ SCROLLBAR (17/08/2026, đồng bộ với desktop.html): position:fixed
+       làm trang hết tràn -> mất thanh cuộn -> vùng nội dung rộng thêm, mọi thứ
+       neo phải nhảy sang phải. Trên điện thoại thật scrollbar là overlay (0px)
+       nên phép trừ ra 0 và không đổi gì; chỉ có tác dụng khi xem bằng máy tính.
+       box-sizing: border-box (preflight) nên padding-right ăn vào width:100%. */
+    const sbw = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+    Object.assign(document.body.style, {
+      position: 'fixed', top: `-${__scrollLockY}px`, left: '0', right: '0', width: '100%',
+      paddingRight: sbw ? `${sbw}px` : '',
+    });
   }
   __scrollLockCount++;
 }
 function unlockBodyScroll() {
   __scrollLockCount = Math.max(0, __scrollLockCount - 1);
   if (__scrollLockCount === 0) {
-    Object.assign(document.body.style, { position: '', top: '', left: '', right: '', width: '' });
+    Object.assign(document.body.style, { position: '', top: '', left: '', right: '', width: '', paddingRight: '' });
     window.scrollTo(0, __scrollLockY);
   }
 }

@@ -501,11 +501,12 @@ window.RESP = (function () {
      KHÔNG ĐỔ BÓNG (chốt 17/08/2026, yêu cầu user — tham chiếu cettire.com/vn):
      đi hẳn hướng phẳng, viền lo việc tách mặt phẳng khỏi nền, backdrop tối lo
      phần còn lại. Trước đó có 5 giá trị bóng, gom về 1 rồi bỏ luôn.
-     `.dk-mega` KHÔNG nằm trong danh sách này: panel menu phải LIỀN MẠCH với
-     header (trắng nối trắng, không viền không bóng) — xem khối mega menu.
+     2 mặt KHÔNG nằm trong danh sách này vì phải LIỀN MẠCH với header (kính nối
+     kính, không viền không bóng): `.dk-mega` (panel menu) và `#dkSearchLayer
+     .ds-sheet` (tấm gợi ý tìm kiếm) — xem rule riêng của từng cái.
      Sửa 1 chỗ này là đổi cả bộ; ĐỪNG thêm border/box-shadow vào từng mặt. */
   .dk-modal, .dk-drawer, .lp-card,
-  #infoSheet .is-panel, #filterSheet .fs-panel, #dkSearchLayer .ds-sheet,
+  #infoSheet .is-panel, #filterSheet .fs-panel,
   #cookieBar, #settingsPanel .sp-card, #sortMenu, [data-size-list] {
     border: 1px solid var(--general-border);
     box-shadow: none;
@@ -695,26 +696,83 @@ window.RESP = (function () {
      420px neo dưới ô nhập của bản trước. Nội dung bên trong bó về 600px cho
      dễ đọc dù layer trải hết bề ngang. z-index 200 để nằm trên header (50)
      và mega panel, nhưng dưới toast/sheet (220+). */
-  #dkSearchLayer { position: fixed; inset: 0; z-index: 200; pointer-events: none; }
+  /* overflow:hidden + visibility có TRỄ — SỬA LỖI user chụp 17/08/2026 "đóng
+     search mà layer chưa mất hẳn":
+     tấm `.ds-sheet` lúc đóng bị đẩy `translateY(-100%)`. Trước đây khung layer
+     bắt đầu từ mép trên màn nên phần đẩy lên đó ra ngoài viewport là biến mất.
+     Từ khi ô nhập dời lên header, layer bắt đầu DƯỚI thanh nav (top = đáy nav)
+     nên phần bị đẩy lên rơi đúng vào dải thanh nav và VẪN HIỆN, đè lên header
+     (z-index 200 > nav 50) — nhìn ra mấy dòng "Khăn lụa / Thắt lưng" + giá gạch
+     ngang lởn vởn trên đầu trang.
+     `overflow: hidden` cắt đúng phần tràn ra ngoài khung; `visibility` trễ .36s
+     là lưới an toàn cho trường hợp transform không chạy (tab nền/cửa sổ ẩn). */
+  #dkSearchLayer {
+    position: fixed; inset: 0; z-index: 200; pointer-events: none;
+    overflow: hidden;
+    visibility: hidden; transition: visibility 0s linear .36s;
+  }
   #dkSearchLayer .ds-backdrop {
     position: absolute; inset: 0; background: rgba(0,0,0,.45);
     opacity: 0; transition: opacity .3s ease;
   }
   #dkSearchLayer .ds-sheet {
     position: absolute; left: 0; right: 0; top: 0;
-    background: var(--general-background);
+    /* Nền: glass-95 + backdrop-blur-[7.5px] khai ở MARKUP, đúng bộ của thanh nav
+       và mega panel (17/08/2026, yêu cầu user "dùng blur background như menu").
+       Không đặt background ở đây nữa kẻo đè lên lớp kính.
+       Cũng KHÔNG viền/bóng — cùng lý do với .dk-mega: tấm này bám ngay dưới hàng
+       nav nên phải đọc ra là phần nối dài của thanh, không phải thẻ nổi. */
+    border: 0; box-shadow: none;
     max-height: 86vh; overflow-y: auto;
-    /* viền + bóng: xem khối "KHUÔN CHUNG CHO MỌI LỚP NỔI" */
     transform: translateY(-100%); transition: transform .35s cubic-bezier(.22,1,.36,1);
   }
-  #dkSearchLayer.open { pointer-events: auto; }
+  #dkSearchLayer.open { pointer-events: auto; visibility: visible; transition-delay: 0s; }
   #dkSearchLayer.open .ds-backdrop { opacity: 1; }
   #dkSearchLayer.open .ds-sheet { transform: none; }
   /* Các số đo dưới đây không có sẵn trong tailwind.css đã build nên đặt tay.
      Khung trong bó 1240 (cùng cỡ với khung thanh toán), riêng Ô NHẬP vẫn giữ
      max 600 canh giữa như yêu cầu trước. */
   #dkSearchLayer .ds-inner { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
-  #dkSearchLayer .ds-field { max-width: 600px; }
+  /* ── Ô nhập tìm kiếm ĐÈ LÊN HÀNG NAV, CANH GIỮA (17/08/2026, yêu cầu user —
+     tham chiếu stradivarius.com) ──
+     Ô absolute trong #dkNavRow với LỀ HAI BÊN BẰNG NHAU (`--dk-search-inset`)
+     nên nó nằm chính giữa hàng nav thay vì tràn hết sang trái như bản đầu.
+     Con số 230 = bề rộng cụm phải TỪ icon search trở đi (search 44 + ngôn ngữ
+     ~94 + tài khoản 44 + giỏ 44 = 226) + 4 hở → mép phải của ô đứng sát ngay
+     icon search, và vì icon search là phần tử ĐẦU của cụm nên hiệu ứng quét từ
+     phải sang trái vẫn đọc ra là "ô trượt ra từ icon search".
+     KIỂU Ô: nền xám đặc (--general-secondary) + bo 2, KHÔNG gạch chân — chốt
+     17/08/2026; focus thì viền chuyển primary, cùng ngôn ngữ với mọi input khác
+     trong file (`focus:border-primary`).
+     Animation: `clip-path` (không animate width vì chữ bị nén, không scaleX vì
+     méo chữ). Ngành hàng + logo mờ đi để hàng nav sạch, ô nổi giữa. */
+  #dkNavRow { --dk-search-inset: 230px; }
+  #dkNavSearchField {
+    position: absolute; left: var(--dk-search-inset); right: var(--dk-search-inset);
+    top: 50%; transform: translateY(-50%);
+    display: flex; align-items: center; height: 40px; padding: 0 12px;
+    background: var(--general-secondary);
+    border: 1px solid transparent; border-radius: var(--radius-2);
+    clip-path: inset(0 0 0 100%); opacity: 0; pointer-events: none;
+    transition: clip-path .38s cubic-bezier(.22,1,.36,1), opacity .18s ease, border-color .15s ease;
+  }
+  /* Cờ trạng thái đặt trên .navbar (không phải #dkNavRow) vì còn phải tắt cả
+     subheader — nó là khối EM của hàng nav, không nằm trong #dkNavRow. */
+  .navbar.search-open #dkNavSearchField { clip-path: inset(0); opacity: 1; pointer-events: auto; }
+  #dkNavSearchField:focus-within { border-color: var(--general-primary); }
+  #dkNavLeft, #dkNavLogo, #dkSubRow { transition: opacity .22s ease; }
+  .navbar.search-open #dkNavLeft,
+  .navbar.search-open #dkNavLogo,
+  /* Mở tìm kiếm thì SUBHEADER TẮT (17/08/2026, yêu cầu user) — tắt bằng opacity
+     chứ không display:none để navbar không tụt 52px làm cả trang giật. */
+  .navbar.search-open #dkSubRow { opacity: 0; pointer-events: none; }
+  #dkSearchInput {
+    flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
+    padding: 0; -webkit-appearance: none; appearance: none;
+    font-size: 14px; line-height: 20px; color: var(--general-foreground);
+  }
+  #dkSearchInput::placeholder { color: var(--general-muted-foreground); }
+  #dkSearchInput::-webkit-search-cancel-button { display: none; }
   /* 2 cột: trái = lịch sử/gợi ý + từ khóa · phải = sản phẩm nổi bật, ngăn bằng
      đường dọc như tham chiếu Versace. */
   #dkSearchLayer .ds-cols { display: flex; gap: 40px; }
@@ -1164,6 +1222,16 @@ function menuSheet() {
 ════════════════════════════════════════════════════════════════ */
 const IcoGlobe = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--general-primary)" stroke-width="1.4"><circle cx="12" cy="12" r="9.25"/><path d="M2.75 12h18.5M12 2.75c2.5 2.4 3.75 5.5 3.75 9.25S14.5 18.85 12 21.25C9.5 18.85 8.25 15.75 8.25 12S9.5 5.15 12 2.75Z"/></svg>`;
 const IcoPin = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--general-primary)" stroke-width="1.4"><path d="M12 21.25s-7.25-5.5-7.25-11A7.25 7.25 0 0 1 12 3a7.25 7.25 0 0 1 7.25 7.25c0 5.5-7.25 11-7.25 11Z"/><circle cx="12" cy="10.25" r="2.75"/></svg>`;
+/* Cờ cho nút ngôn ngữ (17/08/2026, yêu cầu user) — hiện NGÔN NGỮ ĐANG DÙNG:
+   cờ Việt + VIE, đổi sang EN thì cờ Anh + ENG. Vẽ tay ở tỉ lệ 20×14 (3:2 của
+   cờ Việt Nam), KHÔNG lấy emoji 🇻🇳 vì Windows không có glyph cờ, ra 2 chữ cái. */
+const IcoFlagVN = `<svg width="20" height="14" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="20" height="14" rx="1.5" fill="#da251d"/><path d="M10 3.1l1.13 3.47h3.65l-2.95 2.14 1.12 3.47L10 10.03l-2.95 2.15 1.12-3.47-2.95-2.14h3.65z" fill="#ffcd00"/></svg>`;
+const IcoFlagEN = `<svg width="20" height="14" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="20" height="14" rx="1.5" fill="#012169"/><path d="M0 0l20 14M20 0L0 14" stroke="#fff" stroke-width="2.6"/><path d="M0 0l20 14M20 0L0 14" stroke="#c8102e" stroke-width="1.4"/><path d="M10 0v14M0 7h20" stroke="#fff" stroke-width="4.4"/><path d="M10 0v14M0 7h20" stroke="#c8102e" stroke-width="2.6"/></svg>`;
+/* Nút hiện NGÔN NGỮ SẼ CHUYỂN SANG, không phải ngôn ngữ đang dùng (chốt lại
+   17/08/2026 theo user): đang tiếng Việt -> cờ Anh + ENG, bấm là sang English. */
+const dkLangChip = () => (LANG === 'vi'
+  ? `${IcoFlagEN}<span class="dklang-label" data-i18n-skip>ENG</span>`
+  : `${IcoFlagVN}<span class="dklang-label" data-i18n-skip>VIE</span>`);
 
 /* Cấu hình subheader: label hiển thị + nguồn dữ liệu mega menu */
 /* Hàng dept (tầng nav trên) = 3 NGÀNH HÀNG ngang cấp: Nam · Nữ · Làm đẹp.
@@ -1294,7 +1362,13 @@ function dkMegaPanel(item, id) {
     return '';
   }
   return `
-  <div class="dk-mega absolute left-0 right-0 top-full bg-background z-50" data-mega="${id}">
+  <!-- glass-95 + backdrop-blur ĐÚNG BẰNG thanh nav (.navbar, .dk-sub) để panel
+       đọc ra là phần nối dài của thanh chứ không phải một tấm trắng đè lên
+       (yêu cầu user 17/08/2026). Trước đó panel dùng bg-background đặc, tụt
+       xuống dưới thanh kính là thấy rõ mối nối.
+       LƯU Ý: khối này nằm trong template literal — comment TUYỆT ĐỐI không
+       được chứa dấu backtick, dính vào là đứt chuỗi, cả file không chạy. -->
+  <div class="dk-mega absolute left-0 right-0 top-full glass-95 backdrop-blur-[7.5px] z-50" data-mega="${id}">
     <!-- 4 cột đều nhau: tối đa 3 cột nội dung + ảnh ghim ở cột 4 (.dk-mega-grid).
          Mục nào ít nhóm hơn (vd Túi xách chỉ Nam/Nữ) thì bỏ trống cột 3, KHÔNG
          kéo giãn cột — mọi panel phải cùng một lưới. -->
@@ -1372,23 +1446,27 @@ function navBar({ logoOnly = false, plp = false } = {}) {
     <!-- main nav (Nav 1440×60): dept trái · logo giữa · tiện ích phải
          Figma Nav không có viền dưới — chỉ giữ 1 hairline ở đáy cả khối (.navbar::after) -->
     <div class="glass-95 backdrop-blur-[7.5px]">
-      <div class="max-w-[1440px] mx-auto h-[60px] px-2 flex items-center">
-        <div class="flex-1 flex items-center justify-start">${dept}</div>
-        <img src="${A}logo.png" alt="DAFC" class="h-5 w-[93px] object-contain cursor-pointer press shrink-0" data-nav="plp">
+      <div id="dkNavRow" class="max-w-[1440px] mx-auto h-[60px] px-2 flex items-center relative">
+        <div id="dkNavLeft" class="flex-1 flex items-center justify-start">${dept}</div>
+        <img id="dkNavLogo" src="${A}logo.png" alt="DAFC" class="h-5 w-[93px] object-contain cursor-pointer press shrink-0" data-nav="plp">
+        <!-- Cụm tiện ích (đổi 17/08/2026, yêu cầu user): nút ngôn ngữ thành CỜ +
+             mã 3 chữ · BỎ nút "Danh sách cửa hàng" · nút TÌM KIẾM dời từ
+             subheader lên đây, đứng cạnh nút ngôn ngữ. -->
         <div class="flex-1 flex items-center justify-end px-0.5">
-          <button data-dklang class="ghost-hover h-9 px-4 rounded-xs flex items-center gap-2 text-[14px] font-medium leading-5 text-mid-alt transition-colors press">
-            <span class="w-4 h-4 flex items-center justify-center [&_svg]:w-4 [&_svg]:h-4">${IcoGlobe}</span>
-            <span class="dklang-label">${LANG === 'vi' ? 'English' : 'Tiếng Việt'}</span>
-          </button>
-          <button data-toast="Danh sách cửa hàng" class="ghost-hover h-9 px-4 rounded-xs flex items-center gap-2 text-[14px] font-medium leading-5 text-mid-alt transition-colors press">
-            <span class="w-4 h-4 flex items-center justify-center [&_svg]:w-4 [&_svg]:h-4">${IcoPin}</span>
-            <span>Danh sách cửa hàng</span>
-          </button>
+          <button id="dkSearchBtn" class="ghost-hover w-11 h-11 rounded-xs flex items-center justify-center press [&_svg]:w-4 [&_svg]:h-4" aria-label="Tìm kiếm">${I.search}</button>
+          <button data-dklang class="ghost-hover h-9 px-3 rounded-xs flex items-center gap-2 text-[14px] font-medium leading-5 text-mid-alt transition-colors press" aria-label="Đổi ngôn ngữ">${dkLangChip()}</button>
           <button class="ghost-hover w-11 h-11 rounded-xs flex items-center justify-center press [&_svg]:w-4 [&_svg]:h-4" data-nav="${ckAuth ? 'account' : 'login'}" aria-label="Tài khoản">${I.user}</button>
           <button data-nav="cart" class="ghost-hover w-11 h-11 rounded-xs flex items-center justify-center press relative [&_svg]:w-4 [&_svg]:h-4" aria-label="Giỏ hàng">
             ${I.bag}
             <span class="cart-badge absolute top-1.5 right-1 min-w-[15px] h-[15px] px-1 rounded-full bg-destructive text-primary-foreground text-[9px] font-bold flex items-center justify-center">${cartQty}</span>
           </button>
+        </div>
+        <!-- Ô nhập tìm kiếm: ĐÈ LÊN CẢ HÀNG NAV (đổi 17/08/2026 theo tham chiếu
+             stradivarius.com) — trải từ mép trái khung tới sát icon search, quét
+             mở từ phải sang trái; ngành hàng + logo mờ đi, chỉ 3 icon phải giữ
+             lại. Nằm cuối hàng để vẽ ĐÈ LÊN, không cần z-index. -->
+        <div id="dkNavSearchField">
+          <input id="dkSearchInput" type="search" placeholder="Bạn đang tìm kiếm gì" autocomplete="off" enterkeyhint="search">
         </div>
       </div>
     </div>
@@ -1399,7 +1477,12 @@ function navBar({ logoOnly = false, plp = false } = {}) {
          2 mũi tên kiểu Farfetch, KHÔNG bóp padding nút. Mega panel render NGOÀI
          thanh cuộn (sibling) vì overflow-x sẽ cắt mất panel nếu để bên trong. -->
     <div class="dk-sub glass-95 backdrop-blur-[7.5px] relative">
-      <div class="max-w-[1440px] mx-auto h-[52px] px-2 flex items-center justify-between gap-4">
+      <!-- id để ẨN RIÊNG PHẦN CHỮ của subheader khi mở tìm kiếm (17/08/2026):
+           ẩn cả khối dk-sub thì navbar tụt 52px, cả trang giật lên rồi giật
+           xuống lúc đóng. Giữ nguyên khối (còn nền kính, còn chiếm chỗ), chỉ cho
+           nội dung mờ về 0 — tấm gợi ý kéo lên phủ đúng dải đó.
+           (Comment trong template literal: KHÔNG được có dấu backtick.) -->
+      <div id="dkSubRow" class="max-w-[1440px] mx-auto h-[52px] px-2 flex items-center justify-between gap-4">
         <!-- Mũi tên là OVERLAY ở 2 mép (kiểu Farfetch), không nằm trong luồng:
              ẩn/hiện chúng không đổi bề rộng thanh cuộn nên danh mục không bị
              nhảy khi cuộn. Mỗi bên chỉ hiện khi hướng đó CÒN nội dung. -->
@@ -1419,16 +1502,8 @@ function navBar({ logoOnly = false, plp = false } = {}) {
             <button class="dk-nav-arrow press w-9 h-9 rounded-xs flex items-center justify-center" data-nav-next aria-label="Xem danh mục tiếp">${I.chevR('var(--unofficial-foreground-alt)')}</button>
           </div>
         </nav>
-        <!-- Ô nhập 270px của Figma (2171:12954) đổi thành NÚT: bấm mở layer tìm
-             kiếm đè lên trang (cùng ý đồ với bản mobile — ở đó tìm kiếm là một
-             màn riêng phủ kín). Nút theo dáng Button/Ghost h-36 như mọi nút
-             tiện ích khác trên header, ô nhập thật nằm trong layer. -->
-        <div id="dkSearchWrap" class="shrink-0 px-2">
-          <button id="dkSearchBtn" class="ghost-hover h-9 px-3 rounded-xs flex items-center gap-2 press" aria-label="Tìm kiếm">
-            <span class="w-4 h-4 flex items-center justify-center shrink-0 [&_svg]:w-4 [&_svg]:h-4 opacity-60">${I.search}</span>
-            <span class="text-[14px] font-medium leading-5 text-foreground-alt">Tìm kiếm</span>
-          </button>
-        </div>
+        <!-- Nút tìm kiếm ĐÃ DỜI LÊN hàng nav trên (17/08/2026, yêu cầu user) —
+             subheader giờ chỉ còn thanh danh mục. -->
       </div>
       <!-- Mega panel: sibling của hàng nav (không nằm trong .dk-nav-strip có
            overflow-x). Vẫn absolute top-full bám .dk-sub nên rơi đúng dưới
@@ -5095,6 +5170,9 @@ function wireSubheader(root) {
   let timer = null;
 
   const setOpen = id => {
+    /* Mở mega panel thì đóng lớp tìm kiếm: 2 lớp phủ cùng lúc vừa rối vừa để
+       lại khoá cuộn của lớp tìm kiếm mà không còn nút đóng nào nhìn thấy. */
+    if (id != null && window.__closeDkSearch) window.__closeDkSearch();
     panels.forEach(p => p.classList.toggle('open', p.dataset.mega === id));
     items.forEach(it => it.classList.toggle('on', it.dataset.mega === id));
     sub.classList.toggle('mega-open', id != null);
@@ -5936,6 +6014,12 @@ function restoreScrollY(y) {
 }
 
 function go(name, opts = {}) {
+  /* Đóng lớp tìm kiếm TRƯỚC KHI đổi màn — và trước cả lệnh return bên dưới, để
+     bấm đúng màn đang đứng cũng đóng. Không có dòng này thì mở ô tìm kiếm rồi
+     bấm icon giỏ/tài khoản/danh mục là: header dựng lại (ô nhập biến mất) nhưng
+     tấm gợi ý vẫn mở và __scrollLockCount còn 1 -> trang đứng cứng, không cuộn
+     được, không còn nút nào để đóng. (Lỗi user báo 17/08/2026.) */
+  if (window.__closeDkSearch) window.__closeDkSearch();
   if (name === current) return;
   if (current && !opts.back) history.push(current);
   if (current) SCROLL_MEM[current] = curScrollY();   // phải chốt TRƯỚC khi xoá DOM
@@ -5990,14 +6074,24 @@ let __scrollLockCount = 0, __scrollLockY = 0;
 function lockBodyScroll() {
   if (__scrollLockCount === 0) {
     __scrollLockY = window.scrollY || document.documentElement.scrollTop || 0;
-    Object.assign(document.body.style, { position: 'fixed', top: `-${__scrollLockY}px`, left: '0', right: '0', width: '100%' });
+    /* BÙ CHỖ SCROLLBAR (17/08/2026): position:fixed làm trang hết tràn -> mất
+       thanh cuộn -> vùng nội dung rộng thêm ~15px, mọi thứ neo phải NHẢY sang
+       phải đúng 15px. Trước đây không thấy vì sheet phủ kín màn; từ khi ô tìm
+       kiếm mở NGAY TRÊN header thì 3 icon cạnh nó nhảy rõ mồn một.
+       box-sizing: border-box (preflight) nên padding-right ăn vào width:100%,
+       trả lại đúng bề rộng vùng nội dung như lúc còn thanh cuộn. */
+    const sbw = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+    Object.assign(document.body.style, {
+      position: 'fixed', top: `-${__scrollLockY}px`, left: '0', right: '0', width: '100%',
+      paddingRight: sbw ? `${sbw}px` : '',
+    });
   }
   __scrollLockCount++;
 }
 function unlockBodyScroll() {
   __scrollLockCount = Math.max(0, __scrollLockCount - 1);
   if (__scrollLockCount === 0) {
-    Object.assign(document.body.style, { position: '', top: '', left: '', right: '', width: '' });
+    Object.assign(document.body.style, { position: '', top: '', left: '', right: '', width: '', paddingRight: '' });
     window.scrollTo(0, __scrollLockY);
   }
 }
@@ -6345,16 +6439,23 @@ function wire(root) {
   // ── Desktop header: nút mở layer tìm kiếm ──
   // Layer + toàn bộ logic gợi ý dựng MỘT LẦN ở cuối file (window.__openDkSearch)
   // vì nó nằm ngoài #viewport; ở đây chỉ nối nút của header đang render.
+  /* Nút search giờ là TOGGLE: đang mở thì chính nó (đã đổi thành ✕) đóng lại */
   const dkSearchBtn = root.querySelector('#dkSearchBtn');
-  if (dkSearchBtn) dkSearchBtn.addEventListener('click', () => window.__openDkSearch && window.__openDkSearch());
+  if (dkSearchBtn) dkSearchBtn.addEventListener('click', () => {
+    if (window.__dkSearchOpen && window.__dkSearchOpen()) window.__closeDkSearch();
+    else if (window.__openDkSearch) window.__openDkSearch();
+  });
+  // ô nhập nằm trong header vừa render -> nối listener cho đúng phần tử mới
+  if (window.__wireDkSearch) window.__wireDkSearch(root);
 
   // ── Desktop header: nút đổi ngôn ngữ (toggle VI ↔ EN, tái dùng flow settings panel) ──
   root.querySelectorAll('[data-dklang]').forEach(b => b.addEventListener('click', () => {
     const to = LANG === 'vi' ? 'en' : 'vi';
     const opt = document.querySelector(`#settingsPanel [data-lang="${to}"]`);
     if (opt) opt.click();
-    const lb = b.querySelector('.dklang-label');
-    if (lb) lb.textContent = LANG === 'vi' ? 'English' : 'Tiếng Việt';
+    /* Nút hiện NGÔN NGỮ ĐANG DÙNG nên phải vẽ lại cả cờ, không chỉ chữ.
+       LANG đã đổi sau khi click option ở trên -> dkLangChip() ra đúng cặp mới. */
+    b.innerHTML = dkLangChip();
   }));
 
   // Đăng nhập: mở từ PLP/PDP -> quay lại đó (giỏ sẽ thành bản thành viên);
@@ -8642,22 +8743,13 @@ const DK_SEARCH_HOT = ['Versace', 'Túi xách da', 'Giày loafer', 'Khăn lụa'
 document.body.insertAdjacentHTML('beforeend', `
   <div id="dkSearchLayer" aria-hidden="true">
     <div class="ds-backdrop"></div>
-    <div class="ds-sheet" role="dialog" aria-modal="true" aria-label="Tìm kiếm">
+    <div class="ds-sheet glass-95 backdrop-blur-[7.5px]" role="dialog" aria-modal="true" aria-label="Tìm kiếm">
       <div class="ds-inner">
-        <!-- Hàng ô nhập: field canh giữa (max 600), nút đóng neo mép phải để
-             không ăn vào bề rộng field. -->
-        <div class="relative flex items-center justify-center pt-8 pb-6">
-          <label class="ds-field w-full flex items-center gap-3 h-12 border-b border-border-4 focus-within:border-primary transition-colors">
-            <span class="w-5 h-5 flex items-center justify-center shrink-0 [&_svg]:w-5 [&_svg]:h-5 opacity-60">${I.search}</span>
-            <input id="dkSearchInput" type="search" placeholder="Bạn đang tìm kiếm gì" autocomplete="off" enterkeyhint="search"
-                   class="flex-1 min-w-0 outline-none text-[16px] leading-6 text-foreground placeholder:text-muted-foreground"
-                   style="background:transparent;border:0;padding:0;-webkit-appearance:none;appearance:none">
-            <button id="dkSearchClear" type="button" class="shrink-0 text-[14px] leading-5 text-muted-foreground press" style="display:none">Xóa</button>
-          </label>
-          <button id="dkSearchClose" class="absolute right-0 top-8 w-9 h-9 rounded-xs flex items-center justify-center ghost-hover press [&_svg]:w-3.5 [&_svg]:h-3.5" aria-label="Đóng tìm kiếm">${I.close}</button>
-        </div>
-
-        <div class="ds-cols pb-10">
+        <!-- Hàng ô nhập + nút đóng ĐÃ GỠ (17/08/2026, yêu cầu user): ô nhập giờ
+             nằm trên hàng nav, icon search ở đó tự đổi thành ✕ để đóng.
+             Phần dưới ô nhập giữ NGUYÊN như cũ — 2 cột gợi ý / sản phẩm; chỉ
+             thêm pt-8 vì hàng ô nhập cũ vốn gánh khoảng thở phía trên. -->
+        <div class="ds-cols pt-8 pb-10">
           <div class="ds-side flex flex-col gap-8">
             <div id="dkSearchTerms"></div>
             <div id="dkSearchHot"></div>
@@ -8672,8 +8764,14 @@ document.body.insertAdjacentHTML('beforeend', `
   </div>`);
 (() => {
   const layer = document.getElementById('dkSearchLayer');
-  const input = document.getElementById('dkSearchInput');
-  const clear = document.getElementById('dkSearchClear');
+  /* Ô nhập + nút search nằm trong navBar(), mà navBar() được DỰNG LẠI mỗi lần
+     go() -> KHÔNG được giữ tham chiếu, bắt lại theo id mỗi lần dùng, nếu không
+     là trỏ vào phần tử đã bị router xoá. Listener cho ô nhập gắn trong wire()
+     qua window.__wireDkSearch. */
+  const $in   = () => document.getElementById('dkSearchInput');
+  const $row  = () => document.getElementById('dkNavRow');
+  const $nav  = () => document.querySelector('.navbar');
+  const $btn  = () => document.getElementById('dkSearchBtn');
   const terms = document.getElementById('dkSearchTerms');
   const hot   = document.getElementById('dkSearchHot');
   const prods = document.getElementById('dkSearchProducts');
@@ -8691,8 +8789,8 @@ document.body.insertAdjacentHTML('beforeend', `
      đang gõ -> danh sách gợi ý. Cột phải KHÔNG đổi theo phím gõ để ảnh sản
      phẩm không nhấp nháy — cùng lý do bản mobile tách 2 pane. */
   const renderTerms = () => {
-    const q = input.value.trim();
-    clear.style.display = q ? '' : 'none';
+    const el = $in();
+    const q = (el ? el.value : '').trim();
     if (q) {
       const sug = searchSuggestions(q);
       terms.innerHTML = `
@@ -8746,33 +8844,50 @@ document.body.insertAdjacentHTML('beforeend', `
 
   const open = () => {
     if (layer.classList.contains('open')) return;
-    input.value = searchQuery || '';
+    const el = $in(), row = $row(), nav = $nav(), btn = $btn();
+    if (!el || !row || !nav || !btn) return;
+    el.value = searchQuery || '';
     render();
+    nav.classList.add('search-open');           // quét ô nhập + tắt subheader
+    btn.innerHTML = I.close;                    // icon search -> dấu ✕ (chính nó đóng)
+    btn.setAttribute('aria-label', 'Đóng tìm kiếm');
+    lockBodyScroll();                           // khoá cuộn TRƯỚC rồi mới đo nav
+    /* Tấm gợi ý bắt đầu ĐÚNG DƯỚI HÀNG NAV CHÍNH, tức KÉO LÊN phủ luôn dải
+       subheader vừa tắt (17/08/2026, yêu cầu user) — trước đó đo theo đáy cả
+       .navbar nên tấm này bắt đầu dưới subheader, chừa lại một dải trống.
+       Đo tại lúc mở vì chiều cao nav đổi theo trạng thái cuộn (promo bar). */
+    layer.style.top = Math.round(row.getBoundingClientRect().bottom) + 'px';
     layer.classList.add('open');
     layer.setAttribute('aria-hidden', 'false');
-    lockBodyScroll();
-    // đợi tấm trắng bắt đầu đổ xuống rồi mới focus, tránh giật cuộn
-    setTimeout(() => input.focus(), 120);
+    setTimeout(() => el.focus(), 60);
   };
   function close() {
+    const nav = $nav(), btn = $btn();
+    if (nav) nav.classList.remove('search-open');
+    if (btn) { btn.innerHTML = I.search; btn.setAttribute('aria-label', 'Tìm kiếm'); }
     if (!layer.classList.contains('open')) return;
     layer.classList.remove('open');
     layer.setAttribute('aria-hidden', 'true');
     unlockBodyScroll();
   }
 
-  input.addEventListener('input', renderTerms);   // chỉ cột trái đổi theo phím gõ
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { const q = input.value.trim(); if (q) goSearch(q); }
-    if (e.key === 'Escape') close();
-  });
-  clear.addEventListener('click', () => { input.value = ''; renderTerms(); input.focus(); });
   layer.querySelector('.ds-backdrop').addEventListener('click', close);
-  document.getElementById('dkSearchClose').addEventListener('click', close);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 
   localizeNew(layer);
   window.__openDkSearch = open;
+  window.__closeDkSearch = close;
+  window.__dkSearchOpen = () => layer.classList.contains('open');
+  /* Gọi trong wire() sau mỗi lần render: nối lại listener cho ô nhập MỚI */
+  window.__wireDkSearch = root => {
+    const el = root.querySelector('#dkSearchInput');
+    if (!el) return;
+    el.addEventListener('input', renderTerms);   // chỉ cột trái đổi theo phím gõ
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { const q = el.value.trim(); if (q) goSearch(q); }
+      if (e.key === 'Escape') close();
+    });
+  };
 })();
 
 /* ════════════════════════════════════════════════════════════════
