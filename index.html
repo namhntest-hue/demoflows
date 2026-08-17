@@ -3145,18 +3145,17 @@ function dafcRewards() {
   </div>`;
 }
 
-/* Nhãn dòng thu gọn: LUÔN là "Ưu đãi & khuyến mãi ( N )" (chốt user 17/08/2026
-   — tên mục không đổi theo trạng thái), N = số mã ĐANG ĐỦ ĐIỀU KIỆN. Mã ẩn và
-   mã chưa đạt mức không tính: đếm cả những thứ bấm vào không dùng được thì con
-   số nói dối. Con số chính là lý do để bấm vào — nói "có gì đó cho bạn ở đây"
-   mà không cần mở panel. */
-const voucherAvailCount = () => VOUCHERS.filter(v => !v.hidden && voucherEligible(v)).length;
-const voucherLabel = () => `Ưu đãi & khuyến mãi ( ${voucherAvailCount()} )`;
-/* Chữ phụ bên phải CHỈ báo đã áp mấy mã. Mặc định để TRỐNG (yêu cầu user
-   17/08/2026): chưa có gì để nói thì đừng nói, dòng gọn lại còn tên + số. Cũng
-   KHÔNG in số tiền giảm ở đây — khối tóm tắt ngay dưới đã có từng dòng
+/* Dòng thu gọn (chốt user 17/08/2026): TRÁI luôn là tên mục tĩnh "Ưu đãi &
+   khuyến mãi", PHẢI là con số — 2 trạng thái:
+     · chưa chọn: "( N )" với N = số mã ĐANG ĐỦ ĐIỀU KIỆN. Mã ẩn và mã chưa đạt
+       mức không tính: đếm cả những thứ bấm vào không dùng được thì số nói dối.
+     · đã chọn:  "( Đã áp dụng N )".
+   Không in số tiền giảm ở đây — khối tóm tắt ngay dưới đã có từng dòng
    "Giảm giá(<CODE>)" rồi. */
-const voucherHint = () => activeVouchers().length ? `Đã áp dụng ( ${activeVouchers().length} )` : '';
+const voucherAvailCount = () => VOUCHERS.filter(v => !v.hidden && voucherEligible(v)).length;
+const voucherHint = () => activeVouchers().length
+  ? `( Đã áp dụng ${activeVouchers().length} )`
+  : `( ${voucherAvailCount()} )`;
 
 /* Phiếu mua hàng: demo không có backend tra cứu mã thật, nên sinh số tiền giảm
    ổn định theo chuỗi mã (cùng 1 mã luôn ra cùng 1 số tiền) — 50,000 .. 1,000,000đ,
@@ -3252,7 +3251,7 @@ function discountPanel() {
         <div class="py-2">
           <button id="voucherTrigger" class="w-full min-h-9 flex items-center gap-2 press text-left">
             <span class="w-5 h-5 flex items-center justify-center shrink-0">${I.ticket()}</span>
-            <span id="voucherLabelText" class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground">${voucherLabel()}</span>
+            <span class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground">Ưu đãi &amp; khuyến mãi</span>
             <span id="voucherHintText" class="text-[14px] leading-5 text-muted-foreground truncate">${voucherHint()}</span>
             <span class="w-3.5 h-3.5 shrink-0 flex items-center justify-center">${I.chevR('var(--general-muted-foreground)')}</span>
           </button>
@@ -5341,6 +5340,11 @@ const I18N = {
   'DAFC Phiếu mua hàng':'DAFC Gift Voucher', 'Xóa sản phẩm đã chọn':'Remove selected',
   // ── Sheet chọn ưu đãi (17/08/2026) ──
   'Áp dụng ưu đãi':'Apply offers', 'Chọn ưu đãi':'Select offers',
+  /* KHÔNG dùng 'Offers & promotions' cho key này: chuỗi đó đã là bản dịch của
+     'Ưu đãi khuyến mãi' (tiêu đề mục ở PDP, không có dấu &) — I18N_REV lấy theo
+     VALUE nên 2 key trùng bản dịch thì key sau đè key trước, dịch ngược EN→VN
+     sẽ trả nhãn ở giỏ về dạng thiếu dấu &. */
+  'Ưu đãi & khuyến mãi':'Promotions & offers',
   'Ưu đãi vận chuyển':'Shipping offers', 'Ưu đãi mua nhiều':'Multi-buy offers', 'Chọn tối đa 1':'Up to 1',
   'Nhập mã ưu đãi':'Enter offer code', 'Dùng mã':'Use code',
   'Chưa chọn ưu đãi nào':'No offers selected', 'Mã không hợp lệ':'Invalid code',
@@ -5710,8 +5714,7 @@ const I18N_RE = [
   [/^Giảm giá\((.+)\)$/,              'Discount ($1)'],
   [/^Tiết kiệm ([\d,]+)đ$/,           'Save $1đ'],
   // sheet chọn ưu đãi — số tiền/số lượng là data nên phải là luật động
-  [/^Ưu đãi & khuyến mãi \( (\d+) \)$/, 'Offers & promotions ( $1 )'],
-  [/^Đã áp dụng \( (\d+) \)$/,        'Applied ( $1 )'],
+  [/^\( Đã áp dụng (\d+) \)$/,        '( $1 applied )'],
   [/^Đã chọn (\d+) ưu đãi$/,          '$1 offers selected'],
   [/^Đã áp dụng (\d+) ưu đãi$/,       '$1 offers applied'],
   [/^Đã gỡ (\d+) ưu đãi do đơn không còn đủ điều kiện$/, '$1 offers removed — the order no longer qualifies'],
@@ -5761,8 +5764,7 @@ const I18N_REV_RE = [
   [/^Use (\d+) points$/,              'Dùng $1 điểm'],
   [/^Discount \((.+)\)$/,             'Giảm giá($1)'],
   [/^Save ([\d,]+)đ$/,                'Tiết kiệm $1đ'],
-  [/^Offers & promotions \( (\d+) \)$/, 'Ưu đãi & khuyến mãi ( $1 )'],
-  [/^Applied \( (\d+) \)$/,           'Đã áp dụng ( $1 )'],
+  [/^\( (\d+) applied \)$/,           '( Đã áp dụng $1 )'],
   [/^(\d+) offers selected$/,         'Đã chọn $1 ưu đãi'],
   [/^(\d+) offers applied$/,          'Đã áp dụng $1 ưu đãi'],
   [/^(\d+) offers removed — the order no longer qualifies$/, 'Đã gỡ $1 ưu đãi do đơn không còn đủ điều kiện'],
@@ -7181,13 +7183,11 @@ function giftAppear(el, skipLang) {
 /* Cộng ưu đãi hội viên (đã đăng nhập) + mã giảm giá + N phiếu mua hàng -> render
    lại toàn bộ #discountLines (số dòng thay đổi động theo số phiếu đang áp) +
    cập nhật Tổng cộng / Tiết kiệm, không reload lại cả màn cart. */
-/* Cập nhật dòng thu gọn: nhãn (đếm ưu đãi khả dụng / đang áp) + chữ phụ bên
-   phải. Để ngoài wire() vì refreshCartSummary cũng phải gọi được — số khả dụng
-   đổi theo giỏ, và mã có thể TỰ RỚT khi giỏ teo lại. */
+/* Cập nhật con số bên phải dòng thu gọn (khả dụng / đã áp). Để ngoài wire() vì
+   refreshCartSummary cũng phải gọi được — số khả dụng đổi theo giỏ, và mã có
+   thể TỰ RỚT khi giỏ teo lại. Tên mục bên trái là chữ tĩnh, không đụng tới. */
 function renderVoucherUI(root) {
   if (!root) return;
-  const label = root.querySelector('#voucherLabelText');
-  if (label) { label.textContent = voucherLabel(); localizeNew(label); }
   const hint = root.querySelector('#voucherHintText');
   if (hint) { hint.textContent = voucherHint(); localizeNew(hint); }
 }
