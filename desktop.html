@@ -2918,21 +2918,18 @@ function dafcRewards() {
   </div>`;
 }
 
-/* Mã đang áp hiện thành chip có nút gỡ, ngay dưới dòng "Áp dụng ưu đãi" — để
-   thấy được đang dùng ưu đãi nào mà không phải mở panel ra xem. Nhiều mã thì
-   nhiều chip (bản trước chỉ 1 mã nên chỉ 1 chip).
-   Cùng style badge với phiếu mua hàng (bg-secondary, rounded, h-6); mã vận
-   chuyển không có số tiền nên in chữ "Miễn phí vận chuyển" thay cho -Xđ. */
-function voucherChips() {
-  return activeVouchers().map(v => `
-  <span class="bg-secondary rounded flex items-center gap-1.5 px-2 py-0.5 h-6" data-voucher-chip="${v.code}">
-    <span data-i18n-skip class="text-[12px] font-medium leading-4 text-secondary-foreground">${v.code}</span>
-    <span class="text-[12px] font-medium leading-4 ${v.type === 'ship' ? 'text-foreground-alt' : 'text-destructive'}">${v.type === 'ship' ? 'Miễn phí vận chuyển' : '-' + voucherValue(v).toLocaleString('en-US') + 'đ'}</span>
-    <button data-voucher-remove="${v.code}" class="w-3 h-3 flex items-center justify-center shrink-0 press [&_svg]:w-3 [&_svg]:h-3" aria-label="Gỡ ưu đãi">${IcoCross}</button>
-  </span>`).join('');
-}
-/* Dòng tóm tắt bên phải nút "Áp dụng ưu đãi" khi thu gọn */
-const voucherHint = () => activeVouchers().length ? `Đã chọn ${activeVouchers().length} ưu đãi` : 'Chọn hoặc nhập mã';
+/* Nhãn dòng thu gọn: LUÔN là "Ưu đãi & khuyến mãi ( N )" (chốt user 17/08/2026
+   — tên mục không đổi theo trạng thái), N = số mã ĐANG ĐỦ ĐIỀU KIỆN. Mã ẩn và
+   mã chưa đạt mức không tính: đếm cả những thứ bấm vào không dùng được thì con
+   số nói dối. Con số chính là lý do để bấm vào — nói "có gì đó cho bạn ở đây"
+   mà không cần mở panel. */
+const voucherAvailCount = () => VOUCHERS.filter(v => !v.hidden && voucherEligible(v)).length;
+const voucherLabel = () => `Ưu đãi & khuyến mãi ( ${voucherAvailCount()} )`;
+/* Chữ phụ bên phải CHỈ báo đã áp mấy mã. Mặc định để TRỐNG (yêu cầu user
+   17/08/2026): chưa có gì để nói thì đừng nói, dòng gọn lại còn tên + số. Cũng
+   KHÔNG in số tiền giảm ở đây — khối tóm tắt ngay dưới đã có từng dòng
+   "Giảm giá(<CODE>)" rồi. */
+const voucherHint = () => activeVouchers().length ? `Đã áp dụng ( ${activeVouchers().length} )` : '';
 
 /* Phiếu mua hàng: demo không có backend tra cứu mã thật, nên sinh số tiền giảm
    ổn định theo chuỗi mã (cùng 1 mã luôn ra cùng 1 số tiền) — 50,000 .. 1,000,000đ,
@@ -3018,14 +3015,13 @@ function discountPanel() {
       ${rewardsCard}
       <!-- Ưu đãi thu gọn còn 1 dòng — xem khối tương ứng ở screenCART() -->
       <div class="bg-background border border-border-1 rounded-md py-1 px-3">
-        <div class="py-2 flex flex-col gap-2">
+        <div class="py-2">
           <button id="voucherTrigger" class="w-full min-h-9 flex items-center gap-2 press text-left">
             <span class="w-5 h-5 flex items-center justify-center shrink-0">${I.ticket()}</span>
-            <span class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground">Áp dụng ưu đãi</span>
+            <span id="voucherLabelText" class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground">${voucherLabel()}</span>
             <span id="voucherHintText" class="text-[14px] leading-5 text-muted-foreground truncate">${voucherHint()}</span>
             <span class="w-3.5 h-3.5 shrink-0 flex items-center justify-center">${I.chevR('var(--general-muted-foreground)')}</span>
           </button>
-          <div id="voucherChipSlot" class="${activeVouchers().length ? 'flex gap-2 flex-wrap' : 'hidden'}">${voucherChips()}</div>
         </div>
       </div>
     </div>
@@ -3174,20 +3170,18 @@ function screenCART() {
                 ${dafcRewards()}
               </div>` : ''}
 
-              <!-- Ưu đãi THU GỌN còn 1 dòng bấm được (yêu cầu user 17/08/2026):
-                   ô nhập mã + nút "Áp dụng" đã dọn vào panel trượt từ mép phải
-                   (#vcSheet). Ở cột tóm tắt 427px, dòng này để VIỀN như một
-                   control chọn — khác mobile (nằm sẵn trong card viền nên chỉ
-                   cần 1 dòng trần). -->
-              <div class="flex flex-col gap-2">
-                <button id="voucherTrigger" class="w-full h-12 flex items-center gap-2 border border-border rounded-xs px-3 text-left btn-o press">
-                  <span class="w-5 h-5 flex items-center justify-center shrink-0">${I.ticket()}</span>
-                  <span class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground">Áp dụng ưu đãi</span>
-                  <span id="voucherHintText" class="text-[14px] leading-5 text-muted-foreground truncate">${voucherHint()}</span>
-                  <span class="w-3.5 h-3.5 shrink-0 flex items-center justify-center">${I.chevR('var(--general-muted-foreground)')}</span>
-                </button>
-                <div id="voucherChipSlot" class="${activeVouchers().length ? 'flex gap-2 flex-wrap' : 'hidden'}">${voucherChips()}</div>
-              </div>
+              <!-- Ưu đãi THU GỌN còn ĐÚNG 1 dòng bấm được (yêu cầu user
+                   17/08/2026): ô nhập mã + nút "Áp dụng" đã dọn vào panel trượt
+                   từ mép phải (#vcSheet), và KHÔNG hiện chip mã ra ngoài — khối
+                   tóm tắt ngay dưới đã liệt kê từng mã thành dòng riêng. Ở cột
+                   tóm tắt 427px, dòng này để VIỀN như một control chọn — khác
+                   mobile (nằm sẵn trong card viền nên chỉ cần 1 dòng trần). -->
+              <button id="voucherTrigger" class="w-full h-12 flex items-center gap-2 border border-border rounded-xs px-3 text-left btn-o press">
+                <span class="w-5 h-5 flex items-center justify-center shrink-0">${I.ticket()}</span>
+                <span id="voucherLabelText" class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground">${voucherLabel()}</span>
+                <span id="voucherHintText" class="text-[14px] leading-5 text-muted-foreground truncate">${voucherHint()}</span>
+                <span class="w-3.5 h-3.5 shrink-0 flex items-center justify-center">${I.chevR('var(--general-muted-foreground)')}</span>
+              </button>
 
               <!-- Không kẻ divider quanh khối tổng — đồng bộ discountPanel mobile
                    (3428:55499): khoảng trắng là thứ ngăn cách -->
@@ -5211,9 +5205,9 @@ const I18N = {
   'Mã giảm giá':'Promo code', 'Nhập voucher':'Enter voucher', 'Bạn có phiếu mua hàng?':'Have a gift voucher?',
   'DAFC Phiếu mua hàng':'DAFC Gift Voucher', 'Xóa sản phẩm đã chọn':'Remove selected',
   // ── Panel chọn ưu đãi (17/08/2026) ──
-  'Áp dụng ưu đãi':'Apply offers', 'Chọn ưu đãi':'Select offers', 'Chọn hoặc nhập mã':'Pick or enter a code',
+  'Áp dụng ưu đãi':'Apply offers', 'Chọn ưu đãi':'Select offers',
   'Ưu đãi vận chuyển':'Shipping offers', 'Ưu đãi mua nhiều':'Multi-buy offers', 'Chọn tối đa 1':'Up to 1',
-  'Nhập mã ưu đãi':'Enter offer code', 'Dùng mã':'Use code', 'Gỡ ưu đãi':'Remove offer',
+  'Nhập mã ưu đãi':'Enter offer code', 'Dùng mã':'Use code',
   'Chưa chọn ưu đãi nào':'No offers selected', 'Mã không hợp lệ':'Invalid code',
   'Mã đã được chọn':'Code already selected', 'Đã gỡ ưu đãi':'Offers removed',
   'Miễn phí giao hoả tốc 2 giờ':'Free 2-hour express delivery', 'Nội thành Hà Nội và TP.HCM':'Inner-city Hanoi and HCMC',
@@ -5474,6 +5468,8 @@ const I18N_RE = [
   [/^Giảm giá\((.+)\)$/,              'Discount ($1)'],
   [/^Tiết kiệm ([\d,]+)đ$/,           'Save $1đ'],
   // panel chọn ưu đãi — số tiền/số lượng là data nên phải là luật động
+  [/^Ưu đãi & khuyến mãi \( (\d+) \)$/, 'Offers & promotions ( $1 )'],
+  [/^Đã áp dụng \( (\d+) \)$/,        'Applied ( $1 )'],
   [/^Đã chọn (\d+) ưu đãi$/,          '$1 offers selected'],
   [/^Đã áp dụng (\d+) ưu đãi$/,       '$1 offers applied'],
   [/^Đã gỡ (\d+) ưu đãi do đơn không còn đủ điều kiện$/, '$1 offers removed — the order no longer qualifies'],
@@ -5523,6 +5519,8 @@ const I18N_REV_RE = [
   [/^Use (\d+) points$/,              'Dùng $1 điểm'],
   [/^Discount \((.+)\)$/,             'Giảm giá($1)'],
   [/^Save ([\d,]+)đ$/,                'Tiết kiệm $1đ'],
+  [/^Offers & promotions \( (\d+) \)$/, 'Ưu đãi & khuyến mãi ( $1 )'],
+  [/^Applied \( (\d+) \)$/,           'Đã áp dụng ( $1 )'],
   [/^(\d+) offers selected$/,         'Đã chọn $1 ưu đãi'],
   [/^(\d+) offers applied$/,          'Đã áp dụng $1 ưu đãi'],
   [/^(\d+) offers removed — the order no longer qualifies$/, 'Đã gỡ $1 ưu đãi do đơn không còn đủ điều kiện'],
@@ -6888,7 +6886,6 @@ function wire(root) {
     const list = root.querySelector('#pbhList');
     if (!list) return;
     // Ẩn hẳn khi rỗng, tránh flex gap tạo khoảng trống thừa dưới ô input
-    // (cùng lý do với voucherChipSlot ở trên — theo đúng Figma).
     list.className = cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden';
     list.innerHTML = cartPbh.map((p, i) => `
       <span class="pbh-badge bg-secondary rounded flex items-center gap-1.5 px-2 py-0.5 h-6" data-pbh-idx="${i}">
@@ -7216,26 +7213,15 @@ function giftAppear(el, skipLang) {
   el.classList.remove('gift-in'); void el.offsetWidth; el.classList.add('gift-in');
 }
 
-/* Dòng "Áp dụng ưu đãi" (chữ tóm tắt bên phải) + hàng chip mã đang áp. Để ngoài
-   wire() vì refreshCartSummary cũng phải gọi được: mã có thể TỰ RỚT khi giỏ đổi. */
+/* Cập nhật dòng thu gọn: nhãn (đếm ưu đãi khả dụng / đang áp) + chữ phụ bên
+   phải. Để ngoài wire() vì refreshCartSummary cũng phải gọi được — số khả dụng
+   đổi theo giỏ, và mã có thể TỰ RỚT khi giỏ teo lại. */
 function renderVoucherUI(root) {
   if (!root) return;
+  const label = root.querySelector('#voucherLabelText');
+  if (label) { label.textContent = voucherLabel(); localizeNew(label); }
   const hint = root.querySelector('#voucherHintText');
   if (hint) { hint.textContent = voucherHint(); localizeNew(hint); }
-  const slot = root.querySelector('#voucherChipSlot');
-  if (!slot) return;
-  slot.innerHTML = voucherChips();
-  // Ẩn hẳn (không chỉ để rỗng) khi chưa có mã — flex gap sẽ tạo khoảng trống thừa
-  slot.className = activeVouchers().length ? 'flex gap-2 flex-wrap' : 'hidden';
-  localizeNew(slot);
-  slot.querySelectorAll('[data-voucher-remove]').forEach(b => b.addEventListener('click', e => {
-    e.stopPropagation();
-    const code = b.dataset.voucherRemove;
-    cartVouchers = cartVouchers.filter(c => c !== code);
-    renderVoucherUI(root);
-    refreshCartSummary(root);
-    toast('Đã gỡ ' + code);
-  }));
 }
 
 /* Cộng ưu đãi hội viên (đã đăng nhập) + mã giảm giá + N phiếu mua hàng -> render
@@ -7247,10 +7233,10 @@ function refreshCartSummary(root) {
      giảm mà đơn không còn được hưởng. Báo cho người mua biết vì đây là thay đổi
      họ không chủ động làm. */
   const dropped = pruneVouchers();
-  if (dropped.length) {
-    renderVoucherUI(root);
-    toast(`Đã gỡ ${dropped.length} ưu đãi do đơn không còn đủ điều kiện`);
-  }
+  /* Luôn vẽ lại dòng ưu đãi, không chỉ khi có mã rớt: SỐ ƯU ĐÃI KHẢ DỤNG trên
+     nhãn cũng đổi theo giỏ (tick lại món là mã đủ điều kiện trở lại). */
+  renderVoucherUI(root);
+  if (dropped.length) toast(`Đã gỡ ${dropped.length} ưu đãi do đơn không còn đủ điều kiện`);
   const dl = root.querySelector('#discountLines');
   /* discountLinesHTML() sinh chữ TIẾNG VIỆT nên phải dịch lại ngay sau khi dựng:
      hàm này giờ chạy sau mọi thao tác giỏ (trước đây chỉ chạy khi đổi mã/ưu đãi),

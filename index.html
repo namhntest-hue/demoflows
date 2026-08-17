@@ -3145,21 +3145,18 @@ function dafcRewards() {
   </div>`;
 }
 
-/* Mã đang áp hiện thành chip có nút gỡ, ngay dưới dòng "Áp dụng ưu đãi" — để
-   thấy được đang dùng ưu đãi nào mà không phải mở sheet ra xem. Nhiều mã thì
-   nhiều chip (bản trước chỉ 1 mã nên chỉ 1 chip).
-   Cùng style badge với phiếu mua hàng (bg-secondary, rounded, h-6); mã vận
-   chuyển không có số tiền nên in chữ "Miễn phí vận chuyển" thay cho -Xđ. */
-function voucherChips() {
-  return activeVouchers().map(v => `
-  <span class="bg-secondary rounded flex items-center gap-1.5 px-2 py-0.5 h-6" data-voucher-chip="${v.code}">
-    <span data-i18n-skip class="text-[12px] font-medium leading-4 text-secondary-foreground">${v.code}</span>
-    <span class="text-[12px] font-medium leading-4 ${v.type === 'ship' ? 'text-foreground-alt' : 'text-destructive'}">${v.type === 'ship' ? 'Miễn phí vận chuyển' : '-' + voucherValue(v).toLocaleString('en-US') + 'đ'}</span>
-    <button data-voucher-remove="${v.code}" class="w-3 h-3 flex items-center justify-center shrink-0 press [&_svg]:w-3 [&_svg]:h-3" aria-label="Gỡ ưu đãi">${IcoCross}</button>
-  </span>`).join('');
-}
-/* Dòng tóm tắt bên phải nút "Áp dụng ưu đãi" khi thu gọn */
-const voucherHint = () => activeVouchers().length ? `Đã chọn ${activeVouchers().length} ưu đãi` : 'Chọn hoặc nhập mã';
+/* Nhãn dòng thu gọn: LUÔN là "Ưu đãi & khuyến mãi ( N )" (chốt user 17/08/2026
+   — tên mục không đổi theo trạng thái), N = số mã ĐANG ĐỦ ĐIỀU KIỆN. Mã ẩn và
+   mã chưa đạt mức không tính: đếm cả những thứ bấm vào không dùng được thì con
+   số nói dối. Con số chính là lý do để bấm vào — nói "có gì đó cho bạn ở đây"
+   mà không cần mở panel. */
+const voucherAvailCount = () => VOUCHERS.filter(v => !v.hidden && voucherEligible(v)).length;
+const voucherLabel = () => `Ưu đãi & khuyến mãi ( ${voucherAvailCount()} )`;
+/* Chữ phụ bên phải CHỈ báo đã áp mấy mã. Mặc định để TRỐNG (yêu cầu user
+   17/08/2026): chưa có gì để nói thì đừng nói, dòng gọn lại còn tên + số. Cũng
+   KHÔNG in số tiền giảm ở đây — khối tóm tắt ngay dưới đã có từng dòng
+   "Giảm giá(<CODE>)" rồi. */
+const voucherHint = () => activeVouchers().length ? `Đã áp dụng ( ${activeVouchers().length} )` : '';
 
 /* Phiếu mua hàng: demo không có backend tra cứu mã thật, nên sinh số tiền giảm
    ổn định theo chuỗi mã (cùng 1 mã luôn ra cùng 1 số tiền) — 50,000 .. 1,000,000đ,
@@ -3245,19 +3242,20 @@ function discountPanel() {
   <div class="py-6 px-4 bg-secondary flex flex-col gap-4 rise">
     <div class="flex flex-col gap-2">
       ${rewardsCard}
-      <!-- Ưu đãi THU GỌN còn 1 dòng (yêu cầu user 17/08/2026): ô nhập mã + nút
-           "Áp dụng" đã dọn vào sheet, ở đây chỉ còn dòng bấm mở + chip các mã
-           đang áp. Lý do: 90% người mua không thuộc mã, ô input trống chỉ chiếm
-           chỗ; danh sách ưu đãi trong sheet mới là thứ họ cần thấy. -->
+      <!-- Ưu đãi THU GỌN còn ĐÚNG 1 dòng (yêu cầu user 17/08/2026): ô nhập mã +
+           nút "Áp dụng" đã dọn vào sheet, và KHÔNG hiện chip mã ra ngoài giỏ —
+           mã nào đang áp thì khối tóm tắt ngay dưới đã liệt kê từng dòng rồi,
+           thêm một hàng chip nữa là nói 2 lần. Lý do bỏ ô input: 90% người mua
+           không thuộc mã, ô trống chỉ chiếm chỗ; danh sách ưu đãi trong sheet
+           mới là thứ họ cần thấy. -->
       <div class="bg-background border border-border-1 rounded-md py-1 px-3">
-        <div class="py-2 flex flex-col gap-2">
+        <div class="py-2">
           <button id="voucherTrigger" class="w-full min-h-9 flex items-center gap-2 press text-left">
             <span class="w-5 h-5 flex items-center justify-center shrink-0">${I.ticket()}</span>
-            <span class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground">Áp dụng ưu đãi</span>
+            <span id="voucherLabelText" class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground">${voucherLabel()}</span>
             <span id="voucherHintText" class="text-[14px] leading-5 text-muted-foreground truncate">${voucherHint()}</span>
             <span class="w-3.5 h-3.5 shrink-0 flex items-center justify-center">${I.chevR('var(--general-muted-foreground)')}</span>
           </button>
-          <div id="voucherChipSlot" class="${activeVouchers().length ? 'flex gap-2 flex-wrap' : 'hidden'}">${voucherChips()}</div>
         </div>
       </div>
     </div>
@@ -5342,9 +5340,9 @@ const I18N = {
   'Mã giảm giá':'Promo code', 'Nhập voucher':'Enter voucher', 'Bạn có phiếu mua hàng?':'Have a gift voucher?',
   'DAFC Phiếu mua hàng':'DAFC Gift Voucher', 'Xóa sản phẩm đã chọn':'Remove selected',
   // ── Sheet chọn ưu đãi (17/08/2026) ──
-  'Áp dụng ưu đãi':'Apply offers', 'Chọn ưu đãi':'Select offers', 'Chọn hoặc nhập mã':'Pick or enter a code',
+  'Áp dụng ưu đãi':'Apply offers', 'Chọn ưu đãi':'Select offers',
   'Ưu đãi vận chuyển':'Shipping offers', 'Ưu đãi mua nhiều':'Multi-buy offers', 'Chọn tối đa 1':'Up to 1',
-  'Nhập mã ưu đãi':'Enter offer code', 'Dùng mã':'Use code', 'Gỡ ưu đãi':'Remove offer',
+  'Nhập mã ưu đãi':'Enter offer code', 'Dùng mã':'Use code',
   'Chưa chọn ưu đãi nào':'No offers selected', 'Mã không hợp lệ':'Invalid code',
   'Mã đã được chọn':'Code already selected', 'Đã gỡ ưu đãi':'Offers removed',
   'Miễn phí giao hoả tốc 2 giờ':'Free 2-hour express delivery', 'Nội thành Hà Nội và TP.HCM':'Inner-city Hanoi and HCMC',
@@ -5624,25 +5622,32 @@ const I18N = {
   'Hàng pre-order':'Pre-order items',
   'Cửa hàng DAFC':'DAFC store',
 
-  // ── Cookie consent ──
-  'Tùy chọn cookies':'Cookie settings',
-  'Đồng ý tất cả':'Accept all', 'Từ chối tất cả':'Reject all',
+  // ── Cookie consent (bản thảo khách 17/08/2026) ──
+  // Đoạn cuối banner bị 2 inline button cắt thành nhiều text node nên mỗi mảnh
+  // là một key riêng; dấu chấm nối câu bọc trong span [data-i18n-skip].
+  'Tùy chọn Cookie':'Cookie settings',
+  'Chấp nhận tất cả':'Accept all', 'Từ chối tất cả':'Reject all',
   'DAFC sử dụng Cookie và các công nghệ tương tự để vận hành website, nâng cao trải nghiệm người dùng, phân tích hiệu quả hoạt động và cung cấp nội dung phù hợp với nhu cầu của Quý khách.':'DAFC uses cookies and similar technologies to operate this website, enhance your experience, analyse performance and deliver content relevant to your needs.',
-  'Trước khi Quý khách đồng ý, chỉ các Cookie cần thiết để website hoạt động mới được sử dụng. Bạn có thể chấp nhận hoặc từ chối các cookie tùy chọn bên dưới. Bạn cũng có thể thay đổi lựa chọn bất kỳ lúc nào thông qua':'Before you give your consent, only the cookies strictly necessary for the website to work are used. You can accept or reject optional cookies below. You can also change your choice at any time via our',
-  'Chính sách Cookie':'Cookie Policy',
+  'Trước khi Quý khách đồng ý, chỉ các Cookie cần thiết để website hoạt động mới được sử dụng. Quý khách có thể:':'Before you give your consent, only the cookies strictly necessary for the website to work are used. You can:',
+  'Chấp nhận tất cả để đồng ý sử dụng toàn bộ Cookie;':'Accept all to consent to the use of all cookies;',
+  'Từ chối tất cả để từ chối các Cookie không cần thiết;':'Reject all to refuse non-essential cookies;',
+  'Tùy chọn Cookie để tự lựa chọn từng nhóm Cookie theo nhu cầu.':'Cookie settings to choose each cookie group yourself.',
+  'Quý khách có thể thay đổi lựa chọn Cookie bất kỳ lúc nào thông qua':'You can change your cookie choices at any time via',
+  'Ngoài ra, Quý khách có thể tham khảo Chính sách bảo vệ dữ liệu cá nhân của chúng tôi trước khi đưa ra lựa chọn bằng cách nhấp vào liên kết':'You can also read our Personal Data Protection Policy before making your choice by clicking the link',
+  'tại đây':'here',
   'Lưu lựa chọn':'Save choices',
-  'Cookies cần thiết':'Strictly necessary cookies',
-  'Giữ cho website hoạt động: giỏ hàng, đăng nhập, bảo mật. Không thể tắt.':'Keeps the website working: cart, sign-in, security. Cannot be turned off.',
-  'Cookies hiệu năng & phân tích':'Performance & analytics cookies',
+  'Cookie cần thiết':'Strictly necessary cookies',
+  'Luôn bật, không thể tắt. Giữ cho website hoạt động: giỏ hàng, đăng nhập, bảo mật.':'Always on, cannot be turned off. Keeps the website working: cart, sign-in, security.',
+  'Cookie hiệu năng & phân tích':'Performance & analytics cookies',
   'Đo lường lượt truy cập và hiệu quả hoạt động để cải thiện trải nghiệm.':'Measures traffic and performance so we can improve your experience.',
-  'Cookies chức năng':'Functional cookies',
+  'Cookie chức năng':'Functional cookies',
   'Ghi nhớ tuỳ chọn của Quý khách: ngôn ngữ, cửa hàng, sản phẩm đã xem.':'Remembers your choices: language, store and recently viewed products.',
-  'Cookies quảng cáo & tiếp thị':'Advertising & marketing cookies',
+  'Cookie quảng cáo & tiếp thị':'Advertising & marketing cookies',
   'Hiển thị nội dung và quảng cáo phù hợp trên nền tảng của các đối tác.':'Shows relevant content and ads on our partners’ platforms.',
-  'Cookie cần thiết không thể tắt':'Essential cookies can’t be turned off',
-  'Đã chấp nhận tất cả cookie':'All cookies accepted',
-  'Đã từ chối cookies tùy chọn':'Optional cookies rejected',
-  'Bạn có thể chọn cookie bất kỳ lúc nào ở Chính sách Cookie':'You can set your cookie choices anytime in the Cookie Policy',
+  'Cookie cần thiết luôn bật, không thể tắt':'Strictly necessary cookies are always on',
+  'Đã chấp nhận tất cả Cookie':'All cookies accepted',
+  'Đã từ chối Cookie không cần thiết':'Non-essential cookies rejected',
+  'Quý khách có thể thay đổi lựa chọn Cookie bất kỳ lúc nào ở Tùy chọn Cookie':'You can change your cookie choices anytime in Cookie settings',
 
   // ── Làm đẹp: cây danh mục 2 cấp (Filter - Beauty cate demo.xlsx) ──
   // EN = nguyên văn cột Category / Product Type trong file.
@@ -5705,6 +5710,8 @@ const I18N_RE = [
   [/^Giảm giá\((.+)\)$/,              'Discount ($1)'],
   [/^Tiết kiệm ([\d,]+)đ$/,           'Save $1đ'],
   // sheet chọn ưu đãi — số tiền/số lượng là data nên phải là luật động
+  [/^Ưu đãi & khuyến mãi \( (\d+) \)$/, 'Offers & promotions ( $1 )'],
+  [/^Đã áp dụng \( (\d+) \)$/,        'Applied ( $1 )'],
   [/^Đã chọn (\d+) ưu đãi$/,          '$1 offers selected'],
   [/^Đã áp dụng (\d+) ưu đãi$/,       '$1 offers applied'],
   [/^Đã gỡ (\d+) ưu đãi do đơn không còn đủ điều kiện$/, '$1 offers removed — the order no longer qualifies'],
@@ -5718,7 +5725,7 @@ const I18N_RE = [
   [/^Cần mua từ (\d+) sản phẩm$/,     'Requires $1 items or more'],
   [/^Mua thêm ([\d,]+)đ để dùng mã$/, 'Spend $1đ more to use this code'],
   [/^· HSD (\d{2}\/\d{2}\/\d{4})$/,   '· Valid until $1'],
-  [/^Đã lưu tuỳ chọn cookie · (\d+)\/(\d+) nhóm$/, 'Cookie preferences saved · $1/$2 groups'],
+  [/^Đã lưu lựa chọn Cookie · (\d+)\/(\d+) nhóm$/, 'Cookie preferences saved · $1/$2 groups'],
   // giỏ hàng: số món thay đổi được (xoá / đặt hàng xong) nên phải là luật động
   [/^Thanh toán \((\d+)\)$/,          'Payment ($1)'],
   [/^([\d.]+) điểm thưởng$/,          '$1 reward points'],
@@ -5754,6 +5761,8 @@ const I18N_REV_RE = [
   [/^Use (\d+) points$/,              'Dùng $1 điểm'],
   [/^Discount \((.+)\)$/,             'Giảm giá($1)'],
   [/^Save ([\d,]+)đ$/,                'Tiết kiệm $1đ'],
+  [/^Offers & promotions \( (\d+) \)$/, 'Ưu đãi & khuyến mãi ( $1 )'],
+  [/^Applied \( (\d+) \)$/,           'Đã áp dụng ( $1 )'],
   [/^(\d+) offers selected$/,         'Đã chọn $1 ưu đãi'],
   [/^(\d+) offers applied$/,          'Đã áp dụng $1 ưu đãi'],
   [/^(\d+) offers removed — the order no longer qualifies$/, 'Đã gỡ $1 ưu đãi do đơn không còn đủ điều kiện'],
@@ -5767,7 +5776,7 @@ const I18N_REV_RE = [
   [/^Requires (\d+) items or more$/,  'Cần mua từ $1 sản phẩm'],
   [/^Spend ([\d,]+)đ more to use this code$/, 'Mua thêm $1đ để dùng mã'],
   [/^· Valid until (\d{2}\/\d{2}\/\d{4})$/,   '· HSD $1'],
-  [/^Cookie preferences saved · (\d+)\/(\d+) groups$/, 'Đã lưu tuỳ chọn cookie · $1/$2 nhóm'],
+  [/^Cookie preferences saved · (\d+)\/(\d+) groups$/, 'Đã lưu lựa chọn Cookie · $1/$2 nhóm'],
   [/^Payment \((\d+)\)$/,             'Thanh toán ($1)'],
   [/^([\d.]+) reward points$/,        '$1 điểm thưởng'],
   [/^Your bag \((\d+)\)$/,            'Giỏ hàng của bạn ($1)'],
@@ -6889,7 +6898,6 @@ function wire(root) {
     const list = root.querySelector('#pbhList');
     if (!list) return;
     // Ẩn hẳn khi rỗng, tránh flex gap tạo khoảng trống thừa dưới ô input
-    // (cùng lý do với voucherChipSlot ở trên — theo đúng Figma).
     list.className = cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden';
     list.innerHTML = cartPbh.map((p, i) => `
       <span class="pbh-badge bg-secondary rounded flex items-center gap-1.5 px-2 py-0.5 h-6" data-pbh-idx="${i}">
@@ -7173,26 +7181,15 @@ function giftAppear(el, skipLang) {
 /* Cộng ưu đãi hội viên (đã đăng nhập) + mã giảm giá + N phiếu mua hàng -> render
    lại toàn bộ #discountLines (số dòng thay đổi động theo số phiếu đang áp) +
    cập nhật Tổng cộng / Tiết kiệm, không reload lại cả màn cart. */
-/* Dòng "Áp dụng ưu đãi" (chữ tóm tắt bên phải) + hàng chip mã đang áp. Để ngoài
-   wire() vì refreshCartSummary cũng phải gọi được: mã có thể TỰ RỚT khi giỏ đổi. */
+/* Cập nhật dòng thu gọn: nhãn (đếm ưu đãi khả dụng / đang áp) + chữ phụ bên
+   phải. Để ngoài wire() vì refreshCartSummary cũng phải gọi được — số khả dụng
+   đổi theo giỏ, và mã có thể TỰ RỚT khi giỏ teo lại. */
 function renderVoucherUI(root) {
   if (!root) return;
+  const label = root.querySelector('#voucherLabelText');
+  if (label) { label.textContent = voucherLabel(); localizeNew(label); }
   const hint = root.querySelector('#voucherHintText');
   if (hint) { hint.textContent = voucherHint(); localizeNew(hint); }
-  const slot = root.querySelector('#voucherChipSlot');
-  if (!slot) return;
-  slot.innerHTML = voucherChips();
-  // Ẩn hẳn (không chỉ để rỗng) khi chưa có mã — flex gap sẽ tạo khoảng trống thừa
-  slot.className = activeVouchers().length ? 'flex gap-2 flex-wrap' : 'hidden';
-  localizeNew(slot);
-  slot.querySelectorAll('[data-voucher-remove]').forEach(b => b.addEventListener('click', e => {
-    e.stopPropagation();
-    const code = b.dataset.voucherRemove;
-    cartVouchers = cartVouchers.filter(c => c !== code);
-    renderVoucherUI(root);
-    refreshCartSummary(root);
-    toast('Đã gỡ ' + code);
-  }));
 }
 
 function refreshCartSummary(root) {
@@ -7201,10 +7198,10 @@ function refreshCartSummary(root) {
      giảm mà đơn không còn được hưởng. Báo cho người mua biết vì đây là thay đổi
      họ không chủ động làm. */
   const dropped = pruneVouchers();
-  if (dropped.length) {
-    renderVoucherUI(root);
-    toast(`Đã gỡ ${dropped.length} ưu đãi do đơn không còn đủ điều kiện`);
-  }
+  /* Luôn vẽ lại dòng ưu đãi, không chỉ khi có mã rớt: SỐ ƯU ĐÃI KHẢ DỤNG trên
+     nhãn cũng đổi theo giỏ (tick lại món là mã đủ điều kiện trở lại). */
+  renderVoucherUI(root);
+  if (dropped.length) toast(`Đã gỡ ${dropped.length} ưu đãi do đơn không còn đủ điều kiện`);
   const dl = root.querySelector('#discountLines');
   /* discountLinesHTML() sinh chữ TIẾNG VIỆT nên phải dịch lại ngay sau khi dựng:
      hàm này giờ chạy sau mọi thao tác giỏ (trước đây chỉ chạy khi đổi mã/ưu đãi),
@@ -8495,36 +8492,55 @@ document.body.insertAdjacentHTML('beforeend', `
 
 /* ════════════════════════════════════════════════════════════════
    COOKIE CONSENT — cổng hỏi đồng ý cookie khi mở trang
-   2 view trong cùng một panel: "intro" (Đồng ý / Từ chối / Tuỳ chọn) và
+   Nội dung theo bản thảo khách gửi 17/08/2026: block 1 = banner (2 đoạn +
+   3 gạch đầu dòng giải thích đúng 3 nút bên dưới + link Chính sách bảo vệ
+   dữ liệu cá nhân), block 2 = pop up 4 nhóm cookie.
+   2 view trong cùng một panel: "intro" (Chấp nhận / Từ chối / Tuỳ chọn) và
    "prefs" (4 nhóm cookie + công tắc). Nhóm "Cần thiết" luôn bật và khoá;
    3 nhóm còn lại MẶC ĐỊNH TẮT — không tick sẵn cookie không thiết yếu.
    Demo không lưu lựa chọn (project không dùng localStorage), nên mỗi lần
    tải lại trang cổng sẽ hiện lại — đúng ý đồ trình diễn.
 ════════════════════════════════════════════════════════════════ */
 const COOKIE_CATS = [
-  ['need',  'Cookies cần thiết',              'Giữ cho website hoạt động: giỏ hàng, đăng nhập, bảo mật. Không thể tắt.',   true],
-  ['stats', 'Cookies hiệu năng & phân tích',  'Đo lường lượt truy cập và hiệu quả hoạt động để cải thiện trải nghiệm.',    false],
-  ['pref',  'Cookies chức năng',              'Ghi nhớ tuỳ chọn của Quý khách: ngôn ngữ, cửa hàng, sản phẩm đã xem.',      false],
-  ['ads',   'Cookies quảng cáo & tiếp thị',   'Hiển thị nội dung và quảng cáo phù hợp trên nền tảng của các đối tác.',     false],
+  ['need',  'Cookie cần thiết',              'Luôn bật, không thể tắt. Giữ cho website hoạt động: giỏ hàng, đăng nhập, bảo mật.', true],
+  ['stats', 'Cookie hiệu năng & phân tích',  'Đo lường lượt truy cập và hiệu quả hoạt động để cải thiện trải nghiệm.',            false],
+  ['pref',  'Cookie chức năng',              'Ghi nhớ tuỳ chọn của Quý khách: ngôn ngữ, cửa hàng, sản phẩm đã xem.',              false],
+  ['ads',   'Cookie quảng cáo & tiếp thị',   'Hiển thị nội dung và quảng cáo phù hợp trên nền tảng của các đối tác.',             false],
+];
+/* 3 gạch đầu dòng ở banner — mô tả đúng 3 nút bên dưới, đúng thứ tự nút */
+const COOKIE_BULLETS = [
+  'Chấp nhận tất cả để đồng ý sử dụng toàn bộ Cookie;',
+  'Từ chối tất cả để từ chối các Cookie không cần thiết;',
+  'Tùy chọn Cookie để tự lựa chọn từng nhóm Cookie theo nhu cầu.',
 ];
 document.body.insertAdjacentHTML('beforeend', `
   <div id="cookieGate" aria-hidden="true">
     <div class="cg-backdrop"></div>
     <div class="cg-panel" role="dialog" aria-modal="true" aria-label="Cookie">
-      <!-- view 1 — banner 2 đoạn: không tiêu đề, link "Chính sách Cookie" nằm
-           cuối câu. Đoạn bị link cắt thành nhiều text node nên MỖI ĐOẠN phải là
-           một key i18n riêng. 3 lựa chọn xếp theo mức ưu tiên: đồng ý (đặc) ·
-           từ chối · tuỳ chọn — từ chối phải dễ bấm ngang với đồng ý. -->
-      <div class="cg-view cg-intro flex flex-col gap-5 px-4 pt-5 pb-4">
-        <div class="flex flex-col gap-3">
+      <!-- view 1 — banner: không tiêu đề. Đoạn cuối bị 2 inline button ("Tùy
+           chọn Cookie" mở view nhóm, "tại đây" mở trang chính sách) cắt thành
+           nhiều text node nên MỖI MẢNH phải là một key i18n riêng; dấu chấm nối
+           câu bọc trong span [data-i18n-skip] để mảnh sau không dính dấu chấm.
+           Chữ dài hơn banner cũ nên phần nội dung tự cuộn, cụm nút luôn nằm
+           dưới đáy. 3 lựa chọn xếp theo mức ưu tiên: chấp nhận (đặc) · từ chối ·
+           tuỳ chọn — từ chối phải dễ bấm ngang với chấp nhận. -->
+      <div class="cg-view cg-intro flex flex-col min-h-0">
+        <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pt-5 flex flex-col gap-3">
           <p class="text-[13px] font-light leading-5 text-foreground">DAFC sử dụng Cookie và các công nghệ tương tự để vận hành website, nâng cao trải nghiệm người dùng, phân tích hiệu quả hoạt động và cung cấp nội dung phù hợp với nhu cầu của Quý khách.</p>
-          <p class="text-[13px] font-light leading-5 text-foreground">Trước khi Quý khách đồng ý, chỉ các Cookie cần thiết để website hoạt động mới được sử dụng. Bạn có thể chấp nhận hoặc từ chối các cookie tùy chọn bên dưới. Bạn cũng có thể thay đổi lựa chọn bất kỳ lúc nào thông qua <button data-cg-prefs class="underline text-foreground press">Chính sách Cookie</button></p>
+          <p class="text-[13px] font-light leading-5 text-foreground">Trước khi Quý khách đồng ý, chỉ các Cookie cần thiết để website hoạt động mới được sử dụng. Quý khách có thể:</p>
+          <ul class="flex flex-col gap-1.5">
+            ${COOKIE_BULLETS.map(t => `
+              <li class="flex gap-2 text-[13px] font-light leading-5 text-foreground">
+                <span class="text-secondary-foreground" aria-hidden="true">·</span><span class="flex-1 min-w-0">${t}</span>
+              </li>`).join('')}
+          </ul>
+          <p class="text-[13px] font-light leading-5 text-foreground">Quý khách có thể thay đổi lựa chọn Cookie bất kỳ lúc nào thông qua <button data-cg-prefs class="underline text-foreground press">Tùy chọn Cookie</button><span data-i18n-skip>.</span> Ngoài ra, Quý khách có thể tham khảo Chính sách bảo vệ dữ liệu cá nhân của chúng tôi trước khi đưa ra lựa chọn bằng cách nhấp vào liên kết <button data-cg-privacy class="underline text-foreground press">tại đây</button><span data-i18n-skip>.</span></p>
         </div>
-        <div class="flex flex-col gap-2">
-          <button data-cg-all class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[13px] font-medium btn-p press">Đồng ý tất cả</button>
+        <div class="shrink-0 px-4 pt-5 pb-4 flex flex-col gap-2">
+          <button data-cg-all class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[13px] font-medium btn-p press">Chấp nhận tất cả</button>
           <div class="flex gap-2">
             <button data-cg-none class="flex-1 h-12 rounded-xs border border-border bg-background text-foreground text-[13px] font-medium btn-o press">Từ chối tất cả</button>
-            <button data-cg-prefs class="flex-1 h-12 rounded-xs border border-border bg-background text-foreground text-[13px] font-medium btn-o press">Tùy chọn cookies</button>
+            <button data-cg-prefs class="flex-1 h-12 rounded-xs border border-border bg-background text-foreground text-[13px] font-medium btn-o press">Tùy chọn Cookie</button>
           </div>
         </div>
       </div>
@@ -8533,7 +8549,7 @@ document.body.insertAdjacentHTML('beforeend', `
       <div class="cg-view cg-prefs hidden flex-col min-h-0">
         <div class="px-4 pt-5 pb-3 flex items-center gap-2 shrink-0">
           <button data-cg-back class="w-6 h-6 flex items-center justify-center shrink-0 press [&_svg]:w-3.5 [&_svg]:h-3.5" aria-label="Quay lại">${I.chevL}</button>
-          <p class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground truncate">Tùy chọn cookies</p>
+          <p class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground truncate">Tùy chọn Cookie</p>
         </div>
         <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 flex flex-col">
           ${COOKIE_CATS.map(([id, name, desc, locked]) => `
@@ -8552,7 +8568,7 @@ document.body.insertAdjacentHTML('beforeend', `
         <div class="shrink-0 px-4 pt-4 pb-4 flex flex-col gap-1">
           <button data-cg-save class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium btn-p press">Lưu lựa chọn</button>
           <div class="flex">
-            <button data-cg-all class="flex-1 h-11 text-[13px] font-medium text-foreground press">Đồng ý tất cả</button>
+            <button data-cg-all class="flex-1 h-11 text-[13px] font-medium text-foreground press">Chấp nhận tất cả</button>
             <button data-cg-none class="flex-1 h-11 text-[13px] font-medium text-foreground press">Từ chối tất cả</button>
           </div>
         </div>
@@ -8575,22 +8591,32 @@ document.body.insertAdjacentHTML('beforeend', `
   const chosen = () => sws.filter(s => s.getAttribute('aria-checked') === 'true').length;
 
   sws.forEach(s => s.addEventListener('click', () => {
-    if (s.getAttribute('aria-disabled') === 'true') { toast('Cookie cần thiết không thể tắt'); return; }
+    if (s.getAttribute('aria-disabled') === 'true') { toast('Cookie cần thiết luôn bật, không thể tắt'); return; }
     s.setAttribute('aria-checked', s.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
   }));
-  /* 2 chỗ mở view tuỳ chọn: nút "Tùy chọn cookies" và link "Chính sách Cookie" */
+  /* 2 chỗ mở view tuỳ chọn: nút "Tùy chọn Cookie" ở cụm nút và chữ cùng tên
+     trong đoạn cuối banner */
   g.querySelectorAll('[data-cg-prefs]').forEach(b => b.addEventListener('click', () => view('prefs')));
   g.querySelector('[data-cg-back]').addEventListener('click', () => view('intro'));
   g.querySelectorAll('[data-cg-all]').forEach(b => b.addEventListener('click', () => {
-    setAll(true); closeG(); toast('Đã chấp nhận tất cả cookie');
+    setAll(true); closeG(); toast('Đã chấp nhận tất cả Cookie');
   }));
   /* Từ chối tất cả = tắt hết nhóm tuỳ chọn, chỉ giữ nhóm cần thiết đang khoá */
   g.querySelectorAll('[data-cg-none]').forEach(b => b.addEventListener('click', () => {
-    setAll(false); closeG(); toast('Đã từ chối cookies tùy chọn');
+    setAll(false); closeG(); toast('Đã từ chối Cookie không cần thiết');
   }));
   g.querySelector('[data-cg-save]').addEventListener('click', () => {
     const n = chosen(); closeG();
-    toast(n === sws.length ? 'Đã chấp nhận tất cả cookie' : `Đã lưu tuỳ chọn cookie · ${n}/${sws.length} nhóm`);
+    toast(n === sws.length ? 'Đã chấp nhận tất cả Cookie' : `Đã lưu lựa chọn Cookie · ${n}/${sws.length} nhóm`);
+  });
+
+  /* Link "tại đây" -> trang chính sách. Demo chỉ có route 'privacy' (Chính sách
+     bảo mật) nên tạm trỏ vào đó; khi có trang "Chính sách bảo vệ dữ liệu cá
+     nhân" thật thì đổi route ở đây. Xem chính sách KHÔNG tính là đồng ý: đóng
+     banner, không đụng công tắc nhóm nào — như chạm nền. */
+  g.querySelector('[data-cg-privacy]').addEventListener('click', () => {
+    closeG(); view('intro'); go('privacy');
+    toast('Quý khách có thể thay đổi lựa chọn Cookie bất kỳ lúc nào ở Tùy chọn Cookie');
   });
 
   /* Chạm nền = TẠM ĐÓNG để xem trang, KHÔNG tính là đồng ý: không đụng tới
@@ -8599,7 +8625,7 @@ document.body.insertAdjacentHTML('beforeend', `
   g.querySelector('.cg-backdrop').addEventListener('click', () => {
     closeG();
     view('intro');
-    toast('Bạn có thể chọn cookie bất kỳ lúc nào ở Chính sách Cookie');
+    toast('Quý khách có thể thay đổi lựa chọn Cookie bất kỳ lúc nào ở Tùy chọn Cookie');
   });
 
   localizeNew(g);
