@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Demo — Nâng cấp UI giỏ hàng mobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* Trang demo dựng bằng CSS viết tay (không dùng class Tailwind) để không phụ
+     thuộc bản tailwind.css đã build - giống demo-cart-desktop.html.
+
+     KHÁC BẢN DESKTOP: ở mobile component item-cart đang chạy ĐÚNG khổ gốc của
+     nó (375px) nên không có chuyện kéo giãn. Vấn đề của mobile nằm chỗ khác:
+     vùng chạm quá nhỏ, tên sản phẩm bị cắt, và nút "Đặt hàng" nằm quá sâu.
+     Vì vậy hai bản được đặt CẠNH NHAU trong khung điện thoại thật, mỗi khung
+     cuộn riêng, thay vì bật qua lại như bản desktop. */
+  :root{
+    --ink:#0a0a0a; --ink-2:#262626; --muted:#737373; --line:#e5e5e5;
+    --line-2:#f5f5f5; --line-3:#d4d4d4; --red:#d62845; --ok:#0a7c42; --bg:#f4f4f5;
+    --warn-bg:#fff7ed; --warn-line:#fed7aa; --warn-ink:#7c2d12;
+    --vh:812px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:Montserrat,sans-serif;color:var(--ink)}
+  img{display:block}
+
+  .doc{max-width:1280px;margin:0 auto;padding:32px 24px 12px}
+  h1{font-size:22px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:14px;line-height:22px;color:#52525b;margin:0 0 10px;max-width:880px}
+  .warn{font-size:13px;line-height:20px;color:var(--warn-ink);background:var(--warn-bg);
+        border:1px solid var(--warn-line);border-radius:4px;padding:10px 12px;margin:0 0 8px;max-width:880px}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#00000008;padding:1px 4px;border-radius:2px}
+
+  .bar{position:sticky;top:0;z-index:60;background:rgba(244,244,245,.93);backdrop-filter:blur(8px);
+       border-bottom:1px solid #e4e4e7}
+  .bar-in{max-width:1280px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .tog{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2);cursor:pointer;user-select:none}
+  .tog input{width:15px;height:15px;accent-color:var(--ink);cursor:pointer;margin:0}
+  .barnote{font-size:12px;color:var(--muted);margin-left:auto}
+  .barnote b{color:var(--ink);font-weight:500}
+
+  /* ── Hai khung điện thoại cạnh nhau ── */
+  .lab{background:#fff;border-top:1px solid #e4e4e7}
+  .phones{max-width:1280px;margin:0 auto;padding:24px;display:flex;gap:40px;flex-wrap:wrap;justify-content:center}
+  .ph{flex:0 0 auto;width:375px}
+  .ph > .cap{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+  .ph > .cap h2{font-size:15px;font-weight:600;margin:0}
+  .ph > .cap span{font-size:12px;color:var(--muted)}
+  .ph.good > .cap h2{color:var(--ok)}
+  .frame{width:375px;height:var(--vh);border:1px solid var(--line-3);border-radius:14px;overflow:hidden;
+         background:#fff;position:relative;box-shadow:0 10px 34px rgba(0,0,0,.10)}
+  .scroller{height:100%;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:thin}
+  .scroller::-webkit-scrollbar{width:5px}
+  .scroller::-webkit-scrollbar-thumb{background:#d4d4d8;border-radius:3px}
+
+  /* thanh cho biết đang cuộn tới đâu và CTA nằm ở đâu */
+  .depth{margin-top:10px;font-size:12px;color:var(--muted)}
+  .track{height:6px;background:var(--line);border-radius:3px;position:relative;margin:6px 0 4px;overflow:hidden}
+  .track .now{position:absolute;top:0;left:0;height:100%;background:var(--ink-2);border-radius:3px}
+  .track .ctaMark{position:absolute;top:-3px;width:2px;height:12px;background:var(--red)}
+  .ph.good .track .ctaMark{background:var(--ok)}
+
+  /* ── Nội dung màn giỏ, dùng chung 2 bản ── */
+  .nav{height:52px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;
+       padding:0 16px;position:sticky;top:0;background:#fff;z-index:12;font-size:15px;font-weight:600}
+  .h2{font-size:18px;font-weight:500;margin:0;padding:16px 16px 8px}
+  .h2 .n{color:var(--muted)}
+  .selbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 16px}
+  .selbar .t{font-size:14px;font-weight:500}
+  .selbar .clr{appearance:none;border:0;background:none;font:500 14px Montserrat;color:var(--muted);cursor:pointer;padding:0}
+  .selrow{display:flex;align-items:center;gap:8px}
+
+  .chk{width:16px;height:16px;border:1px solid var(--line-3);border-radius:2px;background:#fff;
+       flex:0 0 auto;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(0,0,0,.05);
+       padding:0;cursor:pointer}
+  .chk.on{background:var(--ink);border-color:var(--ink)}
+  .chk svg{width:10px;height:10px;opacity:0}
+  .chk.on svg{opacity:1}
+
+  /* ══════════ BẢN A - hiện tại ══════════
+     Chép đúng screenCART() dòng 3122-3158 của index.html. */
+  .rowA{display:flex;gap:8px;padding:16px}
+  .colChk{width:16px;flex:0 0 auto;display:flex;align-items:center}
+  .thumb{width:100px;height:133px;flex:0 0 auto;background:var(--line-2);overflow:hidden;position:relative}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .infoA{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
+  .brandline{display:flex;align-items:center;gap:8px;height:20px}
+  .brandA{flex:1;min-width:0;font-size:14px;font-weight:500;line-height:20px;margin:0;
+          overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* truncate = 1 dòng + ba chấm. Đây chính là chỗ tên sản phẩm bị cắt. */
+  .nameA{font-size:14px;line-height:20px;color:var(--ink-2);margin:0;
+         overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .varA{font-size:12px;line-height:16px;color:var(--muted);margin:0}
+  .padA{padding-bottom:8px}
+  .footA{display:flex;align-items:flex-end;justify-content:space-between;gap:2px}
+  .priceA{font-size:14px;font-weight:500;line-height:20px;margin:0;padding-top:4px}
+  .delA{appearance:none;border:0;background:none;padding:0;width:14px;height:14px;flex:0 0 auto;
+        cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .delA svg{width:14px;height:14px;fill:var(--muted)}
+  .stpA{display:flex;align-items:center;flex:0 0 auto}
+  .stpA button{appearance:none;border:0;background:none;min-height:24px;padding:0 8px;
+               cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .stpA .q{width:28px;min-height:24px;display:flex;align-items:center;justify-content:center;
+           font-size:12px;font-weight:500;color:#8a8a8a}
+  .stpA svg{width:12px;height:12px;fill:#8a8a8a}
+
+  /* ══════════ BẢN B - đề xuất ══════════
+     Ảnh và bố cục 3 cột giữ nguyên như Figma. Đổi 4 thứ:
+     tên xuống 2 dòng · vùng chạm đủ 44 · giá to hơn · có nút hoàn tác. */
+  .rowB{display:flex;gap:8px;padding:14px 16px}
+  .infoB{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
+  .brandB{flex:1;min-width:0;font-size:14px;font-weight:500;line-height:20px;margin:0;
+          overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* 2 dòng thay vì cắt cụt: tên hàng hiệu phần phân biệt thường nằm ở đuôi
+     ("... Broken Jewels 90x90cm") nên cắt 1 dòng là mất đúng phần cần đọc. */
+  .nameB{font-size:14px;line-height:19px;color:var(--ink-2);margin:0;
+         display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .varB{font-size:12px;line-height:16px;color:var(--muted);margin:4px 0 0}
+  .footB{display:flex;align-items:flex-end;justify-content:space-between;gap:4px;margin-top:8px}
+  .priceB{font-size:15px;font-weight:500;line-height:22px;margin:0}
+  /* Mẹo vùng chạm: padding nở ra 44 rồi kéo lại bằng margin âm, nên hình vẫn
+     đúng kích thước thiết kế mà ngón tay có đủ chỗ bấm. */
+  .tap44{padding:14px;margin:-14px;position:relative;z-index:2}
+  .delB{appearance:none;border:0;background:none;flex:0 0 auto;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;border-radius:50%;
+        transition:background .15s}
+  .delB:active{background:var(--line-2)}
+  .delB svg{width:16px;height:16px;fill:var(--muted)}
+  .stpB{display:flex;align-items:center;flex:0 0 auto;border:1px solid var(--line);border-radius:2px}
+  /* 44 chẵn, không phải 40: 40 vẫn dưới ngưỡng tối thiểu của iOS. */
+  .stpB button{appearance:none;border:0;background:none;width:44px;height:44px;
+               cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+  .stpB button:active{background:var(--line-2)}
+  .stpB .q{width:32px;height:44px;display:flex;align-items:center;justify-content:center;
+           font-size:14px;font-weight:500;color:var(--ink)}
+  .stpB svg{width:13px;height:13px;fill:var(--ink-2)}
+  /* Ô tick: vùng chạm phải nằm trên NÚT BỌC NGOÀI, không đặt thẳng lên .chk.
+     .chk bị ghim width/height 16px nên padding chui vào trong hộp và chỉ nở ra
+     được 30px - đúng lỗi mà chính demo này đã bắt được ở vòng đầu. */
+  .chkTapB{display:flex;align-items:center;width:16px;flex:0 0 auto}
+  .chkTap{appearance:none;border:0;background:none;display:flex;align-items:center;
+          justify-content:center;cursor:pointer}
+
+  /* ── Thanh đáy dính, chỉ có ở bản đề xuất ── */
+  .dock{position:sticky;bottom:0;z-index:14;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);
+        border-top:1px solid var(--line);padding:10px 16px 14px;display:flex;align-items:center;gap:12px}
+  .dock .sum{flex:1;min-width:0}
+  .dock .k{font-size:12px;line-height:16px;color:var(--muted);margin:0}
+  .dock .v{font-size:17px;font-weight:600;line-height:24px;margin:0}
+  .dock .go{flex:0 0 auto;height:48px;padding:0 26px;border:0;border-radius:2px;background:var(--ink);
+            color:#fafafa;font:500 16px Montserrat;cursor:pointer}
+  .dock .go:active{opacity:.85}
+
+  /* ── Toast hoàn tác ── */
+  .toast{position:absolute;left:16px;right:16px;bottom:96px;z-index:30;background:var(--ink-2);
+         color:#fafafa;border-radius:3px;padding:12px 14px;display:flex;align-items:center;gap:12px;
+         font-size:13px;line-height:18px;opacity:0;transform:translateY(8px);pointer-events:none;
+         transition:opacity .22s ease, transform .22s cubic-bezier(.22,1,.36,1)}
+  .toast.on{opacity:1;transform:none;pointer-events:auto}
+  .toast button{appearance:none;border:0;background:none;color:#fff;font:600 13px Montserrat;
+                cursor:pointer;text-decoration:underline;text-underline-offset:3px;flex:0 0 auto;padding:4px}
+
+  /* ── Khối quà, khuyến mãi, tóm tắt ── */
+  .giftWrap{background:var(--line-2)}
+  .giftHd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px 8px}
+  .giftHd p{font-size:12px;font-weight:500;line-height:16px;color:var(--ink-2);margin:0}
+  .giftHd button{appearance:none;border:0;background:none;font:500 12px Montserrat;color:var(--ink-2);
+                 cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:6px 0}
+  .badgeGift{position:absolute;top:0;left:0;background:var(--ink);color:#fafafa;font-size:10px;
+             font-weight:600;line-height:12px;padding:2px 4px}
+  .qtyStatic{width:28px;min-height:24px;display:flex;align-items:center;justify-content:center;
+             font-size:12px;font-weight:500;color:#8a8a8a}
+
+  .promoWrap{padding:24px 16px}
+  .promo{border:1px solid var(--line);border-radius:6px;padding:8px 12px}
+  .promo .t{font-size:16px;font-weight:500;line-height:24px;margin:0 0 8px}
+  .promo .rule{margin:0 0 8px}
+  .promo .rh{font-size:14px;font-weight:500;line-height:20px;margin:0}
+  .promo .rs{font-size:14px;line-height:20px;margin:2px 0 0}
+  .promo .rt{font-size:12px;line-height:16px;margin:2px 0 0}
+  .promo .more{width:100%;min-height:32px;appearance:none;border:0;background:none;
+               font:500 14px Montserrat;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  /* Bản đề xuất: gói khuyến mãi vào accordion đóng sẵn. Nội dung giữ nguyên
+     100%, chỉ không bắt người mua cuộn qua 163px chữ điều khoản mỗi lần. */
+  .promoAcc{border:1px solid var(--line);border-radius:6px}
+  .promoAcc > button{width:100%;min-height:48px;display:flex;align-items:center;justify-content:space-between;
+                     appearance:none;border:0;background:none;padding:0 12px;cursor:pointer;
+                     font:500 15px Montserrat;text-align:left}
+  .promoAcc .bd{display:none;padding:0 12px 10px}
+  .promoAcc.open .bd{display:block}
+  .promoAcc .cv{transition:transform .2s}
+  .promoAcc.open .cv{transform:rotate(90deg)}
+
+  .panel{padding:24px 16px;background:var(--line-2)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin-bottom:8px}
+  .fieldlab{font-size:14px;font-weight:500;line-height:20px;margin:0 0 8px}
+  .inline{display:flex;gap:8px}
+  .inp{flex:1;min-width:0;height:44px;border:1px solid var(--line);border-radius:2px;padding:0 8px;
+       font:400 14px Montserrat;color:var(--ink);background:#fff}
+  .inp::placeholder{color:var(--muted)}
+  .btnO{height:44px;padding:0 16px;flex:0 0 auto;background:var(--line-2);border:1px solid var(--line);
+        border-radius:2px;font:500 14px Montserrat;cursor:pointer}
+  .sumline{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:6px 0}
+  .sumline .k{font-size:16px;font-weight:300;line-height:24px;color:var(--muted)}
+  .sumline .v{font-size:16px;font-weight:300;line-height:24px}
+  .sumtot{display:flex;justify-content:space-between;align-items:center;height:56px;border-top:1px solid var(--line)}
+  .sumtot span{font-size:16px;font-weight:500;line-height:24px}
+  .earn{font-size:14px;line-height:20px;color:var(--ink-2);margin:0}
+  .ctaFlow{width:100%;height:48px;border:0;border-radius:2px;background:var(--ink);color:#fafafa;
+           font:500 16px Montserrat;cursor:pointer;margin-top:16px}
+  .acc{padding:16px}
+  .acc > button{width:100%;min-height:44px;display:flex;align-items:center;justify-content:space-between;
+                appearance:none;border:0;background:none;font:500 14px Montserrat;cursor:pointer;padding:0}
+  .tail{height:80px}
+
+  /* ── Lớp phủ vùng chạm ── */
+  .tt{outline:1.5px dashed var(--red);outline-offset:0;position:relative}
+  .tt.ok{outline-color:var(--ok)}
+  .ttag{position:absolute;top:-1px;left:100%;margin-left:3px;background:var(--red);color:#fff;
+        font-size:9px;font-weight:600;line-height:13px;padding:0 3px;border-radius:2px;
+        white-space:nowrap;z-index:20;pointer-events:none}
+  .tt.ok .ttag{background:var(--ok)}
+
+  /* ── Bảng ── */
+  .doc2{max-width:1280px;margin:0 auto;padding:32px 24px 80px}
+  .panel2{background:#fff;border:1px solid #e4e4e7;border-radius:10px;padding:20px 22px;margin-bottom:22px}
+  .panel2 h2{font-size:16px;margin:0 0 4px}
+  .panel2 .sub{font-size:13px;line-height:20px;color:var(--muted);margin:0 0 14px}
+  table{width:100%;border-collapse:collapse;font-size:13px;line-height:20px}
+  th{text-align:left;font-weight:600;font-size:12px;color:var(--muted);padding:8px 12px 8px 0;border-bottom:1px solid var(--line)}
+  td{padding:9px 12px 9px 0;border-bottom:1px solid var(--line-2);vertical-align:top}
+  td.num{font-family:ui-monospace,Menlo,Consolas,monospace;white-space:nowrap;width:130px}
+  .bad{color:var(--red);font-weight:600}
+  .good{color:var(--ok);font-weight:600}
+  .panel2 ul{margin:0;padding-left:18px}
+  .panel2 li{font-size:13px;line-height:21px;margin-bottom:7px}
+  .panel2 li b{font-weight:500}
+  .panel2 li span{color:var(--muted)}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
+</style>
+</head>
+<body>
+
+<div class="doc">
+  <h1>Nâng cấp UI giỏ hàng - bản mobile</h1>
+  <p class="lede">Khác bản desktop: ở mobile component <code>item-cart</code> đang chạy đúng khổ gốc 375px của nó nên không có chuyện kéo giãn. Vấn đề nằm chỗ khác - vùng chạm nhỏ hơn chuẩn, tên sản phẩm bị cắt cụt, và nút "Đặt hàng" nằm sâu quá tầm với. Hai bản đặt cạnh nhau, mỗi khung cuộn riêng, cùng dữ liệu <code>CART_BASE</code> thật.</p>
+  <p class="warn"><b>Chưa áp vào app.</b> File này độc lập - <code>index.html</code> và <code>desktop.html</code> không đổi một dòng nào.</p>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <label class="tog"><input type="checkbox" id="ttT"> Hiện vùng chạm (chuẩn 44px)</label>
+    <label class="tog"><input type="checkbox" id="giftT" checked> Hiện khối quà tặng</label>
+    <p class="barnote">Thử bấm nút xóa ở bản đề xuất để thấy <b>hoàn tác</b></p>
+  </div>
+</div>
+
+<div class="lab">
+  <div class="phones">
+    <div class="ph" id="phA">
+      <div class="cap"><h2>Hiện tại</h2><span>index.html</span></div>
+      <div class="frame"><div class="scroller" id="scA"></div></div>
+      <div class="depth">
+        <div class="track"><span class="now" id="nowA"></span><span class="ctaMark" id="markA"></span></div>
+        <span id="depthA">-</span>
+      </div>
+    </div>
+
+    <div class="ph good" id="phB">
+      <div class="cap"><h2>Đề xuất</h2><span>thanh đáy dính, vùng chạm 44, tên 2 dòng, hoàn tác</span></div>
+      <div class="frame">
+        <div class="scroller" id="scB"></div>
+        <div class="toast" id="toast"><span id="toastMsg"></span><button id="undo">Hoàn tác</button></div>
+      </div>
+      <div class="depth">
+        <div class="track"><span class="now" id="nowB"></span><span class="ctaMark" id="markB"></span></div>
+        <span id="depthB">-</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="doc2">
+  <div class="panel2">
+    <h2>Số đo so sánh</h2>
+    <p class="sub">Đo sống bằng <code>getBoundingClientRect</code> trên chính hai khung điện thoại ở trên, không in cứng.</p>
+    <table>
+      <thead><tr><th>Chỉ số</th><th class="num">Hiện tại</th><th class="num">Đề xuất</th><th>Ý nghĩa</th></tr></thead>
+      <tbody id="tbl"></tbody>
+    </table>
+  </div>
+
+  <div class="panel2">
+    <h2>Bản đề xuất đổi những gì</h2>
+    <ul>
+      <li><b>Thanh đáy dính mang tổng tiền và nút Đặt hàng</b> <span>người mua thấy tổng tiền và bấm đặt được ở bất kỳ đâu trong trang, không phải cuộn hết mới tới. Nút trong luồng bị bỏ đi để không có hai nút cùng một việc.</span></li>
+      <li><b>Vùng chạm lên 44px</b> <span>nút xóa 14x14 và nút cộng trừ 28x24 đều dưới ngưỡng tối thiểu của iOS và Android. Dùng mẹo padding nở ra rồi margin âm kéo lại, nên kích thước hình vẽ vẫn đúng Figma mà ngón tay có đủ chỗ.</span></li>
+      <li><b>Tên sản phẩm xuống 2 dòng</b> <span>hiện đang <code>truncate</code> 1 dòng, 2 trên 4 món bị cắt. Với hàng hiệu phần phân biệt thường nằm ở đuôi tên nên cắt là mất đúng phần cần đọc.</span></li>
+      <li><b>Có hoàn tác sau khi xóa</b> <span>hiện xóa một món 45 triệu là mất luôn, không lấy lại được, bằng một nút 14x14. Bấm thử ở khung bên phải.</span></li>
+      <li><b>Giá lên 15px, số lượng lên 14px</b> <span>giá là con số quyết định mua, đang cùng cỡ 14 với mọi thứ, còn số lượng thì 12px xám nhạt.</span></li>
+      <li><b>Khuyến mãi gói vào accordion đóng sẵn</b> <span>giữ nguyên 100% nội dung, chỉ không bắt cuộn qua 163px chữ điều khoản trên đường đi tới nút đặt hàng.</span></li>
+    </ul>
+  </div>
+
+  <div class="panel2">
+    <h2>Khi áp vào app cần lưu ý</h2>
+    <ul>
+      <li><b>Đã có sẵn <code>stickyCta()</code></b> <span>ở index.html dòng 1138: định nghĩa rồi nhưng không nơi nào gọi. Đúng là thứ cần cho thanh đáy dính, nên nhiều khả năng chỉ cần nối lại chứ không phải viết mới.</span></li>
+      <li><b>Phải build lại tailwind.css</b> <span>cho <code>line-clamp-2</code> và các lớp vùng chạm. Lệnh: <code>npx tailwindcss@3.4.17 -c tailwind.config.js -i in.css -o tailwind.css --minify</code></span></li>
+      <li><b>Thanh đáy phải chừa vùng an toàn</b> <span>iPhone có thanh gạt dưới, cần <code>padding-bottom: env(safe-area-inset-bottom)</code> kẻo nút bị che.</span></li>
+      <li><b>Dòng cuối danh sách cần chừa chỗ</b> <span>thanh đáy che mất khoảng 80px, nội dung cuối trang phải có khoảng đệm tương ứng.</span></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+/* Dữ liệu lấy đúng CART_BASE của index.html: độ dài tên sản phẩm ảnh hưởng
+   trực tiếp tới chuyện bị cắt chữ nên không được thay bằng chữ giả. */
+const A = 'assets/';
+const BASE = [
+  { img:'p8-0.jpg',  brand:'Versace', name:'Túi da Lou mini',                            variant:'Onesize , Black', now:'45.066.000 ₫', gift:true },
+  { img:'p5-0.jpg',  brand:'Versace', name:'Giày loafer da Manu',                        variant:'40 , Black',      now:'35.248.000 ₫' },
+  { img:'p10-0.jpg', brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm',          variant:'95 , Black',      now:'17.575.000 ₫' },
+  { img:'p2-0.jpg',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant:'Onesize',         now:'15.611.000 ₫' },
+];
+const GIFT = { prog:'Quà tặng kèm túi Lou mini', img:'b1.jpg', brand:'Versace',
+               name:'Nước hoa Crystal Noir EDP 5 ml', variant:'5 ml', was:'1.150.000 ₫' };
+const TIER = { prog:'Ưu đãi đơn từ 100 triệu', img:'g2.jpg', brand:'Versace',
+               name:'Khăn lụa Broken Jewels 84 x 5 cm', variant:'Onesize', was:'6.775.000 ₫' };
+
+const ICO = {
+  tick:'<svg viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="3"><path d="M4 12.5 9.5 18 20 6.5"/></svg>',
+  trash:'<svg viewBox="1.75 -0.25 20.5 24.5"><path d="M21.5,4h-3.551c-.252-2.244-2.139-4-4.449-4h-3c-2.31,0-4.197,1.756-4.449,4H2.5c-.276,0-.5,.224-.5,.5s.224,.5,.5,.5h1.5v14.5c0,2.481,2.019,4.5,4.5,4.5h7c2.481,0,4.5-2.019,4.5-4.5V5h1.5c.276,0,.5-.224,.5-.5s-.224-.5-.5-.5ZM10.5,1h3c1.758,0,3.204,1.308,3.449,3H7.051c.245-1.692,1.691-3,3.449-3Zm8.5,18.5c0,1.93-1.57,3.5-3.5,3.5h-7c-1.93,0-3.5-1.57-3.5-3.5V5h14v14.5ZM10,10.5v7c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5v-7c0-.276,.224-.5,.5-.5s.5,.224,.5,.5Zm5,0v7c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5v-7c0-.276,.224-.5,.5-.5s.5,.224,.5,.5Z"/></svg>',
+  minus:'<svg viewBox="0 0 24 24"><path d="M23.5,12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H23.5c.276,0,.5,.224,.5,.5s-.224,.5-.5,.5Z"/></svg>',
+  plus:'<svg viewBox="0 0 24 24"><path d="M24,12c0,.276-.224,.5-.5,.5H12.5v11c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5V12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H11.5V.5c0-.276,.224-.5,.5-.5s.5,.224,.5,.5V11.5h11c.276,0,.5,.224,.5,.5Z"/></svg>',
+  chev:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5"><path d="M9 5l7 7-7 7"/></svg>',
+};
+
+let showGift = true;
+let cartB = BASE.map(c => ({ ...c }));   // bản B xoá được nên cần state riêng
+let lastRemoved = null;
+
+/* ── Dòng bản A: chép đúng cấu trúc hiện tại ── */
+const rowA = c => `
+  <div class="rowA" data-row>
+    <!-- data-tap: trong index.html ô tick là <button class="chk w-4 h-4"> tức
+         một nút thật 16x16, nên phải đếm nó vào bảng vùng chạm cho công bằng. -->
+    <div class="colChk"><button class="chk on" data-tap aria-label="Bỏ chọn ${c.name}">${ICO.tick}</button></div>
+    <div class="thumb"><img src="${A}${c.img}" alt=""></div>
+    <div class="infoA" data-info>
+      <div>
+        <div class="padA">
+          <div class="brandline">
+            <p class="brandA">${c.brand}</p>
+            <button class="delA" data-tap aria-label="Xóa sản phẩm">${ICO.trash}</button>
+          </div>
+          <p class="nameA" data-name>${c.name}</p>
+        </div>
+        <p class="varA">${c.variant}</p>
+      </div>
+      <div class="footA">
+        <p class="priceA" data-price>${c.now}</p>
+        <div class="stpA">
+          <button data-tap aria-label="Giảm số lượng">${ICO.minus}</button>
+          <span class="q" data-qty>01</span>
+          <button data-tap aria-label="Tăng số lượng">${ICO.plus}</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+/* ── Dòng bản B ── */
+const rowB = (c, i) => `
+  <div class="rowB" data-row data-i="${i}">
+    <div class="chkTapB"><button class="chkTap tap44" data-tap aria-label="Bỏ chọn ${c.name}"><span class="chk on">${ICO.tick}</span></button></div>
+    <div class="thumb"><img src="${A}${c.img}" alt=""></div>
+    <div class="infoB" data-info>
+      <div>
+        <div class="brandline">
+          <p class="brandB">${c.brand}</p>
+          <button class="delB tap44" data-tap data-del="${i}" aria-label="Xóa ${c.name}">${ICO.trash}</button>
+        </div>
+        <p class="nameB" data-name>${c.name}</p>
+        <p class="varB">${c.variant}</p>
+      </div>
+      <div class="footB">
+        <p class="priceB" data-price>${c.now}</p>
+        <div class="stpB">
+          <button data-tap aria-label="Giảm số lượng">${ICO.minus}</button>
+          <span class="q" data-qty>01</span>
+          <button data-tap aria-label="Tăng số lượng">${ICO.plus}</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+/* ── Khối quà, dùng khuôn dòng của từng bản ── */
+const giftBlock = (g, variant) => `
+  <div class="giftWrap">
+    <div class="giftHd"><p>${g.prog}</p><button>Đổi quà</button></div>
+    <div class="${variant === 'A' ? 'rowA' : 'rowB'}" style="padding-top:0">
+      <div class="${variant === 'A' ? 'colChk' : 'chkTapB'}"></div>
+      <div class="thumb"><img src="${A}${g.img}" alt=""><span class="badgeGift">Quà tặng</span></div>
+      <div class="${variant === 'A' ? 'infoA' : 'infoB'}">
+        <div>
+          <div class="${variant === 'A' ? 'padA' : ''}">
+            <p class="${variant === 'A' ? 'brandA' : 'brandB'}">${g.brand}</p>
+            <p class="${variant === 'A' ? 'nameA' : 'nameB'}">${g.name}</p>
+          </div>
+          <p class="${variant === 'A' ? 'varA' : 'varB'}">${g.variant}</p>
+        </div>
+        <div class="${variant === 'A' ? 'footA' : 'footB'}">
+          <div>
+            <p class="${variant === 'A' ? 'priceA' : 'priceB'}">0 ₫</p>
+            <p class="varA" style="text-decoration:line-through">${g.was}</p>
+          </div>
+          <span class="qtyStatic" style="margin-right:${variant === 'A' ? 28 : 40}px">01</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+const PROMO_BODY = `
+  <div class="rule">
+    <p class="rh">* Wardrobe refresh - [01/08 - 31/08]</p>
+    <p class="rs">Nhập mã JUL1500 giảm 1.5 triệu cho đơn từ 16 triệu, JUL1000 giảm 1 triệu cho đơn từ 11 triệu, JUL500 giảm 500K cho đơn từ 8 triệu</p>
+    <p class="rt">(*) Không áp dụng cho Stefano Ricci, TUMI, Montblanc, Phiếu Quà Tặng và New Season</p>
+  </div>
+  <div class="rule">
+    <p class="rh">** Buy more save more - [28/07 - 24/08]</p>
+    <p class="rs">Mua 2 giảm thêm 5%, mua 3 giảm thêm 10%</p>
+    <p class="rt">(**) Sản phẩm chọn lọc</p>
+  </div>
+  <div class="rule"><p class="rh">Miễn phí vận chuyển cho đơn hàng từ 8 triệu</p></div>`;
+
+const summaryBlock = () => `
+  <div class="panel">
+    <div class="card">
+      <p class="fieldlab">Mã giảm giá</p>
+      <div class="inline"><input class="inp" placeholder="Nhập voucher"><button class="btnO">Áp dụng</button></div>
+    </div>
+    <div class="sumline"><span class="k">Tạm tính</span><span class="v">113,500,000đ</span></div>
+    <div class="sumtot"><span>Tổng cộng</span><span>113,500,000đ</span></div>
+    <p class="earn">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b>1.135</b> điểm thưởng</p>
+  </div>`;
+
+const pbhBlock = () => `
+  <div class="acc">
+    <button><span>Bạn có phiếu mua hàng?</span>${ICO.chev}</button>
+  </div>`;
+
+/* ════════════ Dựng hai khung ════════════ */
+function renderA() {
+  const list = BASE.map(c => rowA(c) + (showGift && c.gift ? giftBlock(GIFT, 'A') : '')).join('');
+  document.getElementById('scA').innerHTML = `
+    <div class="nav">Giỏ hàng</div>
+    <h2 class="h2">Giỏ hàng <span class="n">(4)</span></h2>
+    <div class="selbar">
+      <span class="selrow"><span class="chk on">${ICO.tick}</span><span class="t">Chọn tất cả</span></span>
+      <button class="clr">Xóa sản phẩm đã chọn</button>
+    </div>
+    ${list}
+    ${showGift ? `<div style="padding-top:12px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 16px 8px">
+        <p style="font-size:14px;font-weight:500;margin:0">Quà tặng theo đơn hàng</p>
+        <p style="font-size:12px;color:var(--muted);margin:0">1 quà</p>
+      </div>${giftBlock(TIER, 'A')}</div>` : ''}
+    <div class="promoWrap">
+      <div class="promo">
+        <p class="t">Chương trình khuyến mãi (3)</p>
+        ${PROMO_BODY}
+        <button class="more">Xem tất cả 3 chương trình</button>
+      </div>
+    </div>
+    ${summaryBlock()}
+    <div style="padding:16px"><button class="ctaFlow" data-cta style="margin:0">Đặt hàng</button></div>
+    ${pbhBlock()}
+    <div class="tail"></div>`;
+}
+
+function renderB() {
+  const list = cartB.map((c, i) => rowB(c, i) + (showGift && c.gift ? giftBlock(GIFT, 'B') : '')).join('');
+  document.getElementById('scB').innerHTML = `
+    <div class="nav">Giỏ hàng</div>
+    <h2 class="h2">Giỏ hàng <span class="n">(${cartB.length})</span></h2>
+    <div class="selbar">
+      <span class="selrow"><span class="chk on">${ICO.tick}</span><span class="t">Chọn tất cả</span></span>
+      <button class="clr">Xóa sản phẩm đã chọn</button>
+    </div>
+    ${list}
+    ${showGift ? `<div style="padding-top:12px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 16px 8px">
+        <p style="font-size:14px;font-weight:500;margin:0">Quà tặng theo đơn hàng</p>
+        <p style="font-size:12px;color:var(--muted);margin:0">1 quà</p>
+      </div>${giftBlock(TIER, 'B')}</div>` : ''}
+    <div class="promoWrap">
+      <div class="promoAcc" id="promoAcc">
+        <button type="button"><span>Chương trình khuyến mãi (3)</span><span class="cv">${ICO.chev}</span></button>
+        <div class="bd">${PROMO_BODY}</div>
+      </div>
+    </div>
+    ${summaryBlock()}
+    ${pbhBlock()}
+    <div class="tail"></div>
+    <div class="dock">
+      <div class="sum"><p class="k">Tổng cộng</p><p class="v">113,500,000đ</p></div>
+      <button class="go" data-cta>Đặt hàng</button>
+    </div>`;
+
+  document.getElementById('promoAcc').querySelector('button')
+    .onclick = e => e.currentTarget.parentElement.classList.toggle('open');
+
+  document.getElementById('scB').querySelectorAll('[data-del]').forEach(b => {
+    b.onclick = () => removeB(+b.dataset.del);
+  });
+}
+
+/* ── Xoá kèm hoàn tác: cái mà bản hiện tại đang thiếu ── */
+function removeB(i) {
+  const item = cartB[i];
+  if (!item) return;
+  lastRemoved = { item, at: i };
+  cartB.splice(i, 1);
+  renderB(); refresh();
+  showToast('Đã xóa ' + item.name);
+}
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 5000);
+}
+document.getElementById('undo').onclick = () => {
+  if (!lastRemoved) return;
+  cartB.splice(lastRemoved.at, 0, lastRemoved.item);
+  lastRemoved = null;
+  document.getElementById('toast').classList.remove('on');
+  renderB(); refresh();
+};
+
+/* ════════════ Đo sống ════════════ */
+const R = el => el ? el.getBoundingClientRect() : null;
+
+function tapTargets(scope) {
+  return [...scope.querySelectorAll('[data-tap]')].map(el => {
+    const b = R(el);
+    return { el, w: Math.round(b.width), h: Math.round(b.height), ok: b.width >= 44 && b.height >= 44 };
+  });
+}
+
+/* Bao nhiêu tên sản phẩm bị cắt: so bề ngang cần thiết với bề ngang ô chứa.
+   Bản B dùng 2 dòng nên đo theo chiều CAO (scrollHeight) thay vì ngang. */
+function cutNames(scope, twoLine) {
+  return [...scope.querySelectorAll('[data-name]')].filter(n => {
+    const b = R(n);
+    return twoLine ? n.scrollHeight > Math.ceil(b.height) + 1
+                   : n.scrollWidth  > Math.ceil(b.width) + 1;
+  }).length;
+}
+
+function ctaDepth(sc) {
+  const cta = sc.querySelector('[data-cta]');
+  if (!cta) return null;
+  const dock = cta.closest('.dock');
+  /* Nút trong thanh đáy dính thì luôn nhìn thấy -> độ sâu 0 */
+  if (dock) return { px: 0, screens: 0, sticky: true };
+  const top = R(cta).top - R(sc).top + sc.scrollTop;
+  return { px: Math.round(top), screens: +(top / sc.clientHeight).toFixed(1), sticky: false };
+}
+
+function refresh() {
+  const scA = document.getElementById('scA'), scB = document.getElementById('scB');
+  const rowA_ = scA.querySelector('[data-row]'), rowB_ = scB.querySelector('[data-row]');
+  if (!rowA_ || !rowB_) return;
+
+  const tA = tapTargets(rowA_), tB = tapTargets(rowB_);
+  const failA = tA.filter(t => !t.ok).length, failB = tB.filter(t => !t.ok).length;
+  const dA = ctaDepth(scA), dB = ctaDepth(scB);
+  const px = n => n + 'px';
+
+  const smallest = t => t.length ? Math.min(...t.map(x => Math.min(x.w, x.h))) : 0;
+
+  const rows = [
+    ['Vùng chạm dưới chuẩn 44px', failA + ' / ' + tA.length, failB + ' / ' + tB.length, 'Đếm trên một dòng sản phẩm.'],
+    ['Vùng chạm nhỏ nhất',        px(smallest(tA)),  px(smallest(tB)),  'Cạnh ngắn nhất của nút bé nhất.'],
+    ['Tên sản phẩm bị cắt',       cutNames(scA, false) + ' / 4', cutNames(scB, true) + ' / 4', 'Bản đề xuất cho 2 dòng.'],
+    ['Nút Đặt hàng nằm ở',        dA.sticky ? 'thanh đáy' : px(dA.px), dB.sticky ? 'thanh đáy dính' : px(dB.px), 'Tính từ đầu trang.'],
+    ['Phải cuộn bao nhiêu màn',   dA.sticky ? '0' : dA.screens + ' màn', dB.sticky ? '0' : dB.screens + ' màn', 'Trước khi thấy nút đặt hàng.'],
+    ['Tổng tiền nhìn thấy',       'phải cuộn tới', 'luôn thấy', 'Con số quyết định bấm nút.'],
+    ['Hoàn tác sau khi xóa',      'không có', 'có, 5 giây', 'Xóa nhầm món 45 triệu thì sao.'],
+    ['Chiều cao toàn trang',      px(scA.scrollHeight), px(scB.scrollHeight), 'Khuyến mãi gói lại nên ngắn hơn.'],
+    ['Cỡ chữ giá / số lượng',     '14 / 12', '15 / 14', 'Thang chữ.'],
+  ];
+
+  document.getElementById('tbl').innerHTML = rows.map(([k, va, vb, note], i) =>
+    `<tr><td>${k}</td><td class="num bad">${va}</td><td class="num good">${vb}</td>
+     <td><span style="color:var(--muted)">${note}</span></td></tr>`).join('');
+
+  drawTaps();
+  updateDepth();
+}
+
+/* ── Lớp phủ vùng chạm ── */
+function drawTaps() {
+  const on = document.getElementById('ttT').checked;
+  document.querySelectorAll('.ttag').forEach(e => e.remove());
+  document.querySelectorAll('.tt').forEach(e => e.classList.remove('tt', 'ok'));
+  if (!on) return;
+  ['scA', 'scB'].forEach(id => {
+    const sc = document.getElementById(id);
+    const row = sc.querySelector('[data-row]');
+    if (!row) return;
+    tapTargets(row).forEach(t => {
+      t.el.classList.add('tt');
+      if (t.ok) t.el.classList.add('ok');
+      const tag = document.createElement('span');
+      tag.className = 'ttag';
+      tag.textContent = t.w + '×' + t.h;
+      t.el.appendChild(tag);
+    });
+  });
+}
+
+/* ── Thanh cho biết cuộn tới đâu, và vạch đỏ là chỗ nút Đặt hàng ── */
+function updateDepth() {
+  [['scA', 'nowA', 'markA', 'depthA'], ['scB', 'nowB', 'markB', 'depthB']].forEach(([s, n, m, d]) => {
+    const sc = document.getElementById(s);
+    const max = sc.scrollHeight - sc.clientHeight;
+    const pct = max > 0 ? (sc.scrollTop / max) * 100 : 0;
+    document.getElementById(n).style.width = pct + '%';
+    const dep = ctaDepth(sc);
+    const mk = document.getElementById(m);
+    if (dep.sticky) {
+      mk.style.display = 'none';
+      document.getElementById(d).textContent = 'Nút Đặt hàng luôn hiện ở thanh đáy';
+    } else {
+      mk.style.display = '';
+      mk.style.left = Math.min(100, (dep.px / sc.scrollHeight) * 100) + '%';
+      document.getElementById(d).textContent =
+        'Nút Đặt hàng ở ' + dep.px + 'px, phải cuộn ' + dep.screens + ' màn mới tới';
+    }
+  });
+}
+document.getElementById('scA').addEventListener('scroll', updateDepth, { passive: true });
+document.getElementById('scB').addEventListener('scroll', updateDepth, { passive: true });
+
+document.getElementById('ttT').onchange = drawTaps;
+document.getElementById('giftT').onchange = e => { showGift = e.target.checked; renderA(); renderB(); refresh(); };
+
+renderA(); renderB(); refresh();
+/* Đo lại khi font và ảnh xong: bề ngang chuỗi chữ phụ thuộc font thật hay
+   font dự phòng, mà đó chính là phép đo "tên sản phẩm bị cắt". */
+function remeasure() { try { refresh(); } catch (e) {} }
+addEventListener('load', remeasure);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
+addEventListener('resize', remeasure);
+</script>
+</body>
+</html>

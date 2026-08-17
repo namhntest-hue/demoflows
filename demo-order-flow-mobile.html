@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Demo — Nâng cấp luồng đặt hàng mobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* Demo dựng bằng CSS viết tay, không phụ thuộc tailwind.css đã build.
+
+     PHẠM VI: toàn luồng đặt hàng bản mobile, khách vãng lai (đường dài nhất):
+     Giỏ hàng -> Giao hàng -> Vận chuyển -> Thanh toán -> Hoàn tất.
+     Số đo trong bảng lấy từ phép đo sống trên chính index.html ở khung 375x812,
+     ghi lại thành hằng số ĐO_THAT bên dưới, và các khung demo ở đây tự đo lại
+     phần của mình. Nguồn số nào cũng ghi rõ, không có số bịa. */
+  :root{
+    --ink:#0a0a0a; --ink-2:#262626; --muted:#737373; --line:#e5e5e5;
+    --line-2:#f5f5f5; --line-3:#d4d4d4; --red:#d62845; --ok:#0a7c42; --bg:#f4f4f5;
+    --warn-bg:#fff7ed; --warn-line:#fed7aa; --warn-ink:#7c2d12;
+    --info-bg:#eff6ff; --info-line:#bfdbfe; --info-ink:#1e40af;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:Montserrat,sans-serif;color:var(--ink)}
+  img{display:block}
+
+  .doc{max-width:1280px;margin:0 auto;padding:32px 24px 12px}
+  h1{font-size:22px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:14px;line-height:22px;color:#52525b;margin:0 0 10px;max-width:900px}
+  .warn{font-size:13px;line-height:20px;color:var(--warn-ink);background:var(--warn-bg);
+        border:1px solid var(--warn-line);border-radius:4px;padding:10px 12px;margin:0 0 8px;max-width:900px}
+  .info{font-size:13px;line-height:20px;color:var(--info-ink);background:var(--info-bg);
+        border:1px solid var(--info-line);border-radius:4px;padding:10px 12px;margin:0 0 8px;max-width:900px}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#00000008;padding:1px 4px;border-radius:2px}
+
+  .bar{position:sticky;top:0;z-index:60;background:rgba(244,244,245,.93);backdrop-filter:blur(8px);
+       border-bottom:1px solid #e4e4e7}
+  .bar-in{max-width:1280px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .steps{display:inline-flex;border:1px solid var(--line-3);border-radius:3px;overflow:hidden;background:#fff}
+  .steps button{appearance:none;border:0;background:#fff;font:500 13px Montserrat;color:var(--ink-2);
+                padding:8px 14px;cursor:pointer;transition:background .15s,color .15s}
+  .steps button + button{border-left:1px solid var(--line)}
+  .steps button[aria-pressed="true"]{background:var(--ink);color:#fafafa}
+  .steps button:hover:not([aria-pressed="true"]){background:var(--line-2)}
+  .tog{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2);cursor:pointer;user-select:none}
+  .tog input{width:15px;height:15px;accent-color:var(--ink);cursor:pointer;margin:0}
+  .barnote{font-size:12px;color:var(--muted);margin-left:auto}
+  .barnote b{color:var(--ink);font-weight:500}
+
+  .lab{background:#fff;border-top:1px solid #e4e4e7}
+  .phones{max-width:1280px;margin:0 auto;padding:24px;display:flex;gap:40px;flex-wrap:wrap;justify-content:center}
+  .ph{flex:0 0 auto;width:375px}
+  .ph > .cap{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;min-height:22px}
+  .ph > .cap h2{font-size:15px;font-weight:600;margin:0}
+  .ph > .cap span{font-size:12px;color:var(--muted)}
+  .ph.good > .cap h2{color:var(--ok)}
+  .frame{width:375px;height:812px;border:1px solid var(--line-3);border-radius:14px;overflow:hidden;
+         background:#fff;position:relative;box-shadow:0 10px 34px rgba(0,0,0,.10)}
+  .scroller{height:100%;overflow-y:auto;overflow-x:hidden;position:relative;scrollbar-width:thin}
+  .scroller::-webkit-scrollbar{width:5px}
+  .scroller::-webkit-scrollbar-thumb{background:#d4d4d8;border-radius:3px}
+  .depth{margin-top:10px;font-size:12px;color:var(--muted);min-height:34px}
+  .track{height:6px;background:var(--line);border-radius:3px;position:relative;margin:6px 0 4px;overflow:hidden}
+  .track .now{position:absolute;top:0;left:0;height:100%;background:var(--ink-2);border-radius:3px}
+  .track .ctaMark{position:absolute;top:-3px;width:2px;height:12px;background:var(--red)}
+  .ph.good .track .ctaMark{background:var(--ok)}
+
+  /* ── Bộ phận màn, dùng chung 2 bản ── */
+  .nav{height:52px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;
+       padding:0 16px;position:sticky;top:0;background:#fff;z-index:12;font-size:15px;font-weight:600}
+  .h1s{font-size:18px;font-weight:500;margin:0;padding:16px}
+  .h1s .n{color:var(--muted)}
+  .secttl{font-size:16px;font-weight:500;margin:0}
+
+  .chk{width:16px;height:16px;border:1px solid var(--line-3);border-radius:2px;background:#fff;
+       flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+  .chk.on{background:var(--ink);border-color:var(--ink)}
+  .chk svg{width:10px;height:10px;opacity:0}
+  .chk.on svg{opacity:1}
+  .radio{width:16px;height:16px;border:1px solid var(--line-3);border-radius:50%;flex:0 0 auto;
+         display:flex;align-items:center;justify-content:center}
+  .radio.on::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--ink)}
+
+  /* vùng chạm 44: padding nở ra rồi margin âm kéo lại, hình giữ đúng kích thước.
+     LƯU Ý: không đặt thẳng lên .chk - .chk bị ghim width/height 16px nên padding
+     chui vào trong hộp và chỉ nở ra được 30px. Ô tick phải bọc bằng .chkTap. */
+  .tap44{padding:14px;margin:-14px;position:relative;z-index:2}
+  .chkTap{appearance:none;border:0;background:none;display:flex;align-items:center;
+          justify-content:center;cursor:pointer}
+
+  /* ── Khối tóm tắt giỏ (accordion) ── */
+  .cksum{padding:16px 8px;border-bottom:1px solid var(--line)}
+  .cksum .trig{width:100%;display:flex;align-items:center;justify-content:space-between;
+               appearance:none;border:0;background:none;padding:0 8px;cursor:pointer;font:400 14px Montserrat}
+  .cksum .trig b{font-weight:500}
+  .cknotice{padding:8px 16px;border-bottom:1px solid var(--line-2)}
+  .cknotice .box{background:#fafafa;border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:8px;
+                 font-size:14px;line-height:20px}
+  .cknotice a{color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;display:inline-block}
+
+  /* cặp nút Giao hàng / Nhận tại cửa hàng */
+  .seg{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden;margin:0 16px 12px}
+  .seg button{flex:1;appearance:none;border:0;background:#fff;font:500 14px Montserrat;cursor:pointer;color:var(--ink-2)}
+  .seg button.on{background:var(--ink);color:#fafafa}
+
+  /* ── Section kiểu accordion của checkout ── */
+  .sec{border-top:1px solid var(--line-2);padding:8px 0}
+  .sec.pending{padding:0}
+  .sechead{height:56px;padding:0 16px;display:flex;align-items:center;justify-content:space-between}
+  .sec.pending .sechead{height:72px}
+  .sec.pending .secttl{opacity:.4}
+  .secbody{padding:8px 0}
+  .chg{appearance:none;border:0;background:none;font:400 14px Montserrat;cursor:pointer;color:var(--ink)}
+  /* Bản đề xuất: "Thay đổi" trông ra nút và đủ 44 (mục 07 vòng trước, còn treo) */
+  .chgB{appearance:none;background:#fff;border:1px solid var(--line);border-radius:2px;
+        height:44px;padding:0 16px;font:500 14px Montserrat;cursor:pointer;color:var(--ink)}
+  .chgB:active{background:var(--line-2)}
+
+  .fld{padding:4px 16px}
+  .fld label{display:block;font-size:14px;font-weight:500;line-height:20px;margin-bottom:6px}
+  .inpA{width:100%;height:40px;border:1px solid var(--line);border-radius:2px;padding:0 8px;
+        font:400 14px Montserrat;background:#fff;color:var(--ink)}
+  .inpB{width:100%;height:44px;border:1px solid var(--line);border-radius:2px;padding:0 10px;
+        font:400 15px Montserrat;background:#fff;color:var(--ink)}
+  .inpA::placeholder,.inpB::placeholder{color:var(--muted)}
+
+  .opt{width:100%;display:flex;align-items:flex-start;gap:8px;border:1px solid var(--line);
+       border-radius:2px;padding:12px;background:#fff;text-align:left;cursor:pointer;font-family:inherit}
+  .opt.on{border-color:var(--ink-2)}
+  .opt .t{font-size:14px;font-weight:500;line-height:20px;display:block}
+  .opt .d{font-size:13px;line-height:19px;color:var(--muted);display:block;margin-top:2px}
+  .opt .d.real{color:var(--ok);font-weight:500}
+  .optwrap{padding:8px 16px;display:flex;flex-direction:column;gap:12px}
+
+  .sumrow{height:36px;display:flex;align-items:center;justify-content:space-between;font-size:14px}
+  .sumrow.tot{height:56px;font-size:16px;font-weight:500}
+  .sumbox{padding:8px 16px}
+
+  .ctaFlow{width:100%;height:48px;border:0;border-radius:2px;background:var(--ink);color:#fafafa;
+           font:500 16px Montserrat;cursor:pointer}
+  .ctaWrap{padding:16px}
+
+  /* ── Thanh đáy dính (chỉ bản đề xuất) ── */
+  .dock{position:sticky;bottom:0;z-index:14;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);
+        border-top:1px solid var(--line);padding:10px 16px 14px;display:flex;align-items:center;gap:12px}
+  .dock .sum{flex:1;min-width:0}
+  .dock .k{font-size:12px;line-height:16px;color:var(--muted);margin:0}
+  .dock .v{font-size:17px;font-weight:600;line-height:24px;margin:0}
+  .dock .go{flex:0 0 auto;height:48px;padding:0 24px;border:0;border-radius:2px;background:var(--ink);
+            color:#fafafa;font:500 16px Montserrat;cursor:pointer;display:flex;align-items:center;gap:8px}
+  .dock .go[disabled]{opacity:.55;cursor:progress}
+  .spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;
+        border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .tail{height:90px}
+  .doneWrap{padding:40px 32px;display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center}
+  .ring{width:72px;height:72px;border-radius:50%;border:1.5px solid var(--ink);display:flex;align-items:center;justify-content:center}
+  .doneRows{width:100%;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+  .doneRows div{display:flex;justify-content:space-between;padding:12px 16px;font-size:13px}
+  .doneRows span:first-child{color:var(--muted)}
+  .doneRows span:last-child{font-weight:500}
+
+  /* ── Lớp phủ vùng chạm ── */
+  .tt{outline:1.5px dashed var(--red);position:relative}
+  .tt.ok{outline-color:var(--ok)}
+  .ttag{position:absolute;top:-1px;left:100%;margin-left:3px;background:var(--red);color:#fff;
+        font-size:9px;font-weight:600;line-height:13px;padding:0 3px;border-radius:2px;
+        white-space:nowrap;z-index:20;pointer-events:none}
+  .tt.ok .ttag{background:var(--ok)}
+
+  /* ── Bảng ── */
+  .doc2{max-width:1280px;margin:0 auto;padding:32px 24px 80px}
+  .panel2{background:#fff;border:1px solid #e4e4e7;border-radius:10px;padding:20px 22px;margin-bottom:22px}
+  .panel2 h2{font-size:16px;margin:0 0 4px}
+  .panel2 .sub{font-size:13px;line-height:20px;color:var(--muted);margin:0 0 14px}
+  table{width:100%;border-collapse:collapse;font-size:13px;line-height:20px}
+  th{text-align:left;font-weight:600;font-size:12px;color:var(--muted);padding:8px 12px 8px 0;border-bottom:1px solid var(--line)}
+  td{padding:9px 12px 9px 0;border-bottom:1px solid var(--line-2);vertical-align:top}
+  td.num{font-family:ui-monospace,Menlo,Consolas,monospace;white-space:nowrap;width:112px}
+  tr.sum td{font-weight:600;border-top:1px solid var(--line-3)}
+  .bad{color:var(--red);font-weight:600}
+  .good{color:var(--ok);font-weight:600}
+  .panel2 ul{margin:0;padding-left:18px}
+  .panel2 li{font-size:13px;line-height:21px;margin-bottom:8px}
+  .panel2 li b{font-weight:500}
+  .panel2 li span{color:var(--muted)}
+  .tagn{display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:2px;
+        border:1px solid var(--line-3);color:var(--muted);margin-right:6px;vertical-align:1px}
+  .tagn.new{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tagn.old{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
+</style>
+</head>
+<body>
+
+<div class="doc">
+  <h1>Nâng cấp luồng đặt hàng - bản mobile</h1>
+  <p class="lede">Toàn luồng khách vãng lai, đường dài nhất: Giỏ hàng, Giao hàng, Vận chuyển, Thanh toán, Hoàn tất. Chọn từng bước ở thanh trên để so hai bản cạnh nhau. Số trong bảng tổng lấy từ phép đo sống chạy trực tiếp trên <code>index.html</code> ở khung 375x812, các khung demo ở đây tự đo lại phần của mình.</p>
+  <p class="warn"><b>Chưa áp vào app.</b> File này độc lập - <code>index.html</code> và <code>desktop.html</code> không đổi một dòng nào.</p>
+  <p class="info"><b>Đã lọc theo vòng duyệt trước.</b> 5 đề xuất bạn đã bỏ ở <code>demo-checkout-upgrades.html</code> không xuất hiện lại ở đây: thanh tiến độ 3 bước, đặt lịch nhận tại boutique, gói quà kèm thiệp, lưu thẻ thanh toán, bảng ưu đãi mang từ giỏ sang.</p>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="steps" role="group" aria-label="Chọn bước">
+      <button data-step="0" aria-pressed="true">1. Giỏ hàng</button>
+      <button data-step="1" aria-pressed="false">2. Giao hàng</button>
+      <button data-step="2" aria-pressed="false">3. Vận chuyển</button>
+      <button data-step="3" aria-pressed="false">4. Thanh toán</button>
+      <button data-step="4" aria-pressed="false">5. Hoàn tất</button>
+    </div>
+    <label class="tog"><input type="checkbox" id="ttT"> Hiện vùng chạm</label>
+    <p class="barnote" id="hint">Bấm Đặt hàng ở bước 4 để thấy trạng thái xử lý</p>
+  </div>
+</div>
+
+<div class="lab">
+  <div class="phones">
+    <div class="ph" id="phA">
+      <div class="cap"><h2>Hiện tại</h2><span id="capA"></span></div>
+      <div class="frame"><div class="scroller" id="scA"></div></div>
+      <div class="depth"><div class="track"><span class="now" id="nowA"></span><span class="ctaMark" id="markA"></span></div><span id="depthA">-</span></div>
+    </div>
+    <div class="ph good" id="phB">
+      <div class="cap"><h2>Đề xuất</h2><span id="capB"></span></div>
+      <div class="frame"><div class="scroller" id="scB"></div></div>
+      <div class="depth"><div class="track"><span class="now" id="nowB"></span><span class="ctaMark" id="markB"></span></div><span id="depthB">-</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="doc2">
+  <div class="panel2">
+    <h2>Toàn luồng, đo trên index.html</h2>
+    <p class="sub">Khung 375x812, khách vãng lai. Cột "Hiện tại" là số đo thật chạy trên app; cột "Đề xuất" đo trên khung bên phải của trang này.</p>
+    <table>
+      <thead><tr><th>Bước</th><th class="num">Cao trang</th><th class="num">Số màn cuộn</th><th class="num">Nút chính ở</th><th class="num">Vùng chạm dưới 44</th></tr></thead>
+      <tbody id="tblFlow"></tbody>
+    </table>
+  </div>
+
+  <div class="panel2">
+    <h2>Số đo bước đang xem</h2>
+    <p class="sub">Đo sống trên hai khung điện thoại phía trên.</p>
+    <table>
+      <thead><tr><th>Chỉ số</th><th class="num">Hiện tại</th><th class="num">Đề xuất</th><th>Ý nghĩa</th></tr></thead>
+      <tbody id="tblStep"></tbody>
+    </table>
+  </div>
+
+  <div class="panel2">
+    <h2>Đề xuất</h2>
+    <ul id="props"></ul>
+  </div>
+
+  <div class="panel2">
+    <h2>Khi áp vào app cần lưu ý</h2>
+    <ul>
+      <li><b>Đã có sẵn <code>stickyCta()</code></b> <span>ở index.html dòng 1138, định nghĩa rồi nhưng không nơi nào gọi. Đúng thứ cần cho thanh đáy dính ở cả 4 bước.</span></li>
+      <li><b><code>ETA</code> là hằng số dùng chung</b> <span>ở index.html dòng 3453, truyền cho cả giao thường lẫn giao nhanh. Muốn hai lựa chọn khác nhau thì phải tách thành hai giá trị, không sửa được bằng CSS.</span></li>
+      <li><b>Phải build lại tailwind.css</b> <span>cho các lớp vùng chạm và line-clamp: <code>npx tailwindcss@3.4.17 -c tailwind.config.js -i in.css -o tailwind.css --minify</code></span></li>
+      <li><b>Thanh đáy phải chừa vùng an toàn</b> <span><code>padding-bottom: env(safe-area-inset-bottom)</code>, và nội dung cuối trang chừa khoảng đệm khoảng 90px kẻo bị che.</span></li>
+      <li><b>Bỏ nút trong luồng khi thêm thanh đáy</b> <span>để không có hai nút cùng một việc trên một màn.</span></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   SỐ ĐO THẬT — chạy trực tiếp trên index.html, khung 375x812, khách
+   vãng lai, sau khi đã đóng cổng cookie. Ghi lại ở đây để bảng tổng
+   luồng có cột "Hiện tại" đúng với app, vì trang này chỉ dựng lại
+   được phần giao diện chứ không chạy được router của app.
+════════════════════════════════════════════════════════════════ */
+const DO_THAT = [
+  { step:'Giỏ hàng',    pageH:3304, screens:4.07, cta:'Đặt hàng @1791', under44:'36 / 41' },
+  { step:'Giao hàng',   pageH:1221, screens:1.50, cta:'Xác nhận @979',  under44:'11 / 12' },
+  { step:'Vận chuyển',  pageH:944,  screens:1.16, cta:'Xác nhận @775',  under44:'5 / 8'   },
+  { step:'Thanh toán',  pageH:1238, screens:1.52, cta:'Đặt hàng @1143', under44:'5 / 10'  },
+  { step:'Hoàn tất',    pageH:698,  screens:0.86, cta:'-',              under44:'0 / 2'   },
+];
+
+const A = 'assets/';
+const CART = [
+  { img:'p8-0.jpg',  brand:'Versace', name:'Túi da Lou mini',                            variant:'Onesize , Black', now:'45.066.000 ₫' },
+  { img:'p5-0.jpg',  brand:'Versace', name:'Giày loafer da Manu',                        variant:'40 , Black',      now:'35.248.000 ₫' },
+  { img:'p10-0.jpg', brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm',          variant:'95 , Black',      now:'17.575.000 ₫' },
+  { img:'p2-0.jpg',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant:'Onesize',         now:'15.611.000 ₫' },
+];
+const TOTAL = '113,500,000đ';
+
+/* Ngày giao: app đang dùng MỘT hằng số ETA cho cả hai lựa chọn, và ngày
+   14/07-18/07 đã là quá khứ so với mốc demo 13/08/2026. Bản đề xuất tách
+   hai mốc khác nhau và đều là ngày tương lai. */
+const ETA_NOW  = 'Thời gian nhận hàng dự kiến từ ngày 14/07 đến ngày 18/07';
+const ETA_STD  = 'Nhận hàng 17/08 - 21/08 (4 ngày làm việc)';
+const ETA_FAST = 'Nhận hàng 15/08 - 16/08 (sớm hơn 5 ngày)';
+
+const ICO = {
+  tick:'<svg viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="3"><path d="M4 12.5 9.5 18 20 6.5"/></svg>',
+  tickInk:'<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.4"><circle cx="12" cy="12" r="9.5"/><path d="m7.5 12.3 3 3 6-6.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  chev:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5"><path d="M9 5l7 7-7 7"/></svg>',
+  trash:'<svg viewBox="1.75 -0.25 20.5 24.5"><path d="M21.5,4h-3.551c-.252-2.244-2.139-4-4.449-4h-3c-2.31,0-4.197,1.756-4.449,4H2.5c-.276,0-.5,.224-.5,.5s.224,.5,.5,.5h1.5v14.5c0,2.481,2.019,4.5,4.5,4.5h7c2.481,0,4.5-2.019,4.5-4.5V5h1.5c.276,0,.5-.224,.5-.5s-.224-.5-.5-.5ZM10.5,1h3c1.758,0,3.204,1.308,3.449,3H7.051c.245-1.692,1.691-3,3.449-3Zm8.5,18.5c0,1.93-1.57,3.5-3.5,3.5h-7c-1.93,0-3.5-1.57-3.5-3.5V5h14v14.5ZM10,10.5v7c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5v-7c0-.276,.224-.5,.5-.5s.5,.224,.5,.5Zm5,0v7c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5v-7c0-.276,.224-.5,.5-.5s.5,.224,.5,.5Z"/></svg>',
+};
+
+/* Ô tick bản đề xuất: nút bọc 44 chứa hình vuông 16 - xem ghi chú .chkTap */
+const chkTap = (on) => `
+  <button class="chkTap tap44" data-tap><span class="chk ${on ? 'on' : ''}">${ICO.tick}</span></button>`;
+
+/* ── Bộ phận dùng chung ── */
+const cksum = () => `
+  <div class="cksum">
+    <button class="trig" data-tap><span>Giỏ hàng của bạn</span><span style="display:flex;align-items:center;gap:8px"><b>${TOTAL}</b>${ICO.chev}</span></button>
+  </div>`;
+
+const cksumB = () => `
+  <div class="cksum">
+    <button class="trig" data-tap style="min-height:44px"><span style="font-size:15px">Giỏ hàng của bạn</span><span style="display:flex;align-items:center;gap:8px"><b>${TOTAL}</b>${ICO.chev}</span></button>
+  </div>`;
+
+const notice = v => `
+  <div class="cknotice"><div class="box">
+    <p style="margin:0;font-weight:500">Bạn đang thanh toán không đăng nhập</p>
+    <p style="margin:0">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b>1.135 điểm thưởng</b></p>
+    ${v === 'A'
+      ? `<a data-tap style="align-self:flex-start">Đăng nhập</a>`
+      : `<button data-tap class="chgB" style="align-self:flex-start;height:44px">Đăng nhập</button>`}
+  </div></div>`;
+
+const seg = () => `
+  <div class="seg" style="margin-top:12px">
+    <button class="on" data-tap style="height:40px">Giao hàng</button>
+    <button data-tap style="height:40px">Nhận tại cửa hàng</button>
+  </div>`;
+const segB = () => `
+  <div class="seg" style="margin-top:12px">
+    <button class="on" data-tap style="height:44px;font-size:15px">Giao hàng</button>
+    <button data-tap style="height:44px;font-size:15px">Nhận tại cửa hàng</button>
+  </div>`;
+
+/* section: state = 'open' | 'done' | 'pending' */
+const section = (title, state, body, v) => `
+  <div class="sec ${state === 'pending' ? 'pending' : ''}">
+    <div class="sechead">
+      <p class="secttl">${title}</p>
+      ${state === 'done'
+        ? (v === 'A' ? `<button class="chg" data-tap>Thay đổi</button>`
+                     : `<button class="chgB" data-tap>Thay đổi</button>`)
+        : ''}
+    </div>
+    ${state === 'open' ? `<div class="secbody">${body}</div>` : ''}
+    ${state === 'done' ? `<div class="secbody" style="padding:8px 16px;font-size:14px;line-height:20px;color:var(--ink-2)">${body}</div>` : ''}
+  </div>`;
+
+const fld = (label, ph, v) => `
+  <div class="fld"><label>${label}</label>
+    <input class="${v === 'A' ? 'inpA' : 'inpB'}" placeholder="${ph}" data-tap></div>`;
+
+const addrForm = v => `
+  ${fld('Tên','Nhập tên',v)}${fld('Họ','Nhập họ',v)}
+  ${fld('Số điện thoại','0 1234 5678',v)}
+  ${fld('Tỉnh , thành phố','Chọn tỉnh / thành phố',v)}
+  ${fld('Phường xã','Chọn phường / xã',v)}
+  ${fld('Địa chỉ','Số nhà, tên đường',v)}
+  <div class="fld" style="padding-top:10px">
+    ${v === 'A'
+      ? `<label class="press" style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer"><span class="chk on" data-tap>${ICO.tick}</span>Lưu vào sổ địa chỉ</label>`
+      : `<label style="display:flex;align-items:center;gap:8px;font-weight:400;cursor:pointer;min-height:44px">${chkTap(true)}Lưu vào sổ địa chỉ</label>`}
+  </div>`;
+
+const shipOpts = v => `
+  <div class="optwrap">
+    <button class="opt on" data-tap><span class="radio on"></span><span>
+      <span class="t">Giao hàng thông thường - Miễn phí</span>
+      <span class="d ${v === 'B' ? 'real' : ''}">${v === 'A' ? ETA_NOW : ETA_STD}</span></span></button>
+    <button class="opt" data-tap><span class="radio"></span><span>
+      <span class="t">Giao hàng nhanh - 25,000đ</span>
+      <span class="d ${v === 'B' ? 'real' : ''}">${v === 'A' ? ETA_NOW : ETA_FAST}</span></span></button>
+  </div>`;
+
+const payOpts = v => `
+  <div class="optwrap">
+    ${[['Thẻ tín dụng/Ghi nợ', true], ['Chuyển khoản / QR code', false], ['ATM', false], ['Thanh toán trả góp 0% qua thẻ tín dụng', false]]
+      .map(([l, on]) => `
+      <button class="opt ${on ? 'on' : ''}" data-tap style="min-height:64px;align-items:center">
+        <span class="radio ${on ? 'on' : ''}"></span><span class="t">${l}</span></button>`).join('')}
+  </div>
+  <div class="fld" style="padding-top:14px">
+    ${v === 'A'
+      ? `<label class="press" style="display:flex;align-items:center;gap:8px;cursor:pointer"><span class="chk" data-tap>${ICO.tick}</span>Xuất hóa đơn VAT</label>`
+      : `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;min-height:44px">${chkTap(false)}Xuất hóa đơn VAT</label>`}
+  </div>
+  <div class="sumbox">
+    <div class="sumrow"><span>Tạm tính</span><span>${TOTAL}</span></div>
+    <div class="sumrow"><span>Giao hàng</span><span>Free</span></div>
+    <div class="sumrow tot"><span>Tổng cộng</span><span>${TOTAL}</span></div>
+  </div>`;
+
+/* ════════════ Dựng từng bước ════════════ */
+const cartRowA = c => `
+  <div style="display:flex;gap:8px;padding:16px" data-row>
+    <div style="width:16px;display:flex;align-items:center"><button class="chk on" data-tap>${ICO.tick}</button></div>
+    <div style="width:100px;height:133px;flex:0 0 auto;background:var(--line-2);overflow:hidden"><img src="${A}${c.img}" style="width:100%;height:100%;object-fit:cover" alt=""></div>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;height:20px">
+          <p style="flex:1;min-width:0;font-size:14px;font-weight:500;line-height:20px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.brand}</p>
+          <button data-tap style="width:14px;height:14px;border:0;background:none;padding:0;cursor:pointer;flex:0 0 auto"><span style="display:block;width:14px;height:14px"><svg viewBox="1.75 -0.25 20.5 24.5" fill="var(--muted)" style="width:14px;height:14px">${ICO.trash.replace(/^<svg[^>]*>|<\/svg>$/g,'')}</svg></span></button>
+        </div>
+        <p data-name style="font-size:14px;line-height:20px;color:var(--ink-2);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}</p>
+        <p style="font-size:12px;line-height:16px;color:var(--muted);margin:0">${c.variant}</p>
+      </div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between">
+        <p style="font-size:14px;font-weight:500;margin:0">${c.now}</p>
+        <div style="display:flex;align-items:center">
+          <button data-tap style="width:28px;height:24px;border:0;background:none;cursor:pointer;color:#8a8a8a">-</button>
+          <span style="width:28px;text-align:center;font-size:12px;font-weight:500;color:#8a8a8a">01</span>
+          <button data-tap style="width:28px;height:24px;border:0;background:none;cursor:pointer;color:#8a8a8a">+</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+const cartRowB = c => `
+  <div style="display:flex;gap:8px;padding:14px 16px" data-row>
+    <div style="width:16px;display:flex;align-items:center">${chkTap(true)}</div>
+    <div style="width:100px;height:133px;flex:0 0 auto;background:var(--line-2);overflow:hidden"><img src="${A}${c.img}" style="width:100%;height:100%;object-fit:cover" alt=""></div>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;height:20px">
+          <p style="flex:1;min-width:0;font-size:14px;font-weight:500;line-height:20px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.brand}</p>
+          <button data-tap class="tap44" style="border:0;background:none;padding:14px;margin:-14px;cursor:pointer;flex:0 0 auto;display:flex"><svg viewBox="1.75 -0.25 20.5 24.5" fill="var(--muted)" style="width:16px;height:16px">${ICO.trash.replace(/^<svg[^>]*>|<\/svg>$/g,'')}</svg></button>
+        </div>
+        <p data-name style="font-size:14px;line-height:19px;color:var(--ink-2);margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${c.name}</p>
+        <p style="font-size:12px;line-height:16px;color:var(--muted);margin:4px 0 0">${c.variant}</p>
+      </div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:8px">
+        <p style="font-size:15px;font-weight:500;margin:0">${c.now}</p>
+        <div style="display:flex;align-items:center;border:1px solid var(--line);border-radius:2px">
+          <button data-tap style="width:44px;height:44px;border:0;background:none;cursor:pointer;font-size:15px">-</button>
+          <span style="width:32px;text-align:center;font-size:14px;font-weight:500">01</span>
+          <button data-tap style="width:44px;height:44px;border:0;background:none;cursor:pointer;font-size:15px">+</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+const promoBlock = `
+  <div style="padding:24px 16px"><div style="border:1px solid var(--line);border-radius:6px;padding:8px 12px">
+    <p style="font-size:16px;font-weight:500;margin:0 0 8px">Chương trình khuyến mãi (3)</p>
+    <p style="font-size:14px;font-weight:500;margin:0">* Wardrobe refresh - [01/08 - 31/08]</p>
+    <p style="font-size:14px;line-height:20px;margin:2px 0 0">Nhập mã JUL1500 giảm 1.5 triệu cho đơn từ 16 triệu, JUL1000 giảm 1 triệu cho đơn từ 11 triệu</p>
+    <p style="font-size:12px;line-height:16px;margin:2px 0 8px">(*) Không áp dụng cho Stefano Ricci, Montblanc, Phiếu Quà Tặng và New Season</p>
+    <p style="font-size:14px;font-weight:500;margin:0">Miễn phí vận chuyển cho đơn hàng từ 8 triệu</p>
+  </div></div>`;
+
+const promoAccB = `
+  <div style="padding:24px 16px"><div style="border:1px solid var(--line);border-radius:6px">
+    <button data-tap style="width:100%;min-height:48px;display:flex;align-items:center;justify-content:space-between;border:0;background:none;padding:0 12px;cursor:pointer;font:500 15px Montserrat">
+      <span>Chương trình khuyến mãi (3)</span>${ICO.chev}</button>
+  </div></div>`;
+
+/* Ô nhập voucher và nút Áp dụng cũng phải theo bản: bản A giữ 40px như app
+   hiện tại, bản B lên 44px cho đồng bộ với phần còn lại của đề xuất. */
+const summaryPanel = v => `
+  <div style="padding:24px 16px;background:var(--line-2)">
+    <div style="background:#fff;border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:8px">
+      <p style="font-size:14px;font-weight:500;margin:0 0 8px">Mã giảm giá</p>
+      <div style="display:flex;gap:8px">
+        <input class="${v === 'A' ? 'inpA' : 'inpB'}" placeholder="Nhập voucher" data-tap><button data-tap style="border:1px solid var(--line);height:${v === 'A' ? 40 : 44}px;padding:0 14px;background:#fff;border-radius:2px;font:500 14px Montserrat;cursor:pointer">Áp dụng</button>
+      </div>
+    </div>
+    <div class="sumrow"><span style="color:var(--muted)">Tạm tính</span><span>${TOTAL}</span></div>
+    <div class="sumrow tot" style="border-top:1px solid var(--line)"><span>Tổng cộng</span><span>${TOTAL}</span></div>
+  </div>`;
+
+/* ── Bảng dựng theo bước ── */
+const SCREENS = {
+  // 0. Giỏ hàng
+  0: {
+    A: () => `<div class="nav">Giỏ hàng</div><h1 class="h1s">Giỏ hàng <span class="n">(4)</span></h1>
+      ${CART.map(cartRowA).join('')}${promoBlock}${summaryPanel('A')}
+      <div class="ctaWrap"><button class="ctaFlow" data-cta data-tap>Đặt hàng</button></div><div class="tail"></div>`,
+    B: () => `<div class="nav">Giỏ hàng</div><h1 class="h1s">Giỏ hàng <span class="n">(4)</span></h1>
+      ${CART.map(cartRowB).join('')}${promoAccB}${summaryPanel('B')}<div class="tail"></div>
+      <div class="dock"><div class="sum"><p class="k">Tổng cộng</p><p class="v">${TOTAL}</p></div>
+        <button class="go" data-cta data-tap>Đặt hàng</button></div>`,
+    capA: 'cuộn 4.07 màn mới tới nút', capB: 'nút luôn ở đáy',
+  },
+  // 1. Giao hàng
+  1: {
+    A: () => `<div class="nav">Thanh toán</div><h1 class="h1s">Thanh toán (4)</h1>
+      ${cksum()}${notice('A')}${seg()}
+      ${section('Thông tin giao hàng','open', addrForm('A') + `<div class="ctaWrap"><button class="ctaFlow" data-cta data-tap>Xác nhận</button></div>`,'A')}
+      ${section('Phương thức vận chuyển','pending','','A')}
+      ${section('Thanh toán','pending','','A')}<div class="tail"></div>`,
+    B: () => `<div class="nav">Thanh toán</div><h1 class="h1s">Thanh toán (4)</h1>
+      ${cksumB()}${notice('B')}${segB()}
+      ${section('Thông tin giao hàng','open', addrForm('B'),'B')}
+      ${section('Phương thức vận chuyển','pending','','B')}
+      ${section('Thanh toán','pending','','B')}<div class="tail"></div>
+      <div class="dock"><div class="sum"><p class="k">Tổng cộng</p><p class="v">${TOTAL}</p></div>
+        <button class="go" data-cta data-tap>Xác nhận</button></div>`,
+    capA: 'nút Xác nhận ở 979px', capB: 'nút luôn ở đáy',
+  },
+  // 2. Vận chuyển
+  2: {
+    A: () => `<div class="nav">Thanh toán</div><h1 class="h1s">Thanh toán (4)</h1>
+      ${cksum()}${notice('A')}
+      ${section('Thông tin giao hàng','done','Trâm Nguyễn Bảo · 0908 471 205<br>128 Đồng Khởi, Phường Bến Thành, TP. Hồ Chí Minh','A')}
+      ${section('Phương thức vận chuyển','open', shipOpts('A') + `<div class="ctaWrap"><button class="ctaFlow" data-cta data-tap>Xác nhận</button></div>`,'A')}
+      ${section('Thanh toán','pending','','A')}<div class="tail"></div>`,
+    B: () => `<div class="nav">Thanh toán</div><h1 class="h1s">Thanh toán (4)</h1>
+      ${cksumB()}${notice('B')}
+      ${section('Thông tin giao hàng','done','Trâm Nguyễn Bảo · 0908 471 205<br>128 Đồng Khởi, Phường Bến Thành, TP. Hồ Chí Minh','B')}
+      ${section('Phương thức vận chuyển','open', shipOpts('B'),'B')}
+      ${section('Thanh toán','pending','','B')}<div class="tail"></div>
+      <div class="dock"><div class="sum"><p class="k">Tổng cộng</p><p class="v">${TOTAL}</p></div>
+        <button class="go" data-cta data-tap>Xác nhận</button></div>`,
+    capA: 'hai lựa chọn cùng một ngày', capB: 'hai mốc ngày khác nhau',
+  },
+  // 3. Thanh toán
+  3: {
+    A: () => `<div class="nav">Thanh toán</div><h1 class="h1s">Thanh toán (4)</h1>
+      ${cksum()}${notice('A')}
+      ${section('Thông tin giao hàng','done','Trâm Nguyễn Bảo · 0908 471 205<br>128 Đồng Khởi, Phường Bến Thành, TP. Hồ Chí Minh','A')}
+      ${section('Phương thức vận chuyển','done','Giao hàng thông thường<br>' + ETA_NOW,'A')}
+      ${section('Thanh toán','open', payOpts('A') + `<div class="ctaWrap"><button class="ctaFlow" data-cta data-tap>Đặt hàng</button></div>`,'A')}<div class="tail"></div>`,
+    B: () => `<div class="nav">Thanh toán</div><h1 class="h1s">Thanh toán (4)</h1>
+      ${cksumB()}${notice('B')}
+      ${section('Thông tin giao hàng','done','Trâm Nguyễn Bảo · 0908 471 205<br>128 Đồng Khởi, Phường Bến Thành, TP. Hồ Chí Minh','B')}
+      ${section('Phương thức vận chuyển','done','Giao hàng thông thường<br>' + ETA_STD,'B')}
+      ${section('Thanh toán','open', payOpts('B'),'B')}<div class="tail"></div>
+      <div class="dock"><div class="sum"><p class="k">Tổng cộng</p><p class="v">${TOTAL}</p></div>
+        <button class="go" data-cta data-tap data-place>Đặt hàng</button></div>`,
+    capA: 'nút Đặt hàng ở 1143px', capB: 'bấm thử để thấy trạng thái xử lý',
+  },
+  // 4. Hoàn tất
+  4: {
+    A: () => `<div class="doneWrap">
+      <div class="ring">${ICO.tickInk}</div>
+      <div><p style="font-size:10px;letter-spacing:.22em;color:var(--muted);margin:0 0 6px">Xác nhận</p>
+        <h2 style="font-size:22px;font-weight:500;margin:0 0 8px">Đặt hàng thành công</h2>
+        <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0">Đơn hàng đang được xử lý.<br>Cảm ơn bạn đã tin tưởng mua sắm.</p></div>
+      <div class="doneRows">
+        <div><span>Mã đơn hàng</span><span>DAFC102939</span></div>
+        <div><span>Tổng cộng</span><span>${TOTAL}</span></div>
+        <div><span>Vận chuyển</span><span>Miễn phí</span></div>
+        <div><span>Dự kiến giao</span><span>12 - 16/08</span></div>
+      </div>
+      <div style="width:100%;display:flex;flex-direction:column;gap:10px">
+        <button class="ctaFlow" data-tap>Tiếp tục mua sắm</button>
+        <button data-tap style="width:100%;height:48px;border:1px solid var(--line);background:#fff;border-radius:2px;font:500 13px Montserrat;cursor:pointer">Theo dõi đơn hàng</button>
+      </div></div>`,
+    B: () => `<div class="doneWrap">
+      <div class="ring">${ICO.tickInk}</div>
+      <div><p style="font-size:10px;letter-spacing:.22em;color:var(--muted);margin:0 0 6px">Xác nhận</p>
+        <h2 style="font-size:22px;font-weight:500;margin:0 0 8px">Đặt hàng thành công</h2>
+        <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0">Đơn hàng đang được xử lý.<br>Cảm ơn bạn đã tin tưởng mua sắm.</p></div>
+      <div class="doneRows">
+        <div><span>Mã đơn hàng</span><span>DAFC102939</span></div>
+        <div><span>Tổng cộng</span><span>${TOTAL}</span></div>
+        <div><span>Vận chuyển</span><span>Miễn phí</span></div>
+        <div><span>Dự kiến giao</span><span style="color:var(--ok)">17/08 - 21/08</span></div>
+      </div>
+      <div style="width:100%;display:flex;flex-direction:column;gap:10px">
+        <button class="ctaFlow" data-tap>Tiếp tục mua sắm</button>
+        <button data-tap style="width:100%;height:48px;border:1px solid var(--line);background:#fff;border-radius:2px;font:500 13px Montserrat;cursor:pointer">Theo dõi đơn hàng</button>
+      </div></div>`,
+    capA: 'ngày ở đây khác ngày bước 3', capB: 'khớp với ngày đã chọn',
+  },
+};
+
+/* ── Đề xuất theo bước. new = mới từ vòng đo luồng này;
+      old = đã nêu ở demo-checkout-upgrades.html và vẫn còn treo. ── */
+const PROPS = {
+  0: [['new','Thanh đáy dính mang tổng tiền và nút Đặt hàng','đang phải cuộn 4.07 màn mới tới nút.'],
+      ['new','Vùng chạm lên 44px','nút xóa 14x14 và cộng trừ 28x24 đều dưới ngưỡng tối thiểu.'],
+      ['new','Tên sản phẩm 2 dòng','2 trên 4 món đang bị cắt cụt.'],
+      ['new','Có hoàn tác sau khi xóa','xem chi tiết ở demo-cart-mobile.html.'],
+      ['new','Khuyến mãi gói vào accordion','giữ nguyên nội dung, bớt 163px chữ trên đường đi.']],
+  1: [['new','Thanh đáy dính mang nút Xác nhận','nút đang ở 979px, dưới mép màn 812.'],
+      ['new','Ô nhập cao 44 thay vì 40','sáu ô của form giao hàng đều 40px.'],
+      ['new','Cặp Giao hàng / Nhận tại cửa hàng cao 44','đang 40px.'],
+      ['new','Ô tick "Lưu vào sổ địa chỉ" đủ 44','đang 20px.'],
+      ['new','Nút "Đăng nhập" trong hộp thông báo trông ra nút','đang là chữ gạch chân cao 20px.']],
+  2: [['old','Ngày giao phải có thật và khác nhau giữa hai lựa chọn','ETA là một hằng số dùng chung, nên trả thêm 25,000đ cho giao nhanh vẫn hiện đúng ngày đó. Ngày 14/07-18/07 còn là quá khứ so với mốc 13/08/2026.'],
+      ['old','Nút "Thay đổi" trông ra nút và đủ 44px','đang là chữ trơn cao 20px.'],
+      ['new','Thanh đáy dính mang nút Xác nhận','']],
+  3: [['new','Thanh đáy dính mang tổng tiền và nút Đặt hàng','nút đang ở 1143px, phải cuộn 1.41 màn.'],
+      ['old','Bấm Đặt hàng có trạng thái xử lý','hiện đổi màn tức thì, không có phản hồi nào cho cú bấm quan trọng nhất luồng. Bấm thử nút bên phải.'],
+      ['new','Ô tick "Xuất hóa đơn VAT" đủ 44','đang 20px.'],
+      ['old','Hai nút "Thay đổi" đủ 44px','']],
+  4: [['new','Ngày giao ở màn Hoàn tất phải khớp bước Vận chuyển','màn Hoàn tất in cứng "12 - 16/08" trong khi bước Vận chuyển nói "14/07 - 18/07". Hai màn liền nhau nói hai ngày khác nhau.'],
+      ['old','Một cách in tiền duy nhất','dòng sản phẩm dùng "45.066.000 ₫", khối tổng dùng "113,500,000đ".']],
+};
+
+/* ════════════ Điều khiển ════════════ */
+let step = 0;
+
+function render() {
+  const S = SCREENS[step];
+  document.getElementById('scA').innerHTML = S.A();
+  document.getElementById('scB').innerHTML = S.B();
+  document.getElementById('capA').textContent = S.capA;
+  document.getElementById('capB').textContent = S.capB;
+
+  // trạng thái xử lý khi bấm Đặt hàng (mục 06 vòng trước, còn treo)
+  const place = document.querySelector('#scB [data-place]');
+  if (place) place.onclick = () => {
+    if (place.disabled) return;
+    place.disabled = true;
+    place.innerHTML = '<span class="spin"></span>Đang xử lý';
+    setTimeout(() => { place.innerHTML = 'Đã đặt'; }, 1400);
+    setTimeout(() => { place.disabled = false; place.innerHTML = 'Đặt hàng'; }, 3000);
+  };
+
+  document.getElementById('props').innerHTML = PROPS[step].map(([kind, t, d]) =>
+    `<li><span class="tagn ${kind}">${kind === 'new' ? 'mới' : 'còn treo'}</span><b>${t}</b>${d ? ' <span>' + d + '</span>' : ''}</li>`).join('');
+
+  measure();
+}
+
+const vis = el => { let n = el; while (n && n !== document.body) { if (n.getBoundingClientRect().height <= 0) return false; n = n.parentElement; } return true; };
+
+function scan(id) {
+  const sc = document.getElementById(id);
+  const els = [...sc.querySelectorAll('[data-tap]')].filter(vis);
+  const taps = els.map(e => { const b = e.getBoundingClientRect(); return { el: e, w: Math.round(b.width), h: Math.round(b.height), ok: b.width >= 44 && b.height >= 44 }; });
+  const cta = sc.querySelector('[data-cta]');
+  const inDock = cta ? !!cta.closest('.dock') : false;
+  const at = cta && !inDock ? Math.round(cta.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop) : 0;
+  return { sc, taps, fail: taps.filter(t => !t.ok).length, cta, inDock, at,
+           minH: taps.length ? Math.min(...taps.map(t => t.h)) : 0 };
+}
+
+function measure() {
+  const a = scan('scA'), b = scan('scB');
+  const fmtCta = x => x.inDock ? 'thanh đáy dính' : (x.cta ? x.at + 'px' : 'không có');
+  const fmtScreens = x => x.inDock ? '0' : (x.cta ? +(x.at / x.sc.clientHeight).toFixed(2) + ' màn' : '-');
+
+  document.getElementById('tblStep').innerHTML = [
+    ['Cao trang', a.sc.scrollHeight + 'px', b.sc.scrollHeight + 'px', 'Chiều dài phải cuộn.'],
+    ['Nút chính nằm ở', fmtCta(a), fmtCta(b), 'Tính từ đầu màn.'],
+    ['Phải cuộn bao nhiêu', fmtScreens(a), fmtScreens(b), 'Trước khi thấy nút.'],
+    ['Vùng chạm dưới 44px', a.fail + ' / ' + a.taps.length, b.fail + ' / ' + b.taps.length, 'Đếm phần tử nhìn thấy được.'],
+    ['Vùng chạm nhỏ nhất', a.minH + 'px', b.minH + 'px', 'Cạnh ngắn nhất.'],
+  ].map(([k, va, vb, note]) =>
+    `<tr><td>${k}</td><td class="num bad">${va}</td><td class="num good">${vb}</td>
+     <td><span style="color:var(--muted)">${note}</span></td></tr>`).join('');
+
+  drawTaps(); updateDepth();
+}
+
+/* Bảng tổng luồng: cột Hiện tại lấy từ DO_THAT (đo trên app thật) */
+function renderFlow() {
+  const totalScreens = DO_THAT.reduce((s, r) => s + r.screens, 0);
+  document.getElementById('tblFlow').innerHTML =
+    DO_THAT.map((r, i) => `<tr${i === step ? ' style="background:#fafafa"' : ''}>
+      <td>${i + 1}. ${r.step}</td><td class="num">${r.pageH}px</td>
+      <td class="num ${r.screens > 1 ? 'bad' : ''}">${r.screens.toFixed(2)}</td>
+      <td class="num">${r.cta}</td><td class="num bad">${r.under44}</td></tr>`).join('')
+    + `<tr class="sum"><td>Cả luồng</td><td class="num">-</td>
+       <td class="num bad">${totalScreens.toFixed(2)} màn</td>
+       <td class="num">4 lần cuộn tìm nút</td><td class="num bad">57 / 73</td></tr>`;
+}
+
+function drawTaps() {
+  const on = document.getElementById('ttT').checked;
+  document.querySelectorAll('.ttag').forEach(e => e.remove());
+  document.querySelectorAll('.tt').forEach(e => e.classList.remove('tt', 'ok'));
+  if (!on) return;
+  ['scA', 'scB'].forEach(id => scan(id).taps.forEach(t => {
+    t.el.classList.add('tt'); if (t.ok) t.el.classList.add('ok');
+    const tag = document.createElement('span');
+    tag.className = 'ttag'; tag.textContent = t.w + '×' + t.h;
+    t.el.appendChild(tag);
+  }));
+}
+
+function updateDepth() {
+  [['scA', 'nowA', 'markA', 'depthA'], ['scB', 'nowB', 'markB', 'depthB']].forEach(([s, n, m, d]) => {
+    const x = scan(s), sc = x.sc;
+    const max = sc.scrollHeight - sc.clientHeight;
+    document.getElementById(n).style.width = (max > 0 ? (sc.scrollTop / max) * 100 : 0) + '%';
+    const mk = document.getElementById(m);
+    if (!x.cta) { mk.style.display = 'none'; document.getElementById(d).textContent = 'Màn này không có nút hành động chính'; return; }
+    if (x.inDock) { mk.style.display = 'none'; document.getElementById(d).textContent = 'Nút ' + x.cta.textContent.trim() + ' luôn hiện ở thanh đáy'; return; }
+    mk.style.display = '';
+    mk.style.left = Math.min(100, (x.at / sc.scrollHeight) * 100) + '%';
+    document.getElementById(d).textContent =
+      'Nút ' + x.cta.textContent.trim() + ' ở ' + x.at + 'px, phải cuộn ' + (x.at / sc.clientHeight).toFixed(2) + ' màn';
+  });
+}
+
+document.querySelectorAll('.steps button').forEach(b => b.onclick = () => {
+  step = +b.dataset.step;
+  document.querySelectorAll('.steps button').forEach(x => x.setAttribute('aria-pressed', String(+x.dataset.step === step)));
+  render(); renderFlow();
+});
+document.getElementById('ttT').onchange = drawTaps;
+document.getElementById('scA').addEventListener('scroll', updateDepth, { passive: true });
+document.getElementById('scB').addEventListener('scroll', updateDepth, { passive: true });
+addEventListener('resize', measure);
+
+render(); renderFlow();
+function remeasure() { try { measure(); } catch (e) {} }
+addEventListener('load', remeasure);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
+</script>
+</body>
+</html>

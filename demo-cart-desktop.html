@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Demo — Nâng cấp UI giỏ hàng desktop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* Trang demo dựng bằng CSS viết tay (không dùng class Tailwind) để không phụ
+     thuộc bản tailwind.css đã build - giống demo-checkout-upgrades.html.
+     Màu lấy đúng token của app qua tokens.css.
+
+     MỤC ĐÍCH: so sánh dòng sản phẩm trong giỏ hàng bản desktop, giữa cách dựng
+     hiện tại (component mobile item-cart 2851:28705 kéo giãn ra 910px) và cách
+     dựng đề xuất (lưới desktop có cột cố định). Số đo trong bảng ở cuối trang
+     do chính trang này ĐO SỐNG bằng getBoundingClientRect, không in cứng. */
+  :root{
+    --ink:#0a0a0a; --ink-2:#262626; --muted:#737373; --line:#e5e5e5;
+    --line-2:#f5f5f5; --line-3:#d4d4d4; --red:#d62845; --bg:#f4f4f5;
+    --warn-bg:#fff7ed; --warn-line:#fed7aa; --warn-ink:#7c2d12;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);font-family:Montserrat,sans-serif;color:var(--ink)}
+  img{display:block}
+
+  /* ── Khung tài liệu ── */
+  .doc{max-width:1440px;margin:0 auto;padding:32px 24px 12px}
+  h1{font-size:22px;font-weight:600;margin:0 0 6px}
+  .lede{font-size:14px;line-height:22px;color:#52525b;margin:0 0 10px;max-width:900px}
+  .warn{font-size:13px;line-height:20px;color:var(--warn-ink);background:var(--warn-bg);
+        border:1px solid var(--warn-line);border-radius:4px;padding:10px 12px;margin:0 0 8px;max-width:900px}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#00000008;padding:1px 4px;border-radius:2px}
+
+  /* ── Thanh điều khiển dính đầu trang ── */
+  .bar{position:sticky;top:0;z-index:40;background:rgba(244,244,245,.92);backdrop-filter:blur(8px);
+       border-bottom:1px solid #e4e4e7;margin-bottom:0}
+  .bar-in{max-width:1440px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .seg{display:inline-flex;border:1px solid var(--line-3);border-radius:3px;overflow:hidden;background:#fff}
+  .seg button{appearance:none;border:0;background:#fff;font:500 13px Montserrat;color:var(--ink-2);
+              padding:8px 18px;cursor:pointer;transition:background .15s,color .15s}
+  .seg button + button{border-left:1px solid var(--line)}
+  .seg button[aria-pressed="true"]{background:var(--ink);color:#fafafa}
+  .seg button:hover:not([aria-pressed="true"]){background:var(--line-2)}
+  .tog{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2);cursor:pointer;user-select:none}
+  .tog input{width:15px;height:15px;accent-color:var(--ink);cursor:pointer;margin:0}
+  .barnote{font-size:12px;color:var(--muted);margin-left:auto}
+  .barnote b{color:var(--ink);font-weight:500}
+
+  /* ── Sân khấu: tái tạo đúng hình học desktop.html ──
+     canvas max-width 1440 + padding ngang 24 (px-6), 2 cột gap 40 (gap-10),
+     cột phải cứng 427px. Ở màn 1440 thì cột trái ra đúng 910px như app thật. */
+  .stage{background:#fff;border-top:1px solid #e4e4e7;position:relative}
+  .canvas{max-width:1440px;margin:0 auto;padding:24px 24px 64px;position:relative}
+  .cols{display:flex;align-items:flex-start;gap:40px}
+  .main{flex:1;min-width:0}
+  .rail{width:427px;flex:0 0 auto;position:sticky;top:76px}
+
+  .h2{font-size:24px;font-weight:300;line-height:32px;margin:0;padding:16px 0}
+  .h2 .n{color:var(--muted)}
+  .selbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 16px}
+  .selbar .lab{font-size:14px;font-weight:500;line-height:20px}
+
+  /* ô tick dùng chung 2 bản */
+  .chk{width:16px;height:16px;border:1px solid var(--line-3);border-radius:2px;background:#fff;
+       flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+       box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .chk.on{background:var(--ink);border-color:var(--ink)}
+  .chk svg{width:10px;height:10px;opacity:0}
+  .chk.on svg{opacity:1}
+  .selrow{display:flex;align-items:center;gap:8px}
+
+  /* stepper dùng chung 2 bản */
+  .stp{display:flex;align-items:center;flex:0 0 auto}
+  .stp button{appearance:none;border:0;background:none;min-height:24px;padding:0 8px;border-radius:2px;
+              cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+  .stp button:hover{background:var(--line-2)}
+  .stp .q{width:28px;min-height:24px;display:flex;align-items:center;justify-content:center;
+          font-size:12px;font-weight:500;line-height:16px;color:#8a8a8a}
+  .stp svg{width:12px;height:12px;fill:#8a8a8a}
+
+  /* ══════════════ BẢN A - hiện tại ══════════════
+     Sao lại đúng cấu trúc screenCART() dòng 2811-2847 của desktop.html:
+     flex gap-2 px-4 py-4 · ảnh 100x133 · info flex-1 · brand flex-1 đẩy nút xoá
+     ra mép phải · giá và stepper hai đầu justify-between. */
+  .rowA{display:flex;gap:8px;padding:16px}
+  .colChk{width:16px;flex:0 0 auto;display:flex;align-items:center}
+  .thumbA{width:100px;height:133px;flex:0 0 auto;background:var(--line-2);overflow:hidden}
+  .thumbA img{width:100%;height:100%;object-fit:cover}
+  .infoA{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
+  .brandline{display:flex;align-items:center;gap:8px;height:20px}
+  .brandA{flex:1;min-width:0;font-size:14px;font-weight:500;line-height:20px;margin:0;
+          overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nameA{font-size:14px;line-height:20px;color:var(--ink-2);margin:0;
+         overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .varA{font-size:12px;line-height:16px;color:var(--muted);margin:0}
+  .padA{padding-bottom:8px}
+  .footA{display:flex;align-items:flex-end;justify-content:space-between;gap:2px}
+  .priceA{font-size:14px;font-weight:500;line-height:20px;margin:0;padding-top:4px}
+  .delA{appearance:none;border:0;background:none;padding:0;width:14px;height:14px;flex:0 0 auto;
+        cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .delA svg{width:14px;height:14px;fill:var(--muted)}
+
+  /* ══════════════ BẢN B - đề xuất ══════════════
+     Lưới desktop: [tick 16][ảnh 148][thông tin co giãn][giá 140][số lượng 120]
+     Tất cả canh trên (align-items:start) nên giá và stepper của MỌI dòng thẳng
+     cột với nhau -> mắt quét dọc thay vì chạy ngang 662px mỗi dòng. */
+  .rowB{display:grid;grid-template-columns:16px 148px minmax(0,1fr) 140px 120px;gap:20px;
+        padding:20px 16px;align-items:start;border-radius:2px;transition:background .16s ease}
+  .rowB:hover{background:#fafafa}
+  .thumbB{width:148px;height:197px;background:var(--line-2);overflow:hidden;position:relative}
+  .thumbB img{width:100%;height:100%;object-fit:cover;transition:transform .35s cubic-bezier(.22,1,.36,1)}
+  .rowB:hover .thumbB img{transform:scale(1.03)}
+  .infoB{min-width:0;display:flex;flex-direction:column}
+  .brandB{font-size:15px;font-weight:500;line-height:22px;margin:0}
+  .nameB{font-size:15px;line-height:22px;color:var(--ink-2);margin:0 0 6px}
+  .varB{font-size:12px;line-height:16px;color:var(--muted);margin:0}
+  .delB{appearance:none;border:0;background:none;padding:0;margin-top:12px;align-self:flex-start;
+        font:400 12px Montserrat;line-height:16px;color:var(--muted);cursor:pointer;
+        text-decoration:underline;text-underline-offset:3px;transition:color .15s}
+  .delB:hover{color:var(--red)}
+  .priceB{text-align:right}
+  .pnowB{font-size:16px;font-weight:500;line-height:24px;margin:0}
+  .pwasB{font-size:12px;line-height:16px;color:var(--muted);text-decoration:line-through;margin:2px 0 0}
+  .qtyB{display:flex;justify-content:flex-end}
+
+  /* ── Nhóm quà, hai bản ── */
+  .giftWrap{background:var(--line-2)}
+  .giftHd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px 8px}
+  .giftHd p{font-size:12px;font-weight:500;line-height:16px;color:var(--ink-2);margin:0}
+  .giftHd button{appearance:none;border:0;background:none;font:500 12px Montserrat;color:var(--ink-2);
+                 cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .badgeGift{position:absolute;top:0;left:0;background:var(--ink);color:#fafafa;font-size:10px;
+             font-weight:600;line-height:12px;padding:2px 4px}
+  .qtyStatic{width:28px;min-height:24px;display:flex;align-items:center;justify-content:center;
+             font-size:12px;font-weight:500;line-height:16px;color:#8a8a8a}
+
+  /* ── Thẻ tóm tắt cột phải ── */
+  .card{background:#fff;border:1px solid var(--line);border-radius:6px}
+  .card .hd{padding:16px}
+  .card .bd{padding:0 16px 16px;display:flex;flex-direction:column;gap:16px}
+  .fieldlab{font-size:14px;font-weight:500;line-height:20px;margin:0 0 8px}
+  .inline{display:flex;gap:8px}
+  .inp{flex:1;min-width:0;height:40px;border:1px solid var(--line);border-radius:2px;padding:0 8px;
+       font:400 14px Montserrat;color:var(--ink);background:#fff}
+  .inp::placeholder{color:var(--muted)}
+  .btnO{height:40px;padding:0 24px;flex:0 0 auto;background:#fff;border:1px solid var(--line);
+        border-radius:2px;font:500 14px Montserrat;cursor:pointer;transition:background .15s}
+  .btnO:hover{background:var(--line-2)}
+  .sumline{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:6px 0}
+  .sumline .k{font-size:16px;font-weight:300;line-height:24px;color:var(--muted)}
+  .sumline .v{font-size:16px;font-weight:300;line-height:24px}
+  .sumtot{display:flex;justify-content:space-between;align-items:center;height:56px}
+  .sumtot span{font-size:16px;font-weight:500;line-height:24px}
+  .earn{font-size:14px;line-height:20px;color:var(--ink-2);margin:0}
+  .cta{width:100%;height:48px;border:0;border-radius:2px;background:var(--ink);color:#fafafa;
+       font:500 16px Montserrat;cursor:pointer;transition:opacity .15s}
+  .cta:hover{opacity:.88}
+  .acc{border-top:1px solid var(--line-2);padding-top:4px}
+  .acc button{width:100%;height:36px;display:flex;align-items:center;justify-content:space-between;
+              appearance:none;border:0;background:none;font:500 14px Montserrat;cursor:pointer;padding:0}
+
+  /* ── Thẻ chương trình khuyến mãi ── */
+  .promo{border:1px solid var(--line);border-radius:6px;padding:8px 12px}
+  .promo .t{font-size:16px;font-weight:500;line-height:24px;margin:0 0 8px}
+  .promo .rule{margin:0 0 8px}
+  .promo .rh{font-size:14px;font-weight:500;line-height:20px;margin:0}
+  .promo .rs{font-size:14px;line-height:20px;margin:2px 0 0}
+  .promo .rt{font-size:12px;line-height:16px;margin:2px 0 0}
+  .promo .more{width:100%;min-height:32px;appearance:none;border:0;background:none;
+               font:500 14px Montserrat;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .promoSm .t{font-size:14px}
+  .promoSm .rh{font-size:13px}
+  .promoSm .rs,.promoSm .rt{font-size:12px;line-height:17px;color:var(--muted)}
+
+  /* ── Lớp phủ đo khoảng trống ── */
+  .ov{position:absolute;inset:0;pointer-events:none;z-index:30;display:none}
+  .ov.on{display:block}
+  .mk{position:absolute;border:1px dashed var(--red);background:rgba(214,40,69,.06);border-radius:2px}
+  .mk .cap{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;
+           background:var(--red);color:#fff;font-size:10px;font-weight:600;line-height:14px;
+           padding:2px 6px;border-radius:2px}
+  .mk.ok{border-color:#0a7c42;background:rgba(10,124,66,.07)}
+  .mk.ok .cap{background:#0a7c42}
+
+  /* ── Bảng số đo ── */
+  .doc2{max-width:1440px;margin:0 auto;padding:36px 24px 80px}
+  .panel{background:#fff;border:1px solid #e4e4e7;border-radius:10px;padding:20px 22px;margin-bottom:22px}
+  .panel h2{font-size:16px;margin:0 0 4px}
+  .panel .sub{font-size:13px;line-height:20px;color:var(--muted);margin:0 0 14px}
+  table{width:100%;border-collapse:collapse;font-size:13px;line-height:20px}
+  th{text-align:left;font-weight:600;font-size:12px;letter-spacing:.04em;color:var(--muted);
+     padding:8px 12px 8px 0;border-bottom:1px solid var(--line)}
+  td{padding:9px 12px 9px 0;border-bottom:1px solid var(--line-2);vertical-align:top}
+  td.num{font-family:ui-monospace,Menlo,Consolas,monospace;white-space:nowrap;width:120px}
+  .bad{color:var(--red);font-weight:600}
+  .good{color:#0a7c42;font-weight:600}
+  .panel ul{margin:0;padding-left:18px}
+  .panel li{font-size:13px;line-height:21px;margin-bottom:7px}
+  .panel li b{font-weight:500}
+  .panel li span{color:var(--muted)}
+
+  /* ── Dải desktop hẹp ──
+     Cột phải co theo đúng luật CÓ SẴN trong desktop.html dòng 477:
+     .dk-sticky-side.w-[427px] { width: clamp(280px, 32vw, 427px) }
+     Chép lại ở đây để demo phản ánh đúng hành vi app, không chỉ đúng ở 1440. */
+  @media (max-width:1279px){
+    .rail{width:clamp(280px, 32vw, 427px)}
+    /* Lưới đề xuất co lại: giữ nguyên ảnh 148 (ảnh là thứ bán hàng, cắt cuối
+       cùng), rút cột giá / số lượng và khoảng cách cột để trả chỗ cho chữ. */
+    .rowB{grid-template-columns:16px 148px minmax(0,1fr) 128px 108px;gap:16px}
+    .stp button{padding:0 6px}
+  }
+  @media (max-width:1023px){
+    .rowB{grid-template-columns:16px 120px minmax(0,1fr) 120px 100px;gap:14px}
+    .thumbB{width:120px;height:160px}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;animation:none !important}
+  }
+</style>
+</head>
+<body>
+
+<div class="doc">
+  <h1>Nâng cấp UI giỏ hàng - bản desktop</h1>
+  <p class="lede">Bật qua lại giữa <b>Hiện tại</b> và <b>Đề xuất</b> để thấy khác biệt trên cùng một bộ dữ liệu, cùng hình học 1440 của app thật (canvas 1440, padding ngang 24, hai cột cách 40, cột phải cứng 427). Bảng số đo ở cuối trang do chính trang này đo sống, không in cứng.</p>
+  <p class="warn"><b>Chưa áp vào app.</b> File này độc lập - <code>desktop.html</code> và <code>index.html</code> không đổi một dòng nào.</p>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="seg" role="group" aria-label="Chọn phiên bản">
+      <button id="mA" aria-pressed="true">Hiện tại</button>
+      <button id="mB" aria-pressed="false">Đề xuất</button>
+    </div>
+    <label class="tog"><input type="checkbox" id="ovT"> Hiện vùng trống chết</label>
+    <label class="tog"><input type="checkbox" id="giftT" checked> Hiện khối quà tặng</label>
+    <p class="barnote">Bề ngang dòng đang đo: <b id="liveW">-</b></p>
+  </div>
+</div>
+
+<div class="stage" id="stage">
+  <div class="canvas">
+    <div class="cols">
+      <div class="main" id="main"></div>
+      <aside class="rail" id="rail"></aside>
+    </div>
+  </div>
+  <div class="ov" id="ov"></div>
+</div>
+
+<div class="doc2">
+  <div class="panel">
+    <h2>Số đo so sánh</h2>
+    <p class="sub">Đo sống trên chính trang này bằng <code>getBoundingClientRect</code>. Đổi bề ngang cửa sổ thì bảng tự tính lại.</p>
+    <table>
+      <thead><tr><th>Chỉ số</th><th class="num">Hiện tại</th><th class="num">Đề xuất</th><th>Ý nghĩa</th></tr></thead>
+      <tbody id="tbl"></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2>Bản đề xuất đổi những gì</h2>
+    <ul>
+      <li><b>Dòng đổi từ flex kéo giãn sang lưới cột cố định</b> <span><code>16px / 148px / co giãn / 140px / 120px</code>, cách nhau 20. Giá và số lượng của mọi dòng thẳng cột nhau, mắt quét dọc thay vì chạy ngang.</span></li>
+      <li><b>Ảnh 100x133 lên 148x197</b> <span>giữ nguyên tỉ lệ 3:4. DAFC bán hàng hiệu, ảnh sản phẩm là thứ bán hàng.</span></li>
+      <li><b>Nút xoá về ngay dưới dòng phân loại</b> <span>dạng chữ "Xóa" gạch chân, cách món hàng khoảng 20px thay vì gần 740px như hiện tại.</span></li>
+      <li><b>Thang chữ desktop</b> <span>tên 14 lên 15, giá 14 lên 16 medium. Giá là con số quyết định mua nên không thể cùng cỡ với mọi thứ khác.</span></li>
+      <li><b>Có trạng thái hover</b> <span>hiện tại <code>.cart-row</code> không có một dòng CSS nào, desktop dùng chuột mà không có phản hồi.</span></li>
+      <li><b>"Chương trình khuyến mãi" chuyển sang cột phải</b> <span>lấp máng trống cạnh khối tóm tắt và rút ngắn cột trái. Về nội dung cũng đúng chỗ hơn vì đó là chuyện giảm giá.</span></li>
+      <li><b>Không kẻ đường phân cách giữa các dòng</b> <span>giữ đúng quy ước "giữa các block không kẻ border" ghi ở desktop.html dòng 2861. Tách bằng khoảng trắng và hover.</span></li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h2>Khi áp vào app cần lưu ý</h2>
+    <ul>
+      <li><b>Phải build lại tailwind.css.</b> <span>Các class <code>w-[148px]</code>, <code>h-[197px]</code>, <code>grid-cols-[...]</code> chưa có trong bản đã build, mà class chưa build thì im lặng không ăn (đúng như ghi chú ở desktop.html dòng 2567). Lệnh: <code>npx tailwindcss@3.4.17 -c tailwind.config.js -i in.css -o tailwind.css --minify</code></span></li>
+      <li><b>Ba cỡ chữ 15/16/18 đã có sẵn</b> <span>nên riêng phần thang chữ không cần build lại.</span></li>
+      <li><b>Khối quà dùng chung lưới mới</b> <span>để ảnh quà thẳng cột với ảnh sản phẩm, như trong demo này.</span></li>
+      <li><b>Dọn <code>discountPanel()</code></b> <span>ở desktop.html dòng 2754: định nghĩa nhưng không nơi nào gọi, bên trong còn chứa các id trùng với <code>screenCART()</code>.</span></li>
+    </ul>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   Dữ liệu lấy đúng CART_BASE + GIFT_CATALOG của desktop.html để demo
+   phản ánh nội dung thật (độ dài tên sản phẩm ảnh hưởng trực tiếp tới
+   chuyện "khoảng trống chết" nên không được thay bằng chữ giả).
+════════════════════════════════════════════════════════════════ */
+const A = 'assets/';
+const CART = [
+  { img:'p8-0.jpg',  brand:'Versace', name:'Túi da Lou mini',                          variant:'Onesize , Black', now:'45.066.000 ₫', qty:1, gift:'bagBundle' },
+  { img:'p5-0.jpg',  brand:'Versace', name:'Giày loafer da Manu',                      variant:'40 , Black',      now:'35.248.000 ₫', qty:1 },
+  { img:'p10-0.jpg', brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm',        variant:'95 , Black',      now:'17.575.000 ₫', qty:1 },
+  { img:'p2-0.jpg',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant:'Onesize',       now:'15.611.000 ₫', qty:1 },
+];
+const GIFTS = {
+  bagBundle: { prog:'Quà tặng kèm túi Lou mini', img:'b1.jpg', brand:'Versace',
+               name:'Nước hoa Crystal Noir EDP 5 ml', variant:'5 ml', was:'1.150.000 ₫', many:true },
+  tier100:   { prog:'Ưu đãi đơn từ 100 triệu',   img:'g2.jpg', brand:'Versace',
+               name:'Khăn lụa Broken Jewels 84 x 5 cm', variant:'Onesize', was:'6.775.000 ₫', many:true },
+};
+
+const ICO = {
+  tick:  '<svg viewBox="0 0 24 24" fill="none" stroke="#fafafa" stroke-width="3"><path d="M4 12.5 9.5 18 20 6.5"/></svg>',
+  trash: '<svg viewBox="1.75 -0.25 20.5 24.5"><path d="M21.5,4h-3.551c-.252-2.244-2.139-4-4.449-4h-3c-2.31,0-4.197,1.756-4.449,4H2.5c-.276,0-.5,.224-.5,.5s.224,.5,.5,.5h1.5v14.5c0,2.481,2.019,4.5,4.5,4.5h7c2.481,0,4.5-2.019,4.5-4.5V5h1.5c.276,0,.5-.224,.5-.5s-.224-.5-.5-.5ZM10.5,1h3c1.758,0,3.204,1.308,3.449,3H7.051c.245-1.692,1.691-3,3.449-3Zm8.5,18.5c0,1.93-1.57,3.5-3.5,3.5h-7c-1.93,0-3.5-1.57-3.5-3.5V5h14v14.5ZM10,10.5v7c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5v-7c0-.276,.224-.5,.5-.5s.5,.224,.5,.5Zm5,0v7c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5v-7c0-.276,.224-.5,.5-.5s.5,.224,.5,.5Z"/></svg>',
+  minus: '<svg viewBox="0 0 24 24"><path d="M23.5,12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H23.5c.276,0,.5,.224,.5,.5s-.224,.5-.5,.5Z"/></svg>',
+  plus:  '<svg viewBox="0 0 24 24"><path d="M24,12c0,.276-.224,.5-.5,.5H12.5v11c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5V12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H11.5V.5c0-.276,.224-.5,.5-.5s.5,.224,.5,.5V11.5h11c.276,0,.5,.224,.5,.5Z"/></svg>',
+  chev:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.5"><path d="M9 5l7 7-7 7"/></svg>',
+};
+
+const pad2 = n => String(n).padStart(2, '0');
+const stepper = () => `
+  <div class="stp">
+    <button aria-label="Giảm số lượng">${ICO.minus}</button>
+    <span class="q">01</span>
+    <button aria-label="Tăng số lượng">${ICO.plus}</button>
+  </div>`;
+
+/* ── Dòng sản phẩm bản A: chép đúng cấu trúc hiện tại của screenCART() ── */
+const rowA = c => `
+  <div class="rowA" data-row>
+    <div class="colChk"><span class="chk on">${ICO.tick}</span></div>
+    <div class="thumbA"><img src="${A}${c.img}" alt=""></div>
+    <div class="infoA" data-info>
+      <div>
+        <div class="padA">
+          <div class="brandline">
+            <p class="brandA" data-brand>${c.brand}</p>
+            <button class="delA" data-del aria-label="Xóa sản phẩm">${ICO.trash}</button>
+          </div>
+          <p class="nameA" data-name>${c.name}</p>
+        </div>
+        <p class="varA">${c.variant}</p>
+      </div>
+      <div class="footA">
+        <div><p class="priceA" data-price>${c.now}</p></div>
+        <span data-stp>${stepper()}</span>
+      </div>
+    </div>
+  </div>`;
+
+/* ── Dòng sản phẩm bản B: lưới desktop ── */
+const rowB = c => `
+  <div class="rowB" data-row>
+    <span class="chk on">${ICO.tick}</span>
+    <div class="thumbB"><img src="${A}${c.img}" alt=""></div>
+    <div class="infoB" data-info>
+      <p class="brandB" data-brand>${c.brand}</p>
+      <p class="nameB" data-name>${c.name}</p>
+      <p class="varB">${c.variant}</p>
+      <button class="delB" data-del>Xóa</button>
+    </div>
+    <div class="priceB"><p class="pnowB" data-price>${c.now}</p></div>
+    <div class="qtyB" data-stp>${stepper()}</div>
+  </div>`;
+
+/* ── Khối quà: cùng khuôn dòng sản phẩm của từng bản ── */
+const giftA = g => `
+  <div class="giftWrap">
+    <div class="giftHd"><p>${g.prog}</p>${g.many ? '<button>Đổi quà</button>' : ''}</div>
+    <div class="rowA" style="padding-top:0">
+      <div class="colChk"></div>
+      <div class="thumbA" style="position:relative">
+        <img src="${A}${g.img}" alt=""><span class="badgeGift">Quà tặng</span>
+      </div>
+      <div class="infoA">
+        <div>
+          <div class="padA">
+            <p class="brandA">${g.brand}</p>
+            <p class="nameA">${g.name}</p>
+          </div>
+          <p class="varA">${g.variant}</p>
+        </div>
+        <div class="footA">
+          <div>
+            <p class="priceA">0 ₫</p>
+            <p class="varA" style="text-decoration:line-through">${g.was}</p>
+          </div>
+          <span class="qtyStatic" style="margin-right:28px">01</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+const giftB = g => `
+  <div class="giftWrap">
+    <div class="giftHd"><p>${g.prog}</p>${g.many ? '<button>Đổi quà</button>' : ''}</div>
+    <div class="rowB" style="padding-top:0">
+      <span></span>
+      <div class="thumbB">
+        <img src="${A}${g.img}" alt=""><span class="badgeGift">Quà tặng</span>
+      </div>
+      <div class="infoB">
+        <p class="brandB">${g.brand}</p>
+        <p class="nameB">${g.name}</p>
+        <p class="varB">${g.variant}</p>
+      </div>
+      <div class="priceB">
+        <p class="pnowB">0 ₫</p>
+        <p class="pwasB">${g.was}</p>
+      </div>
+      <div class="qtyB"><span class="qtyStatic">01</span></div>
+    </div>
+  </div>`;
+
+/* ── Thẻ chương trình khuyến mãi (dùng cho cả 2 bản, chỉ khác chỗ đặt) ── */
+const promoCard = (small) => `
+  <div class="promo ${small ? 'promoSm' : ''}">
+    <p class="t">Chương trình khuyến mãi (3)</p>
+    <div class="rule">
+      <p class="rh">* Wardrobe refresh - [01/08 - 31/08]</p>
+      <p class="rs">Nhập mã JUL1500 giảm 1.5 triệu cho đơn từ 16 triệu, JUL1000 giảm 1 triệu cho đơn từ 11 triệu, JUL500 giảm 500K cho đơn từ 8 triệu</p>
+      <p class="rt">(*) Không áp dụng cho Stefano Ricci, TUMI, Montblanc, Phiếu Quà Tặng và New Season</p>
+    </div>
+    <div class="rule">
+      <p class="rh">** Buy more save more - [28/07 - 24/08]</p>
+      <p class="rs">Mua 2 giảm thêm 5%, mua 3 giảm thêm 10%</p>
+      <p class="rt">(**) Sản phẩm chọn lọc</p>
+    </div>
+    <div class="rule"><p class="rh">Miễn phí vận chuyển cho đơn hàng từ 8 triệu</p></div>
+    <button class="more">Xem tất cả 3 chương trình</button>
+  </div>`;
+
+const summaryCard = () => `
+  <div class="card">
+    <div class="hd"><h2 class="h2" style="padding:0">Tóm tắt đơn hàng</h2></div>
+    <div class="bd">
+      <div>
+        <p class="fieldlab">Mã giảm giá</p>
+        <div class="inline">
+          <input class="inp" placeholder="Nhập voucher">
+          <button class="btnO">Áp dụng</button>
+        </div>
+      </div>
+      <div>
+        <div class="sumline"><span class="k">Tạm tính</span><span class="v">113,500,000đ</span></div>
+        <div class="sumtot"><span>Tổng cộng</span><span>113,500,000đ</span></div>
+        <p class="earn">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b>1.135</b> điểm thưởng</p>
+      </div>
+      <button class="cta">Đặt hàng</button>
+      <div class="acc">
+        <button><span>Bạn có phiếu mua hàng?</span>${ICO.chev}</button>
+      </div>
+    </div>
+  </div>`;
+
+/* ════════════════════════════════════════════════════════════════
+   Dựng màn
+════════════════════════════════════════════════════════════════ */
+let mode = 'A';
+let showGift = true;
+
+function render() {
+  const row  = mode === 'A' ? rowA : rowB;
+  const gift = mode === 'A' ? giftA : giftB;
+
+  const list = CART.map(c => {
+    let html = row(c);
+    if (showGift && c.gift) html += gift(GIFTS[c.gift]);
+    return html;
+  }).join('');
+
+  const orderGift = showGift ? `
+    <div style="padding-top:12px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:0 16px 8px">
+        <p style="font-size:14px;font-weight:500;line-height:20px;margin:0">Quà tặng theo đơn hàng</p>
+        <p style="font-size:12px;line-height:16px;color:var(--muted);margin:0">1 quà</p>
+      </div>
+      ${gift(GIFTS.tier100)}
+    </div>` : '';
+
+  document.getElementById('main').innerHTML = `
+    <h2 class="h2">Giỏ hàng <span class="n">(4)</span></h2>
+    <div class="selbar">
+      <span class="selrow"><span class="chk on">${ICO.tick}</span><span class="lab">Chọn tất cả</span></span>
+      <button style="appearance:none;border:0;background:none;font:500 14px Montserrat;color:var(--muted);cursor:pointer">Xóa sản phẩm đã chọn</button>
+    </div>
+    <div id="cartList">${list}</div>
+    ${orderGift}
+    ${mode === 'A' ? `<div style="padding:24px 0">${promoCard(false)}</div>` : ''}`;
+
+  /* Bản B: khuyến mãi nằm ở cột phải, dưới thẻ tóm tắt - lấp máng trống */
+  document.getElementById('rail').innerHTML = mode === 'A'
+    ? summaryCard()
+    : summaryCard() + `<div style="margin-top:16px">${promoCard(true)}</div>`;
+
+  /* Đo NGAY, không qua requestAnimationFrame: rAF không chạy khi tab đang ẩn
+     hoặc chưa compositing, lúc đó bảng số đo sẽ rỗng mãi. Đọc getBoundingClientRect
+     tự ép trình duyệt tính lại layout nên gọi thẳng là đủ chính xác. */
+  measure();
+  drawOverlay();
+}
+
+/* Đo lại khi ảnh và font đã tải xong: bề ngang chuỗi chữ phụ thuộc font thật
+   (Montserrat) hay font dự phòng, mà đó chính là con số "chữ tên thật chiếm". */
+function remeasure() { try { measure(); drawOverlay(); } catch (e) { /* chưa dựng xong */ } }
+addEventListener('load', remeasure);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
+
+/* ════════════════════════════════════════════════════════════════
+   ĐO SỐNG - không in cứng con số nào.
+   Đo cả 2 bản bằng cách dựng tạm bản còn lại ngoài màn hình, để bảng
+   so sánh luôn khớp với bề ngang cửa sổ đang xem.
+════════════════════════════════════════════════════════════════ */
+const W = el => el ? Math.round(el.getBoundingClientRect().width) : 0;
+const R = el => el ? el.getBoundingClientRect() : null;
+
+/* Bề ngang thật của chuỗi chữ (khác với bề ngang Ô CHỨA nó) */
+function textWidth(el) {
+  if (!el) return 0;
+  const s = document.createElement('span');
+  const cs = getComputedStyle(el);
+  s.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;left:-9999px';
+  s.style.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize}/${cs.lineHeight} ${cs.fontFamily}`;
+  s.textContent = el.textContent;
+  document.body.appendChild(s);
+  const w = Math.round(s.getBoundingClientRect().width);
+  s.remove();
+  return w;
+}
+
+function metricsOf(scope) {
+  const row = scope.querySelector('[data-row]');
+  if (!row) return null;
+  const info = row.querySelector('[data-info]');
+  const name = row.querySelector('[data-name]');
+  const thumb = row.querySelector('.thumbA, .thumbB');
+  const del = row.querySelector('[data-del]');
+  const price = row.querySelector('[data-price]');
+  const stp = row.querySelector('[data-stp]');
+  const rr = R(row), tr = R(thumb), dr = R(del), pr = R(price), sr = R(stp);
+  return {
+    rowW: Math.round(rr.width),
+    rowH: Math.round(rr.height),
+    thumbW: Math.round(tr.width),
+    thumbH: Math.round(tr.height),
+    infoW: W(info),
+    nameW: textWidth(name),
+    deadAir: Math.max(0, W(info) - textWidth(name)),
+    delDist: Math.round(dr.left - tr.right),
+    priceGap: Math.round(sr.left - pr.right),
+    nameSize: parseInt(getComputedStyle(name).fontSize),
+    priceSize: parseInt(getComputedStyle(price).fontSize),
+  };
+}
+
+/* Dựng bản đối chiếu trong một hộp ẩn cùng bề ngang cột trái để đo */
+function metricsOffscreen(which) {
+  const main = document.getElementById('main');
+  const box = document.createElement('div');
+  box.style.cssText = `position:absolute;left:-99999px;top:0;width:${W(main)}px`;
+  box.innerHTML = (which === 'A' ? rowA : rowB)(CART[0]);
+  document.body.appendChild(box);
+  const m = metricsOf(box);
+  box.remove();
+  return m;
+}
+
+function measure() {
+  const main = document.getElementById('main');
+  const rail = document.getElementById('rail');
+  const cur = metricsOf(main);
+  const oth = metricsOffscreen(mode === 'A' ? 'B' : 'A');
+  const a = mode === 'A' ? cur : oth;
+  const b = mode === 'A' ? oth : cur;
+
+  document.getElementById('liveW').textContent = cur.rowW + 'px';
+
+  /* Máng trống = phần cột trái không có gì bên phải nó, chỉ đo được ở bản
+     đang hiện (chiều cao 2 cột phụ thuộc nội dung thật đang dựng). */
+  const gutterNow = Math.max(0, Math.round(R(main).height - R(rail).height));
+
+  const rows = [
+    ['Bề ngang dòng',            a.rowW + 'px',   b.rowW + 'px',   'Cùng cột trái nên bằng nhau.'],
+    ['Ảnh sản phẩm',             a.thumbW + '×' + a.thumbH, b.thumbW + '×' + b.thumbH, 'Giữ tỉ lệ 3:4, to hơn 48%.'],
+    ['Ô chứa tên sản phẩm',      a.infoW + 'px',  b.infoW + 'px',  'Bản B chặn lại thành một khổ chữ đọc được.'],
+    ['Chữ tên thật chiếm',       a.nameW + 'px',  b.nameW + 'px',  'Bề ngang thật của chuỗi chữ.'],
+    ['Khoảng trống chết',        a.deadAir + 'px', b.deadAir + 'px', 'Ô chứa trừ đi chữ thật. Càng nhỏ càng tốt.'],
+    ['Nút xoá cách món hàng',    a.delDist + 'px', b.delDist + 'px', 'Từ mép phải ảnh tới nút xoá.'],
+    ['Giá cách stepper',         a.priceGap + 'px', b.priceGap + 'px', 'Hai thứ cùng một cụm mà rời nhau bao xa.'],
+    ['Cỡ chữ tên',               a.nameSize + 'px', b.nameSize + 'px', 'Thang chữ desktop.'],
+    ['Cỡ chữ giá',               a.priceSize + 'px', b.priceSize + 'px', 'Giá là con số quyết định mua.'],
+    ['Máng trống cạnh tóm tắt',  mode === 'A' ? gutterNow + 'px' : 'bật bản A', mode === 'B' ? gutterNow + 'px' : 'bật bản B', 'Chiều cao cột trái trừ cột phải.'],
+  ];
+
+  document.getElementById('tbl').innerHTML = rows.map(([k, va, vb, note], i) => {
+    /* Tô màu 4 chỉ số có hướng tốt/xấu rõ ràng */
+    const marked = [4, 5, 6].includes(i);
+    return `<tr>
+      <td>${k}</td>
+      <td class="num ${marked ? 'bad' : ''}">${va}</td>
+      <td class="num ${marked ? 'good' : ''}">${vb}</td>
+      <td><span style="color:var(--muted)">${note}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── Lớp phủ đánh dấu vùng trống, vẽ theo toạ độ đo được ── */
+function drawOverlay() {
+  const ov = document.getElementById('ov');
+  if (!ov.classList.contains('on')) { ov.innerHTML = ''; return; }
+  const stage = document.getElementById('stage');
+  const sr = stage.getBoundingClientRect();
+  const main = document.getElementById('main');
+  const rail = document.getElementById('rail');
+  const row = main.querySelector('[data-row]');
+  if (!row) return;
+
+  const name = row.querySelector('[data-name]');
+  const info = row.querySelector('[data-info]');
+  const price = row.querySelector('[data-price]');
+  const stp = row.querySelector('[data-stp]');
+  const nr = R(name), ir = R(info), pr = R(price), spr = R(stp), mr = R(main), rr = R(rail);
+  const tw = textWidth(name);
+  const cls = mode === 'A' ? 'mk' : 'mk ok';
+  const marks = [];
+
+  /* 1. Khoảng trống chết trên dòng tên */
+  const deadW = Math.max(0, ir.right - (nr.left + tw));
+  if (deadW > 24) marks.push({
+    cls, x: nr.left + tw - sr.left, y: nr.top - sr.top, w: deadW, h: nr.height,
+    cap: 'Trống ' + Math.round(deadW) + 'px'
+  });
+
+  /* 2. Khoảng cách giá tới stepper */
+  const gapW = spr.left - pr.right;
+  if (gapW > 24) marks.push({
+    cls, x: pr.right - sr.left, y: Math.min(pr.top, spr.top) - sr.top,
+    w: gapW, h: Math.max(pr.height, spr.height),
+    cap: 'Giá cách stepper ' + Math.round(gapW) + 'px'
+  });
+
+  /* 3. Máng trống cạnh khối tóm tắt */
+  const gh = mr.bottom - rr.bottom;
+  if (gh > 40) marks.push({
+    cls, x: rr.left - sr.left, y: rr.bottom - sr.top, w: rr.width, h: gh,
+    cap: 'Máng trống ' + Math.round(gh) + 'px'
+  });
+
+  ov.innerHTML = marks.map(m =>
+    `<div class="${m.cls}" style="left:${m.x}px;top:${m.y}px;width:${m.w}px;height:${m.h}px">
+       <span class="cap">${m.cap}</span>
+     </div>`).join('');
+}
+
+/* ── Điều khiển ── */
+function setMode(m) {
+  mode = m;
+  document.getElementById('mA').setAttribute('aria-pressed', String(m === 'A'));
+  document.getElementById('mB').setAttribute('aria-pressed', String(m === 'B'));
+  render();
+}
+document.getElementById('mA').onclick = () => setMode('A');
+document.getElementById('mB').onclick = () => setMode('B');
+document.getElementById('ovT').onchange = e => {
+  document.getElementById('ov').classList.toggle('on', e.target.checked);
+  drawOverlay();
+};
+document.getElementById('giftT').onchange = e => { showGift = e.target.checked; render(); };
+
+/* Phím tắt 1 / 2 để chớp qua lại - cách nhanh nhất để thấy khác biệt bố cục */
+addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === '1') setMode('A');
+  if (e.key === '2') setMode('B');
+});
+
+let rt;
+addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { measure(); drawOverlay(); }, 120); });
+addEventListener('scroll', () => { if (document.getElementById('ov').classList.contains('on')) drawOverlay(); }, { passive: true });
+
+render();
+</script>
+</body>
+</html>
