@@ -709,14 +709,21 @@ window.RESP = (function () {
   #dkSearchLayer {
     position: fixed; inset: 0; z-index: 200; pointer-events: none;
     overflow: hidden;
+    /* XẾP DỌC: tấm gợi ý trên, nền tối là phần còn lại (17/08/2026).
+       Trước đó nền tối là `inset: 0` và JS đo chiều cao tấm rồi set `top` cho nó
+       một lần lúc mở — gõ chữ vào là cột trái đổi nội dung, tấm tụt từ 552 xuống
+       479px mà mốc nền tối vẫn 552 -> HỞ 73px nền trang không bị làm tối (lỗi
+       user báo). Để flex tự chia thì nền tối luôn bắt đầu đúng đáy tấm, tấm cao
+       bao nhiêu cũng khớp, không cần đo. */
+    display: flex; flex-direction: column;
     visibility: hidden; transition: visibility 0s linear .36s;
   }
   #dkSearchLayer .ds-backdrop {
-    position: absolute; inset: 0; background: rgba(0,0,0,.45);
+    position: relative; flex: 1 1 auto; background: rgba(0,0,0,.45);
     opacity: 0; transition: opacity .3s ease;
   }
   #dkSearchLayer .ds-sheet {
-    position: absolute; left: 0; right: 0; top: 0;
+    position: relative; flex: 0 0 auto;   /* item đầu của layer flex-col */
     /* Nền: glass-95 + backdrop-blur-[7.5px] khai ở MARKUP, đúng bộ của thanh nav
        và mega panel (17/08/2026, yêu cầu user "dùng blur background như menu").
        Không đặt background ở đây nữa kẻo đè lên lớp kính.
@@ -775,7 +782,14 @@ window.RESP = (function () {
   #dkSearchInput::-webkit-search-cancel-button { display: none; }
   /* 2 cột: trái = lịch sử/gợi ý + từ khóa · phải = sản phẩm nổi bật, ngăn bằng
      đường dọc như tham chiếu Versace. */
-  #dkSearchLayer .ds-cols { display: flex; gap: 40px; }
+  /* CHỐT CHIỀU CAO phần 2 cột (17/08/2026, yêu cầu user "fix height"): cột trái
+     đổi nội dung theo phím gõ (lịch sử 6 dòng ↔ gợi ý ↔ "không tìm thấy") nên
+     tấm co giãn liên tục, nhìn nhảy.
+     552 = chiều cao ĐO THẬT của trạng thái cao nhất (6 dòng lịch sử + 5 từ khoá
+     phổ biến) và ĐÃ GỒM `pt-8 pb-10` vì box-sizing là border-box — đặt 480 như
+     bản đầu thì padding ăn hết, tấm vẫn tụt xuống 480. Trạng thái nào cao hơn
+     552 thì tấm cứ giãn, nền tối bám theo nhờ flex nên không hở. */
+  #dkSearchLayer .ds-cols { display: flex; gap: 40px; min-height: 552px; }
   #dkSearchLayer .ds-side { width: 280px; flex-shrink: 0; }
   #dkSearchLayer .ds-main {
     flex: 1; min-width: 0;
@@ -8742,7 +8756,9 @@ document.body.insertAdjacentHTML('beforeend', `
 const DK_SEARCH_HOT = ['Versace', 'Túi xách da', 'Giày loafer', 'Khăn lụa', 'Thắt lưng'];
 document.body.insertAdjacentHTML('beforeend', `
   <div id="dkSearchLayer" aria-hidden="true">
-    <div class="ds-backdrop"></div>
+    <!-- THỨ TỰ: tấm gợi ý TRƯỚC, nền tối SAU — layer là flex-col nên nền tối tự
+         chiếm đúng phần dưới đáy tấm, không cần JS đo chiều cao. Đảo lại thứ tự
+         này là nền tối leo lên nằm sau tấm, tấm blur ra màu xám xịt. -->
     <div class="ds-sheet glass-95 backdrop-blur-[7.5px]" role="dialog" aria-modal="true" aria-label="Tìm kiếm">
       <div class="ds-inner">
         <!-- Hàng ô nhập + nút đóng ĐÃ GỠ (17/08/2026, yêu cầu user): ô nhập giờ
@@ -8761,6 +8777,7 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>
       </div>
     </div>
+    <div class="ds-backdrop"></div>
   </div>`);
 (() => {
   const layer = document.getElementById('dkSearchLayer');
@@ -8830,6 +8847,12 @@ document.body.insertAdjacentHTML('beforeend', `
     hot.querySelectorAll('[data-suggest]').forEach(b => b.addEventListener('click', () => goSearch(b.dataset.suggest)));
 
     prods.innerHTML = PRODUCTS.slice(0, 4).map((p, i) => productCard(p, i, { w: 'w-full', noColors: true })).join('');
+    /* BẮT BUỘC gọi wireLazy: ảnh trong productCard mang class `lazy` = opacity 0
+       cho tới khi có thêm `.loaded`, mà chỗ gắn class đó nằm trong wire() — chỉ
+       chạy khi dựng MÀN. Tấm gợi ý này dựng ngoài #viewport nên không được
+       wire() chạm tới -> 4 ảnh trong suốt vĩnh viễn, chỉ thấy khung xám.
+       (Lỗi user báo 17/08/2026.) */
+    if (window.wireLazy) wireLazy(prods);
     prods.querySelectorAll('[data-product]').forEach(el => el.addEventListener('click', e => {
       const qa = e.target.closest('.quick-add');
       const i = el.dataset.product;
@@ -8859,6 +8882,8 @@ document.body.insertAdjacentHTML('beforeend', `
     layer.style.top = Math.round(row.getBoundingClientRect().bottom) + 'px';
     layer.classList.add('open');
     layer.setAttribute('aria-hidden', 'false');
+    /* Nền tối KHÔNG cần JS đặt mốc nữa: layer là flex-col, nền tối là item thứ 2
+       nên tự bám đáy tấm dù tấm cao thấp thế nào (xem khối CSS #dkSearchLayer). */
     setTimeout(() => el.focus(), 60);
   };
   function close() {

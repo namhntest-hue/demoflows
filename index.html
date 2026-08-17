@@ -5590,7 +5590,10 @@ const I18N = {
   'Xóa':'Clear', 'Không tìm thấy kết quả':'No results found',
 
   // ── Menu full-screen ──
-  'Đóng menu':'Close menu', 'Đăng ký / đăng nhập':'Sign up / sign in',
+  // 'Đăng ký / đăng nhập' đã gỡ 17/08/2026: cục tài khoản trong menu giờ là
+  // tiêu đề "Tài khoản" + 2 nút Đăng ký / Đăng nhập (2 key đó đã có sẵn ở trên).
+  // Bản desktop VẪN dùng chuỗi này (menu mobile-style của nó chưa đổi).
+  'Đóng menu':'Close menu',
   'Trang chủ nam':'Men’s home', 'Trang chủ nữ':'Women’s home', 'Trang chủ làm đẹp':'Beauty home',
   'Tất cả quần áo':'All clothing', 'Tất cả quần áo nữ':'All women’s clothing',
   'Tất cả giày dép':'All shoes', 'Tất cả giày dép nữ':'All women’s shoes',
@@ -7608,9 +7611,24 @@ document.body.insertAdjacentHTML('beforeend', `
       <span class="flex-1 min-w-0 text-left text-[14px] leading-5 font-medium text-foreground truncate">${label}</span>
       <span class="w-3 h-3 flex items-center justify-center shrink-0 [&_svg]:w-3 [&_svg]:h-3">${I.chevR('var(--general-muted-foreground)')}</span>
     </button>`;
+  /* Cục tài khoản ở đáy menu (đổi 17/08/2026, yêu cầu user):
+     · CHƯA đăng nhập -> tiêu đề mute "Tài khoản" + 2 NÚT cỡ Regular (h-9 theo
+       component Button của Figma): "Đăng nhập" đặc, "Đăng ký" viền. Trước đó chỉ
+       là 1 hàng chữ "Đăng ký / đăng nhập" gộp 2 việc vào một lối bấm.
+     · Đăng nhập nằm BÊN PHẢI theo đúng quy ước đã chốt cho cặp nút quyết định
+       (hành động đi tiếp ở tay phải).
+     · ĐÃ đăng nhập -> giữ nguyên 1 hàng "Tài khoản" dẫn vào màn tài khoản; 2 nút
+       kia lúc đó vô nghĩa.
+     `data-auth-view` quyết định mở màn đăng nhập ở view nào (handler [data-nav]
+     của panel đọc thuộc tính này rồi mới closeM + go). */
   const loginRow = () => ckAuth
     ? utilRow(I.user, 'Tài khoản', 'data-nav="account"')
-    : utilRow(I.user, 'Đăng ký / đăng nhập', 'data-nav="login" data-auth-view="login"');
+    : `
+    <p class="px-4 pt-3 pb-2 text-[12px] leading-4 text-muted-foreground">Tài khoản</p>
+    <div class="px-4 pb-2 flex gap-2">
+      <button data-nav="login" data-auth-view="register" class="flex-1 h-9 rounded-xs border border-border bg-background text-foreground text-[14px] font-medium btn-o press">Đăng ký</button>
+      <button data-nav="login" data-auth-view="login" class="flex-1 h-9 rounded-xs bg-primary text-primary-foreground text-[14px] font-medium btn-p press">Đăng nhập</button>
+    </div>`;
 
   /* Nav cấp 1: chỉ logo giữa + ✕ phải. Menu mở là một ngữ cảnh riêng — search /
      tài khoản / giỏ hàng đều đã có lối vào trong chính menu hoặc sau khi đóng,
@@ -7702,6 +7720,10 @@ document.body.insertAdjacentHTML('beforeend', `
           : { type: 'brand' });
         return;
       }
+      /* Đang đứng SẴN ở màn đăng nhập mà bấm Đăng ký / Đăng nhập trong menu:
+         go() thấy `name === current` là return luôn -> màn không dựng lại, view
+         vẫn là view cũ dù authView đã đổi. Phải tự dựng lại. */
+      if (b.dataset.nav === 'login' && current === 'login') { rerenderLogin(); return; }
       go(b.dataset.nav);
     }));
     panel.querySelectorAll('[data-ms-close]').forEach(b => b.addEventListener('click', closeM));
