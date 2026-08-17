@@ -250,14 +250,16 @@ Khách gửi nguyên văn 2 block, cả `index.html` lẫn `desktop.html` chép 
 
 - **Block 1 (banner)**: 2 đoạn + **3 gạch đầu dòng** giải thích đúng 3 nút bên dưới (`COOKIE_BULLETS`, cùng thứ tự nút) + đoạn nhắc đổi lựa chọn. Nút đổi tên: `Đồng ý tất cả` → **Chấp nhận tất cả**, `Tùy chọn cookies` → **Tùy chọn Cookie**.
 - **Link trong đoạn cuối**: chữ "Tùy chọn Cookie" mở view nhóm (dùng lại `[data-cg-prefs]`); chữ **"tại đây"** (`[data-cg-privacy]`) mở **trang chính sách thật** — demo mới có route `privacy` (*Chính sách bảo mật*) nên tạm trỏ vào đó, có trang *Chính sách bảo vệ dữ liệu cá nhân* thì đổi 1 dòng. Xem chính sách **không tính là đồng ý**: đóng banner, không bật nhóm nào — như chạm nền.
-- **Block 2 (pop up)**: 4 nhóm đổi tên `Cookies …` → **`Cookie …`**; nhóm cần thiết ghi thẳng "Luôn bật, không thể tắt." đầu dòng mô tả. Bản khách vẽ **checkbox ☑/☐**, demo giữ **công tắc** `.cg-sw` (khoá + mờ 40% cho nhóm cần thiết) — cùng nghĩa, khác hình.
+- **Block 2 (pop up)**: 4 nhóm đổi tên `Cookies …` → **`Cookie …`**; nhóm cần thiết mang luôn phần trong ngoặc vào nhãn: `Cookie cần thiết (luôn bật, không thể tắt)`. **CHỈ 4 NHÃN, KHÔNG CHÚ THÍCH** (chốt 17/08/2026, yêu cầu user) — dòng mô tả từng nhóm đã bỏ khỏi markup; cột `desc` trong `COOKIE_CATS` và 4 key i18n tương ứng **giữ nguyên** để bật lại chỉ tốn 1 dòng. Hàng đổi `items-start` → `items-center` cho khớp nhãn 1 dòng (nhãn nhóm cần thiết vẫn xuống 2 dòng ở 375px, hàng cao 73px). Chiều cao rút gọn: panel tuỳ chọn mobile **400px**, modal desktop **345px**. Bản khách vẽ **checkbox ☑/☐**, demo giữ **công tắc** `.cg-sw` (khoá + mờ 40% cho nhóm cần thiết) — cùng nghĩa, khác hình.
+- **Thang nút — chốt 17/08/2026 theo yêu cầu user, ÁP CẢ 2 BẢN**: state 1 (banner/thẻ) có **Từ chối tất cả (trái) và Chấp nhận tất cả (phải) NGANG CẤP** — cùng nút đặc, cùng cỡ, nằm cùng một hàng, không bên nào nổi hơn bên nào (đúng tinh thần "từ chối phải dễ bấm như đồng ý"); **chấp nhận nằm bên phải** (chốt 17/08/2026, yêu cầu user) — vị trí thuận tay cho hành động đi tiếp, giống nhau ở cả 2 bản; "Tùy chọn Cookie" tụt xuống một bậc — **nút viền full-width** dưới hàng đó, GIỐNG NHAU Ở CẢ 2 BẢN (desktop lúc đầu để chữ gạch chân, đã đổi cho khớp: đây là lối duy nhất sang màn chọn từng nhóm nên không được mờ hơn 2 nút quyết định một bậc rưỡi). State 2 **chỉ còn ĐÚNG 1 NÚT "Lưu lựa chọn"** — vào tới đây là đang bật/tắt từng nhóm, để lại chấp nhận/từ chối tất cả thì 2 nút đó xoá sạch thao tác vừa làm. **Lệch bản thảo khách**: block 2 của khách có liệt kê `<Chấp nhận tất cả> <Từ chối tất cả>` — cần khách xác nhận lại. Xếp 2 nút ngang hàng cũng bớt ~52px chiều cao thẻ desktop (566 → 514).
 - **Banner dài hơn nên đổi cấu trúc**: `.cg-intro` thành flex-col `min-h-0`, phần chữ `flex-1 overflow-y-auto`, cụm nút `shrink-0` — panel chạm trần `max-height:88vh` thì chữ tự cuộn, **3 nút luôn nằm trong màn**. Đo: 812px cao → panel 584 (không cần cuộn); 560px cao → panel 493 = 88vh, chữ cuộn trong 337px.
+- **Cỡ chữ theo thang text style (17/08/2026, yêu cầu user)**: cục cookie trước đó dùng 13px (thân + nút) và 11px (mô tả nhóm) — cả 2 đều ngoài thang Figma. Đã quy về: thân bài / gạch đầu dòng / tên nhóm **14/20** (Light cho thân, Medium cho tên) · mô tả nhóm **12/16 Light** · tiêu đề modal desktop **16/24 Medium** · nút: mobile **14 Medium**, desktop giữ **12 Medium tracking-wider** theo quy ước nút của bản desktop (12 nằm trong thang). Hệ quả chiều cao: panel mobile 584 → **604** (còn cách trần 88vh = 715), thẻ desktop 514 → **574** (trần 600). Ở màn thấp vẫn đúng cơ chế cũ: 375×560 → panel 493 = 88vh, chữ cuộn trong 337px, nút nguyên chỗ.
 - **i18n**: đoạn cuối bị 2 inline button cắt thành nhiều text node → mỗi mảnh là 1 key riêng, **dấu chấm nối câu bọc `<span data-i18n-skip>.</span>`** để mảnh sau không dính dấu chấm vào đầu key. Toast đổi theo: `Đã chấp nhận tất cả Cookie` · `Đã từ chối Cookie không cần thiết` · `Cookie cần thiết luôn bật, không thể tắt` · `Quý khách có thể thay đổi lựa chọn Cookie bất kỳ lúc nào ở Tùy chọn Cookie`; luật regex 2 chiều đổi thành `Đã lưu lựa chọn Cookie · N/M nhóm`. Key `Chính sách Cookie` đã gỡ (không còn chỗ dùng).
 
-**Bản desktop (port 17/08/2026)** — cùng chữ, 3 điểm cố ý khác mobile:
+**Bản desktop (port 17/08/2026)** — cùng chữ, cùng thang nút, 2 điểm cố ý khác mobile:
 - **Link "tại đây" KHÔNG đóng thẻ**: `go('privacy')` rồi để nguyên thẻ góc dưới-trái. Thẻ desktop không nền tối, không khoá cuộn nên đọc chính sách xong chọn tiếp ngay tại chỗ; mobile buộc phải đóng vì cổng chặn cả trang (và kèm toast nhắc). Không có toast ở desktop — không mất gì thì không cần giải thích.
-- **Chặn trần chiều cao thẻ**: chữ mới dài gấp đôi nên `#cookieBar` thành flex-col `max-height: min(600px, calc(100vh - 64px))`, phần chữ `flex-1 overflow-y-auto`, cụm nút `shrink-0`. Đo ở 1440×800: thẻ 420×566, chữ chưa cần cuộn; ở 1440×520: thẻ chạm trần 456, chữ cuộn trong 262px, 3 nút vẫn đủ chỗ. Không có bước này thẻ leo ~740px.
-- **Thứ tự nút trong modal giữ chuẩn desktop** (Từ chối · Chấp nhận · **Lưu lựa chọn** ở phải, primary ngoài cùng), không đảo theo thứ tự liệt kê của khách như mobile (mobile để Lưu lựa chọn lên trên vì nút xếp dọc).
+- **Chặn trần chiều cao thẻ**: chữ mới dài gấp đôi nên `#cookieBar` thành flex-col `max-height: min(600px, calc(100vh - 64px))`, phần chữ `flex-1 overflow-y-auto`, cụm nút `shrink-0`. Đo ở 1440×800: thẻ 420×**514** (sau khi xếp 2 nút ngang hàng), chữ chưa cần cuộn; ở 1440×520: thẻ chạm trần 456, chữ cuộn trong 262px, nút vẫn đủ chỗ. Không có bước này thẻ leo ~740px.
+- **Nút "Lưu lựa chọn" trong modal neo phải** (`justify-end`, `h-11 px-6`) đúng chuẩn footer modal desktop, mobile thì full-width h-12 — cùng cấp, khác khuôn theo bản. Nói chung 2 bản **trùng nhau về thứ tự nút và cấp nút**, chỉ khác thang cỡ vốn có của từng bản: desktop `h-11` / 12px / `tracking-wider`, mobile `h-12` / 13px.
 
 ## Quick add to cart (`#quickAddSheet`)
 
@@ -670,7 +672,18 @@ Cỡ chữ **không** nằm trong `tokens07.json` — viết thẳng bằng util
 
 `12 · 14 · 16 · 18 · 24 · 32 · 48`
 
-(Code dùng thêm 11 / 13 / 15 cho vài chỗ chữ phụ dày đặc — có sẵn từ trước, chưa rà.)
+**Chỉ được dùng cỡ trong thang này** (yêu cầu user 17/08/2026) — 11 / 13 / 15 là cỡ tự chế, không có text style tương ứng trong Figma.
+
+Tình trạng rà (17/08/2026): **cục cookie đã sạch** (chỉ còn 12 / 14 / 16 ở cả 2 bản). Phần còn lại của code vẫn nợ, đếm bằng `grep -o "text-\[13px\]" file | wc -l`:
+
+| Cỡ ngoài thang | `index.html` | `desktop.html` |
+|---|---|---|
+| 13px | 51 | 50 |
+| 11px | 12 | 8 |
+| 15px | 3 | 1 |
+| 22px | 1 (`index.html:4216`, h2 "Đặt hàng thành công" — thang cấm rõ 20/22, nên đổi **24**) | 0 |
+
+Quy tắc quy đổi khi rà tiếp: **13 → 14** · **11 → 12** · **15 → 14 hoặc 16** tuỳ vai (chữ phụ xuống 14, chữ ngang cấp body lên 16) · **22 → 24**.
 
 **Không dùng 20px và 22px** — không có trong thang. Tiêu đề cấp section (h2 trong trang: "Giỏ hàng", "Thanh toán", "Bộ lọc", tên brand ở PDP, tiêu đề bottom sheet) dùng **18px**; tiêu đề trang full-screen (auth) dùng **24px Light**. Riêng heading section trong 3 trang chính sách dùng **16px** — xem mục "Trang tĩnh / chính sách".
 
