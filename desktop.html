@@ -909,7 +909,9 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
         const tags = [...(badge ? [badge] : []), ...(pillBadges || [])];
         return tags.length ? `
       <div class="absolute top-2 left-0 flex flex-col items-start gap-1">
-        ${tags.map(b => `<span class="px-1 text-[12px] font-medium leading-4 text-foreground" style="background:rgba(255,255,255,.9)">${b}</span>`).join('')}
+        <!-- data-i18n-skip khi là wordmark "Pre-order": không có nó thì lượt dịch
+             ngược EN->VN biến badge thành "Đặt trước" (trùng chuỗi với nút) -->
+        ${tags.map(b => `<span ${b === 'Pre-order' ? 'data-i18n-skip ' : ''}class="px-1 text-[12px] font-medium leading-4 text-foreground" style="background:rgba(255,255,255,.9)">${b}</span>`).join('')}
       </div>` : '';
       })()}
       <button class="quick-add press" data-quick="${i}" aria-label="Thêm nhanh vào giỏ"
@@ -1693,7 +1695,10 @@ function dkProductGrid(list, card) {
 function screenPLPList() {
   const m = plpMode;
   const list = plpProducts();
-  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'New' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
+  /* Badge thẻ đầu: đọc từ DATA (`p.preorder`) chứ không phải "thẻ số 0 thì New"
+     — SP#1 là hàng pre-order, để "New" ở PLP thì bấm vào PDP lại thấy
+     "Pre-order", 2 nơi nói 2 chuyện (yêu cầu user 17/08/2026). */
+  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
   // Figma 04/05: breadcrumb luôn 2 đoạn ("Trang chủ • Nam") — thiếu crumbs thì lấy tiêu đề;
   // riêng chế độ tìm kiếm dùng nhãn ngắn "Kết quả tìm kiếm" (Figma 01)
   const tail = (m.crumbs && m.crumbs.length) ? m.crumbs
@@ -1733,7 +1738,10 @@ function screenPLPList() {
 
 function screenPLP() {
   if (plpMode.type !== 'brand') return screenPLPList();
-  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'New' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
+  /* Badge thẻ đầu: đọc từ DATA (`p.preorder`) chứ không phải "thẻ số 0 thì New"
+     — SP#1 là hàng pre-order, để "New" ở PLP thì bấm vào PDP lại thấy
+     "Pre-order", 2 nơi nói 2 chuyện (yêu cầu user 17/08/2026). */
+  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
 
   return `
   <div class="w-full" data-scroller>
@@ -5015,7 +5023,10 @@ function plpSkeletonCards(n) {
 function renderPlpGrid(root, { skeleton = false } = {}) {
   const grid = root.querySelector('#plpGrid');
   if (!grid) return;
-  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'New' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
+  /* Badge thẻ đầu: đọc từ DATA (`p.preorder`) chứ không phải "thẻ số 0 thì New"
+     — SP#1 là hàng pre-order, để "New" ở PLP thì bấm vào PDP lại thấy
+     "Pre-order", 2 nơi nói 2 chuyện (yêu cầu user 17/08/2026). */
+  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
   const paint = () => {
     const list = sortedProducts();
     grid.innerHTML = plpGridInner(list, card);
