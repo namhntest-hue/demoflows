@@ -212,15 +212,18 @@ Dòng quà ở tóm tắt dùng **`giftSummaryRow()`** — cùng khuôn dòng s�
 
 > **Chưa làm** (ngoài phạm vi yêu cầu): màn **Chi tiết đơn hàng** (Tài khoản → Đơn hàng) chưa liệt kê quà — `ORDERS[]` không mang field quà, chỉ có `ckOrderGifts` của đơn vừa đặt; thêm sản phẩm từ PDP vẫn **không tạo dòng giỏ mới** (chỉ tăng badge + mở sheet xác nhận) nên "chọn thêm sản phẩm" chỉ tick/tăng trong giỏ; danh sách đổi quà là inline trong nhóm, **chưa có sheet/modal riêng**.
 
-## Pre-order (14/08/2026, chỉ mobile)
+## Pre-order (14/08/2026, CẢ 2 BẢN)
 
 Hàng pre-order duy nhất là **SP#1 đầm lụa mini Broken Jewels** — ngày nhận dự kiến khai MỘT LẦN ở `PRODUCTS[0].preorder` (dd/mm/yyyy). Mọi nơi khác đọc từ đó, đổi ngày chỉ sửa 1 chỗ (ngày cũ 15/08/2026 in cứng trong markup đã suýt quá hạn — AUDIT ghi nhận):
 
-- **PDP v1**: badge "Pre-order" xếp trên "New Season" ở gallery (cùng style pill); dòng "Dự kiến giao hàng vào ngày …" **nằm trên nút**, không còn nằm trong nút (yêu cầu user 14/08/2026) — nút về khuôn 1 dòng h-12 như 5 PDP kia, sticky CTA cũng vậy (dòng rút gọn "Dự kiến giao …").
+Ở mọi chỗ hiển thị, NGÀY in đậm hơn phần chữ 1 nấc (`<span class="font-medium">`, yêu cầu user 14/08/2026) — hệ quả i18n: câu vỡ thành 2 text node nên phần chữ dịch bằng KEY TĨNH (`'Dự kiến giao hàng vào ngày'`, `'Dự kiến giao'`, `'Nhận hàng dự kiến'`, desktop thêm `'Pre-order · Nhận hàng dự kiến'`), luật regex cả-câu chỉ còn cho chuỗi nguyên 1 node (`#ccPre`, chi tiết đơn, ghi chú vận chuyển, "Nhận dự kiến …" ở màn Hoàn tất).
+
+- **PDP v1**: badge "Pre-order" xếp trên "New Season" ở gallery (cùng style pill); dòng "Dự kiến giao hàng vào ngày …" **nằm trên nút**, không còn nằm trong nút (yêu cầu user 14/08/2026) — nút về khuôn 1 dòng h-12 như 5 PDP kia, sticky CTA cũng vậy (dòng rút gọn "Dự kiến giao …"). Dòng ngày **căn trái** thẳng mép nút, không căn giữa (chỉnh theo yêu cầu user cùng ngày).
 - **Giỏ hàng**: đầm đứng đầu `CART_BASE` (kịch bản "vừa đặt trước xong vào giỏ"), thẻ vẫn đúng khuôn item-cart, chỉ thêm badge "Pre-order" đè góc trên trái ảnh + 1 dòng "Pre-order · Nhận hàng dự kiến …" dưới phân loại.
 - **Sheet xác nhận thêm giỏ** (`#ccPre`): nhắc lại đúng dòng ngày nhận — cả đường bấm từ PDP lẫn quick add PLP; hàng thường thì ẩn (fix finding AUDIT "Đặt trước và Thêm vào giỏ ra cùng một kết quả").
 - **i18n**: chuỗi mang ngày dịch bằng **luật regex** (`Dự kiến giao hàng vào ngày …` ↔ `Estimated delivery …`, `Pre-order · Nhận hàng dự kiến …` ↔ `Pre-order · Estimated arrival …`) — không giữ key ngày cứng trong từ điển. Badge "Pre-order" mang **`data-i18n-skip`** (cơ chế mới trong `applyLang`): wordmark giữ nguyên ở mọi ngôn ngữ, không có nó thì lượt dịch ngược EN→VN biến badge thành "Đặt trước" (trùng chuỗi với nút).
-- **Checkout**: CHƯA đánh dấu pre-order — 3 phương án đang chờ chốt, xem `PREORDER.md`.
+- **Checkout + hoàn tất + đơn đã đặt (phương án A, chốt 14/08/2026)**: món pre-order mang dòng "Pre-order · Nhận hàng dự kiến …" trong tóm tắt đơn và chi tiết đơn (snapshot `preorder` chốt trong `placeOrder`); bước Phương thức vận chuyển có ghi chú "Riêng hàng pre-order: … giao riêng khi hàng về." ở cả lúc chọn lẫn tóm tắt đã xác nhận (ETA chung không đúng cho món đặt trước); màn Hoàn tất thêm dòng "Hàng pre-order · Nhận dự kiến …" (ngày chốt qua `ckOrderPre`). Phương án B (tách 2 shipment) và C (đặt cọc) vẫn để ngỏ — xem `PREORDER.md`.
+- **Bản desktop (port 14/08/2026)** — cùng danh mục trên, các điểm cố ý khác mobile: (1) badge "Pre-order" gắn vào Ô ẢNH ĐẦU của lưới gallery (desktop không có chồng pill New Season); (2) cờ `preorder:true` cũ trong `PDP_DATA.pdp` đã bỏ — CTA suy từ `PRODUCTS[0].preorder` để 1 nguồn; (3) tiện thể sửa popup đăng nhập nhanh còn in cứng "1.135" điểm → `rewardPointsEarned()`. Panel "Tóm tắt đơn hàng" lúc đầu giữ thumb 52×60 gọn, nhưng **user chốt cùng ngày: đồng bộ khuôn dòng theo tóm tắt mobile** (thumb 100×133 + badge + tên 2 dòng + giá đáy-phải + dòng ngày không prefix, quà qua `giftSummaryRow(..., true)`) và **hạ title panel 24 light → 18 medium**. Tiếp đó user chốt thêm: **panel CHỈ để xem thông tin giỏ + tạm tính** — nút "Đặt hàng" cũ trong panel là lỗi UX (bấm được từ bước 0, nhảy thẳng màn hoàn tất, bỏ qua toàn bộ validation các bước) nên đã gỡ, kèm 2 dòng ETA/ghi chú pre-order dưới nút (lặp với bước Phương thức vận chuyển); nút "Đặt hàng" thật giờ nằm **cuối bước Thanh toán như mobile** (khuôn nút inline h-12 px-10 của các bước desktop), chỉ hiện khi đã đi qua đủ các bước.
 
 ## Quick add to cart (`#quickAddSheet`)
 
@@ -458,6 +461,7 @@ Khớp sẵn, không phải sửa: nút CTA (48 · r2 · `#0a0a0a` · chữ 16 R
 - Cặp nút **Cá nhân/Công ty**: bản vẽ để mục đang chọn nền đen 5% + viền 1.5px (kiểu "lún"), nhưng ngày 11/08/2026 user yêu cầu đổi sang kiểu **nổi lên** — giữ theo yêu cầu mới, xem "Quy ước segmented toggle".
 - Nhãn hàng tóm tắt: bản vẽ ghi "Tóm tắt đơn hàng", code đang là "Giỏ hàng của bạn" (khác **nội dung**, không phải style) — chưa đổi.
 - Các dòng giảm giá `#d62845` (JUNE900, voucher, dùng điểm) có trong bản vẽ nhưng demo chưa có tính năng mã giảm giá.
+- **Thumb trong tóm tắt "Giỏ hàng của bạn": 100×133 thay vì 52×60 (yêu cầu user 14/08/2026)** — bản 52×60 làm tên sản phẩm cụt 1 dòng, khó đọc. Nay dùng đúng cỡ ảnh thẻ giỏ hàng, tên được `line-clamp-2`, hàng pre-order mang badge như ở giỏ; dòng quà đi cùng cỡ qua tham số `big` của `giftSummaryRow` (màn Hoàn tất vẫn gọi bản 52×60 gọn như cũ). Thang chữ 13/12 của tóm tắt giữ nguyên. Cùng ngày chỉnh tiếp theo yêu cầu user: **giá ghim đáy-PHẢI** (cột chữ stretch theo ảnh + `justify-between`, giá thêm `self-end`; giá quà 0 ₫ cùng khuôn), và dòng pre-order **bỏ chữ lặp "Pre-order ·"** (badge trên ảnh lo nhận diện) — chỉ còn "Nhận hàng dự kiến <ngày in đậm>"; áp cho cả thẻ ở màn Giỏ (cùng lý do badge). Ngày tách vào `<span class="font-medium">` nên phần chữ dịch bằng key tĩnh `'Nhận hàng dự kiến'`; sheet xác nhận + chi tiết đơn (ảnh không có badge) giữ nguyên dạng "Pre-order · …" dịch bằng luật regex.
 
 ## Logo đối tác thanh toán (11/08/2026)
 
@@ -836,7 +840,31 @@ Vì 62 hàm + toàn bộ hằng dữ liệu (`PRODUCTS`, `CART`, `I18N`…) vẫ
 - **13 chỉnh theo Figma `3547:55856`** (xem "Đối chiếu checkout với Figma") mới áp cho mobile. Desktop còn: checkbox viền `#e5e5e5`, ô nhập padding 12, nhóm field gap 8, link "Thay đổi" 16px Light, tiêu đề màn 18/28, thiếu kẻ ngăn `#f5f5f5` + bước chờ cao 72. (Vòng radio + `.opt.on` đã port 12/08 — xem mục dưới.)
 - ~~**Lệch NGƯỢC — bộ lọc PLP**: desktop lọc thật, mobile chỉ toast.~~ → **đã đồng bộ 12/08/2026**, xem "Bộ lọc lọc thật + 4 hành vi mới" bên dưới. Còn lệch duy nhất: **hàng chip "đang áp dụng" chỉ có ở desktop** (mobile bỏ/tắt bộ lọc trong sheet).
 - ~~**Quà tặng trong giỏ + state giỏ thật (13/08/2026)** — chỉ mobile.~~ → **đã port sang desktop cùng ngày** (yêu cầu user), xem "Quà tặng trong giỏ · Bản desktop". Kèm sửa "Chọn tất cả" bản desktop.
-- **Pre-order (14/08/2026)** — chỉ mobile, xem section "Pre-order": `PRODUCTS[0].preorder` + đầm vào `CART_BASE` (giỏ 4→5 món, tạm tính 113,5tr→186tr), mốc quà 100/150tr→150/200tr (đổi cả tên chương trình + 2 key i18n), badge/dòng ngày ở PDP v1 + giỏ + `#ccPre` ở sheet xác nhận, 6 luật regex i18n mới, cơ chế `data-i18n-skip` trong `applyLang`, `cartQty` khởi tạo 5 (reset đọc `CART_BASE.length`). Desktop có PDP_DATA gộp nên khi port cần gắn theo `idx===0`, không copy markup thẳng.
+- ~~**Pre-order (14/08/2026)** — chỉ mobile.~~ → **đã port sang desktop cùng ngày** (yêu cầu user), xem section "Pre-order" cho danh mục đầy đủ và các điểm desktop cố ý làm khác (badge gắn vào tile gallery, panel tóm tắt giữ thumb 52×60 nên dòng ngày giữ prefix "Pre-order ·").
+
+### Checkout desktop: nhịp spacing kiểu Farfetch (14/08/2026, chỉ desktop)
+
+User yêu cầu học spacing checkout Farfetch — thoáng, nhiều khoảng thở. Nguyên tắc áp: sự thoáng đến từ **nhịp dọc + gutter + hàng cao**, KHÔNG đổi type scale hay cấu trúc; padding NGANG trong section giữ 16px để thẳng hàng với `field()` dùng chung (bơm ngang là lệch mép ô nhập).
+
+| Nấc | Trước | Sau |
+|---|---|---|
+| Lề trang / title | `pt-8 pb-20`, title `pb-6` | `pt-12 pb-24`, title `pb-10` |
+| Gutter 2 cột | `gap-10` (40px) | `gap-16` (64px) |
+| Hàng tiêu đề bước (`ckSection`) | 56px | 72px |
+| Khối notice / tabs hình thức nhận | `mb-4` | `mb-6` |
+| Nút Xác nhận / Đặt hàng trong section | `py-4` | `pt-6 pb-8` (nút chốt: `pt-2 pb-8`) |
+| Tóm tắt đã xong (`s0done`/`s1done`/`p0done`) | `pb-4` | `pb-6` |
+| Gap lựa chọn ship / pay / sổ địa chỉ | `gap-3` | `gap-4` |
+| Khối VAT | `pt-4 pb-4` | `pt-6 pb-6` |
+| Panel tóm tắt: padding / gap hàng / dòng Tổng cộng | `px-4 py-4` / `gap-3` / `h-12 mt-2` | `px-6 py-6` / `gap-5` / `h-14 mt-3` |
+
+Mobile checkout CHƯA áp nhịp này — muốn đồng bộ thì bơm các nấc dọc tương ứng (mobile không có gutter).
+
+**Mobile: khối "Giỏ hàng của bạn" sticky trên đỉnh (14/08/2026, yêu cầu user).** `.ck-sum` thêm `sticky top-0 z-50 bg-background`: cùng top/z với navbar nhưng đứng SAU trong DOM nên khi cuộn nó đè lên, **thay chỗ logo** — khách cuộn tới đâu cũng thấy giỏ + tổng tiền, chạm là xổ danh sách tại chỗ. Cần bg đặc, không thì chữ form hắt xuyên. Kèm lưới an toàn trong wire(): nếu mở danh sách mà scroll-anchoring của trình duyệt đẩy khối âm đỉnh (trigger văng khỏi màn, không thu lại được) thì cuộn mượt về đầu trang — mốc cuộn KHÔNG lấy từ offsetTop/rect của chính khối vì phần tử sticky đang ghim trả về vị trí đã dịch. Lưu ý khi test tự động: cookie banner khoá scroll (`lockBodyScroll`) từ lúc load — phải bấm đóng banner trước thì trang mới cuộn được.
+
+Cùng ngày (yêu cầu user, sau đó **đồng bộ CẢ 2 BẢN**): cặp nút **Giao hàng / Nhận tại cửa hàng dời VÀO ĐẦU thân section 0**, section đổi tên "Thông tin giao hàng" → **"Vận chuyển"** (áp cho cả 2 chế độ — luồng nhận tại cửa hàng trước đó đặt tên section theo chế độ). Lý do: đổi chế độ là việc của đúng bước đó, không phải của cả màn; toggle đứng lẻ trên hộp section trông rời rạc. `#ckModeTabs` giữ nguyên id nên quy tắc paintCheckout ẩn toggle khi đã tới bước Thanh toán (kể cả lúc bấm "Thay đổi" sửa lại bước 0) vẫn chạy — test cả 2 chiều đổi chế độ + ẩn ở bước cuối trên cả desktop lẫn mobile. Key i18n 'Vận chuyển':'Shipping' có sẵn ở cả 2 file. (Các chỉnh desktop khác trong ngày — nhịp spacing Farfetch, nút Xem thêm của panel — vẫn CHỈ desktop: mobile không có panel bên, tóm tắt mobile vốn là accordion không dư tầng tiêu đề, và spacing mobile đang neo theo Figma mốc 56/72.)
+
+Cùng ngày (yêu cầu user, 3 vòng): danh sách sản phẩm trong panel **thu gọn được**. Vòng 1 dùng hàng trigger "Giỏ hàng của bạn" kiểu accordion mobile — user chê **dư 1 tầng tiêu đề** (trùng vai với "Tóm tắt đơn hàng" cùng đứng đầu danh sách). Vòng 2 thay bằng nút "Xem thêm" cạnh title (wiring `#ckSumToggle`). **Bản chốt (vòng 3): đảo bố cục — KHỐI TIỀN lên TRÊN** (panel trả lời ngay "đơn bao nhiêu tiền"), danh sách sản phẩm thành nhóm riêng bên dưới nên hàng trigger **"Giỏ hàng của bạn (N)" + chevron quay lại chính danh** (2 nhóm 2 nội dung, hết trùng vai — dùng lại wiring `.acc-trigger` chung, bỏ handler `#ckSumToggle`). Mặc định thu gọn (~310px), mở ~1.370px. Thứ tự trong panel: title → Tạm tính/Giảm giá/Giao hàng → Tổng cộng (border-t) → trigger Giỏ hàng của bạn → danh sách.
 
 ### Bộ lọc lọc thật + 4 hành vi mới — CẢ 2 BẢN (12/08/2026)
 
@@ -1027,6 +1055,67 @@ Toàn bộ backlog "chờ port" bên dưới đã chạy xong trong một đợt
   với frame desktop tương ứng trước khi bỏ.
 - `SIZE_SHEET_BY_PRODUCT` của mobile (map index SP → kiểu sheet size) chưa port;
   desktop vẫn dùng `SIZE_SHEET_OPTIONS` khoá theo route `pdpN`.
+
+## Bản desktop-neutral.html — phương án màu greige ấm (14/08/2026)
+
+- **Mục đích**: trả lời mục Overview #32 của BRIEF-GAP ("đề xuất phương án màu
+  ngoài Grey-Gold hiện tại"). File là **clone nguyên vẹn** của `desktop.html`
+  tại 14/08 — layout / spacing / thang chữ / radius / nội dung giữ 100%, chỉ
+  khác lớp skin. Font vẫn Montserrat (quyết định của user: giữ font design
+  system, không serif).
+- **Cơ chế**: khối `NEUTRAL SKIN` append **cuối** `<style>` (nằm sau tokens.css
+  + tailwind.css + style gốc nên rule cùng specificity thắng cascade — cùng
+  pattern với `.theme-dplus`). Không đụng `tokens.css`/`tailwind.css` (dùng
+  chung 8 trang), không utility Tailwind mới. Ngoài khối đó chỉ có: 5 badge đổi
+  class (`tag-note` pre-order ×3, `tag-gift` quà tặng ×2), 1 inline shadow
+  `#loginCard`, `<title>`.
+- **Bảng màu**: canvas `#fbfaf7` (body-background tách khỏi nền thẻ — đúng cơ
+  chế Gentle-Monster có sẵn) · bề mặt `#fefdfb` · thẻ/input trắng · secondary
+  `#f4f2ed` · border `#e9e6df` · mực `#171410` / `#2b2721` / `#46423a` · muted
+  `#6f6a60` · destructive `#a03733` (subtle `#fdebec` → badge -% thành pastel
+  đỏ tự động) · pastel: pre-order `#fbf3db`/`#7a5300`, quà `#edf3ec`/`#2f5a34`.
+  Shadow toàn bộ hạ về `rgba(23,20,16,.04–.12)`. Motion: reveal/rise chuyển
+  curve `cubic-bezier(.16,1,.3,1)`; card sản phẩm hover nâng nhẹ + ảnh zoom
+  1.03 (CSS thuần trên `.bg-card[data-product]`, không sửa template).
+- **2 fix kèm theo** (lỗi brief nêu ở Overview #31/#35, chỉ trong bản neutral —
+  bản gốc giữ nguyên chờ khách duyệt): `--general-muted-foreground` `#737373`
+  → `#6f6a60` (chữ 12px lên ~5.3:1) và `--btn-focus-ring` `#d4d4d4` → `#8a8478`
+  (~3.4:1, đạt WCAG 2.4.13).
+- **Đo được khi verify**: ảnh sản phẩm CDN có nền `#f1f1f1` **nướng sẵn trong
+  file** (4 góc ảnh đều 241,241,241) → trả lời câu hỏi mở #02 của BRIEF-GAP:
+  `#f1f1f1` là nền của ảnh, không phải khung web. Chênh với `#f4f2ed` nhỏ
+  (ΔRGB ≤ 7) nên không lộ quầng trên nền ấm.
+- Theme picker (d / dplus) vẫn chạy — `.theme-dplus` được vá tông ấm ngay trong
+  khối skin. RESP giữ nguyên như bản gốc: dưới 768px vẫn đá về `index.html`,
+  nên xem bản neutral cần cửa sổ ≥ 768px.
+
+## Bản desktop-editorial.html — thử nghiệm đổi bố cục (14/08/2026)
+
+- **Clone từ `desktop-neutral.html`** (giữ nguyên skin greige) — trả lời câu hỏi
+  "nếu được đổi layout thì trông thế nào". `desktop.html` và
+  `desktop-neutral.html` không bị đụng.
+- Khối `EDITORIAL LAYOUT` append cuối `<style>` + 6 chỗ template đổi
+  class/cấu trúc (không chuỗi hiển thị nào bị sửa nên i18n nguyên vẹn):
+  - **Hero brand 2 cột 50/50**: ảnh campaign dùng đúng **khổ dọc 1200×1484**
+    (bản gốc ép vào khung ngang 575×320 nên mất phần lớn ảnh); mô tả lên 16px
+    light; strip danh mục tách xuống **hàng full-width, 6 ô chia đều**, nút
+    cuộn ẩn bằng CSS vì hết thứ để cuộn (wiring `[data-strip-next]` giữ nguyên).
+  - **Grid sản phẩm**: gutter 20/56 (gốc 4/16), **tile đầu feature 2×2**
+    (CSS `#plpGrid > [data-product]:first-child`, sống sót qua toggle 3/4 cột
+    và "Xem thêm"), brand/tên trong tile feature lên 16px.
+  - Tiêu đề trang list 24 → **32 light**.
+  - **Gallery PDP so le**: cột phải dịch xuống 64px, gutter 16, container chừa
+    `padding-bottom: 72px` nên không đè carousel bên dưới.
+  - **4 cam kết DAFC → thẻ bento** viền `--general-border`, icon xếp trên,
+    py 64 (viền bao 4 cạnh quanh card — không thuộc lệnh cấm "border ngăn
+    giữa block").
+  - **Footer newsletter → statement band 48px light** (48 thuộc thang chữ
+    Figma), footer cách nội dung 56px.
+- Đã verify bằng computed style + geometry: không tràn ngang (1425/1440),
+  hero không overlap, feature = 2.06× card thường, gallery contained,
+  brandToggle / strip / toggle 3-4 cột / show more / i18n EN↔VI / theme D-D+
+  đều chạy, uppercase = 0. Lỗi 404 duy nhất khi chạy qua http.server là
+  `/favicon.ico` — tình trạng sẵn có của cả repo (không trang nào khai favicon).
 
 ## Vấn đề tồn đọng / cần quyết định tiếp
 

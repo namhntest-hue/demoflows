@@ -1,5 +1,9 @@
 # Pre-order — đã làm gì & đề xuất cho checkout (14/08/2026)
 
+> **Cập nhật cùng ngày: user đã chốt phương án A — ĐÃ LÀM XONG** (xem mục "Phương án A" bên dưới, các dấu vết cụ thể ghi ở cuối file). B và C vẫn để ngỏ như lộ trình nâng cấp.
+>
+> **Đã port toàn bộ sang desktop.html cùng ngày** (kèm ngày in đậm ở PDP cả 2 bản). Desktop khác mobile 2 chỗ có chủ ý: badge gắn vào ô ảnh đầu của lưới gallery; cờ `preorder:true` cũ của `PDP_DATA` bỏ đi, CTA suy thẳng từ `PRODUCTS[0].preorder`. Panel "Tóm tắt đơn hàng" sau đó được user chốt: **đồng bộ khuôn dòng theo tóm tắt mobile** (thumb 100×133, badge, giá đáy-phải, dòng ngày không prefix), hạ title xuống heading 18, và **panel chỉ để xem thông tin** — nút "Đặt hàng" (vốn nhảy thẳng màn hoàn tất từ bước 0, lỗi UX) dời về cuối bước Thanh toán như mobile.
+
 ## Phần đã làm (mobile `index.html`)
 
 | Nơi | Thay đổi |
@@ -49,3 +53,13 @@ Làm **A ngay** (demo hết hứa sai ngày, chi phí thấp nhất), giữ B ch
 - PLP: CTA quick add của hàng pre-order vẫn là "Thêm vào giỏ hàng", chưa đổi thành "Đặt trước"; card chưa có dòng "Expected to be in stock".
 - Mail confirm sau khi submit form notify (mới có toast).
 - Note "For Deposit" ở PDP (kẹt cùng câu hỏi 10 với phương án C).
+
+## Phương án A — chi tiết đã triển khai (14/08/2026, chỉ mobile)
+
+| Nơi | Thay đổi |
+|---|---|
+| Tóm tắt đơn ở checkout ("Giỏ hàng của bạn") | Món pre-order có dòng ngày nhận dưới dòng phân loại · SL — cùng khuôn dòng ở giỏ. Bổ sung cùng ngày theo yêu cầu user: thumb phóng to 52×60 → 100×133 như thẻ giỏ (tên 2 dòng, badge "Pre-order" trên ảnh, dòng quà cùng cỡ); giá ghim đáy-phải (`self-end`); dòng ngày bỏ chữ lặp "Pre-order ·" (badge lo nhận diện), còn "Nhận hàng dự kiến **30/09/2026**" với ngày in đậm — áp cho cả thẻ ở màn Giỏ. Dòng ngày ở PDP căn trái thẳng mép nút |
+| Bước "Phương thức vận chuyển" | Ghi chú "Riêng hàng pre-order: nhận hàng dự kiến 30/09/2026, giao riêng khi hàng về." hiện ở CẢ hai trạng thái: dưới 2 lựa chọn giao hàng (lúc chọn) và trong tóm tắt đã xác nhận — vì ETA chung 14–18/07 không đúng cho món đặt trước |
+| Màn Hoàn tất | Thêm dòng "Hàng pre-order · Nhận dự kiến 30/09/2026" vào bảng tóm tắt (cả 2 chế độ giao hàng / nhận tại cửa hàng); ngày chốt lúc đặt hàng qua `ckOrderPre` vì sau đó giỏ bị dọn rỗng |
+| Đơn đã đặt (chi tiết đơn) | `placeOrder` chốt `preorder` vào snapshot items; màn chi tiết in dòng "Pre-order · Nhận hàng dự kiến …" dưới phân loại của món đó |
+| i18n | 1 key tĩnh (`Hàng pre-order` ↔ `Pre-order items`) + 2 cặp luật regex mới cho chuỗi mang ngày; đã test đủ 2 chiều |

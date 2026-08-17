@@ -708,7 +708,10 @@ const A = 'assets/';
    (1200×1484). `colors` khai đúng các phiên bản màu THẬT đang bán —
    colors[i] ứng với PRODUCT_GALLERY[idx][i]; sản phẩm 1 màu chỉ có 1 swatch. */
 const PRODUCTS = [
-  { img:'p1-0.jpg',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫', tag:'Best seller', colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
+  /* `preorder` = ngày nhận hàng dự kiến (dd/mm/yyyy) — NGUỒN DUY NHẤT cho mọi chỗ
+     hiện pre-order (đồng bộ bản mobile 14/08/2026): badge + dòng ETA ở PDP, dòng
+     trong giỏ, sheet xác nhận, checkout/hoàn tất/chi tiết đơn. Đổi ngày chỉ sửa ở đây. */
+  { img:'p1-0.jpg',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫', tag:'Best seller', preorder:'30/09/2026', colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
   { img:'p2-0.jpg',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', price:'15.611.000 ₫', colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
   { img:'p3-0.jpg',  brand:'Versace', name:'Túi đeo vai da Emblème',                     price:'50.957.000 ₫', off:'-15%', was:'59.949.000 ₫', colors:[{name:'Verde Menta',hex:'#b9dfc6'},{name:'Rosa',hex:'#f5d6e0'}] },
   { img:'p4-0.jpg',  brand:'Versace', name:'Giày cao gót da nappa Gianni 90',            price:'45.066.000 ₫', tag:'New arrival', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Oro',hex:'#c9a94b'}] },
@@ -890,15 +893,18 @@ const CATEGORIES = [
 
 /* CART_BASE = bản gốc để dựng lại giỏ khi bấm "Tiếp tục mua sắm" (đặt hàng
    xong thì CART bị dọn rỗng). CART vẫn là mảng được sửa tại chỗ như cũ. */
-/* KHUYẾN MÃI: 2/4 món có `off`+`was` để demo đủ 2 trạng thái giá của item-cart
+/* KHUYẾN MÃI: 3/5 món có `off`+`was` để demo đủ 2 trạng thái giá của item-cart
    (giá đen trơn vs giá đỏ + badge % + giá gạch ngang). Số KHÔNG bịa: lấy đúng
    `off`/`was` của chính SKU đó trong PRODUCTS — trước đây giày loafer hiện -30%
    ở PLP/PDP nhưng vào giỏ lại thành nguyên giá. Thắt lưng được thêm -15% ở CẢ
-   PRODUCTS lẫn đây để 2 nơi không lệch. GIÁ BÁN (`now`) giữ nguyên nên tạm tính
-   và các mốc quà theo đơn không đổi. */
+   PRODUCTS lẫn đây để 2 nơi không lệch. */
 /* `sel` = đang tick chọn để đặt hàng; `gift` = key trong GIFT_PROGRAMS (chương
-   trình tặng quà, không phải món quà). Xem README "Quà tặng trong giỏ". */
+   trình tặng quà, không phải món quà). Xem README "Quà tặng trong giỏ".
+   `preorder` = ngày nhận dự kiến, lấy thẳng từ PRODUCTS (không chép tay để 2 nơi
+   không lệch); đầm lụa đứng ĐẦU theo kịch bản "vừa bấm Đặt trước ở PDP xong vào
+   giỏ" — đồng bộ bản mobile 14/08/2026. */
 const CART_BASE = [
+  { img:'p1-0.jpg', brand:'Versace', name:'Đầm lụa mini Broken Jewels', variant:'Broken Jewels , 39', off:'-20%', was:'90.696.000 ₫', now:'72.557.000 ₫', qty:1, sel:true, preorder: PRODUCTS[0].preorder },
   { img:'p8-0.jpg', brand:'Versace', name:'Túi da Lou mini',            variant:'Onesize , Black', off:'', was:'', now:'45.066.000 ₫', qty:1, sel:true, gift:'bagBundle' },
   { img:'p5-0.jpg', brand:'Versace', name:'Giày loafer da Manu',        variant:'40 , Black',      off:'-30%', was:'50.354.000 ₫', now:'35.248.000 ₫', qty:1, sel:true },
   { img:'p10-0.jpg',brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm', variant:'95 , Black', off:'-15%', was:'20.676.000 ₫', now:'17.575.000 ₫', qty:1, sel:true },
@@ -1960,7 +1966,7 @@ const pdpSizes = () => SIZES.map(s => ({ label: s, oos: DISABLED.includes(s) ? (
 
 const PDP_DATA = {
   pdp: {
-    idx: 0, preorder: true, lowStock: true, installment: '',
+    idx: 0, lowStock: true, installment: '',   // pre-order suy từ PRODUCTS[0].preorder, không giữ cờ riêng kẻo 2 nguồn lệch nhau
     sizes: pdpSizes(),
     tabs: pdpTabs(0),
   },
@@ -2000,11 +2006,12 @@ function dkScreenPDP(kind) {
   const sw = all.slice(0, (P.colors || []).length);
   const gallery = all.slice(0, 6);
 
-  const cta = D.preorder ? `
-      <button data-add="pdp" class="w-full min-h-[56px] py-2 rounded-xs bg-primary text-primary-foreground btn-p press flex flex-col items-center justify-center gap-0.5">
-        <span class="text-[16px] leading-5">Đặt trước</span>
-        <span class="text-[12px] leading-4 text-primary-foreground opacity-80">Dự kiến giao hàng vào ngày 15/08/2026</span>
-      </button>` : `
+  /* Hàng pre-order (đọc từ PRODUCTS.preorder — nguồn ngày duy nhất, thay cờ
+     preorder:true cũ của PDP_DATA): dòng ngày dự kiến nằm TRÊN nút và căn trái,
+     ngày in đậm hơn 1 nấc; nút về khuôn 1 dòng — đồng bộ bản mobile 14/08/2026. */
+  const cta = P.preorder ? `
+      <p class="text-[12px] leading-4 text-secondary-foreground pb-2">Dự kiến giao hàng vào ngày <span class="font-medium">${P.preorder}</span></p>
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium leading-6 btn-p press flex items-center justify-center">Đặt trước</button>` : `
       <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium leading-6 btn-p press flex items-center justify-center">Thêm vào giỏ hàng</button>`;
 
   return `
@@ -2016,9 +2023,14 @@ function dkScreenPDP(kind) {
       <!-- split: gallery trái + info sticky phải -->
       <div class="flex items-start px-6 pt-4">
         <div id="pdpGallery" class="flex-1 min-w-0 grid grid-cols-2 gap-1">
-          ${gallery.map(s => `
+          <!-- Badge "Pre-order" đè góc trên trái Ô ẢNH ĐẦU — desktop không có chồng
+               pill New Season như mobile nên badge gắn thẳng vào tile; style pill
+               giữ đúng khuôn New Season (bg-secondary, 12 medium). data-i18n-skip:
+               wordmark giữ nguyên ở mọi ngôn ngữ. -->
+          ${gallery.map((s, gi) => `
           <button class="zoomable shimmer relative block w-full overflow-hidden bg-secondary" style="aspect-ratio:469/579" data-zoom="${A}${s}">
             <img src="${A}${s}" class="absolute inset-0 w-full h-full object-cover lazy" alt="${P.name}" onload="this.parentElement.classList.add('loaded')">
+            ${gi === 0 && P.preorder ? '<span data-i18n-skip class="absolute top-3 left-0 bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
           </button>`).join('')}
         </div>
 
@@ -2448,6 +2460,7 @@ function screenORDER() {
                   <span class="text-[12px] leading-4 text-muted-foreground">Versace</span>
                   <span class="text-[14px] leading-5 text-foreground line-clamp-2">${it.name}</span>
                   <span class="text-[12px] leading-4 text-muted-foreground mt-1">${it.variant}</span>
+                  ${it.preorder ? `<span class="text-[12px] leading-4 text-foreground-alt mt-0.5">Pre-order · Nhận hàng dự kiến ${it.preorder}</span>` : ''}
                   <div class="flex items-center justify-between mt-auto">
                     <span class="text-[12px] leading-4 text-muted-foreground">SL: ${it.qty}</span>
                     <span class="text-[14px] font-medium leading-5 text-foreground">${it.price}</span>
@@ -2510,9 +2523,10 @@ function screenORDER() {
    Giá gạch ngang là giá gốc để thấy "được tặng bao nhiêu", giá thật luôn 0 ₫ —
    quà KHÔNG cộng vào tạm tính.
 
-   Mốc chọn quanh giá trị giỏ mặc định (113.500.000 ₫ khi tick đủ 4 item) để
-   demo được cả 2 chiều: mốc 1 đã đạt sẵn (bỏ tick 1 món là rớt), mốc 2 chỉ cần
-   tăng thêm 1 số lượng là chạm.
+   Mốc chọn quanh giá trị giỏ mặc định (186.057.000 ₫ khi tick đủ 5 item — đã
+   gồm đầm pre-order 72.557.000 ₫ từ 14/08/2026) để demo được cả 2 chiều: mốc 1
+   (150tr) đã đạt sẵn (bỏ tick đầm hoặc túi Lou là rớt), mốc 2 (200tr) chỉ cần
+   tăng thêm 1 số lượng bất kỳ là chạm (món rẻ nhất 15,6tr cũng đủ).
 ════════════════════════════════════════════════════════════════ */
 const GIFT_CATALOG = {
   mini:    { img:'b1.jpg',    brand:'Versace', name:'Nước hoa Crystal Noir EDP 5 ml',   variant:'5 ml',            was:'1.150.000 ₫' },
@@ -2528,14 +2542,14 @@ const GIFT_CATALOG = {
    `gifts[0]` là quà mặc định; lựa chọn của user lưu ở giftPick. */
 const GIFT_PROGRAMS = {
   bagBundle: { name: 'Quà tặng kèm túi Lou mini',  gifts: ['mini', 'edt'] },
-  tier100:   { name: 'Ưu đãi đơn từ 100 triệu',    gifts: ['scarf', 'edt'] },
-  tier150:   { name: 'Ưu đãi đơn từ 150 triệu',    gifts: ['sneaker'] },
+  tier150:   { name: 'Ưu đãi đơn từ 150 triệu',    gifts: ['scarf', 'edt'] },
+  tier200:   { name: 'Ưu đãi đơn từ 200 triệu',    gifts: ['sneaker'] },
 };
 let giftPick = {};        // {chương trình: key quà đang chọn} — rỗng = lấy gifts[0]
 
 const ORDER_GIFT_TIERS = [
-  { min: 100000000, program: 'tier100' },
   { min: 150000000, program: 'tier150' },
+  { min: 200000000, program: 'tier200' },
 ];
 const giftOf = pk => GIFT_CATALOG[giftPick[pk] || (GIFT_PROGRAMS[pk] || {}).gifts?.[0]];
 
@@ -2552,7 +2566,8 @@ const cartItems = () => CART.filter(c => !c.removed);
    3 món. */
 const cartSelected = () => CART.filter(c => !c.removed && c.sel !== false);
 /* Điểm thưởng của đơn: demo dùng đúng tỉ lệ 1 điểm / 100.000 ₫ (giỏ mặc định
-   113.500.000 ₫ -> 1.135 điểm, khớp con số vốn in cứng ở 4 màn). */
+   186.057.000 ₫ khi tick đủ 5 món -> 1.860 điểm; con số tự tính nên thêm/bớt
+   món là các màn tự khớp theo). */
 const rewardPointsEarned = () => Math.floor(cartSubtotal() / 100000);
 function cartSubtotal() {
   return cartItems().reduce((s, c) => s + (c.sel === false ? 0 : vndNum(c.now) * (c.qty || 1)), 0);
@@ -2698,7 +2713,7 @@ function productGiftHTML(c, i) {
 
    MỖI MỐC LÀ MỘT Ô RIÊNG mang đúng tên chương trình (yêu cầu user 13/08/2026):
    KHÔNG còn title lớn "Quà tặng theo đơn hàng" và số đếm "N quà" — tên promo chi
-   tiết ("Ưu đãi đơn từ 100 triệu") nói đủ việc rồi, thêm 1 tầng tiêu đề nữa chỉ
+   tiết ("Ưu đãi đơn từ 150 triệu") nói đủ việc rồi, thêm 1 tầng tiêu đề nữa chỉ
    làm loãng. Thoả thêm 1 mốc => thêm 1 ô y hệt, xếp dưới, cách nhau 8px.
 
    Mốc KẾ TIẾP chưa đạt cũng là 1 ô cùng khuôn (cùng nhãn tên chương trình), chỉ
@@ -2750,22 +2765,30 @@ function activeGifts() {
    của tóm tắt (thumb 52×60, chữ 13/12/12) để đọc liền mạch; khác 3 chỗ: badge
    "Quà tặng" trên ảnh, dòng thứ 3 là TÊN CHƯƠNG TRÌNH thay cho "phân loại · SL",
    và giá 0 ₫. `g` truyền vào khi đọc từ bản chốt lúc đặt hàng (giỏ đã dọn rỗng). */
-function giftSummaryRow(pk, g) {
+function giftSummaryRow(pk, g, big) {
   const p = GIFT_PROGRAMS[pk];
   g = g || giftOf(pk);
   if (!p || !g) return '';
-  return `
-              <div class="flex gap-3 items-center">
-                <span class="relative w-[52px] h-[60px] shrink-0 bg-secondary">
-                  <img src="${A}${g.img}" class="w-full h-full object-cover lazy" alt="">
-                  <span class="absolute top-0 left-0 bg-primary text-[10px] font-semibold leading-3 text-primary-foreground px-1 whitespace-nowrap">Quà tặng</span>
-                </span>
-                <div class="flex-1 min-w-0">
+  /* Bản big (thumb 100×133, giá 0 ₫ ghim đáy-phải): dùng ở panel Tóm tắt đơn hàng
+     của checkout — cùng khuôn dòng sản phẩm sau khi đồng bộ theo tóm tắt mobile
+     (yêu cầu user 14/08/2026). Màn Hoàn tất vẫn gọi bản 52×60 gọn. */
+  const info = `
                   <p class="text-[13px] font-medium text-foreground truncate">${g.brand}</p>
-                  <p class="text-[12px] text-secondary-foreground truncate">${g.name}</p>
-                  <p class="text-[12px] text-muted-foreground truncate">${p.name}</p>
-                </div>
-                <p class="text-[13px] font-medium text-foreground shrink-0">0 ₫</p>
+                  <p class="text-[12px] text-secondary-foreground ${big ? 'line-clamp-2' : 'truncate'}">${g.name}</p>
+                  <p class="text-[12px] text-muted-foreground ${big ? 'mt-0.5' : ''} truncate">${p.name}</p>`;
+  return `
+              <div class="flex gap-3 ${big ? '' : 'items-center'}">
+                <span class="relative ${big ? 'w-[100px] h-[133px]' : 'w-[52px] h-[60px]'} shrink-0 bg-secondary overflow-hidden">
+                  <img src="${A}${g.img}" class="w-full h-full object-cover lazy" alt="">
+                  <span class="absolute top-0 left-0 bg-primary text-[10px] font-semibold leading-3 text-primary-foreground ${big ? 'px-1 py-0.5' : 'px-1'} whitespace-nowrap">Quà tặng</span>
+                </span>
+                ${big ? `
+                <div class="flex-1 min-w-0 flex flex-col justify-between">
+                  <div>${info}</div>
+                  <p class="text-[13px] font-medium text-foreground self-end">0 ₫</p>
+                </div>` : `
+                <div class="flex-1 min-w-0">${info}</div>
+                <p class="text-[13px] font-medium text-foreground shrink-0">0 ₫</p>`}
               </div>`;
 }
 
@@ -2936,8 +2959,9 @@ function screenCART() {
       <div class="w-4 shrink-0 flex items-center">
         <button class="chk ${c.sel === false ? '' : 'on'} w-4 h-4 border border-border bg-background-3 rounded-xs shadow-sm flex items-center justify-center btn-o press" data-check>${I.tick}</button>
       </div>
-      <div class="w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
+      <div class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
         <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
+        ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
       </div>
       <div class="flex-1 min-w-0 flex flex-col justify-between">
         <div class="flex flex-col">
@@ -2949,6 +2973,7 @@ function screenCART() {
             <p class="text-[14px] leading-5 text-secondary-foreground truncate">${c.name}</p>
           </div>
           <p class="text-[12px] leading-4 text-muted-foreground">${c.variant}</p>
+          ${c.preorder ? `<p class="text-[12px] leading-4 text-foreground-alt pt-1">Nhận hàng dự kiến <span class="font-medium">${c.preorder}</span></p>` : ''}
         </div>
         <!-- giá + stepper ghim đáy ô, giá thường đen / giá khuyến mãi đỏ (item-cart 2851:28705) -->
         <div class="flex items-end justify-between gap-0.5">
@@ -3357,7 +3382,8 @@ function segToggle(attr, items, active, h) {
 function ckSection(i, title, openBody, doneBody) {
   return `
   <div class="ck-sec border-t border-border-1" data-sec="${i}">
-    <div class="h-[56px] px-4 flex items-center justify-between">
+    <!-- Hàng tiêu đề bước 56 -> 72px: nhịp thoáng kiểu Farfetch (14/08/2026) -->
+    <div class="h-[72px] px-4 flex items-center justify-between">
       <p class="ck-title text-[16px] font-medium leading-6 text-foreground transition-opacity duration-300">${title}</p>
       <button class="ck-change text-[16px] font-light leading-6 text-foreground press" data-goto="${i}">Thay đổi</button>
     </div>
@@ -3424,6 +3450,7 @@ let ckAddr = 0, ckShipName = '', ckShipPhone = '', ckShipLine = '';
    mã đơn vừa sinh để màn Hoàn tất / Chi tiết đơn cùng đọc một nguồn. */
 let ckPlaced = false, ckOrderId = '', ckOrderTotal = '', ckOrderPoints = '';   // tổng + điểm chốt lúc đặt hàng (giỏ bị dọn ngay sau đó)
 let ckOrderGifts = [];   // [{pk, g}] quà của đơn vừa đặt — chốt luôn cả MÓN đang chọn, không chỉ key chương trình
+let ckOrderPre = '';     // ngày nhận pre-order của đơn vừa đặt — chốt lúc placeOrder vì sau đó giỏ bị dọn rỗng
 
 /* field/pickField để Ở NGOÀI screenCHECKOUT vì bước "Nhận tại cửa hàng" dựng
    lại phần thân của nó nhiều lần (ckPickupOpen), không chỉ lúc render màn.
@@ -3513,7 +3540,7 @@ function ckPickupOpen() {
     </div>`}
     ${ckStore ? `
     <div id="ckRecipient">
-      <div class="px-4 pt-4 pb-1">
+      <div class="px-4 pt-6 pb-1">
         <p class="text-[12px] leading-4 tracking-wide text-muted-foreground">Thông tin người nhận</p>
       </div>
       ${field('Họ và tên','Nhập họ và tên','', { val: ckName, key: 'name', auto: 'name' })}
@@ -3524,10 +3551,10 @@ function ckPickupOpen() {
       <div class="grid grid-cols-2">
         ${pickField('Tỉnh thành sinh sống','Chọn tỉnh / thành phố','home', ckHome)}
       </div>
-      <div class="px-4 pt-2">
+      <div class="px-4 pt-3">
         <p class="text-[13px] leading-5 text-secondary-foreground">Đơn hàng được giữ tại cửa hàng trong 3 ngày kể từ khi có thông báo sẵn sàng nhận.</p>
       </div>
-      <div class="px-4 py-4">
+      <div class="px-4 pt-6 pb-8">
         <button class="ck-next h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press inline-flex items-center justify-center" data-next="1" data-require="store">Xác nhận</button>
       </div>
     </div>` : ''}`;
@@ -3570,6 +3597,17 @@ function screenCHECKOUT() {
     : `<p class="text-[14px] font-medium leading-5 text-foreground">Bạn đang thanh toán không đăng nhập</p>
        <p class="text-[14px] leading-5 text-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-medium">${rewardPointsEarned().toLocaleString('vi-VN')} điểm thưởng</b></p>
        <button data-nav="login" class="self-start text-[14px] font-medium leading-5 text-foreground underline press">Đăng nhập</button>`;
+
+  /* Cặp nút Giao hàng / Nhận tại cửa hàng — nằm ĐẦU thân section "Vận chuyển"
+     (yêu cầu user 14/08/2026), cùng khuôn segmented với Cá nhân/Công ty của VAT.
+     px-4 thẳng hàng nội dung section; id giữ nguyên để paintCheckout ẩn khi đã
+     tới bước Thanh toán. */
+  const modeTabs = `
+    <div id="ckModeTabs" class="px-4 pt-1 pb-4">
+      <div class="max-w-[360px]">
+        ${segToggle('data-ck-mode', [['ship','Giao hàng'], ['pickup','Nhận tại cửa hàng']], ckMode, 'h-10')}
+      </div>
+    </div>`;
   /* ── Section 0: Thông tin giao hàng ──
      Khách ĐÃ ĐĂNG NHẬP thì mở ra là sổ địa chỉ đã lưu (chọn 1 chạm là xong
      bước này), cuối danh sách mới là "Thêm địa chỉ mới" xổ form. Khách vãng
@@ -3592,11 +3630,11 @@ function screenCHECKOUT() {
       </label>
     </div>`;
   const ckNextBtn = `
-    <div class="px-4 py-4">
+    <div class="px-4 pt-6 pb-8">
       <button class="ck-next h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press inline-flex items-center justify-center" data-next="1">Xác nhận</button>
     </div>`;
   const s0open = ckAuth ? `
-    <div class="px-4 py-2 grid grid-cols-2 gap-3" id="addrOpts">
+    <div class="px-4 py-2 grid grid-cols-2 gap-4" id="addrOpts">
       ${ADDRESSES.map((a, i) => `
       <button class="opt ${ckAddr === i ? 'on' : ''} w-full flex items-start gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-addr="${i}">
         <span class="radio ${ckAddr === i ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
@@ -3616,7 +3654,7 @@ function screenCHECKOUT() {
     </div>
     ${ckAddr === 'new' ? addrForm : ''}
     ${ckNextBtn}` : `${addrForm}${ckNextBtn}`;
-  const s0done = `<div id="ckShipDone" class="px-4 pb-4 flex flex-col gap-1">${ckShipDoneHTML()}</div>`;
+  const s0done = `<div id="ckShipDone" class="px-4 pb-6 flex flex-col gap-1">${ckShipDoneHTML()}</div>`;
 
   /* ── Section 0 bản NHẬN TẠI CỬA HÀNG (port từ index.html 11/08/2026) ──
      Thứ tự thao tác: thành phố -> cửa hàng trong thành phố đó -> người nhận.
@@ -3630,21 +3668,28 @@ function screenCHECKOUT() {
     <p class="text-[13px] leading-5 text-secondary-foreground">${s.addr}</p>
     <p class="text-[13px] leading-5 text-muted-foreground"><span>Mở cửa</span> <span>${s.hours}</span></p>` : '';
   const p0open = `<div id="ckPickupBody">${ckPickupOpen()}</div>`;
-  const p0done = `<div id="ckStoreDone" class="px-4 pb-4 flex flex-col gap-1">${ckStoreDoneHTML()}</div>`;
+  const p0done = `<div id="ckStoreDone" class="px-4 pb-6 flex flex-col gap-1">${ckStoreDoneHTML()}</div>`;
 
   /* ── Section 1: Phương thức vận chuyển ── */
+  /* Đơn có hàng pre-order: ETA chung của phương thức vận chuyển KHÔNG đúng cho
+     món đặt trước — nhắc đúng tại chỗ khách đọc thời gian giao (cả lúc chọn lẫn
+     tóm tắt đã xác nhận), đồng bộ bản mobile 14/08/2026. */
+  const preDate = (cartSelected().find(c => c.preorder) || {}).preorder;
+  const preNote = preDate ? `<p class="text-[12px] leading-4 text-foreground-alt">Riêng hàng pre-order: nhận hàng dự kiến ${preDate}, giao riêng khi hàng về.</p>` : '';
   const s1open = `
-    <div id="shipOpts" class="px-4 flex flex-col gap-3">
+    <div id="shipOpts" class="px-4 flex flex-col gap-4">
       ${richRadio('std','Giao hàng thông thường - Miễn Phí', ETA, true)}
       ${richRadio('fast','Giao hàng nhanh - 25,000đ', ETA, false)}
+      ${preNote}
     </div>
-    <div class="px-4 py-4">
+    <div class="px-4 pt-6 pb-8">
       <button class="ck-next h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press inline-flex items-center justify-center" data-next="2">Xác nhận</button>
     </div>`;
   const s1done = `
-    <div class="px-4 pb-4 flex flex-col gap-1">
+    <div class="px-4 pb-6 flex flex-col gap-1">
       <p id="shipDoneLabel" class="text-[14px] font-medium leading-5 text-foreground">Giao hàng thông thường</p>
       <p class="text-[14px] leading-5 text-foreground">${ETA}</p>
+      ${preNote}
     </div>`;
   /* ── Section 2: Thanh toán ── */
   /* [id, nhãn, đang chọn, [file logo, bề rộng px, alt]] — logo lấy từ assets,
@@ -3661,11 +3706,11 @@ function screenCHECKOUT() {
       <span class="text-[14px] leading-5 text-foreground">${v}</span>
     </div>`;
   const s2open = `
-    <div id="payOpts" class="px-4 flex flex-col gap-3">
+    <div id="payOpts" class="px-4 flex flex-col gap-4">
       ${pays.map(([id, l, on, icon]) => richRadio(id, l, '', on, icon)).join('')}
     </div>
     <!-- Xuất hóa đơn VAT -->
-    <div class="pt-4 pb-4">
+    <div class="pt-6 pb-6">
       <div class="px-4">
         <label id="vatToggle" class="flex items-center gap-2 press w-fit cursor-pointer">
           <span class="chk w-4 h-4 border border-border flex items-center justify-center shrink-0">${I.tick}</span>
@@ -3681,34 +3726,45 @@ function screenCHECKOUT() {
         </div>
         <div id="vatFieldRows">${vatFieldRows(vatType)}</div>
       </div></div>
+    </div>
+    <!-- Nút chốt đơn nằm CUỐI bước Thanh toán (đồng bộ luồng mobile, yêu cầu user
+         14/08/2026) — trước đây nằm ở panel tóm tắt bên phải nên bấm được từ bước 0,
+         nhảy thẳng tới màn hoàn tất mà chưa nhập gì. Khuôn nút theo nút "Xác nhận"
+         của các bước desktop (h-12 px-10 inline-flex). -->
+    <div class="px-4 pt-2 pb-8">
+      <button data-nav="done" class="h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium btn-p press inline-flex items-center justify-center">Đặt hàng</button>
     </div>`;
 
   return `
   <div class="w-full" data-scroller>
     ${navBar({ logoOnly: true })}
 
-    <div class="max-w-[1240px] mx-auto w-full px-6 pt-8 pb-20">
-      <p class="text-[24px] font-light leading-8 text-foreground pb-6">Thanh toán (${cartSelected().length})</p>
+    <!-- Nhịp thoáng kiểu checkout Farfetch (yêu cầu user 14/08/2026): trang thở
+         nhiều hơn ở 4 nấc — lề trên/dưới trang (pt-12/pb-24), title cách nội dung
+         pb-10, gutter 2 cột 40->64px, và các khối trong cột cách nhau mb-6.
+         Padding NGANG trong section giữ 16px để thẳng hàng với field() dùng chung. -->
+    <div class="max-w-[1240px] mx-auto w-full px-6 pt-12 pb-24">
+      <p class="text-[24px] font-light leading-8 text-foreground pb-10">Thanh toán (${cartSelected().length})</p>
 
-      <div class="flex items-start gap-10">
+      <div class="flex items-start gap-16">
         <!-- ── CỘT TRÁI: 3 section tự đóng/mở ── -->
         <div class="flex-1 min-w-0">
-          <div class="rounded-xs px-3 py-3 flex flex-col gap-2 mb-4" style="background:var(--unofficial-accent-0)">${notice}</div>
-
-          <!-- Hình thức nhận hàng — cùng cặp nút phân đoạn với Cá nhân/Công ty
-               của khối VAT. Đổi tab là dựng lại màn (handler [data-ck-mode]). -->
-          <div id="ckModeTabs" class="max-w-[360px] mb-4">
-            ${segToggle('data-ck-mode', [['ship','Giao hàng'], ['pickup','Nhận tại cửa hàng']], ckMode, 'h-10')}
-          </div>
+          <div class="rounded-xs px-4 py-3.5 flex flex-col gap-2 mb-6" style="background:var(--unofficial-accent-0)">${notice}</div>
 
           <!-- Giao tận nơi: 3 section · Nhận tại cửa hàng: 2 (bỏ bước chọn
                phương thức vận chuyển). Chỉ số vẫn chạy 0,1,... nên ck-next /
-               ck-change / paintCheckout dùng lại nguyên vẹn. -->
+               ck-change / paintCheckout dùng lại nguyên vẹn.
+               Section 0 mang tên "Vận chuyển" ở CẢ 2 chế độ và chứa luôn cặp nút
+               Giao hàng / Nhận tại cửa hàng (yêu cầu user 14/08/2026 — trước đó
+               toggle đứng lẻ trên hộp section): đổi chế độ là việc của đúng bước
+               này, không phải của cả màn. Đổi tab vẫn dựng lại màn (handler
+               [data-ck-mode]); paintCheckout vẫn ẩn toggle khi đã tới bước
+               Thanh toán như cũ. -->
           <div id="ckSections" class="border border-border rounded-md overflow-hidden">
             ${ckMode === 'pickup' ? `
-            ${ckSection(0, 'Nhận tại cửa hàng', p0open, p0done)}
+            ${ckSection(0, 'Vận chuyển', modeTabs + p0open, p0done)}
             ${ckSection(1, 'Thanh toán', s2open, '')}` : `
-            ${ckSection(0, 'Thông tin giao hàng', s0open, s0done)}
+            ${ckSection(0, 'Vận chuyển', modeTabs + s0open, s0done)}
             ${ckSection(1, 'Phương thức vận chuyển', s1open, s1done)}
             ${ckSection(2, 'Thanh toán', s2open, '')}`}
           </div>
@@ -3716,26 +3772,18 @@ function screenCHECKOUT() {
 
         <!-- ── CỘT PHẢI: tóm tắt đơn hàng sticky ── -->
         <div class="dk-sticky-side w-[427px] shrink-0 border border-border rounded-md bg-card">
-          <div class="px-4 py-4 border-b border-border-1">
-            <p class="text-[24px] font-light leading-8 text-foreground">Tóm tắt đơn hàng</p>
+          <!-- Heading hạ 24 light -> 18 medium (yêu cầu user 14/08/2026): panel là khối
+               phụ trợ, title 24 to ngang tiêu đề màn làm lệch tầng bậc.
+               BỐ CỤC (chốt lần 3, 14/08/2026): KHỐI TIỀN đứng TRÊN — panel trả lời
+               ngay "đơn bao nhiêu tiền"; danh sách sản phẩm là nhóm riêng bên dưới
+               mang đúng title "Giỏ hàng của bạn" + trigger đóng/mở (hết trùng vai
+               với "Tóm tắt đơn hàng" vì 2 nhóm giờ 2 nội dung khác nhau — đây là
+               lý do bản trước phải bỏ hàng trigger này). Mặc định THU GỌN; dùng
+               wiring .acc-trigger chung, chevron acc-chev tự xoay. -->
+          <div class="px-6 py-5 border-b border-border-1">
+            <p class="text-[18px] font-medium leading-7 text-foreground">Tóm tắt đơn hàng</p>
           </div>
-          <div class="px-4 py-4 flex flex-col gap-3">
-            <!-- Quà hiện đúng thứ tự như ở giỏ: quà kèm sản phẩm nằm NGAY DƯỚI sản phẩm
-                 đó, quà theo mốc đơn xếp cuối danh sách. -->
-            ${cartSelected().map(c => `
-              <div class="flex gap-3 items-center">
-                <img src="${A}${c.img}" class="w-[52px] h-[60px] object-cover bg-secondary lazy" alt="">
-                <div class="flex-1 min-w-0">
-                  <p class="text-[13px] font-medium text-foreground truncate">${c.brand}</p>
-                  <p class="text-[12px] text-secondary-foreground truncate">${c.name}</p>
-                  <p class="text-[12px] text-muted-foreground">${c.variant} · SL ${c.qty}</p>
-                </div>
-                <p class="text-[13px] font-medium text-foreground shrink-0">${c.now}</p>
-              </div>` + (c.gift && GIFT_PROGRAMS[c.gift] ? giftSummaryRow(c.gift) : '')).join('')}
-            ${orderGiftState().earned.map(t => giftSummaryRow(t.program)).join('')}
-          </div>
-          <div class="px-4 pb-4 flex flex-col">
-            <div class="h-px bg-border-1 mb-2"></div>
+          <div class="px-6 pt-2 pb-4 flex flex-col">
             ${row('Tạm tính', vndCom(cartSubtotal()))}
             ${cartDiscountTotal() > 0 ? row('Giảm giá', '-' + vndCom(cartDiscountTotal())) : ''}
             <!-- Nhận tại cửa hàng thì không có phí nên ghi thẳng, không "tính sau" -->
@@ -3743,13 +3791,51 @@ function screenCHECKOUT() {
               <span class="text-[14px] leading-5 text-foreground">${ckMode === 'pickup' ? 'Nhận hàng' : 'Giao hàng'}</span>
               <span class="text-[14px] leading-5 ${ckMode === 'pickup' ? 'text-foreground' : 'text-muted-foreground'}">${ckMode === 'pickup' ? 'Tại cửa hàng' : 'Sẽ được tính sau'}</span>
             </div>
-            <div class="h-12 flex items-center justify-between border-t border-border-1 mt-2">
+            <div class="h-14 flex items-center justify-between border-t border-border-1 mt-3">
               <span class="text-[16px] font-medium leading-6 text-foreground">Tổng cộng</span>
               <span class="text-[16px] font-medium leading-6 text-foreground">${vndCom(cartTotalNow())}</span>
             </div>
-            <button data-nav="done" class="w-full h-12 mt-2 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium btn-p press flex items-center justify-center">Đặt hàng</button>
-            <p class="pt-3 text-[12px] leading-4 text-muted-foreground text-center">${ETA}</p>
           </div>
+          <!-- Padding panel 16 -> 24 + hàng cách nhau 20px: nhịp thoáng Farfetch (14/08/2026) -->
+          <div class="px-6 pb-4 border-t border-border-1">
+            <div id="ckSumAcc" class="acc">
+              <button class="acc-trigger w-full h-14 flex items-center justify-between press">
+                <span class="text-[14px] leading-5 text-foreground">Giỏ hàng của bạn (${cartSelected().length})</span>
+                ${I.chevR('var(--general-primary)')}
+              </button>
+              <div class="acc-body"><div class="acc-inner">
+                <div class="flex flex-col gap-5 pt-1 pb-2">
+            <!-- Quà hiện đúng thứ tự như ở giỏ: quà kèm sản phẩm nằm NGAY DƯỚI sản phẩm
+                 đó, quà theo mốc đơn xếp cuối danh sách. -->
+            <!-- Đồng bộ khuôn dòng theo tóm tắt checkout MOBILE (yêu cầu user
+                 14/08/2026, thay bản thumb 52×60 gọn trước đó): thumb 100×133 như
+                 thẻ giỏ, tên 2 dòng, giá ghim đáy-phải; hàng pre-order mang badge
+                 trên ảnh nên dòng ngày không lặp chữ "Pre-order", chỉ còn ngày in
+                 đậm. Quà đi cùng cỡ qua giftSummaryRow(..., true) — màn Hoàn tất
+                 vẫn gọi bản 52×60. -->
+            ${cartSelected().map(c => `
+              <div class="flex gap-3">
+                <span class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden">
+                  <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
+                  ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
+                </span>
+                <div class="flex-1 min-w-0 flex flex-col justify-between">
+                  <div>
+                    <p class="text-[13px] font-medium text-foreground truncate">${c.brand}</p>
+                    <p class="text-[12px] text-secondary-foreground line-clamp-2">${c.name}</p>
+                    <p class="text-[12px] text-muted-foreground mt-0.5">${c.variant} · SL ${c.qty}</p>
+                    ${c.preorder ? `<p class="text-[12px] text-foreground-alt mt-0.5">Nhận hàng dự kiến <span class="font-medium">${c.preorder}</span></p>` : ''}
+                  </div>
+                  <p class="text-[13px] font-medium text-foreground self-end">${c.now}</p>
+                </div>
+              </div>` + (c.gift && GIFT_PROGRAMS[c.gift] ? giftSummaryRow(c.gift, null, true) : '')).join('')}
+            ${orderGiftState().earned.map(t => giftSummaryRow(t.program, null, true)).join('')}
+                </div>
+              </div></div>
+            </div>
+          </div>
+          <!-- Panel CHỈ để xem thông tin giỏ + tạm tính (yêu cầu user 14/08/2026):
+               nút "Đặt hàng" nằm CUỐI bước Thanh toán như mobile, không nằm ở đây. -->
         </div>
       </div>
     </div>
@@ -3796,9 +3882,13 @@ function screenDONE() {
   const points = ckOrderPoints || rewardPointsEarned().toLocaleString('vi-VN');
   /* Quà đã chốt lúc đặt hàng; vào thẳng màn này mà chưa đặt (demo) thì lấy tạm từ giỏ */
   const gifts = ckOrderGifts.length ? ckOrderGifts : activeGifts().map(pk => ({ pk, g: giftOf(pk) }));   // mã sinh lúc bấm Đặt hàng (placeOrder)
+  /* Đơn có hàng pre-order: thêm 1 dòng ngày nhận riêng — ngày chốt lúc đặt hàng
+     (ckOrderPre); vào thẳng màn này chưa đặt (demo) thì lấy tạm từ giỏ như gifts. */
+  const pre = ckOrderPre || (cartSelected().find(c => c.preorder) || {}).preorder || '';
   const rows = ckMode === 'pickup'
     ? [['Mã đơn hàng', oid],['Tổng cộng', total],['Nhận tại', st ? st.name : 'Cửa hàng DAFC'],['Sẵn sàng nhận','Từ 12/08']]
     : [['Mã đơn hàng', oid],['Tổng cộng', total],['Vận chuyển','Miễn phí'],['Dự kiến giao','12 – 16/08']];
+  if (pre) rows.push(['Hàng pre-order', `Nhận dự kiến ${pre}`]);
   return `
   <div class="w-full relative" data-scroller>
     <div id="confettiHost" class="absolute inset-x-0 top-0 h-[70vh] pointer-events-none overflow-hidden z-10"></div>
@@ -4640,7 +4730,7 @@ const RENDER = {
 };
 
 const viewport = document.getElementById('viewport');
-let current = null, cartQty = 4, history = [], plpSort = 'relevance';
+let current = null, cartQty = 5, history = [], plpSort = 'relevance';
 
 const SORT_OPTIONS = [
   ['relevance', 'Phù hợp nhất'],
@@ -4951,7 +5041,12 @@ const I18N = {
   'Gợi ý mua kèm':'Complete the look', 'Sản phẩm tương tự':'You may also like', 'Đã xem gần đây':'Recently viewed',
   'Chất liệu':'Material', 'Xuất xứ':'Origin', 
   'Trả trước từ':'From', '/tháng':'/month', 'Xem chính sách trả góp':'View instalment policy',
-  'Dự kiến giao hàng vào ngày 15/08/2026':'Estimated delivery 15/08/2026', 'Dự kiến giao 15/08/2026':'Est. delivery 15/08/2026',
+  // Pre-order: chuỗi có NGÀY nguyên 1 text node dịch bằng luật regex trong
+  // I18N_RE/I18N_REV_RE — không giữ key ngày in cứng kẻo đổi ngày là chết dịch.
+  // Các dòng tách ngày vào <span font-medium> (PDP, thẻ giỏ, panel tóm tắt) thì
+  // phần chữ thành text node riêng -> dịch bằng key tĩnh dưới đây.
+  'Dự kiến giao hàng vào ngày':'Estimated delivery',
+  'Nhận hàng dự kiến':'Estimated arrival',
   'Đã thêm vào giỏ':'Added to bag', 'Đã thêm vào giỏ hàng':'Added to your bag',
   'Xem giỏ hàng':'Go to cart', 'Tiếp tục mua sắm':'Continue shopping',
   
@@ -4989,8 +5084,8 @@ const I18N = {
   'Quà tặng theo đơn hàng':'Order gifts', 'Đổi quà':'Change gift', 'Đóng':'Close',
   'Quà tặng kèm đơn':'Gifts with this order', 'Đổi quà tặng':'Change your gift',
   'Quà tặng kèm túi Lou mini':'Gift with Lou mini bag',
-  'Ưu đãi đơn từ 100 triệu':'Orders from 100 million',
   'Ưu đãi đơn từ 150 triệu':'Orders from 150 million',
+  'Ưu đãi đơn từ 200 triệu':'Orders from 200 million',
   'Đã đổi quà tặng':'Gift changed',
   'Nước hoa Eros Energy EDP 5 ml':'Eros Energy EDP 5 ml',
   'Nước hoa Crystal Noir EDP 5 ml':'Crystal Noir EDP 5 ml',
@@ -5204,6 +5299,7 @@ const I18N = {
   'Đơn hàng được giữ tại cửa hàng trong 3 ngày kể từ khi có thông báo sẵn sàng nhận.':'We hold your order at the store for 3 days from the ready-for-pickup notice.',
   'Nhận hàng':'Collection', 'Tại cửa hàng':'In store',
   'Nhận tại':'Pick up at', 'Sẵn sàng nhận':'Ready from', 'Từ 12/08':'From 12/08',
+  'Hàng pre-order':'Pre-order items',
   'Cửa hàng DAFC':'DAFC store',
 
   // ── Vá 20 chuỗi desktop hiển thị nhưng thiếu bản dịch (quét 11/08/2026) ──
@@ -5262,6 +5358,10 @@ const I18N_RE = [
   [/^1 quà$/,                         '1 gift'],
   [/^(\d+) quà$/,                     '$1 gifts'],
   [/^Mua thêm ([\d.]+ ₫) để nhận$/,   'Spend $1 more to get'],
+  // pre-order: ngày là data (PRODUCTS.preorder) nên phải là luật động — đổi ngày không sửa từ điển
+  [/^Pre-order · Nhận hàng dự kiến (\d{2}\/\d{2}\/\d{4})$/, 'Pre-order · Estimated arrival $1'],
+  [/^Riêng hàng pre-order: nhận hàng dự kiến (\d{2}\/\d{2}\/\d{4}), giao riêng khi hàng về\.$/, 'Pre-order items ship separately — estimated arrival $1.'],
+  [/^Nhận dự kiến (\d{2}\/\d{2}\/\d{4})$/, 'Est. arrival $1'],
 ];
 const I18N_REV_RE = [
   [/^(\d+) stores$/,                  '$1 cửa hàng'],
@@ -5293,6 +5393,9 @@ const I18N_REV_RE = [
   [/^1 gift$/,                        '1 quà'],
   [/^(\d+) gifts$/,                   '$1 quà'],
   [/^Spend ([\d.]+ ₫) more to get$/,  'Mua thêm $1 để nhận'],
+  [/^Pre-order · Estimated arrival (\d{2}\/\d{2}\/\d{4})$/, 'Pre-order · Nhận hàng dự kiến $1'],
+  [/^Pre-order items ship separately — estimated arrival (\d{2}\/\d{2}\/\d{4})\.$/, 'Riêng hàng pre-order: nhận hàng dự kiến $1, giao riêng khi hàng về.'],
+  [/^Est\. arrival (\d{2}\/\d{2}\/\d{4})$/, 'Nhận dự kiến $1'],
 ];
 /* ── Bổ sung từ điển cho các chuỗi riêng của bản DESKTOP ── */
 Object.assign(I18N, {
@@ -5519,7 +5622,13 @@ function tr(t, to) {
 
 function applyLang(root, to) {
   if (!root) return;
-  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  /* [data-i18n-skip] = wordmark giữ nguyên ở MỌI ngôn ngữ (badge "Pre-order"…).
+     Phải chặn ở đây vì dịch ngược EN→VN tra I18N_REV theo text node: badge
+     "Pre-order" trùng chuỗi với nút "Đặt trước" đã dịch nên bị kéo theo. */
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: n => n.parentElement && n.parentElement.closest('[data-i18n-skip]')
+      ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+  });
   const nodes = [];
   while (w.nextNode()) nodes.push(w.currentNode);
   nodes.forEach(n => {
@@ -5723,11 +5832,12 @@ function placeOrder() {
   ckOrderTotal = vndCom(orderTotal);
   ckOrderPoints = rewardPointsEarned().toLocaleString('vi-VN');
   ckOrderGifts = activeGifts().map(pk => ({ pk, g: giftOf(pk) }));
+  ckOrderPre = (cartSelected().find(c => c.preorder) || {}).preorder || '';
   const a = (ckAuth && ckAddr !== 'new') ? ADDRESSES[ckAddr] : null;
   const st = storeInfo(ckStore);
   ORDERS.unshift({
     id: ckOrderId, status: 'Đã xác nhận', tone: 'info', date: '11/08/2026',
-    items: cartSelected().map(c => ({ img: c.img, name: c.name, variant: c.variant, qty: c.qty, price: c.now })),
+    items: cartSelected().map(c => ({ img: c.img, name: c.name, variant: c.variant, qty: c.qty, price: c.now, preorder: c.preorder })),
     sub: vndDot(orderSub), ship: 'Miễn phí', discount: orderDisc ? '− ' + vndDot(orderDisc) : '', total: vndDot(orderTotal),
     payment: 'Thẻ tín dụng/Ghi nợ',
     method: ckMode === 'pickup' ? 'Nhận tại cửa hàng' : 'Giao hàng thông thường',
@@ -5918,11 +6028,11 @@ function wire(root) {
       /* Reset để lặp lại demo: KHÔNG đụng ckAuth nữa — trước đây nút "Tiếp tục
          mua sắm" ở màn Hoàn tất âm thầm đăng xuất người đang đăng nhập. */
       if (el.hasAttribute('data-reset')) {
-        cartQty = 4; CART.length = 0; CART.push(...CART_BASE.map(c => ({ ...c })));
+        cartQty = CART_BASE.length; CART.length = 0; CART.push(...CART_BASE.map(c => ({ ...c })));
         history = []; ckStep = 0; ckMaxStep = 0; ckMode = 'ship';
         ckCity = ''; ckStore = ''; ckHome = ''; ckName = ''; ckPhone = ''; ckEmail = '';
         ckAddr = 0; ckShipName = ''; ckShipPhone = ''; ckShipLine = '';
-        ckPlaced = false; ckOrderId = ''; ckOrderTotal = ''; ckOrderPoints = ''; ckOrderGifts = [];
+        ckPlaced = false; ckOrderId = ''; ckOrderTotal = ''; ckOrderPoints = ''; ckOrderGifts = []; ckOrderPre = '';
         giftPick = {};   // demo chạy lại từ đầu thì quà cũng về mặc định
       }
       /* Bấm "Đặt hàng": chốt đơn lại. Sinh mã theo hệ DAFC1029xx của màn Đơn
@@ -6122,7 +6232,7 @@ function wire(root) {
       const variant = [colorEl ? colorEl.textContent.trim() : '', size].filter(Boolean).join(' , ');
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
         img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
-        price: p.price, off: p.off, was: p.was,
+        price: p.price, off: p.off, was: p.was, preorder: p.preorder,
       }), 450);
     });
   });
@@ -6133,6 +6243,8 @@ function wire(root) {
   // checkout: chuyển section (không chuyển trang)
   if (root.querySelector('#ckSections')) {
     paintCheckout(root);
+    /* Danh sách sản phẩm của panel (#ckSumAcc) đóng/mở qua hàng trigger
+       "Giỏ hàng của bạn" — đi qua wiring .acc-trigger chung, không cần handler riêng. */
     const scrollTo = (i) => {
       const sec = root.querySelector(`.ck-sec[data-sec="${i}"]`);
       if (sec) window.scrollTo({ top: sec.getBoundingClientRect().top + window.scrollY - 56, behavior: 'smooth' });
@@ -7658,7 +7770,7 @@ function quickAddBody(p, idx, sel = 0) {
       // đợi sheet quick-add trượt xuống xong rồi mở sheet xác nhận
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
         img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
-        price: p.price, off: p.off, was: p.was,
+        price: p.price, off: p.off, was: p.was, preorder: p.preorder,
       }), 350);
     });
     // nút ghost "Xem chi tiết" -> đóng sheet, mở đúng PDP của sản phẩm
@@ -7703,7 +7815,7 @@ document.body.insertAdjacentHTML('beforeend', `
         <!-- lợi ích: đưa lên khối nền phụ + icon quà để lý do đăng nhập đọc được trong 1 nhịp -->
         <div class="flex items-start gap-2.5 bg-secondary rounded-xs px-3 py-2.5">
           <span class="shrink-0 mt-0.5 text-foreground [&_svg]:w-4 [&_svg]:h-4">${I.gift}</span>
-          <p class="text-[14px] leading-5 text-secondary-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-medium text-foreground">1.135</b> điểm thưởng</p>
+          <p class="text-[14px] leading-5 text-secondary-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-medium text-foreground">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng</p>
         </div>
         <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-1.5">
@@ -7820,6 +7932,7 @@ document.body.insertAdjacentHTML('beforeend', `
           <p id="ccBrand" class="text-[14px] font-medium leading-5 text-foreground truncate"></p>
           <p id="ccName" class="text-[14px] leading-5 text-secondary-foreground truncate"></p>
           <p id="ccVariant" class="text-[12px] leading-4 text-muted-foreground pt-0.5"></p>
+          <p id="ccPre" class="text-[12px] leading-4 text-foreground-alt pt-0.5 hidden"></p>
           <div class="flex gap-1 items-center pt-1">
             <p id="ccPrice" class="text-[14px] font-medium leading-5 text-foreground"></p>
             <span id="ccOff" class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0 hidden"></span>
@@ -7845,6 +7958,11 @@ document.body.insertAdjacentHTML('beforeend', `
     const va = cc.querySelector('#ccVariant');
     va.textContent = d.variant || '';
     va.classList.toggle('hidden', !d.variant);
+    /* Hàng pre-order: nhắc lại ngày nhận ngay trong sheet — không thì "Đặt trước"
+       và "Thêm vào giỏ" cho ra kết quả y hệt nhau (đồng bộ mobile 14/08/2026). */
+    const pre = cc.querySelector('#ccPre');
+    pre.textContent = d.preorder ? `Pre-order · Nhận hàng dự kiến ${d.preorder}` : '';
+    pre.classList.toggle('hidden', !d.preorder);
     const price = cc.querySelector('#ccPrice');
     price.textContent = d.price || '';
     price.classList.toggle('text-destructive', !!d.off);
@@ -7995,7 +8113,7 @@ document.body.insertAdjacentHTML('beforeend', `
       const variant = [colorEl ? colorEl.textContent.trim() : '', selected].filter(Boolean).join(' , ');
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
         img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
-        price: p.price, off: p.off, was: p.was,
+        price: p.price, off: p.off, was: p.was, preorder: p.preorder,
       }), 350);
     }
   });
