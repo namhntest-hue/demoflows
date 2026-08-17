@@ -261,6 +261,28 @@ Khách gửi nguyên văn 2 block, cả `index.html` lẫn `desktop.html` chép 
 - **Chặn trần chiều cao thẻ**: chữ mới dài gấp đôi nên `#cookieBar` thành flex-col `max-height: min(600px, calc(100vh - 64px))`, phần chữ `flex-1 overflow-y-auto`, cụm nút `shrink-0`. Đo ở 1440×800: thẻ 420×**514** (sau khi xếp 2 nút ngang hàng), chữ chưa cần cuộn; ở 1440×520: thẻ chạm trần 456, chữ cuộn trong 262px, nút vẫn đủ chỗ. Không có bước này thẻ leo ~740px.
 - **Nút "Lưu lựa chọn" trong modal neo phải** (`justify-end`, `h-11 px-6`) đúng chuẩn footer modal desktop, mobile thì full-width h-12 — cùng cấp, khác khuôn theo bản. Nói chung 2 bản **trùng nhau về thứ tự nút và cấp nút**, chỉ khác thang cỡ vốn có của từng bản: desktop `h-11` / 12px / `tracking-wider`, mobile `h-12` / 13px.
 
+## Khuôn chung cho MỌI lớp nổi (17/08/2026, CẢ 2 BẢN)
+
+Yêu cầu user: *"toàn bộ các popup, bottom up phải chung 1 style có border"*. Trước đó mỗi mặt một kiểu — 9 bottom sheet mobile **không có cả viền lẫn bóng** (nền trắng nằm trên nền trắng, chỉ đọc ra mép nhờ backdrop tối), desktop thì có **5 giá trị bóng khác nhau** (`.22` `.18` `.16` `.16` `.14`) cộng `shadow-lg`/`shadow-xl` của Tailwind ở các menu, và chỉ 2 mặt có viền.
+
+Giờ mỗi file có **một khối CSS `KHUÔN CHUNG CHO MỌI LỚP NỔI`** ở đầu `<style>`, liệt kê hết selector:
+
+| | Giá trị |
+|---|---|
+| Viền | `1px solid var(--general-border)` |
+| Bóng | **`none`** — bỏ hẳn (17/08/2026, tham chiếu `cettire.com/vn`) |
+| Bo góc | **không gom** — nổi giữa màn thì 8px, dính mép màn thì 0 |
+
+- **Không đổ bóng**: đi hẳn hướng phẳng như cettire — viền lo việc tách mặt phẳng khỏi nền, backdrop tối `rgba(0,0,0,.45)` lo phần còn lại. (Bản trung gian trong ngày từng gom 5 giá trị bóng về 1 giá trị không lệch hướng `0 2px 24px`; sau đó bỏ luôn.)
+- **Phủ (mobile)**: `.is-panel` `.cg-panel` `.ns-panel` `.qa-panel` `.cc-panel` `.sz-panel` `.gf-panel` `.vc-panel` `.pk-panel` `#settingsPanel .sp-card` `#sortMenu` `#policyMenu`.
+- **Phủ (desktop)**: `.dk-modal` `.dk-drawer` `.lp-card` `#infoSheet .is-panel` `#filterSheet .fs-panel` `#dkSearchLayer .ds-sheet` `#cookieBar` `#settingsPanel .sp-card` `#sortMenu` `[data-size-list]`.
+- **Ngoại lệ có chủ ý: `.dk-mega`** — panel mega menu **không viền, không bóng** để LIỀN MẠCH với header (trắng nối trắng, đúng cách cettire dựng); mép dưới đọc ra nhờ scrim tối. Đây là mặt duy nhất trong 2 file không mang viền chung.
+- **Cố ý KHÔNG phủ**: lớp **chiếm trọn màn** (`.fs-panel` bộ lọc mobile · `.ms-panel` menu · `.lp-card` mobile · `#infoSheet.full` bảng size) — viền quanh mặt phẳng phủ kín màn chỉ tổ hở hairline ở mép, nên `#infoSheet.full .is-panel` khai `border: 0; box-shadow: none`. Và **toast** (pill nền tối `glass-ink-95`, giữ `shadow-lg`) vì nó là thông báo thoáng qua, không phải bề mặt chứa nội dung.
+- Đã **gỡ** `border border-border shadow-lg` khỏi markup 3 menu mobile + 2 menu desktop, gỡ `shadow-xl`+`border-b` của `.dk-mega`, gỡ inline `style="box-shadow:…"` của `.lp-card` desktop (inline style thắng mọi rule nên nó là chỗ duy nhất lọt lưới lúc kiểm) — **đừng thêm border/box-shadow vào từng panel nữa**, sửa ở khối chung.
+- Tiện thể: `.lp-card` desktop đổi `rounded-xs` (2px) → `rounded-md` (8px) cho bằng các modal giữa màn khác.
+
+Kiểm bằng cách đọc `getComputedStyle` từng selector: cả 2 file giờ chỉ ra **đúng 1 cặp** `1px` + `0 2px 24px rgba(0,0,0,.14)`.
+
 ## Quick add to cart (`#quickAddSheet`)
 
 Theo Figma `Drawer` **3373:41590** (đủ màu + size, 390×647) và **3373:41766** (chỉ size, 390×577). Hai frame đã được thu gọn; code khớp số đo mới:
@@ -589,6 +611,12 @@ Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI
   - **Không có viền dưới** ở cả hàng nav lẫn subheader — xem "Quy ước border"; `.navbar::after` và khối JS toggle `.merged` đã bỏ, chỉ `.filterbar::after` còn lại.
   - Figma để nhãn `Store location` + placeholder `What are you looking for?` bằng tiếng Anh giữa bản tiếng Việt — code **giữ chuỗi tiếng Việt** vì màn hình chạy qua i18n VI↔EN.
 - **Mega menu** hover thuần CSS (`.dk-nav-item:hover`), cột Nam/Nữ sinh từ `MENU_DATA`, cột brands từ `MENU_BRANDS`; click điều hướng PLP chế độ danh mục qua `data-plp-title/-crumbs`.
+  - **Nhịp thoáng + liền mạch kiểu cettire (17/08/2026, yêu cầu user)** — số đo lấy trực tiếp từ `cettire.com/vn` (mở panel "Women" đo bằng `getComputedStyle`): panel của họ `box-shadow: none`, **không viền**, chữ 14/19.6, mỗi dòng cách 31px, tiêu đề nhóm cách mục đầu 43px. Áp sang demo: panel **bỏ viền + bỏ bóng** (nối thẳng vào header), khoảng cột **56 → 64**, padding **`py-8` → `pt-8 pb-10`**, giãn dòng trong cột **`gap-2` → `gap-3`** (nhịp 28 → **32px**), tiêu đề nhóm **`pb-1` → `pb-4`** (tiêu đề → mục đầu = **44px**). Panel "Thương hiệu" cao 366 → 424px.
+  - 2 cột thương hiệu không có tiêu đề chừa **đúng khối tiêu đề rỗng** (`<p aria-hidden>&nbsp;</p>` cùng class) thay cho `pt-6` áng chừng — cả 3 cột giờ có dòng chữ đầu cùng ở y=232, và sửa nhịp 1 chỗ thì cả 2 nhánh đi theo.
+  - **Lưới 4 cột đều nhau**: `.dk-mega-grid` = `repeat(4, minmax(0,1fr))` gap 64 — **3 cột nội dung + ảnh ghim cứng ở cột 4** (`.dk-mega-teaser { grid-column: 4 }`). Trước đó cột nội dung là flex-wrap tự co (`min-w-[168px]`) còn ảnh cố định 264px, nên mở "Túi xách" (2 nhóm) và "Thương hiệu" (4 cột) ra 2 lưới lệch hẳn nhau. Mục ít nhóm hơn thì **bỏ trống cột 3**, không kéo giãn. Đo ở 1440: 4 cột × 302px; ở 1024: 4 × 198px, không tràn, không vỡ chữ. `col-start-4` không có trong `tailwind.css` đã build nên khai tay trong `<style>`.
+  - **Thương hiệu chia đều 3 cột** (9/8/8): cột 1 mang luôn tiêu đề + "Tất cả thương hiệu", 2 cột sau `pt-6` cho thẳng hàng. Bản cũ là 1 cột tiêu đề + 3 cột chữ = 4 cột, cộng ảnh thành 5 → không vừa lưới.
+  - **Dòng "Tất cả + &lt;danh mục&gt;" hết đậm, hết gạch chân** (yêu cầu user cùng ngày) — dùng đúng kiểu chữ của các mục còn lại (14px, `text-foreground-alt`, hover đậm màu). Nó cũng chỉ là một đường dẫn danh mục; đậm + gạch chân làm nó hút mắt hơn cả tên nhóm phía trên. Underline duy nhất còn lại trong panel là **chú thích dưới ảnh teaser** ("Bộ sưu tập mới") — giữ vì đó là CTA của ảnh, muốn bỏ thì nói.
+  - Chữ trong panel đã về **thang text style**: mục 14px, tiêu đề cột 12px (trước là 13px — ngoài thang).
   - **Hiệu ứng hover kiểu Farfetch (10/08/2026)**: **KHÔNG gạch chân** (đối chứng cả Farfetch lẫn component Button trong Figma — không state nào có underline). Hover theo đúng 2 biến thể Button: hàng giới tính + nút tiện ích là **Ghost** → "nhún" nền đen 5% (`.ghost-hover`, r2); danh mục subheader là **Ghost Muted** → chỉ đậm chữ, không nền. **MÀU chữ của cả 2 hàng giờ do thang mực 3 bậc của nav cấp** (#737373 → hover #404040 → đang chọn #0a0a0a), xem mục "Nav desktop: state đang chọn". Panel + **scrim tối `rgba(0,0,0,.45)`** phủ phần trang bên dưới mở sau **120ms** (hover-intent — lướt ngang thanh menu không nháy panel). Scrim là `div.dk-scrim` fixed `z:-1` NẰM TRONG `.navbar` (stacking context z-50) nên đè lên nội dung trang nhưng dưới 3 tầng header + panel; bật bằng `.navbar:has(.dk-nav-item:hover > .dk-mega)` — mục không có panel (Pre-loved, Khuyến mãi) không làm tối trang. Độ tối .45 cùng tông mọi backdrop khác của app.
 - **Layer tìm kiếm** (`#dkSearchLayer`, 11/08/2026 — thay dropdown 420px neo dưới ô nhập): bấm nút Tìm kiếm ở subheader → tấm trắng đổ từ mép trên xuống + nền tối `rgba(0,0,0,.45)` phía dưới, cùng ý đồ với bản mobile (ở đó tìm kiếm là **màn riêng** `screenSearch` phủ kín).
   - **Bố cục 2 cột** (tham chiếu overlay tìm kiếm của versace.com), nội dung lấy đúng bộ của bản mobile:

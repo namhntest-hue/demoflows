@@ -266,8 +266,7 @@ window.RESP = (function () {
   #settingsPanel .sp-card {
     position: absolute; right: 12px; bottom: 144px; width: 216px;
     background: var(--general-background);
-    border: 1px solid var(--general-border); border-radius: 8px;
-    box-shadow: 0 8px 28px rgba(0,0,0,.14);
+    border-radius: 8px;   /* viền + bóng: xem khối "KHUÔN CHUNG CHO MỌI LỚP NỔI" */
     opacity: 0; transform: translateY(8px) scale(.97);
     transform-origin: bottom right;
     transition: opacity .22s ease, transform .22s cubic-bezier(.22,1,.36,1);
@@ -307,6 +306,27 @@ window.RESP = (function () {
   .shimmer.loaded img { opacity: 1; }
   @keyframes shimmer { 100% { transform: translateX(100%); } }
 
+  /* ── KHUÔN CHUNG CHO MỌI LỚP NỔI (bottom sheet + popup) ──
+     Chốt 17/08/2026 (yêu cầu user): tất cả dùng CHUNG một viền + một đổ bóng,
+     không panel nào tự chế. Trước đó chỉ #infoSheet và #cookieGate có bóng,
+     7 sheet còn lại (nhận thông báo · quick add · xác nhận thêm giỏ · chọn
+     size · quà tặng · ưu đãi · chọn tỉnh/phường) trần trụi — nền trắng nằm
+     trên nền trắng, không đọc ra mép sheet.
+     Sửa 1 chỗ này là đổi cả bộ; ĐỪNG thêm border/box-shadow vào từng panel.
+     KHÔNG áp cho lớp CHIẾM TRỌN MÀN (`.fs-panel` bộ lọc · `.ms-panel` menu ·
+     `.lp-card`): viền quanh một mặt phẳng phủ kín màn chỉ tổ hở hairline ở mép.
+     KHÔNG ĐỔ BÓNG (chốt 17/08/2026, yêu cầu user — tham chiếu cettire.com/vn):
+     đi hẳn hướng phẳng. Viền lo việc tách mặt phẳng khỏi nền, backdrop tối lo
+     phần còn lại. Trước đây sheet dùng bóng hắt lên `0 -8px 30px`, popover
+     `0 8px 28px`, menu thì `shadow-lg` của Tailwind — 3 kiểu cho cùng một vai,
+     gom về 1 rồi bỏ luôn. */
+  .is-panel, .cg-panel, .ns-panel, .qa-panel, .cc-panel,
+  .sz-panel, .gf-panel, .vc-panel, .pk-panel,
+  #settingsPanel .sp-card, #sortMenu, #policyMenu {
+    border: 1px solid var(--general-border);
+    box-shadow: none;
+  }
+
   /* ── Info Bottom Sheet (versace b-drawer) — đẩy lên thay vì extend ── */
   #infoSheet { position: fixed; inset: 0; z-index: 300; pointer-events: none; }
   #infoSheet .is-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); opacity: 0; transition: opacity .4s ease; }
@@ -317,7 +337,7 @@ window.RESP = (function () {
     transform: translateY(100%);
     transition: transform .4s ease-in-out;     /* versace: transform .4s ease-in-out */
     display: flex; flex-direction: column;
-    box-shadow: 0 -8px 30px rgba(0,0,0,.12);
+    /* viền + bóng: xem khối "KHUÔN CHUNG CHO MỌI LỚP NỔI" phía trên */
   }
   #infoSheet.open { pointer-events: auto; }
   #infoSheet.open .is-backdrop { opacity: 1; }
@@ -332,7 +352,8 @@ window.RESP = (function () {
      nhưng chiếm trọn màn hình — 5 bảng cuộn dọc khá dài, gò trong 90vh chỉ
      tổ phải cuộn trong một khung hẹp. Bỏ luôn đổ bóng và thanh grabber cho
      đúng chất một trang. Chỉ bật khi gọi __openInfoSheet với full=true. */
-  #infoSheet.full .is-panel { top: 0; max-height: none; box-shadow: none; }
+  /* full trang = một trang thật, không phải lớp nổi -> gỡ cả viền lẫn bóng */
+  #infoSheet.full .is-panel { top: 0; max-height: none; box-shadow: none; border: 0; }
   #infoSheet.full .is-grab { display: none; }
 
   /* ── Cookie consent gate ──
@@ -349,7 +370,7 @@ window.RESP = (function () {
     transform: translateY(100%);
     transition: transform .4s ease-in-out;
     display: flex; flex-direction: column;
-    box-shadow: 0 -8px 30px rgba(0,0,0,.12);
+    /* viền + bóng: xem khối "KHUÔN CHUNG CHO MỌI LỚP NỔI" phía trên */
   }
   #cookieGate.open { pointer-events: auto; }
   #cookieGate.open .cg-backdrop { opacity: 1; }
@@ -1238,7 +1259,7 @@ function screenPLPList() {
       <button data-sheet="filter" class="flex items-center gap-2 px-4 h-9 rounded-xs border border-border bg-background text-[14px] font-medium text-foreground btn-o press">${I.sliders} Bộ lọc</button>
       <div class="relative">
         <button id="sortBtn" class="flex items-center gap-1.5 px-4 h-9 text-[14px] font-medium text-foreground-alt press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
-        <div id="sortMenu" class="hidden absolute mt-1 bg-background border border-border shadow-lg z-50" style="right:0;top:100%;width:240px">
+        <div id="sortMenu" class="hidden absolute mt-1 bg-background z-50" style="right:0;top:100%;width:240px">
           ${SORT_OPTIONS.map(([id, label]) => `
             <button class="sort-opt w-full text-left px-4 h-11 flex items-center justify-between text-[14px] ${id === plpSort ? 'font-medium text-foreground' : 'text-foreground-alt'}" data-sort="${id}">
               <span>${label}</span>
@@ -1350,7 +1371,7 @@ function screenPLP() {
       <button data-sheet="filter" class="flex items-center gap-2 px-4 h-9 rounded-xs border border-border bg-background text-[14px] font-medium text-foreground btn-o press">${I.sliders} Bộ lọc</button>
       <div class="relative">
         <button id="sortBtn" class="flex items-center gap-1.5 px-4 h-9 text-[14px] font-medium text-foreground-alt press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
-        <div id="sortMenu" class="hidden absolute mt-1 bg-background border border-border shadow-lg z-50" style="right:0;top:100%;width:240px">
+        <div id="sortMenu" class="hidden absolute mt-1 bg-background z-50" style="right:0;top:100%;width:240px">
           ${SORT_OPTIONS.map(([id, label]) => `
             <button class="sort-opt w-full text-left px-4 h-11 flex items-center justify-between text-[14px] ${id === plpSort ? 'font-medium text-foreground' : 'text-foreground-alt'}" data-sort="${id}">
               <span>${label}</span>
@@ -4989,7 +5010,7 @@ function screenPOLICY(key) {
         <div class="relative shrink-0">
           <button id="policyMore" aria-label="Xem tất cả trang chính sách" aria-expanded="false"
                   class="w-7 h-7 rounded-full bg-secondary flex items-center justify-center btn-s press">${I.chevD('#0a0a0a')}</button>
-          <div id="policyMenu" class="hidden absolute mt-1 bg-background border border-border shadow-lg z-50" style="right:0;top:100%;width:220px">
+          <div id="policyMenu" class="hidden absolute mt-1 bg-background z-50" style="right:0;top:100%;width:220px">
             ${POLICY_TABS.map(([k, label]) => k === key
               ? `<button data-policy-close class="w-full text-left px-4 h-11 flex items-center justify-between text-[14px] font-medium text-foreground">
                    <span>${label}</span>
