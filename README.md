@@ -262,6 +262,20 @@ Khách gửi nguyên văn 2 block, cả `index.html` lẫn `desktop.html` chép 
 - **Chặn trần chiều cao thẻ**: chữ mới dài gấp đôi nên `#cookieBar` thành flex-col `max-height: min(600px, calc(100vh - 64px))`, phần chữ `flex-1 overflow-y-auto`, cụm nút `shrink-0`. Đo ở 1440×800: thẻ 420×**514** (sau khi xếp 2 nút ngang hàng), chữ chưa cần cuộn; ở 1440×520: thẻ chạm trần 456, chữ cuộn trong 262px, nút vẫn đủ chỗ. Không có bước này thẻ leo ~740px.
 - **Nút "Lưu lựa chọn" trong modal neo phải** (`justify-end`, `h-11 px-6`) đúng chuẩn footer modal desktop, mobile thì full-width h-12 — cùng cấp, khác khuôn theo bản. Nói chung 2 bản **trùng nhau về thứ tự nút và cấp nút**, chỉ khác thang cỡ vốn có của từng bản: desktop `h-11` / 12px / `tracking-wider`, mobile `h-12` / 13px.
 
+### Panel "Tùy chọn Cookie" đè đúng ô của thẻ — chốt 18/08/2026 (chỉ desktop)
+
+Yêu cầu khách: panel tuỳ chọn **không căn giữa màn** nữa mà **đè ngay vị trí thẻ cookie** — bấm "Tùy chọn Cookie" thì panel hiện ngay nơi mắt đang đọc, không nhảy ra giữa màn.
+
+Bản mobile **không phải sửa**: `#cookieGate` vốn là *một* panel dính đáy với 2 view (`.cg-intro` / `.cg-prefs`) đổi qua `.hidden`, nên view tuỳ chọn đã luôn hiện đúng chỗ banner.
+
+- `.cp-panel` **bỏ class `.dk-modal`** (khuôn modal giữa màn: `left/top: 50% !important` + `translate(-50%,-50%)`, bo 8, khổ 520) và bỏ luôn `style="width:520px"` · `absolute` · `bg-background` · `flex flex-col` trong markup.
+- Toạ độ · khổ · nền · trần chiều cao chuyển sang **khối CSS dùng chung với `#cookieBar`** (`left:32 bottom:32`, `width:min(420px, 100vw-64px)`, `max-height:min(600px, 100vh-64px)`). Panel đè lên thẻ nên **lệch 1px là lộ** — đừng khai lại mấy thuộc tính này cho riêng mặt nào. Viền lấy từ khối "KHUÔN CHUNG CHO MỌI LỚP NỔI" (đã thêm `#cookiePrefs .cp-panel` vào danh sách selector); bo góc **vuông** như thẻ.
+- **Hiệu ứng vào**: thẻ trượt từ đáy, còn panel thì **mờ-dần + phóng nhẹ `scale(.98)→1`** với `transform-origin: left bottom` — nó thay chỗ thẻ nên không được "bò" khỏi ô. Class `translate-y-full` **giữ nguyên tên** vì đó là cờ đóng/mở mà `openMD`/`closeMD` toggle, chỉ đổi cách vẽ ra — đúng lối `.dk-modal` và `.dk-drawer` đang dùng.
+- **Padding ngang `px-5` → `px-6`** (header · thân · footer) cho bằng thẻ: khổ panel rút 520 → 420 và nằm chồng lên thẻ nên chữ 2 mặt phải thẳng cùng một lề.
+- Đo ở 1440×900: thẻ `[32, 430, 420×438]` · panel `[32, 511, 420×357]` — trùng khít lề trái, khổ ngang và **đáy** (868). Ở 800×700 vẫn trùng khít và nằm trong màn.
+- **Thẻ KHÔNG bị đóng** khi mở panel (đúng nghĩa "đè lên"): thẻ cao hơn panel 81px nên **hở 81px mép trên**, phần hở nằm dưới backdrop nên bị tối 45%. Muốn sạch hẳn thì gọi `closeBar()` trong `openMD` — 1 dòng, nhưng lúc đó là *thay chỗ* chứ không còn là *đè lên*, cần khách chốt.
+- Backdrop tối + `lockBodyScroll` **giữ nguyên** như modal cũ; chỉ đổi chỗ đứng, không đổi tính chất chặn.
+
 ## Back từ PDP về PLP giữ nguyên vị trí cuộn (17/08/2026, CẢ 2 BẢN)
 
 Yêu cầu user. Trước đó `go()` luôn `window.scrollTo(0, 0)` nên back từ PDP là văng lên đầu danh sách, phải cuộn lại từ đầu để tìm sản phẩm vừa xem.
@@ -303,7 +317,7 @@ Giờ mỗi file có **một khối CSS `KHUÔN CHUNG CHO MỌI LỚP NỔI`** �
 
 - **Không đổ bóng**: đi hẳn hướng phẳng như cettire — viền lo việc tách mặt phẳng khỏi nền, backdrop tối `rgba(0,0,0,.45)` lo phần còn lại. (Bản trung gian trong ngày từng gom 5 giá trị bóng về 1 giá trị không lệch hướng `0 2px 24px`; sau đó bỏ luôn.)
 - **Phủ (mobile)**: `.is-panel` `.cg-panel` `.ns-panel` `.qa-panel` `.cc-panel` `.sz-panel` `.gf-panel` `.vc-panel` `.pk-panel` `#settingsPanel .sp-card` `#sortMenu` `#policyMenu`.
-- **Phủ (desktop)**: `.dk-modal` `.dk-drawer` `.lp-card` `#infoSheet .is-panel` `#filterSheet .fs-panel` `#dkSearchLayer .ds-sheet` `#cookieBar` `#settingsPanel .sp-card` `#sortMenu` `[data-size-list]`.
+- **Phủ (desktop)**: `.dk-modal` `.dk-drawer` `.lp-card` `#infoSheet .is-panel` `#filterSheet .fs-panel` `#dkSearchLayer .ds-sheet` `#cookieBar` `#cookiePrefs .cp-panel` `#settingsPanel .sp-card` `#sortMenu` `[data-size-list]`.
 - **Ngoại lệ có chủ ý: `.dk-mega` VÀ `#dkSearchLayer .ds-sheet`** — panel mega menu và tấm gợi ý tìm kiếm **không viền, không bóng** để LIỀN MẠCH với header (trắng nối trắng, đúng cách cettire dựng); mép dưới đọc ra nhờ scrim tối. Đây là mặt duy nhất trong 2 file không mang viền chung. **Từ 17/08/2026 panel dùng luôn `glass-95 backdrop-blur-[7.5px]`** — cùng nền + cùng độ blur với `.dk-sub` ngay trên nó (đo `getComputedStyle`: cả hai ra `color(srgb 1 1 1 / .95)` + `blur(7.5px)`), nên panel đọc ra là phần nối dài của thanh kính chứ không phải tấm trắng đặc đè lên. Lưu ý kỹ thuật: `.dk-mega` nằm TRONG `.dk-sub` vốn đã có `backdrop-filter` → backdrop-filter lồng nhau; nếu trình duyệt cô lập backdrop root thì panel vẫn ra nền trắng 95% (không xấu hơn bản cũ) — nên nhìn mắt thường kiểm lại trên máy thật.
 - **Cố ý KHÔNG phủ**: lớp **chiếm trọn màn** (`.fs-panel` bộ lọc mobile · `.ms-panel` menu · `.lp-card` mobile · `#infoSheet.full` bảng size) — viền quanh mặt phẳng phủ kín màn chỉ tổ hở hairline ở mép, nên `#infoSheet.full .is-panel` khai `border: 0; box-shadow: none`. Và **toast** (pill nền tối `glass-ink-95`, giữ `shadow-lg`) vì nó là thông báo thoáng qua, không phải bề mặt chứa nội dung.
 - Đã **gỡ** `border border-border shadow-lg` khỏi markup 3 menu mobile + 2 menu desktop, gỡ `shadow-xl`+`border-b` của `.dk-mega`, gỡ inline `style="box-shadow:…"` của `.lp-card` desktop (inline style thắng mọi rule nên nó là chỗ duy nhất lọt lưới lúc kiểm) — **đừng thêm border/box-shadow vào từng panel nữa**, sửa ở khối chung.
@@ -409,16 +423,32 @@ Tỉ lệ chuẩn của ảnh sản phẩm: **ngang 160 ⇒ cao 213** (`160/213`
 | Điểm | Quy ước |
 |---|---|
 | Info tab (Mô tả / Bảo quản / Đổi trả / Thương hiệu) | **Extend tại chỗ** (`.acc` + `.acc-trigger` + `.acc-body`). Không dùng bottom sheet. Vách dưới `border-b border-border-1`. |
-| Trả góp / trả trước | **Không có ở cấp sản phẩm.** Không PDP nào hiện dòng "Trả trước từ …/tháng". |
+| Trả góp / trả trước | Dòng "Trả trước từ …/tháng · Xem chi tiết" nằm **ngay dưới nút Thêm vào giỏ hàng, căn giữa** — giống nhau ở mọi PDP có bán trả góp. Sản phẩm **pre-order không hiện** (đặt trước không áp dụng trả góp). |
 | Nhãn bảng size | **"Bảng kích thước"** — không dùng "Size guide", "Bảng size →" hay "Hướng dẫn chọn size". |
 
 Chọn size dạng chip hiện có ở `pdp` (5 cột) và `pdp4` (**còn 4 cột**); `pdp2`/`pdp3`/`pdp5`/`pdp6` dùng dropdown nên không có grid.
 
-> Đã sửa để đạt quy ước: `pdp4` trước đây info tab bấm ra **bottom sheet** (`.sheet-trigger` + `window.__pdp4Tabs`) → đổi sang accordion, bỏ luôn handler và cầu nối `window.__pdp4Tabs` vì không còn ai đọc. Bỏ **5** dòng "Trả trước từ" ở `pdp2`…`pdp6` kèm logic `payOffer` trong `wire()` (vốn để ẩn/hiện dòng đó khi hết hàng). Thống nhất **8** nhãn size guide, `data-toast`, và tiêu đề sheet trong size picker. `pdp5`/`pdp6` dùng vách accordion `border-border` đậm hơn 4 bản kia → về `border-border-1`.
->
-> Dọn kèm 5 entry i18n đã chết: `Trả trước từ` · `/tháng` · `Xem chính sách trả góp` · `Bảng size →` · `Hướng dẫn chọn size`.
+> Đã sửa để đạt quy ước: `pdp4` trước đây info tab bấm ra **bottom sheet** (`.sheet-trigger` + `window.__pdp4Tabs`) → đổi sang accordion, bỏ luôn handler và cầu nối `window.__pdp4Tabs` vì không còn ai đọc. Thống nhất **8** nhãn size guide, `data-toast`, và tiêu đề sheet trong size picker. `pdp5`/`pdp6` dùng vách accordion `border-border` đậm hơn 4 bản kia → về `border-border-1`.
 >
 > **Vẫn giữ** trả góp ở 3 chỗ KHÔNG thuộc cấp sản phẩm: mục "Thanh toán linh hoạt" trong `camKetSection`, link "Chính sách trả góp" ở footer (data thật của site), và phương thức "Thanh toán trả góp 0% qua thẻ tín dụng" ở checkout.
+
+### Trả góp cấp sản phẩm — chốt 18/08/2026
+
+Trước đó dòng trả góp bị **bỏ hẳn** khỏi cả 6 PDP mobile (để 6 bản khỏi lệch nhau), còn bản desktop thì giữ nhưng đặt **sát dưới giá** trong header. Khách chốt một vị trí duy nhất: **ngay dưới CTA, căn giữa** — nên nay áp cho **cả 2 bản, mọi loại PDP**.
+
+| | Mobile `index.html` | Desktop `desktop.html` |
+|---|---|---|
+| Dựng khối | `payOfferRow(idx, cls)` + map `INSTALLMENT` (key = index `PRODUCTS`) | `payOfferRow(amount)`, số tiền đọc từ `PDP_DATA[kind].installment` |
+| Chèn ở | 5 khối `#pdpCta` của `pdp2`…`pdp6` | nhánh không-pre-order của biến `cta` trong `dkScreenPDP` |
+| Khoảng cách 8px | `gap-2` của `#pdpCta` | `pt-2` trên chính khối (theo lệ `pb-2` của dòng ETA pre-order cùng file) |
+
+Chặn pre-order **2 lớp cùng chiều**: mobile kiểm `PRODUCTS[idx].preorder`, desktop để `PDP_DATA.pdp.installment` rỗng **và** nhánh pre-order không gọi hàm.
+
+Khối **buộc phải là con trực tiếp** của `#pdpCta`: `setCta()` ở cả 2 bản tìm nó bằng `[...cta.children].find(c => c.textContent.includes('Trả trước'))` để **ẩn khi size đang chọn hết hàng** — không mua được thì đừng chào trả góp. Logic này bản desktop đã có (nhưng chết vì khối nằm ngoài `#pdpCta`), bản mobile nay thêm vào cho khớp.
+
+Số tiền là **data demo lấy từ Figma**, không suy từ giá: `1.301.000 ₫` cho SP#2, `742.000 ₫` cho SP#3–SP#6. Hai file giữ **đúng cùng bộ số**; đổi thì sửa cả `INSTALLMENT` (mobile) lẫn `PDP_DATA` (desktop). Kèm 3 entry i18n `Trả trước từ` · `/tháng` · `Xem chính sách trả góp` (mobile trước đó đã dọn, nay thêm lại).
+
+> **Chưa đồng bộ**: `desktop-neutral.html` và `desktop-editorial.html` vẫn để khối này ở header cũ.
 
 ## Mô tả sản phẩm — data thật từ DAFC
 

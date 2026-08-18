@@ -1515,6 +1515,27 @@ function screenSearch() {
   </div>`;
 }
 
+/* ── TRẢ GÓP — "Trả trước từ … /tháng · Xem chi tiết" ──────────────
+   Vị trí: NGAY DƯỚI nút Thêm vào giỏ hàng và CĂN GIỮA (chốt 18/08/2026, yêu cầu
+   user), áp dụng cho MỌI loại PDP — nên khai một lần ở đây thay vì copy markup
+   vào 5 màn, kẻo sớm muộn cũng lệch nhau.
+   Chỉ sản phẩm KHÔNG pre-order mới hiện: đặt trước không áp dụng trả góp, và
+   dùng thẳng PRODUCTS[idx].preorder làm điều kiện chặn để khỏi phải nhớ bỏ tay
+   ở từng màn khi đổi sản phẩm nào là pre-order.
+   Số tiền là data demo — giữ ĐÚNG bộ số của bản desktop (PDP_DATA.installment)
+   để 2 bản không lệch nhau; sản phẩm không có key thì không hiện khối này.
+   `cls` dành cho màn có letter-spacing riêng (PDP6). */
+const INSTALLMENT = { 1: '1.301.000 ₫', 2: '742.000 ₫', 3: '742.000 ₫', 4: '742.000 ₫', 5: '742.000 ₫' };
+const payOfferRow = (idx, cls = '') => {
+  const amount = INSTALLMENT[idx];
+  if (!amount || PRODUCTS[idx].preorder) return '';
+  return `
+      <div class="flex items-center justify-center gap-1 text-[12px] leading-4 ${cls}">
+        <span class="text-foreground-alt">Trả trước từ <b class="font-medium">${amount}</b>/tháng</span>
+        <button data-toast="Xem chính sách trả góp" class="text-foreground underline press">Xem chi tiết</button>
+      </div>`;
+};
+
 /* ════════════════════════════════════════════════════════════════
    SCREEN: PDP — theo Figma PDP-Mobile-02-LowStock (2218:6692)
 ════════════════════════════════════════════════════════════════ */
@@ -1863,9 +1884,10 @@ function screenPDP2() {
       </div>
     </div>
 
-    <!-- Sticky CTA (in-flow) -->
+    <!-- Sticky CTA (in-flow) — Button + Payment Offer ngay dưới, căn giữa -->
     <div id="pdpCta" class="flex flex-col gap-2 px-4 pt-4 pb-4 rise">
       <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press flex items-center justify-center">Thêm vào giỏ hàng</button>
+      ${payOfferRow(1)}
     </div>
 
     <!-- KHUYẾN MÃI — layout A: 1 card gộp (Figma 2275:505057) -->
@@ -1913,7 +1935,10 @@ function screenPDP2() {
 /* ════════════════════════════════════════════════════════════════
    SCREEN: PDP3 — biến thể "luxury payment placement" (SP #3)
    Khối giá sạch tuyệt đối (chỉ con số). Trả góp hạ trọng lượng,
-   dời xuống service line ngay DƯỚI nút Thêm vào giỏ hàng.
+   dời xuống service line ngay DƯỚI nút Thêm vào giỏ hàng — cách đặt
+   này khách chốt 18/08/2026 nên nay ÁP CHO MỌI PDP (payOfferRow),
+   không còn là điểm riêng của bản này; khác biệt còn lại của PDP3 là
+   accordion "Ưu đãi khuyến mãi" mở sẵn thay card CTKM rời.
 ════════════════════════════════════════════════════════════════ */
 function screenPDP3() {
   const P = PRODUCTS[2];   // Túi đeo vai da Emblème
@@ -1998,6 +2023,7 @@ function screenPDP3() {
     <!-- Sticky CTA (in-flow) — Button + Payment Offer ngay dưới, căn giữa (mockup 3111:33554) -->
     <div id="pdpCta" class="flex flex-col gap-2 px-4 pt-4 pb-4 rise">
       <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press flex items-center justify-center gap-2">Thêm vào giỏ hàng</button>
+      ${payOfferRow(2)}
     </div>
 
     <!-- accordions -->
@@ -2117,9 +2143,10 @@ function screenPDP4() {
       </div>
     </div>
 
-    <!-- in-flow CTA -->
+    <!-- in-flow CTA — Button + Payment Offer ngay dưới, căn giữa -->
     <div id="pdpCta" class="flex flex-col gap-2 px-4 py-4 rise">
       <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press flex items-center justify-center gap-2">Thêm vào giỏ hàng</button>
+      ${payOfferRow(3)}
     </div>
 
     <!-- promos -->
@@ -2600,6 +2627,7 @@ function screenPDP5() {
     <div id="pdpCta" class="flex flex-col gap-2 px-4 pb-4 bg-card rise">
       <!-- Button/Primary Large: 358x48 · rounded-4 · pad 8,24 -->
       <button data-add="pdp" class="w-full h-12 rounded-sm bg-primary text-primary-foreground text-[14px] font-medium leading-5 btn-p press flex items-center justify-center gap-2 px-6">Thêm vào giỏ hàng</button>
+      ${payOfferRow(4)}
     </div>
 
     <!-- CTKM: pad 8,16 · Frame 28 pad 12 · bg neutral/100 · rounded-4 -->
@@ -2731,6 +2759,7 @@ function screenPDP6() {
       <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary px-6 flex items-center justify-center gap-2 btn-p press">
         <span class="text-[14px] font-medium leading-5 tracking-[0.002em] text-primary-foreground text-center">Thêm vào giỏ hàng</span>
       </button>
+      ${payOfferRow(5, 'tracking-[0.004em]')}
     </div>
 
     <!-- Pre-order slot (CTKM): pad 8,16 · Frame 28 pad 8 r4 bg #f5f5f5 · text Regular 12 -->
@@ -5296,6 +5325,9 @@ const I18N = {
   'Chính sách đổi trả':'Returns policy', 'Về thương hiệu Versace':'About Versace',
   'Gợi ý mua kèm':'Complete the look', 'Sản phẩm tương tự':'You may also like', 'Đã xem gần đây':'Recently viewed',
   'Chất liệu':'Material', 'Xuất xứ':'Origin',
+  // Trả góp: markup tách số tiền vào <b> nên phần chữ thành 2 text node riêng
+  // ("Trả trước từ" và "/tháng") -> phải có 2 key, không gộp 1 câu.
+  'Trả trước từ':'From', '/tháng':'/month', 'Xem chính sách trả góp':'View instalment policy',
 
   // ── Mô tả / bảo quản / thông số: nguyên văn từ shop.dafc.com.vn ──
   'Đầm mini không tay bằng lụa twill, nổi bật với họa tiết "Broken Jewels" và chi tiết thắt nút ở vai lấy cảm hứng từ cách tạo kiểu khăn lụa.':'A sleeveless mini dress in silk twill with the "Broken Jewels" print and a knotted shoulder detail inspired by the way a silk scarf is styled.',
@@ -6738,6 +6770,9 @@ function wire(root) {
     }
     const cta      = root.querySelector('#pdpCta');
     const mainBtn  = cta ? cta.querySelector('button[data-add]') : null;
+    // Khối trả góp nằm ngay dưới nút (payOfferRow) — ẩn khi size chọn đang hết
+    // hàng, giống bản desktop: không còn mua được thì đừng chào trả góp.
+    const payOffer = cta ? [...cta.children].find(c => c.textContent.includes('Trả trước')) : null;
     const stickyBtn = document.querySelector('#pdpStickyCta button[data-add]');
     const NORMAL = mainBtn ? mainBtn.innerHTML : '';
     const stickyNormal = stickyBtn ? stickyBtn.innerHTML : '';
@@ -6753,6 +6788,7 @@ function wire(root) {
         mainBtn.dataset.oosState = state;
         mainBtn.innerHTML = LABEL[state];
         if (stickyBtn) { stickyBtn.dataset.oosState = state; stickyBtn.innerHTML = LABEL[state]; }
+        if (payOffer) payOffer.classList.add('hidden');   // hết hàng thì không chào trả góp
         if (lowStock) lowStock.classList.add('hidden');   // hết hàng / đã đăng ký thì không hiện "Chỉ còn 01 sản phẩm"
         if (state === 'oos') {
           // Tạm hết hàng: không còn hành động nào khả dụng -> disable hẳn nút, bỏ dòng cảnh báo đỏ (dư thừa)
@@ -6770,6 +6806,7 @@ function wire(root) {
         mainBtn.disabled = false; mainBtn.style.opacity = ''; mainBtn.style.pointerEvents = '';
         if (stickyBtn) { delete stickyBtn.dataset.oosState; stickyBtn.innerHTML = stickyNormal; stickyBtn.disabled = false; stickyBtn.style.opacity = ''; stickyBtn.style.pointerEvents = ''; }
         note.classList.add('hidden');
+        if (payOffer) payOffer.classList.remove('hidden');
         if (lowStock) lowStock.classList.toggle('hidden', !SIZE_LOW_STOCK[size]);
       }
     }

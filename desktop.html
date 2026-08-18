@@ -497,7 +497,7 @@ window.RESP = (function () {
      Lấy bóng của .dk-modal làm chuẩn vì nó đang phủ nhiều mặt nhất.
      Bo góc KHÔNG gom vào đây vì phụ thuộc chỗ đứng: nổi giữa màn thì bo 8
      (.dk-modal, .is-panel, .sp-card, .lp-card), dính mép màn thì vuông
-     (.dk-drawer, .fs-panel, .ds-sheet, #cookieBar).
+     (.dk-drawer, .fs-panel, .ds-sheet, #cookieBar, #cookiePrefs .cp-panel).
      KHÔNG ĐỔ BÓNG (chốt 17/08/2026, yêu cầu user — tham chiếu cettire.com/vn):
      đi hẳn hướng phẳng, viền lo việc tách mặt phẳng khỏi nền, backdrop tối lo
      phần còn lại. Trước đó có 5 giá trị bóng, gom về 1 rồi bỏ luôn.
@@ -507,7 +507,7 @@ window.RESP = (function () {
      Sửa 1 chỗ này là đổi cả bộ; ĐỪNG thêm border/box-shadow vào từng mặt. */
   .dk-modal, .dk-drawer, .lp-card,
   #infoSheet .is-panel, #filterSheet .fs-panel,
-  #cookieBar, #settingsPanel .sp-card, #sortMenu, [data-size-list] {
+  #cookieBar, #cookiePrefs .cp-panel, #settingsPanel .sp-card, #sortMenu, [data-size-list] {
     border: 1px solid var(--general-border);
     box-shadow: none;
   }
@@ -540,22 +540,43 @@ window.RESP = (function () {
   }
   .dk-drawer.translate-y-full { transform: translateX(100%); }
   .dk-drawer .safe-b { padding-bottom: 0; }
-  /* ── Cookie card ──
+  /* ── Cookie: thẻ đồng ý + panel "Tùy chọn Cookie" — CHUNG MỘT Ô ──
      Desktop không dùng cổng chặn như mobile: đây là THẺ vuông góc dưới-trái
      (kiểu ARKET), trang vẫn xem và cuộn được phía sau (không nền tối). Đặt
-     bên trái để không chèn nút chat/lên đầu trang thường nằm góc phải. */
-  #cookieBar {
+     bên trái để không chèn nút chat/lên đầu trang thường nằm góc phải.
+
+     Chốt 18/08/2026 (yêu cầu khách): panel "Tùy chọn Cookie" KHÔNG căn giữa màn
+     nữa mà ĐÈ ĐÚNG ô của thẻ — bấm "Tùy chọn Cookie" thì panel hiện ngay nơi
+     mắt đang đọc chứ không nhảy ra giữa màn. Vì phải trùng khít nên 2 mặt dùng
+     CHUNG khối toạ độ dưới đây; ĐỪNG khai lại left/bottom/width cho riêng mặt
+     nào — panel đè lên thẻ nên lệch 1px là lộ ngay. */
+  #cookieBar, #cookiePrefs .cp-panel {
     /* min(): ở dải desktop hẹp thẻ vẫn chừa mép 32px mỗi bên */
-    position: fixed; left: 32px; bottom: 32px; width: min(420px, calc(100vw - 64px)); z-index: 190;
+    position: fixed; left: 32px; bottom: 32px; width: min(420px, calc(100vw - 64px));
     background: var(--general-background);
-    /* viền + bóng: xem khối "KHUÔN CHUNG CHO MỌI LỚP NỔI" phía trên */
-    transform: translateY(calc(100% + 48px)); transition: transform .45s cubic-bezier(.22,1,.36,1);
-    pointer-events: none;
+    /* viền: xem khối "KHUÔN CHUNG CHO MỌI LỚP NỔI" phía trên */
     /* Chữ bản khách 17/08/2026 dài gấp đôi bản cũ: chặn trần chiều cao rồi cho
        phần chữ tự cuộn, không thì thẻ góc leo gần hết màn 800px. */
     display: flex; flex-direction: column; max-height: min(600px, calc(100vh - 64px));
   }
+  #cookieBar {
+    z-index: 190;
+    transform: translateY(calc(100% + 48px)); transition: transform .45s cubic-bezier(.22,1,.36,1);
+    pointer-events: none;
+  }
   #cookieBar.open { transform: translateY(0); pointer-events: auto; }
+  /* Panel tuỳ chọn KHÔNG trượt từ đáy như thẻ: nó chiếm đúng chỗ thẻ nên vào
+     bằng mờ-dần + phóng nhẹ, gốc phóng đặt ở góc dưới-trái (chính chỗ nó đứng)
+     để không thấy nó "bò" khỏi ô.
+     Class `translate-y-full` vẫn là cờ đóng/mở mà openMD/closeMD toggle — giữ
+     nguyên tên, chỉ đổi cách vẽ ra, đúng lối .dk-modal và .dk-drawer đang dùng.
+     Không cần z-index: cùng cha #cookiePrefs và đứng SAU .cp-backdrop trong DOM. */
+  #cookiePrefs .cp-panel {
+    transform-origin: left bottom;
+    transform: scale(1); opacity: 1;
+    transition: opacity .25s ease, transform .28s cubic-bezier(.22,1,.36,1);
+  }
+  #cookiePrefs .cp-panel.translate-y-full { transform: scale(.98); opacity: 0; }
   /* Công tắc 40×24 cho modal tuỳ chọn — bản desktop của .cg-sw ở index.html */
   .cg-sw { position: relative; width: 40px; height: 24px; flex-shrink: 0;
     border-radius: 999px; background: var(--general-border); transition: background .2s ease; }
@@ -2216,6 +2237,20 @@ const PDP_DATA = {
   },
 };
 
+/* TRẢ GÓP — "Trả trước từ … /tháng · Xem chi tiết" nằm NGAY DƯỚI nút Thêm vào
+   giỏ hàng và CĂN GIỮA (chốt 18/08/2026, yêu cầu user; trước đó khối này nằm
+   sát dưới giá trong header). Áp dụng cho MỌI loại PDP.
+   Chỉ sản phẩm KHÔNG pre-order mới hiện — đặt trước không áp dụng trả góp, nên
+   nhánh preorder của `cta` không gọi hàm này (PDP_DATA.pdp cũng để installment
+   rỗng, 2 lớp chặn cùng chiều).
+   Khối BẮT BUỘC là con trực tiếp của #pdpCta: setCta() tìm nó bằng cách quét
+   [...cta.children] theo chữ "Trả trước" để ẩn khi size chọn đang hết hàng. */
+const payOfferRow = amount => amount ? `
+      <div class="flex items-center justify-center gap-1 pt-2 text-[12px] leading-4">
+        <span class="text-foreground-alt">Trả trước từ <b class="font-medium">${amount}</b>/tháng</span>
+        <button data-toast="Xem chính sách trả góp" class="text-foreground underline press">Xem chi tiết</button>
+      </div>` : '';
+
 function dkScreenPDP(kind) {
   const D = PDP_DATA[kind];
   const P = PRODUCTS[D.idx];
@@ -2231,7 +2266,8 @@ function dkScreenPDP(kind) {
   const cta = P.preorder ? `
       <p class="text-[12px] leading-4 text-secondary-foreground pb-2">Dự kiến giao hàng vào ngày <span class="font-medium">${P.preorder}</span></p>
       <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium leading-6 btn-p press flex items-center justify-center">Đặt trước</button>` : `
-      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium leading-6 btn-p press flex items-center justify-center">Thêm vào giỏ hàng</button>`;
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium leading-6 btn-p press flex items-center justify-center">Thêm vào giỏ hàng</button>
+      ${payOfferRow(D.installment)}`;
 
   return `
   <div class="w-full" data-scroller>
@@ -2264,17 +2300,12 @@ function dkScreenPDP(kind) {
         <h1 class="text-[24px] font-medium leading-8 text-foreground">${P.brand}</h1>
               <p class="text-[14px] leading-5 text-foreground-alt">${P.name}</p>
             </div>
-            <div class="flex flex-col gap-2">
-              <div class="flex gap-1.5 items-center">
-                <p class="text-[16px] font-medium leading-6 ${P.off ? 'text-destructive' : 'text-foreground'}">${P.price}</p>
-                ${P.off ? `<span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[14px] leading-5 text-destructive">${P.off}</span>` : ''}
-                ${P.was ? `<p class="text-[14px] leading-5 text-muted-foreground line-through">${P.was}</p>` : ''}
-              </div>
-              ${D.installment ? `
-              <div class="flex items-center gap-1 text-[12px] leading-4">
-                <span class="text-foreground-alt">Trả trước từ <b class="font-medium">${D.installment}</b>/tháng</span>
-                <button data-toast="Xem chính sách trả góp" class="text-foreground underline press">Xem chi tiết</button>
-              </div>` : ''}
+            <!-- Khối giá SẠCH: chỉ con số + badge -% + giá gạch. Dòng trả góp đã
+                 dời xuống ngay dưới nút Thêm vào giỏ hàng (xem payOfferRow). -->
+            <div class="flex gap-1.5 items-center">
+              <p class="text-[16px] font-medium leading-6 ${P.off ? 'text-destructive' : 'text-foreground'}">${P.price}</p>
+              ${P.off ? `<span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[14px] leading-5 text-destructive">${P.off}</span>` : ''}
+              ${P.was ? `<p class="text-[14px] leading-5 text-muted-foreground line-through">${P.was}</p>` : ''}
             </div>
           </div>
 
@@ -9054,13 +9085,20 @@ document.body.insertAdjacentHTML('beforeend', `
   </div>
   <div id="cookiePrefs" class="fixed inset-0 z-[220] pointer-events-none" aria-hidden="true">
     <div class="cp-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
-    <div class="cp-panel dk-modal absolute bg-background translate-y-full flex flex-col"
-         style="width:520px" role="dialog" aria-label="Tùy chọn Cookie">
-      <div class="h-[52px] px-5 flex items-center justify-between shrink-0" style="border-bottom:1px solid var(--general-border)">
+    <!-- KHÔNG dùng dấu backtick trong comment này: cả khối nằm trong template
+         literal, backtick sẽ đứt string.
+         Bỏ .dk-modal (khuôn modal giữa màn) và KHÔNG khai width/position ở đây:
+         panel đè đúng ô của #cookieBar nên toạ độ · khổ · nền · khung đều lấy từ
+         khối CSS chung của 2 mặt. Class translate-y-full giữ nguyên vì đó là cờ
+         đóng/mở của openMD/closeMD.
+         Padding ngang px-6 = px-6 của thẻ (trước là px-5 cho khổ 520px): panel
+         nằm chồng lên thẻ nên chữ 2 mặt phải thẳng cùng một lề. -->
+    <div class="cp-panel translate-y-full" role="dialog" aria-label="Tùy chọn Cookie">
+      <div class="h-[52px] px-6 flex items-center justify-between shrink-0" style="border-bottom:1px solid var(--general-border)">
         <p class="text-[16px] font-medium leading-6 text-foreground">Tùy chọn Cookie</p>
         <button data-cp-close class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
       </div>
-      <div class="flex-1 min-h-0 overflow-y-auto px-5 flex flex-col">
+      <div class="flex-1 min-h-0 overflow-y-auto px-6 flex flex-col">
         ${COOKIE_CATS.map(([id, name, , locked]) => `
           <div class="flex items-center gap-4 py-4" style="border-bottom:1px solid var(--unofficial-border-0)">
             <p class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground">${name}</p>
@@ -9072,7 +9110,7 @@ document.body.insertAdjacentHTML('beforeend', `
       <!-- CHỈ MỘT NÚT (chốt 17/08/2026, yêu cầu user): vào tới đây là đang chọn
            từng nhóm, việc duy nhất còn lại là LƯU. Chấp nhận/từ chối tất cả đã
            có ở thẻ, để lại đây thì 2 nút xoá sạch thao tác vừa làm. -->
-      <div class="shrink-0 px-5 py-4 flex justify-end">
+      <div class="shrink-0 px-6 py-4 flex justify-end">
         <button data-cg-save class="h-11 px-6 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium tracking-wider btn-p press">Lưu lựa chọn</button>
       </div>
     </div>
