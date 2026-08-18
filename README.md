@@ -459,7 +459,38 @@ User: *"dùng toàn bộ style của họ về layout dạng có border/underlin
 > **Đã trả lại nguyên trạng** ở cả 3 file: bộ da **không khai gì** cho `.btn-p`; nền đen + góc vuông (token radius đã = 0) là đã khớp họ. Rule hover đảo nền — thứ mình tự suy ra — cũng đã xoá.
 > Chốt lại: `#000` = **nền** nút chính và **viền** ô chọn size; hai vai trò khác nhau, không gộp.
 
-**Đã áp (cả 3 file):** vách 2 hàng nav `#dfdfdf` · `--unofficial-border-1` → `#dfdfdf` (vách hàng danh sách hết nhạt hơn) · accordion PDP `border-top #000` (triệt `border-b` của markup) · ô chọn size **nền trắng + viền `#000`** · ô nhập tìm kiếm chỉ còn gạch dưới `#000` (2 bản desktop) · vách hàng danh mục trong drawer `#dfdfdf` (mobile). **Nút chính giữ nguyên nền đen chữ trắng.**
+**Đã áp (cả 3 file):** vách 2 hàng nav · `--unofficial-border-1` · accordion PDP `border-top` (triệt `border-b` của markup) · ô chọn size **nền trắng + viền `#000`** · ô nhập tìm kiếm chỉ còn gạch dưới `#000` (2 bản desktop) · vách hàng danh mục trong drawer (mobile). **Nút chính giữ nguyên nền đen chữ trắng.**
+
+#### Hạ tông + brand name + khoảng cách badge (18/08/2026, yêu cầu user)
+
+4 việc, tất cả trong bộ da `skin-mt`. **3 trong 4 là lệch CÓ Ý THỨC so với số đo** — đã ghi rõ tại chỗ trong cả 3 file để sau không ai tưởng là đo sai:
+
+| # | Việc | Trước | Sau | Số đo của họ |
+|---|---|---|---|---|
+| 1 | Vách/underline hàng danh mục trong menu nhẹ hơn | `#dfdfdf` | **`#ececec`** | `#dfdfdf` → **lệch có ý thức** |
+| 2 | Nội dung PDP nhẹ hơn — vách accordion | `#000` | **`#dfdfdf`** | `#000` → **lệch có ý thức** (vạch đen chạy ngang cả cột PDP đọc ra rất nặng) |
+| 2b | Nội dung PDP nhẹ hơn — chữ chạy | `#000` | **`#333333`** (12.6:1 trên trắng) | `#000` → **lệch có ý thức**. Tách 2 tầng mực: `--general-foreground`/`--general-primary` **giữ `#000`** cho tiêu đề/nav/nút, chỉ 2 token chữ chạy hạ tông |
+| 3 | Brand name +1 bậc weight | 400 (bị blanket ép) | **500** | — |
+| 4 | Khoảng cách badge trên card PLP (desktop) | `gap-1` = 4px | **8px** (1 nấc trên lưới 4px) | — |
+
+**2 hook mới thêm vào markup** (không đổi bố cục, chỉ để CSS bám được): `.pc-brand` trên **8 chỗ** hiển thị tên thương hiệu (6 màn PDP mobile + card sản phẩm + sheet quick-add, và `h1` PDP ở 2 bản desktop) · `.pc-badges` trên cụm badge của card (2 bản desktop).
+
+> **Bug specificity — dính 2 lần trong cùng đợt này.** Rule `.pc-brand { font-weight: 500 }` cùng specificity **(0,2,1)** với khối blanket `.font-medium/.font-bold… { font-weight: 400 }` của mục 5, nên **ai viết SAU thắng**.
+> · Lần 1: `desktop.html` để rule ở mục 9 (sau) → đúng 500, nhưng dùng selector `h1` cho PDP — `html.skin-mt h1` chỉ **(0,1,2)**, THUA blanket (0,2,1) → brand PDP ra 400. Sửa bằng cách gắn `.pc-brand` vào chính `h1`.
+> · Lần 2: `index.html` đặt rule ở mục 4b (**trước** mục 5) → blanket đè, brand ra 400 ở cả card lẫn PDP. Sửa bằng cách dời rule xuống cuối mục 5.
+> Đã kiểm thứ tự 2 rule trong cả 3 file bằng grep số dòng: blanket luôn đứng trước.
+
+**Đo lại cả 3 file × 2 bộ da** (tắt transition trước khi đo):
+
+| | `desktop.html` | `desktop-editorial.html` | `index.html` |
+|---|---|---|---|
+| vách hàng nav / hàng danh mục | `#ececec` | `#ececec` | `#ececec` (drawer) |
+| vách accordion PDP | `0.8px #dfdfdf` | `1px #dfdfdf` | `1px #dfdfdf` |
+| brand name (card / PDP) | **500 / 500** | **500 / 500** | **500 / 500** |
+| tên sản phẩm (chữ chạy) | 400 · `#333333` | — | 400 · `#333333` |
+| gap badge | **8px** | **8px** | — (chỉ yêu cầu desktop) |
+
+**Quét tương phản ngưỡng 4.5:1**: `index.html` 8 màn · `desktop.html` 6 màn → **0 vi phạm** (chữ chạy `#333` vẫn 12.6:1). Không tràn ngang (375/375 · 1425/1440). Console sạch trên tab mới ở cả 3 file.
 
 **Bug tự phát hiện và đã sửa ngay:** rule đầu viết `html.skin-mt .acc { border-top: 1px solid #000 }`. Nhưng class `.acc` **còn dùng cho thẻ khuyến mãi** (`acc bg-accent-0 rounded-sm`) và 2 biến thể khác vốn **không có vách nào** → mấy thẻ đó mọc thêm vạch đen trên đầu. Sửa: bám **`.acc.border-b`** — `.border-b` chính là dấu hiệu "accordion này CÓ vách" nên lọc bằng nó là đúng nghĩa, không phải mẹo. Đo lại: thẻ khuyến mãi `border-top 0px` ở **cả 2 bộ da**, accordion info tab `border-top 0.8px #000 · bottom 0px`.
 
@@ -933,6 +964,24 @@ Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI
     - **`:not(:hover)` trong rule làm mờ là bắt buộc.** Bản đầu viết `.dk-nav-strip:hover .dk-nav-link:not(.text-destructive):not([aria-current])` (specificity **5**) còn rule cho mục đang trỏ là `.dk-nav-strip .dk-nav-link:not(...):hover` (specificity **4**) → rule mờ thắng luôn cả mục đang trỏ, hover vào là **cả thanh mờ đều, không mục nào đen lên** (đúng lỗi user báo). Loại thẳng mục đang trỏ ra khỏi rule mờ thì hết phải đấu specificity.
     - **Cách kiểm khi không dựng được `:hover` thật** (Browser pane ẩn): `color` có `transition` nên `getComputedStyle` trả giá trị CŨ nếu transition chưa tick — phải chèn `*{transition:none!important}` trước khi đo, rồi nhân bản 2 rule với `:hover` đổi thành class (giữ nguyên specificity) và gắn class để mô phỏng. Kết quả đo: nghỉ 8 mục #262626 (1 mục đỏ), hover "Túi xách" → #0a0a0a còn 6 mục kia #737373, hover "Quần áo" → đảo lại đúng như vậy.
   - Trước đó chữ trong panel đã về thang text style: mục 14px, tiêu đề cột 12px (bản gốc là 13px — ngoài thang).
+  - **Nhãn nhóm +1 nấc weight · ảnh teaser VUÔNG và to hơn (18/08/2026, yêu cầu user)** — chỉ 2 bản desktop, mobile không có mega panel.
+    - **Weight nhãn nhóm đẩy lên 1 bậc ở CẢ bản gốc LẪN 2 bộ da**, để đổi bộ da nào cũng thấy thay đổi — mỗi bộ da có điểm xuất phát riêng nên **không gộp về một giá trị chung**:
+
+      | | Trước | Sau |
+      |---|---|---|
+      | bản gốc (markup) | `font-medium` 500 | **`font-semibold` 600** |
+      | `skin-mp` (MR PORTER) | 500 | **600** |
+      | `skin-mt` (Mytheresa) | 400 | **500** |
+
+      *(`skin-mt` thấp hơn 1 bậc vì bộ da đó ép toàn trang về 400 — nấc của nó tính từ 400.)*
+    - **Ảnh teaser "Bộ sưu tập mới"**: `aspect-ratio` **264/160 → 1/1**. Riêng `desktop-editorial.html` còn nới cột teaser **264 → 342px** vì ở đó teaser là cột cứng `w-[…]`, không phải 1 ô của lưới 4 cột như bản chính.
+
+      | | Ảnh trước | Ảnh sau |
+      |---|---|---|
+      | `desktop.html` (lưới 4 cột) | 296×180 | **296×296** — bộ da có kẻ dọc thì 255×255 (trừ `padding-left: 40px`) |
+      | `desktop-editorial.html` (cột cứng) | 264×160 | **342×342** — bộ da có kẻ dọc thì 301×301 |
+
+    - Panel cao lên theo ảnh: `desktop.html` panel đầu 300 → **396**; `desktop-editorial.html` 339 → **418**. Đã kiểm **6 panel × 3 bộ da**: **0 panel tràn**, cột nội dung không bị bóp (979px ở 1440). Thử luôn dải hẹp **1024**: cột còn 563px, 0 panel tràn, trang không tràn ngang (1009/1024). Console sạch trên tab mới ở cả 2 file.
   - **Hover gạch chân — CHỈ TRONG DROPDOWN (17/08/2026, yêu cầu user; giữ nguyên sau đợt 18/08)**: 98 đường dẫn trong mega panel (`.dk-mega-grid > div button:hover`) gạch chân khi hover, chữ lúc nghỉ vẫn sạch — kiểu `cettire.com/vn`. Rule bám vào `button` nên **tiêu đề nhóm (thẻ `<p>`) không bị gạch chân** — đã kiểm bằng `matches()`: đường dẫn khớp selector, tiêu đề không. `text-underline-offset: 2px` cho khớp `underline-offset-2` dùng sẵn trong file. **THANH NAV GIỮ NGUYÊN**: hàng ngành hàng `.dk-dept` và danh mục subheader `.dk-nav-link` chỉ đổi màu theo thang mực 3 bậc, không gạch chân (user chốt lại cùng ngày sau khi thử áp cho cả 3 tầng — quyết định 10/08/2026 bên dưới vẫn nguyên giá trị cho thanh nav). Ảnh teaser không đụng. Bản mobile không có rule này (menu là panel trượt, không có hover).
   - **Đổi giữa các mục cho liền mạch kiểu Farfetch (17/08/2026, user chê "chưa mượt")** — 3 nguyên nhân đo được, sửa cả 3:
     1. **Chờ hover-intent 120ms MỖI LẦN đổi mục.** Nay 120ms chỉ còn cho **lần mở đầu** (để lướt ngang thanh menu không nháy panel); panel đang mở thì đổi mục là **đổi ngay** (`openLater` kiểm `isOpen()` trước).
