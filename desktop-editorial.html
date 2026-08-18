@@ -1,5 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi">
+<!-- class="skin-mp" = BỘ DA mặc định của file này (Editorial · MR PORTER).
+     Gỡ class là rơi về bộ da Neutral greige — đổi được tại chỗ ở popover Cài đặt
+     (mục "Bộ da"), xem SKINS / applySkin. Đặt ngay trên <html> chứ không gán bằng
+     JS để không nháy một nhịp greige lúc trang vừa dựng. -->
+<html lang="vi" class="skin-mp">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -80,7 +84,11 @@ window.RESP = (function () {
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Lora = mặt chữ serif cho skin MR PORTER (xem khối MR PORTER SKIN, mục 7).
+     Nạp cả 300 như 3 face kia thì trượt: Lora không có weight 300, dải hợp lệ là
+     400-700 — khai 300 là Google trả về 400 thay thế, dễ tưởng font-light có tác
+     dụng trong khi không. -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- Tailwind đã biên dịch sẵn (không cần CDN, chạy offline). Build lại: xem README.md -->
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="tailwind.css">
@@ -506,20 +514,44 @@ window.RESP = (function () {
   }
   .dk-modal.translate-y-full { transform: translate(-50%, -46%) scale(.97); opacity: 0; }
   .dk-modal .safe-b { padding-bottom: 0; }
-  /* ── Cookie card ──
+  /* ── Cookie: thẻ đồng ý + panel "Tùy chọn" — CHUNG MỘT Ô ──
      Desktop không dùng cổng chặn như mobile: đây là THẺ vuông góc dưới-trái
      (kiểu ARKET), trang vẫn xem và cuộn được phía sau (không nền tối). Đặt
-     bên trái để không chèn nút chat/lên đầu trang thường nằm góc phải. */
-  #cookieBar {
+     bên trái để không chèn nút chat/lên đầu trang thường nằm góc phải.
+
+     Chốt 18/08/2026 (yêu cầu khách, port từ desktop.html): panel "Tùy chọn
+     cookies" KHÔNG căn giữa màn nữa mà ĐÈ ĐÚNG ô của thẻ — bấm "Tùy chọn" thì
+     panel hiện ngay nơi mắt đang đọc. Vì phải trùng khít nên 2 mặt dùng CHUNG
+     khối toạ độ dưới đây; ĐỪNG khai lại left/bottom/width cho riêng mặt nào —
+     panel đè lên thẻ nên lệch 1px là lộ ngay. */
+  #cookieBar, #cookiePrefs .cp-panel {
     /* min(): ở dải desktop hẹp thẻ vẫn chừa mép 32px mỗi bên */
-    position: fixed; left: 32px; bottom: 32px; width: min(420px, calc(100vw - 64px)); z-index: 190;
+    position: fixed; left: 32px; bottom: 32px; width: min(420px, calc(100vw - 64px));
     background: var(--general-background);
     border: 1px solid var(--general-border);
     box-shadow: 0 18px 48px rgba(0,0,0,.16);
+    display: flex; flex-direction: column;
+  }
+  #cookieBar {
+    z-index: 190;
     transform: translateY(calc(100% + 48px)); transition: transform .45s cubic-bezier(.22,1,.36,1);
     pointer-events: none;
   }
   #cookieBar.open { transform: translateY(0); pointer-events: auto; }
+  /* Panel tuỳ chọn KHÔNG trượt từ đáy như thẻ: nó chiếm đúng chỗ thẻ nên vào
+     bằng mờ-dần + phóng nhẹ, gốc phóng ở góc dưới-trái (chính chỗ nó đứng).
+     Class `translate-y-full` vẫn là cờ đóng/mở mà openMD/closeMD toggle — giữ
+     nguyên tên, chỉ đổi cách vẽ ra, đúng lối .dk-modal đang dùng.
+     max-height chỉ đặt cho panel: thẻ ở bản này còn dùng chữ ngắn (fork trước
+     đợt đổi nội dung 17/08) nên chưa cần chặn trần. */
+  #cookiePrefs .cp-panel {
+    max-height: min(600px, calc(100vh - 64px));
+    border-radius: 0;
+    transform-origin: left bottom;
+    transform: scale(1); opacity: 1;
+    transition: opacity .25s ease, transform .28s cubic-bezier(.22,1,.36,1);
+  }
+  #cookiePrefs .cp-panel.translate-y-full { transform: scale(.98); opacity: 0; }
   /* Công tắc 40×24 cho modal tuỳ chọn — bản desktop của .cg-sw ở index.html */
   .cg-sw { position: relative; width: 40px; height: 24px; flex-shrink: 0;
     border-radius: 999px; background: var(--general-border); transition: background .2s ease; }
@@ -841,6 +873,233 @@ window.RESP = (function () {
   .ed-footer { margin-top: 56px; }
   .ed-nl { padding: 40px 0 48px; gap: 20px; }
   .ed-display { font-size: 48px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 300; }
+
+  /* ── HOVER = GẠCH CHÂN, CHỈ TRONG MEGA PANEL (port 18/08/2026 từ desktop.html)
+     Đường dẫn trong panel gạch chân khi hover (kiểu cettire/NAP), chữ lúc nghỉ
+     vẫn sạch. Bám vào hook .dk-mega-cols chứ không vào chuỗi utility.
+     KHÔNG áp cho 2 hàng nav (.dk-dept, .dk-nav-link) — chúng đổi trạng thái bằng
+     màu + gạch chân riêng ở khối NAP bên dưới. Ảnh teaser vốn gạch chân sẵn. */
+  .dk-mega-cols button:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+  /* ══ MR PORTER SKIN — thử màu + cách hiển thị của mrporter.com ══════════════
+     (18/08/2026, yêu cầu user, dựng theo 5 ảnh chụp khách gửi: trang chủ ·
+     header + mega panel mở · drawer bộ lọc · PDP · giỏ hàng.)
+     Chồng LÊN TRÊN khối NEUTRAL SKIN greige phía trên: append-only, cùng
+     specificity thì rule sau thắng, nên không sửa dòng nào ở trên. Xoá trọn
+     khối này là về lại greige.
+
+     TIỀN THÂN: khối này là bản NET-A-PORTER (18/08 sáng) được VIẾT LẠI, không
+     phải append thêm — 2 skin xếp chồng thì thành cả trăm dòng CSS chết. Phần
+     giữ lại từ NAP (2 site cùng nền tảng, cùng ngôn ngữ phẳng): bảng token
+     trắng/đen/trung tính, tắt bóng, panel mega trắng, nav một weight + gạch
+     chân đánh dấu mục đang chọn, "Sale" đỏ.
+     Phần VIẾT LẠI cho MR PORTER:
+       · header TRẮNG chữ đen + một DẢI ĐEN ĐẶC ~8px ngăn hàng tiện ích với
+         hàng danh mục (NAP thì tô đen cả header)
+       · MẶT CHỮ SERIF toàn site (NAP dùng sans) — nét nhận dạng số 1
+       · GÓC VUÔNG tuyệt đối
+       · nhãn nhóm mega về gần ĐEN + có VẠCH NGẮN bên dưới (NAP để xám, không vạch)
+       · hàng danh mục CĂN GIỮA
+     Bảng màu: trắng #fff · đen #000 · mực #1a1a1a · xám chữ #767676 ·
+     viền #e0e0e0 · xám thanh thông báo #d9d9d9 · đỏ sale #d81e05. */
+
+  /* ── 1. Token: bỏ greige ấm, về trung tính lạnh ──
+     MỌI selector từ đây tới hết khối đều gắn tiền tố `html.skin-mp` để BỘ DA BẬT
+     TẮT ĐƯỢC từ popover Cài đặt (yêu cầu user 18/08/2026): gỡ class là rơi về
+     khối NEUTRAL SKIN greige phía trên, không phải xoá CSS.
+     Dùng `html.skin-mp` thay cho `:root` — cùng trỏ vào <html> nhưng specificity
+     (0,1,1) cao hơn `:root` (0,1,0) nên vẫn thắng khối greige. */
+  html.skin-mp {
+    --unofficial-body-background: #ffffff;
+    --general-background: #ffffff;
+    --general-background-blur: #ffffffe5;
+    --general-secondary: #f4f4f4;
+    --general-muted: #f4f4f4;
+    --unofficial-accent-0: #f7f7f7;
+    --unofficial-border-0: #f0f0f0;
+    --unofficial-secondary-hover: #f7f7f7;
+    --unofficial-secondary-active: #ebebeb;
+    --unofficial-accent-2: #ebebeb;
+    --popover-popover: #000000;
+    --popover-popover-foreground: #ffffff;
+    /* mực: NAP dùng đen thật cho nhãn/nút, #1a1a1a cho chữ chạy */
+    --general-foreground: #1a1a1a;
+    --general-primary: #000000;
+    --general-primary-foreground: #ffffff;
+    --general-primary-hover: #262626;
+    --general-primary-active: #1a1a1a;
+    --general-secondary-foreground: #1a1a1a;
+    --unofficial-foreground-alt: #1a1a1a;
+    --unofficial-foreground-alt-2: #333333;
+    --general-body-text: #1a1a1a;
+    --unofficial-ghost-foreground: #333333;
+    --unofficial-mid-alt: #4d4d4d;
+    /* #767676 = 4.54:1 trên trắng, vẫn đạt AA cho chữ 14+ */
+    --general-muted-foreground: #767676;
+    --unofficial-mid-deprecated: #767676;
+    --unofficial-contrast: #000000;
+    --general-border: #e0e0e0;
+    --unofficial-border-1: #ebebeb;
+    --unofficial-border-3: #d9d9d9;
+    --unofficial-border-4: #a6a6a6;
+    --unofficial-border-5: #767676;
+    --unofficial-accent: #000000;
+    --unofficial-accent-foreground: #ffffff;
+    --unofficial-accent-3: #d9d9d9;
+    --unofficial-ghost-hover: rgba(0,0,0,.05);
+    --unofficial-outline-hover: rgba(0,0,0,.04);
+    --unofficial-outline-active: rgba(0,0,0,.06);
+    /* đỏ sale NAP — kéo cả badge -% và giá sale theo, không phải sửa markup */
+    --general-destructive: #d81e05;
+    --unofficial-destructive-foreground: #d81e05;
+    --unofficial-destructive-subtle: #fdecea;
+    --unofficial-destructive-border: #f0a79c;
+    --unofficial-destructive-active: #b81904;
+    --general-success: #2e7d4f;
+    --general-warning: #8a6100;
+    --general-info: #2f6fa8;
+    --focus-ring: #767676;
+    --focus-ring-error: #d81e05;
+    --btn-focus-ring: #767676;
+    --surface-dark: #000000;
+    --unofficial-backdrop: rgba(0,0,0,.5);
+  }
+  html.skin-mp.theme-dplus { --unofficial-accent: #000; --general-muted-foreground: #595959; --focus-ring: #595959; }
+
+  /* ── 2. Nền trang phẳng tuyệt đối: gỡ 2 vệt sáng ấm của khối greige ── */
+  html.skin-mp body { background-image: none; }
+
+  /* ── 3. Bóng: NAP phẳng, viền lo việc tách mặt phẳng ──
+     Khối greige phía trên đã khai bóng cho 10 mặt nên phải tắt đúng từng cái
+     (specificity bằng nhau, rule sau thắng). */
+  html.skin-mp #settingsFab, html.skin-mp #topFab, html.skin-mp #topFab:hover,
+  html.skin-mp #settingsPanel .sp-card, html.skin-mp #infoSheet .is-panel,
+  html.skin-mp .dk-modal, html.skin-mp #filterSheet .fs-panel,
+  html.skin-mp #cookieBar, html.skin-mp #cookiePrefs .cp-panel,
+  html.skin-mp #dkSearchLayer .ds-sheet,
+  html.skin-mp .dk-mega, html.skin-mp .bg-card[data-product]:hover { box-shadow: none; }
+  html.skin-mp #cookieBar, html.skin-mp #cookiePrefs .cp-panel,
+  html.skin-mp .dk-modal { border: 1px solid var(--general-border); }
+
+  /* ── 4. HEADER TRẮNG + DẢI ĐEN NGĂN ──
+     Đọc từ ảnh: hàng tiện ích (cờ quốc gia · wordmark giữa · Search/Rewards/
+     icon phải) nền TRẮNG chữ đen → một DẢI ĐEN ĐẶC ~8px chạy hết bề ngang →
+     hàng danh mục cũng trắng chữ đen, kết bằng 1 hairline xám. Dải đen chính là
+     chi tiết nhận dạng, nó THAY cho việc tô đen cả header như NAP.
+     Vì header về trắng nên đã GỠ HẲN 3 nhóm rule của bản NAP: hạ biến màu trong
+     .navbar, invert logo, và tô lại mặt nạ gradient 2 đầu thanh cuộn (gradient
+     gốc vốn tô bằng nền trang trắng — nay lại đúng). Kéo theo: mục 6 không còn
+     phải trả lại bộ biến sáng cho .dk-mega. */
+  /* `> .glass-95:not(.dk-sub)` = ĐÚNG hàng tiện ích: cả nó và .dk-sub đều là con
+     TRỰC TIẾP của .navbar và đều mang class glass-95, thiếu :not() là dải đen
+     mọc thêm dưới hàng danh mục.
+     `.navbar.glass-95` (không phải descendant) là header rút gọn của
+     checkout/hoàn tất — ảnh giỏ hàng MR PORTER vẫn có dải đen nên áp luôn. */
+  html.skin-mp .navbar.glass-95, html.skin-mp .navbar > .glass-95,
+  html.skin-mp .navbar .dk-sub { background: #fff; }
+  /* DẢI ĐEN 8px giữa 2 hàng header ĐÃ BỎ (yêu cầu user 18/08/2026) — chỉ còn 1
+     hairline xám dưới hàng danh mục.
+     Bỏ nó KÉO THEO việc bỏ luôn 3 offset sticky đã cộng bù 8px: dải đen từng làm
+     header cao thêm 8px nên thanh bộ lọc PLP tuột 9px xuống dưới header, phải
+     đẩy `#plpFilterAnchor` 112 -> 121, `.dk-policy-aside` 128 -> 136,
+     `.dk-sticky-info/.dk-sticky-side` 136 -> 144. Nay header về chiều cao gốc thì
+     3 giá trị gốc lại đúng — GIỮ nguyên số của khối base, không khai lại ở đây.
+     CÒN ĐÚNG 1px phải bù: hairline dưới .dk-sub là của riêng bộ da này, đo được
+     thanh bộ lọc PLP ghim 118 trong khi đáy header 119 -> tuột 1px. Bù ở đây,
+     KHÔNG sửa số của khối base — tắt bộ da là 112 gốc lại đúng vì hết hairline. */
+  html.skin-mp .navbar .dk-sub { border-bottom: 1px solid var(--general-border); }
+  html.skin-mp #plpFilterAnchor { top: 113px; }             /* 112 + 1 (hairline) */
+  /* Nav MỘT weight, mục đang chọn đánh dấu bằng gạch chân (mục 5) chứ không đổi
+     độ đậm — MR PORTER giống NAP ở điểm này. Đè 2 rule font-weight của khối gốc. */
+  html.skin-mp .navbar .dk-dept, html.skin-mp .navbar .dk-dept[aria-current],
+  html.skin-mp .navbar .dk-nav-link, html.skin-mp .navbar .dk-nav-link[aria-current] { font-weight: 400; }
+  /* Nav MỘT MỰC ĐẬM: trong ảnh mọi nhãn nav đều gần đen đều nhau, phân biệt
+     trạng thái bằng gạch chân chứ không bằng độ mờ. Khối gốc dùng thang mực 3
+     bậc (nghỉ #767676 → hover #1a1a1a → đang chọn #000) nên lúc nghỉ chữ xám,
+     lệch hẳn ảnh — đè cả 3 state về gần đen. Nhãn hàng tiện ích (ngôn ngữ, danh
+     sách cửa hàng) cũng vậy: "Search"/"Rewards" của họ đều đen. */
+  html.skin-mp .navbar .dk-dept, html.skin-mp .navbar .dk-nav-link:not(.text-destructive),
+  html.skin-mp .navbar .text-mid-alt { color: #1a1a1a; }
+  html.skin-mp .navbar .dk-dept:hover, html.skin-mp .navbar .dk-nav-link:not(.text-destructive):hover,
+  html.skin-mp .navbar .dk-dept[aria-current], html.skin-mp .navbar .dk-nav-link[aria-current] { color: #000; }
+  /* Thang chữ 2 tầng nav (yêu cầu user 18/08/2026, tham chiếu mrporter.com):
+       hàng dept (Nam · Nữ · Làm đẹp)  16/24  — cấp trên
+       hàng SUBMENU (danh mục)         14/20  — cấp dưới, hạ từ 16 xuống
+     Lệch nhau đúng 1 nấc thang chữ nên đọc ra ngay cái nào là cấp trên; trước đó
+     cả 2 tầng cùng 16 (bản NAP) thì 2 hàng đọc ra ngang cấp.
+     Khai TƯỜNG MINH cả 2 dòng dù 14/20 trùng giá trị trong markup — khối skin này
+     là nơi ghi quyết định thang chữ của header, đọc 1 chỗ ra cả 2 tầng.
+     14 và 16 đều nằm trong thang 12/14/16/18/24/32/48. */
+  html.skin-mp .navbar .dk-dept     { font-size: 16px; line-height: 24px; }
+  html.skin-mp .navbar .dk-nav-link { font-size: 14px; line-height: 20px; }
+  /* Hàng danh mục CĂN TRÁI (yêu cầu user 18/08/2026) — bỏ `justify-content: safe
+     center` từng dùng để bắt chước MR PORTER. Căn trái là mặc định của khối base
+     nên không cần khai gì ở đây; giữ comment để lần sau không ai đặt lại. */
+
+  /* ── 5. Thanh thông báo trên cùng + gạch chân mục đang chọn ──
+     Bám vào #promoSlider bằng :has() vì thẻ bọc không có class/id riêng, và nền
+     của nó là inline style var(--surface-dark) -> cần !important.
+     KHÔNG hạ token --surface-dark: token đó còn tô thẻ "mặt tối lớn" ở màn khác.
+     #d9d9d9 = xám của MR PORTER, đậm hơn #ebebeb bản NAP. */
+  html.skin-mp .navbar div:has(> #promoSlider) { background: #d9d9d9 !important; }
+  html.skin-mp #promoSlider span { color: #1a1a1a; }
+  /* Gạch chân 2px dưới mục đang chọn / đang mở panel — đặt trên .dk-nav-item
+     (cao hết thanh 52px) nên vạch nằm sát đáy hàng danh mục, ngay trên hairline.
+     ĐEN (bản NAP trắng vì header đen). left/right 16px = px-4 của nút để vạch
+     dài đúng bằng chữ, tự co theo nhãn. */
+  html.skin-mp .navbar .dk-nav-item { position: relative; }
+  html.skin-mp .navbar .dk-nav-item::after {
+    content: ''; position: absolute; left: 16px; right: 16px; bottom: 0; height: 2px;
+    background: #000; opacity: 0; transition: opacity .15s ease;
+  }
+  html.skin-mp .navbar .dk-nav-item.on::after,
+  html.skin-mp .navbar .dk-nav-item:has([aria-current])::after { opacity: 1; }
+  html.skin-mp .navbar .dk-nav-item:has(.text-destructive)::after { background: var(--general-destructive); }
+
+  /* ── 6. MEGA PANEL trắng, phẳng, nhịp thoáng ──
+     Không cần trả lại biến màu cho panel nữa (mục 4 không còn đổi màu .navbar). */
+  html.skin-mp .dk-mega { background: #fff; border-bottom: 1px solid #e0e0e0; }
+  /* Nhịp dọc: panel cao thoáng, các mục trong cột giãn ra ~34px/dòng */
+  html.skin-mp .dk-mega > div { padding-top: 40px; padding-bottom: 48px; }
+  html.skin-mp .dk-mega-cols > div { gap: 14px; }
+  /* Nhãn nhóm + VẠCH NGẮN bên dưới — "SHOP BY CATEGORY" / "SHOP BY SPORT" trong
+     ảnh đều có một vạch ~32px×1px nằm giữa nhãn và danh sách. Đây là chi tiết
+     MR PORTER có mà NAP không có (NAP chỉ có nhãn xám trơn).
+     Màu về gần ĐEN #1a1a1a = đúng chốt 18/08 "color Secondary" của bảng màu này
+     (bản NAP cố ý để xám, nay không cần lệch nữa). */
+  html.skin-mp .dk-mega-cols > div > p { color: #1a1a1a; font-weight: 500; position: relative; padding-bottom: 26px; }
+  html.skin-mp .dk-mega-cols > div > p::after {
+    content: ''; position: absolute; left: 0; bottom: 12px; width: 32px; height: 1px; background: #1a1a1a;
+  }
+  /* Kẻ dọc tách khối danh mục khỏi ảnh editorial (ảnh MR PORTER có đúng 1 kẻ dọc
+     cùng kiểu, chạy hết chiều cao khối nội dung) */
+  html.skin-mp .dk-mega-teaser { border-left: 1px solid #e0e0e0; padding-left: 40px; }
+
+  /* ── 7. MẶT CHỮ SERIF — nét nhận dạng số 1 của MR PORTER ──
+     Cả site họ chạy serif: nav, tiêu đề, tên sản phẩm, chữ chạy, cả nhãn nhỏ.
+     Chọn Lora (Google Fonts): serif transitional, tương phản vừa, chân có bracket,
+     x-height cao nên còn đọc được ở 12-14px — gần nhất với mặt chữ trong ảnh
+     trong số các face tải miễn phí được. KHÔNG phải font thật của MR PORTER
+     (họ dùng face riêng, không phát hành công khai).
+     Cắm vào ĐÚNG cơ chế đổi phông có sẵn thay vì ép cứng body:
+       · thêm Lora vào <link> Google Fonts + mảng FONTS + currentFont mặc định
+       · `body.font-sans` (0,1,1) thắng utility `.font-sans` (0,1,0) của Tailwind,
+         nhưng vẫn THUA `html.font-override body` (0,2,1) — nên popover Cài đặt
+         đổi sang Montserrat/Inter/Jakarta vẫn ăn, so sánh sans/serif tại chỗ được.
+     Bản mobile KHÔNG có Lora: kéo cửa sổ hẹp để sang index.html thì hash mang
+     font=lora, bên đó `FONTS.find()` không thấy nên bỏ qua và về Montserrat —
+     không lỗi, chỉ là không mang được mặt chữ theo. */
+  html.skin-mp { --font-app: 'Lora', ui-serif, Georgia, 'Times New Roman', serif; }
+  html.skin-mp body.font-sans { font-family: var(--font-app); }
+
+  /* ── 8. GÓC VUÔNG TUYỆT ĐỐI ──
+     MR PORTER không bo góc ở đâu: nút, thẻ, ô nhập, drawer, modal đều vuông.
+     Hạ 5 token radius là xong cả file. KHÔNG chạm --radius-infinite nên badge
+     giỏ hàng, công tắc cookie và toast vẫn tròn. */
+  html.skin-mp { --radius-2: 0px; --radius-4: 0px; --radius-6: 0px; --radius-8: 0px; --radius-10: 0px; }
+  /* .dk-modal khai bo góc bằng SỐ THẬT + !important ở khối gốc nên token không
+     với tới -> phải đè đúng nó. */
+  html.skin-mp .dk-modal { border-radius: 0 !important; }
 </style>
 </head>
 
@@ -1254,6 +1513,15 @@ function menuSheet() {
 ════════════════════════════════════════════════════════════════ */
 const IcoGlobe = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--general-primary)" stroke-width="1.4"><circle cx="12" cy="12" r="9.25"/><path d="M2.75 12h18.5M12 2.75c2.5 2.4 3.75 5.5 3.75 9.25S14.5 18.85 12 21.25C9.5 18.85 8.25 15.75 8.25 12S9.5 5.15 12 2.75Z"/></svg>`;
 const IcoPin = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--general-primary)" stroke-width="1.4"><path d="M12 21.25s-7.25-5.5-7.25-11A7.25 7.25 0 0 1 12 3a7.25 7.25 0 0 1 7.25 7.25c0 5.5-7.25 11-7.25 11Z"/><circle cx="12" cy="10.25" r="2.75"/></svg>`;
+/* IcoFlagVN/EN + dkLangChip: port từ desktop.html 18/08/2026 khi cụm tiện ích của
+   header lấy theo layout bản chính. Nút hiện NGÔN NGỮ SẼ CHUYỂN SANG, không phải
+   ngôn ngữ đang dùng (chốt 17/08/2026): đang tiếng Việt -> cờ Anh + ENG.
+   data-i18n-skip cho nhãn: ENG/VIE là mã, không dịch. */
+const IcoFlagVN = `<svg width="20" height="14" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="20" height="14" rx="1.5" fill="#da251d"/><path d="M10 3.1l1.13 3.47h3.65l-2.95 2.14 1.12 3.47L10 10.03l-2.95 2.15 1.12-3.47-2.95-2.14h3.65z" fill="#ffcd00"/></svg>`;
+const IcoFlagEN = `<svg width="20" height="14" viewBox="0 0 20 14" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="20" height="14" rx="1.5" fill="#012169"/><path d="M0 0l20 14M20 0L0 14" stroke="#fff" stroke-width="2.6"/><path d="M0 0l20 14M20 0L0 14" stroke="#c8102e" stroke-width="1.4"/><path d="M10 0v14M0 7h20" stroke="#fff" stroke-width="4.4"/><path d="M10 0v14M0 7h20" stroke="#c8102e" stroke-width="2.6"/></svg>`;
+const dkLangChip = () => (LANG === 'vi'
+  ? `${IcoFlagEN}<span class="dklang-label" data-i18n-skip>ENG</span>`
+  : `${IcoFlagVN}<span class="dklang-label" data-i18n-skip>VIE</span>`);
 
 /* Cấu hình subheader: label hiển thị + nguồn dữ liệu mega menu */
 /* Hàng dept (tầng nav trên) = 3 NGÀNH HÀNG ngang cấp: Nam · Nữ · Làm đẹp.
@@ -1294,12 +1562,29 @@ function dkNavCats() {
 const dkCatAttrs = (title, crumbs = []) =>
   `data-nav="plp" data-plp-title="${title}"${crumbs.length ? ` data-plp-crumbs="${crumbs.join('|')}"` : ''}`;
 
+/* Một cột nội dung của mega panel — port 2 quyết định 18/08/2026 từ desktop.html:
+
+   1. CẢ PANEL MỘT CỠ 14 (trước: tiêu đề 12, đường dẫn 13 — cả hai ngoài/dưới
+      thang chữ). Phân cấp lo bằng WEIGHT + MÀU, không bằng cỡ chữ:
+        · tiêu đề nhóm  14 MEDIUM uppercase, secondary-foreground #262626
+        · đường dẫn     14 regular, foreground-alt, hover gạch chân
+      UPPERCASE bằng CLASS `uppercase`, KHÔNG gõ hoa vào chuỗi: chuỗi gốc là key
+      i18n ("Nam"/"Nữ"/"Thương hiệu"…), gõ hoa vào là mất bản dịch. Đây là ngoại
+      lệ có chủ ý của quy ước "không dùng uppercase" — chỉ áp cho nhãn nhóm mega.
+
+   2. BỎ HẲN dòng "Tất cả …" — mọi cột vào thẳng danh mục con. Vẫn NHẬN
+      `allLabel`/`allAttrs` và data `.all` còn nguyên: bật lại tốn 1 dòng, và
+      `all` còn được panel menu trượt (.ms-view → headRow) dùng nên KHÔNG được
+      xoá khỏi data.
+
+   Gạch chân khi hover do rule `.dk-mega-grid > div button:hover` lo (xem khối
+   EDITORIAL LAYOUT) — bản này panel là flex-wrap chứ không phải .dk-mega-grid
+   như desktop.html, nên rule đã viết lại cho đúng cây DOM ở đây. */
 function dkMegaCol(title, allLabel, allAttrs, items, itemAttrs) {
   return `
   <div class="flex flex-col gap-2 min-w-[168px]">
-    <p class="text-[12px] font-medium leading-4 tracking-[0.08em] text-muted-foreground pb-1">${title}</p>
-    ${allLabel ? `<button ${allAttrs} class="text-left text-[13px] font-medium leading-5 text-foreground underline underline-offset-2 press">${allLabel}</button>` : ''}
-    ${items.map(it => `<button ${itemAttrs(it)} class="text-left text-[13px] leading-5 text-foreground-alt hover:text-foreground transition-colors press">${it}</button>`).join('')}
+    <p class="text-[14px] font-medium leading-5 tracking-[0.08em] uppercase text-secondary-foreground pb-1">${title}</p>
+    ${items.map(it => `<button ${itemAttrs(it)} class="text-left text-[14px] font-normal leading-5 text-foreground-alt hover:text-foreground transition-colors press">${it}</button>`).join('')}
   </div>`;
 }
 
@@ -1373,13 +1658,15 @@ function dkMegaPanel(item, id) {
   return `
   <div class="dk-mega absolute left-0 right-0 top-full bg-background border-b border-border shadow-xl z-50" data-mega="${id}">
     <div class="max-w-[1440px] mx-auto px-6 py-8 flex gap-14">
-      <!-- flex-wrap: cây Làm đẹp có 8 danh mục, 1 hàng sẽ tràn 1440 -> xuống 2 hàng -->
-      <div class="flex-1 flex flex-wrap gap-x-14 gap-y-8">${cols}</div>
-      <button ${dkCatAttrs(item.label)} class="w-[264px] shrink-0 flex flex-col gap-2 text-left press group">
+      <!-- flex-wrap: cây Làm đẹp có 8 danh mục, 1 hàng sẽ tràn 1440 -> xuống 2 hàng.
+           .dk-mega-cols là HOOK cho rule hover-gạch-chân: bám vào class riêng chứ
+           không bám chuỗi utility (flex-wrap...) kẻo sửa layout là đứt selector. -->
+      <div class="dk-mega-cols flex-1 flex flex-wrap gap-x-14 gap-y-8">${cols}</div>
+      <button ${dkCatAttrs(item.label)} class="dk-mega-teaser w-[264px] shrink-0 flex flex-col gap-2 text-left press group">
         <span class="block w-full overflow-hidden bg-secondary" style="aspect-ratio:264/160">
           <img src="${A}brand-hero.png" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" alt="${item.label}">
         </span>
-        <span class="text-[13px] font-medium leading-5 text-foreground underline underline-offset-2">Bộ sưu tập mới</span>
+        <span class="text-[14px] font-medium leading-5 text-foreground underline underline-offset-2">Bộ sưu tập mới</span>
       </button>
     </div>
   </div>`;
@@ -1450,15 +1737,16 @@ function navBar({ logoOnly = false, plp = false } = {}) {
       <div class="max-w-[1440px] mx-auto h-[60px] px-2 flex items-center">
         <div class="flex-1 flex items-center justify-start">${dept}</div>
         <img src="${A}logo.png" alt="DAFC" class="h-5 w-[93px] object-contain cursor-pointer press shrink-0" data-nav="plp">
+        <!-- Cụm tiện ích LẤY THEO LAYOUT desktop.html (yêu cầu user 18/08/2026):
+             nút TÌM KIẾM dời từ subheader lên đây và đứng ĐẦU cụm · nút ngôn ngữ
+             rút thành CỜ + mã 3 chữ (dkLangChip) · BỎ nút "Danh sách cửa hàng".
+             Khác desktop.html một điểm: bản chính còn ô nhập tìm kiếm đè lên cả
+             hàng nav (#dkNavSearchField, kiểu stradivarius) — bản này giữ cơ chế
+             sẵn có là mở layer tìm kiếm phủ trang (#dkSearchLayer), nên nút chỉ
+             cần gọi __openDkSearch như cũ. -->
         <div class="flex-1 flex items-center justify-end px-0.5">
-          <button data-dklang class="ghost-hover h-9 px-4 rounded-xs flex items-center gap-2 text-[14px] font-medium leading-5 text-mid-alt transition-colors press">
-            <span class="w-4 h-4 flex items-center justify-center [&_svg]:w-4 [&_svg]:h-4">${IcoGlobe}</span>
-            <span class="dklang-label">${LANG === 'vi' ? 'English' : 'Tiếng Việt'}</span>
-          </button>
-          <button data-toast="Danh sách cửa hàng" class="ghost-hover h-9 px-4 rounded-xs flex items-center gap-2 text-[14px] font-medium leading-5 text-mid-alt transition-colors press">
-            <span class="w-4 h-4 flex items-center justify-center [&_svg]:w-4 [&_svg]:h-4">${IcoPin}</span>
-            <span>Danh sách cửa hàng</span>
-          </button>
+          <button id="dkSearchBtn" class="ghost-hover w-11 h-11 rounded-xs flex items-center justify-center press [&_svg]:w-4 [&_svg]:h-4" aria-label="Tìm kiếm">${I.search}</button>
+          <button data-dklang class="ghost-hover h-9 px-3 rounded-xs flex items-center gap-2 text-[14px] font-medium leading-5 text-mid-alt transition-colors press" aria-label="Đổi ngôn ngữ">${dkLangChip()}</button>
           <button class="ghost-hover w-11 h-11 rounded-xs flex items-center justify-center press [&_svg]:w-4 [&_svg]:h-4" data-nav="${ckAuth ? 'account' : 'login'}" aria-label="Tài khoản">${I.user}</button>
           <button data-nav="cart" class="ghost-hover w-11 h-11 rounded-xs flex items-center justify-center press relative [&_svg]:w-4 [&_svg]:h-4" aria-label="Giỏ hàng">
             ${I.bag}
@@ -1494,16 +1782,8 @@ function navBar({ logoOnly = false, plp = false } = {}) {
             <button class="dk-nav-arrow press w-9 h-9 rounded-xs flex items-center justify-center" data-nav-next aria-label="Xem danh mục tiếp">${I.chevR('var(--unofficial-foreground-alt)')}</button>
           </div>
         </nav>
-        <!-- Ô nhập 270px của Figma (2171:12954) đổi thành NÚT: bấm mở layer tìm
-             kiếm đè lên trang (cùng ý đồ với bản mobile — ở đó tìm kiếm là một
-             màn riêng phủ kín). Nút theo dáng Button/Ghost h-36 như mọi nút
-             tiện ích khác trên header, ô nhập thật nằm trong layer. -->
-        <div id="dkSearchWrap" class="shrink-0 px-2">
-          <button id="dkSearchBtn" class="ghost-hover h-9 px-3 rounded-xs flex items-center gap-2 press" aria-label="Tìm kiếm">
-            <span class="w-4 h-4 flex items-center justify-center shrink-0 [&_svg]:w-4 [&_svg]:h-4 opacity-60">${I.search}</span>
-            <span class="text-[14px] font-medium leading-5 text-foreground-alt">Tìm kiếm</span>
-          </button>
-        </div>
+        <!-- Nút tìm kiếm ĐÃ DỜI LÊN hàng nav trên (18/08/2026, yêu cầu user, theo
+             layout desktop.html) — subheader giờ chỉ còn thanh danh mục. -->
       </div>
       <!-- Mega panel: sibling của hàng nav (không nằm trong .dk-nav-strip có
            overflow-x). Vẫn absolute top-full bám .dk-sub nên rơi đúng dưới
@@ -2153,6 +2433,20 @@ const PDP_DATA = {
   },
 };
 
+/* TRẢ GÓP — "Trả trước từ … /tháng · Xem chi tiết" nằm NGAY DƯỚI nút Thêm vào
+   giỏ hàng và CĂN GIỮA (chốt 18/08/2026, yêu cầu user; port từ desktop.html —
+   trước đó khối này nằm sát dưới giá trong header). Áp dụng cho MỌI loại PDP.
+   Chỉ sản phẩm KHÔNG pre-order mới hiện — đặt trước không áp dụng trả góp, nên
+   nhánh preorder của `cta` không gọi hàm này (PDP_DATA.pdp cũng để installment
+   rỗng, 2 lớp chặn cùng chiều).
+   Khối BẮT BUỘC là con trực tiếp của #pdpCta: setCta() tìm nó bằng cách quét
+   [...cta.children] theo chữ "Trả trước" để ẩn khi size chọn đang hết hàng. */
+const payOfferRow = amount => amount ? `
+      <div class="flex items-center justify-center gap-1 pt-2 text-[12px] leading-4">
+        <span class="text-foreground-alt">Trả trước từ <b class="font-medium">${amount}</b>/tháng</span>
+        <button data-toast="Xem chính sách trả góp" class="text-foreground underline press">Xem chi tiết</button>
+      </div>` : '';
+
 function dkScreenPDP(kind) {
   const D = PDP_DATA[kind];
   const P = PRODUCTS[D.idx];
@@ -2168,7 +2462,8 @@ function dkScreenPDP(kind) {
   const cta = P.preorder ? `
       <p class="text-[12px] leading-4 text-secondary-foreground pb-2">Dự kiến giao hàng vào ngày <span class="font-medium">${P.preorder}</span></p>
       <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium leading-6 btn-p press flex items-center justify-center">Đặt trước</button>` : `
-      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium leading-6 btn-p press flex items-center justify-center">Thêm vào giỏ hàng</button>`;
+      <button data-add="pdp" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium leading-6 btn-p press flex items-center justify-center">Thêm vào giỏ hàng</button>
+      ${payOfferRow(D.installment)}`;
 
   return `
   <div class="w-full" data-scroller>
@@ -2197,17 +2492,12 @@ function dkScreenPDP(kind) {
               <h1 class="text-[24px] font-light leading-8 text-foreground">${P.brand}</h1>
               <p class="text-[14px] leading-5 text-foreground-alt">${P.name}</p>
             </div>
-            <div class="flex flex-col gap-2">
-              <div class="flex gap-1.5 items-center">
-                <p class="text-[16px] font-medium leading-6 ${P.off ? 'text-destructive' : 'text-foreground'}">${P.price}</p>
-                ${P.off ? `<span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[14px] leading-5 text-destructive">${P.off}</span>` : ''}
-                ${P.was ? `<p class="text-[14px] leading-5 text-muted-foreground line-through">${P.was}</p>` : ''}
-              </div>
-              ${D.installment ? `
-              <div class="flex items-center gap-1 text-[12px] leading-4">
-                <span class="text-foreground-alt">Trả trước từ <b class="font-medium">${D.installment}</b>/tháng</span>
-                <button data-toast="Xem chính sách trả góp" class="text-foreground underline press">Xem chi tiết</button>
-              </div>` : ''}
+            <!-- Khối giá SẠCH: chỉ con số + badge -% + giá gạch. Dòng trả góp đã
+                 dời xuống ngay dưới nút Thêm vào giỏ hàng (xem payOfferRow). -->
+            <div class="flex gap-1.5 items-center">
+              <p class="text-[16px] font-medium leading-6 ${P.off ? 'text-destructive' : 'text-foreground'}">${P.price}</p>
+              ${P.off ? `<span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[14px] leading-5 text-destructive">${P.off}</span>` : ''}
+              ${P.was ? `<p class="text-[14px] leading-5 text-muted-foreground line-through">${P.was}</p>` : ''}
             </div>
           </div>
 
@@ -6227,8 +6517,9 @@ function wire(root) {
     const to = LANG === 'vi' ? 'en' : 'vi';
     const opt = document.querySelector(`#settingsPanel [data-lang="${to}"]`);
     if (opt) opt.click();
-    const lb = b.querySelector('.dklang-label');
-    if (lb) lb.textContent = LANG === 'vi' ? 'English' : 'Tiếng Việt';
+    /* Nút giờ là CỜ + mã 3 chữ nên phải dựng lại CẢ chip, không chỉ đổi chữ.
+       LANG đã đổi sau khi opt.click() ở trên -> dkLangChip() ra đúng cặp mới. */
+    b.innerHTML = dkLangChip();
   }));
 
   // Đăng nhập: mở từ PLP/PDP -> quay lại đó (giỏ sẽ thành bản thành viên);
@@ -7376,12 +7667,18 @@ document.body.insertAdjacentHTML('beforeend', filterSheet());
 document.body.insertAdjacentHTML('beforeend', menuSheet());
 
 // ── FAB cài đặt: đổi phông chữ ──
+/* Lora thêm 18/08/2026 cho skin MR PORTER và đặt LÊN ĐẦU vì nó là mặt chữ mặc
+   định của bản này — 3 face sans giữ lại để so sánh tại chỗ trong popover Cài đặt.
+   Mặc định thật do CSS cấp (`--font-app` trong khối MR PORTER SKIN, mục 7);
+   `currentFont` ở đây chỉ quyết định dấu tích nào đang sáng, nên 2 chỗ phải khớp
+   nhau kẻo panel tích Montserrat mà trang lại đang chạy serif. */
 const FONTS = [
+  ['lora',       'Lora',              "'Lora', ui-serif, Georgia, 'Times New Roman', serif"],
   ['montserrat', 'Montserrat',        "'Montserrat', ui-sans-serif, system-ui, sans-serif"],
   ['inter',      'Inter',             "'Inter', ui-sans-serif, system-ui, sans-serif"],
   ['jakarta',    'Plus Jakarta Sans', "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif"],
 ];
-let currentFont = 'montserrat';
+let currentFont = 'lora';
 
 /* ── Theme (đổi trong popover Cài đặt, cùng kiểu với phông chữ) ──
    [id, nhãn, class trên <html>, mô tả ngắn]. Class rỗng = mode D mặc định
@@ -7408,6 +7705,41 @@ function applyTheme(id) {
   return t;
 }
 
+/* ── BỘ DA (skin) — đổi cả bảng màu + mặt chữ + khuôn header tại chỗ ──
+   Yêu cầu user 18/08/2026: cần bật/tắt qua lại giữa 2 hướng đang thử trong file
+   này mà không phải mở 2 file.
+   [id, nhãn, class trên <html>, mô tả ngắn, id phông mặc định]
+   class rỗng = bộ da Neutral greige, tức chính khối NEUTRAL SKIN (mặc định của
+   file, không cần class nào).
+   `font` = phông đi kèm bộ da: đổi da thì RESET luôn phông về mặc định của da đó
+   và xoá .font-override, không thì lựa chọn phông cũ của user còn ghim lại và
+   trang ra serif trên bảng màu greige (hoặc ngược lại). */
+const SKINS = [
+  ['editorial', 'Editorial · MR PORTER', 'skin-mp', 'Trắng–đen, serif Lora, góc vuông', 'lora'],
+  ['neutral',   'Neutral · greige',      '',         'Greige ấm, sans Montserrat, góc bo', 'montserrat'],
+];
+let currentSkin = 'editorial';
+/* Cùng khuôn với applyTheme: gỡ mọi class skin rồi gắn class của skin đích. */
+function applySkin(id) {
+  const s = SKINS.find(x => x[0] === id);
+  if (!s) return null;
+  currentSkin = s[0];
+  const html = document.documentElement;
+  SKINS.forEach(x => { if (x[2]) html.classList.remove(x[2]); });
+  if (s[2]) html.classList.add(s[2]);
+  /* Trả phông về mặc định của bộ da: xoá cả class .font-override lẫn biến inline
+     --font-app (2 thứ mà nút chọn phông đặt lên <html>), để `--font-app` lại do
+     CSS của bộ da cấp. */
+  html.classList.remove('font-override');
+  html.style.removeProperty('--font-app');
+  currentFont = s[4];
+  document.querySelectorAll('#settingsPanel [data-font]').forEach(x =>
+    x.querySelector('.fo-tick').classList.toggle('opacity-0', x.dataset.font !== currentFont));
+  document.querySelectorAll('#settingsPanel [data-skin]').forEach(x =>
+    x.querySelector('.sk-tick').classList.toggle('opacity-0', x.dataset.skin !== s[0]));
+  return s;
+}
+
 document.body.insertAdjacentHTML('beforeend', `
   <button id="settingsFab" aria-label="Cài đặt hiển thị">
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -7427,6 +7759,24 @@ document.body.insertAdjacentHTML('beforeend', `
           ${[['vi','Tiếng Việt'],['en','English']].map(([id,label]) => `
             <button data-lang="${id}" class="langopt flex-1 h-8 rounded-full text-[13px] leading-5 transition-colors press ${id===LANG ? 'bg-background text-foreground font-medium shadow-sm' : 'text-muted-foreground'}">${label}</button>`).join('')}
         </div>
+      </div>
+      <div class="h-px bg-border mx-3"></div>
+      <!-- BỘ DA đặt NGAY TRÊN "Giao diện": nó là lựa chọn thô nhất (đổi cả bảng
+           màu, mặt chữ, khuôn header), 2 mục dưới chỉ tinh chỉnh trong bộ da đó. -->
+      <div class="px-3 pt-3 pb-2">
+        <p class="text-[11px] tracking-[0.12em] text-muted-foreground">Bộ da</p>
+      </div>
+      <div id="skinList" class="pb-2">
+        ${SKINS.map(([id, label, cls, note]) => `
+          <button data-skin="${id}" class="themeopt w-full min-h-11 px-3 py-2 flex items-center justify-between gap-3 press">
+            <span class="flex flex-col items-start min-w-0">
+              <span class="text-[14px] leading-5 text-foreground">${label}</span>
+              <span class="text-[11px] leading-4 text-muted-foreground truncate">${note}</span>
+            </span>
+            <span class="sk-tick w-4 h-4 shrink-0 ${id === currentSkin ? '' : 'opacity-0'}">
+              <svg viewBox="0 0 16 16" fill="none"><path d="m3.5 8.5 3 3 6-7" stroke="var(--general-foreground)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </button>`).join('')}
       </div>
       <div class="h-px bg-border mx-3"></div>
       <div class="px-3 pt-3 pb-2">
@@ -7483,6 +7833,15 @@ document.body.insertAdjacentHTML('beforeend', `
       });
       closeP();
       toast(to === 'en' ? 'Switched to English' : 'Đã chuyển sang Tiếng Việt');
+    });
+  });
+
+  panel.querySelectorAll('[data-skin]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const s = applySkin(btn.dataset.skin);
+      if (!s) return;
+      closeP();
+      toast('Bộ da: ' + s[1]);
     });
   });
 
@@ -8520,13 +8879,20 @@ document.body.insertAdjacentHTML('beforeend', `
   </div>
   <div id="cookiePrefs" class="fixed inset-0 z-[220] pointer-events-none" aria-hidden="true">
     <div class="cp-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
-    <div class="cp-panel dk-modal absolute bg-background translate-y-full flex flex-col"
-         style="width:520px" role="dialog" aria-label="Tùy chọn cookies">
-      <div class="h-[52px] px-5 flex items-center justify-between shrink-0" style="border-bottom:1px solid var(--general-border)">
+    <!-- KHÔNG dùng dấu backtick trong comment này: cả khối nằm trong template
+         literal, backtick sẽ đứt string.
+         Bỏ .dk-modal (khuôn modal giữa màn) và KHÔNG khai width/position ở đây:
+         panel đè đúng ô của #cookieBar nên toạ độ · khổ · nền · khung đều lấy từ
+         khối CSS chung của 2 mặt. Class translate-y-full giữ nguyên vì đó là cờ
+         đóng/mở của openMD/closeMD.
+         Padding ngang px-6 = px-6 của thẻ (trước là px-5 cho khổ 520px): panel
+         nằm chồng lên thẻ nên chữ 2 mặt phải thẳng cùng một lề. -->
+    <div class="cp-panel translate-y-full" role="dialog" aria-label="Tùy chọn cookies">
+      <div class="h-[52px] px-6 flex items-center justify-between shrink-0" style="border-bottom:1px solid var(--general-border)">
         <p class="text-[16px] font-medium leading-6 text-foreground">Tùy chọn cookies</p>
         <button data-cp-close class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
       </div>
-      <div class="flex-1 min-h-0 overflow-y-auto px-5 flex flex-col">
+      <div class="flex-1 min-h-0 overflow-y-auto px-6 flex flex-col">
         ${COOKIE_CATS.map(([id, name, desc, locked]) => `
           <div class="flex items-start gap-4 py-4" style="border-bottom:1px solid var(--unofficial-border-0)">
             <div class="flex-1 min-w-0 flex flex-col gap-1">
@@ -8538,10 +8904,15 @@ document.body.insertAdjacentHTML('beforeend', `
                     aria-label="${name}"><i></i></button>
           </div>`).join('')}
       </div>
-      <div class="shrink-0 px-5 py-4 flex justify-end gap-3">
-        <button data-cg-none class="h-11 px-5 rounded-xs border border-border bg-background text-foreground text-[12px] font-medium tracking-wider btn-o press">Từ chối tất cả</button>
-        <button data-cg-all class="h-11 px-5 rounded-xs border border-border bg-background text-foreground text-[12px] font-medium tracking-wider btn-o press">Đồng ý tất cả</button>
-        <button data-cg-save class="h-11 px-6 rounded-xs bg-primary text-primary-foreground text-[12px] font-medium tracking-wider btn-p press">Lưu lựa chọn</button>
+      <!-- 3 nút XẾP DỌC full-width (18/08/2026): panel co từ 520 xuống 420 để đè
+           đúng ô thẻ, một hàng ngang 3 nút không còn vừa (đo ~399px nội dung cho
+           372px chỗ trống). Xếp dọc cũng đúng idiom của chính thẻ nằm sau lưng —
+           cụm nút ở #cookieBar cũng full-width xếp dọc. Nút LƯU lên đầu vì đó là
+           việc duy nhất cần làm ở màn này. -->
+      <div class="shrink-0 px-6 py-4 flex flex-col gap-2">
+        <button data-cg-save class="h-11 w-full rounded-xs bg-primary text-primary-foreground text-[12px] font-medium tracking-wider btn-p press">Lưu lựa chọn</button>
+        <button data-cg-none class="h-11 w-full rounded-xs border border-border bg-background text-foreground text-[12px] font-medium tracking-wider btn-o press">Từ chối tất cả</button>
+        <button data-cg-all class="h-11 w-full rounded-xs border border-border bg-background text-foreground text-[12px] font-medium tracking-wider btn-o press">Đồng ý tất cả</button>
       </div>
     </div>
   </div>`);

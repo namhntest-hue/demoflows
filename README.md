@@ -276,6 +276,33 @@ Bản mobile **không phải sửa**: `#cookieGate` vốn là *một* panel dín
 - **Thẻ KHÔNG bị đóng** khi mở panel (đúng nghĩa "đè lên"): thẻ cao hơn panel 81px nên **hở 81px mép trên**, phần hở nằm dưới backdrop nên bị tối 45%. Muốn sạch hẳn thì gọi `closeBar()` trong `openMD` — 1 dòng, nhưng lúc đó là *thay chỗ* chứ không còn là *đè lên*, cần khách chốt.
 - Backdrop tối + `lockBodyScroll` **giữ nguyên** như modal cũ; chỉ đổi chỗ đứng, không đổi tính chất chặn.
 
+## Bộ da (skin) đổi được tại chỗ — 18/08/2026
+
+`desktop.html` và `desktop-editorial.html` đều có mục **"Bộ da"** trong popover Cài đặt (FAB góc phải), đặt **trên** mục "Giao diện" vì nó là lựa chọn thô nhất — đổi cả bảng màu, mặt chữ và khuôn nav; 2 mục dưới chỉ tinh chỉnh bên trong.
+
+| File | Lựa chọn | class trên `<html>` | Mặc định |
+|---|---|---|---|
+| `desktop.html` | `Mặc định · Grey-Gold` / `Editorial · MR PORTER` | *(không)* / `skin-mp` | **Mặc định** |
+| `desktop-editorial.html` | `Editorial · MR PORTER` / `Neutral · greige` | `skin-mp` / *(không)* | **Editorial** |
+
+**Cơ chế** — giống nhau ở cả 2 file:
+- Khối CSS của bộ da gắn tiền tố `html.skin-mp` cho **mọi** selector. Không có class thì khối **nằm im 100%** — đây là lý do thêm được vào `desktop.html` mà không phải fork.
+- `html.skin-mp` thay cho `:root`: cùng trỏ `<html>` nhưng specificity **(0,1,1) > (0,1,0)** nên thắng bảng token gốc / khối greige.
+- `SKINS` + `applySkin()` dựng đúng khuôn `THEMES` / `applyTheme()` có sẵn.
+- **`applySkin` reset luôn phông**: xoá `.font-override` + biến inline `--font-app` mà nút chọn phông đặt lên `<html>`, rồi set `currentFont` về phông mặc định của bộ da và cập nhật dấu tích. Không làm bước này thì lựa chọn phông cũ còn ghim lại → serif trên bảng màu Grey-Gold (hoặc ngược lại).
+- `desktop-editorial.html` gắn `class="skin-mp"` **thẳng trong markup** `<html>` (không gán bằng JS) để không nháy một nhịp greige lúc trang vừa dựng. `desktop.html` mặc định không class nên không cần.
+- Bộ da **không mang qua bản mobile**: `RESP.watch` chỉ gói `[screen, lang, font, theme]`, mà `index.html` cũng không có khối skin nào. Lora cũng chỉ có ở 2 file desktop — sang mobile thì `FONTS.find()` không thấy `lora` nên bỏ qua, về Montserrat (không lỗi).
+
+**Port sang `desktop.html` — chỉ chép những gì file này còn thiếu.** 4 mục của bản editorial KHÔNG chép lại vì đã có sẵn: tắt bóng (file này "không đổ bóng" từ 17/08) · header trắng (2 thanh kính vốn đã trắng — bản kia phải tô lại vì từng thử header đen NET-A-PORTER) · dải đen giữa 2 hàng header (user đã bỏ) · hairline đáy `.dk-sub` (file này đã có 1 hairline ở đáy cả khối qua `.navbar::after`) — **nhờ đó KHÔNG phải bù offset sticky nào**, đo lại thanh bộ lọc PLP vẫn khít 0px (112 = 112).
+
+Hai khác biệt phải xử lý khi port:
+1. **Selector mega panel**: `desktop.html` là **lưới** `.dk-mega-grid` (4 cột), `desktop-editorial.html` là flex-wrap `.dk-mega-cols`.
+2. **Thang mực hover 2 chiều của thanh nav (chốt 17/08) được GIỮ NGUYÊN** ở `desktop.html` — không đè màu nav như bản editorial. Màu nghỉ của `.dk-nav-link` vốn đã bind `--general-secondary-foreground`, mà token đó trong bảng MR PORTER = `#1a1a1a`, nên **tự ra gần đen** không cần rule nào. Bản editorial phải đè vì thang mực bên đó là 3 bậc, màu nghỉ `#767676` xám hẳn so với ảnh.
+
+**Đã đo** (`desktop.html`, tắt transition trước khi đo): vòng tròn `mặc định → MR PORTER → mặc định` trả đúng về chỗ cũ ở cả `--general-border` (`#e5e5e5` ↔ `#e0e0e0`), `--radius-2` (`2px` ↔ `0px`), `--general-destructive` (`#d62845` ↔ `#d81e05`), mặt chữ (Montserrat ↔ Lora), nền thanh thông báo (`#262626` ↔ `#d9d9d9`), cỡ hàng submenu (16 ↔ 14); dấu tích của cả 2 mục (bộ da + phông) khớp. Bật bộ da: nav link `#1a1a1a`/14px, gạch chân đen 2px, mega panel trắng pad 40/48, nhãn nhóm `#1a1a1a` uppercase Lora + vạch 32×1px, kẻ dọc trước ảnh teaser. **Quét tương phản 10 màn** (ngưỡng 3:1): **0 vi phạm**. Console sạch trên tab mới, không tràn ngang (1425/1440).
+
+> **Bẫy khi đo** (đã dính 2 lần): pane Browser ẩn thì trang không vẽ frame nên **transition CSS đứng yên giữa đường** — `getComputedStyle` trả giá trị CŨ. Đổi bộ da rồi đo màu nav ra `#262626` (giá trị cũ) trong khi biến đã là `#1a1a1a`. Phải chèn `*, *::before, *::after { transition: none !important }` trước khi đo; riêng `*` KHÔNG khớp pseudo-element nên thiếu `*::after` là đo gạch chân ra `opacity: 0` dù rule đúng.
+
 ## Back từ PDP về PLP giữ nguyên vị trí cuộn (17/08/2026, CẢ 2 BẢN)
 
 Yêu cầu user. Trước đó `go()` luôn `window.scrollTo(0, 0)` nên back từ PDP là văng lên đầu danh sách, phải cuộn lại từ đầu để tìm sản phẩm vừa xem.
@@ -448,7 +475,7 @@ Khối **buộc phải là con trực tiếp** của `#pdpCta`: `setCta()` ở c
 
 Số tiền là **data demo lấy từ Figma**, không suy từ giá: `1.301.000 ₫` cho SP#2, `742.000 ₫` cho SP#3–SP#6. Hai file giữ **đúng cùng bộ số**; đổi thì sửa cả `INSTALLMENT` (mobile) lẫn `PDP_DATA` (desktop). Kèm 3 entry i18n `Trả trước từ` · `/tháng` · `Xem chính sách trả góp` (mobile trước đó đã dọn, nay thêm lại).
 
-> **Chưa đồng bộ**: `desktop-neutral.html` và `desktop-editorial.html` vẫn để khối này ở header cũ.
+> **Đồng bộ**: `desktop-editorial.html` đã port 18/08/2026 (xem section bản editorial). `desktop-neutral.html` **vẫn để khối này ở header cũ**.
 
 ## Mô tả sản phẩm — data thật từ DAFC
 
@@ -673,15 +700,33 @@ Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI
   - 2 cột thương hiệu không có tiêu đề chừa **đúng khối tiêu đề rỗng** (`<p aria-hidden>&nbsp;</p>` cùng class) thay cho `pt-6` áng chừng — cả 3 cột giờ có dòng chữ đầu cùng ở y=232, và sửa nhịp 1 chỗ thì cả 2 nhánh đi theo.
   - **Lưới 4 cột đều nhau**: `.dk-mega-grid` = `repeat(4, minmax(0,1fr))` gap 64 — **3 cột nội dung + ảnh ghim cứng ở cột 4** (`.dk-mega-teaser { grid-column: 4 }`). Trước đó cột nội dung là flex-wrap tự co (`min-w-[168px]`) còn ảnh cố định 264px, nên mở "Túi xách" (2 nhóm) và "Thương hiệu" (4 cột) ra 2 lưới lệch hẳn nhau. Mục ít nhóm hơn thì **bỏ trống cột 3**, không kéo giãn. Đo ở 1440: 4 cột × 302px; ở 1024: 4 × 198px, không tràn, không vỡ chữ. `col-start-4` không có trong `tailwind.css` đã build nên khai tay trong `<style>`.
   - **Thương hiệu chia đều 3 cột** (9/8/8): cột 1 mang luôn tiêu đề + "Tất cả thương hiệu", 2 cột sau `pt-6` cho thẳng hàng. Bản cũ là 1 cột tiêu đề + 3 cột chữ = 4 cột, cộng ảnh thành 5 → không vừa lưới.
-  - **Dòng "Tất cả + &lt;danh mục&gt;" hết đậm, hết gạch chân** (yêu cầu user cùng ngày) — dùng đúng kiểu chữ của các mục còn lại (14px, `text-foreground-alt`, hover đậm màu). Nó cũng chỉ là một đường dẫn danh mục; đậm + gạch chân làm nó hút mắt hơn cả tên nhóm phía trên. Underline duy nhất còn lại trong panel là **chú thích dưới ảnh teaser** ("Bộ sưu tập mới") — giữ vì đó là CTA của ảnh, muốn bỏ thì nói.
+  - ~~**Dòng "Tất cả + &lt;danh mục&gt;" hết đậm, hết gạch chân** (17/08/2026) — dùng đúng kiểu chữ của các mục còn lại.~~ → **Dòng này ĐÃ BỎ HẲN 18/08/2026**, xem ngay dưới. Underline duy nhất còn lại trong panel là **chú thích dưới ảnh teaser** ("Bộ sưu tập mới") — giữ vì đó là CTA của ảnh, muốn bỏ thì nói.
+  - **BỎ HẲN dòng "Tất cả …" khỏi mega panel (chốt 18/08/2026, yêu cầu user)**: mọi cột giờ vào thẳng danh mục con, không còn dòng dẫn cấp trên. Xoá đúng 1 dòng render trong `dkMegaCol()`.
+    - **Data `all` GIỮ NGUYÊN** (`MENU_DATA[].cats[][1].all`, `MENU_BRAND_SUB.all`) và `dkMegaCol` vẫn nhận `allLabel`/`allAttrs` — bật lại tốn 1 dòng. Quan trọng hơn: `all` **vẫn đang được panel menu trượt dùng** (`.ms-view` → `headRow(menuSub.all, …)`), xoá khỏi data là vỡ chỗ đó. Cùng lối với cột `desc` của `COOKIE_CATS`: giữ data, không render.
+    - **Panel menu trượt `.ms-view` KHÔNG đụng** — user chỉ định "trong dk-mega". Menu đó vẫn có dòng "Tất cả …" ở đầu mỗi submenu.
+    - **Không mất đường đi nào**: nút danh mục ở subheader đã trỏ tới PLP cấp đó, ảnh teaser cột 4 cũng trỏ về `item.label`. Chỗ *hơi* hụt: cột "Nam"/"Nữ" trong panel không còn lối riêng vào "tất cả hàng mới của giới tính đó" (tiêu đề cột là `<p>`, không bấm được) — vào bằng subheader thì ra PLP cấp danh mục, không tách giới tính. Muốn giữ lối đó thì cho tiêu đề cột bấm được.
+    - Đo lại đủ **21 panel** (Nam 6 · Nữ 6 · Làm đẹp 9): **0 đường dẫn nào bắt đầu bằng "Tất cả"**. Số mục Nam 98 → **87**. Chiều cao panel co lại: 360/432/360/324/360/468 → **300/364/300/280/300/396**; cơ chế chạy chiều cao khi đổi mục đọc số đo trực tiếp nên không phải sửa gì.
+    - **Cột thẳng hàng vẫn nguyên**: dòng chữ đầu của mọi cột trong cả 6 panel Nam đều ở `top = 236` — khối tiêu đề rỗng (`<p aria-hidden>&nbsp;</p>`) vẫn làm đúng việc cho 2 cột thương hiệu không tiêu đề. Panel thương hiệu nay 9/8/8 mục, 3 cột thẳng hàng.
   - **Cỡ chữ nav lên 16, tiêu đề cột mega lên 14 (17/08/2026, yêu cầu user)**: hàng ngành hàng `.dk-dept` **16/24** · danh mục subheader `.dk-nav-link` **16/24** · 98 mục trong mega panel **16/24** · tiêu đề cột mute trong mega **14/20** (trước 12). Vẫn nằm trong thang text style. Đo sau khi tăng: hàng nav vẫn cao 60, subheader 52, không nút nào vỡ chữ ở 1440 lẫn 1024; ngành "Làm đẹp" 11 mục thì thanh danh mục tràn (1567 > 1409) và **2 mũi tên trượt tự hiện** như thiết kế, trang không tràn ngang.
-  - **Chưa tăng** (chờ ý anh/chị): nút ngôn ngữ `VIE/ENG` và chú thích dưới ảnh teaser vẫn 14 — đó là nút tiện ích và caption, không phải mục menu.
-  - **Tiêu đề nhóm mute trong mega: UPPERCASE + weight regular** (17/08/2026, yêu cầu user) — 14/20, `tracking-[0.08em]`, `font-normal`. Viết hoa bằng **class `uppercase`, KHÔNG gõ hoa vào chuỗi**: chuỗi gốc là key i18n ("Nam"/"Nữ"/"Thương hiệu"…), gõ hoa là mất bản dịch. Đây là **ngoại lệ có chủ ý** của quy ước "không dùng UPPERCASE" — chỉ áp cho nhãn nhóm trong mega panel.
+    - ⚠️ **Phần "98 mục trong mega panel 16/24" ĐÃ BỊ ĐÈ ngày 18/08/2026** — xem gạch đầu dòng ngay dưới. Hai hàng nav (`.dk-dept`, `.dk-nav-link`) vẫn **16/24** như mục này ghi.
+  - **Chưa tăng** (chờ ý anh/chị): nút ngôn ngữ `VIE/ENG` vẫn 14 — đó là nút tiện ích, không phải mục menu. (Chú thích ảnh teaser cũng 14, nay đúng bằng cả panel.)
+  - **CẢ MEGA PANEL MỘT CỠ 14 (chốt 18/08/2026, yêu cầu user)** — đè phần "mục mega lên 16" của quyết định 17/08. Toàn bộ chữ **hiện ra khi hover** vào subheader giờ cùng cỡ 14; phân cấp chuyển sang lo bằng **weight + màu**, không bằng cỡ chữ:
+
+    | | Trước (17/08) | Nay (18/08) |
+    |---|---|---|
+    | Tiêu đề nhóm | 14/20 regular, muted `#737373` | **14/20 medium, `text-secondary-foreground` #262626** |
+    | Đường dẫn danh mục (98 mục) | 16/24 regular, `#404040` | **14/20 regular, `#404040`** (giữ màu) |
+    | Nhãn dưới ảnh teaser | 14/20 medium | không đổi — nay đúng bằng cả panel |
+
+    Cả 3 đều dùng class sẵn có trong `tailwind.css` đã build → **không phải rebuild**. Tiêu đề giữ `tracking-[0.08em]` (chữ hoa cần thoáng). Sửa đúng 2 dòng trong `dkMegaCol()`. **Không đụng 2 hàng nav** — `.dk-dept` và `.dk-nav-link` vẫn 16/24 medium, vì đó là thanh luôn hiện chứ không phải nội dung xổ ra khi hover.
+
+    Đo `getComputedStyle` trên 3 panel đầu: tiêu đề `14px / 500 / uppercase / rgb(38,38,38) / tracking 1.12px`; **toàn bộ 16+18+13 đường dẫn đều `14px / 400`**; mọi phần tử còn ở 16px đều là **div/span bọc không có text node** (thừa hưởng cỡ body, không vẽ chữ nào).
+  - **Tiêu đề nhóm trong mega: UPPERCASE** (17/08/2026, yêu cầu user) — `tracking-[0.08em]`, viết hoa bằng **class `uppercase`, KHÔNG gõ hoa vào chuỗi**: chuỗi gốc là key i18n ("Nam"/"Nữ"/"Thương hiệu"…), gõ hoa là mất bản dịch (đã kiểm lại 18/08: DOM giữ `Nam`, sang EN ra `Men`, về VN lại `Nam`). Đây là **ngoại lệ có chủ ý** của quy ước "không dùng UPPERCASE" — chỉ áp cho nhãn nhóm trong mega panel. Weight regular của bản 17/08 đã đổi sang **medium** ngày 18/08 (xem trên).
   - **Thang màu subheader đổi cơ chế** (17/08/2026, yêu cầu user): nghỉ = `--general-secondary-foreground` **#262626** (trước #737373, phải hover mới đọc rõ); **hover vào thanh thì mục đang trỏ ĐẬM LÊN #0a0a0a, mọi mục còn lại tụt về #737373** — hover ăn 2 chiều một lúc, cách nhau 3 bậc mực nên nhìn ra ngay đang trỏ vào đâu. Loại trừ **mục đang xem** (`aria-current` giữ #0a0a0a) và **"Khuyến mãi"** (giữ đỏ ở mọi state). Hàng ngành hàng phía trên KHÔNG đổi, vẫn thang mực 3 bậc cũ.
     - **`:not(:hover)` trong rule làm mờ là bắt buộc.** Bản đầu viết `.dk-nav-strip:hover .dk-nav-link:not(.text-destructive):not([aria-current])` (specificity **5**) còn rule cho mục đang trỏ là `.dk-nav-strip .dk-nav-link:not(...):hover` (specificity **4**) → rule mờ thắng luôn cả mục đang trỏ, hover vào là **cả thanh mờ đều, không mục nào đen lên** (đúng lỗi user báo). Loại thẳng mục đang trỏ ra khỏi rule mờ thì hết phải đấu specificity.
     - **Cách kiểm khi không dựng được `:hover` thật** (Browser pane ẩn): `color` có `transition` nên `getComputedStyle` trả giá trị CŨ nếu transition chưa tick — phải chèn `*{transition:none!important}` trước khi đo, rồi nhân bản 2 rule với `:hover` đổi thành class (giữ nguyên specificity) và gắn class để mô phỏng. Kết quả đo: nghỉ 8 mục #262626 (1 mục đỏ), hover "Túi xách" → #0a0a0a còn 6 mục kia #737373, hover "Quần áo" → đảo lại đúng như vậy.
   - Trước đó chữ trong panel đã về thang text style: mục 14px, tiêu đề cột 12px (bản gốc là 13px — ngoài thang).
-  - **Hover gạch chân — CHỈ TRONG DROPDOWN (17/08/2026, yêu cầu user)**: 98 đường dẫn trong mega panel (`.dk-mega-grid > div button:hover`) gạch chân khi hover, chữ lúc nghỉ vẫn sạch — kiểu `cettire.com/vn`. `text-underline-offset: 2px` cho khớp `underline-offset-2` dùng sẵn trong file. **THANH NAV GIỮ NGUYÊN**: hàng ngành hàng `.dk-dept` và danh mục subheader `.dk-nav-link` chỉ đổi màu theo thang mực 3 bậc, không gạch chân (user chốt lại cùng ngày sau khi thử áp cho cả 3 tầng — quyết định 10/08/2026 bên dưới vẫn nguyên giá trị cho thanh nav). Ảnh teaser không đụng. Bản mobile không có rule này (menu là panel trượt, không có hover).
+  - **Hover gạch chân — CHỈ TRONG DROPDOWN (17/08/2026, yêu cầu user; giữ nguyên sau đợt 18/08)**: 98 đường dẫn trong mega panel (`.dk-mega-grid > div button:hover`) gạch chân khi hover, chữ lúc nghỉ vẫn sạch — kiểu `cettire.com/vn`. Rule bám vào `button` nên **tiêu đề nhóm (thẻ `<p>`) không bị gạch chân** — đã kiểm bằng `matches()`: đường dẫn khớp selector, tiêu đề không. `text-underline-offset: 2px` cho khớp `underline-offset-2` dùng sẵn trong file. **THANH NAV GIỮ NGUYÊN**: hàng ngành hàng `.dk-dept` và danh mục subheader `.dk-nav-link` chỉ đổi màu theo thang mực 3 bậc, không gạch chân (user chốt lại cùng ngày sau khi thử áp cho cả 3 tầng — quyết định 10/08/2026 bên dưới vẫn nguyên giá trị cho thanh nav). Ảnh teaser không đụng. Bản mobile không có rule này (menu là panel trượt, không có hover).
   - **Đổi giữa các mục cho liền mạch kiểu Farfetch (17/08/2026, user chê "chưa mượt")** — 3 nguyên nhân đo được, sửa cả 3:
     1. **Chờ hover-intent 120ms MỖI LẦN đổi mục.** Nay 120ms chỉ còn cho **lần mở đầu** (để lướt ngang thanh menu không nháy panel); panel đang mở thì đổi mục là **đổi ngay** (`openLater` kiểm `isOpen()` trước).
     2. **Panel mới fade từ 0 + trượt 6px trong khi panel cũ fade ra** → nhìn ra một nhịp "tắt rồi bật". Nay lúc đổi mục gắn class `.mega-swap` khoá transition opacity/transform, **nội dung đổi tức thì**, mặt phẳng đứng yên.
@@ -1285,6 +1330,130 @@ Toàn bộ backlog "chờ port" bên dưới đã chạy xong trong một đợt
   brandToggle / strip / toggle 3-4 cột / show more / i18n EN↔VI / theme D-D+
   đều chạy, uppercase = 0. Lỗi 404 duy nhất khi chạy qua http.server là
   `/favicon.ico` — tình trạng sẵn có của cả repo (không trang nào khai favicon).
+
+### Đợt 18/08/2026 — port 4 chỉnh sửa của `desktop.html` + thử skin NET-A-PORTER
+
+**Phần A — port 4 chỉnh sửa (giữ đúng quyết định của bản chính):**
+
+| # | Chỉnh sửa | Ghi chú khi port |
+|---|---|---|
+| 1 | Trả góp xuống dưới CTA, căn giữa | Y hệt `desktop.html`: thêm `payOfferRow()`, gọi ở nhánh không-pre-order của `cta`, xoá khối khỏi header. `setCta()` bản này **đã có sẵn** lookup `payOffer` nên hết chết. |
+| 2 | Panel cookie đè ô thẻ | Cùng cách: bỏ `.dk-modal`, 2 mặt dùng chung khối toạ độ. **Khác bản chính**: fork này còn dùng chữ cookie NGẮN (trước 17/08) nên `max-height` chỉ đặt cho panel, thẻ chưa cần chặn trần. |
+| 3 | Mega panel một cỡ 14 | Fork đang ở 12 (tiêu đề) / 13 (đường dẫn) — cả hai **ngoài thang chữ**. Đưa về 14 medium uppercase (tiêu đề) + 14 regular (đường dẫn), nhãn teaser 13 → 14. Thêm rule hover-gạch-chân, bám hook mới `.dk-mega-cols`. |
+| 4 | Bỏ dòng "Tất cả …" | Y hệt. Data `.all` giữ nguyên (panel menu trượt còn dùng). |
+
+- **Kéo theo (bắt buộc, không phải mở rộng phạm vi)**: footer panel cookie có **3 nút xếp ngang** — panel co 520 → 420 để đè đúng ô thẻ thì một hàng 3 nút không còn vừa (đo ~399px nội dung / 372px chỗ trống). Đổi sang **xếp dọc full-width**, đúng idiom cụm nút của chính thẻ nằm sau lưng, nút **Lưu lựa chọn lên đầu**. (Bản chính đã rút footer còn 1 nút từ 17/08 — fork này chưa port phần nội dung đó nên vẫn 3 nút.)
+- **KHÔNG port**: đợt đổi nội dung cookie 17/08 (chữ bản khách, thang nút, bỏ mô tả nhóm), lưới `.dk-mega-grid` 4 cột, nền kính của mega panel. Fork này cố ý lệch ở đó; port cả sang là viết lại nửa file, không nằm trong yêu cầu.
+- Đo lại: 6 PDP — `pdp` pre-order không có khối trả góp, 5 PDP còn lại đều **căn giữa khít nút, pad-top 8px, header sạch**. Cookie: thẻ `[32,458,420×410]` · panel `[32,279,420×589]` — trùng lề trái, khổ ngang, **đáy 868**; panel ở bản này **cao hơn** thẻ nên **che kín, không hở mép trên** như `desktop.html` (thẻ ở đó cao hơn panel 81px). Mega: **0 dòng "Tất cả"**, mọi đường dẫn 14px/400.
+
+**Phần B — skin NET-A-PORTER** → ⚠ **đã bị VIẾT LẠI thành skin MR PORTER cùng ngày**, xem mục kế tiếp. Phần dưới đây ghi lại bản NAP để so sánh 2 hướng.
+
+Đọc từ ảnh khách gửi (net-a-porter.com/en-us, trang Designers, mega panel mở). Append-only chồng lên khối greige — **xoá trọn khối là về lại neutral**, không dòng nào phía trên bị sửa.
+
+| Mặt | Greige (trước) | NAP (nay) |
+|---|---|---|
+| Nền trang | `#fbfaf7` + 2 vệt radial ấm | `#ffffff`, phẳng tuyệt đối (`background-image: none`) |
+| Thanh thông báo trên cùng | tối `#24201a`, chữ trắng | **sáng `#ebebeb`, chữ `#1a1a1a`** — đảo hẳn |
+| Header (nav + subheader) | kính trắng 95% | **đen đặc `#000`**, chữ + icon trắng |
+| Logo | PNG mực đen | `filter: brightness(0) invert(1)` → trắng |
+| Nav | 14px, 3 bậc mực, đang chọn **đậm 600** | **một weight 400**, đang chọn đánh dấu bằng **gạch chân 2px sát đáy header**. Thang 2 tầng: dept **16/24** · submenu **14/20** (xem dưới) |
+| Sale | `#a03733` | `#d81e05` (kéo cả badge -% và giá sale theo token) |
+| Mega panel | greige + `shadow-xl` | **trắng, không bóng**, kẻ dưới 1px, nhịp dọc 34px/dòng, pad 40/48 |
+| Nhãn nhóm | Secondary `#262626` | **xám `#767676`** (⚠ cố ý lệch chốt 18/08, xem dưới) |
+| Bóng | 10 mặt có bóng ấm | **tắt hết**, viền lo việc tách mặt phẳng |
+
+- **Cơ chế đổi màu icon**: mọi svg trong file tô bằng `var(--general-primary)` / `var(--general-muted-foreground)` → chỉ cần **hạ biến trong `.navbar`**, không sửa svg nào.
+- **`.dk-mega` là con của `.navbar`** nên phải **trả lại bộ biến sáng** cho panel, không thì chữ trắng trên nền trắng.
+- ⚠ **Nhãn nhóm mega để XÁM, cố ý lệch chốt 18/08 "color Secondary"**: ở bảng màu NAP, Secondary là `#1a1a1a` (gần đen), mà NAP để nhãn nhóm xám cho nó lùi hẳn ra sau danh sách. Đây là file thử nghiệm nên ưu tiên giống NAP; về đúng chốt thì **xoá 1 dòng**, markup đã bind sẵn `text-secondary-foreground`.
+- **KHÔNG đổi font**: NAP dùng grotesque riêng + serif cho caption editorial. Thêm 1 webfont serif nữa là quyết định khác (file đã tải 3 font), nên bản này tái hiện *cách hiển thị* (nhãn hoa nhỏ, nhịp thoáng, kẻ mảnh) chứ không đổi mặt chữ.
+
+**2 lỗi tự phát hiện khi kiểm và đã sửa** (cả hai đều là biến màu `.navbar` ăn lan):
+1. **Đường dẫn mega trắng trên nền trắng** — mục 4 tô trực tiếp `.navbar .text-foreground-alt` thành trắng; hạ biến ở `.dk-mega` không cứu được vì đó là rule màu trực tiếp. Sửa bằng 2 rule `.dk-mega .text-foreground-alt/.text-muted-foreground` viết SAU (cùng specificity, sau thắng) — **đừng đảo thứ tự 2 mục đó**.
+2. **Header checkout/hoàn tất trắng mà chữ đã trắng** (dòng "Thanh toán an toàn & bảo mật" mất hút) — biến thể `logoOnly` đặt `.glass-95` **trên chính `.navbar`**, nên selector descendant không khớp. Thêm `.navbar.glass-95`.
+
+- **Quét tương phản tự động 11 màn** (`plp · pdp · pdp2 · cart · checkout · done · order · account · login · privacy · search`, tính contrast ratio từng phần tử có text node so với nền thực tế gần nhất): **0 điểm dưới 2.5:1**. Console sạch trên tab mới.
+
+**Thang chữ 2 tầng nav — hạ submenu về 14 (18/08/2026, yêu cầu user, tham chiếu `mrporter.com`)**
+
+Bản NAP lúc đầu để **cả 2 tầng cùng 16** nên 2 hàng đọc ra ngang cấp. Nay lệch đúng 1 nấc thang chữ:
+
+| Tầng | Selector | Cỡ |
+|---|---|---|
+| Hàng dept — Nam · Nữ · Làm đẹp | `.navbar .dk-dept` | **16/24** |
+| Hàng submenu — danh mục | `.navbar .dk-nav-link` | **14/20** (hạ từ 16) |
+
+- Khai **tường minh cả 2 dòng** trong khối skin dù 14/20 trùng giá trị trong markup — khối này là nơi ghi quyết định thang chữ của header, đọc 1 chỗ ra cả 2 tầng.
+- Đo lại: **cả 3 dept** đều ra `14px / 20px / weight 400`; nút vẫn cao 36, hàng subheader vẫn 52, không nhãn nào vỡ 2 dòng. Gạch chân đang-chọn tự co theo chữ hẹp hơn (nút 135px → vạch 103px = 135 − 2×16 inset).
+- **Tràn thanh cuộn**: `Nam`/`Nữ` (8 mục) **không tràn ở cả 16 lẫn 14** (1262/1262) — hạ cỡ không phải để chữa tràn. `Làm đẹp` (11 mục) vẫn tràn, chỉ đỡ hơn: **1554 → 1403** so với khung 1262, nên **2 mũi tên trượt vẫn hiện** như thiết kế (đo: next hiện, prev ẩn).
+- **Không tra được `mrporter.com`**: site chặn cả browser pane (`Access Denied`, Akamai) lẫn WebFetch (timeout 60s). Nên chỉ áp **đúng con số user yêu cầu**, KHÔNG suy diễn thêm đặc điểm nào của MR PORTER (chữ hoa, tracking, nền sáng/tối…) — cần đối chiếu thì phải có ảnh chụp như lần NAP.
+- Hệ quả cần biết: hàng submenu (14) giờ **cùng cỡ với đường dẫn trong mega panel** (14). Không lẫn nhau vì 2 mặt phẳng khác nhau.
+
+### Skin MR PORTER — viết lại từ bản NAP (18/08/2026, 5 ảnh khách gửi)
+
+Khách gửi 5 ảnh `mrporter.com`: trang chủ · header + mega panel mở · drawer bộ lọc · PDP · giỏ hàng. Khối `NET-A-PORTER SKIN` được **VIẾT LẠI thành `MR PORTER SKIN`**, không append thêm — 2 skin xếp chồng thì thành cả trăm dòng CSS chết. (Lần trước thử `WebFetch` + browser pane vào `mrporter.com` đều bị chặn; nay có ảnh nên dựng được.)
+
+**Giữ lại từ NAP** (2 site cùng nền tảng, cùng ngôn ngữ phẳng): bảng token trắng/đen/trung tính, tắt bóng, panel mega trắng, nav một weight + gạch chân đánh dấu mục đang chọn, "Sale" đỏ `#d81e05`, thanh thông báo sáng.
+
+**Viết lại cho MR PORTER:**
+
+| Mặt | NAP | MR PORTER |
+|---|---|---|
+| Header | **đen đặc**, chữ + icon trắng, logo `invert` | **TRẮNG chữ đen** + **DẢI ĐEN ĐẶC 8px** ngăn hàng tiện ích với hàng danh mục, kết bằng hairline `#e0e0e0`. Logo không filter |
+| Mặt chữ | sans (Montserrat) | **SERIF — nét nhận dạng số 1** |
+| Bo góc | token gốc (2/4/8) | **vuông tuyệt đối** (hạ 5 token radius) |
+| Nav màu | trắng đều | **`#1a1a1a` đều**, hover/đang chọn `#000` — đè thang mực 3 bậc của khối gốc (nghỉ `#767676` nhìn xám hẳn so với ảnh) |
+| Gạch chân | trắng | **đen** |
+| Nhãn nhóm mega | xám `#767676`, không vạch | **`#1a1a1a` + VẠCH NGẮN 32×1px bên dưới** (chi tiết MR PORTER có, NAP không) — nay **đúng chốt "color Secondary"**, không còn cố ý lệch |
+| Hàng danh mục | căn trái | **căn giữa** (`justify-content: safe center`) |
+| Thanh thông báo | `#ebebeb` | `#d9d9d9` (đậm hơn) |
+
+- **Serif = Lora (Google Fonts)** — serif transitional, tương phản vừa, x-height cao nên đọc được ở 12–14px; gần nhất với mặt chữ trong ảnh trong số face tải miễn phí được. **Không phải font thật của MR PORTER** (face riêng, không phát hành).
+  - Cắm vào **đúng cơ chế đổi phông có sẵn**, không ép cứng: thêm vào `<link>` + mảng `FONTS` (đặt đầu) + `currentFont = 'lora'`. `body.font-sans` (0,1,1) thắng utility `.font-sans` (0,1,0) nhưng **thua** `html.font-override body` (0,2,1) → popover Cài đặt vẫn đổi được sang 3 face sans để so sánh tại chỗ.
+  - **Không khai weight 300** cho Lora: dải hợp lệ 400–700, khai 300 thì Google trả 400 thay thế, dễ tưởng `font-light` có tác dụng.
+  - Bản mobile không có Lora → kéo cửa sổ hẹp thì hash mang `font=lora`, `FONTS.find()` bên đó không thấy nên bỏ qua, về Montserrat. Không lỗi, chỉ không mang được mặt chữ theo.
+- **`> .glass-95:not(.dk-sub)`** để dải đen chỉ mọc dưới hàng tiện ích: cả nó và `.dk-sub` đều là con **trực tiếp** của `.navbar` và đều mang class `glass-95`. `.navbar.glass-95` (không phải descendant) là header rút gọn checkout/hoàn tất — ảnh giỏ hàng MR PORTER cũng có dải đen nên áp luôn.
+- **`safe center`** chứ không `center`: ngành Làm đẹp 11 mục làm thanh tràn, `center` khi tràn sẽ đẩy phần đầu ra ngoài vùng cuộn và không cuộn tới được. Trình duyệt không hiểu `safe` thì bỏ cả khai báo → về căn trái, fallback vẫn dùng được. Lưu ý: giữa của **thanh cuộn**, không phải giữa màn — hàng này còn nút Tìm kiếm bên phải (MR PORTER để search ở hàng tiện ích) nên cụm danh mục lệch trái một chút so với ảnh.
+
+**1 regression tự phát hiện và đã sửa** — **dải đen 8px làm lệch mọi offset sticky canh theo đáy header.** Đo được: `#plpFilterAnchor` ghim ở 118 trong khi đáy header xuống 127 → **tuột 9px xuống dưới header**; `desktop.html` canh khít 0px (118 = 118) nên đây là hệ quả trực tiếp của dải đen, không phải lỗi có sẵn. Dịch cả 3 offset:
+
+| Phần tử | Trước | Sau |
+|---|---|---|
+| `#plpFilterAnchor` (thanh bộ lọc PLP) | 112 | **121** = 112 + 8 (dải đen) + 1 (hairline `.dk-sub`) |
+| `.dk-policy-aside` | 128 | **136** |
+| `.dk-sticky-info` / `.dk-sticky-side` | 136 | **144** |
+
+Đo lại sau khi sửa: thanh bộ lọc **0px** (127 = 127, khít như `desktop.html`), 3 mặt sticky còn lại clearance 23–25px (bằng `desktop.html`), không tràn ngang (1425/1440).
+
+- **Quét tương phản 12 màn** (`plp · pdp · pdp2 · pdp6 · cart · checkout · done · order · account · login · privacy · search`, ngưỡng 3:1): **0 điểm vi phạm**. Console sạch trên tab mới. *Lưu ý khi chạy*: quét 12 màn trong MỘT lệnh `javascript_tool` bị timeout 30s (mỗi màn `querySelectorAll('body *')` + `getComputedStyle` rất nặng) — phải khai helper vào `window` rồi chia 3–4 màn mỗi lệnh.
+
+**Đợt sửa tiếp cùng ngày (yêu cầu user) — nav theo `desktop.html` + bỏ dải đen + công tắc bộ da**
+
+*1. Cụm tiện ích header lấy theo layout `desktop.html`* — thứ tự **tìm kiếm → ngôn ngữ → tài khoản → giỏ**:
+- Nút **tìm kiếm dời từ subheader lên hàng nav trên**, thành nút icon 44×44 đứng đầu cụm. Subheader giờ chỉ còn thanh danh mục (gỡ `#dkSearchWrap`, id này không chỗ nào trong JS đọc nên gỡ an toàn).
+- **Bỏ nút "Danh sách cửa hàng"**.
+- Nút ngôn ngữ rút thành **cờ + mã 3 chữ** — port `IcoFlagVN` / `IcoFlagEN` / `dkLangChip()` từ `desktop.html`. Wiring `[data-dklang]` đổi từ "đổi textContent của `.dklang-label`" sang **dựng lại cả chip** (`b.innerHTML = dkLangChip()`), vì giờ có cả cờ.
+- **KHÔNG port** `#dkNavSearchField` (ô nhập tìm kiếm đè lên cả hàng nav, kiểu stradivarius) — nó cần thêm một khối CSS + wiring riêng, mà bản này đã có cơ chế layer tìm kiếm phủ trang (`#dkSearchLayer`) và nút mới gọi đúng `__openDkSearch`. Đã đo: mở/đóng layer từ nút mới đều chạy.
+
+*2. Bỏ dải đen giữa header và subheader* — chỉ còn 1 hairline xám dưới hàng danh mục. Header từ 153 → **145px**. Kéo theo **gỡ luôn 3 offset sticky đã cộng bù 8px** (trả về số gốc của khối base); còn **đúng 1px** phải bù cho cái hairline, và bù **trong khối bộ da** (`html.skin-mp #plpFilterAnchor { top: 113px }`) chứ không sửa số base — tắt bộ da là hết hairline nên 112 gốc lại đúng. Đo cả 2 bộ da: thanh bộ lọc PLP ghim **khít 0px** (editorial 119=119, neutral 118=118).
+
+*3. Subheader căn trái* — gỡ `justify-content: safe center`. Giữ comment tại chỗ để lần sau không ai đặt lại.
+
+*4. Công tắc BỘ DA trong popover Cài đặt* — đổi qua lại Neutral ↔ Editorial tại chỗ, không phải mở 2 file:
+- Toàn bộ khối `MR PORTER SKIN` được **gắn tiền tố `html.skin-mp`** cho MỌI selector. Dùng `html.skin-mp` thay `:root` — cùng trỏ `<html>` nhưng specificity (0,1,1) > `:root` (0,1,0) nên vẫn thắng khối greige. Gỡ class là rơi về `NEUTRAL SKIN`, **không phải xoá CSS**.
+- `<html class="skin-mp">` đặt thẳng trong markup, không gán bằng JS — tránh nháy một nhịp greige lúc trang vừa dựng.
+- `SKINS` + `applySkin()` dựng đúng khuôn `THEMES`/`applyTheme()` sẵn có. Mục **"Bộ da" đặt TRÊN "Giao diện"** trong popover: nó là lựa chọn thô nhất (đổi cả bảng màu + mặt chữ + khuôn header), 2 mục dưới chỉ tinh chỉnh bên trong.
+- **`applySkin` reset luôn phông**: xoá `.font-override` + biến inline `--font-app` mà nút chọn phông đặt lên `<html>`, rồi set `currentFont` về phông mặc định của bộ da (editorial → Lora, neutral → Montserrat) và cập nhật dấu tích. Không làm bước này thì lựa chọn phông cũ còn ghim lại → serif trên bảng màu greige.
+- Đo vòng tròn `editorial → neutral → editorial`: `--unofficial-body-background` `#ffffff` ↔ `#fbfaf7`, `--general-border` `#e0e0e0` ↔ `#e9e6df`, `--radius-2` `0px` ↔ `2px`, `--general-destructive` `#d81e05` ↔ `#a03733`, mặt chữ `Lora` ↔ `Montserrat`, vệt gradient nền tắt/bật, nền hàng nav đặc/kính — **tất cả về đúng vị trí cả 2 chiều**, dấu tích của cả 2 mục (bộ da + phông) khớp.
+- **Quét tương phản 8 màn × 2 bộ da** (`plp · pdp · cart · checkout · account · login · order · privacy`, ngưỡng 3:1): **0 điểm vi phạm**. Console sạch trên tab mới.
+- Bộ da **không mang qua bản mobile**: `RESP.watch` chỉ gói `[screen, lang, font, theme]`. Thêm skin vào hash cũng vô nghĩa vì `index.html` không có khối skin nào.
+
+**Đặc điểm MR PORTER CHƯA lấy — cần khách chốt:**
+1. **Nhãn nhỏ CHỮ HOA + letter-spacing** (`CUSTOMER CARE`, `NEED HELP?`, `BACK IN STOCK`, `ONLY TWO LEFT`, caption ảnh teaser). Đầy trong ảnh nhưng **đụng quy ước "không dùng UPPERCASE"** của chính project — ngoại lệ duy nhất đang cho phép là nhãn nhóm mega. Không tự mở rộng.
+2. **Drawer bộ lọc trượt từ MÉP TRÁI** (ảnh 3) — bản này trượt từ phải theo chốt 17/08 cho sheet chọn ưu đãi.
+3. **PDP**: nút "Add to Wish List" viền dưới CTA, dòng "Premier same-day delivery", khối "VIEW MORE" + đường dẫn danh mục cuối trang.
+4. **Giỏ hàng**: hộp info xanh nhạt "Local taxes may apply", ô nhập mã giảm giá + Apply nằm trong panel tóm tắt, dòng "Sending item from Italy 🇮🇹".
+5. **Footer**: band newsletter xám rồi 3 cột link, và band cross-sell NET-A-PORTER cuối trang.
+- **Lưu ý khi đo**: pane Browser ẩn thì trang không vẽ frame → **transition CSS đứng yên giữa đường**, `getComputedStyle` trả giá trị cũ. Phải chèn `*, *::before, *::after { transition: none !important }` trước khi đo. Riêng `*` **không khớp pseudo-element** — thiếu `*::after` là đo gạch chân nav ra `opacity: 0` dù rule đúng (đã dính đúng bẫy này).
 
 ## Vấn đề tồn đọng / cần quyết định tiếp
 
