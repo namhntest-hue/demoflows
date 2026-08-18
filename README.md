@@ -282,8 +282,9 @@ Bản mobile **không phải sửa**: `#cookieGate` vốn là *một* panel dín
 
 | File | Lựa chọn | class trên `<html>` | Mặc định |
 |---|---|---|---|
-| `desktop.html` | `Mặc định · Grey-Gold` / `Editorial · MR PORTER` | *(không)* / `skin-mp` | **Mặc định** |
-| `desktop-editorial.html` | `Editorial · MR PORTER` / `Neutral · greige` | `skin-mp` / *(không)* | **Editorial** |
+| `index.html` **(mobile)** | `Mặc định · Grey-Gold` / `Editorial · MR PORTER` / `Mytheresa · chữ hoa` | *(không)* / `skin-mp` / `skin-mt` | **Mặc định** |
+| `desktop.html` | `Mặc định · Grey-Gold` / `Editorial · MR PORTER` / `Mytheresa · chữ hoa` | *(không)* / `skin-mp` / `skin-mt` | **Mặc định** |
+| `desktop-editorial.html` | `Editorial · MR PORTER` / `Mytheresa · chữ hoa` / `Neutral · greige` | `skin-mp` / `skin-mt` / *(không)* | **Editorial** |
 
 **Cơ chế** — giống nhau ở cả 2 file:
 - Khối CSS của bộ da gắn tiền tố `html.skin-mp` cho **mọi** selector. Không có class thì khối **nằm im 100%** — đây là lý do thêm được vào `desktop.html` mà không phải fork.
@@ -291,7 +292,18 @@ Bản mobile **không phải sửa**: `#cookieGate` vốn là *một* panel dín
 - `SKINS` + `applySkin()` dựng đúng khuôn `THEMES` / `applyTheme()` có sẵn.
 - **`applySkin` reset luôn phông**: xoá `.font-override` + biến inline `--font-app` mà nút chọn phông đặt lên `<html>`, rồi set `currentFont` về phông mặc định của bộ da và cập nhật dấu tích. Không làm bước này thì lựa chọn phông cũ còn ghim lại → serif trên bảng màu Grey-Gold (hoặc ngược lại).
 - `desktop-editorial.html` gắn `class="skin-mp"` **thẳng trong markup** `<html>` (không gán bằng JS) để không nháy một nhịp greige lúc trang vừa dựng. `desktop.html` mặc định không class nên không cần.
-- Bộ da **không mang qua bản mobile**: `RESP.watch` chỉ gói `[screen, lang, font, theme]`, mà `index.html` cũng không có khối skin nào. Lora cũng chỉ có ở 2 file desktop — sang mobile thì `FONTS.find()` không thấy `lora` nên bỏ qua, về Montserrat (không lỗi).
+- ⚠ **Bộ da KHÔNG mang qua mốc 768px**: `RESP.watch` chỉ gói `[screen, lang, font, theme]`. Từ 18/08/2026 cả 3 file đã có bộ da **cùng id** (`default`/`editorial`/`mytheresa`) nên mang được về mặt kỹ thuật, nhưng phải thêm tham số thứ 5 vào `RESP.hash()` + phần đọc hash ở **cả 3 file** — chưa làm, cần chốt. Hiện kéo cửa sổ qua mốc là bộ da về mặc định của file đích.
+
+### Bản mobile `index.html` — thêm 2 bộ da (18/08/2026, yêu cầu user)
+
+"Tạo luôn style editorial cho bản mobile, **chỉ cần thêm style không cần thay đổi layout gì**, bấm vào setting và thay đổi tương tự desktop."
+
+- **Cùng cơ chế, cùng nhãn, cùng id** với 2 bản desktop — `SKINS` / `applySkin()` / mục "Bộ da" trên "Giao diện" trong popover Cài đặt. Chép nguyên vì mobile đã có sẵn đủ hạ tầng: `FONTS`, `currentFont`, `THEMES`, `applyTheme`, `#settingsPanel`, `--font-app`, `.font-override`.
+- **KHÔNG rule nào đụng bố cục** — chỉ token màu · token bo góc · mặt chữ · chữ hoa nhãn menu · nền thanh promo. Không sửa `display`/`flex`/`grid`/spacing/thứ tự.
+- **Mobile ít việc hơn desktop** vì: không có 2 hàng nav / mega panel; bottom sheet vốn **đã vuông góc và đã không đổ bóng** (chốt 17/08) nên chỉ còn `#settingsPanel .sp-card` khai bo `8px` bằng số thật là phải đè; `body` không có vệt gradient nào để tắt.
+- **Thanh promo**: bản gốc `bg-primary` (đen) chữ trắng → 2 bộ da đảo thành xám nhạt chữ đen (`#d9d9d9` / `#f2f2f2`). Ở mobile nền là **utility class** (0,1,0) nên `html.skin-* div:has(> #promoSlider)` (0,2,1) đè được — **không cần `!important`** như desktop (ở đó nền là inline style).
+- **Chữ hoa nhãn menu (chỉ bộ da Mytheresa)**: mobile không có hàng nav, "nhãn menu" là drawer `#menuSheet` — hàng tab ngành hàng `.ms-tab` + các hàng danh mục trong `.ms-view`. Bám `button > span:first-child` vì hàng nào cũng đặt nhãn ở span đầu, chevron/icon ở span sau → **không phải thêm class hook nào vào markup**, đúng yêu cầu "không thay đổi layout". Bộ số 12/16 · tracking .5px · weight 500 giống 2 bản desktop.
+- **Đã đo**: vòng `mặc định → Editorial → Mytheresa → mặc định` trả đúng về chỗ cũ ở mực/viền/mặt xám/xám chữ/radius/phông/nền promo, dấu tích cả 2 mục khớp; `.sp-card` 8px ↔ 0px. Drawer dưới bộ da Mytheresa: tab + **cả 9 hàng** ra `12px / 500 / uppercase / 0.5px`, 2 bộ da kia giữ 14/16px sentence case. **Chuỗi trong DOM vẫn "Trang chủ nam"** (chữ hoa do CSS) nên i18n nguyên vẹn — đổi sang EN ra `Men's home`. Cookie gate ăn theo token: viền `#dfdfdf`, vuông, không bóng. **Quét tương phản 11 màn × 2 bộ da** (ngưỡng 3:1): **0 vi phạm**. Console sạch trên tab mới, không tràn ngang (375/375).
 
 **Port sang `desktop.html` — chỉ chép những gì file này còn thiếu.** 4 mục của bản editorial KHÔNG chép lại vì đã có sẵn: tắt bóng (file này "không đổ bóng" từ 17/08) · header trắng (2 thanh kính vốn đã trắng — bản kia phải tô lại vì từng thử header đen NET-A-PORTER) · dải đen giữa 2 hàng header (user đã bỏ) · hairline đáy `.dk-sub` (file này đã có 1 hairline ở đáy cả khối qua `.navbar::after`) — **nhờ đó KHÔNG phải bù offset sticky nào**, đo lại thanh bộ lọc PLP vẫn khít 0px (112 = 112).
 
@@ -302,6 +314,31 @@ Hai khác biệt phải xử lý khi port:
 **Đã đo** (`desktop.html`, tắt transition trước khi đo): vòng tròn `mặc định → MR PORTER → mặc định` trả đúng về chỗ cũ ở cả `--general-border` (`#e5e5e5` ↔ `#e0e0e0`), `--radius-2` (`2px` ↔ `0px`), `--general-destructive` (`#d62845` ↔ `#d81e05`), mặt chữ (Montserrat ↔ Lora), nền thanh thông báo (`#262626` ↔ `#d9d9d9`), cỡ hàng submenu (16 ↔ 14); dấu tích của cả 2 mục (bộ da + phông) khớp. Bật bộ da: nav link `#1a1a1a`/14px, gạch chân đen 2px, mega panel trắng pad 40/48, nhãn nhóm `#1a1a1a` uppercase Lora + vạch 32×1px, kẻ dọc trước ảnh teaser. **Quét tương phản 10 màn** (ngưỡng 3:1): **0 vi phạm**. Console sạch trên tab mới, không tràn ngang (1425/1440).
 
 > **Bẫy khi đo** (đã dính 2 lần): pane Browser ẩn thì trang không vẽ frame nên **transition CSS đứng yên giữa đường** — `getComputedStyle` trả giá trị CŨ. Đổi bộ da rồi đo màu nav ra `#262626` (giá trị cũ) trong khi biến đã là `#1a1a1a`. Phải chèn `*, *::before, *::after { transition: none !important }` trước khi đo; riêng `*` KHÔNG khớp pseudo-element nên thiếu `*::after` là đo gạch chân ra `opacity: 0` dù rule đúng.
+
+### Bộ da thứ 3: `Mytheresa · chữ hoa` (18/08/2026, yêu cầu user)
+
+Yêu cầu: "theme uppercase các title menu và màu sắc tương tự mytheresa.com". **Đo được thật** — `mytheresa.com/euro/en/men` mở được trong Browser pane và nạp đủ (12 stylesheet, `main.css` 4357 rule, 65 ảnh, 4 font face), nên số dưới đây là số đo chứ không phải suy đoán:
+
+| Điểm | Số đo trên mytheresa.com | Đưa vào bộ da |
+|---|---|---|
+| Nav **cả 2 tầng** (`WOMEN/MEN/KIDS` và `NEW ARRIVALS/DESIGNERS/…`) | 12px · 400 · `uppercase` · `letter-spacing: 0.5px` · `#000` · lh 16.8px · AvenirNextLTPro | y hệt, **lh làm tròn 16px** (cặp 12/16 của thang chữ; lệch 0.8px không nhìn ra) và **weight nâng 400 → 500**, xem dưới |
+| Chữ trang | `#000` **thật** (đếm 829 phần tử) | `--general-foreground/primary/secondary-foreground` = `#000` — khác rõ nhất với MR PORTER (`#1a1a1a`) |
+| Viền | `#dfdfdf` áp đảo (162 chỗ), `#999999` rải rác | `--general-border: #dfdfdf`, `--unofficial-border-4: #999999` |
+| Mặt xám | `#f2f2f2` | `--general-secondary/muted` |
+| Xám chữ | `#666666` | `--general-muted-foreground` (5.74:1 trên trắng — đạt AA cả chữ nhỏ) |
+| Bo góc | **KHÔNG CÓ CHỖ NÀO** (quét 2500 phần tử, rỗng) | 5 token radius = 0 |
+| "SALE" trên nav | **ĐEN**, không tô đỏ | đè cả 3 state của `.dk-nav-link.text-destructive` về `#000` |
+
+- **CHỮ HOA làm bằng `text-transform`**, không gõ hoa vào chuỗi — chuỗi gốc là key i18n ("Nam"/"Nữ"/"Quần áo"…), gõ hoa vào là mất bản dịch. Đây là **ngoại lệ của quy ước "không dùng UPPERCASE"**, và là ngoại lệ **an toàn** vì nằm trong một bộ da phải tự bật: mặc định của cả 2 file không đổi.
+- **Weight nav nâng 1 bậc: 400 → 500 medium** (chốt 18/08/2026, yêu cầu user) — **chỗ duy nhất của nav không theo số đo**. Lý do hợp lý: chữ hoa 12px ở Montserrat mảnh hơn AvenirNextLTPro của họ nên 500 bù lại đúng độ dày mắt thấy. Áp cho **cả 4 selector** (`.dk-dept`, `.dk-nav-link`, và 2 biến thể `[aria-current]`) nên nav **một độ đậm ở mọi state** — việc đánh dấu mục đang chọn vẫn để gạch chân lo, đúng tinh thần mytheresa. Đo lại: cả 2 hàng nav ra `500` ở cả state nghỉ lẫn `[aria-current]`, thanh danh mục `Nam`/`Nữ` **vẫn vừa khít 1409/1409** (nâng weight không làm tràn thêm).
+- **Chỉ nav chữ hoa.** Đường dẫn trong mega panel giữ **14px** — user yêu cầu chữ hoa cho *title menu*, không đụng cỡ nội dung panel.
+- **Phông: Montserrat** (mặc định dự án) — cùng họ sans **hình học** với AvenirNextLTPro của họ nên gần nhất, **không phải nạp thêm face nào**.
+- **2 chỗ KHÔNG lấy từ mytheresa, đã ghi rõ trong comment:**
+  1. **Không đo được panel flyout** của họ (event hover tổng hợp không kích được handler React) → phần mega panel suy từ hệ chung (viền `#dfdfdf`, nhãn hoa đen) chứ không phải số đo.
+  2. **Trang họ không có màu đỏ nào** → `--general-destructive` **giữ đỏ gốc dự án** `#d62845`, vì badge -% và viền lỗi form vẫn phải đọc ra là cảnh báo. Nếu khách muốn đơn sắc tuyệt đối thì phải chốt riêng cách hiển thị badge giảm giá + lỗi form.
+- **Khác nhau giữa 2 file**: chỉ selector mega panel (`desktop.html` = lưới `.dk-mega-grid`, `desktop-editorial.html` = flex-wrap `.dk-mega-cols`). File editorial còn phải thêm: đè thang mực 3 bậc về đen, khai lại `--font-app` về Montserrat (không thì đổi từ MR PORTER sang còn dính serif Lora), tắt bóng của khối greige, tắt vệt gradient nền. **Sửa 1 file nhớ sửa cả 2.**
+- **Sửa kèm một lệch giữa 2 file**: bộ da MR PORTER ở `desktop.html` chỉ đè `font-weight` cho `[aria-current]` nên nav ra **500** (markup có `font-medium`), trong khi cùng bộ da ở file editorial là **400** và nav MR PORTER thật là regular. Đã đè cả 4 selector → **400** ở cả 2 file.
+- **Đã đo**: vòng `mặc định → Mytheresa → MR PORTER → mặc định` (desktop.html) và `editorial → Mytheresa → Neutral → editorial` (editorial) đều trả **đúng về chỗ cũ** ở token mực/viền/mặt xám/radius/phông/nền thanh thông báo/cỡ+case nav, dấu tích của cả 2 mục (bộ da + phông) khớp. Thanh danh mục: `Nam`/`Nữ` **vừa khít** 1409/1409, `Làm đẹp` tràn 1450/1409 nên 2 mũi tên trượt tự hiện (chữ hoa 12px + tracking rộng hơn 14px thường một chút). Thanh bộ lọc PLP ghim khít **0px** ở cả 2 file. **Quét tương phản 10 màn × bộ da Mytheresa**: **0 vi phạm**. Console sạch trên tab mới ở cả 2 file, không tràn ngang (1425/1440).
 
 ## Back từ PDP về PLP giữ nguyên vị trí cuộn (17/08/2026, CẢ 2 BẢN)
 
