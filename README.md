@@ -1610,6 +1610,42 @@ Khách gửi 5 ảnh `mrporter.com`: trang chủ · header + mega panel mở · 
 - **Quét tương phản 8 màn × 2 bộ da** (`plp · pdp · cart · checkout · account · login · order · privacy`, ngưỡng 3:1): **0 điểm vi phạm**. Console sạch trên tab mới.
 - Bộ da **không mang qua bản mobile**: `RESP.watch` chỉ gói `[screen, lang, font, theme]`. Thêm skin vào hash cũng vô nghĩa vì `index.html` không có khối skin nào.
 
+### Đo được hệ chữ MR PORTER qua proxy NET-A-PORTER (18/08/2026)
+
+User gửi `mrporter.com/en-vn/` yêu cầu xem site gốc. **Site chặn cả 2 đường**: browser pane trả Akamai `Access Denied` (Reference #18.ce07f2ab…), WebFetch trả `ECONNRESET`. Lần trước cũng vậy — không đọc được trực tiếp.
+
+**Tìm được proxy hợp lệ**: `net-a-porter.com/en-vn/` **mở được đủ** (25 stylesheet), và bundle font của nó chứa **ngay `Mrporter`, `Chronicle Display`, `SackersGothicStd`** → 2 site **dùng chung design system + chung bộ font**. Nên NAP là proxy hợp lệ cho phần **HỆ THỐNG** (cỡ · weight · tracking · cặp sans/serif); còn lựa chọn **riêng của thương hiệu** (chữ hoa hay không, mặt nào dùng ở đâu) vẫn lấy theo 5 ảnh MR PORTER khách gửi.
+
+Đo NAP ở **cả 342px và 1440px — gần như trùng nhau**, đúng kiểu design system dùng chung:
+
+| Đếm | size / lh | weight | case | ls | family | Vai trò |
+|---:|---|---|---|---|---|---|
+| **217** | **14 / 18** | 400 | none | **0.14px** | **AkkuratPro** (sans) | **thân bài** |
+| 26 | **12 / 16** | 400 | **uppercase** | **1.8px** | AkkuratPro | **nhãn eyebrow** — "Shop By", "WHAT TO SHOP NOW" |
+| 26 | 12 / 16 | 400 | none | 0.12px | AkkuratPro | micro body / legal |
+| 18 | 14 / 18 | **700** | uppercase | 0.14px | AkkuratPro | **nav** |
+| 12 | **16 / 20** | 400 | none | 0.8px | **ChronicleText** (serif) | tiêu đề editorial |
+| 7 | 18 / 22 | 400 | none | normal | ChronicleText | tên thương hiệu |
+| 6 | 14 / 18 | **900** | none | normal | AkkuratPro | tên thương hiệu chữ hoa |
+| 6 | 12 / 18 | 500 | uppercase | **15%** | AkkuratPro | nhãn địa điểm |
+
+**2 con số đã áp ngay** (vì dự án có sẵn ô tương ứng, không phải tự chế):
+
+| | Số đo | Dự án trước | Nay |
+|---|---|---|---|
+| thân bài | 0.14px @14px = **0.01em** | không có tracking | `html.skin-mp body { letter-spacing: 0.01em }` |
+| nhãn eyebrow | 1.8px @12px = **0.15em** | **2 giá trị** cho cùng vai trò: `0.12em` (nhãn popover/footer) và `0.08em` (nhãn nhóm mega) | gom cả 2 về **0.15em** |
+
+**Thân bài 14px của họ TRÙNG mặc định dự án** → khác Mytheresa, bộ da này **không cần remap cỡ chữ nào**.
+
+Đo lại sau khi áp (`desktop.html`, tắt transition trước khi đo): `default` body `normal` · eyebrow 1.32px · nhãn mega 1.12px → `editorial` body **0.16px** · eyebrow **1.65px** · nhãn mega **2.1px** (đúng 0.15em ở 11px và 14px) → `mytheresa` không bị ảnh hưởng (eyebrow vẫn 1.32px). Tracking rộng hơn **không gây tràn thêm**: PDP có 3 phần tử `truncate` ở cả 2 bộ da, tổng px tràn thậm chí **147 → 96**; thanh danh mục vẫn vừa khít 1409/1409; trang không tràn ngang. Console sạch trên cả 3 file.
+
+**3 phát hiện MÂU THUẪN với bộ da hiện tại — cần user chốt**, vì NAP-proxy và ảnh MR PORTER nói khác nhau:
+
+1. **Phạm vi mặt chữ serif.** NAP dùng `ChronicleText` cho **chỉ ~25 trong ~380 phần tử** (tiêu đề editorial + tên thương hiệu); **thân bài là `AkkuratPro` SANS**. Bộ da của ta đang phủ Lora lên **toàn bộ body**. Nhưng ảnh MR PORTER khách gửi cho thấy serif dùng **rộng** (nav, "Shopping Bag", tên sản phẩm trong giỏ) — MR PORTER chính là bản serif-forward trong 2 site. **Giữ nguyên như đang có**, chờ chốt.
+2. **Weight của nav.** NAP nav là **700**; bộ da ta để **400**. Ảnh MR PORTER nhìn ra nav weight thường. Giữ 400, chờ chốt.
+3. **Tên mặt chữ serif thật là `Chronicle Display` / `ChronicleText`** (Hoefler) — Lora chỉ là bản thay thế miễn phí. Trước đây mình chỉ đoán "Miller/Chronicle" khi xem ảnh; nay xác nhận được đúng tên từ bundle font.
+
 **Đặc điểm MR PORTER CHƯA lấy — cần khách chốt:**
 1. **Nhãn nhỏ CHỮ HOA + letter-spacing** (`CUSTOMER CARE`, `NEED HELP?`, `BACK IN STOCK`, `ONLY TWO LEFT`, caption ảnh teaser). Đầy trong ảnh nhưng **đụng quy ước "không dùng UPPERCASE"** của chính project — ngoại lệ duy nhất đang cho phép là nhãn nhóm mega. Không tự mở rộng.
 2. **Drawer bộ lọc trượt từ MÉP TRÁI** (ảnh 3) — bản này trượt từ phải theo chốt 17/08 cho sheet chọn ưu đãi.
