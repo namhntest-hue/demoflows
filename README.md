@@ -303,7 +303,53 @@ Bản mobile **không phải sửa**: `#cookieGate` vốn là *một* panel dín
 - **Mobile ít việc hơn desktop** vì: không có 2 hàng nav / mega panel; bottom sheet vốn **đã vuông góc và đã không đổ bóng** (chốt 17/08) nên chỉ còn `#settingsPanel .sp-card` khai bo `8px` bằng số thật là phải đè; `body` không có vệt gradient nào để tắt.
 - **Thanh promo**: bản gốc `bg-primary` (đen) chữ trắng → 2 bộ da đảo thành xám nhạt chữ đen (`#d9d9d9` / `#f2f2f2`). Ở mobile nền là **utility class** (0,1,0) nên `html.skin-* div:has(> #promoSlider)` (0,2,1) đè được — **không cần `!important`** như desktop (ở đó nền là inline style).
 - **Chữ hoa nhãn menu (chỉ bộ da Mytheresa)**: mobile không có hàng nav, "nhãn menu" là drawer `#menuSheet` — hàng tab ngành hàng `.ms-tab` + các hàng danh mục trong `.ms-view`. Bám `button > span:first-child` vì hàng nào cũng đặt nhãn ở span đầu, chevron/icon ở span sau → **không phải thêm class hook nào vào markup**, đúng yêu cầu "không thay đổi layout". Bộ số 12/16 · tracking .5px · weight 500 giống 2 bản desktop.
-**Bổ sung 18/08/2026 — thang chữ toàn trang cho bộ da Mytheresa ở mobile.** Trước đó bộ da này ở `index.html` chỉ có bảng màu + chữ hoa nhãn menu, **thiếu 3 rule phạm vi toàn trang** mà 2 bản desktop đã có, nên cùng tên bộ da mà mobile nhìn khác desktop khá rõ. Nay đã bằng nhau:
+**Sửa lại 18/08/2026 (user báo "mobile chưa giống mytheresa thực tế") — ĐO TỪ CHÍNH BẢN MOBILE CỦA HỌ.**
+
+Bản trước lệch vì bảng quy đổi **suy từ số đo bản desktop** của họ rồi áp cho mobile. Nay đo lại đúng `mytheresa.com/euro/en/men/clothing` ở khổ **375×812**:
+
+| Đếm | size / line-height | weight | case | family | Vai trò |
+|---:|---|---|---|---|---|
+| **585** | **12 / 16.8** | 400 | none | AvenirNext | **thân bài** — "My Wishlist", "Sign In", "Filters" |
+| 60 | 12 / 16.8 | 400 | uppercase | | **giá** "€ 3,000" |
+| 60 | 12 / 16.8 | 400 | lowercase | | "original price" |
+| 16 | **14 / 18.2** | 400 | none | | link phụ |
+| 14 | **14 / 18.2** | 400 | **uppercase** | | **hàng dept** Women/Men/Kids |
+| 6 | **18 / 23.4** | 400 | none | **OptimaLTPro** | **tiêu đề mục** |
+| 4 | **24 / 28.8** | 400 | none | **OptimaLTPro** | **tiêu đề trang** "Clothing" |
+| 1 | 12 / 15.6 | 400 | none | | thanh promo |
+
+**Hệ chữ mobile của họ chỉ có 4 cỡ: 12 · 14 · 18 · 24**, tất cả weight 400, tất cả `ls .5px` — cả 4 đều nằm trong thang dự án nên không phải tự chế cỡ nào. **Khác bản desktop của họ ở 3 điểm**: hàng dept 14 (desktop 12) · tiêu đề mục 18 (desktop 20) · tiêu đề trang 24 (desktop 28).
+
+**3 chỗ bản trước làm SAI, đã sửa:**
+
+| Ta | Trước (sai) | Nay | Vì sao |
+|---|---|---|---|
+| 16 | → 14 | **→ 12** | ta dùng 16 cho nút CTA + giá PDP + tiêu đề nhỏ; cả 3 vai trò đó ở họ đều **12** |
+| 18 | → 16 | **giữ 18** | họ **không có 16 nào**; 18 chính là ô tiêu đề mục, trùng vai trò |
+| 22 · 24 | → 18 | **→ 24** | 24 là ô tiêu đề trang của họ |
+
+Còn lại: `11 · 13 · 14 · 15 → 12` (12 là sàn của họ) · `32 → 24` · `9 · 10` giữ (chỉ số trong pill badge, nâng lên 12 là vỡ pill).
+
+**Weight: toàn bộ 400, KHÔNG trừ chỗ nào** — kể cả nhãn menu. Bản trước để nhãn menu 500 theo chốt *"nâng weight menu lên medium"*, nhưng chốt đó nói cho bản **desktop**; lần này user yêu cầu "mang **toàn bộ** từ mytheresa sang" nên theo số đo. ⚠ **Hệ quả: nav mobile 400 vs nav desktop 500 — đang lệch nhau có ý thức, chờ user chốt.**
+
+**Nhãn menu tách 2 ô** theo đúng phân cấp của họ: `.ms-tab` (hàng dept) **14/18 · 400 · uppercase** = số đo thật; hàng danh mục trong `.ms-view` **12/16 · 400 · uppercase** — ô thân bài, **không đo được** (bị chặn trước khi mở được menu mobile của họ) nhưng thấp hơn tab 1 nấc nên vẫn ra phân cấp tab > hàng.
+
+**Đo lại sau khi sửa** — hình dáng đã trùng bản mobile của họ (12px áp đảo + 18px cho tiêu đề mục + chỉ 1 weight):
+
+| Màn | Cỡ chữ | Weight |
+|---|---|---|
+| plp | 12px ×288 · 18px ×7 · 9px ×6 · 10px ×3 | **400 duy nhất** ×304 |
+| pdp | 12px ×322 · 18px ×10 · 9px ×6 · 10px ×1 | **400 duy nhất** ×339 |
+| cart | 12px ×295 · 18px ×9 · 9px ×6 · 10px ×3 | **400 duy nhất** ×313 |
+| account | 12px ×195 · 18px ×7 | **400 duy nhất** ×202 |
+
+Drawer: tab `14/18 · 400 · uppercase · ls .5` (3 tab, đồng bộ) · hàng danh mục `12/16 · 400 · uppercase · ls .5` (9 hàng, đồng bộ); chuỗi DOM vẫn `"Trang chủ nam"` nên i18n nguyên vẹn. **Quét tương phản ngưỡng 4.5:1, 12 màn: 0 vi phạm.** Chữ bị cắt không tệ thêm (10 phần tử `truncate` ở cả 2 bộ da, tổng px tràn **638 → 459** vì chữ nhỏ hơn). Không tràn ngang (375/375). Console sạch trên tab mới.
+
+> **Đã dừng gọi mytheresa.com**: sau vài lần tải liên tiếp, bot-mitigation của họ chặn (`Something went wrong · Reference CPR`). Vì vậy **không đo được PDP và giỏ hàng bản mobile** của họ — 2 màn đó map theo vai trò từ hệ 4 cỡ đã đo, không phải số đo trực tiếp. Muốn đo chính xác 2 màn đó thì phải đợi hoặc dùng ảnh chụp.
+
+**2 thứ CHƯA mang sang** (phần lệch còn lại lớn nhất): **line-height** — họ 12/16.8 (tỉ lệ 1.4), ta 12/20 (1.67) nên chữ ta thoáng hơn; không đổi vì leading của dự án gắn với chiều cao hàng cố định (`h-4`/`h-6`/`h-11`/`h-12`), ép 16.8px vào hàng `h-4` (16px) là tràn. Và **mặt chữ serif OptimaLTPro** cho 2 ô 18/24 — user chỉ yêu cầu size + weight.
+
+**Bổ sung trước đó cùng ngày — thang chữ toàn trang cho bộ da Mytheresa ở mobile.** Trước đó bộ da này ở `index.html` chỉ có bảng màu + chữ hoa nhãn menu, **thiếu 3 rule phạm vi toàn trang** mà 2 bản desktop đã có, nên cùng tên bộ da mà mobile nhìn khác desktop khá rõ. Nay đã bằng nhau:
 
 | | Mặc định / Editorial | Mytheresa (sau bổ sung) |
 |---|---|---|
