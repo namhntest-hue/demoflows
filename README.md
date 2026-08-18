@@ -303,6 +303,21 @@ Bản mobile **không phải sửa**: `#cookieGate` vốn là *một* panel dín
 - **Mobile ít việc hơn desktop** vì: không có 2 hàng nav / mega panel; bottom sheet vốn **đã vuông góc và đã không đổ bóng** (chốt 17/08) nên chỉ còn `#settingsPanel .sp-card` khai bo `8px` bằng số thật là phải đè; `body` không có vệt gradient nào để tắt.
 - **Thanh promo**: bản gốc `bg-primary` (đen) chữ trắng → 2 bộ da đảo thành xám nhạt chữ đen (`#d9d9d9` / `#f2f2f2`). Ở mobile nền là **utility class** (0,1,0) nên `html.skin-* div:has(> #promoSlider)` (0,2,1) đè được — **không cần `!important`** như desktop (ở đó nền là inline style).
 - **Chữ hoa nhãn menu (chỉ bộ da Mytheresa)**: mobile không có hàng nav, "nhãn menu" là drawer `#menuSheet` — hàng tab ngành hàng `.ms-tab` + các hàng danh mục trong `.ms-view`. Bám `button > span:first-child` vì hàng nào cũng đặt nhãn ở span đầu, chevron/icon ở span sau → **không phải thêm class hook nào vào markup**, đúng yêu cầu "không thay đổi layout". Bộ số 12/16 · tracking .5px · weight 500 giống 2 bản desktop.
+**Bổ sung 18/08/2026 — thang chữ toàn trang cho bộ da Mytheresa ở mobile.** Trước đó bộ da này ở `index.html` chỉ có bảng màu + chữ hoa nhãn menu, **thiếu 3 rule phạm vi toàn trang** mà 2 bản desktop đã có, nên cùng tên bộ da mà mobile nhìn khác desktop khá rõ. Nay đã bằng nhau:
+
+| | Mặc định / Editorial | Mytheresa (sau bổ sung) |
+|---|---|---|
+| Cỡ áp đảo trên PLP | **14px ×192** | **12px ×257** |
+| letter-spacing (`body`) | `normal` | **`0.5px`** |
+| Weight | 400 ×176 · 500 ×99 · 300 ×20 · 700 ×8 · 600 ×1 | **400 ×304 — chỉ còn một weight** |
+
+- Quy đổi y hệt 2 bản desktop: `13/14/15 → 12` · `16 → 14` · `18 → 16` · `22/24 → 18` · `32 → 24`; 12 và nhỏ hơn giữ nguyên. Kiểm kê mobile trước khi remap: 9(2) 10(7) 11(14) 12(155) **13(51)** 14(233) 15(3) 16(54) 18(28) 22(1) 24(8) 32(1) — **không có 20 và 48** nên bảng trên phủ hết.
+- **Nhãn menu vẫn giữ 500** dù có rule blanket 400: rule ở mục 4 có `#menuSheet` (1 id) nên thắng khối blanket (chỉ toàn class), không cần `!important`. Đo lại: tab + **cả 9 hàng** ra `12px / 500 / uppercase / 0.5px`, chuỗi DOM vẫn `"Trang chủ nam"` nên i18n nguyên vẹn.
+- **KHÔNG đổi** line-height (gắn với chiều cao hàng cố định) và **KHÔNG đổi chiều cao header 48px** của mobile — user chỉ yêu cầu "style", mà số đo mobile của mytheresa thì chưa có (chỉ đo được bản desktop của họ).
+- **Chữ bị cắt KHÔNG tệ thêm**: 10 phần tử `truncate` (tên sản phẩm trên card) bị cắt ở **cả 2 bộ da** — đó là thiết kế vốn vậy. Nhưng tổng px tràn **giảm 638 → 459** vì chữ nhỏ hơn, tức thu nhỏ làm ĐỠ cắt chứ không gây thêm. Không tràn ngang (375/375).
+- **Quét tương phản ngưỡng 4.5:1** (chữ nay 12px nên không được hưởng ngưỡng 3:1), 12 màn: **0 vi phạm**. Console sạch trên tab mới.
+- ⚠ **Đánh đổi đã nêu với user trước khi làm**: thân bài 12px + giãn chữ 0.5px trên màn 375px với tiếng Việt **có dấu** thì khá nhỏ — nhỏ hơn hẳn 14px mặc định; desktop 1440px thì thoải mái. User chốt vẫn làm. Đây là bộ da phải tự bật nên không ảnh hưởng mặc định; muốn nới thì đổi dòng `13/14/15 → 12` thành `→ 14`.
+
 - **Đã đo**: vòng `mặc định → Editorial → Mytheresa → mặc định` trả đúng về chỗ cũ ở mực/viền/mặt xám/xám chữ/radius/phông/nền promo, dấu tích cả 2 mục khớp; `.sp-card` 8px ↔ 0px. Drawer dưới bộ da Mytheresa: tab + **cả 9 hàng** ra `12px / 500 / uppercase / 0.5px`, 2 bộ da kia giữ 14/16px sentence case. **Chuỗi trong DOM vẫn "Trang chủ nam"** (chữ hoa do CSS) nên i18n nguyên vẹn — đổi sang EN ra `Men's home`. Cookie gate ăn theo token: viền `#dfdfdf`, vuông, không bóng. **Quét tương phản 11 màn × 2 bộ da** (ngưỡng 3:1): **0 vi phạm**. Console sạch trên tab mới, không tràn ngang (375/375).
 
 **Port sang `desktop.html` — chỉ chép những gì file này còn thiếu.** 4 mục của bản editorial KHÔNG chép lại vì đã có sẵn: tắt bóng (file này "không đổ bóng" từ 17/08) · header trắng (2 thanh kính vốn đã trắng — bản kia phải tô lại vì từng thử header đen NET-A-PORTER) · dải đen giữa 2 hàng header (user đã bỏ) · hairline đáy `.dk-sub` (file này đã có 1 hairline ở đáy cả khối qua `.navbar::after`) — **nhờ đó KHÔNG phải bù offset sticky nào**, đo lại thanh bộ lọc PLP vẫn khít 0px (112 = 112).
@@ -330,6 +345,51 @@ Yêu cầu: "theme uppercase các title menu và màu sắc tương tự mythere
 | "SALE" trên nav | **ĐEN**, không tô đỏ | đè cả 3 state của `.dk-nav-link.text-destructive` về `#000` |
 
 - **CHỮ HOA làm bằng `text-transform`**, không gõ hoa vào chuỗi — chuỗi gốc là key i18n ("Nam"/"Nữ"/"Quần áo"…), gõ hoa vào là mất bản dịch. Đây là **ngoại lệ của quy ước "không dùng UPPERCASE"**, và là ngoại lệ **an toàn** vì nằm trong một bộ da phải tự bật: mặc định của cả 2 file không đổi.
+**Đợt 2 cùng ngày — thang chữ toàn trang + header 64/64 + gạch chân hàng dept (2 bản desktop)**
+
+Đo lại trên `mytheresa.com/euro/en/men/clothing`, gom **mọi tổ hợp** `(size | weight | transform | tracking | family)` đang thực sự vẽ chữ:
+
+| Đếm | Tổ hợp | Ví dụ |
+|---:|---|---|
+| **592** | 12px · 400 · none · 0.5px · AvenirNextLTPro | **thân bài** |
+| 73 | 12px · 400 · **uppercase** · 0.5px | nav |
+| 60 | 12px · 400 · lowercase · 0.5px | "original price" |
+| 8 | **16px** · 400 · none · 0.5px | "Jackets" — tiêu đề mục |
+| 6 | **20px** · 400 · none · 0.5px · **OptimaLTPro** | "Mytheresa News" — tiêu đề khối |
+| 5 | **28px** · 400 · none · 0.5px · **OptimaLTPro** | "Clothing" — tiêu đề trang |
+| 4 | 14px · 400 · none · 0.5px | "Show more" |
+
+**3 kết luận:** (a) **toàn trang weight 400** — không một phần tử 500/600/700 nào; họ dựng phân cấp bằng **cỡ chữ + mặt chữ (sans/serif)**, tuyệt đối không bằng độ đậm. (b) **letter-spacing 0.5px ở mọi chỗ**. (c) thân bài **12px** — nhỏ hơn 14px mặc định của dự án đúng 1 nấc.
+
+**Quy đổi về thang chữ dự án** (12/14/16/18/24/32/48 — không tự chế cỡ mới):
+
+| Dự án | → | Ghi chú |
+|---|---|---|
+| 14 (thân bài) · 13 · 15 | **12** | 13/15 là nợ cũ, dồn về 12 cho hết lệch |
+| 16 | **14** | |
+| 18 | **16** | khớp tiêu đề mục 16 của họ |
+| 22 · 24 | **18** | họ 20 → 18 (20 không có trong thang) |
+| 32 | **24** | họ 28 → 24 |
+| 48 (`.ed-display`) | **32** | khai bằng số thật trong CSS nên phải đè riêng |
+| 12 / 11 / 10 / 9 | giữ | 12 là sàn của họ; nhỏ hơn là badge/chỉ số |
+
+- **Weight**: đè cả 5 utility (`.font-light/normal/medium/semibold/bold`) + thẻ `b`/`strong` về **400**. **Ngoại lệ duy nhất: nav giữ 500** theo chốt riêng bên dưới — rule nav (0,2,2) tự thắng khối này (0,2,1), không cần `!important`. Đo trên PLP: **400 ×425 + 500 ×11**, và 11 phần tử 500 đó **đúng là 3 nút dept + 8 mục subheader**, không sót chỗ nào.
+- **Cỡ chữ** đo trên PLP: **12px ×389** áp đảo (đúng hình dáng của họ — 592 @ 12px), rồi 14px ×22 · 16px ×6 · 24px ×1. Còn 11/10/9px (×18) là **badge/chỉ số nợ cũ ngoài thang**, bộ da không cố sửa.
+- **KHÔNG đổi line-height**: leading của dự án gắn với chiều cao hàng cố định (`h-6`/`h-9`/`h-11`…), đổi là vỡ nhịp. Hệ quả: 12px của ta thoáng hơn 12/16.8 của họ một chút.
+- **KHÔNG thêm mặt chữ serif OptimaLTPro** cho tiêu đề — user yêu cầu "font weight và font size", không yêu cầu đổi mặt chữ. Đây là nét MR PORTER/Mytheresa còn thiếu rõ nhất nếu muốn đi tiếp.
+> **LỖI ĐÃ SỬA (user báo 18/08/2026) — "theme mytheresa mega menu không hiển thị được".**
+> Nguyên nhân: rule hạ chiều cao subheader viết là `html.skin-mt .dk-sub > div { height: 64px }`. Nhưng **9 panel `.dk-mega` CŨNG là con trực tiếp của `.dk-sub`** — chúng render ngoài thanh cuộn để `overflow-x` không cắt panel. Nên selector ép luôn cả panel về 64px, mà `.dk-mega` có `overflow: hidden` → nội dung ~362px bị cắt còn một dải 64px.
+> Sửa: bám `#dkSubRow` (id chỉ trúng hàng subheader). `desktop.html` đã có id này sẵn; **đã thêm `id="dkSubRow"` vào markup hàng subheader của `desktop-editorial.html`** cho khớp bản chính.
+> **TUYỆT ĐỐI KHÔNG dùng `.dk-sub > div`** cho bất kỳ rule nào nhắm hàng subheader — đã ghi cảnh báo tại chỗ trong cả 2 file.
+> Đo lại sau khi sửa: **0 panel bị cắt** ở cả 3 bộ da × 2 file (chiều cao panel 253–441px tuỳ bộ da và tuỳ mục, `innerH` không vượt `panelH`); số đường dẫn mỗi panel không đổi (14/16/11/10/25). Test bằng **đúng đường hover thật** (dispatch `pointerenter`/`mouseenter`, chờ hover-intent 120ms) chứ không tự gắn class `.open`: panel mở ở `top 160` = đáy subheader, cao 385px, `visibility: visible`, `opacity: 1`, 16 đường dẫn nằm trọn trong panel.
+
+- **Header 64 / subheader 64** (yêu cầu user) — **chỉ trong `skin-mt`**, 2 bộ da kia giữ 60/72. Header tổng 32+64+64 = **160**, đáy header khi cuộn **128** = bớt 4px so với base, nên 4 offset sticky trừ theo: `#plpFilterAnchor` 128 · `.dk-policy-aside` 144 · `[data-policy-sec]` 144 · `.dk-sticky-info/side` 152. File editorial: hàng nav **không có id** (bản chính có `#dkNavRow`) nên bám cấu trúc `.navbar > .glass-95:not(.dk-sub) > div`.
+- **Gạch chân hàng dept khi đang chọn** — ⚠ **cố ý lệch mytheresa**: đo thật cả 4 mục `WOMEN/MEN/KIDS/LIFE` trên trang men của họ đều **y hệt nhau** (400, `#000`, không underline, không border, `::after` = `content: none`) → **họ không đánh dấu hàng dept**. User vẫn muốn có, và điều này khớp quyết định 13/08 của dự án là state đang chọn phải đọc ra được. Đặt `::after` ở `bottom: 0` của **nút `h-9`** chứ không phải đáy hàng 64px — ở đáy hàng thì vạch rơi cách chữ 14px, đọc ra là đường kẻ của thanh chứ không phải gạch chân của mục. Đo: vạch 2px `#000`, rộng **31.5px** = đúng bề rộng chữ "Nam", mục không active `opacity: 0`.
+- **Đã đo cả 2 file × mọi bộ da**: `default`/`editorial` giữ 60/72 + đáy header 132 + tracking `normal`; `mytheresa` ra 64/64 + đáy 128 + tracking `0.5px`. Thanh bộ lọc PLP ghim **khít 0px ở cả 3 bộ da**, cột info PDP clearance 23–24px, anchor mục lục nhảy tới 144 > 128. Thanh danh mục `Nam`/`Nữ` vừa khít 1409/1409, `Làm đẹp` tràn 1457 nên mũi tên trượt tự hiện. Không tràn ngang (1425/1440). Console sạch trên tab mới ở cả 2 file.
+- **Quét tương phản ở ngưỡng NGHIÊM HƠN 4.5:1** (vì chữ nay 12px, không còn được hưởng ngưỡng 3:1 của chữ lớn), 10 màn × bộ da Mytheresa: **0 vi phạm**.
+
+> **Bẫy khi đo — dính lần thứ 4:** lần quét đầu báo 4 lỗi "English" `#767676` trên `#f2f2f2` = 4.06:1. Nhưng `#767676` là muted của bộ da **MR PORTER**, không phải Mytheresa (`#666666`) — đó là **giá trị cũ đứng lại giữa transition** vì pane Browser không vẽ frame. Chèn `*, *::before, *::after { transition: none !important }` rồi đo lại: ra đúng `#666666` và **0 vi phạm**. Cứ đổi bộ da rồi đo màu là PHẢI tắt transition trước.
+
 - **Weight nav nâng 1 bậc: 400 → 500 medium** (chốt 18/08/2026, yêu cầu user) — **chỗ duy nhất của nav không theo số đo**. Lý do hợp lý: chữ hoa 12px ở Montserrat mảnh hơn AvenirNextLTPro của họ nên 500 bù lại đúng độ dày mắt thấy. Áp cho **cả 4 selector** (`.dk-dept`, `.dk-nav-link`, và 2 biến thể `[aria-current]`) nên nav **một độ đậm ở mọi state** — việc đánh dấu mục đang chọn vẫn để gạch chân lo, đúng tinh thần mytheresa. Đo lại: cả 2 hàng nav ra `500` ở cả state nghỉ lẫn `[aria-current]`, thanh danh mục `Nam`/`Nữ` **vẫn vừa khít 1409/1409** (nâng weight không làm tràn thêm).
 - **Chỉ nav chữ hoa.** Đường dẫn trong mega panel giữ **14px** — user yêu cầu chữ hoa cho *title menu*, không đụng cỡ nội dung panel.
 - **Phông: Montserrat** (mặc định dự án) — cùng họ sans **hình học** với AvenirNextLTPro của họ nên gần nhất, **không phải nạp thêm face nào**.
