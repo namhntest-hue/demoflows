@@ -434,6 +434,50 @@ Yêu cầu: "theme uppercase các title menu và màu sắc tương tự mythere
 - **Đã đo cả 2 file × mọi bộ da**: `default`/`editorial` giữ 60/72 + đáy header 132 + tracking `normal`; `mytheresa` ra 64/64 + đáy 128 + tracking `0.5px`. Thanh bộ lọc PLP ghim **khít 0px ở cả 3 bộ da**, cột info PDP clearance 23–24px, anchor mục lục nhảy tới 144 > 128. Thanh danh mục `Nam`/`Nữ` vừa khít 1409/1409, `Làm đẹp` tràn 1457 nên mũi tên trượt tự hiện. Không tràn ngang (1425/1440). Console sạch trên tab mới ở cả 2 file.
 - **Quét tương phản ở ngưỡng NGHIÊM HƠN 4.5:1** (vì chữ nay 12px, không còn được hưởng ngưỡng 3:1 của chữ lớn), 10 màn × bộ da Mytheresa: **0 vi phạm**.
 
+### Hệ viền / gạch chân theo số đo Mytheresa (18/08/2026, cả 3 file)
+
+User: *"dùng toàn bộ style của họ về layout dạng có border/underline ở các mục (ví dụ menu, pdp), dùng màu border/underline tương đương mytheresa"*. Lần này họ **không chặn**, đo được cả PLP lẫn 1 PDP (`saman-amel-…-p01048872`) — quét mọi phần tử có viền thấy được, ghi cả cạnh · độ dày · màu · phần tử:
+
+| Đếm | Viền | Ở đâu |
+|---:|---|---|
+| **155** | **border-bottom 1px `#dfdfdf`** | `headerdesktop__section` (**cả 2 hàng nav**), hàng danh sách, ô nhập form |
+| 6 | **border 1px `#000` (4 cạnh)** | ô chọn size (`dropdown__select__content` — nền **trắng** + viền đen) **và nút nền đen** (`.button` — viền cùng màu nền nên vô hình, ĐỪNG đọc thành nút viền) |
+| 6 | **border-top 1px `#000`** | `accordion__item` ("product details") |
+| 4 | border 1px `#dfdfdf` (4 cạnh) | ô nhập form, danh sách option dropdown |
+| 1 | border 1px `#999999` (4 cạnh) | `.button--disabled` ("Subscribe") — nền `#999` chữ trắng = **trạng thái DISABLED**, không phải nút phụ |
+| 8 | `underline auto rgb(0,0,0)` | link inline — gạch chân **đen**, dày/offset `auto` |
+
+**Luật của họ, rõ ràng 2 tầng:**
+- **`#000` 1px** = phần tử **tương tác / chính**: nút CTA · ô chọn size · vách accordion · gạch dưới ô tìm kiếm
+- **`#dfdfdf` 1px** = phần tử **kết cấu / phụ**: vách 2 hàng nav · ô nhập form · danh sách option
+
+> ### ⚠ LỖI TỰ GÂY, USER BẮT — "button CTA vẫn fill màu đen chứ"
+> Đợt đầu mình kết luận **nút "Add to bag" của họ là nút viền** (nền trong suốt) và đã đổi `.btn-p` ở cả 3 file theo đó. **Sai.**
+> **Nguyên nhân**: probe dùng `find()` quét `button,a,div` nên bắt phải thẻ **BỌC** `.productbuttons` (nền trong suốt, viền 0) thay vì nút thật `.button`. Dữ liệu của mình còn **tự mâu thuẫn** ngay lúc đó — bảng thống kê ghi `button « Add to bag` có viền `#000` cả 4 cạnh, nhưng probe trực tiếp trả `border: 0px` — mà mình không truy.
+> **Đo lại đúng phần tử `.button`**: `background: rgb(0,0,0)` · `color: rgb(255,255,255)` · `border 0.8px rgb(0,0,0)` · `radius 0` · cao **44px** · nhãn `.button__text` **14px/400**.
+> Viền `#000` 4 cạnh của nó **cùng màu nền nên vô hình** — chính vì vậy nó bị đếm vào nhóm "6 chỗ border 1px #000", rất dễ đọc thành nút viền.
+> **Đã trả lại nguyên trạng** ở cả 3 file: bộ da **không khai gì** cho `.btn-p`; nền đen + góc vuông (token radius đã = 0) là đã khớp họ. Rule hover đảo nền — thứ mình tự suy ra — cũng đã xoá.
+> Chốt lại: `#000` = **nền** nút chính và **viền** ô chọn size; hai vai trò khác nhau, không gộp.
+
+**Đã áp (cả 3 file):** vách 2 hàng nav `#dfdfdf` · `--unofficial-border-1` → `#dfdfdf` (vách hàng danh sách hết nhạt hơn) · accordion PDP `border-top #000` (triệt `border-b` của markup) · ô chọn size **nền trắng + viền `#000`** · ô nhập tìm kiếm chỉ còn gạch dưới `#000` (2 bản desktop) · vách hàng danh mục trong drawer `#dfdfdf` (mobile). **Nút chính giữ nguyên nền đen chữ trắng.**
+
+**Bug tự phát hiện và đã sửa ngay:** rule đầu viết `html.skin-mt .acc { border-top: 1px solid #000 }`. Nhưng class `.acc` **còn dùng cho thẻ khuyến mãi** (`acc bg-accent-0 rounded-sm`) và 2 biến thể khác vốn **không có vách nào** → mấy thẻ đó mọc thêm vạch đen trên đầu. Sửa: bám **`.acc.border-b`** — `.border-b` chính là dấu hiệu "accordion này CÓ vách" nên lọc bằng nó là đúng nghĩa, không phải mẹo. Đo lại: thẻ khuyến mãi `border-top 0px` ở **cả 2 bộ da**, accordion info tab `border-top 0.8px #000 · bottom 0px`.
+
+**Đo lại toàn bộ (tắt transition trước khi đo):**
+
+| | `desktop.html` | `desktop-editorial.html` | `index.html` |
+|---|---|---|---|
+| vách hàng nav | `1px #dfdfdf` (cả 2 hàng) | `1px #dfdfdf` (cả 2 hàng) | — (mobile không có hàng nav) |
+| vách hàng drawer | — | — | `1px #dfdfdf` × 9 hàng |
+| accordion info tab | `top 0.8px #000 · bot 0` | `top 1px #000 · bot 0` | `top 1px #000 · bot 0` |
+| thẻ khuyến mãi | `top 0px` (không đụng) | `top 0px` | `top 0px` |
+| nút chính | **nền `#000`** · chữ `#fff` · r0 | y hệt | y hệt |
+| ô chọn size | nền `#fff` · viền `1px #000` · r0 | — | — |
+
+**Quét tương phản ngưỡng 4.5:1**: `desktop.html` 4 màn · `index.html` 8 màn → **0 vi phạm**. Không tràn ngang (375/375 · 1425/1440). Console sạch trên tab mới ở cả 3 file.
+
+**Chưa mang sang** (không đo được): panel flyout của họ — bị chặn khi thử mở menu; nên **mega panel** vẫn giữ vách hiện có chứ không có số đo riêng.
+
 > **Bẫy khi đo — dính lần thứ 4:** lần quét đầu báo 4 lỗi "English" `#767676` trên `#f2f2f2` = 4.06:1. Nhưng `#767676` là muted của bộ da **MR PORTER**, không phải Mytheresa (`#666666`) — đó là **giá trị cũ đứng lại giữa transition** vì pane Browser không vẽ frame. Chèn `*, *::before, *::after { transition: none !important }` rồi đo lại: ra đúng `#666666` và **0 vi phạm**. Cứ đổi bộ da rồi đo màu là PHẢI tắt transition trước.
 
 - **Weight nav nâng 1 bậc: 400 → 500 medium** (chốt 18/08/2026, yêu cầu user) — **chỗ duy nhất của nav không theo số đo**. Lý do hợp lý: chữ hoa 12px ở Montserrat mảnh hơn AvenirNextLTPro của họ nên 500 bù lại đúng độ dày mắt thấy. Áp cho **cả 4 selector** (`.dk-dept`, `.dk-nav-link`, và 2 biến thể `[aria-current]`) nên nav **một độ đậm ở mọi state** — việc đánh dấu mục đang chọn vẫn để gạch chân lo, đúng tinh thần mytheresa. Đo lại: cả 2 hàng nav ra `500` ở cả state nghỉ lẫn `[aria-current]`, thanh danh mục `Nam`/`Nữ` **vẫn vừa khít 1409/1409** (nâng weight không làm tràn thêm).
