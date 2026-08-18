@@ -340,6 +340,26 @@ Yêu cầu: "theme uppercase các title menu và màu sắc tương tự mythere
 - **Sửa kèm một lệch giữa 2 file**: bộ da MR PORTER ở `desktop.html` chỉ đè `font-weight` cho `[aria-current]` nên nav ra **500** (markup có `font-medium`), trong khi cùng bộ da ở file editorial là **400** và nav MR PORTER thật là regular. Đã đè cả 4 selector → **400** ở cả 2 file.
 - **Đã đo**: vòng `mặc định → Mytheresa → MR PORTER → mặc định` (desktop.html) và `editorial → Mytheresa → Neutral → editorial` (editorial) đều trả **đúng về chỗ cũ** ở token mực/viền/mặt xám/radius/phông/nền thanh thông báo/cỡ+case nav, dấu tích của cả 2 mục (bộ da + phông) khớp. Thanh danh mục: `Nam`/`Nữ` **vừa khít** 1409/1409, `Làm đẹp` tràn 1450/1409 nên 2 mũi tên trượt tự hiện (chữ hoa 12px + tracking rộng hơn 14px thường một chút). Thanh bộ lọc PLP ghim khít **0px** ở cả 2 file. **Quét tương phản 10 màn × bộ da Mytheresa**: **0 vi phạm**. Console sạch trên tab mới ở cả 2 file, không tràn ngang (1425/1440).
 
+## Subheader cao 72 + gom offset sticky một chỗ (18/08/2026, 2 bản desktop)
+
+Yêu cầu user: "nguyên block subheader tăng height lên 72, áp dụng toàn bộ theme". Sửa ở **markup base** (`h-[52px]` → `h-[72px]`) chứ không nhét vào khối bộ da nào — đo lại: cả 3 bộ da ở mỗi file ra **đúng 72**. Bản mobile **không đụng**: `index.html` không có subheader.
+
+Nút danh mục vẫn `h-9` (36px) nên chỉ thoáng thêm, nhưng **header cao thêm 20px thì mọi offset sticky canh theo đáy header phải dịch theo**. Nhân dịp này gom cả 4 số vào **một khối `<style>` có tên** (`OFFSET STICKY CANH THEO ĐÁY HEADER`) thay vì rải rác giữa markup và CSS:
+
+| Phần tử | Trước | Sau | Trước ở đâu |
+|---|---|---|---|
+| `#plpFilterAnchor` (thanh bộ lọc PLP) | 112 | **132** | utility `top-[112px]` trong markup |
+| `.dk-policy-aside` (mục lục trang chính sách) | 128 | **148** | utility `top-[128px]` trong markup |
+| `[data-policy-sec]` (mốc nhảy anchor) | 128 | **148** | utility `scroll-mt-[128px]` trong markup |
+| `.dk-sticky-info` / `.dk-sticky-side` | 136 | **156** | đã ở `<style>` |
+
+- **Vì sao khai tay trong `<style>` chứ không sửa utility trong markup**: `top-[132px]` · `top-[148px]` · `scroll-mt-[148px]` **không có trong `tailwind.css` đã build** (cùng lý do `col-start-4` phải khai tay). Gom 1 chỗ cũng đúng hơn về bản chất — 4 số này **buộc phải dịch cùng nhau** mỗi lần chiều cao header đổi, để rải rác trong markup là chắc chắn có cái bị bỏ sót. `#plpFilterAnchor` là id (1,0,0) nên thắng mọi utility class còn sót lại.
+- Bộ da MR PORTER ở file editorial vẫn cộng **+1px** cho hairline đáy `.dk-sub` của nó: `133` thay vì `132`.
+- **`#dkSearchLayer` không phải sửa**: `layer.style.top` đo `getBoundingClientRect().bottom` của hàng nav **tại lúc mở**, nên tự thích ứng.
+- **`.dk-mega` không phải sửa**: `absolute top-full` bám `.dk-sub`. Đo lại: đỉnh panel = đáy subheader (164 = 164 ở `desktop.html`; ở file editorial lệch 1px vì hairline của bộ da MR PORTER nằm giữa).
+- **Gạch chân mục đang chọn không phải sửa**: `::after` ở `bottom: 0` của `.dk-nav-item` vốn `h-full` → tự tụt xuống đáy hàng 72px. Đo lại: item 72px, vạch `bottom 0 / 2px`.
+- **Đã đo cả 2 file × mọi bộ da**: header tổng **164** (promo 32 + nav 60 + subheader 72), đáy header khi cuộn **132**; thanh bộ lọc PLP ghim **khít 0px**, cột info PDP + tóm tắt giỏ clearance **23–24px**, mục lục chính sách **26px**, anchor `[data-policy-sec]` nhảy tới **148 > 132** nên không bị header che. Console sạch trên tab mới, không tràn ngang (1425/1440).
+
 ## Back từ PDP về PLP giữ nguyên vị trí cuộn (17/08/2026, CẢ 2 BẢN)
 
 Yêu cầu user. Trước đó `go()` luôn `window.scrollTo(0, 0)` nên back từ PDP là văng lên đầu danh sách, phải cuộn lại từ đầu để tìm sản phẩm vừa xem.
