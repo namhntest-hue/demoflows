@@ -734,6 +734,31 @@ Giữ **tên thương hiệu + tên sản phẩm · màu (nếu có) · size**. 
 
 > ⚠ **Một câu chưa rõ trong yêu cầu:** phần đầu ghi *"giữ lại tên sản phẩm"* nhưng vế cuối lại ghi *"bỏ hình và tên"*. Mình hiểu vế cuối là gõ nhầm của **"bỏ hình và tiền"** (nhắc lại vế đầu) nên **GIỮ tên**. Nếu thật sự muốn bỏ tên thì sửa 1 dòng trong `quickAddBody`.
 
+## Bộ lọc: TIÊU ĐỀ MỤC viết HOA (19/08/2026, CẢ 2 BẢN)
+
+User: *"ở filter, cate lớn nhất hãy cho uppercase lên, áp cho 2 bản luôn"* → làm sai một lượt → user làm rõ: *"cái cần uppercase là DANH MỤC, THƯƠNG HIỆU, MÀU SẮC… không phải cate bên trong đó"*.
+
+> ### ⚠ LỖI ĐỌC YÊU CẦU
+> Mình hiểu "cate lớn nhất" thành **tầng đầu của cây Danh mục** (`Quần áo · Túi xách · Giày dép…`, tức `.fcat-check`) rồi viết hoa chỗ đó. Sai — thứ cần hoa là **hàng tiêu đề của từng mục bộ lọc** (`.facc-trigger`). Đã đảo lại: **cate mọi tầng giữ chữ thường**.
+
+```css
+html.skin-mt #filterSheet .facc-trigger > span:first-child {
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+```
+
+`> span:first-child` = nhãn chữ; span sau là icon `+/-` nên không dính (đo: icon ra `none`). Là **ngoại lệ có chủ ý** của quy ước "không dùng UPPERCASE", an toàn vì nằm trong bộ da.
+
+**Đo lại — 2 file × 2 biến thể thân bộ lọc × 3 bộ da:**
+
+| | Tiêu đề mục | Cate bên trong |
+|---|---|---|
+| `skin-mt` · thời trang | `DANH MỤC · THƯƠNG HIỆU · MÀU SẮC · KÍCH THƯỚC · KHOẢNG GIÁ · KHÁC` — **6/6 uppercase** | `Quần áo` → **none** |
+| `skin-mt` · làm đẹp | `DANH MỤC · THƯƠNG HIỆU · DUNG TÍCH · KHOẢNG GIÁ · ƯU ĐÃI · KHÁC` — **6/6 uppercase** | `Tắm & dưỡng thể` → **none** |
+| mặc định / MR PORTER | **6/6 none** | `Quần áo` → none |
+
+Console sạch trên tab mới ở cả 2 file.
+
 ## Bộ lọc: mọi mục ĐÓNG sẵn (19/08/2026, CẢ 2 BẢN)
 
 User: *"filter mặc định closed hết"*. Trước đây **6/7 mục mở sẵn** (chỉ "Khác" đóng) nên panel dài lê thê, phải cuộn mới thấy hết tên các mục.
