@@ -767,11 +767,41 @@ window.RESP = (function () {
      `span:first-child` = nhãn chữ; hàng nào cũng đặt nhãn ở span đầu, chevron/icon
      ở span sau — nên KHÔNG cần thêm class hook nào vào markup (đúng yêu cầu
      "không thay đổi layout"). */
-  /* Hàng TAB ngành hàng = tương ứng hàng dept "WOMEN/MEN/KIDS" của họ, ĐO ĐƯỢC ở
-     khổ 375: 14px · 400 · uppercase · ls 0.5px. (Trước đây mình để 12/500 vì suy
-     từ bản desktop của họ — sai, xem mục 5.) */
-  html.skin-mt #menuSheet .ms-tab {
-    font-size: 14px; line-height: 18px; font-weight: 400;
+  /* Hàng TAB ngành hàng (menu lv0: Nam · Nữ · Làm đẹp) = tương ứng hàng dept
+     "WOMEN/MEN/KIDS" của họ, ĐO ĐƯỢC ở khổ 375: 14px · 400 · uppercase · ls 0.5px.
+
+     WEIGHT 500 — CỐ Ý LỆCH SỐ ĐO (chốt 19/08/2026, yêu cầu user: *"độ dày của
+     menu lv0 cần đồng bộ về fontweight so với bản desktop"*). Số đo mobile của họ
+     là 400, nhưng hàng dept ở 2 bản desktop đã chốt 500 từ 18/08 (lý do ghi ở đó:
+     chữ hoa 12px Montserrat mảnh hơn AvenirNextLTPro của họ nên 500 bù lại đúng
+     độ dày mắt thấy). Để 2 bản lệch nhau ở CÙNG MỘT hàng menu là lỗi nặng hơn
+     việc lệch số đo -> theo desktop.
+     CỠ CHỮ vẫn giữ 14px của số đo mobile (user chỉ yêu cầu fontweight); desktop
+     là 12px vì hàng dept desktop của họ đo ra 12. Lệch cỡ này CÓ CHỦ Ý.
+     Rule (1,2,1) tự thắng khối blanket 400 ở mục 5 (0,2,1), không cần !important.
+     Một độ đậm ở MỌI state — markup có `font-medium` khi active và `font-normal`
+     khi nghỉ, cả hai đều bị rule này đè, đúng cách desktop làm với `[aria-current]`.
+
+     `.search-tab` = HÀNG TAB Y HỆT nhưng ở màn Search (dưới thanh tìm kiếm) —
+     cùng 3 nhãn Nam/Nữ/Làm đẹp, cùng `h-10`, cùng vai "chọn ngành hàng". Trước
+     19/08/2026 nó KHÔNG có rule bộ da nào nên ra 12px thường, đứng cạnh drawer
+     chữ hoa là lệch hẳn (user báo: *"phần nội dung search bên dưới thanh search
+     chưa được uppercase đồng bộ (nam nữ làm đẹp) giống menu"*).
+     Gộp chung 1 rule thay vì khai 2 lần — 2 class này vốn đã đi cặp ở rule
+     transition đầu file, để lệch nhau lần nữa là chuyện sớm muộn.
+     Chiều cao KHÔNG đổi: cả hai đều `h-10` (40px), chỉ chữ trong đó đổi.
+
+     ⚠ PHẢI viết `button.search-tab`, KHÔNG được để `.search-tab` trơn — BẪY
+     SPECIFICITY đã dính 3 lần trong dự án (2 lần với `.pc-brand`, xem README):
+       `html.skin-mt .search-tab`        = (0,2,1)
+       `html.skin-mt .text-[16px]`       = (0,2,1)  <- blanket cỡ chữ ở mục 5
+       `html.skin-mt .font-light/...`    = (0,2,1)  <- blanket weight ở mục 5
+     CÙNG HẠNG mà mục 5 viết SAU nên mục 5 thắng -> chữ ra 12px/400, chỉ mỗi
+     `text-transform` ăn (blanket không khai nó). Thêm `button` nâng lên (0,2,2)
+     là thắng cả hai. `.ms-tab` không dính vì đã có `#menuSheet` (1,2,1). */
+  html.skin-mt #menuSheet .ms-tab,
+  html.skin-mt button.search-tab {
+    font-size: 14px; line-height: 18px; font-weight: 500;
     text-transform: uppercase; letter-spacing: 0.5px;
   }
   /* Hàng danh mục trong drawer: KHÔNG đo được (không mở được menu mobile của họ
@@ -927,11 +957,14 @@ window.RESP = (function () {
      Kiểm kê trước remap: 9(2) 10(7) 11(14) 12(155) 13(51) 14(233) 15(3) 16(54)
      18(28) 22(1) 24(8) 32(1) — không có 20/48 nên bảng trên phủ hết.
 
-     WEIGHT: TOÀN BỘ 400, KHÔNG TRỪ CHỖ NÀO — kể cả nhãn menu. Họ không có một
-     phần tử 500/600/700 nào ở cả 2 khổ. (Bản trước để nhãn menu 500 theo chốt
-     "nâng weight menu lên medium" của user, nhưng chốt đó nói cho bản DESKTOP;
-     lần này user yêu cầu "mang TOÀN BỘ từ mytheresa sang" nên theo số đo.
-     => nav mobile 400 vs nav desktop 500, đang LỆCH NHAU CÓ Ý THỨC, chờ user chốt.)
+     WEIGHT: TOÀN BỘ 400 — họ không có một phần tử 500/600/700 nào ở cả 2 khổ.
+     3 NGOẠI LỆ, đều là lệch số đo CÓ CHỦ Ý và đều đã được user chốt:
+       · `.pc-brand` (tên thương hiệu)  -> 500, khai ở cuối mục này
+       · `.ms-tab`   (menu lv0)         -> 500, khai ở mục 4 — CHỐT 19/08/2026
+       · tiêu đề màn con + nhãn nhóm    -> 500, khai ở mục 4a
+     Riêng `.ms-tab`: chốt 18/08 "nâng weight menu lên medium" vốn nói cho bản
+     DESKTOP, nên bản mobile từng để 400 theo số đo và 2 bản LỆCH NHAU. User chốt
+     19/08 lấy desktop làm chuẩn -> mobile lên 500. Nay 2 bản CÙNG 500 ở hàng lv0.
 
      2 THỨ CHƯA MANG SANG, đã báo user:
        · line-height: họ 12/16.8 (tỉ lệ 1.4), ta 12/20 (1.67) -> chữ ta thoáng hơn.
@@ -8694,7 +8727,10 @@ document.body.insertAdjacentHTML('beforeend', `
             <span id="ccOff" class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0 hidden"></span>
             <p id="ccWas" class="text-[12px] leading-4 text-muted-foreground line-through hidden"></p>
           </div>
-          <p id="ccCount" class="text-[12px] leading-4 text-muted-foreground pt-1"></p>
+          <!-- Dòng "Giỏ hàng hiện có N sản phẩm" ĐÃ BỎ (19/08/2026, yêu cầu user).
+               Số lượng giỏ đã có ở chấm đếm trên icon giỏ ở header.
+               Luật i18n cho chuỗi này VẪN GIỮ trong I18N_RE/I18N_REV: rẻ, và còn
+               dùng nếu bật lại. Bản desktop bỏ y hệt — sửa 1 bên nhớ sửa cả 2. -->
         </div>
       </div>
       <div class="px-4 pt-2 pb-4 flex flex-col gap-2.5 shrink-0">
@@ -8730,7 +8766,6 @@ document.body.insertAdjacentHTML('beforeend', `
     const was = cc.querySelector('#ccWas');
     was.textContent = d.was || '';
     was.classList.toggle('hidden', !d.was);
-    cc.querySelector('#ccCount').textContent = `Giỏ hàng hiện có ${cartQty} sản phẩm`;
     localizeNew(panel);
     cc.classList.remove('pointer-events-none');
     cc.setAttribute('aria-hidden', 'false');

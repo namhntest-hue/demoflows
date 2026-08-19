@@ -446,6 +446,22 @@ window.RESP = (function () {
      (bản vẽ để nền trắng ở cả 2 trạng thái). */
   .opt.on { border-color: var(--general-secondary-foreground); }
   .opt { transition: border-color .2s ease, background .2s ease; }
+  /* ── BADGE NHÃN — NỀN TRẮNG DÙNG CHUNG (19/08/2026, yêu cầu user) ───────────
+     *"trong các ver pdp chưa được đồng bộ màu badge pre-order, seasonal…"*.
+     Đo được đúng vậy — cùng một loại nhãn mà 2 nền khác nhau:
+       thẻ sản phẩm (PLP)            -> inline `rgba(255,255,255,.9)` = trắng 90%
+       PDP · giỏ hàng · màn Hoàn tất -> `bg-secondary` = xám (#f5f5f5, #f2f2f2 ở skin-mt)
+     Nay gom về MỘT rule, nền `--color-white` (primitive #ffffff của tokens.css).
+     Primitive nên KHÔNG đổi theo bộ da -> badge trắng như nhau ở cả 3 skin.
+     Sửa nền badge thì sửa ĐÚNG dòng này, đừng khai lại ở từng chỗ.
+     ⚠ KHAI GIỐNG HỆT bản `index.html` (cùng tên class, cùng giá trị) — sửa một
+     file thì sửa cả hai, kẻo lại lệch đúng thứ vừa đi đồng bộ.
+     ĐỌC ĐƯỢC vì badge nào cũng nằm ĐÈ TRÊN ẢNH (tile gallery PDP `absolute top-3`,
+     ảnh thẻ sản phẩm `absolute top-2`, ảnh dòng giỏ/hoàn tất `absolute top-0`).
+     KHÔNG áp cho badge MANG NGHĨA MÀU: -% giảm giá (đỏ) · chấm đếm giỏ (đỏ) ·
+     "Quà tặng" (đen) · pill trạng thái đơn. */
+  .badge-label { background: var(--color-white); }
+
   /* ── Size / swatch chips ── */
   .chip { transition: border-color .18s ease, background .18s ease, color .18s ease; }
   .chip.on { border-color: var(--general-primary); border-width: 1.5px; }
@@ -509,7 +525,7 @@ window.RESP = (function () {
      kính, không viền không bóng): `.dk-mega` (panel menu) và `#dkSearchLayer
      .ds-sheet` (tấm gợi ý tìm kiếm) — xem rule riêng của từng cái.
      Sửa 1 chỗ này là đổi cả bộ; ĐỪNG thêm border/box-shadow vào từng mặt. */
-  .dk-modal, .dk-drawer, .lp-card,
+  .dk-modal, .dk-drawer, .lp-card, .cc-drop,
   #infoSheet .is-panel, #filterSheet .fs-panel,
   #cookieBar, #cookiePrefs .cp-panel, #settingsPanel .sp-card, #sortMenu, [data-size-list] {
     border: 1px solid var(--general-border);
@@ -530,6 +546,47 @@ window.RESP = (function () {
   }
   .dk-modal.translate-y-full { transform: translate(-50%, -46%) scale(.97); opacity: 0; }
   .dk-modal .safe-b { padding-bottom: 0; }
+  /* ── Quick add: khổ 2 CỘT (19/08/2026, layout tham chiếu user gửi) ──
+     Rộng 960 thay cho drawer 560 cũ vì giờ phải chứa 2 cột. CAO CỐ ĐỊNH 620 —
+     bắt buộc: cột trái là ảnh `h-full`, không chốt chiều cao thì ảnh không có
+     mốc để cao theo và panel co về đúng chiều cao cột phải.
+     `min()` để màn thấp vẫn vừa; `.dk-modal` đã có `max-height: 84vh` nhưng
+     max-height KHÔNG ghì được `height` khi viewport hụt nên vẫn tính lại ở đây.
+     Cột ảnh 46% — hẹp hơn nửa panel một chút vì cột phải phải chứa lưới 6 ô size
+     cộng lề 24; tham chiếu chia gần 50/50 nhưng panel của họ rộng hơn ta 220px. */
+  #quickAddSheet .qa-panel { width: 960px; height: min(620px, 84vh); }
+  #quickAddSheet .qa-media { width: 46%; }
+  /* Vị trí hàng chấm: khai bằng CSS chứ KHÔNG dùng utility `bottom-4 left-6`.
+     Lý do: `tailwind.css` là bản BUILD TĨNH, quét class có sẵn trong 2 file HTML —
+     2 utility đó chưa chỗ nào dùng nên KHÔNG có trong bản build, gõ vào markup là
+     rơi im lặng (chấm dính đúng mép ảnh). Đã đo và bắt được lúc kiểm.
+     Khai ở đây rẻ hơn nhiều so với rebuild lại cả stylesheet giữa chừng; nếu sau
+     này có rebuild thì rule này vẫn đúng, chỉ là thừa. */
+  #quickAddSheet #qaDots { left: 24px; bottom: 16px; }
+
+  /* ── "Đã thêm vào giỏ hàng": DROPDOWN NGAY DƯỚI ICON GIỎ ──────────────────────
+     Chốt 19/08/2026 (yêu cầu user): *"ở bản desktop 'đã thêm vào giỏ hàng' ngay
+     tại icon giỏ hàng sẽ dropdown xuống thay vì đè popup lên"*.
+     Trước đây nó mượn `.dk-modal` -> nổi GIỮA màn + nền tối 45%, tức chặn cả trang
+     chỉ để báo một việc vừa xong. Nay là tấm thả xuống neo vào icon giỏ, giống
+     mini-cart của sàn thật: không tối nền, không khoá cuộn.
+     KHÔNG dùng `.dk-modal` nữa vì class đó ép `left/top: 50% !important`.
+     Toạ độ do JS đặt (đo rect của nút giỏ lúc mở) — CSS chỉ lo khuôn + hiệu ứng.
+     Vẫn dùng chung cờ `translate-y-full` mà JS toggle, y như mọi sheet khác trong
+     dự án, nên đoạn JS đóng/mở không phải viết lại. */
+  .cc-drop {
+    position: fixed; width: 380px; max-width: calc(100vw - 32px);
+    border-radius: 8px; overflow: hidden;
+    transform: translateY(0); opacity: 1;
+    transition: opacity .18s ease, transform .2s cubic-bezier(.22,1,.36,1);
+  }
+  /* Trạng thái ĐÓNG: nhích lên 8px + mờ đi, đúng hướng "thả xuống từ icon" */
+  .cc-drop.translate-y-full { transform: translateY(-8px); opacity: 0; }
+  .cc-drop .safe-b { padding-bottom: 0; }
+  /* Nền chặn click-ra-ngoài: TRONG SUỐT (dropdown không được tối trang).
+     Vẫn giữ phần tử để bấm ra ngoài là đóng — bỏ hẳn thì phải nghe click trên
+     document rồi tự loại trừ, dài dòng hơn mà cùng kết quả. */
+  #cartConfirm .cc-backdrop { background: transparent; }
   /* ── Drawer desktop: panel cao hết màn, TRƯỢT VÀO TỪ MÉP PHẢI (yêu cầu user
      17/08/2026 cho sheet chọn ưu đãi). Vẫn dùng chung cờ `translate-y-full` mà
      JS toggle như bottom sheet mobile — nhờ vậy hai bản chạy đúng một đoạn JS,
@@ -1033,7 +1090,7 @@ window.RESP = (function () {
   html.skin-mp { --radius-2: 0px; --radius-4: 0px; --radius-6: 0px; --radius-8: 0px; --radius-10: 0px; }
   /* .dk-modal khai bo góc bằng SỐ THẬT + !important ở khối trên nên token không
      với tới -> phải đè đúng nó. */
-  html.skin-mp .dk-modal { border-radius: 0 !important; }
+  html.skin-mp .dk-modal, html.skin-mp .cc-drop { border-radius: 0 !important; }
 
   /* ── 7. TRACKING theo SỐ ĐO THẬT của nền tảng (18/08/2026) ───────────────────
      mrporter.com CHẶN cả browser pane (Akamai "Access Denied", Reference #18.ce07…)
@@ -1146,7 +1203,10 @@ window.RESP = (function () {
     --radius-2: 0px; --radius-4: 0px; --radius-6: 0px; --radius-8: 0px; --radius-10: 0px;
   }
   html.skin-mt.theme-dplus { --unofficial-accent: #000; --general-muted-foreground: #595959; --focus-ring: #595959; }
-  html.skin-mt .dk-modal { border-radius: 0 !important; }
+  /* `.cc-drop` phải đi kèm `.dk-modal`: tấm "Đã thêm vào giỏ" từ 19/08/2026 KHÔNG
+     còn là .dk-modal (đổi sang dropdown neo icon giỏ) nên rơi khỏi rule này và
+     giữ nguyên bo 8px giữa bộ da góc vuông. Đã đo và bắt được. */
+  html.skin-mt .dk-modal, html.skin-mt .cc-drop { border-radius: 0 !important; }
 
   /* ── 2. NAV CHỮ HOA — yêu cầu chính của bộ da này ──
      Viết hoa bằng `text-transform`, KHÔNG gõ hoa vào chuỗi: chuỗi gốc là key i18n
@@ -1165,6 +1225,29 @@ window.RESP = (function () {
      nghỉ nên nav MỘT độ đậm ở mọi state. */
   html.skin-mt .navbar .dk-dept[aria-current],
   html.skin-mt .navbar .dk-nav-link[aria-current] { font-weight: 500; }
+  /* Hàng tab Nam/Nữ/Làm đẹp ở màn Search (dưới thanh tìm kiếm) — CÙNG VAI "chọn
+     ngành hàng" với `.dk-dept` trên nav, nên lấy đúng bộ số của nó: 12/16 · 500 ·
+     uppercase · ls .5. Trước 19/08/2026 hàng này KHÔNG có rule bộ da nào nên ra
+     chữ thường, đứng cạnh nav chữ hoa là lệch hẳn (user báo).
+     Bản mobile khai cặp `.ms-tab, .search-tab` chung một rule; ở file này drawer
+     `#menuSheet` là code chết nên chỉ còn `.search-tab`.
+     ⚠ Cỡ chữ 2 bản CỐ Ý LỆCH: mobile 14px (hàng dept của họ ở khổ 375 đo ra 14),
+     desktop 12px (khổ 1280 đo ra 12) — mỗi khổ theo số đo của chính nó, giống
+     đúng cách `.ms-tab` vs `.dk-dept` đang làm. Weight thì CÙNG 500.
+     Chiều cao không đổi: nút vẫn `h-10`.
+
+     ⚠ PHẢI viết `button.search-tab`, KHÔNG được để `.search-tab` trơn — BẪY
+     SPECIFICITY đã dính nhiều lần trong dự án (xem `.pc-brand` ở mục 9):
+       `html.skin-mt .search-tab`  = (0,2,1)
+       `html.skin-mt .text-[16px]` = (0,2,1)  <- blanket cỡ chữ ở mục 5
+       `html.skin-mt .font-light…` = (0,2,1)  <- blanket weight ở mục 5
+     CÙNG HẠNG mà mục 5 viết SAU nên mục 5 thắng -> chỉ mỗi `text-transform` ăn
+     (blanket không khai nó), còn cỡ chữ và weight bị đè. Thêm `button` nâng lên
+     (0,2,2) là thắng cả hai. */
+  html.skin-mt button.search-tab {
+    font-size: 12px; line-height: 16px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
   /* "Khuyến mãi" ĐEN như mọi mục khác (đo thật: SALE của họ không tô đỏ). Phải
      nhắc cả :hover và [aria-current] vì khối gốc khoá đỏ ở cả 3 state. */
   html.skin-mt .navbar .dk-nav-link.text-destructive,
@@ -1571,7 +1654,7 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
       <div class="pc-badges absolute top-2 left-0 flex flex-col items-start gap-1">
         <!-- data-i18n-skip khi là wordmark "Pre-order": không có nó thì lượt dịch
              ngược EN->VN biến badge thành "Đặt trước" (trùng chuỗi với nút) -->
-        ${tags.map(b => `<span ${b === 'Pre-order' ? 'data-i18n-skip ' : ''}class="px-1 text-[12px] font-medium leading-4 text-foreground" style="background:rgba(255,255,255,.9)">${b}</span>`).join('')}
+        ${tags.map(b => `<span ${b === 'Pre-order' ? 'data-i18n-skip ' : ''}class="badge-label px-1 text-[12px] font-medium leading-4 text-foreground">${b}</span>`).join('')}
       </div>` : '';
       })()}
       <button class="quick-add press" data-quick="${i}" aria-label="Thêm nhanh vào giỏ"
@@ -2839,7 +2922,7 @@ function dkScreenPDP(kind) {
           ${gallery.map((s, gi) => `
           <button class="zoomable shimmer relative block w-full overflow-hidden bg-secondary" style="aspect-ratio:469/579" data-zoom="${A}${s}">
             <img src="${A}${s}" class="absolute inset-0 w-full h-full object-cover lazy" alt="${P.name}" onload="this.parentElement.classList.add('loaded')">
-            ${gi === 0 && P.preorder ? '<span data-i18n-skip class="absolute top-3 left-0 bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
+            ${gi === 0 && P.preorder ? '<span data-i18n-skip class="absolute top-3 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
           </button>`).join('')}
         </div>
 
@@ -3858,7 +3941,7 @@ function screenCART() {
       </div>
       <div class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
         <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
-        ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
+        ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
       </div>
       <div class="flex-1 min-w-0 flex flex-col justify-between">
         <div class="flex flex-col">
@@ -4718,7 +4801,7 @@ function screenCHECKOUT() {
               <div class="flex gap-3">
                 <span class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden">
                   <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
-                  ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
+                  ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
                 </span>
                 <div class="flex-1 min-w-0 flex flex-col justify-between">
                   <div>
@@ -8743,61 +8826,91 @@ document.body.insertAdjacentHTML('beforeend', `
   });
   window.__openNotify = openN;
 })();
-/* ── Quick Add sheet (PLP) — 2.5 ảnh peek + thuộc tính giống PDP ── */
+/* ── Quick Add dialog (PLP) — BỐ CỤC 2 CỘT ────────────────────────────────────
+   Dựng lại 19/08/2026 theo layout tham chiếu user gửi (quick view của versace.com):
+     cột TRÁI  = 1 ảnh lớn + chấm chuyển ảnh dưới đáy
+     cột PHẢI  = ✕ trên cùng · tên + giá · màu · [nhãn size ... link bảng size]
+                 · lưới size · (giãn) · CTA · "Xem chi tiết" căn giữa dưới CTA
+   ⚠ CHỈ MƯỢN CÁCH BỐ TRÍ, KHÔNG bê style (user nói rõ) — mọi thứ vẽ ra vẫn là
+   component sẵn có của dự án: `.sw` cho ô màu, `.chip` cho ô size, `.btn-p` cho
+   CTA, khuôn `.dk-modal` cho vỏ, thang chữ và token màu của dự án.
+   KHÁC tham chiếu 2 chỗ, CÓ Ý THỨC:
+     · họ có icon ❤ lưu sản phẩm ở góc ảnh — dự án KHÔNG có tính năng wishlist,
+       thêm vào là bịa tính năng nên bỏ;
+     · họ chỉ hiện tên sản phẩm; ta giữ CẢ tên thương hiệu (dòng trên) vì đó là
+       nội dung sẵn có của mọi card/PDP trong dự án.
+   Bản MOBILE giữ nguyên bottom-sheet 1 cột — user chỉ yêu cầu bản desktop. */
 document.body.insertAdjacentHTML('beforeend', `
   <div id="quickAddSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
     <div class="qa-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
-    <div class="qa-panel dk-modal absolute bg-background translate-y-full flex flex-col"
-         style="width:560px" role="dialog" aria-label="Thêm nhanh vào giỏ">
-      <!-- Dialog desktop: bỏ thanh grabber của bottom-sheet, chỉ giữ ✕ 24px -->
-      <div class="h-8 shrink-0 relative">
-        <button id="qaClose" class="absolute top-1 right-1.5 w-8 h-8 flex items-center justify-center press [&_svg]:w-3.5 [&_svg]:h-3.5">${I.close}</button>
+    <div class="qa-panel dk-modal absolute bg-background translate-y-full flex"
+         role="dialog" aria-label="Thêm nhanh vào giỏ">
+      <!-- CỘT TRÁI: ảnh. Kích thước do .qa-media trong <style> cấp. -->
+      <div id="qaMedia" class="qa-media relative shrink-0 bg-secondary"></div>
+      <!-- CỘT PHẢI: thông tin + CTA -->
+      <div class="qa-info flex-1 min-w-0 flex flex-col">
+        <div class="h-8 shrink-0 relative">
+          <button id="qaClose" class="absolute top-1 right-1.5 w-8 h-8 flex items-center justify-center press [&_svg]:w-3.5 [&_svg]:h-3.5">${I.close}</button>
+        </div>
+        <!-- Block DUY NHẤT được cuộn khi màn quá thấp -->
+        <div id="qaBody" class="flex-1 min-h-0 flex flex-col overflow-y-auto no-scrollbar"></div>
+        <!-- CTA GHIM đáy cột phải: nằm NGOÀI #qaBody nên không cuộn theo nội dung. -->
+        <div id="qaCta" class="shrink-0 bg-background"></div>
+        <div class="safe-b"></div>
       </div>
-      <!-- #qaBody = "group1" trong Figma 3373:41590: gallery + header + khối
-           chọn màu/size. Đây là block DUY NHẤT được cuộn khi màn quá thấp. -->
-      <div id="qaBody" class="flex-1 min-h-0 flex flex-col overflow-y-auto no-scrollbar"></div>
-      <!-- CTA GHIM đáy dialog: nằm NGOÀI #qaBody nên không cuộn theo nội dung. -->
-      <div id="qaCta" class="shrink-0 bg-background"></div>
-      <div class="safe-b"></div>
     </div>
   </div>`);
 
-/* CTA của quick add — tách riêng vì phải GHIM đáy dialog (#qaCta nằm ngoài vùng
-   cuộn #qaBody). Figma Frame 427319820 giờ CAO 80 = pad 16 + nút 48 + pad 16,
-   tức chỉ còn nút chính; "Xem chi tiết" đã dời lên cạnh tên sản phẩm. */
+/* CỘT TRÁI — 1 ảnh lớn chiếm hết khung + hàng chấm dưới đáy.
+   Dùng scroll-snap ngang: mỗi slide rộng 100% nên lúc nào cũng CHỈ THẤY 1 ảnh,
+   đúng tham chiếu (bản cũ là dải 2.5 ảnh peek cuộn ngang).
+   Chấm đặt ĐÈ lên ảnh ở đáy-trái — cùng vị trí tham chiếu; kiểu chấm lấy đúng
+   `#pdpDots` của bản mobile (thanh 4/6px bo tròn) để 2 bản một ngôn ngữ. */
+function quickAddMedia(p, idx) {
+  const gallery = PRODUCT_GALLERY[idx] || [p.img];
+  return `
+    <div id="qaSlides" class="drag-x flex h-full w-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
+      ${gallery.map(img => `
+        <div class="w-full h-full shrink-0 snap-center">
+          <img src="${A}${img}" class="w-full h-full object-cover" alt="${p.name}">
+        </div>`).join('')}
+    </div>
+    ${gallery.length > 1 ? `
+    <div id="qaDots" class="absolute flex gap-1">
+      ${gallery.map((_, i) => `<span class="h-1 rounded-full transition-all duration-300 ${i === 0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
+    </div>` : ''}`;
+}
+
+/* CTA của quick add — tách riêng vì phải GHIM đáy cột phải (#qaCta nằm ngoài
+   vùng cuộn #qaBody).
+   "Xem chi tiết" DỜI XUỐNG ĐÂY, nằm DƯỚI nút chính và CĂN GIỮA (theo tham chiếu:
+   "View Details" gạch chân ở đáy panel). Trước đây nó nằm cạnh tên sản phẩm —
+   chỗ đó nay chỉ còn tên, đúng tham chiếu. */
 function quickAddCta(p) {
   return `
-    <div class="px-4 pt-4 pb-4">
+    <div class="px-6 pt-4 pb-6 flex flex-col gap-3">
       <button id="qaAdd" data-quick-img="${A}${p.img}" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium btn-p press">Thêm vào giỏ hàng</button>
+      <button id="qaDetail" class="self-center text-[14px] leading-5 underline press" style="color:var(--unofficial-ghost-foreground)">Xem chi tiết</button>
     </div>`;
 }
 
-/* Quick add — theo Figma Drawer (3373:41590 / 3373:41766):
-   gallery 160×213 gap 2 · header dùng đúng style header PDP (brand 20/28,
-   tên 14/20, giá 16/24) · swatch 44px · nút 48 primary + 36 ghost, gap 10 */
+/* CỘT PHẢI — thứ tự khối bám tham chiếu: tên -> giá -> màu -> size -> (CTA ở
+   quickAddCta). Gallery đã tách sang quickAddMedia(); ở đây KHÔNG còn ảnh nào
+   ngoài ô chọn màu.
+   Style vẫn của dự án: header dùng đúng khuôn header PDP (brand 18/28, tên 14/20,
+   giá 16/24), swatch `.sw` 44px, size `.chip`. */
 function quickAddBody(p, idx, sel = 0) {
   /* ĐỒNG NHẤT với PDP: cùng đọc PRODUCT_GALLERY nên quick add của sản phẩm
      nào ra đúng bộ ảnh của PDP sản phẩm đó. */
   const gallery = PRODUCT_GALLERY[idx] || [p.img];
   return `
-    <!-- Gallery: pad 2 + gap 2 (Figma Frame 427319867). Ảnh W=163 -> H=213. -->
-    <div class="flex gap-0.5 overflow-x-auto no-scrollbar p-0.5">
-      ${gallery.map(img => `
-        <div class="shrink-0 w-[163px] overflow-hidden bg-secondary" style="aspect-ratio:163/213">
-          <img src="${A}${img}" class="w-full h-full object-cover" alt="${p.name}">
-        </div>`).join('')}
-    </div>
-    <div class="flex flex-col gap-1 pt-2 px-4 pb-2">
+    <div class="flex flex-col gap-1 px-6 pb-4">
       <div class="flex flex-col pb-2 items-start text-left">
-        <p class="pc-brand h-7 text-[18px] font-medium leading-7 text-foreground">${p.brand}</p>
-        <!-- Hàng tên sản phẩm = [tên] gap 10 [Xem chi tiết] (Figma Frame
-             427319813: HORIZONTAL gap 10, Link Button 85×24 nằm ngay sau tên).
-             Tên KHÔNG flex-1: để nó hug như Figma, chỉ co lại + truncate khi
-             tên dài, nhờ vậy link luôn nằm sát tên và không bị đẩy ra ngoài. -->
-        <div class="w-full flex items-center gap-2.5">
-          <p class="min-w-0 truncate text-[14px] leading-5 text-foreground-alt">${p.name}</p>
-          <button id="qaDetail" class="shrink-0 text-[14px] leading-5 underline press" style="color:var(--unofficial-ghost-foreground)">Xem chi tiết</button>
-        </div>
+        <p class="pc-brand text-[18px] font-medium leading-7 text-foreground">${p.brand}</p>
+        <!-- Hàng tên: nay CHỈ còn tên (link "Xem chi tiết" đã dời xuống dưới CTA
+             theo tham chiếu). Cho xuống dòng thay vì truncate — cột phải rộng
+             rãi hơn drawer 560 cũ nên không cần cắt chữ nữa. -->
+        <p class="w-full text-[14px] leading-5 text-foreground-alt">${p.name}</p>
       </div>
       <div class="flex gap-1.5 items-center">
         <p class="text-[16px] font-medium leading-6 ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
@@ -8805,15 +8918,15 @@ function quickAddBody(p, idx, sel = 0) {
         ${p.was ? `<p class="text-[14px] leading-5 text-muted-foreground line-through">${p.was}</p>` : ''}
       </div>
     </div>
-    <div class="pt-2 px-4 pb-2 flex flex-col gap-4">
+    <div class="px-6 pb-2 flex flex-col gap-5">
       ${(p.colors && p.colors.length) ? `
       <div class="flex flex-col gap-2">
         <div class="flex gap-2">
           <p class="text-[12px] font-medium leading-4 text-foreground">Màu sắc</p>
           <p class="qa-color-name text-[12px] leading-4 text-muted-foreground">${p.colors[sel].name}</p>
         </div>
-        <!-- Ô chọn màu dạng ẢNH 44×44 giống PDP (Figma "Image Selection"), thay
-             cho ô màu hex 36px trước đây — để quick add và PDP nhìn như một. -->
+        <!-- Ô chọn màu dạng ẢNH 44×44 giống PDP (Figma "Image Selection") — để
+             quick add và PDP nhìn như một. -->
         <div class="flex gap-2" data-qa-colors>
           ${p.colors.map((c, ci) => `
             <button class="sw w-11 h-11 rounded-xs overflow-hidden shrink-0 border ${ci===sel ? 'on' : 'border-transparent'} bg-secondary btn-s press" data-cw="${ci}" data-name="${c.name}">
@@ -8822,12 +8935,21 @@ function quickAddBody(p, idx, sel = 0) {
         </div>
       </div>` : ''}
       <div class="flex flex-col gap-2">
-        <!-- Không có link bảng kích thước ở quick add: node "Bảng size" trong
-             Figma 3373:41590 đang TẮT hiển thị. Muốn xem thì vào trang PDP. -->
-        <p class="text-[12px] font-medium leading-4 text-foreground">${p.sizes ? 'Dung tích' : 'Kích thước'}</p>
-        <!-- 5 ô / dòng (trước là 4) -> chip hẹp hơn: (358 - 4×8)/5 ≈ 65px.
-             SIZES đang có 6 giá trị nên dòng 2 còn lẻ 1 ô — xem README. -->
-        <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)" data-qa-sizes>
+        <!-- Hàng nhãn = [nhãn] ... [link bảng size] — đúng tham chiếu ("Select
+             size:" trái, "SIZE GUIDE" phải).
+             ĐẢO quyết định cũ ("Figma 3373:41590 tắt node Bảng size nên quick add
+             không có link"): tham chiếu đặt link ngay ở ô này, và dự án ĐÃ CÓ
+             bảng size thật. Dùng lại NGUYÊN hook data-size-chart của PDP nên
+             không phải viết handler mới — wire() bắt sẵn.
+             (KHÔNG gõ dấu backtick trong comment này — cả khối nằm trong template
+             literal, dính vào là đứt chuỗi. Đã dính đúng lỗi này lúc viết.) -->
+        <div class="flex items-center justify-between">
+          <p class="text-[12px] font-medium leading-4 text-foreground">${p.sizes ? 'Dung tích' : 'Kích thước'}</p>
+          ${p.sizes ? '' : '<button data-size-chart aria-label="Mở bảng kích thước" class="text-[12px] leading-4 text-foreground press">Bảng kích thước →</button>'}
+        </div>
+        <!-- 6 ô / dòng: cột phải rộng hơn drawer cũ nên vừa 6 (tham chiếu cũng
+             xếp 6 ô mỗi dòng). SIZES đang có 6 giá trị -> vừa đúng 1 dòng. -->
+        <div class="grid gap-2" style="grid-template-columns:repeat(6,1fr)" data-qa-sizes>
           ${(p.sizes || SIZES).map((s, si) => {
             const off = !p.sizes && DISABLED.includes(s);
             return `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${(si === 0 && !off) ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? 'disabled' : ''}>${s}</button>`;
@@ -8841,14 +8963,30 @@ function quickAddBody(p, idx, sel = 0) {
 (() => {
   const qa = document.getElementById('quickAddSheet');
   const panel = qa.querySelector('.qa-panel');
+  const media = document.getElementById('qaMedia');
   const body = document.getElementById('qaBody');
   const ctaBox = document.getElementById('qaCta');
 
   /* `ci` = màu vừa chọn trên card PLP, để quick add mở lên đúng màu đó */
   const openQA = (idx, ci = 0) => {
     const p = PRODUCTS[idx];
+    media.innerHTML = quickAddMedia(p, idx);
     body.innerHTML = quickAddBody(p, idx, (p.colors && p.colors[ci]) ? ci : 0);
     ctaBox.innerHTML = quickAddCta(p);
+
+    /* Chấm chuyển ảnh: nghe scroll của dải slide, ô nào đang ở giữa thì chấm đó
+       nở ra. Cùng cơ chế `#pdpDots` bản mobile, chỉ khác là dựng lại mỗi lần mở
+       nên listener sống theo node — không cần gỡ. */
+    const slides = media.querySelector('#qaSlides');
+    const dots = media.querySelector('#qaDots');
+    if (slides && dots) {
+      slides.addEventListener('scroll', () => {
+        const i = Math.round(slides.scrollLeft / slides.clientWidth);
+        [...dots.children].forEach((d, di) => {
+          d.className = 'h-1 rounded-full transition-all duration-300 ' + (di === i ? 'w-6 bg-primary' : 'w-4 bg-border-3');
+        });
+      }, { passive: true });
+    }
 
     body.querySelectorAll('[data-qa-colors]').forEach(rw => {
       rw.addEventListener('click', ev => {
@@ -8869,7 +9007,10 @@ function quickAddBody(p, idx, sel = 0) {
       });
     });
     ctaBox.querySelector('#qaAdd').addEventListener('click', e => {
-      const img = body.querySelector('img');
+      /* Ảnh bay vào giỏ lấy từ CỘT TRÁI (trước đây #qaBody có gallery nên
+         `body.querySelector('img')` trúng; nay ảnh đã tách sang #qaMedia, để
+         nguyên là bay nhầm cái thumbnail chọn màu). */
+      const img = media.querySelector('img');
       if (img) flyToCart(img);
       cartQty++;
       document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
@@ -8883,11 +9024,14 @@ function quickAddBody(p, idx, sel = 0) {
         price: p.price, off: p.off, was: p.was, preorder: p.preorder,
       }), 350);
     });
-    // nút ghost "Xem chi tiết" -> đóng sheet, mở đúng PDP của sản phẩm
-    body.querySelector('#qaDetail').addEventListener('click', () => {
+    // "Xem chi tiết" -> đóng dialog, mở đúng PDP của sản phẩm.
+    // Nút này nay nằm trong #qaCta (dưới CTA) chứ không còn trong #qaBody.
+    ctaBox.querySelector('#qaDetail').addEventListener('click', () => {
       closeQA();
       go(idx === 1 ? 'pdp2' : idx === 2 ? 'pdp3' : idx === 3 ? 'pdp4' : idx === 4 ? 'pdp5' : idx === 5 ? 'pdp6' : 'pdp');
     });
+    // Link "Bảng kích thước →" dùng hook [data-size-chart] -> nhờ wire() nối
+    wire(body);
     localizeNew(body); localizeNew(ctaBox);
 
     qa.classList.remove('pointer-events-none'); qa.setAttribute('aria-hidden', 'false');
@@ -9020,16 +9164,21 @@ document.body.insertAdjacentHTML('beforeend', `
     go('login');
   });
 })();
-/* ── Bottom sheet xác nhận đã thêm vào giỏ ──
-   Theo ngôn ngữ sheet chung của app: bo 10, handle 50×3, header 52px (tiêu đề 20/28 + ✕ 12px),
-   hàng item kiểu item-cart (ảnh 3:4 + brand 14 medium + tên 14 + variant 12 + giá),
-   nút chính 48 "Xem giỏ hàng" + nút ghost 36 "Tiếp tục mua sắm" (như drawer quick-add) */
+/* ── Xác nhận đã thêm vào giỏ — DROPDOWN dưới icon giỏ (19/08/2026) ───────────
+   Đổi từ modal giữa màn sang tấm thả xuống neo vào icon giỏ ở header (yêu cầu
+   user). Nội dung giữ nguyên: hàng item kiểu item-cart (ảnh 3:4 + brand 14 medium
+   + tên 14 + variant 12 + giá), nút chính 48 "Xem giỏ hàng" + nút ghost 36
+   "Tiếp tục mua sắm".
+   3 thứ BỎ vì không còn hợp vai dropdown:
+     · thanh grabber 50×3 — di sản bottom-sheet mobile, tấm này không kéo được;
+     · nền tối 45% — dropdown không được tối cả trang;
+     · khoá cuộn trang — xem ghi chú trong openCC.
+   Bản MOBILE giữ nguyên bottom sheet. */
 document.body.insertAdjacentHTML('beforeend', `
   <div id="cartConfirm" class="fixed inset-0 z-[220] pointer-events-none" aria-hidden="true">
-    <div class="cc-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
-    <div class="cc-panel dk-modal absolute bg-background translate-y-full flex flex-col"
-         style="width:480px" role="dialog" aria-label="Đã thêm vào giỏ hàng">
-      <span class="absolute left-1/2 -translate-x-1/2 top-2 w-[50px] h-[3px] rounded-full bg-border"></span>
+    <div class="cc-backdrop absolute inset-0 opacity-0 transition-opacity duration-300"></div>
+    <div class="cc-panel cc-drop bg-background translate-y-full flex flex-col"
+         role="dialog" aria-label="Đã thêm vào giỏ hàng">
       <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
         <p class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">Đã thêm vào giỏ hàng</p>
         <button id="ccClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
@@ -9048,7 +9197,11 @@ document.body.insertAdjacentHTML('beforeend', `
             <span id="ccOff" class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0 hidden"></span>
             <p id="ccWas" class="text-[12px] leading-4 text-muted-foreground line-through hidden"></p>
           </div>
-          <p id="ccCount" class="text-[12px] leading-4 text-muted-foreground pt-1"></p>
+          <!-- Dòng "Giỏ hàng hiện có N sản phẩm" ĐÃ BỎ (19/08/2026, yêu cầu user).
+               Số lượng giỏ đã có ở chấm đếm trên icon giỏ — mà tấm này lại thả
+               xuống ngay dưới đúng cái icon đó, nên nhắc lại bằng chữ là thừa.
+               Luật i18n cho chuỗi này VẪN GIỮ trong I18N_RE/I18N_REV: rẻ, và còn
+               dùng nếu bật lại. -->
         </div>
       </div>
       <div class="px-4 pt-2 pb-4 flex flex-col gap-2.5 shrink-0">
@@ -9061,6 +9214,48 @@ document.body.insertAdjacentHTML('beforeend', `
 (() => {
   const cc = document.getElementById('cartConfirm');
   const panel = cc.querySelector('.cc-panel');
+
+  /* Neo tấm vào NÚT GIỎ ở header: đo rect của nút rồi đặt toạ độ.
+     Đo lúc mở thay vì nhét panel vào trong nút vì `navBar()` DỰNG LẠI mỗi lần
+     đổi màn — panel nằm trong đó là mất theo, mà nút giỏ cũng không có id cố
+     định để bám. Bám `[data-nav="cart"]` (thuộc tính điều hướng, có ở mọi
+     header đầy đủ).
+     Canh MÉP PHẢI tấm với mép phải nút, thả xuống dưới 8px — đúng lối dropdown.
+     Kẹp trong khoảng 16px hai bên để màn hẹp không đẩy tấm ra ngoài.
+     DỰ PHÒNG: màn nào header rút gọn (checkout: logo + cam kết bảo mật, KHÔNG có
+     icon giỏ) thì rơi về góc phải-trên. Hiện chưa luồng nào gọi cart-confirm từ
+     đó, nhưng thiếu nhánh này là tấm văng ra toạ độ 0,0. */
+  const place = () => {
+    const btn = document.querySelector('[data-nav="cart"]');
+    const w = panel.offsetWidth || 380;
+    if (!btn) { panel.style.top = '72px'; panel.style.left = (innerWidth - w - 16) + 'px'; return; }
+    const r = btn.getBoundingClientRect();
+    const left = Math.min(Math.max(16, r.right - w), innerWidth - w - 16);
+    panel.style.top = (r.bottom + 8) + 'px';
+    panel.style.left = left + 'px';
+  };
+  /* Header là `sticky top-0` nên nút giỏ đứng yên khi cuộn, nhưng thanh khuyến
+     mãi trên cùng thì cuộn đi -> nút tụt lên vài chục px. Bám theo cho tấm không
+     rời khỏi icon. `passive` vì chỉ đọc rect, không chặn cuộn. */
+  addEventListener('scroll', () => { if (!panel.classList.contains('translate-y-full')) place(); }, { passive: true });
+  addEventListener('resize', () => { if (!panel.classList.contains('translate-y-full')) place(); });
+
+  /* ── Tự đóng sau 5s (chốt 19/08/2026, yêu cầu user) ──────────────────────────
+     Là tấm BÁO VIỆC ĐÃ XONG chứ không phải hộp thoại phải trả lời, nên tự rút đi.
+     `clearTimeout` trước khi hẹn lại: thêm liên tiếp 2-3 món thì openCC gọi nhiều
+     lần, không dọn là các hẹn giờ chồng nhau và cái cũ đóng sập tấm vừa mở lại.
+     TẠM DỪNG KHI RÊ CHUỘT VÀO TẤM: trong tấm có 2 nút bấm được (Xem giỏ hàng /
+     Tiếp tục mua sắm) — 5s mà biến mất đúng lúc user đang với tay tới nút thì
+     thành lỗi. Rời chuột ra thì hẹn lại đủ 5s.
+     Bấm ✕ / bấm ra ngoài / bấm nút vẫn đóng ngay như cũ; closeCC dọn hẹn giờ nên
+     không có chuyện tấm mở lại rồi bị cái hẹn cũ đóng ké. */
+  const CC_MS = 5000;
+  let ccTimer = null;
+  const disarmCC = () => { clearTimeout(ccTimer); ccTimer = null; };
+  const armCC = () => { disarmCC(); ccTimer = setTimeout(() => closeCC(), CC_MS); };
+  panel.addEventListener('mouseenter', disarmCC);
+  panel.addEventListener('mouseleave', () => { if (!panel.classList.contains('translate-y-full')) armCC(); });
+
   const openCC = (d = {}) => {
     cc.querySelector('#ccImg').src = d.img || '';
     cc.querySelector('#ccBrand').textContent = d.brand || '';
@@ -9083,19 +9278,24 @@ document.body.insertAdjacentHTML('beforeend', `
     const was = cc.querySelector('#ccWas');
     was.textContent = d.was || '';
     was.classList.toggle('hidden', !d.was);
-    cc.querySelector('#ccCount').textContent = `Giỏ hàng hiện có ${cartQty} sản phẩm`;
     localizeNew(panel);
     cc.classList.remove('pointer-events-none');
     cc.setAttribute('aria-hidden', 'false');
     cc.querySelector('.cc-backdrop').classList.remove('opacity-0');
+    /* place() TRƯỚC khi bỏ cờ đóng: đặt xong toạ độ rồi mới cho hiện, không thì
+       tấm nháy một frame ở chỗ cũ. offsetWidth đọc được vì phần tử chỉ mờ chứ
+       không display:none. */
+    place();
     panel.classList.remove('translate-y-full');
-    lockBodyScroll();
+    armCC();
+    /* KHÔNG lockBodyScroll: đây là dropdown, không phải modal. Khoá cuộn ở đây
+       vừa sai vai vừa gây giật ngang (ẩn scrollbar làm trang rộng thêm ~15px). */
   };
   const closeCC = () => {
+    disarmCC();
     cc.querySelector('.cc-backdrop').classList.add('opacity-0');
     panel.classList.add('translate-y-full');
     cc.classList.add('pointer-events-none');
-    unlockBodyScroll();
     setTimeout(() => cc.setAttribute('aria-hidden', 'true'), 300);
   };
   window.__openCartConfirm = openCC;

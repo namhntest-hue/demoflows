@@ -465,7 +465,32 @@ Lấy đúng bộ số của phần tử desktop tương ứng — đo lại **c
 
 > **Bẫy đã dính khi viết comment này:** gõ **dấu backtick** trong comment nằm giữa template literal của `render()` → đứt chuỗi, cả file `SyntaxError` và không chạy. Cảnh báo vốn đã ghi ở 3 chỗ khác trong 2 file mà vẫn dính. Nhân đây: sau khi sửa phải **bust cache** (`?bust=n`) mới thấy bản mới — `location.reload()` vẫn trả bản cũ, làm mình đọc nhầm là chưa sửa được.
 
-**1 chỗ VẪN lệch, cố ý, chờ user chốt:** weight cấp 1 mobile `400` vs desktop `500`. Lệch này có từ 18/08 — số đo mobile thật của mytheresa là 400, còn desktop được user chốt nâng lên 500. Đã ghi trong comment mục 5 của `index.html`.
+**Weight menu lv0 — ĐÃ CHỐT 19/08/2026:** *"độ dày của menu lv0 (men, women, beauty) cần đồng bộ về fontweight so với bản desktop"*. Lệch này có từ 18/08: số đo mobile thật của mytheresa là **400**, còn hàng dept 2 bản desktop đã chốt **500** (chữ hoa 12px Montserrat mảnh hơn AvenirNextLTPro của họ nên 500 bù lại đúng độ dày mắt thấy). Để 2 bản lệch nhau ở **cùng một hàng menu** là lỗi nặng hơn lệch số đo → `.ms-tab` lên **500**, lấy desktop làm chuẩn.
+
+| | mobile `.ms-tab` | desktop `.dk-dept` |
+|---|---|---|
+| weight | **500** ✅ đồng bộ | **500** |
+| cỡ chữ | `14px/18` | `12px/16` — **lệch có chủ ý**, mỗi khổ theo số đo của chính nó; user chỉ yêu cầu fontweight |
+| case · tracking | uppercase · `.5px` | uppercase · `.5px` |
+
+**Một độ đậm ở MỌI state**: markup có `font-medium` khi active và `font-normal` khi nghỉ, rule đè cả hai — đúng cách desktop làm với `[aria-current]`. Đo lại vòng 3 bộ da: `skin-mt` ra `14px/18 w500 uppercase` cho **cả 3 tab**, 2 bộ da kia giữ nguyên `16px` w500/w400 không hoa.
+
+#### Hàng tab ở màn Search cũng phải theo (19/08/2026, CẢ 2 BẢN)
+
+User: *"phần nội dung search bên dưới thanh search chưa được uppercase đồng bộ (nam nữ làm đẹp) giống menu"*. `.search-tab` là **hàng tab y hệt** — cùng 3 nhãn, cùng `h-10`, cùng vai "chọn ngành hàng" — nhưng **không có rule bộ da nào** ở cả 2 file, nên đứng cạnh menu chữ hoa là lệch hẳn.
+
+| | `.search-tab` trước | sau |
+|---|---|---|
+| `index.html` | `12px · 400 · thường` | **`14px/18 · 500 · HOA · ls .5`** = hệt `.ms-tab` |
+| `desktop.html` | `16px · 500/300 · thường` | **`12px/16 · 500 · HOA · ls .5`** = hệt `.dk-dept` |
+
+Mỗi file lấy đúng bộ số của hàng menu lv0 **của chính nó** (mobile 14px, desktop 12px — mỗi khổ theo số đo riêng, giống hệt cách `.ms-tab` vs `.dk-dept` đang làm). Bản mobile gộp `.ms-tab` + `.search-tab` chung một rule vì 2 class này vốn đã đi cặp ở rule transition đầu file; bản desktop chỉ còn `.search-tab` (drawer `#menuSheet` ở đó là code chết). Chiều cao không đổi: vẫn `h-10` = 40px ở mọi bộ da.
+
+> ### ⚠ 2 LỖI TỰ GÂY TRONG ĐÚNG 1 LẦN SỬA NÀY
+> **1. Viết text vào comment SAU dấu `*/` đã đóng** → text lọt ra ngoài comment, CSS đứt, **toàn bộ rule sau đó bị vứt** (kể cả rule `.ms-tab` vốn đang chạy tốt). Triệu chứng: `document.styleSheets` chỉ còn mỗi rule `transition`, bộ da nhìn như không ăn. Đây là biến thể của bẫy "backtick trong comment" đã ghi ở mục menu — **mọi lần sửa comment trong khối `<style>`/template literal đều phải kiểm lại rule còn parse không**.
+> **2. Bẫy specificity — lần thứ 3 của dự án** (2 lần trước với `.pc-brand`). Rule `html.skin-mt .search-tab` = **(0,2,1)**, **cùng hạng** với 2 khối blanket ở mục 5 (`.text-[16px]` và `.font-light/…`) mà 2 khối đó viết **SAU** → chúng thắng. Kết quả rất dễ đọc nhầm: `text-transform` **ăn** (blanket không khai nó) nhưng cỡ chữ và weight **bị đè** → ra `12px/400 HOA`, trông như "đã uppercase rồi mà vẫn sai".
+> Sửa: viết **`button.search-tab`** → (0,2,2), thắng cả hai. `.ms-tab` không dính vì đã có `#menuSheet` → (1,2,1).
+> **Luật rút ra: mọi rule bộ da nhắm cỡ chữ/weight mà chỉ có 1 class thì PHẢI nâng specificity** (thêm tag hoặc id), không thì khối blanket mục 5 nuốt.
 
 > `desktop.html` **cũng có** một bản `#menuSheet` y hệt (dải desktop hẹp) và bộ da `skin-mt` ở file đó **không phủ chữ hoa cấp nào**. **Không sửa** vì drawer đó là **code chết**: handler `[data-menu-open]` có nhưng không markup nào mang thuộc tính đó, không lối nào mở được.
 
@@ -580,6 +605,88 @@ Mục **cuối** cố ý không kẻ: chân panel đã có gạch trên, kẻ n�
 
 > **Bẫy khi đo — pane Browser không vẽ frame thì `backgroundColor` trả giá trị SAI.** `getComputedStyle(el).backgroundColor` trên nút "Bộ lọc" trả `rgb(255,255,255)` **kể cả khi gán inline `background-color: rgb(1,2,3) !important`** — tức số đọc ra không phải giá trị thật. Các thuộc tính **layout** (height/padding/border-width/font-size) vẫn đúng. Cách vòng qua: viết hàm dò **người thắng trong cascade** (duyệt `document.styleSheets`, lọc rule `el.matches()`, tính specificity + `!important` + thứ tự) rồi đọc giá trị từ rule thắng. Đây là **bẫy thứ 5** của việc đo trong pane này — 4 cái trước ghi ở mục "Dựng 17 màn desktop vào Figma" và cảnh báo tắt transition ở trên.
 
+## "Đã thêm vào giỏ hàng" — DROPDOWN dưới icon giỏ (19/08/2026, CHỈ DESKTOP)
+
+User: *"ở bản desktop 'đã thêm vào giỏ hàng' ngay tại icon giỏ hàng sẽ dropdown xuống thay vì đè popup lên"*.
+
+**Trước:** `#cartConfirm` mượn `.dk-modal` → nổi **giữa màn**, nền tối 45%, khoá cuộn trang — chặn cả trang chỉ để báo một việc vừa xong.
+**Sau:** tấm **380px thả xuống neo vào icon giỏ** ở header, canh mép phải với mép phải nút, cách nút 8px. Không tối nền, không khoá cuộn — giống mini-cart của sàn thật.
+
+| Bỏ | Vì sao |
+|---|---|
+| thanh grabber `50×3` | di sản bottom-sheet mobile, tấm này không kéo được |
+| nền tối `bg-black/45` | dropdown không được tối cả trang |
+| `lockBodyScroll()` | sai vai, và ẩn scrollbar làm trang giật ngang ~15px |
+
+**Cách neo:** đo `getBoundingClientRect()` của `[data-nav="cart"]` **lúc mở**, không nhét panel vào trong nút. Lý do: `navBar()` **dựng lại mỗi lần đổi màn** — panel nằm trong đó là mất theo, mà nút giỏ cũng không có id cố định. Bám thuộc tính điều hướng `[data-nav="cart"]` có ở mọi header đầy đủ.
+
+- **Bám theo khi cuộn**: header `sticky top-0` nên nút giỏ đứng yên, nhưng thanh khuyến mãi trên cùng cuộn đi → nút tụt lên. Nghe `scroll`/`resize` (passive) và đặt lại toạ độ. Đo: cuộn 400px thì tấm `92 → 60`, **vẫn cách nút đúng 8px**.
+- **Kẹp trong 16px hai bên** để màn hẹp không đẩy tấm ra ngoài.
+- **Dự phòng**: màn checkout dùng header rút gọn (logo + cam kết bảo mật, **không có icon giỏ**) → rơi về góc phải-trên. Chưa luồng nào gọi cart-confirm từ đó, nhưng thiếu nhánh này là tấm văng ra toạ độ `0,0`. Đo: `x=884 y=72`, lề phải đúng 16.
+- **`translate-y-full` giữ nguyên làm cờ đóng/mở** như mọi sheet khác trong dự án — CSS map nó sang `translateY(-8px) + opacity 0`, nên đoạn JS đóng/mở không phải viết lại.
+- `place()` gọi **trước** khi bỏ cờ đóng, không thì tấm nháy một frame ở chỗ cũ.
+
+> **Lỗi tự gây, bắt được lúc kiểm:** bỏ class `.dk-modal` khỏi panel thì nó cũng **rơi khỏi 2 rule bộ da** `html.skin-mp/.skin-mt .dk-modal { border-radius: 0 !important }` → tấm vẫn bo `8px` giữa 2 bộ da góc vuông. Sửa: thêm `.cc-drop` vào cả 2 selector đó, và vào danh sách "KHUÔN CHUNG CHO MỌI LỚP NỔI" để nhận viền 1px + không bóng.
+> **Luật: gỡ một class khuôn khỏi phần tử thì phải grep xem class đó còn được rule nào khác dùng để cấp thuộc tính cho phần tử này không.**
+
+### Bỏ dòng "Giỏ hàng hiện có {n} sản phẩm" (19/08/2026, yêu cầu user, CẢ 2 BẢN)
+
+Gỡ `#ccCount` khỏi markup và bỏ dòng gán `textContent` trong `openCC`. Lý do hợp lý: số lượng giỏ **đã có ở chấm đếm trên icon giỏ** — mà bản desktop tấm này lại thả xuống **ngay dưới đúng cái icon đó**, nhắc lại bằng chữ là thừa.
+
+Bỏ ở **cả 2 file**: cùng một component, để lệch nhau thì hỏng đúng thứ cả đợt này đang đi đồng bộ. **Giữ luật i18n** `/^Giỏ hàng hiện có (\d+) sản phẩm$/` trong `I18N_RE`/`I18N_REV` — rẻ, và còn dùng nếu bật lại.
+
+Đo lại: `#ccCount` = **0 chỗ** ở cả 2 file, không còn tham chiếu treo. Nội dung tấm còn đúng 7 dòng — `Đã thêm vào giỏ hàng · <thương hiệu> · <tên> · <biến thể> · <giá> · Xem giỏ hàng · Tiếp tục mua sắm`. Desktop vẫn neo đúng nút giỏ (lệch mép phải 0, cách 8px), mobile vẫn mở đúng bottom sheet. Console sạch trên tab mới ở cả 2 file.
+
+### Tự đóng sau 5s (19/08/2026, yêu cầu user)
+
+*"thời gian hiển thị dropdown đó khoảng 5s"*. Hợp lý: đây là tấm **báo việc đã xong**, không phải hộp thoại phải trả lời.
+
+| Tình huống | Xử lý |
+|---|---|
+| mở tấm | hẹn `5000ms` rồi tự đóng |
+| **rê chuột vào tấm** | **dừng đếm** — trong tấm có 2 nút bấm được, 5s mà biến mất đúng lúc user đang với tay tới nút thì thành lỗi |
+| rời chuột | hẹn lại **đủ 5s** từ đầu |
+| thêm liên tiếp 2-3 món | `clearTimeout` trước khi hẹn lại — không dọn thì hẹn cũ **đóng sập tấm vừa mở lại** |
+| bấm ✕ / ra ngoài / nút | đóng ngay, và **dọn hẹn giờ** để nó không đóng ké lần mở sau |
+
+**Đo lại từng nhánh** (đo bằng `performance.now()` + chờ thật): mở → còn ở `4.3s`, đã đóng ở `5.3s` · giữ chuột `5.6s` vẫn mở, rời chuột thì còn ở `4.3s` và đóng ở `5.3s` · mở lại lúc còn `2s` thì chờ thêm `2.6s` vẫn mở (đã hẹn lại từ đầu) và đóng ở `5.2s` · đóng tay ở `1.5s` rồi mở lại, chờ `2.2s` **vẫn mở** (hẹn cũ đã bị dọn) · đường đi thật quick add → Thêm vào giỏ cũng tự đóng đúng 5s.
+
+**Đo lại** (tắt transition trước): mép phải tấm trùng mép phải nút (**lệch 0**), cách nút **8px**, backdrop `rgba(0,0,0,0)`, viền `1px`, bóng `none`, không còn grabber, `body overflow` **không đổi** khi mở. Bo góc theo bộ da: `8px` bản gốc · `0` ở MR PORTER và Mytheresa. Tương tác: bấm ra ngoài đóng · "Xem giỏ hàng" sang màn giỏ và đóng tấm · đường đi thật từ **PDP** và từ **quick add** đều ra đúng vị trí. Console sạch trên tab mới. **Bản mobile không đụng** — vẫn bottom sheet, không tự đóng.
+
+## Quick add desktop — bố cục 2 CỘT (19/08/2026, CHỈ DESKTOP)
+
+User gửi ảnh quick view của **versace.com** kèm chốt: *"sẽ sử dụng layout như thế này nhé, tuy nhiên đây chỉ là layout tham khảo cách bố trí chứ k copy y chang vì khác style"*.
+
+**Trước:** drawer 1 cột rộng 560 — dải 2.5 ảnh peek cuộn ngang ở trên, rồi header, màu, size, CTA ghim đáy.
+**Sau:** dialog **960×620**, 2 cột:
+
+| Cột trái (46%) | Cột phải |
+|---|---|
+| 1 ảnh lớn chiếm hết khung (scroll-snap, mỗi slide 100%) | ✕ trên cùng bên phải |
+| hàng chấm chuyển ảnh, đè đáy ảnh, lề `24/16` | thương hiệu → tên → giá |
+| | nhãn "Màu sắc" + ô màu 44px |
+| | hàng `[Kích thước ......... Bảng kích thước →]` |
+| | lưới size **6 ô/dòng** (trước 5) |
+| | *(giãn)* → **CTA** → **"Xem chi tiết" căn giữa dưới CTA** |
+
+**CHỈ mượn cách bố trí, KHÔNG bê style** — mọi thứ vẽ ra vẫn là component sẵn có: `.sw` cho ô màu, `.chip` cho ô size, `.btn-p` cho CTA, khuôn `.dk-modal` cho vỏ, thang chữ + token màu của dự án. Nên đổi bộ da vẫn ăn: bo góc panel `8px` ở bản gốc / `0` ở 2 bộ da kia, CTA `#0a0a0a` / `#000`.
+
+**3 thay đổi cấu trúc trong code:**
+1. Tách `quickAddMedia()` khỏi `quickAddBody()` — ảnh sang `#qaMedia` (cột trái), thông tin ở `#qaBody` (cột phải).
+2. `#qaDetail` ("Xem chi tiết") **dời từ cạnh tên sản phẩm xuống dưới CTA**, nên handler phải đổi từ `body.querySelector` sang `ctaBox.querySelector`.
+3. `flyToCart` đổi nguồn ảnh sang `media.querySelector('img')` — để nguyên `body.querySelector('img')` là **bay nhầm cái thumbnail chọn màu** (ảnh gallery không còn trong `#qaBody`).
+
+**Đảo 1 quyết định cũ:** quick add trước KHÔNG có link bảng size ("node Bảng size trong Figma 3373:41590 đang tắt"). Tham chiếu đặt link ngay ở hàng nhãn size và dự án **đã có bảng size thật** → thêm lại, dùng **nguyên hook `[data-size-chart]`** của PDP nên không phải viết handler mới, chỉ cần gọi `wire(body)`. Sản phẩm làm đẹp (`p.sizes`) vẫn **không** có link — nhãn ra "Dung tích", bảng size quần áo vô nghĩa với nước hoa.
+
+**KHÁC tham chiếu 2 chỗ, có ý thức:** (a) họ có icon ❤ lưu sản phẩm ở góc ảnh — dự án **không có tính năng wishlist**, thêm vào là bịa tính năng; (b) họ chỉ hiện tên sản phẩm, ta **giữ cả tên thương hiệu** vì đó là nội dung sẵn có của mọi card/PDP.
+
+**Đo lại** (tắt transition trước): panel `960×620` giữa màn · cột ảnh `441×618` · chấm cách mép ảnh đúng `24/16` · thứ tự dọc cột phải `✕ → thương hiệu → giá → Màu sắc → [Kích thước | Bảng kích thước →] cùng hàng → lưới size → CTA → Xem chi tiết` · "Xem chi tiết" căn giữa cột (lệch ≤1px). Tương tác: link bảng size mở đúng dialog 5 bảng · cuộn sang ảnh 3 thì chấm ra `○○●○○` · chọn màu + size rồi Thêm vào giỏ → giỏ `5 → 6`. Chạy đúng ở **cả 3 bộ da**. Console sạch trên tab mới. **Bản mobile không đụng** — vẫn bottom-sheet 1 cột.
+
+> **2 lỗi tự gây, bắt được lúc kiểm:**
+> · **Backtick trong comment giữa template literal — LẦN THỨ 3 trong ngày.** Gõ `` `[data-size-chart]` `` vào comment HTML nằm trong template literal của `quickAddBody()` → đứt chuỗi, `ReferenceError: data is not defined`, quick add không mở được.
+> · **Utility Tailwind chưa có trong bản build.** `bottom-4` và `left-6` **không chỗ nào trong 2 file HTML dùng** nên bản build tĩnh `tailwind.css` không có chúng — gõ vào markup là **rơi im lặng**, chấm dính đúng mép ảnh. Đã kiểm bằng cách grep từng class trong `tailwind.css`. Sửa bằng cách khai `#quickAddSheet #qaDots { left: 24px; bottom: 16px }` trong khối `<style>` thay vì rebuild cả stylesheet giữa chừng.
+> **Luật rút ra: thêm class Tailwind MỚI vào markup thì phải grep `tailwind.css` xem có không** — không có thì hoặc rebuild, hoặc khai tay trong `<style>`.
+
 ## Ô tìm kiếm — đồng bộ theo bộ da (19/08/2026, CẢ 2 BẢN)
 
 User: *"update đồng bộ lại search field luôn, hiện tại search chưa được đồng bộ ở các skin"*. Đúng — có **2 lỗi khác nhau**:
@@ -617,16 +724,18 @@ Bảng viền đo 18/08 xếp **"gạch dưới ô tìm kiếm" vào tầng `#00
 > · **`getComputedStyle` trả object SỐNG.** Mình gỡ thẻ `<style>` tắt-transition *trước khi* đọc chuỗi ra → giá trị được resolve lại lúc transition đã bật, đọc ra `rgba(0,0,0,0)` thay vì `rgb(0,0,0)` và suýt kết luận rule không ăn. Phải **ép sang chuỗi ngay khi thẻ style còn đó**.
 > · **Cache.** `location.reload()` và cả `navigate` sang cùng URL vẫn trả bản cũ; phải thêm `?nocache=n` mới thấy sửa đổi.
 
-## Badge nhãn — nền TRẮNG dùng chung (19/08/2026, CHỈ MOBILE)
+## Badge nhãn — nền TRẮNG dùng chung (19/08/2026, CẢ 2 BẢN)
 
-User: *"đồng bộ các badge trong trang sẽ có nền là màu -white nhé"*. Trước đây **cùng một loại nhãn mà 2 nền khác nhau**:
+User: *"đồng bộ các badge trong trang sẽ có nền là màu -white nhé"* → làm mobile trước; sau đó user báo tiếp *"trong các ver pdp chưa được đồng bộ màu badge pre-order, seasonal…"* → **đã áp nốt `desktop.html`**, cùng tên class và cùng giá trị.
+
+Trước đây **cùng một loại nhãn mà 2 nền khác nhau**, giống hệt nhau ở cả 2 file:
 
 | Badge nhãn | Ở đâu | Nền cũ |
 |---|---|---|
 | Pre-order · New arrival | thẻ sản phẩm (PLP, hàng gợi ý) | inline `rgba(255,255,255,.9)` — trắng **90%** |
 | New Season · La Vacanza | thẻ sản phẩm | inline `rgba(255,255,255,.9)` |
-| Pre-order · New Season · La Vacanza | 6 màn PDP (đè ảnh gallery) | `bg-secondary` = **`#f5f5f5`** (`#f2f2f2` ở `skin-mt`) |
-| Pre-order | dòng giỏ hàng (đè ảnh) | `bg-secondary` |
+| Pre-order · New Season · La Vacanza | PDP (đè ảnh gallery) — mobile 6 màn, desktop 1 | `bg-secondary` = **`#f5f5f5`** (`#f2f2f2` ở `skin-mt`) |
+| Pre-order | dòng giỏ hàng · màn Hoàn tất (đè ảnh) | `bg-secondary` |
 
 Nay gom về **một rule** trong khối `<style>` — sửa nền badge thì sửa đúng dòng này, đừng khai lại ở từng chỗ:
 
@@ -634,7 +743,9 @@ Nay gom về **một rule** trong khối `<style>` — sửa nền badge thì s�
 .badge-label { background: var(--color-white); }
 ```
 
-`--color-white` = primitive `#ffffff` của `tokens.css` (đúng "màu -white" user gọi tên). **Primitive nên không đổi theo bộ da** → badge trắng như nhau ở cả 3 skin. Thay **14 chỗ markup** (12 static + 2 trong `productCard`), gỡ sạch `bg-secondary` và inline `rgba(...)` khỏi nhóm này.
+`--color-white` = primitive `#ffffff` của `tokens.css` (đúng "màu -white" user gọi tên). **Primitive nên không đổi theo bộ da** → badge trắng như nhau ở cả 3 skin. Thay **14 chỗ markup ở `index.html`** (12 static + 2 trong `productCard`) và **4 chỗ ở `desktop.html`** (PDP gallery · dòng giỏ · màn Hoàn tất · thẻ sản phẩm), gỡ sạch `bg-secondary` và inline `rgba(...)` khỏi nhóm này.
+
+> ⚠ **Rule khai GIỐNG HỆT ở cả 2 file** (cùng tên class, cùng giá trị) — sửa một file thì sửa cả hai, kẻo lại lệch đúng thứ vừa đi đồng bộ. Nút quick-add trên thẻ sản phẩm của `desktop.html` vẫn giữ `rgba(255,255,255,.9)`: nó là NÚT, không phải badge.
 
 **Đọc được vì badge nào cũng nằm ĐÈ TRÊN ẢNH** — gallery PDP `absolute top-3`, ảnh thẻ sản phẩm `absolute top-2`, ảnh dòng giỏ `absolute top-0`. Không có cái nào đặt trên nền trắng của trang nên trắng đặc không bị chìm.
 
@@ -647,9 +758,9 @@ Nay gom về **một rule** trong khối `<style>` — sửa nền badge thì s�
 | "Quà tặng" | `#000` chữ trắng | nhấn quà tặng |
 | pill trạng thái đơn | `#f2f2f2` / `#fef2f2` | mã hoá trạng thái |
 
-**Đo lại** PLP · PDP · giỏ hàng × `mặc định` và `skin-mt`: mọi `.badge-label` ra **`rgb(255,255,255)`**; badge `-%` vẫn `rgb(254,242,242)`, chấm đếm giỏ vẫn `rgb(214,40,69)`, "Quà tặng" vẫn nền `rgb(0,0,0)`. Console sạch trên tab mới.
+**Đo lại** (tắt transition trước) PLP · PDP · giỏ hàng × `mặc định` và `skin-mt`, **cả 2 file**: mọi `.badge-label` ra **`rgb(255,255,255)`**; badge `-%` vẫn `rgb(254,242,242)`, chấm đếm giỏ vẫn `rgb(214,40,69)`, "Quà tặng" vẫn nền đen. Riêng mobile quét đủ **6 màn PDP** — cả 6 ra trắng. Console sạch trên tab mới ở cả 2 file.
 
-> **CHƯA làm bản desktop** — theo quy ước mặc định "chỉ sửa `index.html` trừ khi user nói rõ". `desktop.html` vẫn còn badge `bg-secondary`, nói một tiếng là đồng bộ.
+> **CÒN LỆCH — là lệch NỘI DUNG, không phải màu, chưa sửa vì user chỉ nói về màu:** PDP mobile treo tới **3 badge** (`Pre-order` · `New Season` · `La Vacanza`, tuỳ màn 1–3 cái), còn **PDP desktop chỉ treo `Pre-order`** — markup gallery desktop (`dkPdp`, tile đầu) không render 2 badge mùa vụ. Muốn đồng bộ nốt thì thêm chúng vào tile đầu của gallery desktop.
 
 ## Subheader cao 72 + gom offset sticky một chỗ (18/08/2026, 2 bản desktop)
 
