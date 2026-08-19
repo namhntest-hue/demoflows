@@ -558,6 +558,22 @@ window.RESP = (function () {
   .opt.on { border-color: var(--general-secondary-foreground); }
   .opt { transition: border-color .2s ease, background .2s ease; }
 
+  /* ── BADGE NHÃN — NỀN TRẮNG DÙNG CHUNG (19/08/2026, yêu cầu user) ───────────
+     "đồng bộ các badge trong trang sẽ có nền là màu -white".
+     Trước đây cùng một loại nhãn mà 2 nền khác nhau:
+       thẻ sản phẩm (PLP · hàng gợi ý)  -> inline `rgba(255,255,255,.9)` = trắng 90%
+       PDP · giỏ hàng                    -> `bg-secondary` = xám #f5f5f5 (#f2f2f2 ở skin-mt)
+     Nay gom về MỘT rule, nền `--color-white` (primitive #ffffff của tokens.css —
+     đúng "màu -white" user gọi tên; primitive nên KHÔNG đổi theo bộ da, badge
+     trắng như nhau ở cả 3 skin).
+     Sửa nền badge thì sửa ĐÚNG dòng này, đừng khai lại ở từng chỗ.
+     ĐỌC ĐƯỢC vì badge nào cũng nằm ĐÈ TRÊN ẢNH (gallery PDP `absolute top-3`,
+     ảnh thẻ sản phẩm `absolute top-2`, ảnh dòng giỏ `absolute top-0`) — không có
+     cái nào đặt trên nền trắng của trang, nên trắng đặc không bị chìm.
+     KHÔNG áp cho 4 badge MANG NGHĨA MÀU, đã hỏi user: -% giảm giá (đỏ) · chấm
+     đếm giỏ (đỏ) · "Quà tặng" (đen) · pill trạng thái đơn. */
+  .badge-label { background: var(--color-white); }
+
   /* ── Size / swatch chips ── */
   .chip { transition: border-color .18s ease, background .18s ease, color .18s ease; }
   .chip.on { border-color: #0a0a0a; border-width: 1.5px; }
@@ -810,6 +826,29 @@ window.RESP = (function () {
      line-height rơi về leading-5 (20px) làm hàng cao thêm 4px, lệch màn gốc. */
   html.skin-mt #menuSheet .ms-panel:has(.glass-95 > p) .ms-view button > span:first-child {
     text-transform: none;
+  }
+
+  /* ── 4c. Ô TÌM KIẾM — chỉ GẠCH DƯỚI, bỏ hộp nền xám (19/08/2026, yêu cầu user)
+     *"update đồng bộ lại search field luôn, hiện tại search chưa được đồng bộ ở
+     các skin"*. Đúng: 2 ô tìm kiếm của bản này (màn Search + sheet chọn tỉnh/
+     phường) đều là hộp `bg-secondary` bo góc và KHÔNG đổi hình theo bộ da nào —
+     đổi da chỉ thấy sắc xám nhích một nấc (#f5f5f5 -> #f2f2f2), còn hình dáng y
+     nguyên. Bộ da khác thì đổi cả hình.
+     Bảng viền đo 18/08 xếp "gạch dưới ô tìm kiếm" vào tầng `#000` 1px của họ —
+     CÙNG TẦNG với nút CTA và ô chọn size (xem mục 4b). Nên bộ da này bỏ hộp, chỉ
+     còn một vạch đen dưới, đúng kiểu input underline của họ.
+     `.search-field` = hook mới thêm vào 2 thẻ <label> bọc; 2 bản desktop dùng
+     ĐÚNG TÊN NÀY cho ô tương ứng nên sửa 1 chỗ là hiểu cả 3 file.
+     Chiều cao KHÔNG đổi: vẫn còn padding dọc của `p-2` (label để `min-h-10`).
+     Bỏ padding NGANG để icon kính lúp thẳng lề nội dung — hộp nền mất rồi thì
+     8px thụt vào đọc ra là lệch chứ không phải padding.
+     2 bộ da kia GIỮ hộp nền: chưa đo được ô tìm kiếm của MR PORTER (mrporter.com
+     chặn), mà tự chế một kiểu cho nó thì đúng vào lỗi "bê nguyên/tự suy" đã bị
+     bắt hôm nay. Bản gốc + MR PORTER = hộp xám, Mytheresa = gạch dưới. */
+  html.skin-mt .search-field {
+    background: transparent; border-radius: 0;
+    border-bottom: 1px solid #000;
+    padding-left: 0; padding-right: 0;
   }
 
   /* ── 4b. HỆ VIỀN / GẠCH CHÂN theo SỐ ĐO THẬT (18/08/2026, yêu cầu user) ───────
@@ -1109,10 +1148,10 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
       <img src="${A}${p.img}" alt="${p.name}" class="absolute inset-0 w-full h-full object-cover lazy">
       <!-- data-i18n-skip khi là wordmark "Pre-order": không có nó thì lượt dịch
            ngược EN->VN biến badge thành "Đặt trước" (trùng chuỗi với nút) -->
-      ${badge ? `<span ${badge === 'Pre-order' ? 'data-i18n-skip ' : ''}class="absolute top-2 left-0 px-2 py-1 text-[12px] font-medium leading-4 text-foreground tracking-wide" style="background:rgba(255,255,255,.9)">${badge}</span>` : ''}
+      ${badge ? `<span ${badge === 'Pre-order' ? 'data-i18n-skip ' : ''}class="badge-label absolute top-2 left-0 px-2 py-1 text-[12px] font-medium leading-4 text-foreground tracking-wide">${badge}</span>` : ''}
       ${pillBadges && pillBadges.length ? `
       <div class="absolute top-2 left-0 flex flex-col items-start gap-1">
-        ${pillBadges.map(b => `<span class="px-2 py-1 text-[10px] font-medium leading-3 text-foreground" style="background:rgba(255,255,255,.9)">${b}</span>`).join('')}
+        ${pillBadges.map(b => `<span class="badge-label px-2 py-1 text-[10px] font-medium leading-3 text-foreground">${b}</span>`).join('')}
       </div>` : ''}
       <button class="quick-add press" data-quick="${i}" aria-label="Thêm nhanh vào giỏ"
         style="display:flex;min-width:36px;min-height:36px;padding:var(--2, 8px);justify-content:center;align-items:center;position:absolute;right:8px;bottom:8px;border-radius:var(--rounded-infinite, 9999px);border:1px solid var(--general-border, #E5E5E5);background:var(--general-background, #FFF);">
@@ -1861,7 +1900,7 @@ function screenSearch() {
     </div>
 
     <div class="flex items-center px-4 py-2">
-      <label class="flex-1 min-w-0 flex items-center gap-3 min-h-10 bg-secondary rounded-xs p-2">
+      <label class="flex-1 min-w-0 search-field flex items-center gap-3 min-h-10 bg-secondary rounded-xs p-2">
         <span class="w-5 h-5 flex items-center justify-center shrink-0 [&_svg]:w-4 [&_svg]:h-4">${I.search}</span>
         <span style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Tìm kiếm</span>
         <input id="searchInput" type="search" value="${searchQuery}" placeholder="Bạn đang tìm kiếm gì" autocomplete="off" enterkeyhint="search"
@@ -1937,9 +1976,9 @@ function screenPDP() {
           </div>`).join('')}
       </div>
       <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
-        ${P.preorder ? '<span data-i18n-skip class="bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
-        <span class="bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">New Season</span>
-        <span class="bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">La Vacanza</span>
+        ${P.preorder ? '<span data-i18n-skip class="badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
+        <span class="badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">New Season</span>
+        <span class="badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">La Vacanza</span>
       </div>
       <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
         ${gallery.map((_, i) => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
@@ -2204,8 +2243,8 @@ function screenPDP2() {
           </div>`).join('')}
       </div>
       <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
-        <span class="bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">New Season</span>
-        <span class="bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">La Vacanza</span>
+        <span class="badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">New Season</span>
+        <span class="badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">La Vacanza</span>
       </div>
       <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-0.5">
         ${gallery.map((_, i) => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
@@ -2343,7 +2382,7 @@ function screenPDP3() {
           </div>`).join('')}
       </div>
       <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
-        <span class="bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">New Season</span>
+        <span class="badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">New Season</span>
       </div>
       <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
         ${gallery.map((_, i) => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
@@ -2461,8 +2500,8 @@ function screenPDP4() {
           </button>`).join('')}
       </div>
       <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
-        <span class="bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">New Season</span>
-        <span class="bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">La Vacanza</span>
+        <span class="badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">New Season</span>
+        <span class="badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">La Vacanza</span>
       </div>
       <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
         ${gallery.map((_, i) => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
@@ -2941,7 +2980,7 @@ function screenPDP5() {
           </div>`).join('')}
       </div>
       <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
-        <span class="bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">New Season</span>
+        <span class="badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">New Season</span>
       </div>
       <!-- Slick dash: active 24x4 foreground r2 · inactive 16x4 neutral-300 r2 · gap 2 -->
       <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
@@ -3083,7 +3122,7 @@ function screenPDP6() {
           </div>`).join('')}
       </div>
       <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
-        <span class="bg-secondary px-2 py-1 text-[12px] font-medium leading-4 tracking-[0.004em] text-foreground">New Season</span>
+        <span class="badge-label px-2 py-1 text-[12px] font-medium leading-4 tracking-[0.004em] text-foreground">New Season</span>
       </div>
       <!-- Slick dash: 24x4 #0a0a0a r2 · 16x4 #d4d4d4 r2 · gap 2 · bottom 8 -->
       <div id="pdpDots" class="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
@@ -3735,7 +3774,7 @@ function screenCART() {
       </div>
       <div class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
         <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
-        ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
+        ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
       </div>
       <div class="flex-1 min-w-0 flex flex-col justify-between">
         <div class="flex flex-col">
@@ -4530,7 +4569,7 @@ function screenCHECKOUT() {
               <div class="flex gap-3">
                 <span class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden">
                   <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
-                  ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 bg-secondary px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
+                  ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
                 </span>
                 <div class="flex-1 min-w-0 flex flex-col justify-between">
                   <div>
@@ -9253,7 +9292,7 @@ document.body.insertAdjacentHTML('beforeend', `
         <button id="pkClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
       </div>
       <div class="px-4 pb-3 shrink-0">
-        <label class="flex items-center gap-3 min-h-10 bg-secondary rounded-xs p-2">
+        <label class="search-field flex items-center gap-3 min-h-10 bg-secondary rounded-xs p-2">
           <span class="w-5 h-5 flex items-center justify-center shrink-0 [&_svg]:w-4 [&_svg]:h-4">${I.search}</span>
           <input id="pkSearch" type="search" placeholder="Tìm kiếm" autocomplete="off" enterkeyhint="search"
                  class="flex-1 min-w-0 outline-none text-[14px] leading-6 font-light text-foreground placeholder:text-muted-foreground"

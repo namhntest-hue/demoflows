@@ -1351,9 +1351,31 @@ window.RESP = (function () {
      bảng quy đổi cỡ chữ ở mục 5 kéo về 12px, muốn đúng 14 thì phải khai riêng. */
   /* Ô chọn size: viền ĐEN (họ để #000 cho ô này, khác ô nhập form #dfdfdf) */
   html.skin-mt [data-size-trigger] { border-color: #000; }
-  /* Ô nhập tìm kiếm: chỉ GẠCH DƯỚI đen, kiểu input underline của họ */
-  html.skin-mt #dkSearchInput {
-    border: 0; border-bottom: 1px solid #000; border-radius: 0;
+  /* ── Ô TÌM KIẾM: chỉ GẠCH DƯỚI đen, kiểu input underline của họ ───────────────
+     ⚠ SỬA LẠI 19/08/2026 (user báo *"search chưa được đồng bộ ở các skin"*).
+     Rule cũ bám `#dkSearchInput` — tức cái INPUT nằm BÊN TRONG hộp. Mà input đó
+     vốn đã `background: transparent; border: 0`; thứ vẽ ra hộp là thẻ bọc
+     `#dkNavSearchField` (`background: var(--general-secondary)` + `border-radius`).
+     Hệ quả: bộ da vẽ vạch đen NẰM TRONG hộp xám -> ra một cái hộp xám có kẻ ngang
+     ở giữa, không phải ô underline. Đo được lúc kiểm: hộp vẫn `rgb(242,242,242)`
+     bo 0, input mang `border-bottom 0.8px rgb(0,0,0)`.
+     Sửa: bỏ nền + đưa gạch dưới lên ĐÚNG thẻ bọc, và gỡ khai báo ở input.
+     `:focus-within` vẫn đổi `border-color` sang `--general-primary` = #000 ở bộ da
+     này nên vạch giữ nguyên màu khi focus, không cần khai thêm.
+     Bỏ padding NGANG để chữ thẳng lề — hộp nền mất rồi thì 12px thụt vào đọc ra
+     là lệch chứ không phải padding. */
+  html.skin-mt #dkNavSearchField {
+    background: transparent; border-radius: 0;
+    border: 0; border-bottom: 1px solid #000;
+    padding-left: 0; padding-right: 0;
+  }
+  /* 2 ô tìm kiếm còn lại của file (màn Search + sheet chọn tỉnh/phường) dùng thẻ
+     <label> bọc, hook `.search-field` — CÙNG TÊN với bản mobile để sửa 1 chỗ là
+     hiểu cả 3 file. Chiều cao giữ nguyên nhờ vẫn còn padding dọc của p-2/p-3. */
+  html.skin-mt .search-field {
+    background: transparent; border-radius: 0;
+    border-bottom: 1px solid #000;
+    padding-left: 0; padding-right: 0;
   }
 
   /* ── 10. BỘ LỌC — HỆ GẠCH ĐỒNG BỘ (19/08/2026, yêu cầu user) ──────────────────
@@ -2560,7 +2582,7 @@ function screenSearch() {
     ${navBar()}
     <div class="max-w-[720px] mx-auto w-full px-6 py-10 min-h-[60vh]">
       <div class="flex items-center pb-2">
-        <label class="flex-1 min-w-0 flex items-center gap-3 min-h-12 bg-secondary rounded-xs p-3">
+        <label class="search-field flex-1 min-w-0 flex items-center gap-3 min-h-12 bg-secondary rounded-xs p-3">
           <span class="w-5 h-5 flex items-center justify-center shrink-0 [&_svg]:w-4 [&_svg]:h-4">${I.search}</span>
           <span style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Tìm kiếm</span>
           <input id="searchInput" type="search" value="${searchQuery}" placeholder="Bạn đang tìm kiếm gì" autocomplete="off" enterkeyhint="search"
@@ -9782,7 +9804,7 @@ document.body.insertAdjacentHTML('beforeend', `
         <button id="pkClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
       </div>
       <div class="px-4 pb-3 shrink-0">
-        <label class="flex items-center gap-3 min-h-10 bg-secondary rounded-xs p-2">
+        <label class="search-field flex items-center gap-3 min-h-10 bg-secondary rounded-xs p-2">
           <span class="w-5 h-5 flex items-center justify-center shrink-0 [&_svg]:w-4 [&_svg]:h-4">${I.search}</span>
           <input id="pkSearch" type="search" placeholder="Tìm kiếm" autocomplete="off" enterkeyhint="search"
                  class="flex-1 min-w-0 outline-none text-[14px] leading-6 font-light text-foreground placeholder:text-muted-foreground"

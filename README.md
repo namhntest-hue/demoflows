@@ -580,6 +580,77 @@ Mục **cuối** cố ý không kẻ: chân panel đã có gạch trên, kẻ n�
 
 > **Bẫy khi đo — pane Browser không vẽ frame thì `backgroundColor` trả giá trị SAI.** `getComputedStyle(el).backgroundColor` trên nút "Bộ lọc" trả `rgb(255,255,255)` **kể cả khi gán inline `background-color: rgb(1,2,3) !important`** — tức số đọc ra không phải giá trị thật. Các thuộc tính **layout** (height/padding/border-width/font-size) vẫn đúng. Cách vòng qua: viết hàm dò **người thắng trong cascade** (duyệt `document.styleSheets`, lọc rule `el.matches()`, tính specificity + `!important` + thứ tự) rồi đọc giá trị từ rule thắng. Đây là **bẫy thứ 5** của việc đo trong pane này — 4 cái trước ghi ở mục "Dựng 17 màn desktop vào Figma" và cảnh báo tắt transition ở trên.
 
+## Ô tìm kiếm — đồng bộ theo bộ da (19/08/2026, CẢ 2 BẢN)
+
+User: *"update đồng bộ lại search field luôn, hiện tại search chưa được đồng bộ ở các skin"*. Đúng — có **2 lỗi khác nhau**:
+
+**1. Bản mobile: ô tìm kiếm KHÔNG đổi hình theo bộ da nào.** Cả 2 ô (màn Search + sheet chọn tỉnh/phường) là `<label class="bg-secondary rounded-xs p-2">`; đổi da chỉ thấy sắc xám nhích một nấc (`#f5f5f5` → `#f2f2f2`), hình dáng y nguyên.
+
+**2. Bản desktop: rule `skin-mt` bám NHẦM phần tử.**
+
+> Rule cũ là `html.skin-mt #dkSearchInput { border-bottom: 1px solid #000 }` — tức cái **input nằm bên trong** hộp. Mà input đó vốn đã `background: transparent; border: 0`; thứ vẽ ra hộp là thẻ bọc `#dkNavSearchField` (`background: var(--general-secondary)` + `border-radius`).
+> Kết quả: vạch đen bị vẽ **bên trong hộp xám** → ra một hộp xám có kẻ ngang ở giữa, không phải ô underline. Đo được lúc kiểm: hộp `rgb(242,242,242)`, input `border-bottom 0.8px rgb(0,0,0)`.
+> Sửa: bỏ nền + đưa gạch dưới lên **đúng thẻ bọc**, gỡ khai báo ở input.
+
+**Đã áp — 5 ô tìm kiếm, hook chung `.search-field`:**
+
+| File | Ô | Selector |
+|---|---|---|
+| `index.html` | màn Search · sheet tỉnh/phường | `.search-field` (hook mới, 2 chỗ) |
+| `desktop.html` | ô trên nav | `#dkNavSearchField` (đã có id) |
+| `desktop.html` | màn Search · sheet tỉnh/phường | `.search-field` (hook mới, 2 chỗ) |
+
+Cùng một khai báo ở cả 2 file — **cùng tên hook** nên sửa 1 chỗ là hiểu cả 2:
+
+```css
+html.skin-mt .search-field { background: transparent; border-radius: 0;
+  border-bottom: 1px solid #000; padding-left: 0; padding-right: 0; }
+```
+
+Bảng viền đo 18/08 xếp **"gạch dưới ô tìm kiếm" vào tầng `#000` 1px** của họ — cùng tầng nút CTA và ô chọn size. Bỏ padding **ngang** để icon kính lúp thẳng lề nội dung: hộp nền mất rồi thì 8/12px thụt vào đọc ra là lệch chứ không phải padding. Chiều cao giữ nhờ vẫn còn padding dọc (`p-2`/`p-3` + `min-h-10`/`min-h-12`); chỉ nhích **+0.8px** do thêm nét viền.
+
+**2 bộ da kia GIỮ hộp nền xám** — chưa đo được ô tìm kiếm của MR PORTER (mrporter.com chặn), tự chế một kiểu cho nó là đúng vào lỗi "bê nguyên / tự suy" đã bị bắt cùng ngày. Chốt: **bản gốc + MR PORTER = hộp xám · Mytheresa = gạch dưới**.
+
+**Đo lại** (tắt transition trước), vòng `mặc định → MR PORTER → Mytheresa → mặc định`, cả 2 file: `skin-mt` ra `nền trong suốt · bo 0 · gạch dưới 1px #000 · padL 0`; 2 bộ da kia giữ `#f5f5f5`/`#f4f4f4` · bo 2/0 · padL 8-12. Input bên trong ô nav nay `border 0` cả 4 cạnh. Console sạch trên tab mới.
+
+> **2 bẫy đo lại dính trong đợt này** (cả 2 đều đã ghi ở mục trước mà vẫn sập):
+> · **`getComputedStyle` trả object SỐNG.** Mình gỡ thẻ `<style>` tắt-transition *trước khi* đọc chuỗi ra → giá trị được resolve lại lúc transition đã bật, đọc ra `rgba(0,0,0,0)` thay vì `rgb(0,0,0)` và suýt kết luận rule không ăn. Phải **ép sang chuỗi ngay khi thẻ style còn đó**.
+> · **Cache.** `location.reload()` và cả `navigate` sang cùng URL vẫn trả bản cũ; phải thêm `?nocache=n` mới thấy sửa đổi.
+
+## Badge nhãn — nền TRẮNG dùng chung (19/08/2026, CHỈ MOBILE)
+
+User: *"đồng bộ các badge trong trang sẽ có nền là màu -white nhé"*. Trước đây **cùng một loại nhãn mà 2 nền khác nhau**:
+
+| Badge nhãn | Ở đâu | Nền cũ |
+|---|---|---|
+| Pre-order · New arrival | thẻ sản phẩm (PLP, hàng gợi ý) | inline `rgba(255,255,255,.9)` — trắng **90%** |
+| New Season · La Vacanza | thẻ sản phẩm | inline `rgba(255,255,255,.9)` |
+| Pre-order · New Season · La Vacanza | 6 màn PDP (đè ảnh gallery) | `bg-secondary` = **`#f5f5f5`** (`#f2f2f2` ở `skin-mt`) |
+| Pre-order | dòng giỏ hàng (đè ảnh) | `bg-secondary` |
+
+Nay gom về **một rule** trong khối `<style>` — sửa nền badge thì sửa đúng dòng này, đừng khai lại ở từng chỗ:
+
+```css
+.badge-label { background: var(--color-white); }
+```
+
+`--color-white` = primitive `#ffffff` của `tokens.css` (đúng "màu -white" user gọi tên). **Primitive nên không đổi theo bộ da** → badge trắng như nhau ở cả 3 skin. Thay **14 chỗ markup** (12 static + 2 trong `productCard`), gỡ sạch `bg-secondary` và inline `rgba(...)` khỏi nhóm này.
+
+**Đọc được vì badge nào cũng nằm ĐÈ TRÊN ẢNH** — gallery PDP `absolute top-3`, ảnh thẻ sản phẩm `absolute top-2`, ảnh dòng giỏ `absolute top-0`. Không có cái nào đặt trên nền trắng của trang nên trắng đặc không bị chìm.
+
+**KHÔNG áp cho 4 badge MANG NGHĨA MÀU** (trắng hoá là mất nghĩa, riêng chấm đếm giỏ là mất luôn):
+
+| Badge | Nền giữ nguyên | Lý do |
+|---|---|---|
+| `-20%` giảm giá | `#fef2f2` chữ đỏ | cảnh báo giá |
+| chấm đếm giỏ | `#d62845` chữ trắng | trắng trên nền trắng = biến mất |
+| "Quà tặng" | `#000` chữ trắng | nhấn quà tặng |
+| pill trạng thái đơn | `#f2f2f2` / `#fef2f2` | mã hoá trạng thái |
+
+**Đo lại** PLP · PDP · giỏ hàng × `mặc định` và `skin-mt`: mọi `.badge-label` ra **`rgb(255,255,255)`**; badge `-%` vẫn `rgb(254,242,242)`, chấm đếm giỏ vẫn `rgb(214,40,69)`, "Quà tặng" vẫn nền `rgb(0,0,0)`. Console sạch trên tab mới.
+
+> **CHƯA làm bản desktop** — theo quy ước mặc định "chỉ sửa `index.html` trừ khi user nói rõ". `desktop.html` vẫn còn badge `bg-secondary`, nói một tiếng là đồng bộ.
+
 ## Subheader cao 72 + gom offset sticky một chỗ (18/08/2026, 2 bản desktop)
 
 Yêu cầu user: "nguyên block subheader tăng height lên 72, áp dụng toàn bộ theme". Sửa ở **markup base** (`h-[52px]` → `h-[72px]`) chứ không nhét vào khối bộ da nào — đo lại: cả 3 bộ da ở mỗi file ra **đúng 72**. Bản mobile **không đụng**: `index.html` không có subheader.
