@@ -1458,6 +1458,102 @@ window.RESP = (function () {
      này nên vạch giữ nguyên màu khi focus, không cần khai thêm.
      Bỏ padding NGANG để chữ thẳng lề — hộp nền mất rồi thì 12px thụt vào đọc ra
      là lệch chứ không phải padding. */
+  /* ── QUICK ADD KIỂU HOVER: rê chuột vào ảnh -> hiện dải SIZE ────────────────
+     Chốt 19/08/2026, yêu cầu user — CHỈ bộ da này. 2 bộ da kia giữ nút giỏ tròn
+     + dialog quick add 2 cột như cũ.
+     Markup `.pc-sizes` luôn có trong card; toàn bộ việc bật/tắt nằm ở đây nên
+     JS không phải biết đang ở bộ da nào.
+     Dải nằm ĐÈ ĐÁY ẢNH, nền trắng đục để chữ đọc được trên ảnh bất kỳ; trượt
+     lên 6px khi hiện cho ra cảm giác đẩy từ mép ảnh.
+     ẨN NÚT GIỎ TRÒN ở bộ da này: nó và dải size cùng một vai "thêm nhanh", để cả
+     hai vừa đá nhau vừa chồng chỗ (nút ở góc phải-dưới, đúng chỗ dải size).
+     `display` của nút là INLINE STYLE trong markup nên buộc !important. */
+  html.skin-mt .quick-add { display: none !important; }
+  .pc-sizes { display: none; }
+  /* ĐO THẬT hugoboss.com/us/men-clothing (19/08/2026, user gửi làm tham chiếu) —
+     tấm `.product-tile-plp__quickshop` của họ:
+       absolute, ghim ĐÁY tile, rộng hết bề ngang · nền rgba(249,249,249,.9)
+       lưới size: `display: grid` · `repeat(auto-fill, minmax(54px, 1fr))` · gap 4
+       nhãn size 14/17.5 · 400 · KHÔNG viền · size hết #999
+     3 chỗ LỆCH CÓ CHỦ Ý, đều theo yêu cầu user:
+       · THÊM background-blur — họ để `backdrop-filter: none`, chỉ có nền đục 90%.
+         Dùng đúng 7.5px của dự án (cùng số với .navbar/.glass-95), nên hạ độ đục
+         xuống .82 cho lớp mờ đọc ra được.
+       · CĂN GIỮA nhãn — họ `text-align: left`.
+       · Ô size dạng OUTLINE "như bên trong PDP" — họ không viền. Lấy đúng bộ số
+         của `.chip` ở PDP: cao 36 (h-9), viền 1px --general-border, chữ 12/16
+         (thang chữ mục 5 kéo 14 -> 12), weight 400, góc vuông.
+     LƯỚI CỐ ĐỊNH 4 CỘT (chốt 19/08/2026, yêu cầu user "1 line sẽ có 4 ô size").
+     Trước đó dùng auto-fit nên số cột đổi theo bề ngang card — 4 cột cố định thì
+     ô size rộng bằng nhau ở mọi mật độ lưới, và bộ 6 size xuống đúng 2 hàng. */
+  html.skin-mt .pc-sizes {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 12px;
+    /* NỀN LẤY ĐÚNG BỘ MÀU CỦA HEADER (chốt 19/08/2026, yêu cầu user).
+       Dùng thẳng token `--general-background-blur` — token dành riêng cho MẶT
+       PHẲNG CÓ BLUR trong hệ token của dự án (tailwind map thành `bg-blur`),
+       thay vì tự pha lại bằng color-mix như `.glass-95`. Cùng ra trắng ~90-95%
+       nhưng đây mới là chỗ hệ token định nghĩa sẵn, không phải công thức chép tay.
+       Đổi bộ da là tấm đổi theo: bản gốc + skin-mt đều `#ffffffe5`, mode GM
+       trong tokens.css là `#f5f5f5`.
+       (Trước đây hardcode rgba(249,249,249,.82) chép của hugoboss — đứng yên ở
+       mọi bộ da, không ăn nhập với header của chính mình.)
+       Blur giữ 7.5px = đúng số của `.navbar`. */
+    background: var(--general-background-blur);
+    -webkit-backdrop-filter: blur(7.5px);
+            backdrop-filter: blur(7.5px);
+    opacity: 0; transform: translateY(6px); pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+  }
+  /* ÍT SIZE (dưới 4 — Onesize, 1 dung tích, hay 2 khổ khăn lụa): bỏ lưới 4 cột,
+     xếp thành MỘT HÀNG ô tự co theo nội dung rồi CĂN GIỮA.
+     `grid-auto-flow: column` + `grid-auto-columns: minmax(96px, auto)`:
+       · `auto` = ô nở ra vừa đủ chữ -> nhãn dài "90 × 90 cm" KHÔNG bị cắt
+         (lưới 4 cột cứng bóp ô về 76px, thiếu chỗ — user báo 19/08/2026);
+       · `96px` là sàn để 1 ô lẻ như "Onesize" không co lại thành mẩu bé tí.
+     `grid-template-columns: none` bắt buộc: không huỷ thì 4 cột của rule trên
+     vẫn còn, ô sẽ xếp vào đó thay vì theo auto-columns. */
+  html.skin-mt .pc-sizes.is-few {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(96px, auto);
+    justify-content: center;
+  }
+  /* `.group` = thẻ bọc card, đã có sẵn trong markup */
+  html.skin-mt .group:hover .pc-sizes,
+  html.skin-mt .pc-sizes:focus-within { opacity: 1; transform: none; pointer-events: auto; }
+  /* KHÔNG VIỀN (chốt 19/08/2026, yêu cầu user "thử bỏ outline ra khỏi các buttons
+     size") — trở lại đúng cách hugoboss làm.
+     HOVER LẤY ĐÚNG CỦA CỤM NAM/NỮ/LÀM ĐẸP trên header (chốt 19/08/2026, yêu cầu
+     user): cụm đó là `.dk-dept.ghost-hover`, và `.ghost-hover:hover` khai
+     `background: var(--unofficial-ghost-hover); color: var(--general-primary)`.
+     Chép ĐÚNG 2 khai báo đó thay vì gắn thêm class `.ghost-hover` vào markup:
+     rule nghỉ ở đây là (0,2,1), `.ghost-hover:hover` chỉ (0,2,0) nên gắn class
+     cũng vô dụng — nền trong suốt lúc nghỉ sẽ đè mất hover.
+     Cùng lý do đó, KHÔNG dùng `--general-secondary` nữa (bản trước). */
+  /* `white-space: nowrap` + pad ngang 8: bảo đảm HIỆN ĐỦ NHÃN (yêu cầu user
+     19/08/2026). Không có nowrap thì nhãn 2 chữ như "90 ml" hay "90 × 90 cm" tự
+     xuống dòng trong ô cao 36px và bị cắt mất dòng dưới. */
+  html.skin-mt .pc-size {
+    height: 36px; padding: 0 8px;
+    display: flex; align-items: center; justify-content: center;
+    border: 0; background: transparent; white-space: nowrap;
+    font-size: 12px; line-height: 16px; font-weight: 400; letter-spacing: .5px;
+    color: var(--general-foreground);
+    transition: background-color .15s ease, color .15s ease;
+  }
+  html.skin-mt .pc-size:hover {
+    background: var(--unofficial-ghost-hover);
+    color: var(--general-primary);
+  }
+  /* Size ĐÃ HẾT: chữ #999 đúng số đo của họ, thêm gạch ngang cho đọc ra ngay.
+     VẪN BẤM ĐƯỢC (bấm là mở khung nhận thông báo) nên KHÔNG dùng [disabled] —
+     disabled thì mất luôn sự kiện click. Hover vẫn nổi nền để thấy bấm được. */
+  html.skin-mt .pc-size.is-oos { color: #999; text-decoration: line-through; }
+
   html.skin-mt #dkNavSearchField {
     background: transparent; border-radius: 0;
     border: 0; border-bottom: 1px solid #000;
@@ -1667,6 +1763,26 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
              ngược EN->VN biến badge thành "Đặt trước" (trùng chuỗi với nút) -->
         ${tags.map(b => `<span ${b === 'Pre-order' ? 'data-i18n-skip ' : ''}class="badge-label px-1 text-[12px] font-medium leading-4 text-foreground">${b}</span>`).join('')}
       </div>` : '';
+      })()}
+      <!-- LỚP SIZE HIỆN KHI RÊ CHUỘT VÀO ẢNH — chỉ bật ở bộ da Mytheresa
+           (chốt 19/08/2026, yêu cầu user). Markup dựng cho MỌI bộ da, việc
+           hiện/ẩn do CSS gác: bộ da khác vẫn dùng nút giỏ + dialog quick add như
+           cũ, không phải rẽ nhánh trong JS.
+           Liệt kê ĐỦ size, kể cả size đã hết (đánh dấu data-oos) — user yêu cầu
+           rõ; bấm size hết thì mở khung nhận thông báo khi có hàng.
+           Hàng làm đẹp (p.sizes) không có size hết nên off luôn false. -->
+      ${(() => {
+        /* Size lấy ĐÚNG bộ của PDP sản phẩm này — xem pcSizesOf(). */
+        const list = pcSizesOf(p, i);
+        /* ÍT SIZE (dưới 4, tức không lấp đầy một hàng): thêm `is-few` để CSS
+           đổi lưới thành hàng ô TỰ CO THEO NỘI DUNG và CĂN GIỮA.
+           Gồm cả 1 size (Onesize của pdp3, 1 dung tích của hàng làm đẹp) lẫn 2
+           size (khăn lụa pdp2). Lưới 4 cột cứng bóp ô về 76px, mà nhãn
+           "90 × 90 cm" cần rộng hơn -> chữ bị cắt (user báo 19/08/2026). */
+        return `
+      <div class="pc-sizes${list.length < 4 ? ' is-few' : ''}" data-pc-sizes="${i}">
+        ${list.map(s => `<button class="pc-size press${s.oos ? ' is-oos' : ''}" data-pc-size="${s.label}"${s.oos ? ' data-oos="1"' : ''}>${s.label}</button>`).join('')}
+      </div>`;
       })()}
       <button class="quick-add press" data-quick="${i}" aria-label="Thêm nhanh vào giỏ"
         style="display:flex;min-width:36px;min-height:36px;padding:var(--spacing-2);justify-content:center;align-items:center;position:absolute;right:8px;bottom:8px;border-radius:var(--radius-infinite);border:1px solid var(--general-border);background:rgba(255,255,255,.9);">
@@ -2897,6 +3013,23 @@ const PDP_DATA = {
     tabs: pdpTabs(5),
   },
 };
+
+/* Size của từng SẢN PHẨM, lấy ĐÚNG BỘ CỦA PDP tương ứng (chốt 19/08/2026, yêu
+   cầu user: "demo thực tế size theo bên trong pdp luôn").
+   Trước đây dải size hover trên card dùng chung `SIZES` (39-44) cho mọi SP —
+   sai với 3 SP: pdp2 là khăn (90 × 90 cm / 84 × 5 cm), pdp3 là Onesize.
+   `PDP_DATA[*].idx` chính là index trong PRODUCTS nên map thẳng được, KHÔNG đẻ
+   thêm bảng size thứ hai — một nguồn duy nhất, sửa PDP là card đổi theo.
+   SP#7-10 và hàng làm đẹp không có PDP riêng: xem `pcSizesOf` bên dưới. */
+const SIZES_BY_PRODUCT = Object.fromEntries(Object.values(PDP_DATA).map(d => [d.idx, d.sizes]));
+/* Trả về [{label, oos}] cho card index `i`:
+     · hàng làm đẹp -> dung tích trong PRODUCTS[i].sizes, không có hàng nào hết;
+     · SP có PDP    -> đúng bộ của PDP đó;
+     · còn lại      -> bộ size mặc định, y như PDP thường. */
+function pcSizesOf(p, i) {
+  if (p.sizes && p.sizes.length) return p.sizes.map(label => ({ label, oos: '' }));
+  return SIZES_BY_PRODUCT[i] || pdpSizes();
+}
 
 /* TRẢ GÓP — "Trả trước từ … /tháng · Xem chi tiết" nằm NGAY DƯỚI nút Thêm vào
    giỏ hàng và CĂN GIỮA (chốt 18/08/2026, yêu cầu user; trước đó khối này nằm
@@ -5848,9 +5981,42 @@ function wireSearchPane(root, pane) {
   });
 }
 
+/* Bấm 1 size trên dải hover của card (bộ da Mytheresa).
+   · size CÒN HÀNG -> thêm thẳng vào giỏ với đúng size đó, rồi mở tấm xác nhận.
+     Không mở dialog quick add nữa: màu đã chọn sẵn trên card, size vừa bấm là
+     mảnh cuối cùng còn thiếu.
+   · size ĐÃ HẾT -> mở khung "nhận thông báo khi có hàng" (dùng lại __openNotify
+     của PDP, không dựng form mới).
+   Trả về true nếu đã xử lý, để handler card biết mà đừng điều hướng sang PDP. */
+function pcSizeClick(el, btn) {
+  const idx = +btn.closest('[data-pc-sizes]').dataset.pcSizes;
+  const size = btn.dataset.pcSize;
+  if (btn.dataset.oos) {
+    if (window.__openNotify) window.__openNotify(() => toast('Đã đăng ký · sẽ báo bạn khi có hàng'));
+    return true;
+  }
+  const p = PRODUCTS[idx];
+  const img = el.querySelector('img');
+  if (img) flyToCart(img);
+  cartQty++;
+  document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
+  /* Màu đang chọn lấy từ chính card (ô swatch có viền primary), để dòng biến thể
+     trong tấm xác nhận khớp với thứ user đang nhìn. */
+  const ci = [...el.querySelectorAll('[data-swatches] .cw')].findIndex(c => c.classList.contains('border-primary'));
+  const colorName = (p.colors && p.colors[ci > -1 ? ci : 0]) ? p.colors[ci > -1 ? ci : 0].name : '';
+  setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
+    img: `${A}${p.img}`, brand: p.brand, name: p.name,
+    variant: [colorName, size].filter(Boolean).join(' , '),
+    price: p.price, off: p.off, was: p.was, preorder: p.preorder,
+  }), 120);
+  return true;
+}
+
 function wireProductCards(root) {
   root.querySelectorAll('[data-product]').forEach(el => {
     el.addEventListener('click', e => {
+      const ps = e.target.closest('[data-pc-size]');
+      if (ps) { e.stopPropagation(); pcSizeClick(el, ps); return; }
       const qa = e.target.closest('.quick-add');
       if (qa) { if (window.__openQuickAdd) window.__openQuickAdd(+qa.dataset.quick); return; }
       go(el.dataset.product === '1' ? 'pdp2' : el.dataset.product === '2' ? 'pdp3' : el.dataset.product === '3' ? 'pdp4' : el.dataset.product === '4' ? 'pdp5' : el.dataset.product === '5' ? 'pdp6' : 'pdp');  // SP#2..6 -> bản riêng
@@ -9862,6 +10028,9 @@ document.body.insertAdjacentHTML('beforeend', `
        (Lỗi user báo 17/08/2026.) */
     if (window.wireLazy) wireLazy(prods);
     prods.querySelectorAll('[data-product]').forEach(el => el.addEventListener('click', e => {
+      // Dải size hover: xử lý TẠI CHỖ, không đóng layer tìm kiếm
+      const ps = e.target.closest('[data-pc-size]');
+      if (ps) { e.stopPropagation(); pcSizeClick(el, ps); return; }
       const qa = e.target.closest('.quick-add');
       const i = el.dataset.product;
       close();                                    // đóng layer trước, y như goSearch

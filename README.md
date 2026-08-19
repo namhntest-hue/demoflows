@@ -605,6 +605,135 @@ Mục **cuối** cố ý không kẻ: chân panel đã có gạch trên, kẻ n�
 
 > **Bẫy khi đo — pane Browser không vẽ frame thì `backgroundColor` trả giá trị SAI.** `getComputedStyle(el).backgroundColor` trên nút "Bộ lọc" trả `rgb(255,255,255)` **kể cả khi gán inline `background-color: rgb(1,2,3) !important`** — tức số đọc ra không phải giá trị thật. Các thuộc tính **layout** (height/padding/border-width/font-size) vẫn đúng. Cách vòng qua: viết hàm dò **người thắng trong cascade** (duyệt `document.styleSheets`, lọc rule `el.matches()`, tính specificity + `!important` + thứ tự) rồi đọc giá trị từ rule thắng. Đây là **bẫy thứ 5** của việc đo trong pane này — 4 cái trước ghi ở mục "Dựng 17 màn desktop vào Figma" và cảnh báo tắt transition ở trên.
 
+## Quick add riêng cho `skin-mt` (19/08/2026, CẢ 2 BẢN)
+
+Yêu cầu user, **chỉ bộ da Mytheresa** — 2 bộ da kia giữ nguyên nút giỏ tròn + dialog quick add.
+
+### Desktop: rê chuột vào ảnh → hiện dải SIZE
+
+Markup `.pc-sizes` dựng cho **mọi bộ da**, việc bật/tắt do CSS gác → JS không phải biết đang ở bộ da nào.
+
+| | |
+|---|---|
+| vị trí | đè đáy ảnh, nền trắng `.94`, trượt lên 6px khi hiện |
+| liệt kê | **đủ size, kể cả size đã hết** (user yêu cầu rõ) — size hết: chữ `#999` + gạch ngang |
+| bấm size **còn hàng** | thêm thẳng vào giỏ với đúng size đó → tấm xác nhận thả xuống. Không mở dialog nữa: màu đã chọn sẵn trên card, size là mảnh cuối cùng còn thiếu |
+| bấm size **đã hết** | mở khung **"nhận thông báo khi có hàng"** — dùng lại `__openNotify` của PDP, không dựng form mới |
+| nút giỏ tròn | **ẩn** ở bộ da này |
+
+- Size hết **không dùng `[disabled]`** — disabled thì mất luôn sự kiện click, mà ta cần click để mở khung nhận thông báo. Dùng class `.is-oos` + `data-oos`.
+- Ẩn nút giỏ tròn vì nó và dải size **cùng một vai** "thêm nhanh", và chồng đúng chỗ nhau (góc phải-dưới). `display` của nút là inline style nên phải `!important`.
+- Handler bấm size `e.stopPropagation()` — không thì click xuyên lên card và nhảy sang PDP. Nối ở **cả 2 chỗ** có card: `wireProductCards()` và lưới gợi ý trong layer tìm kiếm.
+- Màu trong dòng biến thể đọc từ **ô swatch đang chọn trên card**, để khớp thứ user đang nhìn.
+
+**Đo lại**: lúc nghỉ `opacity 0 · pointer-events none`; 6 size `39 40 41 42 43[HẾT] 44[HẾT]`; bấm `41` → giỏ `5→6`, **ở lại PLP**, tấm xác nhận ghi `Broken Jewels , 41`; bấm `43` → giỏ **không đổi**, khung nhận thông báo mở, không điều hướng. Bộ da khác: dải size `display:none`, nút giỏ `display:flex`.
+
+#### Hình thức tấm: đo thật hugoboss.com (user gửi làm tham chiếu)
+
+Đo `hugoboss.com/us/men-clothing` — tấm `.product-tile-plp__quickshop` của họ (phải **giả lập hover** mới có size, vùng `js-product-tile-quickshop-sizes` rỗng cho tới lúc đó):
+
+| | HUGO BOSS | Ta |
+|---|---|---|
+| tấm | `absolute`, ghim **đáy tile**, rộng hết bề ngang | y hệt |
+| nền | `rgba(249,249,249,.9)` · `backdrop-filter: none` | `rgba(249,249,249,.82)` + **`blur(7.5px)`** |
+| lưới size | `grid` · `repeat(auto-fill, minmax(54px,1fr))` · `gap 4` | `grid` · `repeat(auto-fit, minmax(44px,1fr))` · `gap 4` |
+| nhãn | 14/17.5 · 400 · **không viền** · căn TRÁI | **outline như chip PDP** · căn GIỮA |
+| size hết | `#999` | `#999` + gạch ngang |
+
+**Lệch có chủ ý, đều theo yêu cầu user:**
+1. **Thêm background-blur** — họ chỉ có nền đục 90%, `backdrop-filter: none`. Dùng đúng `7.5px` của dự án (cùng số với `.navbar` / `.glass-95`), nên hạ độ đục xuống `.82` cho lớp mờ đọc ra được.
+2. **Căn giữa** nhãn — họ căn trái.
+3. **Lưới CỐ ĐỊNH 4 cột** — họ `auto-fill minmax(54px,1fr)` nên số cột đổi theo bề ngang tile. 4 cột cố định thì ô size rộng bằng nhau ở **mọi mật độ lưới**, bộ 6 size xuống đúng 2 hàng.
+
+#### Vòng chỉnh tiếp theo (cùng ngày, yêu cầu user)
+
+| Yêu cầu | Đã làm |
+|---|---|
+| "1 line sẽ có **4 ô size**" | `grid-template-columns: repeat(4, minmax(0,1fr))` |
+| "**size theo bên trong pdp** luôn" | dải size đọc thẳng `PDP_DATA[*].sizes` |
+| "chỉ có 1 size thì hiện **Onesize ở giữa**" | **dưới 4 size** → class `is-few` (xem dưới) |
+| "**bỏ outline**, hover nổi lên dạng secondary" | `border: 0` · nền trong suốt · hover — xem dưới |
+| "nền dùng **bộ màu tương tự header**" | chép nguyên công thức `.glass-95` của `.navbar`, viết bằng **token** |
+| "hover thì **tương tự cục nam nữ làm đẹp**" | chép nguyên 2 khai báo của `.ghost-hover:hover` mà `.dk-dept` đang dùng |
+
+#### Nền + hover lấy thẳng từ header (19/08/2026, yêu cầu user)
+
+Trước đó nền tấm là `rgba(249,249,249,.82)` **chép cứng của hugoboss** — đứng yên ở mọi bộ da và không ăn nhập với header của chính mình. Nay:
+
+```css
+/* token DÀNH RIÊNG cho mặt phẳng có blur (tailwind map thành `bg-blur`) */
+background: var(--general-background-blur);
+backdrop-filter: blur(7.5px);            /* đúng số của .navbar */
+
+/* = đúng .ghost-hover:hover mà cụm Nam/Nữ/Làm đẹp (.dk-dept) dùng */
+.pc-size:hover { background: var(--unofficial-ghost-hover); color: var(--general-primary); }
+```
+
+> **Dùng `--general-background-blur`, KHÔNG tự pha lại bằng `color-mix` như `.glass-95`.** Bản đầu mình chép công thức của `.glass-95`; user chỉ ra hệ token **đã có sẵn token dành riêng cho mặt phẳng blur** — dùng nó mới đúng, khỏi công thức chép tay. Giá trị: bản gốc + `skin-mt` = `#ffffffe5`, mode GM trong `tokens.css` = `#f5f5f5`.
+
+> **Chép 2 khai báo hover thay vì gắn class `.ghost-hover` vào markup.** Rule nghỉ của `.pc-size` là **(0,2,1)**, còn `.ghost-hover:hover` chỉ **(0,2,0)** — gắn class cũng vô dụng vì `background: transparent` lúc nghỉ sẽ đè mất hover.
+
+**Đo ở `skin-mt`**: tấm size ra `rgba(255,255,255,0.898)` + `blur(7.5px)` — đúng token `#ffffffe5`; header `color(srgb 1 1 1 / 0.95)` + cùng blur (nav dùng `.glass-95` 95%, tấm dùng token blur 90% — **cùng một hệ, hai vai khác nhau**). 2 rule hover in ra **trùng từng khai báo**:
+`.ghost-hover:hover {background: var(--unofficial-ghost-hover); color: var(--general-primary);}`
+`html.skin-mt .pc-size:hover {background: var(--unofficial-ghost-hover); color: var(--general-primary);}`
+Bố cục không đổi: **4 cột × 2 hàng · viền ô 0px**. Console sạch trên tab mới.
+
+> **Size theo PDP là sửa một BUG DỮ LIỆU, không chỉ là thẩm mỹ.** Trước đó card dùng chung `SIZES` (39–44) cho **mọi** sản phẩm — sai với 2 món: `idx 1` là **khăn lụa** (`90 × 90 cm` / `84 × 5 cm`), `idx 2` là **túi Emblème** (`Onesize`). Nay `SIZES_BY_PRODUCT` map từ `PDP_DATA[*].idx` (chính là index trong `PRODUCTS`) nên **không đẻ thêm bảng size thứ hai** — sửa PDP là card đổi theo.
+
+**Đo lại từng sản phẩm:**
+
+| idx | Sản phẩm | Size trên card | Bố cục |
+|---|---|---|---|
+| 0 | Đầm lụa mini | `39 40 41 42 43[HẾT] 44[HẾT]` | 4 cột × 2 hàng, ô 76px |
+| **1** | **Khăn lụa** | **`90 × 90 cm` · `84 × 5 cm`** | 1 hàng |
+| **2** | **Túi Emblème** | **`Onesize`** | `is-single`, 1 ô **127px căn giữa** |
+| 3–5 | Giày | `39…44` | 4 cột × 2 hàng |
+| — | Nước hoa | `90 ml` | `is-single`, 127px căn giữa |
+
+Ô size: `viền 0px · nền trong suốt · cao 36 · chữ 12px w400`. Bấm chạy đúng theo từng bộ: khăn lụa → biến thể `Broken Jewels , 90 × 90 cm`; túi → `Verde Menta , Onesize`; size hết → giỏ không đổi, khung nhận thông báo mở. Console sạch trên tab mới.
+
+#### Ít size: căn giữa + đủ chỗ cho nhãn (19/08/2026, user báo)
+
+*"trường hợp ít size như khăn lụa thì tràn nó ra căn center chứ, với đảm bảo phải hiện đủ nội dung bên trong"*. Lưới **4 cột cứng** bóp mọi ô về **76px** — mà nhãn khăn lụa cần rộng hơn:
+
+| | |
+|---|---|
+| bề rộng chữ thật `90 × 90 cm` | **72px** |
+| lòng ô CŨ (76 − pad 8) | **68px** → **thiếu 4px**, chữ xuống dòng rồi bị cắt trong ô cao 36 |
+| lòng ô MỚI (96 − pad 16) | **80px** → đủ |
+
+Đổi `is-single` (chỉ bắt 1 size) thành **`is-few`** cho **mọi trường hợp dưới 4 size**:
+
+```css
+grid-template-columns: none;              /* huỷ 4 cột, không thì ô vẫn xếp vào đó */
+grid-auto-flow: column;
+grid-auto-columns: minmax(96px, auto);    /* auto = nở vừa chữ · 96px = sàn cho ô lẻ */
+justify-content: center;
+```
+
+Kèm `white-space: nowrap` + pad ngang `4px → 8px` trên `.pc-size`: không có `nowrap` thì nhãn 2 chữ tự xuống dòng trong ô cao 36 và mất dòng dưới.
+
+**Đo lại**: khăn lụa 2 ô **96px, 1 hàng, lệch tâm 0px, không cắt chữ**; `Onesize` và `90 ml` cùng vậy; bộ 6 size vẫn **4 cột × 2 hàng, ô 76px, không cắt chữ**. Console sạch trên tab mới.
+
+> Hàng thứ 2 của bộ 6 size (2 ô lẻ) vẫn **căn trái theo cột**, không căn giữa — giữ nhịp cột với hàng trên. Đây là hàng ĐẦY 4 ô nên không thuộc diện "ít size".
+
+### Mobile: bỏ ảnh + giá khỏi quick add
+
+Giữ **tên thương hiệu + tên sản phẩm · màu (nếu có) · size**. Bỏ ở **tầng markup** chứ không ẩn bằng CSS: dải gallery tải tới 9 ảnh, ẩn đi vẫn tốn mạng như thường.
+
+**Size theo đúng biến thể PDP của từng sản phẩm** — phần này **đã có sẵn từ trước**, không phải làm mới:
+
+| PDP dùng | Sản phẩm (idx) | Bấm quick add ở PLP |
+|---|---|---|
+| dropdown | `1 · 2 · 4 · 5` | mở **bottom sheet "Chọn size"** (`#sizeSheet`), đúng bộ chọn size của PDP |
+| chip | còn lại | mở quick add sheet, lưới chip như cũ |
+
+> **Bug kéo theo, đã vá:** `flyToCart` lấy `body.querySelector('img')` — bỏ gallery thì ảnh đầu tiên trong sheet trở thành **ô chọn màu 44px** (hoặc `null` nếu SP không có màu). Nay `openQA(idx, ci, srcImg)` nhận thẳng **ảnh của card** vừa bấm.
+
+**Đo lại** (`skin-mt`, SP chip idx 0): gallery **đã bỏ** · giá **đã bỏ** · còn `Versace · Đầm lụa mini Broken Jewels · Màu sắc · Kích thước` + 6 chip · sheet cao `374px`. Thêm giỏ ra `Broken Jewels , 39`. SP dropdown (idx 1) mở đúng sheet "Chọn size" 2 dòng, quick add sheet **không** mở. 2 bộ da kia vẫn `gallery=có · giá=có`. Console sạch trên tab mới ở cả 2 file.
+
+> ⚠ **Một câu chưa rõ trong yêu cầu:** phần đầu ghi *"giữ lại tên sản phẩm"* nhưng vế cuối lại ghi *"bỏ hình và tên"*. Mình hiểu vế cuối là gõ nhầm của **"bỏ hình và tiền"** (nhắc lại vế đầu) nên **GIỮ tên**. Nếu thật sự muốn bỏ tên thì sửa 1 dòng trong `quickAddBody`.
+
 ## Bộ lọc: mọi mục ĐÓNG sẵn (19/08/2026, CẢ 2 BẢN)
 
 User: *"filter mặc định closed hết"*. Trước đây **6/7 mục mở sẵn** (chỉ "Khác" đóng) nên panel dài lê thê, phải cuộn mới thấy hết tên các mục.

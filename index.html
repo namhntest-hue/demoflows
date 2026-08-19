@@ -5664,7 +5664,7 @@ function wireProductCards(root) {
           // ctx cho size sheet biết đang thêm SP nào / màu nào / bay từ ảnh nào
           window.__openSizeSheet(kind, '', null, { idx, ci, img: el.querySelector('img') });
         } else if (window.__openQuickAdd) {
-          window.__openQuickAdd(idx, ci);
+          window.__openQuickAdd(idx, ci, el.querySelector('img'));
         }
         return;
       }
@@ -8519,13 +8519,20 @@ function quickAddBody(p, idx, sel = 0) {
      nào ra đúng bộ ảnh của PDP sản phẩm đó. */
   const gallery = PRODUCT_GALLERY[idx] || [p.img];
   return `
+    <!-- ẢNH và GIÁ: chỉ dựng khi KHÔNG ở bộ da Mytheresa.
+         Chốt 19/08/2026, yêu cầu user: ở skin-mt quick add mobile chỉ còn TÊN sản
+         phẩm + MÀU (nếu có) + SIZE. Bỏ hẳn ở tầng markup chứ không ẩn bằng CSS:
+         dải ảnh này tải tới 9 ảnh gallery, ẩn đi vẫn tốn mạng như thường.
+         Đọc trạng thái bộ da qua class trên thẻ html — quickAddBody chỉ chạy lúc
+         MỞ sheet nên luôn đọc được bộ da đang bật. -->
+    ${document.documentElement.classList.contains('skin-mt') ? '' : `
     <!-- Gallery: pad 2 + gap 2 (Figma Frame 427319867). Ảnh W=163 -> H=213. -->
-    <div class="flex gap-0.5 overflow-x-auto no-scrollbar p-0.5">
+    <div class="qa-gallery flex gap-0.5 overflow-x-auto no-scrollbar p-0.5">
       ${gallery.map(img => `
         <div class="shrink-0 w-[163px] overflow-hidden bg-secondary" style="aspect-ratio:163/213">
           <img src="${A}${img}" class="w-full h-full object-cover" alt="${p.name}">
         </div>`).join('')}
-    </div>
+    </div>`}
     <div class="flex flex-col gap-1 pt-2 px-4 pb-2">
       <div class="flex flex-col pb-2 items-start text-left">
         <p class="pc-brand h-7 text-[18px] font-medium leading-7 text-foreground">${p.brand}</p>
@@ -8538,11 +8545,12 @@ function quickAddBody(p, idx, sel = 0) {
           <button id="qaDetail" class="shrink-0 text-[14px] leading-5 underline press" style="color:var(--unofficial-ghost-foreground)">Xem chi tiết</button>
         </div>
       </div>
+      ${document.documentElement.classList.contains('skin-mt') ? '' : `
       <div class="flex gap-1.5 items-center">
         <p class="text-[16px] font-medium leading-6 ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
         ${p.off ? `<span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[14px] font-medium leading-5 text-destructive shrink-0">${p.off}</span>` : ''}
         ${p.was ? `<p class="text-[14px] leading-5 text-muted-foreground line-through">${p.was}</p>` : ''}
-      </div>
+      </div>`}
     </div>
     <div class="pt-2 px-4 pb-2 flex flex-col gap-4">
       ${(p.colors && p.colors.length) ? `
@@ -8594,8 +8602,14 @@ function quickAddCta(p) {
   const body = document.getElementById('qaBody');
   const ctaBox = document.getElementById('qaCta');
 
-  /* `ci` = màu vừa chọn trên card PLP, để quick add mở lên đúng màu đó */
-  const openQA = (idx, ci = 0) => {
+  /* `ci` = màu vừa chọn trên card PLP, để quick add mở lên đúng màu đó.
+     `srcImg` = ảnh trên CARD vừa bấm, dùng cho hiệu ứng bay vào giỏ. Bắt buộc
+     phải truyền từ ngoài vào kể từ 19/08/2026: bộ da Mytheresa bỏ dải gallery
+     khỏi sheet nên `body.querySelector('img')` không còn là ảnh sản phẩm nữa
+     (nó rơi trúng ô CHỌN MÀU 44px, hoặc null nếu SP không có màu). */
+  let qaSrcImg = null;
+  const openQA = (idx, ci = 0, srcImg = null) => {
+    qaSrcImg = srcImg;
     const p = PRODUCTS[idx];
     body.innerHTML = quickAddBody(p, idx, (p.colors && p.colors[ci]) ? ci : 0);
     ctaBox.innerHTML = quickAddCta(p);
@@ -8619,7 +8633,9 @@ function quickAddCta(p) {
       });
     });
     ctaBox.querySelector('#qaAdd').addEventListener('click', e => {
-      const img = body.querySelector('img');
+      /* Ưu tiên ảnh của CARD (qaSrcImg); chỉ rơi về ảnh trong sheet khi mở từ
+         chỗ không truyền được card. Xem ghi chú ở openQA. */
+      const img = qaSrcImg || body.querySelector('.qa-gallery img') || body.querySelector('img');
       if (img) flyToCart(img);
       cartQty++;
       document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
