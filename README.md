@@ -605,6 +605,52 @@ Mục **cuối** cố ý không kẻ: chân panel đã có gạch trên, kẻ n�
 
 > **Bẫy khi đo — pane Browser không vẽ frame thì `backgroundColor` trả giá trị SAI.** `getComputedStyle(el).backgroundColor` trên nút "Bộ lọc" trả `rgb(255,255,255)` **kể cả khi gán inline `background-color: rgb(1,2,3) !important`** — tức số đọc ra không phải giá trị thật. Các thuộc tính **layout** (height/padding/border-width/font-size) vẫn đúng. Cách vòng qua: viết hàm dò **người thắng trong cascade** (duyệt `document.styleSheets`, lọc rule `el.matches()`, tính specificity + `!important` + thứ tự) rồi đọc giá trị từ rule thắng. Đây là **bẫy thứ 5** của việc đo trong pane này — 4 cái trước ghi ở mục "Dựng 17 màn desktop vào Figma" và cảnh báo tắt transition ở trên.
 
+## Bộ lọc: mọi mục ĐÓNG sẵn (19/08/2026, CẢ 2 BẢN)
+
+User: *"filter mặc định closed hết"*. Trước đây **6/7 mục mở sẵn** (chỉ "Khác" đóng) nên panel dài lê thê, phải cuộn mới thấy hết tên các mục.
+
+Đổi tham số mặc định của `fSection()`: `open = true` → **`open = false`**, và bỏ mấy chỗ truyền `true` tường minh (chúng chỉ tồn tại để với tới tham số vị trí phía sau: `h = 56` cho "Màu sắc", `count` cho "Danh mục"/"Thương hiệu" ở desktop).
+
+**Không đụng cấp con**: nhánh con của Danh mục (`.fcat`) và cấp 3 (`.fsub`) **vốn đã đóng sẵn** từ trước.
+
+**Đo lại — cả 2 file × cả 2 biến thể thân bộ lọc:**
+
+| | Thời trang | Làm đẹp |
+|---|---|---|
+| các mục | `Danh mục · Thương hiệu · Màu sắc · Kích thước · Khoảng giá · Khác` | `Danh mục · Thương hiệu · Dung tích · Khoảng giá · Ưu đãi · Khác` |
+| số mục mở | **0/6** | **0/6** |
+| cấp con mở | 0 | 0 |
+| thân phải cuộn? | **không** | **không** |
+
+Bấm vào tiêu đề vẫn mở ra bình thường. Console sạch trên tab mới ở cả 2 file.
+
+## Bộ da mặc định khi vào trang = Mytheresa (19/08/2026, CẢ 2 BẢN)
+
+User: *"set mặc định khi vào sẽ xem skin mytheresa luôn, cả 2 phiên bản đều xem skin đó đầu tiên"*.
+
+**2 chỗ sửa, ở cả 2 file** — đổi mặc định thì phải sửa đủ cả 2, không thì tích trong popover Cài đặt trỏ sai mục:
+
+| Chỗ | Trước | Sau |
+|---|---|---|
+| thẻ `<html>` | `<html lang="vi">` | `<html lang="vi" class="skin-mt">` |
+| khởi tạo state | `let currentSkin = 'default'` | `let currentSkin = 'mytheresa'` |
+
+**Đặt class THẲNG vào thẻ `<html>`, KHÔNG gọi `applySkin()` lúc boot**: gọi bằng JS thì trang vẽ một nhịp bằng bảng màu gốc rồi mới nhảy sang bộ da — nhìn ra nháy. Phông của bộ da này là **Montserrat**, trùng `currentFont` mặc định nên không phải đụng gì thêm.
+
+**Đo lại — cả 2 file, tab mới:**
+
+| | `index.html` | `desktop.html` |
+|---|---|---|
+| class `<html>` | `skin-mt` | `skin-mt` |
+| `currentSkin` / `currentFont` | `mytheresa` / `montserrat` | `mytheresa` / `montserrat` |
+| token mực · viền · `radius-8` | `#000000` · `#dfdfdf` · `0px` | y hệt |
+| phông body | Montserrat | Montserrat |
+| dấu hiệu bộ da đang chạy | tab menu `14px w500 HOA` · hairline thanh lọc `#ececec` | nav dept `12px w500 HOA` |
+
+Popover Cài đặt tích đúng **`mytheresa`** + phông **`montserrat`**. Đổi sang bộ da khác rồi quay lại vẫn chạy: `default` → không class · `editorial` → `skin-mp` · `mytheresa` → `skin-mt`. Console sạch trên tab mới ở cả 2 file.
+
+> Bản gốc Grey-Gold và MR PORTER **vẫn còn nguyên**, chỉ là không còn được chọn sẵn — vào popover Cài đặt đổi lại một chạm.
+
 ## Subheader "Khuyến mãi" giữ màu ĐỎ ở mọi bộ da (19/08/2026, 2 bản desktop)
 
 User: *"subheader KHUYẾN MÃI sẽ có màu đỏ"*. Đảo quyết định 18/08 — hồi đó bộ da `skin-mt` ép nó về `#000` theo số đo ("SALE trên trang mytheresa không tô đỏ").
