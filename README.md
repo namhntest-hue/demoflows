@@ -434,6 +434,41 @@ Yêu cầu: "theme uppercase các title menu và màu sắc tương tự mythere
 - **Đã đo cả 2 file × mọi bộ da**: `default`/`editorial` giữ 60/72 + đáy header 132 + tracking `normal`; `mytheresa` ra 64/64 + đáy 128 + tracking `0.5px`. Thanh bộ lọc PLP ghim **khít 0px ở cả 3 bộ da**, cột info PDP clearance 23–24px, anchor mục lục nhảy tới 144 > 128. Thanh danh mục `Nam`/`Nữ` vừa khít 1409/1409, `Làm đẹp` tràn 1457 nên mũi tên trượt tự hiện. Không tràn ngang (1425/1440). Console sạch trên tab mới ở cả 2 file.
 - **Quét tương phản ở ngưỡng NGHIÊM HƠN 4.5:1** (vì chữ nay 12px, không còn được hưởng ngưỡng 3:1 của chữ lớn), 10 màn × bộ da Mytheresa: **0 vi phạm**.
 
+#### Drawer mobile — đồng bộ cấp 2 với nav desktop (19/08/2026, yêu cầu user, CHỈ `index.html`)
+
+User: *"submenu level của mobile vẫn chưa được đồng bộ với menu desktop nhé (uppercase theo bản desktop)"*. Hai bản dùng **chung `MENU_DATA`** nên map được 1-1 từng cấp:
+
+| Cấp | Mobile (`#menuSheet`) | Desktop | Trước | Sau |
+|---|---|---|---|---|
+| 1 · ngành hàng | `.ms-tab` | `.dk-dept` | HOA | — |
+| 1 · danh mục (màn gốc) | hàng trong `.ms-view` | `.dk-nav-link` | HOA | — |
+| — · **tiêu đề màn con** | `navSub()` `<p>` | `.dk-nav-link` đang mở panel | **thường, 400** | **HOA, 500** |
+| 2 · **nhãn nhóm** | `<p>` trong `.ms-view` | `.dk-mega-grid > div > p` | **thường, 400, `#666`** | **HOA, 500, `#000`** |
+| 2 · **hàng nội dung** | hàng trong `.ms-view` màn con | đường dẫn trong mega panel | **HOA** | **viết hoa chữ đầu** |
+
+Lấy đúng bộ số của phần tử desktop tương ứng — đo lại **cả 2 bản, bộ da `skin-mt`**:
+
+| | mobile sau khi sửa | desktop |
+|---|---|---|
+| tiêu đề màn con / nav link | `12px · 500 · uppercase · ls .5 · #000` | `12px · 500 · uppercase · ls .5` |
+| nhãn nhóm | `12px · 500 · uppercase · ls .5 · #000` | `12px · 500 · uppercase · ls .5 · #000` |
+| hàng nội dung cấp 2 | `12px · 400 · none · ls .5` | `12px · 400 · none · ls .5` |
+
+**Không khai `font-size`**: thang chữ (mục 5) đã kéo sẵn tiêu đề màn con `16 → 12`, nhãn nhóm vốn đã 12. Chữ hoa bằng `text-transform`, **không gõ hoa vào chuỗi** (mất bản dịch i18n). Selector bám cấu trúc sẵn có, **không thêm hook nào vào markup**: `#menuSheet .glass-95 > p` (chỉ `navSub` có `<p>` trong thanh nav — `navRoot` chỉ có span/img/button) và `#menuSheet .ms-view > p` (mọi con trực tiếp khác của `.ms-view` đều là `<button>`).
+
+> **Hàng nội dung cấp 2 — user làm rõ ở lượt sau:** *"từ menu bản mobile chọn vào quần áo > đẩy sang menu level 2, trên desktop là viết hoa chữ cái đầu nhưng trên mobile đang viết uppercase toàn bộ"*. Đúng: hàng ở màn con lấy **đúng `sub.items`** mà desktop đổ vào mega panel, nên phần tử tương ứng là **đường dẫn trong panel** (`12px · 400 · none`), không phải nav link. Rule chữ hoa ở mục 4 bám `.ms-view button > span` nên phủ cả 2 màn — tách bằng **`:has()`** thay vì thêm class vào markup: màn gốc có `.ms-tab` (deptTabs) → giữ hoa; màn con có `.glass-95 > p` (navSub) → gỡ hoa.
+> **Chỉ đè `text-transform`**, không bỏ cả rule: bỏ thì `line-height` rơi về `leading-5` (20px) làm hàng cao thêm 4px, lệch màn gốc. Đo lại: hàng cấp 1 và cấp 2 đều **48.8px** ở `skin-mt`, **52px** ở 2 bộ da kia.
+
+**Bỏ dòng "Tất cả …" khỏi màn con** (19/08/2026, yêu cầu user) — màn con vào thẳng danh mục cấp dưới, không còn dòng dẫn cấp trên nào. Đúng bằng cách 2 bản desktop đã làm với mega panel hôm 18/08: **data `MENU_DATA[].cats[][1].all` giữ nguyên**, chỉ thôi render; bật lại tốn 1 dòng markup. Helper `headRow` **vẫn dùng** cho dòng "Trang chủ …" ở màn gốc — đừng xoá. Là sửa **markup** nên áp cho cả 3 bộ da; đo lại `default`/`editorial`/`mytheresa` đều `còn dòng "Tất cả …" = false`, hàng đầu màn con là danh mục con thật.
+
+> ⚠ **Khác desktop một điểm — có mất một đường đi.** Ở desktop bỏ dòng này không mất gì vì chính nút danh mục ở subheader đã trỏ tới PLP cấp đó. Ở **mobile** hàng danh mục chỉ mang `data-ms-sub` (mở màn con), **không điều hướng** — nên drawer nay không còn lối vào PLP "cả danh mục" (vd `{title:'Tất cả quần áo', crumbs:['Nam','Quần áo']}`). Muốn trả lại thì gắn `catAttrs` lên tiêu đề màn con. **Đã báo user.**
+
+> **Bẫy đã dính khi viết comment này:** gõ **dấu backtick** trong comment nằm giữa template literal của `render()` → đứt chuỗi, cả file `SyntaxError` và không chạy. Cảnh báo vốn đã ghi ở 3 chỗ khác trong 2 file mà vẫn dính. Nhân đây: sau khi sửa phải **bust cache** (`?bust=n`) mới thấy bản mới — `location.reload()` vẫn trả bản cũ, làm mình đọc nhầm là chưa sửa được.
+
+**1 chỗ VẪN lệch, cố ý, chờ user chốt:** weight cấp 1 mobile `400` vs desktop `500`. Lệch này có từ 18/08 — số đo mobile thật của mytheresa là 400, còn desktop được user chốt nâng lên 500. Đã ghi trong comment mục 5 của `index.html`.
+
+> `desktop.html` **cũng có** một bản `#menuSheet` y hệt (dải desktop hẹp) và bộ da `skin-mt` ở file đó **không phủ chữ hoa cấp nào**. **Không sửa** vì drawer đó là **code chết**: handler `[data-menu-open]` có nhưng không markup nào mang thuộc tính đó, không lối nào mở được.
+
 ### Hệ viền / gạch chân theo số đo Mytheresa (18/08/2026, cả 3 file)
 
 User: *"dùng toàn bộ style của họ về layout dạng có border/underline ở các mục (ví dụ menu, pdp), dùng màu border/underline tương đương mytheresa"*. Lần này họ **không chặn**, đo được cả PLP lẫn 1 PDP (`saman-amel-…-p01048872`) — quét mọi phần tử có viền thấy được, ghi cả cạnh · độ dày · màu · phần tử:
@@ -520,6 +555,30 @@ User: *"dùng toàn bộ style của họ về layout dạng có border/underlin
 - **Khác nhau giữa 2 file**: chỉ selector mega panel (`desktop.html` = lưới `.dk-mega-grid`, `desktop-editorial.html` = flex-wrap `.dk-mega-cols`). File editorial còn phải thêm: đè thang mực 3 bậc về đen, khai lại `--font-app` về Montserrat (không thì đổi từ MR PORTER sang còn dính serif Lora), tắt bóng của khối greige, tắt vệt gradient nền. **Sửa 1 file nhớ sửa cả 2.**
 - **Sửa kèm một lệch giữa 2 file**: bộ da MR PORTER ở `desktop.html` chỉ đè `font-weight` cho `[aria-current]` nên nav ra **500** (markup có `font-medium`), trong khi cùng bộ da ở file editorial là **400** và nav MR PORTER thật là regular. Đã đè cả 4 selector → **400** ở cả 2 file.
 - **Đã đo**: vòng `mặc định → Mytheresa → MR PORTER → mặc định` (desktop.html) và `editorial → Mytheresa → Neutral → editorial` (editorial) đều trả **đúng về chỗ cũ** ở token mực/viền/mặt xám/radius/phông/nền thanh thông báo/cỡ+case nav, dấu tích của cả 2 mục (bộ da + phông) khớp. Thanh danh mục: `Nam`/`Nữ` **vừa khít** 1409/1409, `Làm đẹp` tràn 1450/1409 nên 2 mũi tên trượt tự hiện (chữ hoa 12px + tracking rộng hơn 14px thường một chút). Thanh bộ lọc PLP ghim khít **0px** ở cả 2 file. **Quét tương phản 10 màn × bộ da Mytheresa**: **0 vi phạm**. Console sạch trên tab mới ở cả 2 file, không tràn ngang (1425/1440).
+
+### Bộ lọc: hệ gạch đồng bộ (19/08/2026, CẢ 2 BẢN)
+
+User: *"ở phần filter chưa được update theo style của mytheresa ở cả 2 phiên bản, hãy update theo style và lưu ý chúng ta dùng underline màu nhẹ nhàng đồng bộ"*.
+
+> ### ⚠ LỖI TỰ GÂY, USER BẮT — "bê nguyên style của mytheresa vào"
+> Bản đầu mình **thay linh kiện của dự án bằng linh kiện của họ**: nút "Bộ lọc" outline → chữ trần (ẩn cả icon sliders) · checkbox 16px bo góc có dấu ✓ → ô 8×8 vuông tô đen đặc · chip size chọn (viền primary) → tô đen chữ trắng · "Đặt lại" outline → nền `#f2f2f2` · bỏ rail dọc cây danh mục · bỏ grabber bottom-sheet · tiêu đề panel → 16px CHỮ HOA · hàng tiêu đề mục 72 → 52.
+> User bắt lỗi: *"context là dựa trên style của mytheresa và dùng style có sẵn của tôi để điều chỉnh chứ không phải bê nguyên style của mytheresa vào"* — **mytheresa là THAM CHIẾU, linh kiện phải là của dự án.** Đã **trả lại nguyên trạng cả 8 thứ**: `btn-o` · `.chk` · `.chip` · rail Figma · grabber · thang chữ của mục 5 (bộ da vốn đã tự hạ 18→16 ở desktop, 16→12/14 cho nhãn mục — đó là hệ chữ CÓ SẴN, không phải rule mới).
+> Bài học: đo trang tham chiếu xong thì bước tiếp theo là **soi xem hệ của mình còn thiếu chỗ nào**, chứ không phải chép số đo của họ đè lên component của mình.
+
+**Còn lại đúng MỘT việc — cũng là việc user nêu đích danh:** bộ lọc là chỗ **duy nhất** trong `skin-mt` chưa theo hệ gạch đã chốt 18/08/2026, nên kéo nó về `#ececec` — **cùng một sắc, cùng một vai** với vách 2 hàng nav và vách hàng danh mục trong menu.
+
+| Chỗ | Trước | Sau |
+|---|---|---|
+| Hairline dưới thanh lọc (`.filterbar::after`) | `--general-border` = `#dfdfdf` | **`#ececec`** |
+| Gạch giữa các mục trong panel | **không có** — 6 mục chạy liền một dải | **`1px #ececec`** |
+| Vách header drawer (`border-b`) — *chỉ desktop* | `#dfdfdf` | **`#ececec`** |
+| Vách chân panel/drawer | mobile: không có · desktop: `#dfdfdf` | **`1px #ececec`** |
+
+Mục **cuối** cố ý không kẻ: chân panel đã có gạch trên, kẻ nữa là 2 vạch sát nhau. CSS gọn còn **3 rule** (mobile) / **4 rule** (desktop), không đụng markup/layout.
+
+**Đo lại — cả 2 file, vòng `mytheresa → mặc định → MR PORTER → mytheresa`:** mọi linh kiện trở về **đúng giá trị gốc** ở cả 3 bộ da (nút `h36` viền `1px` pad `16`, icon sliders `block`, checkbox `16px` + dấu ✓ `block`, rail `1px #d9d9d9`, chip/nút Đặt lại viền `1px`, tiêu đề mục `72px`, `#sortBtn` pad `16`). Chỉ 4 chỗ gạch đổi theo bộ da: `skin-mt` ra `#ececec`, mặc định `#e5e5e5`, MR PORTER `#e0e0e0`; gạch mục ra `1px|1px|1px|1px|1px|0px` ở `skin-mt` và `0px × 6` ở 2 bộ da kia. Đúng ở **cả 2 biến thể thân bộ lọc** (thời trang / làm đẹp, đều 6 mục).
+
+> **Bẫy khi đo — pane Browser không vẽ frame thì `backgroundColor` trả giá trị SAI.** `getComputedStyle(el).backgroundColor` trên nút "Bộ lọc" trả `rgb(255,255,255)` **kể cả khi gán inline `background-color: rgb(1,2,3) !important`** — tức số đọc ra không phải giá trị thật. Các thuộc tính **layout** (height/padding/border-width/font-size) vẫn đúng. Cách vòng qua: viết hàm dò **người thắng trong cascade** (duyệt `document.styleSheets`, lọc rule `el.matches()`, tính specificity + `!important` + thứ tự) rồi đọc giá trị từ rule thắng. Đây là **bẫy thứ 5** của việc đo trong pane này — 4 cái trước ghi ở mục "Dựng 17 màn desktop vào Figma" và cảnh báo tắt transition ở trên.
 
 ## Subheader cao 72 + gom offset sticky một chỗ (18/08/2026, 2 bản desktop)
 
