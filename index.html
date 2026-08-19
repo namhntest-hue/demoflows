@@ -3966,6 +3966,13 @@ const eyeBtn = () => `
   </button>`;
 
 /* input theo Figma: 358x36, pad 8, stroke #e5e5e5, r2, text 14 */
+/* LỖI NGAY DƯỚI Ô NHẬP: dùng `setFieldErr(inputEl, msg)` / `clearFieldErr(inputEl)`
+   đã có sẵn trong file (khai gần validatePickup). Chúng gắn `.fld-err` (viền đỏ,
+   khai ở <style>), `aria-invalid`, `aria-describedby` rồi CHÈN THẲNG thẻ <p> ngay
+   sau ô — không cần dựng sẵn chỗ trống trong markup.
+   ⚠ ĐỪNG khai thêm hàm cùng tên: mình đã lỡ viết một bản trùng tên ở đây
+   (19/08/2026) và nó bị bản gốc phía dưới đè, gây `TypeError` khó lần. */
+
 const afield = (label, attrs, ph, extra = '', labelCls = 'text-muted-foreground') => {
   const isPass = /type="password"/.test(attrs);
   return `
@@ -4062,8 +4069,13 @@ function viewOtp() {
   <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
     <h2 class="text-[24px] font-light leading-8 text-foreground">Xác thực OTP</h2>
     <p class="text-[14px] leading-5" style="color:var(--unofficial-ghost-foreground)">Mã xác thực đã được gửi đến ${authPhone ? `<b class="font-medium text-foreground">${authPhone}</b>` : 'số điện thoại của bạn'}<br>Hoặc <button data-otp-change class="underline underline-offset-2 press">thay đổi số điện thoại</button></p>
-    <div class="flex gap-2" id="otpRow">
-      ${[0,1,2,3,4,5].map(i => `<input inputmode="numeric" maxlength="1" data-otp="${i}" class="otp-cell w-[52px] h-[52px] text-center text-[18px] font-medium border border-border-3 rounded-xs outline-none focus:border-primary transition-colors">`).join('')}
+    <!-- Bọc thêm 1 lớp để dòng lỗi nằm SÁT hàng ô (gap-2 = 8px). Để nó làm con
+         trực tiếp của cột gap-6 thì lỗi rơi cách hàng ô 24px, đọc ra là chú
+         thích của khối dưới chứ không phải lỗi của ô. -->
+    <div class="flex flex-col gap-2">
+      <div class="flex gap-2" id="otpRow">
+        ${[0,1,2,3,4,5].map(i => `<input inputmode="numeric" maxlength="1" data-otp="${i}" class="otp-cell w-[52px] h-[52px] text-center text-[18px] font-medium border border-border-3 rounded-xs outline-none focus:border-primary transition-colors">`).join('')}
+      </div>
     </div>
     <div class="flex flex-col gap-4">
       ${abtn('Xác nhận', 'data-auth-verify', 'h-10')}
@@ -6518,6 +6530,22 @@ function setFieldErr(inp, msg) {
   const p = document.getElementById(eid);
   if (p) localizeNew(p);
 }
+/* 6 ô OTP không có ô nào là "ô chính" để gắn lỗi: setFieldErr chèn <p> vào
+   `afterend` của phần tử truyền vào, mà afterend của một ô thì rơi vào GIỮA hàng
+   flex. Nên truyền CẢ HÀNG `#otpRow` — <p> rơi ngay dưới hàng, đúng chỗ; lớp
+   `.fld-err` bám vào div không viền nên vô hình, không hại gì.
+   Tô đỏ 6 ô phải làm riêng, và gỡ khi gõ lại. */
+function otpErr(root, msg) {
+  const row = root.querySelector('#otpRow');
+  if (!row) return;
+  const cells = [...row.querySelectorAll('.otp-cell')];
+  if (!msg) { clearFieldErr(row); cells.forEach(c => c.classList.remove('fld-err')); return; }
+  setFieldErr(row, msg);
+  cells.forEach(c => {
+    c.classList.add('fld-err');
+    c.addEventListener('input', () => otpErr(root, ''), { once: true });
+  });
+}
 function validatePickup(root) {
   const get = k => root.querySelector(`[data-ckf="${k}"]`);
   const rules = [
@@ -6838,12 +6866,18 @@ function wire(root) {
     btn.addEventListener('click', () => {
       const inp = root.querySelector('#regPhone');
       authPhone = inp && inp.value.trim() ? inp.value.trim() : '';
-      if (!authPhone) { toast('Vui lòng nhập số điện thoại'); if (inp) inp.focus(); return; }
+      if (!authPhone) { if (inp) { setFieldErr(inp, 'Vui lòng nhập số điện thoại'); inp.focus(); } return; }
+      if (inp) clearFieldErr(inp);
       authFlow = authView === 'forgot' ? 'forgot' : 'register';
       btn.innerHTML = spinnerSVG();
       setTimeout(() => { authView = 'otp'; rerenderLogin(); toast('Đã gửi mã OTP'); }, 700);
     });
   });
+
+  /* Gõ lại vào ô SĐT thì xoá lỗi ngay — không thì lỗi nằm lì tới lần bấm sau.
+     Cùng lối với ô checkout ([data-ckf]) đã làm. */
+  root.querySelectorAll('#regPhone, #loginId').forEach(inp =>
+    inp.addEventListener('input', () => clearFieldErr(inp)));
 
   // Đổi SĐT từ màn OTP -> quay lại màn nhập SĐT của luồng
   root.querySelectorAll('[data-otp-change]').forEach(btn => {
@@ -6895,7 +6929,8 @@ function wire(root) {
   root.querySelectorAll('[data-auth-verify]').forEach(btn => {
     btn.addEventListener('click', () => {
       const code = otpCells.map(c => c.value).join('');
-      if (code.length < 6) { toast('Vui lòng nhập đủ 6 số'); return; }
+      if (code.length < 6) { otpErr(root, 'Vui lòng nhập đủ 6 số'); return; }
+      otpErr(root, '');
       btn.innerHTML = spinnerSVG();
       setTimeout(() => { authView = authFlow === 'register' ? 'reginfo' : 'setpass'; rerenderLogin(); }, 700);
     });
@@ -9061,8 +9096,13 @@ document.body.insertAdjacentHTML('beforeend', `
       </div>
       <!-- Ô nhập mã vẫn còn (mã riêng / mã gửi qua email không nằm trong danh
            sách) nhưng lùi xuống vai phụ: nằm trong sheet, không chiếm chỗ ở giỏ -->
-      <div class="px-4 pb-3 shrink-0 flex gap-1">
-        <input id="vcCode" placeholder="Nhập mã ưu đãi" class="flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+      <!-- Bọc cột để dòng lỗi nằm dưới cặp [ô nhập | nút]. Lỗi ẩn bằng .hidden
+           (display:none) nên KHÔNG tính là flex item -> lúc không lỗi khối này
+           cao đúng như cũ, không hở thêm khoảng trống nào. -->
+      <div class="px-4 pb-3 shrink-0 flex gap-1 items-start">
+        <div class="flex-1 min-w-0 flex flex-col">
+          <input id="vcCode" placeholder="Nhập mã ưu đãi" class="w-full h-10 bg-background border border-border rounded-xs px-2 text-[14px] text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+        </div>
         <button id="vcCodeApply" disabled class="h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs text-[14px] font-medium leading-5 text-foreground btn-s press">Dùng mã</button>
       </div>
       <div id="vcList" class="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 pb-4 flex flex-col"></div>
@@ -9085,7 +9125,9 @@ document.body.insertAdjacentHTML('beforeend', `
   const codeBtn = sh.querySelector('#vcCodeApply');
   let temp = [], onDone = null;
 
-  const resetCode = () => { input.value = ''; codeBtn.disabled = true; codeBtn.style.opacity = '.4'; };
+  /* resetCode dọn luôn dòng lỗi: ô trống thì lỗi cũ không còn nghĩa. Cũng là
+     chỗ duy nhất chạy khi MỞ LẠI sheet, nên lỗi không sống sót qua 2 lần mở. */
+  const resetCode = () => { input.value = ''; codeBtn.disabled = true; codeBtn.style.opacity = '.4'; clearFieldErr(input); };
   const syncFoot = () => {
     const n = temp.filter(c => voucherEligible(voucherByCode(c))).length;
     const sum = voucherSumOf(temp);
@@ -9114,14 +9156,15 @@ document.body.insertAdjacentHTML('beforeend', `
   input.addEventListener('input', () => {
     const has = input.value.trim().length > 0;
     codeBtn.disabled = !has; codeBtn.style.opacity = has ? '1' : '.4';
+    clearFieldErr(input);   // gõ lại thì lỗi cũ hết nghĩa
   });
   const useCode = () => {
     const code = input.value.trim().toUpperCase();
     if (!code) return;
     const v = voucherByCode(code);
-    if (!v) { toast('Mã không hợp lệ'); return; }
-    if (!voucherEligible(v)) { toast(voucherBlockReason(v)); return; }
-    if (temp.includes(code)) { toast('Mã đã được chọn'); resetCode(); return; }
+    if (!v) { setFieldErr(input, 'Mã không hợp lệ'); return; }
+    if (!voucherEligible(v)) { setFieldErr(input, voucherBlockReason(v)); return; }
+    if (temp.includes(code)) { setFieldErr(input, 'Mã đã được chọn'); return; }
     pickVoucher(v, false);
     resetCode();
     toast('Đã chọn ' + code);

@@ -605,6 +605,122 @@ Mục **cuối** cố ý không kẻ: chân panel đã có gạch trên, kẻ n�
 
 > **Bẫy khi đo — pane Browser không vẽ frame thì `backgroundColor` trả giá trị SAI.** `getComputedStyle(el).backgroundColor` trên nút "Bộ lọc" trả `rgb(255,255,255)` **kể cả khi gán inline `background-color: rgb(1,2,3) !important`** — tức số đọc ra không phải giá trị thật. Các thuộc tính **layout** (height/padding/border-width/font-size) vẫn đúng. Cách vòng qua: viết hàm dò **người thắng trong cascade** (duyệt `document.styleSheets`, lọc rule `el.matches()`, tính specificity + `!important` + thứ tự) rồi đọc giá trị từ rule thắng. Đây là **bẫy thứ 5** của việc đo trong pane này — 4 cái trước ghi ở mục "Dựng 17 màn desktop vào Figma" và cảnh báo tắt transition ở trên.
 
+## Subheader "Khuyến mãi" giữ màu ĐỎ ở mọi bộ da (19/08/2026, 2 bản desktop)
+
+User: *"subheader KHUYẾN MÃI sẽ có màu đỏ"*. Đảo quyết định 18/08 — hồi đó bộ da `skin-mt` ép nó về `#000` theo số đo ("SALE trên trang mytheresa không tô đỏ").
+
+Nhất quán với quyết định vốn đã có của chính bộ da này: `--general-destructive` **giữ đỏ gốc dự án** chứ không đơn sắc hoá, vì badge `-%` và viền lỗi form phải đọc ra là cảnh báo. Mục khuyến mãi cùng loại tín hiệu đó.
+
+**2 rule phải gỡ, không phải 1** — chỗ thứ hai suýt bỏ sót:
+
+| # | Rule | File |
+|---|---|---|
+| 1 | `html.skin-mt … .dk-nav-link.text-destructive{,:hover,[aria-current]} { color: #000 }` | `desktop.html` · `desktop-editorial.html` |
+| 2 | rule bôi đen **mọi** `.dk-nav-link[aria-current]` → thêm `:not(.text-destructive)` | `desktop-editorial.html` (2 chỗ: `skin-mt` và `skin-mp`) |
+
+> Chỗ (2) chỉ lộ ra khi **đo state đang chọn**: bỏ mỗi rule (1) thì mục vẫn đỏ lúc nghỉ nhưng **đen khi đứng ở màn khuyến mãi**. `desktop.html` không dính vì rule `[aria-current]` ở đó chỉ khai `font-weight`.
+> Rule đè được là do specificity: `html.skin-* .navbar .dk-nav-link[aria-current]` = **(0,3,1)** thắng rule đỏ gốc `.navbar .dk-nav-link.text-destructive` = **(0,3,0)**.
+
+**Đo lại — cả 2 file × mọi bộ da, cả state nghỉ lẫn đang chọn:**
+
+| File | Bộ da | Nghỉ | Đang chọn |
+|---|---|---|---|
+| `desktop.html` | mặc định | `rgb(214,40,69)` | `rgb(214,40,69)` |
+| | MR PORTER | `rgb(216,30,5)` | `rgb(216,30,5)` |
+| | **Mytheresa** | **`rgb(214,40,69)`** ✅ (trước là đen) | **`rgb(214,40,69)`** |
+| `desktop-editorial.html` | editorial | `rgb(216,30,5)` | `rgb(216,30,5)` ✅ (trước là đen) |
+| | Mytheresa | `rgb(160,55,51)` | `rgb(160,55,51)` |
+| | neutral | `rgb(160,55,51)` | `rgb(160,55,51)` |
+
+Các mục nav khác giữ nguyên mực đen/xám của từng bộ da. Console sạch trên tab mới ở cả 2 file. **Bản mobile không liên quan** — không có subheader, và hàng "Khuyến mãi" trong drawer vốn đã `text-destructive`, không bộ da nào đè.
+
+## PLP: số lượng sản phẩm sát lề phải (19/08/2026, CHỈ DESKTOP)
+
+User vẽ sơ đồ: tiêu đề danh mục bên trái, **số lượng dính mép phải** cùng một hàng. Trước đây hai thứ dính nhau ở bên trái (`flex items-end gap-2`), nên thêm `justify-between` + `shrink-0` cho số lượng.
+
+⚠ **Cố ý lệch Figma**: bản vẽ (Frame 2903:45118) để số lượng dính ngay sau tiêu đề, cách 8px. Đẩy sang phải thì nó **thẳng cột với lưới sản phẩm** ngay dưới, và mép phải trang có một mốc thị giác.
+
+**"Sát lề phải" = mép phải CỘT NỘI DUNG**, tức `px-6` (24px) trong khung `max-w-[1440px]` — đúng máng lề mà đường dẫn / thanh lọc / lưới sản phẩm đang dùng. Cho bằng 0 là nó thò ra khỏi mọi khối khác trên trang.
+
+**Đo ở 1440**: tiêu đề `x=24` · số lượng mép phải **`1401`** — **trùng khít mép phải lưới sản phẩm `1401`** · canh đáy với tiêu đề lệch **0px**. (Nút "Sắp xếp" của thanh lọc ở `1409` vì thanh đó dùng `pr-4` chứ không `pr-6` — lệch có sẵn từ trước, không thuộc đợt này.)
+
+**Tiêu đề dài**: `shrink-0` trên số lượng bảo đảm **tiêu đề truncate, số lượng không bị bóp**. Đo ở khổ hẹp 820: tiêu đề `truncate = true`, số lượng vẫn đủ chữ "16 sản phẩm" và mép phải vẫn trùng lưới (`781`), trang **không tràn ngang**. Giống nhau ở **cả 3 bộ da**. Console sạch trên tab mới.
+
+> **Bản mobile không đụng**: ở đó hàng này là `[N sản phẩm] ... [nút mật độ cột]`, không có tiêu đề danh mục — sơ đồ user vẽ là hàng của desktop.
+
+> **Bẫy comment — LẦN THỨ 5.** Lần này comment HTML chứa **cả backtick lẫn một dãy gạch ngang** (`-----`): backtick cắt đứt template literal, và 2 dấu gạch liền cũng sai cú pháp comment HTML. Script quét nay kiểm **cả hai**: `<!-- … -->` chứa backtick **hoặc** chứa `--` bên trong — hiện **0 chỗ** ở cả 2 file.
+
+## Lỗi ô nhập: inline thay cho toast (19/08/2026, CẢ 2 BẢN)
+
+User: *"các thông báo trạng thái edge case của inputfield sẽ hiện dạng error ngay bên dưới inputfield thay vì toast msg"*. Đúng — toast nổi ở **đáy màn**, rời hẳn khỏi ô gây lỗi và **tự biến mất**, người dùng phải nhớ lỗi rồi tự dò về ô.
+
+> ### ⚠ LỖI TỰ GÂY — VIẾT LẠI THỨ ĐÃ CÓ
+> Mình viết một hàm `setFieldErr(id, msg)` mới cùng bộ markup dựng sẵn `errLine(id)`… trong khi **file đã có sẵn `setFieldErr(inp, msg)` / `clearFieldErr(inp)`** (khai gần `validatePickup`, dùng cho form nhận-tại-cửa-hàng). Hai hàm **trùng tên**, bản khai SAU đè bản trước → `TypeError: Cannot read properties of undefined (reading 'remove')` rất khó lần vì lỗi chỉ ra ở call site.
+> Bản có sẵn còn **tốt hơn** bản mình viết: kèm `aria-invalid` + `aria-describedby`, và dùng class `.fld-err` (khai `border-color: var(--general-destructive) !important` trong `<style>` — đúng cách vòng qua chuyện `border-destructive` không thắng nổi `border-border` cùng specificity).
+> **Đã gỡ sạch bản trùng**, dùng đúng API sẵn có. **Luật: trước khi viết helper, grep xem file đã có chưa** — lần này grep "toast" nhưng không grep "err".
+
+**3 chỗ đã đổi (giống nhau ở cả 2 file):**
+
+| Chỗ | Toast cũ | Nay |
+|---|---|---|
+| gửi mã OTP (đăng ký / quên MK) | `Vui lòng nhập số điện thoại` | dòng lỗi dưới `#regPhone` |
+| xác nhận OTP | `Vui lòng nhập đủ 6 số` | dòng lỗi dưới hàng `#otpRow` + **6 ô tô đỏ** |
+| dùng mã ưu đãi | `Mã không hợp lệ` · `voucherBlockReason(v)` · `Mã đã được chọn` | dòng lỗi dưới `#vcCode` |
+
+- **6 ô OTP** không có ô nào là "ô chính" để gắn lỗi — `setFieldErr` chèn `<p>` vào `afterend`, mà `afterend` của một ô thì rơi **vào giữa hàng flex**. Nên thêm `otpErr(root, msg)`: truyền **cả hàng `#otpRow`** (thẻ `<p>` rơi ngay dưới hàng, `.fld-err` bám div không viền nên vô hình) rồi tô đỏ 6 ô riêng.
+- **Ô mã ưu đãi** phải tách khỏi hàng `[ô | nút]` thành cột riêng, không thì `afterend` đặt lỗi **chen giữa ô và nút "Dùng mã"**.
+- **Gõ lại là lỗi mất ngay** — nối `clearFieldErr` vào listener `input` sẵn có của `#vcCode`, thêm listener cho `#regPhone`/`#loginId`, và `once` cho 6 ô OTP. Cùng lối với ô checkout `[data-ckf]` đã làm.
+- **Không** đụng `Mã đã được chọn` → bỏ luôn `resetCode()` ở nhánh đó: giữ mã trên màn để người dùng thấy mã nào bị trùng, thay vì xoá trắng ô rồi báo lỗi về một mã không còn nhìn thấy.
+
+**Giữ nguyên dạng toast** cho những thứ **không phải lỗi của một ô nhập**: `Chọn tỉnh / thành phố trước` · `Chọn cửa hàng nhận hàng` · `Hãy chọn ít nhất 1 sản phẩm` (đều là chọn-lựa, không có ô để gắn) và toàn bộ thông báo thành công.
+
+**Đo lại cả 2 file, 3 chỗ × 2 bước:** lỗi hiện đúng chữ dưới đúng ô · `toast = (ẩn)` · ô mang `.fld-err` + `aria-invalid="true"` · OTP tô đỏ **6/6** ô · gõ lại thì lỗi **mất và hết đỏ** · gửi lại thành công thì lỗi cũ không sót. Console sạch trên tab mới ở cả 2 file.
+
+> **Bẫy backtick trong comment giữa template literal — LẦN THỨ 4 trong ngày.** Lần này là `` `gap-6` `` trong comment HTML của `viewOtp()`. Nay đã có script quét: tìm mọi `<!-- … -->` chứa backtick — hiện **0 chỗ** ở cả 2 file. Chạy lại script đó sau mỗi lần thêm comment vào markup.
+
+## Màn đăng nhập / đăng ký — nền trắng full trang (19/08/2026, CHỈ DESKTOP)
+
+User: *"cho background trắng full trang thay vì cho nền màu xám cảm giác đóng hộp, nhưng vẫn limit width lại"*.
+
+Sửa ở `screenLOGIN()` — khung chung của **cả 6 màn xác thực** (`login · register · otp · reginfo · setpass · forgot`), nên đổi một chỗ là đổi hết 6.
+
+| Bỏ | Là gì |
+|---|---|
+| `bg-secondary` trên vùng trang | nền xám — thủ phạm chính của cảm giác "đóng hộp" |
+| `bg-background` trên thẻ | nền trắng của thẻ, nay trùng nền trang nên vô nghĩa |
+| `border border-border-1` | viền hộp |
+| `rounded-md` | bo góc hộp |
+| `shadow-sm` | **mặt CUỐI CÙNG trong file còn đổ bóng** — trái với chốt 17/08/2026 "đi hẳn hướng phẳng, không đổ bóng"; bỏ luôn là đúng hướng chung |
+| `overflow-hidden` | chỉ tồn tại để cắt góc bo, nay không còn bo |
+
+**GIỮ `w-[440px]`** — đúng "vẫn limit width". **KHÔNG đụng `px-4`** trong các view: giữ nguyên thì bề rộng nội dung y hệt trước, đổi này **chỉ gỡ phần vỏ** chứ không xê dịch một dòng nào.
+
+**Đo lại cả 6 view × 3 bộ da:** nền đặc gần nhất phía sau cột là `rgb(255,255,255)` · cột `nền trong suốt · viền 0 · bo 0 · bóng none` · rộng đúng **440** · căn giữa vùng chứa **lệch 0px**. **0 phần tử còn `box-shadow`** trên màn này. Console sạch trên tab mới.
+
+> Khối xám lớn còn lại phía dưới **là `footer()`** (băng "Cập nhật thông tin mới nhất từ DAFC"), có ở mọi màn — không phải phần hộp của form nên giữ nguyên. **Bản mobile không liên quan:** ở đó màn xác thực vốn đã full trang, không có thẻ.
+
+### Bỏ thanh header + nút back (19/08/2026, yêu cầu user, CHỈ DESKTOP)
+
+*"vì có title lớn rồi nên hãy bỏ cái dialog và button back ra"*. Đã **xoá hẳn `authNav(title)`** — hàng 48px kiểu header hộp thoại `[◀ back] + tiêu đề 16px căn giữa` đứng đầu cả 6 view. Hai vấn đề của nó, mà đợt bỏ nền xám ở trên làm lộ hẳn ra:
+
+- **tiêu đề lặp** — mọi view đều đã có `h2` 24px ngay dưới, chữ y hệt;
+- nó là **mẫu của màn hình điện thoại**. Hết hộp rồi thì một thanh header trôi giữa nền trắng đọc ra là mảnh vỡ chứ không phải cấu trúc.
+
+Xoá kéo theo `[data-auth-back]` (chỉ tồn tại trong hàm đó) → handler của nó trong `wire()` thành code chết, **đã xoá luôn**.
+
+> ⚠ **Mất đường quay lại ở 2 view — đã báo user, chưa vá:**
+> | View | Trước back về | Lối ra bằng chữ hiện có |
+> |---|---|---|
+> | `login` | thoát về màn gọi | — (là màn gốc) |
+> | `register` | login | ✓ "Đã có tài khoản? **Đăng nhập**" |
+> | `forgot` | login | ✓ "← Quay lại đăng nhập" |
+> | `otp` | màn nhập SĐT của luồng | ✓ "**Đăng nhập**" + "thay đổi số điện thoại" |
+> | **`reginfo`** | `register` | ✗ **KHÔNG có** |
+> | **`setpass`** | `otp` | ✗ **KHÔNG có** |
+> Muốn trả lại thì thêm **1 nút chữ ở cuối form**, **đừng dựng lại thanh header** — đó chính là thứ vừa bỏ.
+
+**Đo lại cả 6 view:** không còn `[data-auth-back]`, không còn hàng `.h-12`, mỗi view giữ đúng `h2` 24px riêng của nó (`Đăng nhập · Tạo tài khoản · Quên mật khẩu · Xác thực OTP · Hoàn tất đăng ký · Đặt mật khẩu mới`), form là phần tử đầu tiên. **Luồng chạy thật vẫn thông**: login → Đăng ký ngay → nhập SĐT → OTP (6 ô) → "Đăng nhập" về login → "Quên mật khẩu?" → forgot → "← Quay lại đăng nhập" → đăng nhập thật ra `plp` với `ckAuth = true`. Console sạch trên tab mới. **Bản mobile giữ nguyên `authNav`** — ở đó là màn full trang thật, cần header + back.
+
 ## "Đã thêm vào giỏ hàng" — DROPDOWN dưới icon giỏ (19/08/2026, CHỈ DESKTOP)
 
 User: *"ở bản desktop 'đã thêm vào giỏ hàng' ngay tại icon giỏ hàng sẽ dropdown xuống thay vì đè popup lên"*.
