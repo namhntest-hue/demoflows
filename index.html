@@ -1024,19 +1024,183 @@ window.RESP = (function () {
   html.skin-mt .filterbar::after { background: #ececec; }
   html.skin-mt #filterSheet .facc:not(:last-child) { border-bottom: 1px solid #ececec; }
   html.skin-mt #filterSheet .safe-b { border-top: 1px solid #ececec; }
-  /* ── TIÊU ĐỀ MỤC TRONG BỘ LỌC VIẾT HOA (19/08/2026, yêu cầu user) ────────────
-     DANH MỤC · THƯƠNG HIỆU · MÀU SẮC · KÍCH THƯỚC · KHOẢNG GIÁ · ƯU ĐÃI · KHÁC
-     — tức hàng tiêu đề của từng mục (`.facc-trigger`), KHÔNG phải các cate nằm
-     bên trong mục Danh mục.
-     ⚠ Mình đã làm SAI một lượt: hiểu "cate lớn nhất" thành tầng đầu của cây
-     Danh mục (`.fcat-check`) rồi viết hoa chỗ đó. User bắt lỗi, đã đảo lại —
-     cate mọi tầng GIỮ CHỮ THƯỜNG.
+  /* ── TIÊU ĐỀ MỤC TRONG BỘ LỌC: CHỮ THƯỜNG, ĐẬM HƠN 1 NẤC (19/08/2026) ────────
+     Danh mục · Thương hiệu · Màu sắc · Kích thước · Khoảng giá · Ưu đãi · Khác
+     — hàng tiêu đề của từng mục (`.facc-trigger`).
+     Đường đi của yêu cầu (ghi lại để khỏi lặp): user bảo viết hoa -> mình hiểu
+     nhầm sang cate trong cây Danh mục -> user làm rõ là TIÊU ĐỀ MỤC -> thử bỏ
+     hoa đổi sang weight -> user hỏi cái nào hợp concept hơn -> CHỐT: DÙNG CẢ HAI,
+     hoa + 500.
+     LÝ DO chọn chữ hoa làm đòn bẩy DUY NHẤT (không kèm độ đậm):
+       · Số đo mytheresa KHÔNG có phần tử 500/600/700 nào — họ phân cấp bằng cỡ
+         chữ + chữ hoa, không bằng độ đậm. Nâng weight là lệch số đo, và làm
+         loãng nét nhận dạng của bộ da.
+       · Trên mobile tiêu đề mục và cate bên trong CÙNG 12px; chữ hoa đã đủ tách
+         mà không phải đẻ thêm cỡ chữ hay nấc đậm nào.
+     WEIGHT 400 (chốt cuối 19/08/2026, yêu cầu user "hạ font weight xuống 400
+     bằng các nội dung bên trong filter, vẫn giữ uppercase"): tiêu đề mục nay
+     CÙNG ĐỘ ĐẬM với hàng cate/thương hiệu bên trong, chỉ khác ở CHỮ HOA (và ở
+     desktop thì thêm 1 nấc cỡ chữ 14 vs 12).
+     ⚠ Vẫn phải KHAI 400 tường minh, không bỏ trắng: markup để `font-light` (300),
+     mà khối blanket của bộ da chỉ kéo về 400 cho các class `.font-*` — bỏ rule
+     này đi thì ra 300, nhạt hơn cả nội dung bên trong.
+     Rule (1,3,2) nên thắng khối blanket, không cần !important.
      `> span:first-child` = nhãn chữ; span sau là icon +/- nên không dính.
-     Là NGOẠI LỆ có chủ ý của quy ước "không dùng UPPERCASE", và an toàn vì nằm
-     trong bộ da: 2 bộ da kia vẫn chữ thường.
      KHAI GIỐNG HỆT ở index.html và desktop.html — sửa 1 file nhớ sửa cả 2. */
   html.skin-mt #filterSheet .facc-trigger > span:first-child {
-    text-transform: uppercase; letter-spacing: 0.5px;
+    font-weight: 400; text-transform: uppercase;
+  }
+
+  /* ── 7. GIỎ HÀNG & THANH TOÁN CỦA BỘ DA EDITORIAL — nền xám, khối trắng ───────
+     (19/08/2026, yêu cầu user.)
+
+     ⚠ STYLE NÀY THUỘC `skin-mp` (Editorial · MR PORTER), KHÔNG phải `skin-mt`.
+     Chốt của user: *"lưu style này vào skin editorial nhé, hiện tại bản skin mt
+     đang mặc định nên đừng chỉnh sửa"* + *"roll back trả lại skin mt như bản
+     trước khi update cart"*. `skin-mt` là bộ da MẶC ĐỊNH khi vào trang (xem thẻ
+     <html> đầu file), nên thử nghiệm phải nằm ở bộ da người ta phải tự bật —
+     không đụng thứ khách mở ra là thấy ngay. `skin-mt` đã roll back sạch: không
+     còn rule nào của mục 7 trỏ vào nó.
+
+     Tham chiếu: dior.com/en_us/couture/basket + /checkout — xem TẬN NƠI bằng
+     Chrome (phiên đã đăng nhập, giỏ có hàng + địa chỉ đã lưu), ĐÚNG KHỔ MOBILE
+     (thu cửa sổ về innerWidth 414). Vòng đầu mình đo bản desktop của họ rồi suy
+     sang mobile -> nâng gần như mọi khối lên tấm trắng, sai hướng: nền xám khi đó
+     chỉ còn là mấy khe hở. Số đo bản mobile:
+       · body                 #f8f8f8 — kể cả thanh header, chỉ có kẻ dưới #e5e5e5
+       · thẻ sản phẩm         #ffffff, KHÔNG viền, lề ngang 16
+       · ô ảnh trong thẻ      #f2f2f4 — mặt xám riêng, nằm TRONG mặt trắng
+       · thẻ LỰA CHỌN         #ffffff + viền 0.8px #e5e5e5 (gói quà, phương thức
+                              giao, PayPal, các mục Help & Services)
+       · "Total / Subtotal / Delivery / Taxes"  KHÔNG có tấm — chữ nằm TRẦN trên
+                              nền xám; chỉ ô "Express · Tue, Aug 25 · Free"
+                              (một lựa chọn) mới trắng
+       · checkout: tiêu đề bước, câu dẫn, ghi chú đều nằm trần trên xám; chỉ thẻ
+                   địa chỉ / "Add a new delivery address" / "Pick-up in store"
+                   trắng lên. Bước chưa tới ("2. Shipping method") chỉ là chữ mờ.
+     => LUẬT: nền xám là MẶC ĐỊNH. Chỉ thứ CHỌN ĐƯỢC hoặc là MÓN HÀNG mới trắng.
+     Chữ, tiêu đề, tổng tiền, ghi chú, nút — để trần trên nền.
+
+     NHÓM HÀNG GỘP LẠI MỘT TẤM (yêu cầu user: *"cho nguyên nhóm thẻ sản phẩm ở
+     cart group lại như cũ"*). Bản trước mình tách mỗi `.cart-row` thành một thẻ
+     rời cách nhau 8px — đúng cách họ làm khi giỏ chỉ có 1 món, nhưng giỏ demo 5
+     món thì thành 5 mảnh vụn, mất hẳn cảm giác "một danh sách". Nay `#cartList`
+     và `#orderGift` mỗi cái là MỘT tấm trắng liền, mọi dòng bên trong giữ y bản
+     gốc — kể cả dải quà vẫn tự tô `bg-accent-0` để tách khỏi dòng hàng, vì nó
+     đang nằm trên mặt trắng chứ không phải trên canvas.
+
+     THAM CHIẾU ≠ BÊ NGUYÊN (bài học mục 6): không mượn linh kiện nào của họ,
+     không đụng markup/layout. Đây thuần tuý là đảo LỚP NỀN của 2 màn; bỏ class
+     `skin-mp` là về y như cũ.
+     Số lấy từ BẢNG TOKEN CÓ SẴN của bộ da, không đẻ sắc mới (bài học
+     `--general-background-blur`: hệ token đã có ô đúng vai thì dùng nó):
+       · canvas   var(--unofficial-accent-0) = #f7f7f7  (họ #f8f8f8, lệch 1 nấc)
+       · gạch     var(--unofficial-border-1) = #ebebeb
+       · mặt nhấn var(--unofficial-secondary-active) = #ebebeb cho rãnh segmented
+       · bo góc   0 — bộ da này vuông góc mọi chỗ (họ bo 4)
+     Tấm chạy FULL-BLEED thay vì lề 16 như họ: nội dung bên trong vốn đã `px-4`,
+     cho thêm lề ngoài nữa thì chữ rơi về x=32 trong khi tiêu đề màn ở x=16. */
+  html.skin-mp:has([data-screen="cart"]) body,
+  html.skin-mp:has([data-screen="checkout"]) body,
+  html.skin-mp:has([data-screen="cart"]) #viewport,
+  html.skin-mp:has([data-screen="checkout"]) #viewport {
+    background: var(--unofficial-accent-0);
+  }
+  /* Nhóm hàng: 2 tấm trắng liền — danh sách sản phẩm và nhóm quà theo mốc đơn. */
+  html.skin-mp [data-screen="cart"] #cartList,
+  html.skin-mp [data-screen="cart"] #orderGift {
+    background: var(--general-background);
+    border-top: 1px solid var(--unofficial-border-1);
+    border-bottom: 1px solid var(--unofficial-border-1);
+    margin-top: 12px;
+  }
+  /* Thẻ khuyến mãi: đã sẵn viền 4 cạnh + lề ngang -> đúng khuôn thẻ lựa chọn của
+     họ, chỉ thiếu mặt trắng vì trước nay nền trang đã trắng. Kéo luôn viền về
+     cùng sắc gạch với 2 tấm trên (thẻ Rewards và thẻ ưu đãi trong panel bên dưới
+     vốn đã dùng border-border-1). */
+  html.skin-mp [data-screen="cart"] div:has(> #promoPeek) {
+    background: var(--general-background);
+    border-color: var(--unofficial-border-1);
+  }
+  /* Chân trang `bg-secondary` = #f4f4f4, chỉ đậm hơn canvas 3/255 -> dính liền
+     khối cam kết phía trên thành một dải. Thêm đúng một kẻ theo hệ gạch, không
+     đổi nền (footer là component dùng chung mọi màn, đổi màu ở đây là lệch). */
+  html.skin-mp [data-screen="cart"] .bg-secondary.mt-4 {
+    border-top: 1px solid var(--unofficial-border-1);
+  }
+  /* Panel ưu đãi + tổng tiền: bỏ mặt xám #f4f4f4, hoà thẳng vào canvas — đúng chỗ
+     họ để "Total/Subtotal/Taxes" nằm trần. 2 thẻ bấm được bên trong (Rewards ·
+     "Ưu đãi & khuyến mãi") vốn đã bg-background + viền nên tự nổi lên. */
+  html.skin-mp [data-screen="cart"] .bg-secondary:has(#discountLines) { background: transparent; }
+  /* Rãnh segmented "Giao hàng / Nhận tại cửa hàng": #f4f4f4 chỉ đậm hơn canvas
+     3/255 -> gần như mất rãnh, nút đang chọn hết đọc ra là đang chọn. Nâng đúng
+     một nấc sang mặt xám đậm hơn của bộ da; nút active vẫn là bg-background. */
+  html.skin-mp [data-screen="checkout"] div:has(> .seg) {
+    background: var(--unofficial-secondary-active);
+  }
+  /* .ck-sum là thanh sticky — nội dung cuộn qua BÊN DƯỚI nó nên bắt buộc phải đục,
+     giữ trắng. Kẻ dưới kéo từ --general-border về cùng sắc gạch. */
+  html.skin-mp [data-screen="checkout"] .ck-sum { border-bottom-color: var(--unofficial-border-1); }
+  /* Kẻ ngăn bước / ngăn hộp thông báo đang là --general-secondary (#f4f4f4): trên
+     canvas #f7f7f7 chỉ còn 3/255, coi như mất vạch. Về #ebebeb. Bước chưa tới
+     không cần đụng gì thêm — nền xám + chữ mờ 0.4 (paintCheckout lo) đã là đúng
+     cách họ thể hiện "chưa tới". */
+  html.skin-mp [data-screen="checkout"] .ck-sec { border-top-color: var(--unofficial-border-1); }
+  html.skin-mp [data-screen="checkout"] .ck-notice { border-bottom-color: var(--unofficial-border-1); }
+  /* Hộp trạng thái tài khoản trong .ck-notice tự tô `bg-accent-0` — cùng token với
+     canvas nên nay là hộp vô hình. KHÔNG nâng lên trắng: bên họ dòng tương đương
+     ("Connected as … / Log out") nằm trần trên nền xám, và nó là THÔNG BÁO chứ
+     không phải thứ chọn được. Bỏ nền, để kẻ dưới của .ck-notice làm ranh giới. */
+  html.skin-mp [data-screen="checkout"] .ck-notice .bg-accent-0 { background: transparent; }
+  /* Dải mờ dưới nút Đặt hàng nổi: gradient gốc fade về TRẮNG, mà nền dưới nó nay
+     là canvas xám -> hiện thành vệt trắng chạy ngang. Fade về đúng màu canvas.
+     Viết rgba tay vì cần alpha, không token nào mang sẵn 2 mức mờ này. */
+  html.skin-mp [data-screen="cart"] #cartStickyCta {
+    background-image: linear-gradient(to top, #f7f7f7 0%, rgba(247,247,247,.95) 50%, rgba(247,247,247,0) 100%);
+  }
+
+  /* ── 7b. CHỮ & NHỊP CỦA CHECKOUT THEO DIOR MOBILE (20/08/2026, yêu cầu user) ──
+     *"thử chỉnh sửa lại độ đậm nhạt của màu text cũng như spacing theo đúng của
+     dior vào skin mp"* + 4 ảnh chụp 4 bước checkout mobile của họ.
+     Số đo đọc TRONG IFRAME 414px trên chính phiên đã đăng nhập: cửa sổ Chrome
+     phiên này không thu nhỏ được (resize không ăn, innerWidth kẹt 1920), nên
+     nhúng /en_us/couture/checkout vào iframe cùng origin là cách duy nhất lấy
+     đúng bản mobile mà vẫn còn session. Lấy được:
+       · khối một bước        padding 32px 20px
+       · tiêu đề bước         16px/23 serif w400 — MÀU là thứ phân cấp:
+                              #33383c khi bước đang mở · #7b8487 khi đã xong
+                              HOẶC chưa tới (hai trạng thái này CÙNG một xám)
+       · tiêu đề -> nội dung  20px
+       · tóm tắt bước đã xong 12px/17 w400 #7b8487
+       · "Edit" đi theo màu của bước: đen khi mở, xám khi không
+     2 chỗ cố ý lệch số đo:
+       · Lề ngang giữ 16 (px-4) chứ không 20 như họ — mọi thứ trong 2 màn này,
+         kể cả tiêu đề màn, đang thẳng cột 16; đổi riêng phần bước là gãy cột.
+       · Line-height 17 quy về 16 (cặp 12/16 của thang chữ dự án), không chế số
+         mới — đúng quy ước "thang chữ theo text style". */
+  html.skin-mp [data-screen="checkout"] .ck-sec { padding: 32px 0 24px; }
+  html.skin-mp [data-screen="checkout"] .ck-sec.is-pending { padding: 32px 0; }
+  /* Hàng tiêu đề bỏ chiều cao cố định (56 / 72 khi chưa tới): nhịp nay do padding
+     của khối bước lo, giữ h-[56px] nữa là cộng dồn thành hai lớp khoảng trắng.
+     12px + py-2 sẵn có của thân = đúng 20px tiêu đề -> nội dung như họ. */
+  html.skin-mp [data-screen="checkout"] .ck-head { height: auto; padding-bottom: 12px; }
+  html.skin-mp [data-screen="checkout"] .ck-sec.is-pending .ck-head { padding-bottom: 0; }
+  /* Tiêu đề bước: 400 như họ (markup đang font-medium). */
+  html.skin-mp [data-screen="checkout"] .ck-title { font-weight: 400; }
+  /* Bước KHÔNG mở -> xám, cả tiêu đề lẫn nút "Thay đổi".
+     `opacity` đang bị paintCheckout ghi INLINE (0.4 cho bước chưa tới) nên phải
+     !important mới gỡ được: họ phân cấp bằng MÀU, chồng thêm mờ là ra hai nấc
+     nhạt khác nhau cho hai trạng thái mà bên họ dùng chung một xám. */
+  html.skin-mp [data-screen="checkout"] .ck-title { opacity: 1 !important; }
+  html.skin-mp [data-screen="checkout"] .ck-sec:not(:has(> .ck-open.is-open)) .ck-title,
+  html.skin-mp [data-screen="checkout"] .ck-sec:not(:has(> .ck-open.is-open)) .ck-change {
+    color: var(--general-muted-foreground);
+  }
+  /* Tóm tắt của bước đã xong: 12/16 xám, bỏ luôn nhấn đậm ở dòng tên người nhận
+     — bên họ cả cụm tóm tắt là MỘT cấp chữ phụ, không có dòng nào nổi lên. */
+  html.skin-mp [data-screen="checkout"] .ck-done .acc-inner p {
+    font-size: 12px; line-height: 16px; font-weight: 400;
+    color: var(--general-muted-foreground);
   }
 </style>
 </head>
@@ -1574,7 +1738,7 @@ function footer() {
       <div class="acc border-b border-border">
         <button class="acc-trigger w-full h-[52px] flex items-center justify-between px-2 press">
           <span class="text-[14px] font-medium text-foreground">${group}</span>
-          ${I.chevR('#0a0a0a')}
+          ${accIco}
         </button>
         <div class="acc-body"><div class="acc-inner">
           <div class="pb-3 px-2 flex flex-col items-start">
@@ -1624,7 +1788,7 @@ function miniCart() {
   <div class="acc bg-background border border-border rounded-xs">
     <button class="acc-trigger w-full h-[52px] flex items-center justify-between px-3 press">
       <span class="flex items-center gap-2 text-[14px] font-medium text-foreground">${I.gift} Giỏ hàng của bạn (${cartSelected().length})</span>
-      <span class="flex items-center gap-2"><span class="text-[14px] font-semibold text-foreground">${vndCom(cartSubtotal())}</span>${I.chevR('#737373')}</span>
+      <span class="flex items-center gap-2"><span class="text-[14px] font-semibold text-foreground">${vndCom(cartSubtotal())}</span>${accIco}</span>
     </button>
     <div class="acc-body"><div class="acc-inner">
       <div class="px-3 pb-3 flex flex-col gap-3 border-t border-border-1 pt-3">
@@ -2105,7 +2269,7 @@ function screenPDP() {
       ${tabs.map(([t, body]) => `
         <div class="acc border-b border-border-1">
           <button class="acc-trigger w-full h-14 flex items-center justify-between px-2 press">
-            <span class="text-[14px] leading-5 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+            <span class="text-[14px] leading-5 text-foreground">${t}</span>${accIco}
           </button>
           <div class="acc-body"><div class="acc-inner"><div class="pb-4 px-2 text-[12px] leading-4 text-foreground-alt">${body}</div></div></div>
         </div>`).join('')}
@@ -2365,7 +2529,7 @@ function screenPDP2() {
       ${tabs.map(([t, body, sp]) => `
         <div class="acc border-b border-border-1">
           <button class="acc-trigger w-full h-14 flex items-center justify-between px-2 press">
-            <span class="text-[14px] leading-5 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+            <span class="text-[14px] leading-5 text-foreground">${t}</span>${accIco}
           </button>
           <div class="acc-body"><div class="acc-inner">
             <div class="pb-4 px-2 flex flex-col gap-2">
@@ -2498,7 +2662,7 @@ function screenPDP3() {
       ${tabs.map(([t, body]) => `
         <div class="acc border-b border-border-1${t === 'Ưu đãi khuyến mãi' ? ' open' : ''}">
           <button class="acc-trigger w-full h-14 flex items-center justify-between px-2 press">
-            <span class="text-[14px] leading-5 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+            <span class="text-[14px] leading-5 text-foreground">${t}</span>${accIco}
           </button>
           <div class="acc-body"><div class="acc-inner"><div class="pb-4 px-2 text-[12px] leading-4 text-foreground-alt">${body}</div></div></div>
         </div>`).join('')}
@@ -2631,7 +2795,7 @@ function screenPDP4() {
       ${tabs.map(([t, body]) => `
         <div class="acc border-b border-border-1">
           <button class="acc-trigger w-full h-14 flex items-center justify-between px-2 press">
-            <span class="text-[14px] leading-5 text-foreground">${t}</span>${I.chevR('var(--general-primary)')}
+            <span class="text-[14px] leading-5 text-foreground">${t}</span>${accIco}
           </button>
           <div class="acc-body"><div class="acc-inner"><div class="pb-4 px-2 text-[12px] leading-4 text-foreground-alt">${body}</div></div></div>
         </div>`).join('')}
@@ -3112,7 +3276,7 @@ function screenPDP5() {
         <div class="acc border-b border-border-1">
           <button class="acc-trigger w-full h-14 flex items-center justify-between gap-2 px-2 rounded-xs press">
             <span class="text-[14px] leading-5 text-foreground">${t}</span>
-            <span class="w-3.5 h-3.5 flex items-center justify-center [&_svg]:w-3.5 [&_svg]:h-3.5">${I.chevD('var(--general-primary)')}</span>
+            <span class="w-3.5 h-3.5 flex items-center justify-center [&_svg]:w-3.5 [&_svg]:h-3.5">${accIco}</span>
           </button>
           <div class="acc-body"><div class="acc-inner">
             <p class="pb-4 px-2 text-[12px] leading-4 text-foreground-alt">${body}</p>
@@ -3244,7 +3408,7 @@ function screenPDP6() {
         <div class="acc border-b border-border-1">
           <button class="acc-trigger w-full h-13 flex items-center justify-between gap-2 px-2 rounded-xs press" style="height:52px">
             <span class="text-[14px] leading-5 tracking-[0.002em] text-foreground">${t}</span>
-            <span class="w-3.5 h-3.5 flex items-center justify-center [&_svg]:w-3.5 [&_svg]:h-3.5">${I.chevD('var(--general-primary)')}</span>
+            <span class="w-3.5 h-3.5 flex items-center justify-center [&_svg]:w-3.5 [&_svg]:h-3.5">${accIco}</span>
           </button>
           <div class="acc-body"><div class="acc-inner">
             <p class="pb-4 px-2 text-[12px] leading-4 tracking-[0.004em] text-foreground-alt">${body}</p>
@@ -3938,7 +4102,7 @@ function screenCART() {
       <div class="acc">
         <button class="acc-trigger w-full h-9 flex items-center justify-between press">
           <span class="text-[14px] font-medium leading-5 text-foreground">Bạn có phiếu mua hàng?</span>
-          ${I.chevR('var(--general-primary)')}
+          ${accIco}
         </button>
         <div class="acc-body"><div class="acc-inner">
           <div class="flex flex-col gap-2 pt-2 pb-2">
@@ -4448,9 +4612,21 @@ function screenCHECKOUT() {
     </div>
   </div>`;
 
-  /* Đăng nhập xong thì router nhảy tới ckStep = 1 (bỏ qua bước địa chỉ). Ở chế
-     độ nhận tại cửa hàng, bước 1 là Thanh toán — mà chưa chọn cửa hàng thì
-     không được phép nhảy qua, nên kéo về bước 0. */
+  /* ── VÀO CHECKOUT LÀ LUÔN MỞ BƯỚC "VẬN CHUYỂN" (chốt 19/08/2026, yêu cầu user:
+     "từ checkout vào cart, dù đăng nhập rồi hay chưa đều phải trả về trang chọn
+     vận chuyển hay chọn mua tại cửa hàng").
+     Trước đây mọi lối đăng nhập đều đặt `ckStep = 1`. Đó là DI SẢN từ hồi section
+     0 là ĐỊA CHỈ — người đã đăng nhập có sẵn địa chỉ nên nhảy qua là hợp lý.
+     Nhưng section 0 nay là "Vận chuyển", CHỨA CẶP TAB giao hàng / nhận tại cửa
+     hàng — không đăng nhập nào trả lời thay được. Hệ quả cũ: bấm Đặt hàng ở giỏ
+     là rơi thẳng vào "Phương thức vận chuyển", mất luôn chỗ chọn nhận tại cửa hàng.
+     Nay: mọi lối đăng nhập/đăng ký để `ckStep = 0`, và chính nút Đặt hàng ở giỏ
+     cũng ép `ckStep = 0` trước khi go('checkout') — kể cả lượt quay lại giỏ rồi
+     vào lại.
+     GIỮ `ckMaxStep`: các bước đã hoàn tất vẫn hiện dạng tóm tắt + "Thay đổi",
+     nên quay lại giỏ rồi vào lại KHÔNG mất dữ liệu đã nhập.
+     Guard dưới đây vẫn cần cho chế độ nhận tại cửa hàng: chưa chọn cửa hàng thì
+     không được coi bước nào là xong. */
   if (ckMode === 'pickup' && !ckStore) { ckStep = 0; ckMaxStep = 0; }
 
   const notice = ckAuth
@@ -4618,7 +4794,7 @@ function screenCHECKOUT() {
       <div class="acc px-2">
         <button class="acc-trigger w-full h-9 flex items-center justify-between press">
           <span class="text-[14px] text-foreground">Giỏ hàng của bạn</span>
-          <span class="flex items-center gap-2"><span class="text-[14px] font-medium text-foreground">${vndCom(cartSubtotal())}</span>${I.chevR('var(--general-primary)')}</span>
+          <span class="flex items-center gap-2"><span class="text-[14px] font-medium text-foreground">${vndCom(cartSubtotal())}</span>${accIco}</span>
         </button>
         <div class="acc-body"><div class="acc-inner">
           <div class="flex flex-col gap-3 pt-2 pb-2">
@@ -4945,6 +5121,20 @@ const FILTER_SIZES  = ['39','40','41','42','43','44','45','46','47','48','49','5
 
 const IcoMinus = `<svg width="14" height="14" viewBox="-0.25 11.25 24.5 1.5" fill="var(--general-primary)"><path d="M23.5,12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H23.5c.276,0,.5,.224,.5,.5s-.224,.5-.5,.5Z"/></svg>`;
 const IcoPlus  = `<svg width="14" height="14" viewBox="-0.25 -0.25 24.5 24.5" fill="var(--general-primary)"><path d="M24,12c0,.276-.224,.5-.5,.5H12.5v11c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5V12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H11.5V.5c0-.276,.224-.5,.5-.5s.5,.224,.5,.5V11.5h11c.276,0,.5,.224,.5,.5Z"/></svg>`;
+/* ── ICON EXTEND CỦA MỌI ACCORDION = DẤU CỘNG / TRỪ (19/08/2026, yêu cầu user) ──
+   "đồng bộ lại từ các icon đang có dấu mũi tên lên xuống giờ sẽ là dấu cộng trừ".
+   Trước đó dự án dùng SONG SONG 2 kiểu cho cùng một việc mở/đóng:
+     · +/- : accordion trong PDP và trong bộ lọc
+     · mũi tên xoay 90 độ (`.acc-chev`) : footer, tóm tắt giỏ, tab PDP, phiếu
+       mua hàng, tóm tắt checkout — 7 chỗ
+   Nay gom hết về +/-. Đổi/ẩn icon do CSS `.acc .acc-ico-plus/-minus` lo sẵn, nên
+   chỉ cần thay markup, KHÔNG đụng JS.
+   Dùng hằng này thay vì gõ lại 2 span ở từng chỗ — lần sau đổi icon sửa 1 dòng.
+   LƯU Ý: IcoPlus/IcoMinus khoá `fill: var(--general-primary)` nên icon extend
+   giờ MỘT MÀU ở mọi chỗ; trước đây mũi tên nhận tham số màu và có chỗ để #737373.
+   Đó chính là phần "đồng bộ" — một việc thì một icon, một màu. */
+const accIco = `<span class="acc-ico-plus">${IcoPlus}</span><span class="acc-ico-minus">${IcoMinus}</span>`;
+
 const IcoCross = `<svg width="16" height="16" viewBox="5.74 5.75 12.51 12.5" fill="var(--general-primary)"><path d="M17.854,17.146c.195,.195,.195,.512,0,.707-.098,.098-.226,.146-.354,.146s-.256-.049-.354-.146l-5.146-5.146-5.146,5.146c-.098,.098-.226,.146-.354,.146s-.256-.049-.354-.146c-.195-.195-.195-.512,0-.707l5.146-5.146L6.146,6.854c-.195-.195-.195-.512,0-.707s.512-.195,.707,0l5.146,5.146,5.146-5.146c.195-.195,.512-.195,.707,0s.195,.512,0,.707l-5.146,5.146,5.146,5.146Z"/></svg>`;
 
 /* ô checkbox 16×16 — Figma để r=2 (rounded-xs), trước đây thiếu nên ô vuông
@@ -6831,7 +7021,7 @@ function wire(root) {
          hàng, đẩy đơn vào ORDERS để tab Đơn hàng thấy ngay, rồi DỌN GIỎ —
          trước đây đặt xong quay lại giỏ vẫn thấy đủ 4 món "vừa mua". */
       if (t === 'done' && !ckPlaced) placeOrder();
-      if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = ckAuth ? 1 : 0; ckMaxStep = ckStep; }
+      if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = 0; ckMaxStep = 0; }
       if (t === 'back') { window.history.back(); return; }
       if (el.hasAttribute('data-loading')) {
         if (btnBusy(el)) return;
@@ -6965,7 +7155,7 @@ function wire(root) {
   // Hoàn tất đăng ký (sau OTP): tạo tài khoản -> đăng nhập luôn, quay về màn gọi
   root.querySelectorAll('[data-reg-done]').forEach(btn => {
     btn.addEventListener('click', () => {
-      ckAuth = true; ckStep = 1; ckMaxStep = Math.max(ckMaxStep, 1);
+      ckAuth = true; ckStep = 0;   // vào checkout luôn mở bước Vận chuyển — xem ghi chú ở screenCHECKOUT
       btn.innerHTML = spinnerSVG();
       const back = loginFrom || 'checkout';
       setTimeout(() => { authView = 'login'; go(back); toast('Đăng ký thành công'); }, 700);
@@ -6974,7 +7164,7 @@ function wire(root) {
 
     root.querySelectorAll('[data-login-submit]').forEach(btn => {
     btn.addEventListener('click', () => {
-      ckAuth = true; ckStep = 1; ckMaxStep = Math.max(ckMaxStep, 1);
+      ckAuth = true; ckStep = 0;   // vào checkout luôn mở bước Vận chuyển — xem ghi chú ở screenCHECKOUT
       if (btnBusy(btn)) return;
       const html = btn.innerHTML;
       btn.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
@@ -7510,6 +7700,11 @@ function wire(root) {
       toast('Hãy chọn ít nhất 1 sản phẩm');
       return;
     }
+    /* Ép mở lại bước "Vận chuyển" mỗi lần vào checkout — kể cả lượt quay lại
+       giỏ rồi vào lại. Không có dòng này thì ckStep còn giữ giá trị của lượt
+       trước và rơi thẳng vào bước giữa. ckMaxStep GIỮ NGUYÊN nên các bước đã
+       xong vẫn ở dạng tóm tắt, không mất dữ liệu. Xem ghi chú ở screenCHECKOUT. */
+    ckStep = 0;
     if (ckAuth) go('checkout');
     else if (window.__openLoginPop) window.__openLoginPop();
   }));
@@ -8760,7 +8955,7 @@ document.body.insertAdjacentHTML('beforeend', `
     btn.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
     setTimeout(() => {
       btn.innerHTML = html; btnDone(btn);
-      ckAuth = true; ckStep = 1; ckMaxStep = Math.max(ckMaxStep, 1);
+      ckAuth = true; ckStep = 0;   // vào checkout luôn mở bước Vận chuyển — xem ghi chú ở screenCHECKOUT
       closeLP();
       go('checkout');
       toast('Đăng nhập thành công');

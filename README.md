@@ -734,30 +734,97 @@ Giữ **tên thương hiệu + tên sản phẩm · màu (nếu có) · size**. 
 
 > ⚠ **Một câu chưa rõ trong yêu cầu:** phần đầu ghi *"giữ lại tên sản phẩm"* nhưng vế cuối lại ghi *"bỏ hình và tên"*. Mình hiểu vế cuối là gõ nhầm của **"bỏ hình và tiền"** (nhắc lại vế đầu) nên **GIỮ tên**. Nếu thật sự muốn bỏ tên thì sửa 1 dòng trong `quickAddBody`.
 
-## Bộ lọc: TIÊU ĐỀ MỤC viết HOA (19/08/2026, CẢ 2 BẢN)
+## Vào checkout LUÔN mở bước "Vận chuyển" (19/08/2026, CẢ 2 BẢN)
 
-User: *"ở filter, cate lớn nhất hãy cho uppercase lên, áp cho 2 bản luôn"* → làm sai một lượt → user làm rõ: *"cái cần uppercase là DANH MỤC, THƯƠNG HIỆU, MÀU SẮC… không phải cate bên trong đó"*.
+User: *"khi từ checkout vào cart, dù đăng nhập rồi hay chưa đều phải trả về trang chọn vận chuyển hay chọn mua tại cửa hàng"*.
 
-> ### ⚠ LỖI ĐỌC YÊU CẦU
-> Mình hiểu "cate lớn nhất" thành **tầng đầu của cây Danh mục** (`Quần áo · Túi xách · Giày dép…`, tức `.fcat-check`) rồi viết hoa chỗ đó. Sai — thứ cần hoa là **hàng tiêu đề của từng mục bộ lọc** (`.facc-trigger`). Đã đảo lại: **cate mọi tầng giữ chữ thường**.
+> ### Nguyên nhân: một dòng di sản
+> Mọi lối đăng nhập/đăng ký đều đặt `ckStep = 1`. Đó là **di sản từ hồi section 0 là ĐỊA CHỈ** — người đã đăng nhập có sẵn địa chỉ nên nhảy qua là hợp lý.
+> Nhưng section 0 **nay là "Vận chuyển", chứa cặp tab Giao hàng / Nhận tại cửa hàng** — không đăng nhập nào trả lời thay được. Hệ quả: bấm Đặt hàng ở giỏ là rơi thẳng vào "Phương thức vận chuyển", **mất luôn chỗ chọn nhận tại cửa hàng**.
+> Thêm một tầng nữa: `ckStep` là **state cấp module**, nên quay lại giỏ rồi vào lại vẫn giữ giá trị của lượt trước.
+
+**Sửa — 5 chỗ mỗi file:**
+
+| Chỗ | Trước | Sau |
+|---|---|---|
+| `[data-login-submit]` · `[data-reg-done]` · popup đăng nhập nhanh (3 chỗ) | `ckStep = 1; ckMaxStep = Math.max(ckMaxStep,1)` | `ckStep = 0` |
+| nút bật/tắt đăng nhập trong panel Cài đặt | `ckStep = ckAuth ? 1 : 0` | `ckStep = 0; ckMaxStep = 0` |
+| **nút "Đặt hàng" ở giỏ** | *(không đụng ckStep)* | **`ckStep = 0`** trước khi `go('checkout')` |
+
+**GIỮ `ckMaxStep`**: các bước đã hoàn tất vẫn hiện dạng tóm tắt + "Thay đổi" → quay lại giỏ rồi vào lại **không mất dữ liệu đã nhập**, chỉ là bước Vận chuyển mở lại.
+
+**Đo lại — cả 2 file, đo bằng chiều cao thật của `.ck-open` chứ không đoán tên class:**
+
+| Kịch bản | `ckStep` | Section đang mở | Có 2 tab Giao hàng/Nhận tại CH |
+|---|---|---|---|
+| đã đăng nhập → vào checkout | **0** | `sec0 Vận chuyển` | ✅ |
+| xác nhận xong bước 0 | 1 | `sec1 Phương thức vận chuyển` | — |
+| **quay lại giỏ rồi vào lại** | **0** (`ckMaxStep` vẫn 1) | **`sec0 Vận chuyển`** | ✅ |
+| khách → đăng nhập từ popup ở giỏ | **0** | `sec0` | ✅ |
+| khách → "mua không đăng nhập" | **0** | `sec0` | ✅ |
+
+Kịch bản 4–5 cố tình đặt `ckStep = 2` trước khi bấm để chắc chắn state bẩn cũng bị reset. Console sạch trên tab mới ở cả 2 file.
+
+## Icon extend của accordion: gom hết về DẤU CỘNG / TRỪ (19/08/2026, CẢ 2 BẢN)
+
+User: *"về icon extend hãy đồng bộ lại từ các icon đang có dấu mũi tên lên xuống giờ sẽ là dấu cộng trừ thôi"*. Dự án đang dùng **3 kiểu icon cho cùng một việc mở/đóng**:
+
+| Kiểu | Ở đâu |
+|---|---|
+| `+/−` | accordion PDP (khối khuyến mãi), mục bộ lọc |
+| **mũi tên phải xoay 90°** (`.acc-chev`) | footer, tóm tắt giỏ, tab PDP (pdp/pdp2/pdp3/pdp4), phiếu mua hàng, tóm tắt checkout — **8 chỗ** |
+| **mũi tên xuống** (`chevD`) | tab PDP của **pdp5 · pdp6** — **2 chỗ** |
+
+Gom hết về `+/−`. Thêm hằng dùng chung để lần sau đổi icon chỉ sửa 1 dòng:
+
+```js
+const accIco = `<span class="acc-ico-plus">${IcoPlus}</span><span class="acc-ico-minus">${IcoMinus}</span>`;
+```
+
+**Không đụng JS**: CSS `.acc .acc-ico-plus/-minus` + `.acc.open` đảo icon sẵn, chỉ cần thay markup.
+
+> **Kiểu thứ 3 suýt bị bỏ sót.** Vòng quét đầu chỉ tìm `chevR` (mũi tên xoay) nên `pdp5`/`pdp6` — vốn dùng `chevD` — vẫn còn nguyên. Chỉ lộ ra khi đo **đếm số accordion có `+/−` trên từng màn**: `pdp5` ra **7 accordion nhưng chỉ 3 cái có icon**. Bài học: đừng quét theo TÊN ICON, quét theo **"accordion nào chưa có cặp `+/−`"**.
+
+> Icon `+/−` khoá `fill: var(--general-primary)` nên nay **một màu ở mọi chỗ**; trước đây mũi tên nhận tham số màu và có chỗ để `#737373`. Đó chính là phần "đồng bộ" — một việc thì một icon, một màu.
+
+**Đo lại — quét 11 màn của bản mobile + 7 màn desktop:** tổng **55 accordion (mobile)** → **thiếu icon: 0 · còn mũi tên: 0**. Đóng→mở đảo đúng `block/none → none/block`, kiểm cả trên `pdp5` (chỗ vừa vá). Console sạch trên tab mới ở cả 2 file.
+
+## Bộ lọc: TIÊU ĐỀ MỤC = HOA + weight 500 (19/08/2026, CẢ 2 BẢN)
+
+Yêu cầu đi qua 4 nhịp, ghi lại để khỏi lặp:
+1. *"ở filter, cate lớn nhất hãy cho uppercase lên, áp cho 2 bản luôn"*
+2. → mình hiểu nhầm thành **tầng đầu của cây Danh mục** (`.fcat-check`) rồi viết hoa chỗ đó. User bắt lỗi: *"cái cần uppercase là DANH MỤC, THƯƠNG HIỆU, MÀU SẮC… không phải cate bên trong đó"* → chuyển sang `.facc-trigger`
+3. → *"giờ cho nó về lại bình thường nhưng tăng font weight lên"* → bỏ hoa, để 500
+4. → *"theo bạn nên tăng font weight hay uppercase sẽ phù hợp concept chung hơn"* → **CHỐT: dùng CẢ HAI**
 
 ```css
 html.skin-mt #filterSheet .facc-trigger > span:first-child {
-  text-transform: uppercase; letter-spacing: 0.5px;
+  font-weight: 500; text-transform: uppercase;
 }
 ```
 
-`> span:first-child` = nhãn chữ; span sau là icon `+/-` nên không dính (đo: icon ra `none`). Là **ngoại lệ có chủ ý** của quy ước "không dùng UPPERCASE", an toàn vì nằm trong bộ da.
+5. → **CHỐT CUỐI**: *"hạ font weight xuống 400 bằng các nội dung bên trong filter, vẫn giữ uppercase"* → **chữ hoa là đòn bẩy DUY NHẤT**
 
-**Đo lại — 2 file × 2 biến thể thân bộ lọc × 3 bộ da:**
+**Vì sao chữ hoa, không phải độ đậm:**
 
-| | Tiêu đề mục | Cate bên trong |
-|---|---|---|
-| `skin-mt` · thời trang | `DANH MỤC · THƯƠNG HIỆU · MÀU SẮC · KÍCH THƯỚC · KHOẢNG GIÁ · KHÁC` — **6/6 uppercase** | `Quần áo` → **none** |
-| `skin-mt` · làm đẹp | `DANH MỤC · THƯƠNG HIỆU · DUNG TÍCH · KHOẢNG GIÁ · ƯU ĐÃI · KHÁC` — **6/6 uppercase** | `Tắm & dưỡng thể` → **none** |
-| mặc định / MR PORTER | **6/6 none** | `Quần áo` → none |
+1. **Số đo mytheresa KHÔNG có phần tử 500/600/700 nào** — họ phân cấp bằng **cỡ chữ + chữ hoa**, không bằng độ đậm. Nâng weight là lệch số đo và làm loãng nét nhận dạng bộ da.
+2. **Trên mobile tiêu đề mục và cate bên trong CÙNG 12px** — chữ hoa đã đủ tách mà không phải đẻ thêm cỡ chữ hay nấc đậm nào.
 
-Console sạch trên tab mới ở cả 2 file.
+> ⚠ **Vẫn phải khai `font-weight: 400` tường minh, không được bỏ trắng.** Markup để `font-light` (**300**), mà khối blanket của bộ da chỉ kéo về 400 cho các class `.font-*` — bỏ rule này đi thì tiêu đề ra **300**, nhạt hơn cả nội dung bên trong.
+
+**Đánh đổi đã biết:** chữ hoa 12px tiếng Việt bị chật phần dấu (`ƯU ĐÃI`, `KÍCH THƯỚC`). Dự án đã chấp nhận đánh đổi này cho nav và nhãn menu.
+
+**Đo lại — 2 file × 3 bộ da:**
+
+| | Tiêu đề mục | Cate bên trong | Thương hiệu bên trong |
+|---|---|---|---|
+| `skin-mt` mobile | `12px w400 UPPERCASE` | `12px w400 thường` | `12px w400 thường` |
+| `skin-mt` desktop | `14px w400 UPPERCASE` | `12px w400 thường` | `12px w400 thường` |
+| mặc định / MR PORTER | `16px w300 thường` | `14px w400` | `14px w400` |
+
+**6/6 mục** đều `w400 + uppercase` ở cả 2 file. Tiêu đề mục nay **cùng độ đậm với nội dung bên trong**, chỉ khác ở chữ hoa — và ở desktop thêm 1 nấc cỡ chữ (14 vs 12). Console sạch trên tab mới ở cả 2 file.
+
+> Còn 2 nhãn nhóm cùng vai vẫn ở **500**: `.dk-mega-grid > div > p` (mega panel) và `#menuSheet .ms-view > p` (drawer). Nay bộ lọc **cố ý khác** chúng — nếu muốn cả 3 về 400 cho thống nhất thì sửa thêm 2 rule đó.
 
 ## Bộ lọc: mọi mục ĐÓNG sẵn (19/08/2026, CẢ 2 BẢN)
 
@@ -1077,6 +1144,96 @@ Nay gom về **một rule** trong khối `<style>` — sửa nền badge thì s�
 **Đo lại** (tắt transition trước) PLP · PDP · giỏ hàng × `mặc định` và `skin-mt`, **cả 2 file**: mọi `.badge-label` ra **`rgb(255,255,255)`**; badge `-%` vẫn `rgb(254,242,242)`, chấm đếm giỏ vẫn `rgb(214,40,69)`, "Quà tặng" vẫn nền đen. Riêng mobile quét đủ **6 màn PDP** — cả 6 ra trắng. Console sạch trên tab mới ở cả 2 file.
 
 > **CÒN LỆCH — là lệch NỘI DUNG, không phải màu, chưa sửa vì user chỉ nói về màu:** PDP mobile treo tới **3 badge** (`Pre-order` · `New Season` · `La Vacanza`, tuỳ màn 1–3 cái), còn **PDP desktop chỉ treo `Pre-order`** — markup gallery desktop (`dkPdp`, tile đầu) không render 2 badge mùa vụ. Muốn đồng bộ nốt thì thêm chúng vào tile đầu của gallery desktop.
+
+## Giỏ hàng + Thanh toán của bộ da EDITORIAL: nền xám, khối trắng (19/08/2026, CẢ 2 BẢN)
+
+Ba vòng yêu cầu, ghi đủ vì hai vòng đầu **đã sai và đã bị gỡ**:
+
+1. *"từ màn cart, checkout của skin mt hãy thử áp dụng style có nền nhúng màu xám nhẹ và trắng các block tiêu biểu như dior.com/en_us/couture/basket"*
+2. *"ở bản mobile của dior họ dùng màu background là một màu xám nhạt, CHỈ CÓ CÁC THẺ trong giỏ hàng là đang dùng màu nền trắng; khi đi đến checkout thì vẫn giữ màu nền xám và CÁC LỰA CHỌN sẽ trắng lên"*
+3. *"cho nguyên nhóm thẻ sản phẩm ở cart group lại như cũ, còn lại thì giữ nguyên và tạo luôn bản desktop"* + *"lưu style này vào skin editorial nhé, hiện tại bản skin mt đang mặc định nên đừng chỉnh sửa"* + *"move style sang skin editorial và roll back trả lại skin mt như bản trước khi update cart"*
+
+**⚠ STYLE NẰM Ở `skin-mp` (Editorial · MR PORTER), KHÔNG PHẢI `skin-mt`.** `skin-mt` là bộ da mặc định khi vào trang (chốt 19/08, xem mục riêng) nên thử nghiệm phải nằm ở bộ da người ta **phải tự bật** — không đụng thứ khách mở ra là thấy ngay. `skin-mt` đã **roll back sạch** ở cả 2 file: không còn rule nào của mục này trỏ vào nó, đo lại ra đúng số cũ.
+
+**2 lần sai đã gỡ:**
+
+- **Vòng 1 — đo nhầm khổ.** Mình đo bản **desktop** của Dior (ở đó cột phải đúng là một tấm trắng liền) rồi suy ra cho mobile → nâng gần như mọi khối lên tấm trắng. Nền xám khi đó chỉ còn là mấy khe hở 12px, tức **vẫn là trang nền trắng** thêm vài đường kẻ.
+- **Vòng 2 — tách nhóm hàng thành thẻ rời.** Đúng cách Dior làm khi giỏ chỉ có 1 món, nhưng giỏ demo 5 món thì thành 5 mảnh vụn, mất cảm giác "một danh sách". Nay nhóm hàng **gộp lại một tấm** như bản gốc.
+
+**Tham chiếu xem TẬN NƠI, đúng khổ mobile** (Chrome trên phiên user đã đăng nhập, giỏ có hàng + địa chỉ đã lưu, cửa sổ thu về `innerWidth = 414`), đọc computed style:
+
+| Thứ | Dior mobile | Dùng gì ở ta |
+|---|---|---|
+| `body` — kể cả thanh header | `#f8f8f8`, header chỉ có kẻ dưới `#e5e5e5` | `var(--unofficial-accent-0)` = **`#f7f7f7`** |
+| **Thẻ sản phẩm** | `#fff`, **không viền**, lề ngang 16 | `#cartList` là **một tấm** cho cả nhóm, full-bleed (xem QĐ 1) |
+| Ô ảnh trong thẻ | `#f2f2f4` — mặt xám riêng, nằm TRONG mặt trắng | đã có sẵn (`bg-secondary`) |
+| **Thẻ lựa chọn** (gói quà, phương thức giao, PayPal, Help & Services) | `#fff` + viền `0.8px #e5e5e5`, bo 4–8 | `.opt` / `richRadio` / ô nhập **vốn đã** `bg-background` + viền — không phải làm gì |
+| "Total / Subtotal / Delivery / Taxes" | **không có tấm** — chữ nằm trần trên xám; chỉ ô "Express · Tue, Aug 25 · Free" (một lựa chọn) mới trắng | panel ưu đãi + tổng tiền bỏ mặt `#f4f4f4`, hoà vào canvas |
+| Checkout | tiêu đề bước, câu dẫn, ghi chú đều nằm trần; bước chưa tới ("2. Shipping method") chỉ là chữ mờ | `.ck-sec` trong suốt ở mọi trạng thái |
+
+**Luật rút ra: nền xám là MẶC ĐỊNH; chỉ thứ CHỌN ĐƯỢC hoặc là MÓN HÀNG mới trắng.** Chữ, tiêu đề, tổng tiền, ghi chú, nút — để trần trên nền. Đây là lý do bản viết lại **ngắn hơn** bản đầu: phần lớn thẻ lựa chọn của dự án vốn đã `bg-background` + viền, nền trang chuyển xám là chúng tự nổi lên, không cần rule nào.
+
+Số lấy từ **bảng token có sẵn của bộ da, không đẻ sắc mới** — cùng bài học với `--general-background-blur`: hệ token đã có ô đúng vai thì dùng nó, đừng pha tay. Bo góc **0** vì bộ da này vuông góc mọi chỗ (họ bo 4).
+
+**THAM CHIẾU ≠ BÊ NGUYÊN** (bài học của mục bộ lọc, cùng ngày): không mượn linh kiện nào của Dior, **không đụng markup/layout**; tắt `skin-mp` là về y như cũ.
+
+Cái gì trắng, cái gì ở lại nền xám:
+
+| Màn | Trắng | Ở lại nền xám |
+|---|---|---|
+| Giỏ hàng | `#cartList` và `#orderGift` — mỗi cái **một tấm liền** cho cả nhóm · thẻ khuyến mãi · 2 thẻ bấm được trong panel (Rewards · "Ưu đãi & khuyến mãi") — vốn đã trắng sẵn · **desktop**: cột phải `bg-card` cũng vốn đã trắng | tiêu đề "Giỏ hàng (n)" · hàng "Chọn tất cả" · panel ưu đãi + **tổng tiền** · cụm nút Đặt hàng + phiếu mua hàng · khối cam kết · footer giữ nền cũ, chỉ thêm 1 kẻ |
+| Thanh toán | `.ck-sum` (mobile, sticky nên **bắt buộc** phải đục) · thẻ địa chỉ / phương thức giao / phương thức thanh toán / ô nhập — vốn đã trắng sẵn · nút seg đang chọn · **desktop**: cột phải `.dk-sticky-side` vốn đã trắng + viền | tiêu đề màn · hộp trạng thái tài khoản · **mọi** `.ck-sec` (mở, xong, chưa tới) · khung `#ckSections` ở desktop · spacer đáy |
+
+**5 quyết định có chủ ý, ghi ra để sau khỏi tưởng là sót:**
+
+1. **Tấm full-bleed thay vì lề 16 như họ.** Nội dung bên trong vốn đã `px-4`; thêm lề ngoài nữa thì chữ rơi về `x=32` trong khi tiêu đề màn ở `x=16`. Full-bleed thì nội dung nằm đúng `x=16` — thẳng cột với mọi thứ còn lại.
+2. **Nhóm hàng gộp một tấm, KHÔNG tách từng dòng** (yêu cầu vòng 3). Kèm theo đó `.gift-group` **giữ nguyên** `bg-accent-0` như bản gốc — nó đang nằm trên mặt trắng nên vẫn tách được khỏi dòng hàng. (Ở bản vòng 2, khi mỗi dòng là một thẻ rời thì dải quà nằm thẳng trên canvas và biến mất, phải đảo lên trắng — nay không cần nữa.)
+3. **Ba chỗ xám phải nâng một nấc vì nay chỉ còn cách canvas 3/255:** rãnh segmented "Giao hàng / Nhận tại cửa hàng" → `--unofficial-secondary-active` `#ebebeb` (nút đang chọn vẫn `bg-background`, không thì hết đọc ra là đang chọn); kẻ ngăn bước `.ck-sec` và kẻ dưới `.ck-notice` (`--general-secondary`) → `#ebebeb`; kẻ dưới `.ck-sum` kéo từ `--general-border` về `#ebebeb`.
+4. **Hộp trạng thái tài khoản bỏ nền, không nâng lên trắng** — bên họ dòng tương đương ("Connected as … / Log out") nằm trần trên xám, và nó là THÔNG BÁO chứ không phải thứ chọn được. Ở mobile nó là `.bg-accent-0` trong `.ck-notice`; ở **desktop nó tô bằng inline style** `background:var(--unofficial-accent-0)` nên phải `!important` mới đè được. Cùng lý do: dải mờ dưới nút "Đặt hàng" nổi (`#cartStickyCta`, chỉ mobile) fade về `#f7f7f7` thay vì trắng, kẻo hiện thành vệt trắng chạy ngang.
+5. **Chân trang không đổi màu, chỉ thêm một kẻ.** `bg-secondary` `#f4f4f4` chỉ đậm hơn canvas 3/255 nên dính liền khối cam kết thành một dải. Đổi nền footer là lệch với các màn khác (footer là component dùng chung), nên chỉ thêm `border-top` theo hệ gạch.
+
+**Khổ desktop dễ hơn mobile** vì bố cục 2 cột của dự án đã trùng cách Dior dựng: cột phải (tóm tắt / tổng tiền) vốn là `bg-card` + viền, thẻ lựa chọn vốn `bg-background` + viền. Nên bản desktop chỉ còn **5 rule**: canvas · 2 tấm nhóm hàng · thẻ khuyến mãi · rãnh segmented · hộp thông báo. `#ckSections` cố ý để trong suốt — khung bước không phải thứ chọn được, thứ chọn được là các thẻ bên trong nó.
+
+**Đo lại — cả 2 file, tab mới, bust cache.**
+
+`index.html` bật `skin-mp`: giỏ ra `body`/`#viewport` = `rgb(247,247,247)`, `#cartList` và `#orderGift` trắng viền `#ebebeb` `mt=12px`, `.cart-row` **trong suốt** (đã gộp nhóm), `.gift-group` giữ `#f7f7f7` trên mặt trắng, thẻ khuyến mãi trắng, panel tổng tiền + `#cartCta` + cam kết trong suốt, footer `#f4f4f4` + kẻ `#ebebeb`. Checkout ra `.ck-sum` trắng, `.ck-notice` + cả 3 `.ck-sec` trong suốt, rãnh seg `#ebebeb` với nút active trắng.
+
+`desktop.html` bật `skin-mp`: giỏ ra `body`/`#viewport` = `rgb(247,247,247)`, `#cartList` + `#orderGift` trắng `mt=12px`, thẻ khuyến mãi trắng, **cột phải vẫn `rgb(255,255,255)` không phải sửa**, footer thêm kẻ. Checkout ra `#ckSections` + `.ck-sec` trong suốt, cột phải trắng, rãnh seg `#ebebeb`, hộp thông báo `rgba(0,0,0,0)` (đè được inline style).
+
+**Roll back `skin-mt` — đo xác nhận ở cả 2 file:** `body` và `#viewport` trắng · `#cartList`/`#orderGift` trong suốt, `border-top: 0px`, `margin-top: 0px` · `.gift-group` `#f7f7f7` · panel ưu đãi `#f2f2f2` · rãnh seg `#f2f2f2` · footer không kẻ · hộp thông báo desktop `#f7f7f7`. Bộ da "Mặc định" cũng không lệch số nào.
+
+Quét riêng **"có gì chìm vào canvas không"** (phần tử có nền xám trong khoảng `#f3f3f3`–`#fbfbfb` mà **cha gần nhất có nền cũng đúng màu đó**) trên 5 biến thể mỗi file — giỏ vãng lai · giỏ đã đăng nhập · checkout vãng lai · checkout nhận tại cửa hàng · checkout đã đăng nhập: **sạch 5/5 ở cả 2 file**. Console sạch cả hai.
+
+### Vòng 4 — chữ & nhịp của checkout theo Dior mobile (20/08/2026)
+
+User: *"thử chỉnh sửa lại độ đậm nhạt của màu text cũng như spacing theo đúng của dior vào skin mp"* + 4 ảnh chụp 4 bước checkout mobile của họ.
+
+**Cách lấy số đo — ghi lại vì sẽ cần dùng lại:** cửa sổ Chrome của phiên này **không thu nhỏ được** (`resize_window` báo thành công nhưng `innerWidth` kẹt 1920, cửa sổ đang maximized). Cách vòng được: **nhúng `/en_us/couture/checkout` vào một iframe 414px ngay trên trang dior.com đang mở** — cùng origin nên đọc được `contentDocument`, và vẫn giữ session đăng nhập. Gỡ iframe sau khi đo xong.
+
+| Vai | Dior mobile | Áp vào `skin-mp` |
+|---|---|---|
+| Khối một bước | `padding: 32px 20px` | `.ck-sec { padding: 32px 0 24px }` (24 + `py-2` sẵn có của thân = 32) · lề ngang **giữ 16**, xem lệch số 1 |
+| Tiêu đề bước | `16px/23` serif **w400** | `.ck-title { font-weight: 400 }` (markup đang `font-medium`) |
+| — đang mở | `#33383c` | `--general-foreground` `#1a1a1a` |
+| — đã xong **và** chưa tới | `#7b8487` — **cùng một xám**, không phải hai nấc | `--general-muted-foreground` `#767676` |
+| Tiêu đề → nội dung | 20px | bỏ `height` cố định của `.ck-head` (56 / 72), thay bằng `padding-bottom: 12px` + `py-2` sẵn có |
+| Tóm tắt bước đã xong | `12px/17` w400 `#7b8487` | `.ck-done .acc-inner p` → `12px/16` w400 xám, **bỏ luôn** `font-medium` ở dòng tên |
+| "Edit" | đi theo màu của bước | `.ck-change` cùng rule màu với `.ck-title` |
+
+**Điểm cốt lõi: họ phân cấp trạng thái bằng MÀU, ta đang bằng `opacity`.** `paintCheckout` ghi `style.opacity = 0.4` **inline** cho bước chưa tới — chồng lên màu xám là ra hai nấc nhạt khác nhau cho hai trạng thái mà bên họ dùng chung một xám. Nên trong `skin-mp` phải `opacity: 1 !important` để gỡ, rồi phân cấp bằng màu. Cơ chế JS **không đụng** — bỏ bộ da là opacity chạy lại như cũ.
+
+**2 chỗ cố ý lệch số đo:**
+
+1. **Lề ngang giữ 16 (`px-4`), không lấy 20 của họ.** Mọi thứ trong 2 màn này — kể cả tiêu đề màn — đang thẳng cột 16; đổi riêng phần bước là gãy cột.
+2. **Line-height 17 quy về 16**, dùng cặp `12/16` của thang chữ dự án thay vì chế số mới (quy ước "thang chữ theo text style").
+
+**Bản desktop chỉ lấy phần MÀU + weight, không lấy spacing** — `padding: 32px 20px` và bỏ chiều cao hàng tiêu đề là nhịp của khổ hẹp; khổ 1440 ở ta đang là hàng tiêu đề cao 72 trong một khung có viền, trộn vào là hai hệ đánh nhau.
+
+**Đo lại:** `index.html` bật `skin-mp` — bước đang mở ra `title 16px/24 w400 rgb(26,26,26)` + "Thay đổi" cùng màu, `head h=36 pb=12`, `sec pad=32px 0 24px`; bước chưa tới ra `rgb(118,118,118)` `op=1` `head h=24 pb=0` `sec pad=32px 0`; bấm "Xác nhận" thì bước 0 chuyển xám và tóm tắt ra `12px/16 w400 rgb(118,118,118)`. Khoảng cách giữa 2 tiêu đề bước chưa tới = **89px** (bên họ 87px sau khi quy đổi tỉ lệ ảnh). `desktop.html` ra đúng bộ màu đó, `sec pad` giữ `0px`. `skin-mt` và bộ da "Mặc định" ở cả 2 file giữ nguyên: `sec pad=8px 0`, `head h=56/72`, tiêu đề đen. Console sạch cả hai.
+
+> **Chưa nhìn được bản của MÌNH bằng mắt:** Browser pane của phiên này không compositing nên không chụp được ảnh, và Chrome (nơi xem được Dior) không cho mở `localhost`/`file://`. Số đo bên Dior là ảnh chụp thật + computed style; số đo bên ta **chỉ là computed style**.
+
+> **`desktop-editorial.html` CHƯA ÁP** — cố ý hỏi trước. Ở file đó `skin-mp` là bộ da **mặc định**, nên thêm khối này vào là đổi luôn giao diện mở-ra-thấy-ngay của file, đúng thứ user vừa yêu cầu tránh ở `index.html`/`desktop.html`.
 
 ## Subheader cao 72 + gom offset sticky một chỗ (18/08/2026, 2 bản desktop)
 
