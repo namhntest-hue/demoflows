@@ -1145,6 +1145,26 @@ Nay gom về **một rule** trong khối `<style>` — sửa nền badge thì s�
 
 > **CÒN LỆCH — là lệch NỘI DUNG, không phải màu, chưa sửa vì user chỉ nói về màu:** PDP mobile treo tới **3 badge** (`Pre-order` · `New Season` · `La Vacanza`, tuỳ màn 1–3 cái), còn **PDP desktop chỉ treo `Pre-order`** — markup gallery desktop (`dkPdp`, tile đầu) không render 2 badge mùa vụ. Muốn đồng bộ nốt thì thêm chúng vào tile đầu của gallery desktop.
 
+## Bộ lọc: chốt cứng thang chữ 14 / 12 cho 2 tầng tiêu đề (20/08/2026, CẢ 2 BẢN)
+
+User: *"ở filter, dialog title filter sẽ font 14 UPPERCASE, cate danh mục …. sẽ UPPERCASE font size 12"*.
+
+**Hoá ra hai bản đang ra hai bộ số khác nhau** dù markup giống hệt — vì mỗi bản có khối blanket thang chữ riêng của bộ da:
+
+| | Trước — mobile | Trước — desktop | Nay (cả hai) |
+|---|---|---|---|
+| Tiêu đề panel | `18` | `16` | **`14/20` hoa** |
+| Tiêu đề mục | `12` | `14` | **`12/16` hoa** |
+| Cate / thương hiệu bên trong | `12` thường | `12` thường | không đổi |
+
+**Điểm đáng ghi: mobile ra `12` cho tiêu đề mục là ĐÚNG MỘT CÁCH TÌNH CỜ** — markup để `text-[16px]`, và blanket của bộ da kéo `.text-[16px]` xuống 12. Cùng markup đó ở desktop lại ra 14 vì blanket bên kia khác. Nên nay **khai thẳng cỡ chữ tại chính rule của tầng đó** ở cả 2 file: hai bản chốt cùng một số, và sau này ai sửa blanket cũng không kéo tầng chữ này đi theo.
+
+Ghi đè ghi chú cũ: mục "Bộ lọc: TIÊU ĐỀ MỤC = HOA" từng ghi *"ở desktop thì thêm 1 nấc cỡ chữ 14 vs 12"* — **không còn đúng**, hai bản nay bằng nhau.
+
+Ba tầng chữ trong panel sau khi chốt: **tiêu đề panel `14` hoa** → **tiêu đề mục `12` hoa** → **cate `12` thường**. Hai tầng dưới cùng cỡ, chỉ chữ hoa tách chúng — đúng lý do đã chốt 19/08 (không đẻ thêm cỡ chữ, không nâng weight).
+
+**Đo lại — cả 2 file:** `skin-mt` ra `title 14px/20 w400 uppercase` · `tiêu đề mục 12px/16 w400 uppercase` · `cate 12px/20 w400 none` («Quần áo») — **giống hệt nhau ở mobile và desktop**. `skin-mp` và bộ da Mặc định ra `18/28 w500 none` và `16/24 w300 none`, không lệch số nào. Console sạch trên tab mới ở cả 2 file.
+
 ## Cookie: đảo thang nút — 1 primary dưới cùng (20/08/2026, CẢ 2 BẢN)
 
 User: *"cục cookies sẽ cho button primary là đồng ý nằm dưới cùng, 2 lựa chọn reject và tùy chọn sẽ nằm chung 1 hàng bên trên button đồng ý"*.
