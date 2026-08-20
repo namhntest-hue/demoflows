@@ -951,6 +951,25 @@ window.RESP = (function () {
   /* toast desktop nằm giữa đáy, không đụng FAB */
   #toast { bottom: 48px; }
 
+  /* ── TẠM ẨN dải "Mua thêm … để nhận …" (20/08/2026, yêu cầu user) ─────────────
+     Phần TEASER của `orderGiftInner()` — mốc quà kế tiếp CHƯA đạt, dựng với
+     `data-gift-next`. Ẩn bằng CSS chứ không xoá trong JS: `refreshCartGifts` vẫn
+     dựng lại như cũ nên bật lại chỉ là xoá 2 dòng dưới đây. ÁP CHO MỌI BỘ DA —
+     chuyện nội dung demo, không phải style. Rule thứ 2 cho trường hợp mốc đã đạt
+     bị rớt (bỏ tick sản phẩm): khi đó khối chỉ còn teaser, không ẩn thì ở
+     `skin-mt` còn lại một tấm trắng rỗng.
+     KHAI GIỐNG HỆT ở index.html — sửa 1 file nhớ sửa cả 2. */
+  [data-gift-next] { display: none; }
+  #orderGift:not(:has([data-gift-tier])) { display: none; }
+
+  /* ── SỐ TIỀN TRONG GIỎ DÙNG CHỮ SỐ ĐẲNG CHIỀU (20/08/2026) ────────────────────
+     Màn giỏ xếp giá theo CỘT ở mép phải (giá từng món, tạm tính, các dòng giảm,
+     tổng cộng). Chữ số tỉ lệ của Montserrat có bề rộng khác nhau nên cột số bị
+     răng cưa; `tabular-nums` ép về cùng bề rộng -> cột thẳng, và số lượng ở stepper
+     không nhảy ngang khi đổi 1 <-> 2. Đặt Ở BASE, không trong bộ da: chuyện đọc số,
+     đúng cho cả 3 bộ da. KHAI GIỐNG HỆT ở index.html. */
+  [data-screen="cart"] { font-variant-numeric: tabular-nums; }
+
   /* ══ BỘ DA "Editorial · MR PORTER" — bật/tắt từ popover Cài đặt ═════════════
      (18/08/2026, yêu cầu user: "bản desktop chưa switch được sang style này".)
      MỌI selector gắn tiền tố `html.skin-mp` nên khi KHÔNG có class thì file này
@@ -977,8 +996,12 @@ window.RESP = (function () {
     --unofficial-body-background: #ffffff;
     --general-background: #ffffff;
     --general-background-blur: #ffffffe5;
-    --general-secondary: #f4f4f4;
-    --general-muted: #f4f4f4;
+    /* ⚠ 20/08/2026: các số dưới đây ĐO LẠI TỪ CHÍNH mrporter.com/en-vn (khổ
+       mobile 375, trang chủ) thay cho số cũ lấy từ net-a-porter làm proxy — xem
+       khối cùng tên trong index.html cho bảng đo đầy đủ. Token màu không phụ
+       thuộc khổ nên áp cho cả 2 file. */
+    --general-secondary: #f0f0f0;
+    --general-muted: #f0f0f0;
     --unofficial-accent-0: #f7f7f7;
     --unofficial-border-0: #f0f0f0;
     --unofficial-secondary-hover: #f7f7f7;
@@ -986,20 +1009,20 @@ window.RESP = (function () {
     --unofficial-accent-2: #ebebeb;
     --popover-popover: #000000;
     --popover-popover-foreground: #ffffff;
-    --general-foreground: #1a1a1a;
+    --general-foreground: #000000;
     --general-primary: #000000;
-    --general-primary-foreground: #ffffff;
+    --general-primary-foreground: #f0f0f0;
     --general-primary-hover: #262626;
     --general-primary-active: #1a1a1a;
-    --general-secondary-foreground: #1a1a1a;
-    --unofficial-foreground-alt: #1a1a1a;
+    --general-secondary-foreground: #2b2b2b;
+    --unofficial-foreground-alt: #2b2b2b;
     --unofficial-foreground-alt-2: #333333;
-    --general-body-text: #1a1a1a;
+    --general-body-text: #000000;
     --unofficial-ghost-foreground: #333333;
     --unofficial-mid-alt: #4d4d4d;
-    /* #767676 = 4.54:1 trên trắng, vẫn đạt AA cho chữ 14+ */
-    --general-muted-foreground: #767676;
-    --unofficial-mid-deprecated: #767676;
+    /* #656565 = 6.0:1 trên trắng (số đo thật của họ; bản proxy cũ là #767676) */
+    --general-muted-foreground: #656565;
+    --unofficial-mid-deprecated: #656565;
     --unofficial-contrast: #000000;
     --general-border: #e0e0e0;
     --unofficial-border-1: #ebebeb;
@@ -1021,9 +1044,9 @@ window.RESP = (function () {
     --general-success: #2e7d4f;
     --general-warning: #8a6100;
     --general-info: #2f6fa8;
-    --focus-ring: #767676;
+    --focus-ring: #656565;
     --focus-ring-error: #d81e05;
-    --btn-focus-ring: #767676;
+    --btn-focus-ring: #656565;
     --surface-dark: #000000;
     --unofficial-backdrop: rgba(0,0,0,.5);
   }
@@ -1082,20 +1105,24 @@ window.RESP = (function () {
   /* Kẻ dọc tách khối danh mục khỏi ảnh editorial (ảnh MR PORTER có đúng 1 kẻ dọc) */
   html.skin-mp .dk-mega-teaser { border-left: 1px solid #e0e0e0; padding-left: 40px; }
 
-  /* ── 5. MẶT CHỮ SERIF — nét nhận dạng số 1 của MR PORTER ──
-     Lora (Google Fonts): serif transitional, tương phản vừa, x-height cao nên còn
-     đọc được ở 12–14px. KHÔNG phải font thật của MR PORTER (face riêng, không
-     phát hành công khai).
+  /* ── 5. MẶT CHỮ — SANS, KHÔNG CÒN SERIF ──
+     20/08/2026, user chốt: *"ở skin mp giờ sẽ k dùng font lora nữa nhé, dùng mặc
+     định montserrat luôn"*. Bỏ cả Lora lẫn Georgia — CỐ Ý lệch số đo (thân bài
+     của MR PORTER là serif, họ khai thẳng `Georgia`), đây là quyết định của user
+     chứ không phải đo sai. Bộ da nay phân biệt với 2 bộ kia bằng BẢNG MÀU +
+     tracking + khuôn nav, không còn bằng mặt chữ.
      Cắm vào đúng cơ chế đổi phông sẵn có: `body.font-sans` (0,1,1) thắng utility
      `.font-sans` (0,1,0) của Tailwind nhưng vẫn THUA `html.font-override body`
      (0,2,1) — nên nút chọn phông trong popover vẫn đè được để so sánh sans/serif. */
-  html.skin-mp { --font-app: 'Lora', ui-serif, Georgia, 'Times New Roman', serif; }
+  html.skin-mp { --font-app: 'Montserrat', ui-sans-serif, system-ui, sans-serif; }
   html.skin-mp body.font-sans { font-family: var(--font-app); }
 
-  /* ── 6. GÓC VUÔNG TUYỆT ĐỐI ──
+  /* ── 6. GÓC VUÔNG, TRỪ NÚT ──
      Hạ 5 token radius là xong cả file. KHÔNG chạm --radius-infinite nên badge giỏ,
-     công tắc cookie và toast vẫn tròn. */
-  html.skin-mp { --radius-2: 0px; --radius-4: 0px; --radius-6: 0px; --radius-8: 0px; --radius-10: 0px; }
+     công tắc cookie và toast vẫn tròn.
+     20/08/2026: `--radius-2` lên **2px** — nút chính của họ đo ra bo 2px, và
+     `--radius-2` đúng là nấc `rounded-xs` mà nút đang dùng. 4 nấc còn lại giữ 0. */
+  html.skin-mp { --radius-2: 2px; --radius-4: 0px; --radius-6: 0px; --radius-8: 0px; --radius-10: 0px; }
   /* .dk-modal khai bo góc bằng SỐ THẬT + !important ở khối trên nên token không
      với tới -> phải đè đúng nó. */
   html.skin-mp .dk-modal, html.skin-mp .cc-drop { border-radius: 0 !important; }
@@ -1121,7 +1148,12 @@ window.RESP = (function () {
           thân bài  ls 0.14px @14px = 0.01em
           eyebrow   ls 1.8px  @12px = 0.15em   (dự án đang để 0.12em / 0.08em)
      Chữ 14px thân bài của họ TRÙNG mặc định dự án nên không phải remap cỡ nào. */
-  html.skin-mp body { letter-spacing: 0.01em; }
+  /* 20/08/2026: đo lại trên chính mrporter.com/en-vn — họ dùng `ls 0.2px` CỐ ĐỊNH
+     ở cả 14px lẫn 12px, nên khai bằng px chứ không em (số cũ 0.01em = 0.14px là
+     của proxy net-a-porter). Nhãn eyebrow bên dưới GIỮ 0.15em dù họ đo ra 0.2px:
+     nhãn của họ chạy bằng SackersGothicStd — Gothic vốn đã rất rộng chân — ta
+     không có font đó, hạ về 0.2px là nhãn dính chùm. Xem index.html. */
+  html.skin-mp body { letter-spacing: 0.2px; }
   /* Ô eyebrow: dự án có 2 giá trị tracking cho cùng một vai trò (0.12em cho nhãn
      mục trong popover/footer, 0.08em cho nhãn nhóm mega) -> gom về 0.15em đo được.
      Đây là nét nhận dạng rõ nhất của MR PORTER trong ảnh khách gửi ("SHOP BY
@@ -1622,6 +1654,109 @@ window.RESP = (function () {
   html.skin-mt #filterSheet .facc-trigger > span:first-child {
     font-weight: 400; text-transform: uppercase;
   }
+  /* ── TIÊU ĐỀ PANEL "Bộ lọc" CŨNG CHỮ HOA (20/08/2026, yêu cầu user) ───────────
+     Thứ đã từng bị GỠ hồi 19/08 (bản đầu bê nguyên cụm linh kiện mytheresa, trong
+     đó có "tiêu đề panel 16px chữ hoa"). Nay user gọi lại đích danh mỗi chữ hoa ->
+     làm đúng bấy nhiêu: KHÔNG kèm đổi cỡ chữ, không đổi weight.
+     Bám `div:has(> #filterClose) > p` thay vì cỡ chữ: hàng tiêu đề là hàng duy
+     nhất chứa nút đóng, selector không vỡ khi thang chữ đổi.
+     KHAI GIỐNG HỆT ở index.html — sửa 1 file nhớ sửa cả 2. */
+  html.skin-mt #filterSheet div:has(> #filterClose) > p { text-transform: uppercase; }
+
+  /* ── SWATCH MÀU Ở LISTING: VUÔNG, KHÔNG TRÒN (20/08/2026, yêu cầu user) ───────
+     *"ở skin mt pick màu ở listing hãy cho hình vuông thay vì hình tròn nhé"*.
+     `.cw` là ô chọn màu trên THẺ SẢN PHẨM (PLP, hàng gợi ý, kết quả tìm) — không
+     phải swatch ở PDP (chỗ đó là ảnh) và không phải ô màu trong sheet bộ lọc.
+     Vuông góc đúng mạch bộ da: mọi radius token của `skin-mt` đã là 0, chỗ duy
+     nhất còn tròn là mấy ô này vì `rounded-full` khai bằng utility chứ không qua
+     token. Phải đè cả BUTTON lẫn SPAN con — ở desktop button là khung viền 20px
+     và nền màu nằm ở span 16px bên trong, bỏ sót span là ra hình tròn lồng trong
+     khung vuông.
+     (0,3,1) nên thắng utility `rounded-full` (0,1,0), không cần !important.
+     KHAI GIỐNG HỆT ở index.html và desktop.html — sửa 1 file nhớ sửa cả 2. */
+  html.skin-mt [data-swatches] .cw,
+  html.skin-mt [data-swatches] .cw > span { border-radius: 0; }
+
+  /* ── TRANG GIỎ: NỀN XÁM ĐỂ NHẤN CÁC BLOCK (20/08/2026, yêu cầu user) ──────────
+     *"ở trang cart sẽ cho nền màu xám để nhấn các block"*, bộ da `skin-mt`. CHỈ
+     màn giỏ; màn Thanh toán giữ nền trắng.
+     Khổ desktop cần ÍT rule hơn mobile vì bố cục 2 cột đã sẵn đúng khuôn: cột phải
+     (tóm tắt đơn + tổng tiền) vốn là `bg-card` + viền -> tự thành block trắng nổi
+     trên canvas, không phải làm gì. Nên chỉ còn: canvas · 2 tấm nhóm hàng · thẻ
+     khuyến mãi · kẻ chân trang. Bản mobile khai cùng khối này ở index.html kèm
+     thêm 2 rule của riêng khổ hẹp (khối tổng tiền, dải mờ nút nổi).
+     Số lấy từ bảng token của chính bộ da: canvas #f7f7f7
+     (--unofficial-accent-0), gạch #ececec (--unofficial-border-1), bo 0. */
+  html.skin-mt:has([data-screen="cart"]) body,
+  html.skin-mt:has([data-screen="cart"]) #viewport {
+    background: var(--unofficial-accent-0);
+  }
+  /* ── ĐÓNG HỘP THEO MAISON KITSUNÉ (20/08/2026, yêu cầu user) ──
+     *"học cách họ đóng hộp các block cart"*, đọc từ ảnh chụp
+     maisonkitsune.com/ww/checkout/cart mà user gửi (trang không mở được để đo:
+     Chrome chặn domain, Browser pane dính Cloudflare "Just a moment…").
+     Điểm được adapt: **tên hộp nằm BÊN TRONG hộp** — "CART (5 ARTICLES)" ở đỉnh
+     hộp trắng, tách khỏi danh sách bằng một kẻ mảnh. Bản của ta trước đó để tiêu
+     đề "Giỏ hàng (n)" đứng NGOÀI trên canvas (kiểu Dior).
+     Khổ desktop khớp họ nhiều hơn mobile: cột phải (tóm tắt + nút + ô mã) vốn đã
+     là `bg-card` + viền -> đúng hộp "CHECKOUT SUMMARY" của họ, KHÔNG phải làm gì.
+     HỘP 1 = [tiêu đề][chọn tất cả]──kẻ──[các món]: ba phần tử riêng trong markup,
+     cho cùng mặt trắng và bỏ khe là ra một hộp, không sửa markup.
+     `.flex-1 > div:has(> h2)` chứ không `div:has(> h2)` trần: màn giỏ desktop có
+     2 thẻ h2 và cái thứ hai nằm ở cột phải. */
+  html.skin-mt [data-screen="cart"] .flex-1 > div:has(> h2),
+  html.skin-mt [data-screen="cart"] .flex-1 > div:has(> #selectAll),
+  html.skin-mt [data-screen="cart"] #cartList {
+    background: var(--general-background);
+  }
+  html.skin-mt [data-screen="cart"] .flex-1 > div:has(> h2) {
+    border-top: 1px solid var(--unofficial-border-1);
+    margin-top: 12px;
+  }
+  html.skin-mt [data-screen="cart"] .flex-1 > div:has(> #selectAll) {
+    border-bottom: 1px solid var(--unofficial-border-1);
+  }
+  /* Danh sách là THÂN hộp: kẻ trên đã do hàng trên lo, chỉ cần kẻ đáy + khoảng thở
+     dưới món cuối như họ. */
+  html.skin-mt [data-screen="cart"] #cartList {
+    border-bottom: 1px solid var(--unofficial-border-1);
+    /* 16, KHÔNG phải 8: đỉnh hộp đã là 16 (hàng tiêu đề `py-4`), để 8 thì hộp nặng
+       đầu nhẹ chân — bắt được lúc rà lại nhịp dọc 20/08. */
+    padding-bottom: 16px;
+  }
+  /* Thẻ khuyến mãi: khe quanh nó là 24 (từ `py-6` của phần bọc) trong khi khe giữa
+     mọi hộp khác là 12 -> nhịp dọc nhảy 12·24·12. Bỏ padding dọc của phần bọc, để
+     margin 12 lo khoảng cách. Thẻ bên trong không đổi gì. */
+  html.skin-mt [data-screen="cart"] div:has(> div > #promoPeek) {
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 12px;
+  }
+  /* Nhóm quà theo mốc đơn: hộp riêng, cùng khuôn. */
+  html.skin-mt [data-screen="cart"] #orderGift {
+    background: var(--general-background);
+    border-top: 1px solid var(--unofficial-border-1);
+    border-bottom: 1px solid var(--unofficial-border-1);
+    margin-top: 12px;
+  }
+  /* Quà theo sản phẩm NẰM CHUNG BLOCK với món của nó (yêu cầu user: *"gift đang
+     nằm rời rạc ra khỏi block thẻ sản phẩm"*). `.gift-group` tự tô `bg-accent-0`
+     và chạy full-bleed nên trên tấm trắng nó thành dải xám cắt ngang — đọc ra là
+     khối thứ ba chứ không phải phần đuôi của món. Bỏ nền riêng của nó, đồng thời
+     kẻ mảnh TRƯỚC mỗi món (trừ món đầu) để ranh giới ô nằm giữa các MÓN. Hai việc
+     phải làm cùng nhau: chỉ bỏ nền thì quà lại dính vào món kế tiếp.
+     Quà theo MỐC ĐƠN trong `#orderGift` GIỮ nền — nó không thuộc món nào. */
+  html.skin-mt [data-screen="cart"] .gift-group[data-gift-of] { background: transparent; }
+  html.skin-mt [data-screen="cart"] #cartList .cart-row:not(:first-child) {
+    border-top: 1px solid var(--unofficial-border-1);
+  }
+  html.skin-mt [data-screen="cart"] div:has(> #promoPeek) {
+    background: var(--general-background);
+    border-color: var(--unofficial-border-1);
+  }
+  html.skin-mt [data-screen="cart"] .bg-secondary.mt-4 {
+    border-top: 1px solid var(--unofficial-border-1);
+  }
 
   /* ── GIỎ HÀNG & THANH TOÁN CỦA BỘ DA EDITORIAL — nền xám, khối trắng ──────────
      (19/08/2026, yêu cầu user. Bản mobile khai cùng khối này ở index.html —
@@ -1646,51 +1781,41 @@ window.RESP = (function () {
      rãnh segmented · hộp thông báo tài khoản.
      Số lấy từ bảng token có sẵn của bộ da: canvas #f7f7f7 (--unofficial-accent-0),
      gạch #ebebeb (--unofficial-border-1), mặt nhấn #ebebeb
-     (--unofficial-secondary-active). */
-  html.skin-mp:has([data-screen="cart"]) body,
-  html.skin-mp:has([data-screen="checkout"]) body,
-  html.skin-mp:has([data-screen="cart"]) #viewport,
-  html.skin-mp:has([data-screen="checkout"]) #viewport {
-    background: var(--unofficial-accent-0);
+     (--unofficial-secondary-active).
+     ════════════════════════════════════════════════════════════════════════════
+     ⚠⚠ 20/08/2026 — PHẦN "NỀN XÁM KIỂU DIOR" ĐÃ BỊ GỠ Ở CẢ 2 FILE.
+     User: *"giờ chỉnh lại cái giỏ hàng và checkout theo style mrporter nhé"*, hỏi
+     rõ thì chốt **"bỏ nền xám, về nền trắng"**. Đo mrporter.com/en-vn: nền chủ đạo
+     của họ là #ffffff, ngăn nhóm bằng KẺ MẢNH và gọi tên nhóm bằng NHÃN HOA nhỏ.
+     Mô tả Dior phía trên giữ lại làm hồ sơ số đo, phòng khi quay lại hướng đó.
+     ⚠ KHÔNG đo được giỏ/checkout CỦA MR PORTER (`/shoppingbag` 404, `/checkout`
+     giỏ rỗng nên redirect) — các số dưới suy từ trang chủ của họ.
+     ════════════════════════════════════════════════════════════════════════════ */
+  /* Danh sách hàng: mỗi món ngăn nhau bằng một hairline. `:not(:first-child)` chứ
+     không `+`: dải quà chèn giữa các dòng và phải DÍNH món của nó. */
+  html.skin-mp [data-screen="cart"] #cartList .cart-row:not(:first-child) {
+    border-top: 1px solid var(--unofficial-border-1);
   }
-  /* Nhóm hàng: 2 tấm trắng liền — danh sách sản phẩm và nhóm quà theo mốc đơn.
-     GỘP cả nhóm chứ không tách từng dòng thành thẻ rời (yêu cầu user): giỏ nhiều
-     món mà tách ra là mất cảm giác "một danh sách". Dải quà bên trong giữ nguyên
-     `bg-accent-0` để tách khỏi dòng hàng — nó đang nằm trên mặt trắng, không phải
-     trên canvas. */
+  /* Ranh giới giữa các NHÓM lớn của cột trái. */
   html.skin-mp [data-screen="cart"] #cartList,
-  html.skin-mp [data-screen="cart"] #orderGift {
-    background: var(--general-background);
-    border-top: 1px solid var(--unofficial-border-1);
-    border-bottom: 1px solid var(--unofficial-border-1);
-    margin-top: 12px;
-  }
-  /* Thẻ khuyến mãi: đã sẵn viền 4 cạnh -> đúng khuôn thẻ lựa chọn của họ, chỉ
-     thiếu mặt trắng vì trước nay nền trang đã trắng. */
-  html.skin-mp [data-screen="cart"] div:has(> #promoPeek) {
-    background: var(--general-background);
-    border-color: var(--unofficial-border-1);
-  }
-  /* Chân trang `bg-secondary` = #f4f4f4, chỉ đậm hơn canvas 3/255 -> dính liền
-     khối cam kết phía trên thành một dải. Thêm đúng một kẻ theo hệ gạch, không
-     đổi nền (footer là component dùng chung mọi màn, đổi màu ở đây là lệch). */
-  html.skin-mp [data-screen="cart"] .bg-secondary.mt-4 {
+  html.skin-mp [data-screen="cart"] #orderGift,
+  html.skin-mp [data-screen="cart"] #cartCta {
     border-top: 1px solid var(--unofficial-border-1);
   }
-  /* Rãnh segmented "Giao hàng / Nhận tại cửa hàng": #f4f4f4 chỉ đậm hơn canvas
-     3/255 -> gần như mất rãnh, nút đang chọn hết đọc ra là đang chọn. Nâng đúng
-     một nấc; nút active vẫn là bg-background. */
-  html.skin-mp [data-screen="checkout"] div:has(> .seg) {
-    background: var(--unofficial-secondary-active);
+  /* Tên nhóm = nhãn hoa nhỏ (bên họ 10–12px uppercase). Markup đang 24px/font-light
+     cho tiêu đề 2 màn và 16px cho tiêu đề bước — kéo cả ba về cùng một bậc nhãn.
+     Chữ hoa ở đây là ngoại lệ AN TOÀN của quy ước "không dùng UPPERCASE": nằm
+     trong bộ da phải tự bật, đúng lý do đã chấp nhận cho nhãn menu của `skin-mt`.
+     `h2:has(#cartCount)` chứ không `h2` trần: màn giỏ desktop có 2 thẻ h2, cái
+     thứ hai là tiêu đề cột phải. */
+  html.skin-mp [data-screen="cart"] h2:has(#cartCount),
+  html.skin-mp [data-screen="checkout"] p.text-\[24px\],
+  html.skin-mp [data-screen="checkout"] .ck-title {
+    font-size: 12px; line-height: 16px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.15em;
   }
-  /* Hộp trạng thái tài khoản đầu cột trái tô `--unofficial-accent-0` bằng INLINE
-     STYLE — cùng token với canvas nên nay là hộp vô hình, và inline nên phải
-     !important mới đè được. KHÔNG nâng lên trắng: bên họ dòng tương đương
-     ("Connected as … / Log out") nằm trần trên nền xám, và nó là THÔNG BÁO chứ
-     không phải thứ chọn được. */
-  html.skin-mp [data-screen="checkout"] .flex-1 > .rounded-xs.mb-6 {
-    background: transparent !important;
-  }
+  /* (Đã gỡ 20/08: rule bỏ nền hộp trạng thái tài khoản — chỉ cần khi nền trang là
+     xám. Trên nền trắng, hộp `--unofficial-accent-0` #f7f7f7 tự đọc được.) */
 
   /* ── Độ đậm nhạt chữ của checkout theo Dior (20/08/2026, yêu cầu user) ────────
      Số đo lấy ở khổ MOBILE của họ (iframe 414 trên phiên đã đăng nhập — xem khối
@@ -1703,7 +1828,9 @@ window.RESP = (function () {
          chưa tới (hai trạng thái này dùng CHUNG một xám, không phải hai nấc)
        · "Edit" đi theo màu của bước
        · tóm tắt bước đã xong 12px w400 xám, cả cụm một cấp chữ phụ */
-  html.skin-mp [data-screen="checkout"] .ck-title { font-weight: 400; opacity: 1 !important; }
+  /* 20/08 (đổi hướng sang MR PORTER): bỏ phần `font-weight: 400` của Dior — tiêu
+     đề bước nay là NHÃN HOA w500 khai ở khối trên. `opacity` vẫn phải gỡ. */
+  html.skin-mp [data-screen="checkout"] .ck-title { opacity: 1 !important; }
   html.skin-mp [data-screen="checkout"] .ck-sec:not(:has(> .ck-open.is-open)) .ck-title,
   html.skin-mp [data-screen="checkout"] .ck-sec:not(:has(> .ck-open.is-open)) .ck-change {
     color: var(--general-muted-foreground);
@@ -1711,6 +1838,23 @@ window.RESP = (function () {
   html.skin-mp [data-screen="checkout"] .ck-done .acc-inner p {
     font-size: 12px; line-height: 16px; font-weight: 400;
     color: var(--general-muted-foreground);
+  }
+  /* Nút "Thay đổi" gạch chân như "Edit" của họ: gạch 1px ngay đáy hộp, chữ chừa
+     2px (họ vẽ bằng linear-gradient; ta dùng text-decoration — đúng linh kiện dự
+     án đã dùng cho link chữ, và gạch tự đổi màu theo chữ vì ăn currentColor). */
+  html.skin-mp [data-screen="checkout"] .ck-change {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+  /* Header màn Thanh toán: yêu cầu 20/08 là "về tone màu của nền" — nền nay đã
+     trắng nên chỉ còn phải GỠ phần tô xám, `glass-95` trắng gốc chính là tone của
+     nền. Giữ đúng một kẻ dưới (header của MR PORTER cũng tách bằng hairline).
+     CHỈ màn checkout: header ở đó rút còn mỗi logo nên tương đương header mobile.
+     Màn Giỏ hàng không đụng — ở đó là thanh nav đầy đủ (promo bar + 2 hàng nav +
+     9 panel mega), một việc khác hẳn. */
+  html.skin-mp [data-screen="checkout"] .navbar {
+    border-bottom: 1px solid var(--unofficial-border-1);
   }
 </style>
 </head>
@@ -3859,7 +4003,11 @@ function giftCard(g) {
   <div class="flex gap-2 px-4 pb-4">
     <span class="w-4 shrink-0" aria-hidden="true"></span>
     <span class="relative w-[100px] h-[133px] shrink-0 bg-background overflow-hidden">
-      <img src="${A}${g.img}" class="w-full h-full object-cover lazy" alt="">
+      <!-- alt PHẢI có nội dung: ảnh mang thông tin (món quà đang được nhận), không
+           phải ảnh trang trí. Alt rỗng là trình đọc màn hình bỏ qua hẳn.
+           KHÔNG dùng dấu backtick trong comment ở đây: khối này nằm bên trong một
+           template literal, backtick sẽ đóng chuỗi sớm và hỏng cả script. -->
+      <img src="${A}${g.img}" class="w-full h-full object-cover lazy" alt="Quà tặng ${g.brand} ${g.name}">
       <span class="absolute top-0 left-0 bg-primary text-[10px] font-semibold leading-3 text-primary-foreground px-1 py-0.5">Quà tặng</span>
     </span>
     <span class="flex-1 min-w-0 flex flex-col justify-between">
@@ -3904,7 +4052,7 @@ function giftOptionsHTML(pk) {
         <!-- 52×60: kích thước thumb CÓ SẮN trong tailwind.css (mini cart dùng chung).
                w-[40px]/h-[46px] KHÔNG được build — dùng là ảnh bụng ra kích thước gốc 1200×1484. -->
           <span class="w-[52px] h-[60px] shrink-0 bg-secondary overflow-hidden">
-          <img src="${A}${g.img}" class="w-full h-full object-cover lazy" alt="">
+          <img src="${A}${g.img}" class="w-full h-full object-cover lazy" alt="${g.brand} ${g.name}">
         </span>
         <span class="flex-1 min-w-0">
           <span class="block text-[14px] leading-5 text-foreground truncate">${g.name}</span>
@@ -4213,7 +4361,9 @@ function screenCART() {
         <button class="chk ${c.sel === false ? '' : 'on'} w-4 h-4 border border-border bg-background-3 rounded-xs shadow-sm flex items-center justify-center btn-o press" data-check>${I.tick}</button>
       </div>
       <div class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
-        <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
+        <!-- alt mang tên hàng: ảnh này là ĐƯỜNG DẪN vào PDP (data-product) và là
+             thứ phân biệt các dòng trong giỏ. -->
+        <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="${c.brand} ${c.name}">
         ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
       </div>
       <div class="flex-1 min-w-0 flex flex-col justify-between">
@@ -8780,7 +8930,7 @@ function applyTheme(id) {
    bảng màu gốc (hoặc ngược lại). */
 const SKINS = [
   ['default',   'Mặc định · Grey-Gold',  '',         'Bảng màu Figma của dự án',            'montserrat'],
-  ['editorial', 'Editorial · MR PORTER', 'skin-mp',  'Trắng–đen, serif Lora, góc vuông',    'lora'],
+  ['editorial', 'Editorial · MR PORTER', 'skin-mp',  'Trắng–đen, Montserrat, góc vuông',    'montserrat'],
   ['mytheresa', 'Mytheresa · chữ hoa',   'skin-mt',  'Nav CHỮ HOA 12px, đen thật, đơn sắc', 'montserrat'],
 ];
 let currentSkin = 'mytheresa';   // khớp class skin-mt đặt sẵn trên thẻ <html>

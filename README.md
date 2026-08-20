@@ -1145,7 +1145,202 @@ Nay gom về **một rule** trong khối `<style>` — sửa nền badge thì s�
 
 > **CÒN LỆCH — là lệch NỘI DUNG, không phải màu, chưa sửa vì user chỉ nói về màu:** PDP mobile treo tới **3 badge** (`Pre-order` · `New Season` · `La Vacanza`, tuỳ màn 1–3 cái), còn **PDP desktop chỉ treo `Pre-order`** — markup gallery desktop (`dkPdp`, tile đầu) không render 2 badge mùa vụ. Muốn đồng bộ nốt thì thêm chúng vào tile đầu của gallery desktop.
 
-## Giỏ hàng + Thanh toán của bộ da EDITORIAL: nền xám, khối trắng (19/08/2026, CẢ 2 BẢN)
+## Tiêu đề panel "Bộ lọc" cũng chữ hoa (20/08/2026, CẢ 2 BẢN)
+
+User: *"quay lại filter cho title 'Bộ lọc' khi bật bộ lọc sẽ uppercase lên luôn nhé"*.
+
+**Đây là thứ đã từng bị GỠ hồi 19/08.** Bản đầu của mục "Bộ lọc — hệ gạch đồng bộ" bê nguyên cả cụm linh kiện mytheresa, trong đó có *"tiêu đề panel 16px chữ hoa"*, và user bắt trả lại nguyên trạng vì sai hướng. Nay user gọi lại **đích danh mỗi chữ hoa** → làm đúng bấy nhiêu: **không** kèm đổi cỡ chữ (giữ 18px của dự án, không hạ về 16 như bản bị gỡ), **không** đổi weight.
+
+```css
+html.skin-mt #filterSheet div:has(> #filterClose) > p { text-transform: uppercase; }
+```
+
+**Bám `div:has(> #filterClose) > p`, không bám cỡ chữ** — hàng tiêu đề là hàng **duy nhất** chứa nút đóng, nên selector không vỡ khi thang chữ đổi. Dùng chung được cho cả 2 file dù chúng khác nhau ở chỗ khác (mobile là bottom-sheet có grabber, desktop là drawer có kẻ dưới header).
+
+Ba tầng chữ trong panel nay đọc ra rõ: **tiêu đề panel HOA** → **tiêu đề mục HOA, nhỏ hơn một nấc** → **cate/thương hiệu chữ thường**.
+
+**Đo lại:** mobile `skin-mt` ra `"Bộ lọc" 18px/28 w400 uppercase ls 0.5px` với tiêu đề mục `12px uppercase`; desktop ra `16px w400 uppercase` với tiêu đề mục `14px uppercase` (desktop có thêm một nấc cỡ chữ, đúng như đã chốt). `skin-mp` và bộ da Mặc định ra `tt=none` ở cả hai — không đụng. Console sạch trên tab mới ở cả 2 file.
+
+## Rà lại trang giỏ bằng checklist redesign (20/08/2026, CẢ 2 BẢN)
+
+User: *"hãy kiểm tra và nâng cấp cart mà bạn vừa tạo cho nó chuẩn chỉnh hơn"*. Chạy audit đo thực tế trên màn giỏ, đối chiếu từng điểm với quy ước dự án. **Nửa danh sách hoá ra là đúng sẵn — không sửa:**
+
+| Checklist nhắc | Đo được | Xử lý |
+|---|---|---|
+| Chữ dưới 12px | 9–10px, nhưng **toàn bộ** là wordmark (`VISA` `MASTER` `JCB` `AMEX` `MOMO` `TIKINOW`) + chấm đếm giỏ + badge "Quà tặng" | **giữ** — đúng ngoại lệ "wordmark thương hiệu và mã kỹ thuật" |
+| Thiếu hover / active / focus | có `.press`, **3 rule `:focus-visible`**, transition 0.12–0.18s trên nút và ô tick | **giữ** |
+| Trộn nhiều họ xám ở viền | `#ececec` ×20 là **kẻ chia khối**, `#dfdfdf` ×11 là **viền control** (ô nhập, nút Áp dụng, ô tick) — hai vai khác nhau nên hai sắc là có lý, và cùng một họ trung tính | **giữ**, không gộp |
+| Thiếu empty state | `cartEmptyHTML()` đã có, đã kiểm ở vòng trước | **giữ** |
+
+**Ba lỗi thật, đã sửa:**
+
+1. **Số tiền chạy chữ số tỉ lệ.** `.price` và `#cartTotal` đo ra `font-variant-numeric: normal`. Màn giỏ xếp giá theo **cột** ở mép phải (giá từng món · tạm tính · các dòng giảm · tổng cộng), mà chữ số tỉ lệ của Montserrat có bề rộng khác nhau → cột số răng cưa, và số lượng ở stepper nhảy ngang khi đổi `1 ↔ 2`.
+   ```css
+   [data-screen="cart"] { font-variant-numeric: tabular-nums; }
+   ```
+   Đặt **ở base, không trong bộ da** — chuyện đọc số, đúng cho cả 3 bộ da. Kế thừa nên phủ luôn số phát sinh về sau; font không có bảng `tnum` thì trình duyệt bỏ qua, không hỏng gì.
+
+2. **Nhịp dọc lệch — 3 chỗ.** Đo ra: hộp danh sách `pt=16 / pb=8`, hộp summary `pt=24 / pb=16` (cả hai **nặng đầu nhẹ chân**), và khe giữa các hộp chạy `12 · 24 · 12 · 40 · 16` vì phần bọc thẻ khuyến mãi mang `py-6`. Sửa: `#cartList` → `pb: 16`, `#cartCta` → `pb: 24`, phần bọc thẻ khuyến mãi bỏ padding dọc và dùng `margin-top: 12` như mọi hộp khác. Nay đỉnh–đáy cân và khe đều 12.
+
+3. **7/9 ảnh trong giỏ để `alt` rỗng** — ảnh sản phẩm và ảnh quà. Đây là ảnh **mang thông tin**: ảnh sản phẩm còn là đường dẫn vào PDP (`data-product`) và là thứ phân biệt các dòng; để rỗng là trình đọc màn hình bỏ qua hẳn, người dùng nghe hết dòng quà mà không biết quà là món gì. Nay `alt` mang `brand + name` (ảnh quà thêm tiền tố "Quà tặng"). Sửa ở **markup base**, không phải bộ da.
+
+> **Lỗi tự gây, bắt được ngay:** comment giải thích tôi thêm vào cạnh 4 thẻ `<img>` có chứa **dấu backtick** — mà cả khối markup đó nằm **bên trong một template literal**, nên backtick đóng chuỗi sớm và làm **cả script 512KB không parse** (`go`/`applySkin` thành `undefined`, trang trắng). Đã bỏ hết backtick trong các comment nằm trong template literal và ghi cảnh báo ngay tại chỗ. Bài học vận hành kèm theo: `read_console_messages` **giữ log cũ của tab qua điều hướng** — lỗi cũ vẫn hiện sau khi đã sửa, phải mở **tab mới** mới xác nhận được là sạch.
+
+**Đo lại:** mobile `skin-mt` ra hộp danh sách `pb=16`, phần bọc thẻ khuyến mãi `pt=0 pb=0 mt=12`, hộp summary `pt=24 pb=24`; `.price` và `#cartTotal` ra `tabular-nums`; **alt rỗng = 0/9**. Desktop ra `#cartList pb=16`, phần bọc khuyến mãi `mt=12`, `alt` rỗng = 0/15. `skin-mp` và bộ da Mặc định giữ nhịp cũ (`cartList pb=0`, phần bọc `pt=24`), riêng `tabular-nums` áp cho cả ba — đúng chủ ý. Console sạch trên **tab mới** ở cả 2 file.
+
+## Đóng hộp trang giỏ theo Maison Kitsuné (20/08/2026, CẢ 2 BẢN)
+
+User: *"https://maisonkitsune.com/ww/checkout/cart tham khảo cách hiển thị của maison kitsune rồi adapt vào trang cart"* → *"đây là hình tôi chụp được từ maison kitsune, hãy học cách họ đóng hộp các block cart"*.
+
+> **Không đo được, đọc từ ảnh.** Chrome chặn domain này ở tầng chính sách; Browser pane vào được nhưng dính Cloudflare *"Just a moment…"*. Nên đây là lần đầu trong dự án **không có computed style** của site tham chiếu — chỉ có ảnh chụp desktop mà user gửi.
+
+**Ba điểm đóng hộp học được:**
+
+1. **Tên hộp nằm BÊN TRONG hộp.** "CART (5 ARTICLES)" ở đỉnh hộp trắng, tách khỏi danh sách bằng một kẻ mảnh. Bản của ta trước đó để tiêu đề "Giỏ hàng (n)" đứng **ngoài**, trên canvas — đó là kiểu Dior, không phải kiểu này.
+2. **Các món ngăn nhau bằng kẻ mảnh bên trong hộp** — đã làm ở vòng trước, khớp sẵn.
+3. **Cột tóm tắt là một hộp gộp đủ**: tổng tiền + nút thanh toán + ô mã giảm giá + hộp con "Shipping and returns".
+
+**Adapt thành 3 hộp:**
+
+| Hộp | Gồm | Cách ghép |
+|---|---|---|
+| 1 | tiêu đề "Giỏ hàng (n)" · hàng "Chọn tất cả" · `#cartList` | ba phần tử **riêng** trong markup; cho cùng mặt trắng, bỏ khe giữa chúng, kẻ dưới ở hàng "Chọn tất cả" → ra một hộp. **Không sửa markup.** |
+| 2 | `#orderGift` (quà theo mốc đơn) | hộp riêng, cùng khuôn |
+| 3 | `discountPanel` (ưu đãi + các dòng giảm + **Tổng cộng**) · `#cartCta` (nút Đặt hàng + "Bạn có phiếu mua hàng?") | nối 2 khối liền kề thành một hộp — đúng bấy nhiêu nội dung như hộp "CHECKOUT SUMMARY" của họ |
+
+Thêm `padding-bottom: 8px` cho `#cartList` — bên họ món cuối không sát viền hộp.
+
+**Khổ desktop khớp họ nhiều hơn mobile:** cột phải (tóm tắt + nút + ô mã) vốn đã là `bg-card` + viền → đúng hộp "CHECKOUT SUMMARY", **không phải làm gì**. Nên desktop chỉ cần dựng Hộp 1 + Hộp 2. Selector khác mobile: `.flex-1 > div:has(> h2)` chứ không `> [data-scroller] > div:has(> h2)`, vì cột trái là `.flex-1` và màn giỏ desktop có **2 thẻ `h2`** (cái thứ hai ở cột phải).
+
+**Không bê nguyên:** giữ full-bleed (họ có lề ngoài + padding trong; khổ 375 mà thụt 2 lớp thì nội dung rơi quá sâu), giữ thang chữ và khuôn nút của dự án, **không** đổi chữ sang in hoa như họ.
+
+**Đo lại:** mobile `skin-mt` ra chuỗi liền mạch `y=76→128→153` cho [tiêu đề `bdT` 0.8px `mt=12`] → [chọn tất cả `bdB` 0.8px] → [`#cartList` `bdT=0` `bdB` 0.8px `pb=8`]; `#orderGift` hộp riêng `mt=12`; panel `mt=12` + `#cartCta` liền nhau, cả hai `rgb(255,255,255)`, kẻ đáy ở `#cartCta`. Desktop ra `y=213→278→314` cho cùng ba khối, cột phải vẫn `rgb(255,255,255)` viền `#dfdfdf`. `skin-mp` và bộ da Mặc định: tiêu đề `rgba(0,0,0,0)`, không kẻ, `cartList pb=0` — không lệch số nào. Console sạch cả hai.
+
+## Tạm ẩn dải "Mua thêm… để nhận…" + quà về chung block với món (20/08/2026, CẢ 2 BẢN)
+
+### 1. Tạm ẩn dải mốc quà CHƯA đạt
+
+User: *"tạm thời ẩn block 'Ưu đãi đơn từ 200 triệu / Mua thêm 13.943.000 ₫ để nhận Giày thể thao Greca Court trắng'"*. Đó là phần **teaser** của `orderGiftInner()` — mốc quà kế tiếp chưa đạt, dựng với `data-gift-next`.
+
+```css
+[data-gift-next] { display: none; }
+#orderGift:not(:has([data-gift-tier])) { display: none; }
+```
+
+**Ẩn bằng CSS chứ không xoá trong JS:** `refreshCartGifts` vẫn dựng lại như cũ, nên bật lại chỉ là xoá 2 dòng — không phải khôi phục logic. **Áp cho mọi bộ da** vì đây là chuyện nội dung demo, không phải style.
+
+**Rule thứ hai là chỗ dễ sót:** khi khách bỏ tick sản phẩm thì tạm tính rớt xuống dưới mốc, khối quà theo đơn **chỉ còn teaser** — không ẩn thì ở `skin-mt` còn lại một **tấm trắng rỗng** giữa trang. Đã kiểm: bỏ tick toàn bộ → `#orderGift` ra `display: none`.
+
+### 2. Quà theo sản phẩm về chung block với món
+
+User: *"gift đang nằm rời rạc ra khỏi block thẻ sản phẩm hãy làm cho nó nằm vào chung block để k tạo cảm giác lạc"*.
+
+Nguyên nhân "lạc": `.gift-group` tự tô `bg-accent-0` và chạy **full-bleed**, nên trên tấm trắng của `skin-mt` nó thành một **dải xám cắt ngang** — đọc ra là khối thứ ba, không phải phần đuôi của món.
+
+**Hai việc phải làm cùng nhau** (chỉ làm một là lạc kiểu khác):
+
+```css
+html.skin-mt [data-screen="cart"] .gift-group[data-gift-of] { background: transparent; }
+html.skin-mt [data-screen="cart"] #cartList .cart-row:not(:first-child) {
+  border-top: 1px solid var(--unofficial-border-1);
+}
+```
+
+- **Bỏ nền riêng** của dải quà → nó nối liền vào món ngay trên.
+- **Kẻ mảnh trước mỗi món** (trừ món đầu) → ranh giới ô nay nằm giữa các **món**, nên "món + quà của nó" đọc ra là một ô. Nếu chỉ bỏ nền mà không có kẻ này thì quà lại dính luôn vào món kế tiếp.
+
+`:not(:first-child)` chứ không `+`: dải quà chèn giữa các dòng, kẻ chỉ được rơi vào đầu mỗi món mới.
+
+**Quà theo MỐC ĐƠN trong `#orderGift` giữ nền `bg-accent-0`** — nó không thuộc món nào nên vẫn cần tự tách trên tấm trắng của khối riêng nó.
+
+**Đo lại — cả 2 file, vòng 3 bộ da:** teaser ra `display: none` ở **cả ba**; `#orderGift` vẫn `block` (còn mốc 150 triệu đã đạt) và ra `none` khi bỏ tick hết. `skin-mt`: quà theo SP `rgba(0,0,0,0)`, quà theo mốc `#f7f7f7`, kẻ ngăn món `row0=0` + `row1..4=0.8px`. `skin-mp` và bộ da Mặc định: quà theo SP giữ nền cũ (`#f7f7f7` / `#fafafa`) — không đụng. Console sạch cả hai.
+
+## `skin-mt`: trang giỏ nền xám để nhấn các block (20/08/2026, CẢ 2 BẢN)
+
+User: *"ở trang cart sẽ cho nền màu xám để nhấn các block"*. Câu này không nói bộ da nào — cả `skin-mt` và `skin-mp` khi đó đều đang nền trắng ở màn giỏ (`skin-mp` vừa bị gỡ nền xám ở vòng 6) nên **đã hỏi lại**, chốt: **`skin-mt`**.
+
+**CHỈ màn giỏ.** Màn Thanh toán của `skin-mt` giữ nền trắng — user nói "trang cart", không nói checkout.
+
+**Không phải dựng lại từ đầu:** lấy đúng bản đã chốt sau 5 vòng ở `skin-mp` (mục "Giỏ hàng + Thanh toán của bộ da EDITORIAL"), chỉ đổi tiền tố selector và để `var()` tự lấy token của `skin-mt`:
+
+| Phần | Làm gì | Token `skin-mt` |
+|---|---|---|
+| canvas `body` + `#viewport` | nền xám | `--unofficial-accent-0` = `#f7f7f7` |
+| `#cartList` · `#orderGift` | block trắng, full-bleed, kẻ trên/dưới, khe 12 | `--general-background` + `--unofficial-border-1` = `#ececec` |
+| thẻ khuyến mãi | thêm mặt trắng, viền về cùng sắc gạch | |
+| khối ưu đãi + tổng tiền | **bỏ** mặt `#f2f2f2`, hoà vào nền — nó chỉ đậm hơn canvas 5/255 nên để lại là mảng lem nhem; 2 thẻ bấm được bên trong vốn đã trắng + viền, chúng mới là block được nhấn | |
+| chân trang | giữ nền `#f2f2f2`, thêm 1 kẻ để không dính khối cam kết | |
+| dải mờ nút Đặt hàng nổi | fade về `#f7f7f7` thay vì trắng | |
+
+**Nhóm hàng GỘP một tấm, không tách từng dòng** — đúng bài học vòng 3: giỏ 5 món mà tách ra là 5 mảnh vụn. Dải quà `.gift-group` giữ nguyên `bg-accent-0`: nó nằm **trên mặt trắng** nên vẫn tách khỏi dòng hàng; chỉ khi bỏ tấm đi thì nó mới trùng canvas và biến mất.
+
+**Khổ desktop cần ít rule hơn** (4 thay vì 6): cột phải (tóm tắt đơn + tổng tiền) vốn là `bg-card` + viền → tự thành block trắng nổi trên canvas, không phải làm gì. Hai rule của riêng khổ hẹp — khối tổng tiền và dải mờ nút nổi — desktop không có.
+
+**Đo lại:** `skin-mt` màn giỏ ra `body`/`#viewport` = `rgb(247,247,247)`; `#cartList` + `#orderGift` trắng viền `#ececec` `mt=12px`; thẻ khuyến mãi trắng; khối tổng tiền `rgba(0,0,0,0)`; footer `#f2f2f2` + kẻ; `.gift-group` `#f7f7f7` trên mặt trắng; gradient sticky đã sang xám; **desktop thêm** cột phải `rgb(255,255,255)`. `skin-mt` màn **Thanh toán** vẫn `body` trắng. `skin-mp` và bộ da Mặc định không lệch số nào ở cả 2 file. Quét "có gì chìm vào canvas" trên 3 biến thể (vãng lai · đã đăng nhập · giỏ rỗng): **sạch cả 3**. Console sạch.
+
+## `skin-mt`: ô chọn màu ở listing thành VUÔNG (20/08/2026, CẢ 2 BẢN)
+
+User: *"ở skin mt pick màu ở listing hãy cho hình vuông thay vì hình tròn nhé"*.
+
+`.cw` là ô chọn màu trên **thẻ sản phẩm** — dùng ở PLP, hàng gợi ý, kết quả tìm. Không phải swatch ở PDP (chỗ đó là **ảnh**, không phải ô màu) và cũng không phải ô màu trong sheet bộ lọc.
+
+Vuông góc đúng mạch bộ da: mọi radius token của `skin-mt` đã là `0`, chỗ duy nhất còn tròn là mấy ô này vì `rounded-full` khai bằng **utility** chứ không qua token.
+
+```css
+html.skin-mt [data-swatches] .cw,
+html.skin-mt [data-swatches] .cw > span { border-radius: 0; }
+```
+
+**Phải đè cả BUTTON lẫn SPAN con.** Nền màu nằm ở span, không phải ở button: bỏ sót span là ra hình tròn lồng trong khung vuông. Ở desktop khoảng cách này còn rõ hơn — button là khung viền 20px, span màu 16px bên trong. `(0,3,1)` nên thắng utility `rounded-full` `(0,1,0)`, không cần `!important`.
+
+**Đo lại — cả 2 file, vòng 4 bộ da:** `skin-mt` ra `.cw r=0px` **và** `span r=0px` (mobile 18×18, desktop 20×20 + span 16); `skin-mp` và bộ da Mặc định giữ `9999px`. Quét 4 màn `plp · pdp · cart · checkout`: **0** phần tử `rounded-full` nào bị vuông lây ngoài `.cw`, và 8 phần tử tròn ở PDP vẫn `9999px`. Console sạch cả hai.
+
+> Làm **cả 2 bản** dù user không nói "làm desktop": đây là rule của bộ da, mà quy ước của dự án cho khối bộ da là *"khai giống hệt ở index.html và desktop.html"* — để lệch một file là chính bộ da tự mâu thuẫn.
+
+## Bộ da Editorial đo lại từ CHÍNH mrporter.com (20/08/2026, CẢ 2 BẢN)
+
+User: *"https://www.mrporter.com/en-vn/ — giờ thử áp skin mobile của website này vào skin mp"*.
+
+**Bối cảnh:** bộ da `skin-mp` mang tên MR PORTER nhưng số của nó dựng 18/08 từ **net-a-porter.com làm proxy** — hồi đó mrporter chặn cả browser lẫn WebFetch. Nay **Browser pane vào được trang chủ của họ**, nên thay số proxy bằng số thật.
+
+> **Chỉ vào được TRANG CHỦ.** Lần điều hướng thứ hai (`/mens/clothing`) ăn ngay "Access Denied" của bot-detection, và sau đó cả trang chủ cũng bị chặn theo. Nên **không có số của PLP/PDP** (tên sản phẩm, giá, brand) — phần đó vẫn là số cũ. Chrome thì chặn hẳn domain này ở tầng chính sách duyệt web, chỉ Browser pane vào được.
+
+**Đo được ở khổ 375** (thống kê theo số lần xuất hiện):
+
+| Vai | Số đo |
+|---|---|
+| **Thân bài** (220 lần, áp đảo) | `14/18` · w400 · ls **0.2px** · `#000` · **serif, họ khai thẳng `Georgia`** |
+| Chữ phụ | `12/18` · w400 · `#656565` |
+| Nhãn hoa | `10–12/16` · w400 · uppercase · ls 0.2px · font **SackersGothicStd** |
+| Tiêu đề nhỏ | `16/24` · w500 · `#000` |
+| **Nút chính** | nền `#000` · chữ **`#f0f0f0`** · viền 1px · **bo 2px** · `14` w500 · không hoa · cao 40 |
+| Mặt nền | `#fff` · `#f0f0f0` · `#eee` · `#cbcbcb` · `#656565` |
+
+**Đổi 8 token** (áp cả 2 file — token màu không phụ thuộc khổ):
+
+| Token | Cũ (proxy) | Mới (số thật) |
+|---|---|---|
+| `--general-foreground` · `--general-body-text` | `#1a1a1a` | **`#000000`** |
+| `--general-secondary-foreground` · `--unofficial-foreground-alt` | `#1a1a1a` | `#2b2b2b` |
+| `--general-muted-foreground` · `--unofficial-mid-deprecated` | `#767676` | **`#656565`** |
+| `--general-primary-foreground` | `#ffffff` | **`#f0f0f0`** |
+| `--general-secondary` · `--general-muted` | `#f4f4f4` | `#f0f0f0` |
+| `--focus-ring` · `--btn-focus-ring` | `#767676` | `#656565` |
+| `--radius-2` | `0px` | **`2px`** — nút của họ bo 2, và `--radius-2` đúng là nấc `rounded-xs` mà nút chính dùng; 4 nấc còn lại giữ 0 |
+| `--font-app` | `'Lora', …` | **`Georgia, 'Lora', …`** — họ khai thẳng Georgia; Lora tụt xuống làm lưới an toàn cho máy thiếu Georgia |
+| `body { letter-spacing }` | `0.01em` | **`0.2px`** — họ dùng px CỐ ĐỊNH ở cả 14 lẫn 12, không phải em |
+
+**Một chỗ CỐ Ý KHÔNG theo số đo — nhãn hoa giữ `0.15em`.** Nhãn hoa của họ đo ra `ls 0.2px`, nhưng nó chạy bằng **SackersGothicStd**, một Gothic bản thân đã rất rộng chân. Ta không có font đó; hạ tracking về 0.2px trên Georgia/Lora là nhãn dính chùm, mất hẳn chất eyebrow. Giữ `0.15em` để bù phần rộng mà font của họ có sẵn — đúng bài học "tham chiếu ≠ bê nguyên". Muốn sát hơn thì hạ dần `0.15 → 0.1em`, đừng lấy thẳng 0.2px.
+
+**Không đổi khuôn nút.** Của họ `14px w500 cao 40`, của ta `16px w400 cao 48` — đó là khuôn nút của dự án, đổi là đụng layout chứ không còn là bộ da.
+
+**Đo lại:** `skin-mp` ở cả 2 file ra `fg=#000000 · muted=#656565 · sec=#f0f0f0 · primaryFg=#f0f0f0 · r2=2px`, `body ls=0.2px font=Georgia color=rgb(0,0,0)`; nút Đặt hàng ra `bg #000 · chữ rgb(240,240,240) · bo 2px`. `skin-mt` (`#000`/`#666666`/`#f2f2f2`/`#ffffff`/`r2=0`/`ls 0.5px`/Montserrat) và bộ da Mặc định (`#0a0a0a`/`#737373`/`#f5f5f5`/`#fafafa`) **không lệch số nào**. Hai màn giỏ/thanh toán làm theo Dior vẫn chạy nguyên: canvas `#f7f7f7`, tấm trắng, footer nay `#f0f0f0` — **tách khỏi canvas rõ hơn trước** vì `--general-secondary` vừa xuống một nấc. Console sạch cả hai.
+
+## Giỏ hàng + Thanh toán của bộ da EDITORIAL (19–20/08/2026, CẢ 2 BẢN)
+
+> **⚠ ĐỌC VÒNG 6 TRƯỚC.** Năm vòng đầu dựng theo **Dior** (nền xám, khối trắng); vòng 6 user đổi hướng sang **MR PORTER** và phần nền xám **đã bị gỡ**. Các vòng 1–5 giữ lại làm hồ sơ số đo, không còn là mô tả code hiện tại.
+
+### Vòng 1–5 — hướng Dior (đã gỡ)
 
 Ba vòng yêu cầu, ghi đủ vì hai vòng đầu **đã sai và đã bị gỡ**:
 
@@ -1231,7 +1426,61 @@ User: *"thử chỉnh sửa lại độ đậm nhạt của màu text cũng như
 
 **Đo lại:** `index.html` bật `skin-mp` — bước đang mở ra `title 16px/24 w400 rgb(26,26,26)` + "Thay đổi" cùng màu, `head h=36 pb=12`, `sec pad=32px 0 24px`; bước chưa tới ra `rgb(118,118,118)` `op=1` `head h=24 pb=0` `sec pad=32px 0`; bấm "Xác nhận" thì bước 0 chuyển xám và tóm tắt ra `12px/16 w400 rgb(118,118,118)`. Khoảng cách giữa 2 tiêu đề bước chưa tới = **89px** (bên họ 87px sau khi quy đổi tỉ lệ ảnh). `desktop.html` ra đúng bộ màu đó, `sec pad` giữ `0px`. `skin-mt` và bộ da "Mặc định" ở cả 2 file giữ nguyên: `sec pad=8px 0`, `head h=56/72`, tiêu đề đen. Console sạch cả hai.
 
-> **Chưa nhìn được bản của MÌNH bằng mắt:** Browser pane của phiên này không compositing nên không chụp được ảnh, và Chrome (nơi xem được Dior) không cho mở `localhost`/`file://`. Số đo bên Dior là ảnh chụp thật + computed style; số đo bên ta **chỉ là computed style**.
+### Vòng 5 — 3 chi tiết còn lệch (20/08/2026)
+
+User: *"cục giỏ hàng của bạn cũng sẽ thụt vô 16px đồng bộ với các nội dung bên dưới, header có logo cũng cho về tone màu xám của nền nhé, các nút edit (thay đổi) sẽ có underline y chang dior"*.
+
+| Việc | Số đo Dior mobile | Làm gì |
+|---|---|---|
+| Cục "Giỏ hàng của bạn" (`.ck-sum`) | card "Order Summary" có **lề ngoài 16**, chữ bên trong ở 32 | `margin: 12px 16px 0` + **viền 4 cạnh** thay cho mỗi kẻ dưới → mép tấm `x=16 w=343`, chữ `x=33` |
+| Header có logo | `#f8f8f8` — **cùng màu canvas**, không phải trắng — tách bằng đúng một kẻ `1px #e5e5e5` | `.navbar` → `--unofficial-accent-0` + kẻ `--unofficial-border-1` |
+| "Thay đổi" / "Edit" | gạch **1px** ngay đáy hộp, chữ chừa `padding-bottom: 2px`, vẽ bằng `linear-gradient` cùng màu chữ | `text-decoration: underline` + `thickness 1px` + `offset 2px` |
+
+**Sticky mà có lề vẫn an toàn** — chỗ này đáng lo nên đã kiểm riêng: `.ck-sum` ghim ở `top: 0`, nếu các thẻ cuộn qua bên dưới rộng hơn nó thì sẽ lòi ra hai bên. Đo: thẻ `.opt` và ô nhập đều nằm trong `px-4` → `x=16 w=343`, **trùng đúng biên** với tấm sau khi thêm lề. Hai dải `0..16` và `359..375` luôn là canvas.
+
+**Gạch chân dùng `text-decoration` chứ không chép `linear-gradient` của họ** — đúng linh kiện dự án đã dùng cho mọi link chữ, và gạch tự đổi màu theo chữ khi bước chuyển đen ↔ xám vì `text-decoration` ăn `currentColor`. Chép gradient thì phải khai lại màu hai lần.
+
+**Bản desktop:** lấy gạch chân + header. Header **chỉ ở màn Thanh toán** — ở đó header rút còn mỗi logo nên tương đương thanh header mobile. **Màn Giỏ hàng không đụng**: header desktop ở đó là thanh nav đầy đủ (promo bar + 2 hàng nav + 9 panel mega), đổi nền cả cụm là việc khác hẳn, phải đo lại nav của họ trước. `.ck-sum` không có ở desktop (cột phải thay vai đó).
+
+**Đo lại:** mobile `skin-mp` ra `.ck-sum x=16 w=343 mar=12px 16px 0 bd=0.8px #ebebeb`, chữ trong tấm `x=33`, `.opt x=16 w=343` (trùng biên), navbar **cả 2 màn** `rgb(247,247,247)` + kẻ `#ebebeb`, `.ck-change` `underline 1px offset 2px` màu theo bước. Desktop `skin-mp` ra navbar checkout xám + kẻ, `.ck-change` underline, navbar màn giỏ giữ nguyên `rgba(0,0,0,0)`. `skin-mt` và bộ da Mặc định ở cả 2 file: navbar `color(srgb 1 1 1 / 0.95)` không kẻ, `.ck-sum x=0 mar=0 bd=0`, `.ck-change` không gạch. Console sạch cả hai.
+
+### Vòng 6 — ĐỔI HƯỚNG: bỏ nền xám, về MR PORTER (20/08/2026)
+
+User: *"ở skin mp giờ sẽ k dùng font lora nữa nhé, dùng mặc định montserrat luôn, giờ chỉnh lại cái giỏ hàng và checkout theo style mrporter nhé"*. Hỏi rõ "chỉnh theo MR PORTER nghĩa là gì" thì chốt: **bỏ nền xám, về nền trắng**.
+
+**Hai việc:**
+
+1. **Bỏ serif.** `--font-app` của `skin-mp` về `'Montserrat', ui-sans-serif, …` ở cả 2 file, và cột phông trong `SKINS` đổi `'lora'` → `'montserrat'` để `applySkin` reset đúng (không thì đổi da xong phông cũ còn ghim lại). **Cố ý lệch số đo** — thân bài của MR PORTER là serif, họ khai thẳng `Georgia` — đây là quyết định của user, không phải đo sai. Bộ da nay phân biệt với 2 bộ kia bằng **bảng màu + tracking + khuôn nav**, không còn bằng mặt chữ.
+2. **Gỡ toàn bộ lớp nền xám kiểu Dior**, dựng lại 2 màn theo ngôn ngữ MR PORTER.
+
+> **⚠ KHÔNG đo được giỏ/checkout CỦA MR PORTER.** `/en-vn/shoppingbag` trả 404; `/en-vn/checkout` giỏ rỗng nên đá thẳng về trang chủ. Các số dưới đây **suy từ ngôn ngữ đo được ở trang chủ** của họ, không phải từ chính 2 màn đó. Nếu có ảnh chụp 2 màn ấy thì làm lại được cho đúng.
+
+| Gỡ | Thêm |
+|---|---|
+| canvas `#f7f7f7` trên `body`/`#viewport` | nền trắng — không khai gì, đúng mặc định file |
+| `#cartList`/`#orderGift` thành tấm trắng có viền + `margin-top` | **kẻ mảnh** `#ebebeb` ngăn các nhóm: danh sách hàng · quà theo mốc · khối ưu đãi+tổng · cụm Đặt hàng |
+| — | **kẻ giữa từng món** trong giỏ: `#cartList .cart-row:not(:first-child)` — dùng `:not(:first-child)` chứ không `+` vì dải quà chèn giữa và phải dính món của nó |
+| thẻ khuyến mãi tô trắng | (bỏ — trên nền trắng không cần) |
+| kẻ trên chân trang | (bỏ — `#f0f0f0` trên trắng tự tách) |
+| rãnh segmented nâng lên `#ebebeb` | (bỏ — `#f0f0f0` trên trắng đọc được) |
+| hộp trạng thái tài khoản bỏ nền (2 file) | (bỏ — `#f7f7f7` trên trắng đọc được) |
+| gradient nút Đặt hàng nổi fade về xám | (bỏ — gradient trắng gốc lại đúng) |
+| header tô xám | header giữ `glass-95` trắng gốc, **chỉ giữ lại 1 kẻ dưới** — "về tone màu của nền" nay chính là trắng |
+| `.ck-title { font-weight: 400 }` của Dior | **nhãn hoa nhỏ** cho tên nhóm |
+
+**Nhãn hoa là nét nhận dạng chính của hướng mới.** Trang chủ họ gọi tên nhóm bằng `10–12px uppercase` (font SackersGothicStd). Ta kéo **ba** chỗ về cùng một bậc nhãn `12/16 · w500 · uppercase · ls .15em`: tiêu đề màn giỏ, tiêu đề màn thanh toán, tiêu đề mỗi bước checkout. Chữ hoa ở đây là **ngoại lệ an toàn** của quy ước "không dùng UPPERCASE" — nằm trong bộ da phải tự bật, đúng lý do đã chấp nhận cho nhãn menu của `skin-mt`.
+
+Selector khác nhau giữa 2 file: mobile là `h2` + `.ck-h1`; desktop **không có** `.ck-h1` và màn giỏ có **2 thẻ `h2`** (cái thứ hai là tiêu đề cột phải) → dùng `h2:has(#cartCount)` + `p.text-\[24px\]`.
+
+**Giữ lại từ vòng 4–5** (là chuyện của CHỮ, không phải của nền, và vẫn hợp editorial): nhịp `padding: 32px 0 24px` cho mỗi bước · bỏ chiều cao cố định hàng tiêu đề · phân cấp bước bằng **màu** thay `opacity` · tóm tắt bước đã xong `12/16` xám · "Thay đổi" gạch chân `1px offset 2px` · `.ck-sum` thụt vào 16 kèm viền (user yêu cầu đích danh, không rút lại).
+
+**Một lỗi tự gây, bắt được lúc kiểm:** ở `desktop.html` mình chèn khối chú thích mới **ngay sau** `*/` của comment cũ mà quên mở `/*` → cả đoạn thành text trần trong CSS, parser nuốt luôn rule `.cart-row:not(:first-child)` đứng sau nó. Triệu chứng rất dễ đọc nhầm: `#cartList` có kẻ (rule sau đó) nhưng từng dòng thì không, trông như selector sai chứ không như lỗi cú pháp. Cách phát hiện: duyệt `document.styleSheets` đếm rule khớp `cart-row` — ra **0** trong khi `element.matches(selector)` ra **true**, tức selector đúng mà rule không tồn tại.
+
+**Đo lại — cả 2 file, `skin-mp`:** `body`/`#viewport` trắng; `#cartList` · `#orderGift` · `#cartCta` (và trên mobile cả khối ưu đãi+tổng) đều `border-top 1px #ebebeb`; `row0` không kẻ, `row1..4` có kẻ; tiêu đề giỏ và tiêu đề thanh toán ra `12px w500 uppercase ls 1.8px`; 3 `.ck-title` ra `12px w500 uppercase`, bước đang mở `rgb(0,0,0)` còn 2 bước kia `rgb(101,101,101)`; navbar trắng 95% + kẻ dưới `#ebebeb`; hộp thông báo trở lại `#f7f7f7`; gradient sticky trở lại trắng. Đếm rule trong `document.styleSheets`: **16/16** rule `skin-mp [data-screen=…]` đều được parse. `skin-mt` và bộ da Mặc định: `#cartList` không kẻ, `h2` vẫn `18px none`, navbar không kẻ — không lệch số nào. Console sạch cả hai.
+
+> **Chưa nhìn được bản của MÌNH bằng mắt:** Browser pane của phiên này không compositing nên không chụp được ảnh, và Chrome không cho mở `localhost`/`file://`. Số đo bên ta **chỉ là computed style**.
+
+> **`desktop-editorial.html` NAY ĐÃ LỆCH HẲN** — hỏi 3 lần chưa có chốt nên vẫn không đụng. File đó lấy `skin-mp` làm bộ da **mặc định**, mà `skin-mp` ở 2 file kia vừa đổi: bảng màu (đo lại từ mrporter thật), mặt chữ (Lora → Montserrat), và toàn bộ 2 màn giỏ/thanh toán. Nên hiện `desktop-editorial.html` là bản `skin-mp` **cũ**, không còn khớp với chính bộ da cùng tên ở 2 file kia. Đồng bộ hay để nguyên làm ảnh chụp của hướng cũ — cần user quyết.
 
 > **`desktop-editorial.html` CHƯA ÁP** — cố ý hỏi trước. Ở file đó `skin-mp` là bộ da **mặc định**, nên thêm khối này vào là đổi luôn giao diện mở-ra-thấy-ngay của file, đúng thứ user vừa yêu cầu tránh ở `index.html`/`desktop.html`.
 
