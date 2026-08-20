@@ -1145,6 +1145,25 @@ Nay gom về **một rule** trong khối `<style>` — sửa nền badge thì s�
 
 > **CÒN LỆCH — là lệch NỘI DUNG, không phải màu, chưa sửa vì user chỉ nói về màu:** PDP mobile treo tới **3 badge** (`Pre-order` · `New Season` · `La Vacanza`, tuỳ màn 1–3 cái), còn **PDP desktop chỉ treo `Pre-order`** — markup gallery desktop (`dkPdp`, tile đầu) không render 2 badge mùa vụ. Muốn đồng bộ nốt thì thêm chúng vào tile đầu của gallery desktop.
 
+## Cookie: đảo thang nút — 1 primary dưới cùng (20/08/2026, CẢ 2 BẢN)
+
+User: *"cục cookies sẽ cho button primary là đồng ý nằm dưới cùng, 2 lựa chọn reject và tùy chọn sẽ nằm chung 1 hàng bên trên button đồng ý"*.
+
+**Đảo lại chốt 17/08.** Bản cũ: "Từ chối tất cả" + "Chấp nhận tất cả" **ngang cấp** cùng hàng, cả hai nút đặc; "Tùy chọn Cookie" nút viền full-width ở dưới.
+
+| | Trên | Dưới |
+|---|---|---|
+| Cũ (17/08) | `[Từ chối ĐẶC]` `[Chấp nhận ĐẶC]` | `[Tùy chọn — viền, full]` |
+| Nay (20/08) | `[Từ chối — viền]` `[Tùy chọn — viền]` | `[Chấp nhận — ĐẶC, full]` |
+
+**"Từ chối tất cả" phải xuống nút viền theo.** Nếu để nguyên nút đặc thì hàng trên có một nút đặc + một nút viền → đọc ra là **hai cấp khác nhau**, trong khi user gọi cả hai là "lựa chọn". Nay hàng trên là hai nút cùng khuôn, và cả cụm còn **đúng một** nút đặc — đúng nghĩa "primary".
+
+> ⚠ **Ghi lại cho lần rà soát pháp lý:** "Từ chối" vẫn giữ **nguyên cỡ, nguyên chiều cao, nguyên cỡ chữ** như "Chấp nhận" (mobile `h-12`, desktop `h-11`, cùng `font-medium`) — chỉ khác mặt nền. Không thu nhỏ, không đẩy thành chữ mờ, không giấu sau một lớp nữa. Nếu sau này khách yêu cầu chuẩn GDPR chặt hơn thì chỗ cần xem lại là **độ nổi của nút Từ chối so với Chấp nhận**, không phải vị trí.
+
+Sửa ở **markup base**, không phải bộ da — đây là thứ tự và cấp bậc nút, mọi bộ da đều dùng chung. Nhãn giữ nguyên nên **không đụng key i18n** nào.
+
+**Đo lại:** mobile ra hàng trên `Từ chối tất cả` + `Tùy chọn Cookie` cùng `167×48` nền trắng viền 1px, dưới cùng `Chấp nhận tất cả` `341×48` nền `rgb(0,0,0)` chữ trắng. Desktop ra `181×44` / `181×44` rồi `370×44`. **Handler vẫn sống sau khi đổi chỗ markup:** bấm "Tùy chọn Cookie" ở cụm đáy mobile → `intro` ẩn, `prefs` hiện, bấm "Quay lại" → về đúng view đầu; desktop → `#cookiePrefs` bỏ `pointer-events-none` và `aria-hidden` về `false`. Console sạch trên tab mới ở cả 2 file.
+
 ## Tiêu đề panel "Bộ lọc" cũng chữ hoa (20/08/2026, CẢ 2 BẢN)
 
 User: *"quay lại filter cho title 'Bộ lọc' khi bật bộ lọc sẽ uppercase lên luôn nhé"*.
