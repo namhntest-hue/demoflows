@@ -56,6 +56,10 @@ Chip/hàng chọn size ở **PDP + quick add** (và dải size hover trên card 
 - Nhãn có tiền tố chảy vào cả dòng biến thể tấm xác nhận (`Nero , IT 40`) và label trigger dropdown.
 - **Mobile** giữ `data-size` = số thô (logic `OOS_MODE`/`SIZE_LOW_STOCK` tra thẳng); **desktop** `data-size` = chính label nên 2 chỗ tra cứu trong `setCta`/dropdown phải bóc qua `sizeRaw()` — thêm size mới nhớ đi qua `sizeLabel`/`sizeRaw`, đừng tra map bằng nhãn có tiền tố.
 
+## Chấm đếm giỏ: đổi đỏ → ĐEN (21/08/2026, CẢ 2 BẢN)
+
+Đã thử phương án số đếm nằm giữa thân túi kiểu mytheresa (chữ trần 10px, không nền) theo ref user gửi, rồi user chốt **trả lại chấm đếm như cũ, chỉ đổi màu nền đỏ → đen**: `bg-destructive` → `bg-primary`, chữ trắng giữ nguyên, vị trí/kích thước (15×15, góc trên phải) giữ nguyên. Desktop áp cùng ngày ở cả 2 chỗ có badge: header (`dkNavRow`) + navbar trong drawer menu (`navRoot`). Cỡ 9px + `font-bold` là hiện trạng cũ giữ theo yêu cầu — vẫn lệch thang (T7 badge giỏ = 10px, bold bị cấm §1.1), chờ đợt remap Phần 6 STYLE-RULES. 3 bản skin desktop chưa áp.
+
 ## Quà tặng trong giỏ (13/08/2026, CẢ 2 BẢN)
 
 Hai cơ chế theo yêu cầu user, **cùng chạy trong màn Giỏ hàng**:
@@ -669,19 +673,19 @@ Markup `.pc-sizes` dựng cho **mọi bộ da**, việc bật/tắt do CSS gác 
 Trước đó nền tấm là `rgba(249,249,249,.82)` **chép cứng của hugoboss** — đứng yên ở mọi bộ da và không ăn nhập với header của chính mình. Nay:
 
 ```css
-/* token DÀNH RIÊNG cho mặt phẳng có blur (tailwind map thành `bg-blur`) */
-background: var(--general-background-blur);
+background: var(--general-background-blur);                                  /* fallback không color-mix */
+background: color-mix(in srgb, var(--general-background) 75%, transparent);  /* 21/08: hạ độ đục -> 75% */
 backdrop-filter: blur(7.5px);            /* đúng số của .navbar */
 
 /* = đúng .ghost-hover:hover mà cụm Nam/Nữ/Làm đẹp (.dk-dept) dùng */
 .pc-size:hover { background: var(--unofficial-ghost-hover); color: var(--general-primary); }
 ```
 
-> **Dùng `--general-background-blur`, KHÔNG tự pha lại bằng `color-mix` như `.glass-95`.** Bản đầu mình chép công thức của `.glass-95`; user chỉ ra hệ token **đã có sẵn token dành riêng cho mặt phẳng blur** — dùng nó mới đúng, khỏi công thức chép tay. Giá trị: bản gốc + `skin-mt` = `#ffffffe5`, mode GM trong `tokens.css` = `#f5f5f5`.
+> **Lịch sử nền tấm này qua 3 nấc:** bản đầu chép công thức `.glass-95` → user chỉ ra hệ token **có sẵn token dành riêng cho mặt phẳng blur** `--general-background-blur` (`#ffffffe5` ≈ 90%; mode GM = `#f5f5f5`) nên đổi sang token → **21/08/2026 user yêu cầu "quick add desktop giảm opacity xuống 75%"**: token cố định ~90% không chỉnh nấc được nên quay lại công thức `color-mix` của họ `.glass-*` nhưng pha **trên token nền** (mode GM vẫn đổi theo), giữ dòng token làm fallback cho trình duyệt không có color-mix.
 
 > **Chép 2 khai báo hover thay vì gắn class `.ghost-hover` vào markup.** Rule nghỉ của `.pc-size` là **(0,2,1)**, còn `.ghost-hover:hover` chỉ **(0,2,0)** — gắn class cũng vô dụng vì `background: transparent` lúc nghỉ sẽ đè mất hover.
 
-**Đo ở `skin-mt`**: tấm size ra `rgba(255,255,255,0.898)` + `blur(7.5px)` — đúng token `#ffffffe5`; header `color(srgb 1 1 1 / 0.95)` + cùng blur (nav dùng `.glass-95` 95%, tấm dùng token blur 90% — **cùng một hệ, hai vai khác nhau**). 2 rule hover in ra **trùng từng khai báo**:
+**Đo ở `skin-mt`** (đo lại 21/08 sau khi hạ độ đục): tấm size ra `color(srgb 1 1 1 / 0.75)` + `blur(7.5px)`; header `color(srgb 1 1 1 / 0.95)` + cùng blur (nav dùng `.glass-95` 95%, tấm quick add 75% — **cùng một hệ, hai vai khác nhau**). 2 rule hover in ra **trùng từng khai báo**:
 `.ghost-hover:hover {background: var(--unofficial-ghost-hover); color: var(--general-primary);}`
 `html.skin-mt .pc-size:hover {background: var(--unofficial-ghost-hover); color: var(--general-primary);}`
 Bố cục không đổi: **4 cột × 2 hàng · viền ô 0px**. Console sạch trên tab mới.
@@ -741,6 +745,17 @@ Giữ **tên thương hiệu + tên sản phẩm · màu (nếu có) · size**. 
 **Đo lại** (`skin-mt`, SP chip idx 0): gallery **đã bỏ** · giá **đã bỏ** · còn `Versace · Đầm lụa mini Broken Jewels · Màu sắc · Kích thước` + 6 chip · sheet cao `374px`. Thêm giỏ ra `Broken Jewels , 39`. SP dropdown (idx 1) mở đúng sheet "Chọn size" 2 dòng, quick add sheet **không** mở. 2 bộ da kia vẫn `gallery=có · giá=có`. Console sạch trên tab mới ở cả 2 file.
 
 > ⚠ **Một câu chưa rõ trong yêu cầu:** phần đầu ghi *"giữ lại tên sản phẩm"* nhưng vế cuối lại ghi *"bỏ hình và tên"*. Mình hiểu vế cuối là gõ nhầm của **"bỏ hình và tiền"** (nhắc lại vế đầu) nên **GIỮ tên**. Nếu thật sự muốn bỏ tên thì sửa 1 dòng trong `quickAddBody`.
+
+## Checkout desktop: dropdown địa giới tại ô + nút full width (21/08/2026, CHỈ desktop.html)
+
+4 yêu cầu user, đều trong màn Thanh toán bản desktop (3 bản skin desktop CHƯA áp):
+
+- **Ô chọn Tỉnh/thành · Phường xã · Thành phố · Tỉnh thành sinh sống**: bỏ khuôn nửa cột `grid grid-cols-2` → **full width** theo cột form (ô nằm trong `pickField`, đo 667px trên cột 699px).
+- **Bấm ô xổ DROPDOWN ngay dưới ô** thay vì popup `#pickSheet` giữa màn. Popup + IIFE cũ **đã xoá**, thay bằng module `__openPickDD(btn, opts, current, cb)` cùng khuôn dropdown chọn size PDP5/6: listbox `[data-pick-list]` (ăn viền 1px/không bóng theo khối KHUÔN CHUNG CHO MỌI LỚP NỔI), max-height 260px, hàng `min-h-11`, chọn xong tự đóng, bấm ra ngoài/bấm lại ô là đóng, caret xoay + `aria-expanded`. Danh sách **> 8 mục** (10 tỉnh) có ô tìm kiếm đầu listbox — giữ nguyên tính năng gõ không dấu (`norm`) + tô đậm khớp (`highlightMatch`) của popup cũ; ≤ 8 mục (3 thành phố, ≤ 7 phường) không có ô tìm. `wireAddressPickers` giữ nguyên ràng buộc tỉnh→phường, thành phố→cửa hàng (đổi thành phố vẫn `rerenderCheckout` — dropdown sống trong DOM màn nên tự bị dọn).
+- **Nút "Xác nhận" (3 bước) + "Đặt hàng"**: `h-12 px-10 inline-flex` (hug) → **`w-full`**, thêm `leading-5` đi cặp cỡ 16 (trước đó `text-[16px]` trần).
+- **Nút "Thay đổi"** (`.ck-change`): `16/24 font-light` → **`12/16 + underline`**, weight 400 (bỏ `font-light` — 300 bị STYLE-RULES §1.1 cấm). Rule gạch chân riêng của skin-mp giờ trùng với markup, vô hại.
+
+**Soát text style cùng lượt (thang markup 12/14/16/18/24/32/48, size đi cặp leading):** trong checkout đã sửa `text-[13px]`→`14` (8 chỗ: thẻ cửa hàng, dòng địa chỉ sổ, ghi chú pickup, đếm cửa hàng, ghi chú giữ đơn, `storeLines`) · `text-[11px]`→`12 leading-4` ("(Mặc định)") · brand + giá trong panel tóm tắt `13` thiếu leading → `14 leading-5`. **Còn tồn, chưa đụng** (thuộc đợt remap Phần 6 STYLE-RULES, "demo chưa sửa theo"): `.ck-title 16/24 font-medium` (cỡ 16 sẽ bị thang skin-mt bỏ; 500 chữ thường là trạng thái lai §1.1) · nhãn `tracking-[0.2em]` ở panel tóm tắt + thẻ Membership (chờ rule chặn §4.1) · `text-[12px]` thiếu leading trong hàng SP panel tóm tắt · màn Hoàn tất còn 4× `text-[13px]` + `font-semibold` + `tracking-wider` trên 2 nút.
 
 ## Vào checkout LUÔN mở bước "Vận chuyển" (19/08/2026, CẢ 2 BẢN)
 

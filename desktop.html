@@ -535,7 +535,7 @@ window.RESP = (function () {
      Sửa 1 chỗ này là đổi cả bộ; ĐỪNG thêm border/box-shadow vào từng mặt. */
   .dk-modal, .dk-drawer, .lp-card, .cc-drop,
   #infoSheet .is-panel, #filterSheet .fs-panel,
-  #cookieBar, #cookiePrefs .cp-panel, #settingsPanel .sp-card, #sortMenu, [data-size-list] {
+  #cookieBar, #cookiePrefs .cp-panel, #settingsPanel .sp-card, #sortMenu, [data-size-list], [data-pick-list] {
     border: 1px solid var(--general-border);
     box-shadow: none;
   }
@@ -1558,8 +1558,13 @@ window.RESP = (function () {
        trong tokens.css là `#f5f5f5`.
        (Trước đây hardcode rgba(249,249,249,.82) chép của hugoboss — đứng yên ở
        mọi bộ da, không ăn nhập với header của chính mình.)
-       Blur giữ 7.5px = đúng số của `.navbar`. */
+       Blur giữ 7.5px = đúng số của `.navbar`.
+       21/08/2026 (yêu cầu user): hạ độ đục 90% -> 75% cho nhìn xuyên ảnh nhiều
+       hơn — pha bằng đúng công thức họ `.glass-*` của dự án (color-mix trên
+       token nền, mode GM đổi theo); dòng token cũ giữ làm fallback cho trình
+       duyệt không có color-mix. */
     background: var(--general-background-blur);
+    background: color-mix(in srgb, var(--general-background) 75%, transparent);
     -webkit-backdrop-filter: blur(7.5px);
             backdrop-filter: blur(7.5px);
     opacity: 0; transform: translateY(6px); pointer-events: none;
@@ -2725,7 +2730,7 @@ function navBar({ logoOnly = false, plp = false } = {}) {
           <button class="ghost-hover w-11 h-11 rounded-xs flex items-center justify-center press [&_svg]:w-4 [&_svg]:h-4" data-nav="${ckAuth ? 'account' : 'login'}" aria-label="Tài khoản">${I.user}</button>
           <button data-nav="cart" class="ghost-hover w-11 h-11 rounded-xs flex items-center justify-center press relative [&_svg]:w-4 [&_svg]:h-4" aria-label="Giỏ hàng">
             ${I.bag}
-            <span class="cart-badge absolute top-1.5 right-1 min-w-[15px] h-[15px] px-1 rounded-full bg-destructive text-primary-foreground text-[9px] font-bold flex items-center justify-center">${cartQty}</span>
+            <span class="cart-badge absolute top-1.5 right-1 min-w-[15px] h-[15px] px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">${cartQty}</span>
           </button>
         </div>
         <!-- Ô nhập tìm kiếm: ĐÈ LÊN CẢ HÀNG NAV (đổi 17/08/2026 theo tham chiếu
@@ -4995,7 +5000,9 @@ function ckSection(i, title, openBody, doneBody) {
     <!-- Hàng tiêu đề bước 56 -> 72px: nhịp thoáng kiểu Farfetch (14/08/2026) -->
     <div class="h-[72px] px-4 flex items-center justify-between">
       <p class="ck-title text-[16px] font-medium leading-6 text-foreground transition-opacity duration-300">${title}</p>
-      <button class="ck-change text-[16px] font-light leading-6 text-foreground press" data-goto="${i}">Thay đổi</button>
+      <!-- 21/08/2026 (yêu cầu user): 16/24 font-light -> 12/16 + underline; bỏ
+           font-light vì 300 bị STYLE-RULES cấm (§1.1), link chữ dùng 400. -->
+      <button class="ck-change text-[12px] leading-4 underline text-foreground press" data-goto="${i}">Thay đổi</button>
     </div>
     <div class="ck-open acc-body"><div class="acc-inner">${openBody}</div></div>
     <div class="ck-done acc-body"><div class="acc-inner">${doneBody || ''}</div></div>
@@ -5023,7 +5030,7 @@ let ckProvince = '', ckWard = '';   // lựa chọn hiện tại ở form giao h
 /* ── Cửa hàng cho luồng "Nhận tại cửa hàng" (đồng bộ với index.html) ──
    Dữ liệu DEMO gom theo thành phố đúng thứ tự thao tác: chọn thành phố ->
    danh sách cửa hàng lọc theo thành phố đó. Dùng chung dialog chọn 1 giá trị
-   (__openPicker) với ô tỉnh/phường nên không phát sinh kiểu UI mới. */
+   (__openPickDD) với ô tỉnh/phường nên không phát sinh kiểu UI mới. */
 const DAFC_STORES = [
   ['TP. Hồ Chí Minh', [
     ['DAFC Union Square',   'Union Square, 171 Đồng Khởi, Phường Sài Gòn',   '09:30 – 21:30'],
@@ -5084,17 +5091,19 @@ const field = (label, ph, type, opts = {}) => {
 };
 
 /* Ô chọn địa giới: nhìn y như input ở trên (h-10, viền, r2) nhưng là button
-   mở dialog chọn — cùng cách PDP thay <select> bằng sheet chọn size.
-   label[for] + id trên button: bấm nhãn cũng mở được dialog và trình đọc màn
-   hình đọc được tên nút; aria-haspopup báo trước là sẽ mở hộp thoại. */
+   xổ DROPDOWN ngay dưới ô — cùng khuôn dropdown chọn size của PDP5/6
+   ([data-size-dd]). 21/08/2026 (yêu cầu user): thôi mở popup #pickSheet giữa
+   màn; ô cũng FULL WIDTH theo cột form thay vì nằm nửa cột grid-cols-2.
+   label[for] + id trên button: bấm nhãn cũng mở được; aria-haspopup="listbox"
+   + aria-expanded do __openPickDD cập nhật. */
 const pickField = (label, ph, key, val) => `
     <div class="px-4 py-2 flex flex-col gap-2">
       <label for="pk-${key}" class="text-[14px] font-medium leading-5 text-foreground">${label}</label>
-      <div class="relative">
-        <button type="button" id="pk-${key}" data-pick="${key}" aria-haspopup="dialog" class="w-full h-10 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] text-left flex items-center btn-o press transition-colors focus:border-primary">
+      <div class="relative" data-pick-dd>
+        <button type="button" id="pk-${key}" data-pick="${key}" aria-haspopup="listbox" aria-expanded="false" class="w-full h-10 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] text-left flex items-center btn-o press transition-colors focus:border-primary">
           <span class="pick-label truncate ${val ? 'text-foreground' : 'text-muted-foreground'}">${val || ph}</span>
         </button>
-        <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
+        <span data-pick-caret class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200">${I.chevD('var(--general-primary)')}</span>
       </div>
     </div>`;
 
@@ -5111,8 +5120,8 @@ function storeOpt(name, addr, hours, on) {
     </span>
     <span class="flex-1 min-w-0">
       <span class="block text-[14px] font-medium leading-5 text-foreground">${name}</span>
-      <span class="block pt-0.5 text-[13px] leading-5 text-secondary-foreground">${addr}</span>
-      <span class="block text-[13px] leading-5 text-muted-foreground"><span>Mở cửa</span> <span>${hours}</span></span>
+      <span class="block pt-0.5 text-[14px] leading-5 text-secondary-foreground">${addr}</span>
+      <span class="block text-[14px] leading-5 text-muted-foreground"><span>Mở cửa</span> <span>${hours}</span></span>
     </span>
   </button>`;
 }
@@ -5132,17 +5141,15 @@ function ckPickupOpen() {
     <div class="px-4 pt-3">
       <p class="text-[12px] leading-4 text-muted-foreground">${step}</p>
     </div>
-    <div class="grid grid-cols-2">
-      ${pickField('Thành phố','Chọn thành phố','city', ckCity)}
-    </div>
+    ${pickField('Thành phố','Chọn thành phố','city', ckCity)}
     ${!ckCity ? `
     <div class="px-4 pb-2">
-      <p class="text-[13px] leading-5 text-muted-foreground">Chọn thành phố để xem các cửa hàng DAFC có thể nhận hàng.</p>
+      <p class="text-[14px] leading-5 text-muted-foreground">Chọn thành phố để xem các cửa hàng DAFC có thể nhận hàng.</p>
     </div>` : `
     <div id="ckStoreGroup" class="px-4 py-2 flex flex-col gap-2">
       <div class="flex items-baseline justify-between">
         <span id="storeOptsLbl" class="text-[14px] font-medium leading-5 text-foreground">Cửa hàng</span>
-        <span class="text-[13px] leading-5 text-muted-foreground">${stores.length} cửa hàng</span>
+        <span class="text-[14px] leading-5 text-muted-foreground">${stores.length} cửa hàng</span>
       </div>
       <div id="storeOpts" role="radiogroup" aria-labelledby="storeOptsLbl" class="grid grid-cols-2 gap-3">
         ${stores.map(([name, addr, hours]) => storeOpt(name, addr, hours, name === ckStore)).join('')}
@@ -5158,14 +5165,12 @@ function ckPickupOpen() {
         ${field('Số điện thoại','0 1234 5678','tel', { val: ckPhone, key: 'phone', auto: 'tel' })}
         ${field('Email','Nhập email','email', { val: ckEmail, key: 'email', auto: 'email' })}
       </div>
-      <div class="grid grid-cols-2">
-        ${pickField('Tỉnh thành sinh sống','Chọn tỉnh / thành phố','home', ckHome)}
-      </div>
+      ${pickField('Tỉnh thành sinh sống','Chọn tỉnh / thành phố','home', ckHome)}
       <div class="px-4 pt-3">
-        <p class="text-[13px] leading-5 text-secondary-foreground">Đơn hàng được giữ tại cửa hàng trong 3 ngày kể từ khi có thông báo sẵn sàng nhận.</p>
+        <p class="text-[14px] leading-5 text-secondary-foreground">Đơn hàng được giữ tại cửa hàng trong 3 ngày kể từ khi có thông báo sẵn sàng nhận.</p>
       </div>
       <div class="px-4 pt-6 pb-8">
-        <button class="ck-next h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press inline-flex items-center justify-center" data-next="1" data-require="store">Xác nhận</button>
+        <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 btn-p press flex items-center justify-center" data-next="1" data-require="store">Xác nhận</button>
       </div>
     </div>` : ''}`;
 }
@@ -5240,10 +5245,8 @@ function screenCHECKOUT() {
       ${field('Họ','Nhập họ')}
     </div>
     ${field('Số điện thoại','0 1234 5678','tel', { val: ckShipPhone, key: 'sphone', auto: 'tel' })}
-    <div class="grid grid-cols-2">
-      ${pickField('Tỉnh , thành phố','Chọn tỉnh / thành phố','province', ckProvince)}
-      ${pickField('Phường xã','Chọn phường / xã','ward', ckWard)}
-    </div>
+    ${pickField('Tỉnh , thành phố','Chọn tỉnh / thành phố','province', ckProvince)}
+    ${pickField('Phường xã','Chọn phường / xã','ward', ckWard)}
     ${field('Địa chỉ','Số nhà, tên đường','', { val: ckShipLine, key: 'saddr', auto: 'street-address' })}
     <div class="px-4 pt-1">
       <label class="flex items-center gap-2 press">
@@ -5253,7 +5256,7 @@ function screenCHECKOUT() {
     </div>`;
   const ckNextBtn = `
     <div class="px-4 pt-6 pb-8">
-      <button class="ck-next h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press inline-flex items-center justify-center" data-next="1">Xác nhận</button>
+      <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 btn-p press flex items-center justify-center" data-next="1">Xác nhận</button>
     </div>`;
   const s0open = ckAuth ? `
     <div class="px-4 py-2 grid grid-cols-2 gap-4" id="addrOpts">
@@ -5263,8 +5266,8 @@ function screenCHECKOUT() {
           <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
         </span>
         <span class="flex-1 min-w-0">
-          <span class="block text-[14px] font-medium leading-5 text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="text-[11px] font-normal text-muted-foreground">(Mặc định)</span>' : ''}</span>
-          <span class="block text-[13px] leading-5 text-secondary-foreground">${a.line}</span>
+          <span class="block text-[14px] font-medium leading-5 text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="text-[12px] leading-4 font-normal text-muted-foreground">(Mặc định)</span>' : ''}</span>
+          <span class="block text-[14px] leading-5 text-secondary-foreground">${a.line}</span>
         </span>
       </button>`).join('')}
       <button class="opt ${ckAddr === 'new' ? 'on' : ''} w-full flex items-center gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-addr="new">
@@ -5287,8 +5290,8 @@ function screenCHECKOUT() {
      và 3 ô người nhận cũng chia cột như form giao hàng, đúng khuôn desktop. */
   const st = storeInfo(ckStore);
   const storeLines = s => s ? `
-    <p class="text-[13px] leading-5 text-secondary-foreground">${s.addr}</p>
-    <p class="text-[13px] leading-5 text-muted-foreground"><span>Mở cửa</span> <span>${s.hours}</span></p>` : '';
+    <p class="text-[14px] leading-5 text-secondary-foreground">${s.addr}</p>
+    <p class="text-[14px] leading-5 text-muted-foreground"><span>Mở cửa</span> <span>${s.hours}</span></p>` : '';
   const p0open = `<div id="ckPickupBody">${ckPickupOpen()}</div>`;
   const p0done = `<div id="ckStoreDone" class="px-4 pb-6 flex flex-col gap-1">${ckStoreDoneHTML()}</div>`;
 
@@ -5305,7 +5308,7 @@ function screenCHECKOUT() {
       ${preNote}
     </div>
     <div class="px-4 pt-6 pb-8">
-      <button class="ck-next h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] btn-p press inline-flex items-center justify-center" data-next="2">Xác nhận</button>
+      <button class="ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 btn-p press flex items-center justify-center" data-next="2">Xác nhận</button>
     </div>`;
   const s1done = `
     <div class="px-4 pb-6 flex flex-col gap-1">
@@ -5352,9 +5355,9 @@ function screenCHECKOUT() {
     <!-- Nút chốt đơn nằm CUỐI bước Thanh toán (đồng bộ luồng mobile, yêu cầu user
          14/08/2026) — trước đây nằm ở panel tóm tắt bên phải nên bấm được từ bước 0,
          nhảy thẳng tới màn hoàn tất mà chưa nhập gì. Khuôn nút theo nút "Xác nhận"
-         của các bước desktop (h-12 px-10 inline-flex). -->
+         của các bước desktop (21/08/2026: cả bộ đổi sang w-full theo yêu cầu user). -->
     <div class="px-4 pt-2 pb-8">
-      <button data-nav="done" class="h-12 px-10 rounded-xs bg-primary text-primary-foreground text-[16px] font-medium btn-p press inline-flex items-center justify-center">Đặt hàng</button>
+      <button data-nav="done" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium btn-p press flex items-center justify-center">Đặt hàng</button>
     </div>`;
 
   return `
@@ -5443,12 +5446,12 @@ function screenCHECKOUT() {
                 </span>
                 <div class="flex-1 min-w-0 flex flex-col justify-between">
                   <div>
-                    <p class="text-[13px] font-medium text-foreground truncate">${c.brand}</p>
+                    <p class="text-[14px] font-medium leading-5 text-foreground truncate">${c.brand}</p>
                     <p class="text-[12px] text-secondary-foreground line-clamp-2">${c.name}</p>
                     <p class="text-[12px] text-muted-foreground mt-0.5">${c.variant} · SL ${c.qty}</p>
                     ${c.preorder ? `<p class="text-[12px] text-foreground-alt mt-0.5">Nhận hàng dự kiến <span class="font-medium">${c.preorder}</span></p>` : ''}
                   </div>
-                  <p class="text-[13px] font-medium text-foreground self-end">${c.now}</p>
+                  <p class="text-[14px] font-medium leading-5 text-foreground self-end">${c.now}</p>
                 </div>
               </div>` + (c.gift && GIFT_PROGRAMS[c.gift] ? giftSummaryRow(c.gift, null, true) : '')).join('')}
             ${orderGiftState().earned.map(t => giftSummaryRow(t.program, null, true)).join('')}
@@ -7909,7 +7912,7 @@ function wireAddressPickers(root) {
          Cùng ràng buộc phụ thuộc như tỉnh -> phường: đổi thành phố là bỏ cửa
          hàng đang chọn, vì cửa hàng cũ không thuộc thành phố mới. */
       if (btn.dataset.pick === 'city') {
-        window.__openPicker('Chọn thành phố', DAFC_STORES.map(([c]) => c), ckCity, picked => {
+        window.__openPickDD(btn, DAFC_STORES.map(([c]) => c), ckCity, picked => {
           if (picked === ckCity) return;
           ckCity = picked; ckStore = '';
           // đổi thành phố -> danh sách cửa hàng đổi theo, khối thông tin thu lại
@@ -7923,14 +7926,14 @@ function wireAddressPickers(root) {
       /* Tỉnh/thành người nhận đang sinh sống — chỉ có ở luồng nhận tại cửa
          hàng, dùng lại đúng danh sách tỉnh của địa chỉ giao hàng. */
       if (btn.dataset.pick === 'home') {
-        window.__openPicker('Chọn tỉnh / thành phố', VN_LOCATIONS.map(([pv]) => pv), ckHome, picked => {
+        window.__openPickDD(btn, VN_LOCATIONS.map(([pv]) => pv), ckHome, picked => {
           ckHome = picked;
           setPickLabel(btn, picked, 'Chọn tỉnh / thành phố');
         });
         return;
       }
       if (btn.dataset.pick === 'province') {
-        window.__openPicker('Chọn tỉnh / thành phố', VN_LOCATIONS.map(([pv]) => pv), ckProvince, picked => {
+        window.__openPickDD(btn, VN_LOCATIONS.map(([pv]) => pv), ckProvince, picked => {
           ckProvince = picked; ckWard = '';
           setPickLabel(btn, picked, 'Chọn tỉnh / thành phố');
           const w = root.querySelector('[data-pick="ward"]');
@@ -7940,7 +7943,7 @@ function wireAddressPickers(root) {
       }
       if (!ckProvince) { toast('Chọn tỉnh / thành phố trước'); return; }
       const wards = (VN_LOCATIONS.find(([pv]) => pv === ckProvince) || ['', []])[1];
-      window.__openPicker('Chọn phường / xã', wards, ckWard, picked => {
+      window.__openPickDD(btn, wards, ckWard, picked => {
         ckWard = picked;
         setPickLabel(btn, picked, 'Chọn phường / xã');
       });
@@ -9520,7 +9523,7 @@ document.body.insertAdjacentHTML('beforeend', `
         <button class="w-6 h-6 flex items-center justify-center press" data-nav="login" aria-label="Tài khoản">${I.user}</button>
         <button data-nav="cart" class="w-6 h-6 flex items-center justify-center press relative" aria-label="Giỏ hàng">
           ${I.bag}
-          <span class="cart-badge absolute -top-1 -right-1.5 min-w-[15px] h-[15px] px-1 rounded-full bg-destructive text-primary-foreground text-[9px] font-bold flex items-center justify-center">${cartQty}</span>
+          <span class="cart-badge absolute -top-1 -right-1.5 min-w-[15px] h-[15px] px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">${cartQty}</span>
         </button>
       </div>
     </div>`;
@@ -10346,9 +10349,10 @@ document.body.insertAdjacentHTML('beforeend', `
    Trước đây danh sách đổi quà xổ INLINE ngay trong nhóm quà — nó đẩy cả danh
    sách giỏ xuống và lẫn với chính thẻ quà đang hiển thị. Giờ tách hẳn ra:
    MOBILE trượt lên từ đáy, DESKTOP là popup giữa màn (class .dk-modal) — cùng
-   khuôn #sizeSheet/#pickSheet sẵn có nên dùng lại được cả markup lẫn cách mở/đóng.
-   Chạm 1 dòng là chọn xong + đóng (không có nút xác nhận) — giống #pickSheet,
-   vì đây là chọn 1 giá trị chứ không phải hành động mua. */
+   khuôn #sizeSheet sẵn có nên dùng lại được cả markup lẫn cách mở/đóng.
+   Chạm 1 dòng là chọn xong + đóng (không có nút xác nhận) — chọn 1 giá trị
+   chứ không phải hành động mua. (#pickSheet cũ cùng khuôn đã bỏ 21/08/2026 —
+   ô địa giới checkout nay xổ dropdown tại ô, xem __openPickDD.) */
 document.body.insertAdjacentHTML('beforeend', `
   <div id="giftSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
     <div class="gf-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
@@ -10917,89 +10921,85 @@ document.body.insertAdjacentHTML('beforeend', `
   setTimeout(openBar, 700);
 })();
 
-/* ── Sheet chọn 1 giá trị từ danh sách (tỉnh/thành, phường/xã) ──
-   Cùng khuôn #sizeSheet nhưng KHÔNG có nút xác nhận: chạm 1 dòng là chọn xong
-   và đóng luôn, vì đây chỉ là điền form chứ không phải hành động mua. */
-document.body.insertAdjacentHTML('beforeend', `
-  <div id="pickSheet" class="fixed inset-0 z-[220] pointer-events-none" aria-hidden="true">
-    <div class="pk-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
-    <div class="pk-panel dk-modal absolute bg-background translate-y-full flex flex-col"
-         style="width:480px; max-height:72vh" role="dialog" aria-label="Chọn">
-      <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
-        <p id="pkTitle" class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground"></p>
-        <button id="pkClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
-      </div>
-      <div class="px-4 pb-3 shrink-0">
-        <label class="search-field flex items-center gap-3 min-h-10 bg-secondary rounded-xs p-2">
-          <span class="w-5 h-5 flex items-center justify-center shrink-0 [&_svg]:w-4 [&_svg]:h-4">${I.search}</span>
-          <input id="pkSearch" type="search" placeholder="Tìm kiếm" autocomplete="off" enterkeyhint="search"
-                 class="flex-1 min-w-0 outline-none text-[14px] leading-6 font-light text-foreground placeholder:text-muted-foreground"
-                 style="background:transparent;border:0;padding:0;-webkit-appearance:none;appearance:none">
-          <button id="pkClear" type="button" class="shrink-0 text-[14px] leading-5 text-muted-foreground press" style="display:none">Xóa</button>
-        </label>
-      </div>
-      <div id="pkList" class="flex-1 min-h-0 overflow-y-auto no-scrollbar"></div>
-      <div class="safe-b"></div>
-    </div>
-  </div>`);
+/* ── Dropdown chọn 1 giá trị NEO VÀO Ô (tỉnh/thành, phường/xã, thành phố) ──
+   21/08/2026 (yêu cầu user): bỏ popup #pickSheet giữa màn — bấm ô là xổ
+   listbox NGAY DƯỚI ô, cùng khuôn dropdown chọn size của PDP5/6
+   ([data-size-dd]); viền 1px + không bóng ăn theo khối KHUÔN CHUNG CHO MỌI
+   LỚP NỔI qua [data-pick-list]. Danh sách dài hơn 8 mục có ô tìm kiếm ở đầu
+   (giữ tính năng gõ không dấu + tô đậm khớp của popup cũ). Chỉ 1 dropdown mở
+   tại một thời điểm; bấm lại chính ô đang mở là đóng. Listener bấm-ra-ngoài
+   gắn MỘT lần ở document (không qua wire() nên không nhân bản mỗi lần render;
+   dropdown sống trong DOM của màn nên rerenderCheckout tự dọn nó). */
 (() => {
-  const pk = document.getElementById('pickSheet');
-  const panel = pk.querySelector('.pk-panel');
-  const list = pk.querySelector('#pkList');
-  const search = pk.querySelector('#pkSearch');
-  const clear = pk.querySelector('#pkClear');
-  let onPick = null, allOpts = [], curVal = '';
-
   /* Bỏ dấu + đ→d để gõ "da nang" vẫn ra "TP. Đà Nẵng" — người dùng hiếm khi
-     gõ đủ dấu khi đang điền địa chỉ trên điện thoại. */
-  const norm = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+     gõ đủ dấu khi đang điền địa chỉ. */
+  const norm = t => t.normalize('NFD').replace(/[̀-ͯ]/g, '')
                      .replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
 
   const tick = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="shrink-0"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-  const paintList = () => {
-    const raw = search.value.trim();
-    const q = norm(raw);
-    const shown = q ? allOpts.filter(o => norm(o).includes(q)) : allOpts;
-    clear.style.display = raw ? '' : 'none';
-    list.innerHTML = shown.length ? shown.map(o => `
-      <button class="w-full min-h-[52px] flex items-center gap-2 px-4 py-4 press text-left transition-colors ${o === curVal ? 'bg-secondary' : ''}" data-pk-opt="${o}">
-        <span class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground">${highlightMatch(o, raw)}</span>
-        ${o === curVal ? tick : ''}
-      </button>`).join('')
-      : '<p class="px-4 py-6 text-[14px] leading-5 text-muted-foreground">Không tìm thấy kết quả</p>';
-    list.querySelectorAll('[data-pk-opt]').forEach(b => b.addEventListener('click', () => {
-      const v = b.dataset.pkOpt;
-      closePK();
-      if (onPick) onPick(v);
-    }));
-    list.scrollTop = 0;
-    localizeNew(list);
+  let cur = null;   // { wrap, btn, box } của dropdown đang mở
+  const close = () => {
+    if (!cur) return;
+    cur.box.remove();
+    cur.btn.setAttribute('aria-expanded', 'false');
+    const c = cur.wrap.querySelector('[data-pick-caret]');
+    if (c) c.style.transform = '';
+    cur = null;
   };
-  search.addEventListener('input', paintList);
-  clear.addEventListener('click', () => { search.value = ''; paintList(); search.focus(); });
+  document.addEventListener('click', e => { if (cur && !cur.wrap.contains(e.target)) close(); });
 
-  const closePK = () => {
-    pk.querySelector('.pk-backdrop').classList.add('opacity-0');
-    panel.classList.add('translate-y-full');
-    pk.classList.add('pointer-events-none');
-    unlockBodyScroll();
-    setTimeout(() => pk.setAttribute('aria-hidden', 'true'), 300);
+  const openDD = (btn, opts, current, cb) => {
+    if (cur && cur.btn === btn) { close(); return; }   // bấm lần 2 vào chính ô = đóng
+    close();
+    const wrap = btn.closest('[data-pick-dd]') || btn.parentElement;
+    const box = document.createElement('div');
+    box.setAttribute('data-pick-list', '');
+    box.setAttribute('role', 'listbox');
+    box.className = 'absolute left-0 right-0 top-full mt-1 bg-background rounded-sm z-40 flex flex-col';
+    box.style.maxHeight = '260px';
+    box.innerHTML = `
+      ${opts.length > 8 ? `
+      <label class="flex items-center gap-2 h-10 px-3 border-b border-border shrink-0">
+        <span class="w-4 h-4 flex items-center justify-center shrink-0 [&_svg]:w-4 [&_svg]:h-4">${I.search}</span>
+        <input data-pk-search type="search" placeholder="Tìm kiếm" autocomplete="off"
+               class="flex-1 min-w-0 outline-none text-[14px] leading-5 text-foreground placeholder:text-muted-foreground"
+               style="background:transparent;border:0;padding:0;-webkit-appearance:none;appearance:none">
+      </label>` : ''}
+      <div data-pk-rows class="flex-1 min-h-0 overflow-y-auto no-scrollbar"></div>`;
+    const rows = box.querySelector('[data-pk-rows]');
+    const search = box.querySelector('[data-pk-search]');
+
+    const paint = () => {
+      const raw = search ? search.value.trim() : '';
+      const q = norm(raw);
+      const shown = q ? opts.filter(o => norm(o).includes(q)) : opts;
+      rows.innerHTML = shown.length ? shown.map(o => `
+        <button type="button" role="option" aria-selected="${o === current}" data-pk-opt="${o}"
+                class="w-full min-h-11 flex items-center gap-2 px-3 py-2 text-left transition-colors press ${o === current ? 'bg-secondary' : 'ghost-hover'}">
+          <span class="flex-1 min-w-0 text-[14px] leading-5 text-foreground">${highlightMatch(o, raw)}</span>
+          ${o === current ? tick : ''}
+        </button>`).join('')
+        : '<p class="px-3 py-4 text-[14px] leading-5 text-muted-foreground">Không tìm thấy kết quả</p>';
+      rows.querySelectorAll('[data-pk-opt]').forEach(b => b.addEventListener('click', () => {
+        const v = b.dataset.pkOpt;
+        close();
+        cb(v);
+      }));
+      rows.scrollTop = 0;
+      localizeNew(rows);
+    };
+    if (search) search.addEventListener('input', paint);
+    paint();
+    wrap.appendChild(box);
+    localizeNew(box);   // placeholder "Tìm kiếm"; tên địa giới không có trong I18N nên giữ nguyên
+    btn.setAttribute('aria-expanded', 'true');
+    const caret = wrap.querySelector('[data-pick-caret]');
+    if (caret) caret.style.transform = 'translateY(-50%) rotate(180deg)';
+    if (search) search.focus();
+    cur = { wrap, btn, box };
   };
-  const openPK = (title, opts, current, cb) => {
-    onPick = cb; allOpts = opts; curVal = current || '';
-    pk.querySelector('#pkTitle').textContent = title;
-    search.value = '';        // mỗi lần mở là danh sách đầy đủ, không dính từ khoá cũ
-    paintList();
-    localizeNew(panel);   // cả tiêu đề + placeholder; tên địa giới không có trong I18N nên giữ nguyên
-    pk.classList.remove('pointer-events-none'); pk.setAttribute('aria-hidden', 'false');
-    pk.querySelector('.pk-backdrop').classList.remove('opacity-0');
-    panel.classList.remove('translate-y-full');
-    lockBodyScroll();
-  };
-  pk.querySelector('.pk-backdrop').addEventListener('click', closePK);
-  pk.querySelector('#pkClose').addEventListener('click', closePK);
-  window.__openPicker = openPK;
+  window.__openPickDD = openDD;
 })();
 
 /* Popup đăng nhập nhanh nằm ngoài .screen nên wire() không chạm tới */
