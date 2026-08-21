@@ -28,6 +28,49 @@ chốt nhưng chưa thi hành** (nhóm A). Cái mới của lần dò này là *
 >   PDP/quick-add T3 `14/20·500·hoa` (vai hoa thứ 6, §1.5). Đã thi hành + đo lại: đạt.
 > * Còn mở: **B1 · B6 · B8 · B9 · B10 · B12** (chờ lệnh) và **C3** (confetti).
 
+> **Kiểm màn CART lần 2 (20/08 tối)** — sau khi user bổ sung khối CSS mới
+> *"3 chỗ +1 nấc weight + brand đồng bộ"* (phiên làm việc khác ghi vào `index.html`):
+> * **Brand hàng giỏ ✅ chuẩn** — `.cart-row p:has(+ .del)` = 500 + hoa + dòng 16 → đúng T6,
+>   khớp chốt C1; đã ghi bổ sung "hàng trong giỏ" vào vai 6 §1.5.
+> * **3 chỗ nâng 500 đang NỬA CẶP** (500 nhưng chữ thường — §1.1 cấm trạng thái lai):
+>   trigger "Bạn có phiếu mua hàng?" + "Ưu đãi & khuyến mãi" vốn là vai hoa 5 (chốt việc 8A:
+>   T6 = 500 **+ hoa** + nhịp 16) → chỉ cần thêm `text-transform: uppercase` + `line-height: 16px`
+>   là trọn chốt. "Tổng cộng" (nhãn + số) là **quyết định mới C4** — xem dưới.
+> * **C4 (chờ chốt):** "Tổng cộng" 500 thường. (a — khuyến nghị) coi là NHÃN HÀNG TỔNG:
+>   thêm hoa + nhịp 16, ghi vào §1.5 (số tiền không có chữ cái nên uppercase vô hại);
+>   (b) giữ 500 thường = thêm ngoại lệ ghi danh thứ hai (phình danh sách đóng — chống chỉ định).
+> * Phần còn lại của cart đều thuộc backlog đã chốt chưa thi hành: `12/20` ×58 (việc 1) ·
+>   `16→12/24` ×3 gồm Tổng cộng (việc 3) · `18/27·28` ×3 (việc 3) · hoa-400 ×8 quà tặng/footer
+>   (việc 7) · nền hồng −% ×3 + gradient sticky `#f7f7f7` (việc 5) · tracking rò nút Đặt hàng
+>   sticky (§4.1) · VISA/TIKINOW 9px bo 3 + badge giỏ đỏ 9px (B3/B4/C2 — kệ chờ icon).
+> * Mực ✅ sạch · viền trong màn ✅ sạch (3 tầng đúng) · bóng ✅ không · glass navbar ✅ chữ ký hợp lệ.
+
+> **ĐỢT ÁP LUẬT MÀN GIỎ — THI HÀNH 20/08 tối (lệnh user "áp dụng đúng rule thử"):**
+> khối CSS `6e` trong index.html, phạm vi `[data-screen="cart"]` + 1 fix global §4.1.
+> Đã làm: cặp cỡ+dòng (leading-5→18, leading-6→16, 18→/24, 10→/14 — việc 1+3) ·
+> canvas + gradient sticky về `#f2f2f2`, badge −% bỏ nền hồng (việc 5) · nhãn quà tặng +
+> footer hoa lên 500, mực chính (việc 7) · trigger PBH + "Ưu đãi & khuyến mãi" +
+> **"Tổng cộng" (C4a — đã ghi vai vào §1.5)** thành trọn cặp 500·hoa·16, hint PBH mực phụ
+> 12/18, nút "Áp dụng" trắng viền V1 (việc 8A) · §4.1 chặn tracking global (miễn trừ
+> #settingsPanel theo Phần 5).
+> **Đo lại sau sửa: 129 phần tử chữ — 0 sai cặp (trừ 9/13.5 của badge giỏ + chip VISA
+> thuộc nhóm B3/B4/C2 kệ chờ icon) · 0 weight lai · 0 hoa-400 · 0 tracking rò · mực/mặt/
+> viền/bóng sạch.** Màn giỏ là màn đầu tiên đạt chuẩn STYLE-RULES đầy đủ; các màn khác
+> nhân rộng bằng cách bỏ scope `[data-screen="cart"]` sau khi user duyệt thị giác.
+
+> **DESKTOP.HTML — cùng đợt, thi hành ngay sau (lệnh user "áp dụng cho bản desktop luôn"):**
+> khối `6e` tương ứng + phần riêng khổ này: override 4 remap còn lệch luật TRONG cart
+> (`16→12/16` thay 14 · `18→18/24` thay 16 · `22/24/32→24/32` thay 18 · `11→12/16`).
+> Ba việc đồng bộ GLOBAL cho cả bản desktop (không chỉ cart) vì là chốt toàn cục:
+> **`.pc-brand` theo C1** (card 12/16·500·hoa; PDP h1 + quick-add 14/20·500·hoa — trước là
+> 500 chữ thường, PLP/PDP desktop sẽ thấy brand hoa như mobile) · **footer nhãn 500**
+> (việc 7) · **§4.1 chặn tracking** (+ miễn trừ #settingsPanel). Canvas giỏ → `#f2f2f2`.
+> Khối "3 chỗ 500" của user hoàn thiện trọn cặp hoa+16 ("Tổng cộng" C4a; desktop không có
+> accordion phiếu mua hàng — cụm CTA nằm card cột phải).
+> **Đo lại: 0 vi phạm ngoài 9/13.5 badge giỏ + VISA (kệ).** Tiêu đề "Giỏ hàng" desktop ra
+> 24/32 (markup 22 → T1 theo bảng quy đổi việc 3) — to hơn mobile 18/24 là do markup hai
+> khổ chọn bậc khác nhau, thang vẫn chung.
+
 ---
 
 ## Bảng trạng thái từng màn

@@ -1145,6 +1145,29 @@ Nay gom về **một rule** trong khối `<style>` — sửa nền badge thì s�
 
 > **CÒN LỆCH — là lệch NỘI DUNG, không phải màu, chưa sửa vì user chỉ nói về màu:** PDP mobile treo tới **3 badge** (`Pre-order` · `New Season` · `La Vacanza`, tuỳ màn 1–3 cái), còn **PDP desktop chỉ treo `Pre-order`** — markup gallery desktop (`dkPdp`, tile đầu) không render 2 badge mùa vụ. Muốn đồng bộ nốt thì thêm chúng vào tile đầu của gallery desktop.
 
+## Giỏ: 3 chỗ +1 nấc weight + brand đồng bộ với thẻ SP (20/08/2026, CẢ 2 BẢN)
+
+User: *"số tiền tổng cộng tăng font weight lên 500, ưu đãi & khuyến mãi tăng lên 500, Bạn có phiếu mua hàng tăng lên 500, brand name của thẻ sản phẩm trong cart chưa đồng bộ text style với bên ngoài"*.
+
+Ba chỗ đầu đang `w400` (blanket bộ da kéo `font-medium` về 400) → khai `500` tường minh. Hàng "Tổng cộng" lấy **cả nhãn lẫn số**: chỉ đậm con số mà để nhãn nhạt thì hai đầu một hàng lệch nấc, đọc ra như lỗi.
+
+### Brand lệch tới 3 thứ, không chỉ weight
+
+| | `.pc-brand` ngoài listing | brand trong dòng giỏ |
+|---|---|---|
+| **mobile** | `12/16 · w500 · UPPERCASE` | `12/20 · w400 · thường` |
+| **desktop** | `12/20 · w500 · thường` | `12/20 · w400 · thường` |
+
+Nên **rule hai file cố ý KHÁC nhau**: mobile phải kéo thêm `uppercase` + `line-height: 16`, desktop **chỉ** cần weight. Copy y rule mobile sang desktop là brand trong giỏ hoá chữ hoa trong khi thẻ sản phẩm ngoài listing vẫn chữ thường — tức lại lệch đúng cái vừa sửa.
+
+`p:has(+ .del)` = dòng brand: nó là `p` duy nhất đứng ngay trước nút xoá trong dòng giỏ, nên không phải thêm class hook vào markup.
+
+"Bạn có phiếu mua hàng?" **chỉ có ở mobile** — cụm CTA desktop nằm trong card cột phải, không có accordion này, nên bản desktop không có nhánh tương ứng.
+
+**Đo lại:** mobile `skin-mt` ra brand `12/16 w500 uppercase` **khớp đúng** `.pc-brand` ngoài listing; desktop ra `12/20 w500 thường` **khớp đúng** `.pc-brand` bên đó. Hàng "Tổng cộng" cả nhãn + số `w500` ở cả 2 file; "Ưu đãi & khuyến mãi" `w500`; "Bạn có phiếu mua hàng?" `w500` (mobile). `skin-mp` và bộ da Mặc định không lệch số nào. Console sạch trên tab mới.
+
+> **Phát hiện phụ, chưa sửa vì ngoài phạm vi câu hỏi:** `.pc-brand` của `skin-mt` **giữa hai bản đang lệch nhau** — mobile `12/16 uppercase`, desktop `12/20 chữ thường`. Tức thẻ sản phẩm ở listing của hai khổ đang không cùng text style. Cần user chốt lấy bản nào làm chuẩn rồi đồng bộ.
+
 ## Bộ lọc: weight +1 nấc cho panel và các tầng danh mục (20/08/2026, CẢ 2 BẢN)
 
 User: *"filter tăng font weight của BỘ LỌC và các level danh mục lên 1 nấc nhé"*.

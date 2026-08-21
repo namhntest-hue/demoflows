@@ -153,9 +153,13 @@ Quy ước toàn dự án là **không dùng UPPERCASE**. `skin-mt` là ngoại 
 2. Nhãn nhóm trong menu / mega panel — `.ms-view > p` · `.dk-mega-grid > div > p` · tiêu đề màn con
 3. Tiêu đề panel + tiêu đề mục trong bộ lọc — `#filterSheet` 2 tầng nhãn
 4. Nhãn nhóm ở footer + tên chương trình quà tặng
-5. Nhãn mở mục trong giỏ — trigger "Bạn có phiếu mua hàng?" + "Ưu đãi & khuyến mãi"
-   *(thêm 20/08/2026 khi chốt việc 8, phương án A)*
-6. Tên thương hiệu — `.pc-brand`: card + hàng gợi ý **T6 12/16**, PDP + quick-add **T3 14/20**
+5. Nhãn mở mục trong giỏ — trigger "Bạn có phiếu mua hàng?" + "Ưu đãi & khuyến mãi",
+   và **hàng "Tổng cộng"** (nhãn hàng tổng + con số — số không có chữ cái nên hoa vô hại)
+   *(thêm 20/08/2026 khi chốt việc 8A; mở rộng "Tổng cộng" tối 20/08 — C4a: user muốn
+   500, luật buộc trọn cặp → thành nhãn thay vì đẻ ngoại lệ thứ hai)*
+6. Tên thương hiệu — `.pc-brand`: card + hàng gợi ý **T6 12/16**, PDP + quick-add **T3 14/20**,
+   **hàng trong giỏ** (`.cart-row p:has(+ .del)`, T6 — user bổ sung 20/08 "brand trong cart
+   chưa đồng bộ với bên ngoài", rule đã vào code đúng cặp 500+hoa+16)
    *(chốt 20/08/2026, AUDIT C1: user cần brand đậm hơn tên sản phẩm → thay chốt
    "500 chữ thường" 18/08 bằng bậc nhãn có sẵn trong thang — đủ cả size lẫn weight,
    không phải đẻ ngoại lệ)*
@@ -166,7 +170,7 @@ thông báo lỗi · nội dung hàng trong danh sách (kể cả hàng cấp 2 
 **Luôn viết hoa bằng `text-transform`, không gõ hoa vào chuỗi** — chuỗi gốc là key i18n,
 gõ hoa vào là mất bản dịch.
 
-Muốn thêm vai thứ 5 vào danh sách này thì phải sửa file này trước, sửa CSS sau.
+Muốn thêm vai thứ 7 vào danh sách này thì phải sửa file này trước, sửa CSS/Figma sau.
 
 ### 1.6 Mặt chữ
 
@@ -208,7 +212,9 @@ bộ bộ da, và bộ da này nhấn bằng chữ hoa + kẻ mảnh chứ khôn
 phải mặt thứ ba cho nội dung — không dùng cho khối tĩnh, không thêm độ mờ thứ hai.
 Token bàn giao: `--surface-sticky` (xem `shadcn-theme/`).
 
-Mặt tối `#0a0a0a` chỉ dùng cho: nút chính · badge trên ảnh · popover · backdrop.
+Mặt tối `#0a0a0a` chỉ dùng cho: nút chính · backdrop (đen 60%, token `--overlay`).
+*(Đính chính 20/08 theo số đo thật: badge trên ảnh — `.badge-label` Pre-order/New season —
+là **mặt trắng chữ đen**, không phải mặt tối; bộ Figma đã dựng theo số thật này.)*
 
 ### 2.3 Nhấn bằng gì
 
@@ -243,7 +249,9 @@ Phải gỡ khỏi bộ da: **`#cfcfcf`** (3092 chỗ — `border-border-3` trê
 ### 3.2 Bo góc — 0
 
 `border-radius: 0` cho mọi thứ. **Một ngoại lệ:** hình tròn thật, tức phần tử có
-`width == height` và về bản chất là chấm/vòng (badge số trong giỏ, dot phân cách, ô màu tròn).
+`width == height` và về bản chất là chấm/vòng (badge số trong giỏ, dot phân cách, radio).
+*(Đính chính 20/08: **ô màu KHÔNG thuộc ngoại lệ này** — skin-mt đã vuông hóa swatch từ trước,
+`[data-swatches] .cw { border-radius: 0 }`, đo thật 18×18 vuông. Bộ Figma dựng theo đúng thế.)*
 
 Còn vi phạm:
 
