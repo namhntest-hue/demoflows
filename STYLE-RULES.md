@@ -152,7 +152,7 @@ Quy ước toàn dự án là **không dùng UPPERCASE**. `skin-mt` là ngoại 
 1. Nav ngành hàng + nav danh mục — `.dk-dept` · `.dk-nav-link` · `.ms-tab` · `.search-tab`
 2. Nhãn nhóm trong menu / mega panel — `.ms-view > p` · `.dk-mega-grid > div > p` · tiêu đề màn con
 3. Tiêu đề panel + tiêu đề mục trong bộ lọc — `#filterSheet` 2 tầng nhãn
-4. Nhãn nhóm ở footer + tên chương trình quà tặng
+4. Nhãn nhóm ở footer *(21/08/2026: **tên chương trình quà tặng RÚT KHỎI vai này** — user đảo chốt 20/08: "tên chương trình không cần uppercase". Nó về họ nội dung 12/16 · 400 · mực chính; khối quà nhấn bằng mặt nền, xem §2.3)*
 5. Nhãn mở mục trong giỏ — trigger "Bạn có phiếu mua hàng?" + "Ưu đãi & khuyến mãi",
    và **hàng "Tổng cộng"** (nhãn hàng tổng + con số — số không có chữ cái nên hoa vô hại)
    *(thêm 20/08/2026 khi chốt việc 8A; mở rộng "Tổng cộng" tối 20/08 — C4a: user muốn
@@ -200,7 +200,12 @@ Không có bậc thứ tư. Không có mực xám nhạt hơn `#666666` cho ch�
 
 **Bỏ `#f7f7f7`.** Hai xám cách nhau 5/255 là hai xám *không phân biệt được* — chính comment
 trong code đã gọi nó là *"mảng lem nhem"* rồi vẫn dùng cả hai (canvas giỏ `#f7f7f7`,
-mặt phụ `#f2f2f2`). Canvas màn giỏ về `#f2f2f2`, hộp trắng trên đó vẫn đọc ra rõ.
+mặt phụ `#f2f2f2`).
+*(Cập nhật 21/08/2026 — user đảo chốt canvas giỏ: **màn giỏ về NỀN TRẮNG, không đóng hộp**,
+theo hướng bộ da editorial — "không bị trong khuông khổ". Các khối cột trái phân nhóm bằng
+kẻ mảnh; chỉ khối quà tặng mang tấm nền nhấn accent-0 (ngoại lệ §2.3); cột tóm tắt desktop
+giữ hộp. Câu "canvas giỏ về #f2f2f2" phía trên hết hiệu lực; việc khai tử #f7f7f7 cho các
+MẶT còn lại vẫn giữ.)*
 
 **Bỏ mặt hồng `#fef2f2`** trên badge `-20%`. Giữ **chữ đỏ** (đã chốt: badge giảm giá và viền
 lỗi form phải đọc ra là cảnh báo), nhưng bỏ nền tô — đây là mảng màu **duy nhất** trên toàn
@@ -226,6 +231,16 @@ Thứ tự đòn bẩy, dùng từ trên xuống. Hết đòn bẩy thì dừng,
 4. **Mặt đen chữ trắng** (nút chính, badge trên ảnh)
 
 Không nhấn bằng: mảng màu nhạt · bo góc · đổ bóng · gradient · độ đậm chữ.
+
+> **Ngoại lệ ghi danh (21/08/2026, user đảo chốt 20/08 "nhấn bằng chữ, không bằng mảng màu"):**
+> khối quà tặng trong GIỎ (`.gift-group.bg-accent-0` — quà kèm sản phẩm + ô mốc kế tiếp) được
+> nhấn bằng **dải nền `--unofficial-accent-0`, FULL-BLEED dài bằng cả thẻ** — đúng nguyên bản
+> skin-mp (chốt cuối cùng ngày: *"dài bằng cả thẻ chứ không thụt vô, tham khảo skin-mp"*).
+> Hợp lệ vì trang giỏ nay là **nền trắng không hộp** (§2.2): dải nhấn là một HÀNG trong dòng
+> chảy, không còn cắt ngang hộp nào. Skin-mt không đè rule nào lên `.gift-group` — markup +
+> token tự lo. (2 bản thử cùng ngày đã bác: `--general-secondary` full-bleed khi CÒN hộp, và
+> tấm con inset 16px.) Đi cùng việc tên chương trình rút khỏi vai hoa (§1.5 mục 4). Danh sách
+> ngoại lệ mảng-màu này ĐÓNG — chỗ thứ hai muốn nền nhấn thì quay về 4 đòn bẩy trên.
 
 ---
 

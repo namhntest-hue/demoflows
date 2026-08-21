@@ -60,6 +60,23 @@ Chip/hàng chọn size ở **PDP + quick add** (và dải size hover trên card 
 
 Đã thử phương án số đếm nằm giữa thân túi kiểu mytheresa (chữ trần 10px, không nền) theo ref user gửi, rồi user chốt **trả lại chấm đếm như cũ, chỉ đổi màu nền đỏ → đen**: `bg-destructive` → `bg-primary`, chữ trắng giữ nguyên, vị trí/kích thước (15×15, góc trên phải) giữ nguyên. Desktop áp cùng ngày ở cả 2 chỗ có badge: header (`dkNavRow`) + navbar trong drawer menu (`navRoot`). Cỡ 9px + `font-bold` là hiện trạng cũ giữ theo yêu cầu — vẫn lệch thang (T7 badge giỏ = 10px, bold bị cấm §1.1), chờ đợt remap Phần 6 STYLE-RULES. 3 bản skin desktop chưa áp.
 
+## Trang giỏ skin-mt: NỀN TRẮNG, KHÔNG ĐÓNG HỘP — theo hướng bộ da editorial (21/08/2026, CẢ 2 BẢN)
+
+User đảo 2 chốt 20/08 ("nền xám nhấn block" + "đóng hộp maison kitsuné"): *"style ở cart kiểu của editorial đang đẹp, dùng nền trang cart màu trắng, cái nào quà tặng thì nhấn màu xuống, không bị trong khuông khổ — dùng style đó áp dụng lại cho skin-mt"*. Chuẩn đích ĐO từ skin-mp trên trang chạy rồi áp cho skin-mt bằng token của chính nó:
+
+- **Gỡ**: rule canvas xám `body/#viewport` (nền về trắng mặc định) · bg trắng 3 phần HỘP 1 + viền bao đỉnh/đáy + lề bù tiêu đề (desktop) + khe `mt-12` (mobile) · nhánh "đáy hộp di chuyển" `#cartList:has(...)` · bg + viền đáy `#orderGift` · **HỘP 2 mobile**: `discountPanel` về **trong suốt** (markup gốc `bg-secondary` xám), `#cartCta` bỏ viền đáy + pb-24 · rule dải mờ `#cartStickyCta` fade về #f2f2f2 (gradient markup fade trắng lại đúng).
+- **Giữ / thêm kẻ**: mỗi vùng ngăn nhau đúng MỘT kẻ `--unofficial-border-1` (#ececec): "Chọn tất cả"──kẻ──danh sách · kẻ giữa các món · kẻ trên `#orderGift` · kẻ trên khối tổng + kẻ trên `#cartCta` (mobile). Thẻ khuyến mãi giữ viền (thẻ bấm được, không phải hộp). **Cột phải desktop giữ nguyên hộp** `bg-card` + viền — như chính skin-mp.
+- **Không đổi**: tấm quà accent-0 (mục dưới), toàn bộ khối typography/weight/hoa của cart.
+- Đo sau sửa (cả 2 bản): body trắng, mọi khối cột trái `transparent`, kẻ đúng 4 vị trí, tấm quà #f7f7f7, console sạch. STYLE-RULES §2.2 đã ghi đè câu "canvas giỏ về #f2f2f2" (hết hiệu lực).
+
+## Quà tặng trong giỏ: nền nhấn nhẹ + tên chương trình THÔI chữ hoa (21/08/2026, CẢ 2 BẢN, skin-mt)
+
+User đảo 2 ý của chốt 20/08 "nhấn bằng chữ, không bằng mảng màu": *"quà tặng cần nhấn màu xuống một xíu để nổi bật, tên chương trình không cần uppercase"*.
+
+- **Nền khối quà — chốt sau 3 nhịp**: (1) `--general-secondary` full-bleed khi cart CÒN hộp → bác (*"nhấn nhẹ thôi, như cắt ngang"*); (2) tấm con accent-0 inset 16px + ẩn spacer → bác nốt sau khi cart về nền trắng không hộp (*"cho phần nhấn màu dài bằng cả thẻ chứ không thụt vô — tham khảo skin-mp"*); (3) **CHỐT: đúng nguyên bản skin-mp** — skin-mt KHÔNG đè rule nào lên `.gift-group` nữa, markup `bg-accent-0` tự ăn token `--unofficial-accent-0` (#f7f7f7 ở bộ da này), **full-bleed dài bằng thẻ**, spacer `w-4` giữ nguyên nên nhãn/ảnh quà thẳng cột ảnh món (x=40). Hợp lý vì bối cảnh đã đổi: trang phẳng thì dải nhấn là một HÀNG trong dòng chảy, không cắt ngang hộp nào. Đo cả 2 bản: tấm rộng đúng bằng `.cart-row` (375/750px), ảnh thẳng hàng. Khối bare trong `#orderGift` giữ không nền.
+- **Tên chương trình**: gỡ rule `text-transform: uppercase` + gỡ `font-weight: 500` (blanket `.font-*` trả markup `font-medium` về 400 — §1.1 cặp 500+hoa không tách rời, bỏ hoa là bỏ 500). Đo cả 2 bản: `12/16 · 400 · không hoa · mực chính`.
+- **STYLE-RULES đã cập nhật cùng lượt** (luật sửa trước, code sửa sau): §1.5 vai 4 rút "tên chương trình quà tặng" khỏi danh sách hoa; §2.3 thêm ngoại lệ ghi danh mảng-màu cho `.gift-group` (danh sách đóng).
+
 ## Quà tặng trong giỏ (13/08/2026, CẢ 2 BẢN)
 
 Hai cơ chế theo yêu cầu user, **cùng chạy trong màn Giỏ hàng**:
@@ -756,6 +773,15 @@ Giữ **tên thương hiệu + tên sản phẩm · màu (nếu có) · size**. 
 - **Nút "Thay đổi"** (`.ck-change`): `16/24 font-light` → **`12/16 + underline`**, weight 400 (bỏ `font-light` — 300 bị STYLE-RULES §1.1 cấm). Rule gạch chân riêng của skin-mp giờ trùng với markup, vô hại.
 
 **Soát text style cùng lượt (thang markup 12/14/16/18/24/32/48, size đi cặp leading):** trong checkout đã sửa `text-[13px]`→`14` (8 chỗ: thẻ cửa hàng, dòng địa chỉ sổ, ghi chú pickup, đếm cửa hàng, ghi chú giữ đơn, `storeLines`) · `text-[11px]`→`12 leading-4` ("(Mặc định)") · brand + giá trong panel tóm tắt `13` thiếu leading → `14 leading-5`. **Còn tồn, chưa đụng** (thuộc đợt remap Phần 6 STYLE-RULES, "demo chưa sửa theo"): `.ck-title 16/24 font-medium` (cỡ 16 sẽ bị thang skin-mt bỏ; 500 chữ thường là trạng thái lai §1.1) · nhãn `tracking-[0.2em]` ở panel tóm tắt + thẻ Membership (chờ rule chặn §4.1) · `text-[12px]` thiếu leading trong hàng SP panel tóm tắt · màn Hoàn tất còn 4× `text-[13px]` + `font-semibold` + `tracking-wider` trên 2 nút.
+
+## Audit text style luồng auth: đăng nhập · đăng ký · OTP · quên mật khẩu (21/08/2026)
+
+Scan 6 view (`login/register/otp/reginfo/setpass/forgot`) + popup đăng nhập nhanh desktop theo STYLE-RULES + thang markup. **Đã sửa (vi phạm cơ học):**
+
+- **2 chuỗi gõ HOA vào text** — vi phạm quy tắc "không dùng UPPERCASE, không gõ hoa vào chuỗi" (§1.5): nút `GỬI MÃ XÁC THỰC` (forgot) → `Gửi mã xác thực`, nút `TẠO TÀI KHOẢN` (reginfo) → `Tạo tài khoản`. Sửa ở **CẢ 5 FILE** (luật copy toàn dự án) kèm từ điển i18n: thay key hoa `'GỬI MÃ XÁC THỰC'` bằng `'Gửi mã xác thực':'Send verification code'`, xoá key thừa `'TẠO TÀI KHOẢN'` (key thường `'Tạo tài khoản':'Create account'` đã có sẵn). Verify EN ra "Send verification code" / "Create account".
+- **Thiếu line-height đi cặp cỡ chữ** (index + desktop): input `afield` 14→`leading-5` · nút `abtn` 14→`leading-5` · ô OTP 18→`leading-7` (mobile ra 18/28, desktop remap còn 16/28) · nút "Nhận lại mã" 14→`leading-5`.
+
+**Còn tồn — thuộc tầng remap skin-mt (Phần 6, đã chốt 20/08 nhưng demo chưa sửa), KHÔNG tự đổi:** tiêu đề view `24/32 font-light` (300 bị §1.1 cấm — nhưng là spec Figma gốc "Tiêu đề Light 24", tầng bộ da sẽ ép weight khi remap; hiện blanket 400 của skin-mt ĐÃ đè nó khi đo) · `tracking-wide` trong `abtn` (đo skin-mt ra ls0.5px — khối chặn hiện có ĐÃ vô hiệu nó, chỉ còn là rác markup) · input popup đăng nhập nhanh desktop dùng `font-light` (lệch với input `afield` 400) · ô OTP viền `border-border-3` #cfcfcf (nhập về V2 #dfdfdf khi remap viền §3.1). Đo sau sửa: thân màn auth desktop skin-mt đồng nhất `12/20 · w400 · ls0.5` (nhịp 12/20 sẽ siết về 12/18 ở Phần 6 việc 1), console sạch cả 2 bản.
 
 ## Vào checkout LUÔN mở bước "Vận chuyển" (19/08/2026, CẢ 2 BẢN)
 
