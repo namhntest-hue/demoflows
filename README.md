@@ -48,6 +48,14 @@ Ngoài luồng mua hàng còn 3 trang tĩnh vào từ footer: `privacy` · `term
 - Settings FAB (góc phải dưới): đổi ngôn ngữ + đổi font (Montserrat/Inter/Plus Jakarta Sans).
 - **Nút về đầu trang `#topFab`** (góc phải dưới, ngay trên Settings FAB) — mọi màn, cả 2 bản. Xem mục "Nút về đầu trang".
 
+## Tiền tố hệ đo size (21/08/2026, CẢ 5 BẢN kể cả 3 skin desktop)
+
+Chip/hàng chọn size ở **PDP + quick add** (và dải size hover trên card của skin-mt) hiển thị kèm hệ đo trước số size kiểu mytheresa: **`IT 39`** thay vì `39` (hàng demo toàn Versace hệ Ý; ví dụ brief: `UK/US 30`, `IT 34`).
+
+- Nguồn duy nhất: `SIZE_UNIT = 'IT'` + `sizeLabel(s)` (khai ngay dưới `OOS_MODE`) — chỉ prefix nhãn **thuần số**; `Onesize` / `90 × 90 cm` / dung tích `90 ml` giữ nguyên. Đổi hệ đo = sửa 1 hằng.
+- Nhãn có tiền tố chảy vào cả dòng biến thể tấm xác nhận (`Nero , IT 40`) và label trigger dropdown.
+- **Mobile** giữ `data-size` = số thô (logic `OOS_MODE`/`SIZE_LOW_STOCK` tra thẳng); **desktop** `data-size` = chính label nên 2 chỗ tra cứu trong `setCta`/dropdown phải bóc qua `sizeRaw()` — thêm size mới nhớ đi qua `sizeLabel`/`sizeRaw`, đừng tra map bằng nhãn có tiền tố.
+
 ## Quà tặng trong giỏ (13/08/2026, CẢ 2 BẢN)
 
 Hai cơ chế theo yêu cầu user, **cùng chạy trong màn Giỏ hàng**:

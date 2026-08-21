@@ -1926,6 +1926,15 @@ const DISABLED = ['43','44'];
 //   43 → chỉ báo "Tạm hết hàng"   ·   44 → mời "Nhận thông báo khi có hàng"
 const OOS_MODE = { '43': 'oos', '44': 'notify' };
 
+/* Tiền tố HỆ ĐO đặt trước số size ở mọi chỗ chọn size (PDP + quick add), kiểu
+   mytheresa: "IT 34", "UK/US 30". Hàng demo toàn Versace (hệ Ý) nên dùng IT
+   chung; đổi hệ chỉ sửa 1 chỗ này. Nhãn KHÔNG phải số thuần (Onesize,
+   90 × 90 cm, dung tích 90 ml) giữ nguyên.
+   data-size + key tra cứu (OOS_MODE, SIZE_LOW_STOCK, DISABLED) vẫn là SỐ THÔ —
+   tiền tố chỉ sống ở nhãn hiển thị/biến thể trong giỏ. */
+const SIZE_UNIT = 'IT';
+const sizeLabel = s => /^\d+$/.test(s) ? `${SIZE_UNIT} ${s}` : s;
+
 // Danh sách kích thước cho các PDP dùng "dropdown" (giờ mở bottom sheet thay vì <select>)
 // `left` = số lượng còn lại, CHỈ gán khi sắp hết -> hàng đó hiện "Còn X sản phẩm";
 // size còn hàng bình thường không hiện trạng thái gì (Figma 3281:53948)
@@ -1933,8 +1942,8 @@ const SIZE_LOW_STOCK = { '42': 1 };
 const SIZE_SHEET_OPTIONS = {
   pdp2: ['90 × 90 cm', '84 × 5 cm'].map(label => ({ label, oos: false })),
   pdp3: ['Onesize'].map(label => ({ label, oos: false })),
-  pdp5: SIZES.map(s => ({ label: s, oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
-  pdp6: SIZES.map(s => ({ label: s, oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
+  pdp5: SIZES.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
+  pdp6: SIZES.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
 };
 
 // Nội dung banner khuyến mãi trên cùng PLP (không viết hoa toàn bộ)
@@ -2712,7 +2721,7 @@ function screenPDP() {
         <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)">
           ${SIZES.map(s => {
             const off = DISABLED.includes(s);
-            return `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? `data-oos="${OOS_MODE[s] || 'oos'}"` : ''}>${s}</button>`;
+            return `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? `data-oos="${OOS_MODE[s] || 'oos'}"` : ''}>${sizeLabel(s)}</button>`;
           }).join('')}
         </div>
         <!-- Mặc định ẨN — chỉ hiện khi bấm đúng size sắp hết hàng (SIZE_LOW_STOCK, xem setCta) -->
@@ -3234,7 +3243,7 @@ function screenPDP4() {
         <div class="grid gap-2" style="grid-template-columns:repeat(4,1fr)">
           ${SIZES.map(s => {
             const off = DISABLED.includes(s);
-            return `<button class="chip w-full h-9 px-2 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? `data-oos="${OOS_MODE[s] || 'oos'}"` : ''}>${s}</button>`;
+            return `<button class="chip w-full h-9 px-2 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? `data-oos="${OOS_MODE[s] || 'oos'}"` : ''}>${sizeLabel(s)}</button>`;
           }).join('')}
         </div>
         <!-- Mặc định ẨN — chỉ hiện khi bấm đúng size sắp hết hàng (SIZE_LOW_STOCK, xem setCta) -->
@@ -7886,7 +7895,7 @@ function wire(root) {
       const colorEl = root.querySelector('#colorName');
       const sizeChip = root.querySelector('.chip.on');
       const sizeLbl = root.querySelector('.size-trigger-label');
-      const size = sizeChip ? sizeChip.dataset.size
+      const size = sizeChip ? sizeLabel(sizeChip.dataset.size)
         : (sizeLbl && !sizeLbl.classList.contains('text-muted-foreground') ? sizeLbl.textContent.trim() : '');
       const variant = [colorEl ? colorEl.textContent.trim() : '', size].filter(Boolean).join(' , ');
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
@@ -9484,7 +9493,7 @@ function quickAddBody(p, idx, sel = 0) {
         <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)" data-qa-sizes>
           ${(p.sizes || SIZES).map((s, si) => {
             const off = !p.sizes && DISABLED.includes(s);
-            return `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${(si === 0 && !off) ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? 'disabled' : ''}>${s}</button>`;
+            return `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${(si === 0 && !off) ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? 'disabled' : ''}>${sizeLabel(s)}</button>`;
           }).join('')}
         </div>
       </div>
@@ -9548,7 +9557,7 @@ function quickAddCta(p) {
       document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
       const colorName = body.querySelector('.qa-color-name');
       const sizeChip = body.querySelector('[data-qa-sizes] .chip.on');
-      const variant = [colorName ? colorName.textContent.trim() : '', sizeChip ? sizeChip.dataset.size : ''].filter(Boolean).join(' , ');
+      const variant = [colorName ? colorName.textContent.trim() : '', sizeChip ? sizeLabel(sizeChip.dataset.size) : ''].filter(Boolean).join(' , ');
       closeQA();
       // đợi sheet quick-add trượt xuống xong rồi mở sheet xác nhận
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
