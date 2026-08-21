@@ -1145,6 +1145,130 @@ Nay gom về **một rule** trong khối `<style>` — sửa nền badge thì s�
 
 > **CÒN LỆCH — là lệch NỘI DUNG, không phải màu, chưa sửa vì user chỉ nói về màu:** PDP mobile treo tới **3 badge** (`Pre-order` · `New Season` · `La Vacanza`, tuỳ màn 1–3 cái), còn **PDP desktop chỉ treo `Pre-order`** — markup gallery desktop (`dkPdp`, tile đầu) không render 2 badge mùa vụ. Muốn đồng bộ nốt thì thêm chúng vào tile đầu của gallery desktop.
 
+## Bộ lọc: weight +1 nấc cho panel và các tầng danh mục (20/08/2026, CẢ 2 BẢN)
+
+User: *"filter tăng font weight của BỘ LỌC và các level danh mục lên 1 nấc nhé"*.
+
+Bộ da ép toàn trang về `400` nên **"1 nấc" ở đây là `500`** — cùng cách tính đã ghi ở mục thang chữ ("`skin-mt` thấp hơn 1 bậc vì bộ da ép về 400, nấc của nó tính từ 400").
+
+**Tăng cả ba nhóm cùng lúc** nên tương quan giữa chúng **không đổi**, chỉ đậm hơn một nấc:
+
+| Tầng | Trước | Nay | Phân cấp vẫn nhờ |
+|---|---|---|---|
+| Tiêu đề panel "BỘ LỌC" | `14px w400` | `14px w500` | cỡ chữ + chữ hoa |
+| Tiêu đề mục "DANH MỤC"… | `12px w400` | `12px w500` | chữ hoa |
+| 3 tầng cây danh mục | `12px w400` | `12px w500` | indent `40 / 64 / 88` |
+
+**Điểm kỹ thuật đáng ghi — vì sao 3 selector chứ không 1:**
+
+```css
+html.skin-mt #filterSheet .facc { font-weight: 500; }
+```
+
+phủ được **mọi dòng lựa chọn** (cate, thương hiệu, màu sắc…) vì chúng **không mang class `font-*` nào** → chúng kế thừa, nên khối blanket `400` của bộ da không chặn được. Ngược lại **hai tầng nhãn phải khai `500` tường minh**: markup của chúng có `font-medium`, tức đúng loại class mà blanket kéo về `400`.
+
+**Đo lại — cả 2 file:** `skin-mt` ra `title 14px w500` · `tiêu đề mục 12px w500` · **cả 4 mức indent của cây danh mục `w500`** (`pl=16 / 40 / 64 / 88`) · mục "Thương hiệu" cũng `w500` nên panel không có chỗ nào lệch nấc. Bộ da Mặc định giữ `title w500 · mục w300 · cate w400`, `skin-mp` giữ `title w500 · mục w300 · cate w400` — không lệch số nào. Console sạch trên tab mới.
+
+## Quà tặng: nhấn bằng chữ, không bằng mảng màu (20/08/2026, CẢ 2 BẢN)
+
+User: *"phần nhấn màu của quà tặng hơi dài, thử vài style phù hợp với skin mt cho phần quà tặng"*.
+
+**Đo hiện trạng:** `.gift-group` tự tô `bg-accent-0` và chạy full-bleed → mảng xám **375×185** — cao gần bằng một dòng sản phẩm, rộng hết bề ngang. Trên bộ da này nó lạc: `skin-mt` **không nhấn bằng mảng màu ở bất kỳ đâu** — nav, menu, bộ lọc, footer đều phân cấp bằng **chữ hoa + kẻ mảnh**.
+
+Nên đổi **đòn bẩy**, không phải thu nhỏ mảng:
+
+| Bỏ | Thay bằng |
+|---|---|
+| mặt xám của cả 2 loại dải quà (theo sản phẩm + theo mốc đơn) | — |
+| — | tên chương trình lên **nhãn chữ hoa 12px** — cùng bậc với 6 nhãn footer, nhãn menu, tiêu đề mục bộ lọc, nên tự đọc ra là nhãn nhóm |
+| — | "Đổi quà" chuẩn hoá gạch chân `1px / offset 2px` (markup **vốn đã có** `underline`, mặc định trình duyệt để gạch dày hơn và sát chữ hơn) — cùng khuôn link hành động với "Thay đổi" ở checkout |
+
+**Giữ nguyên** badge "Quà tặng" nền đen trên ảnh và giá `0 ₫` — đó mới là chỗ phân biệt quà với hàng mua, không cần mảng nền tiếp sức.
+
+**2 phương án đã cân nhắc rồi bỏ** (ghi lại phòng khi muốn quay lại):
+
+- **(B) Thu mảng xám thành chip nhỏ ôm mỗi tên chương trình.** Vẫn là nhấn bằng màu, mà bộ da này không có linh kiện chip nền nào khác — sẽ là ngoại lệ đứng một mình.
+- **(C) Rail dọc `border-left` 2px đen cho cả dải.** Nhấn bằng đường, nhưng đẻ thêm một kiểu vạch thứ hai bên cạnh hệ gạch ngang đang dùng khắp nơi.
+
+**Đo lại:** `skin-mt` ở cả 2 file ra **3/3 dải quà** `bg=rgba(0,0,0,0)`, nhãn `12px uppercase`, "Đổi quà" `1px/2px`; badge "Quà tặng" vẫn `rgb(10,10,10)` `10px`. `skin-mp` và bộ da Mặc định giữ nguyên mảng `#f7f7f7` / `#fafafa`, nhãn `tt=none`, gạch chân `auto/auto` — không lệch số nào. Console sạch trên tab mới.
+
+## Trang giỏ: 3 lỗi hộp user chỉ ra (20/08/2026)
+
+User: *"phần title lớn (giỏ hàng) đang chưa được thụt vào; block giỏ hàng và block tóm tắt đơn hàng đang chưa bằng nhau hiện cái cao cái thấp; cho quà tặng của đơn hàng nằm vô trong block giỏ hàng luôn"*. Cả ba đều đo ra số, không phải cảm giác.
+
+**1. Tiêu đề "Giỏ hàng" sát mép hộp — CHỈ DESKTOP.** Đo: chữ ở `x=24` trong khi hàng "Chọn tất cả" và nội dung từng món đều ở `x=40`. Nguyên nhân: hàng tiêu đề desktop chỉ có `py-4`, **không có `px`**; bản mobile không dính vì hàng tương ứng bên đó vốn `px-4`. Thêm `padding: 0 16px` cho hàng đó.
+
+**2. Hai cột lệch đỉnh đúng 12px — CHỈ DESKTOP.** Đo (sau khi tắt transition, vì `.rise` đang chạy làm rect sai): hộp trái `y=197`, card tóm tắt `y=185`. Thủ phạm là chính `margin-top: 12px` tôi thêm cho hộp đầu ở vòng "đóng hộp" — cột phải bắt đầu ngay đỉnh vùng nội dung nên không có khe tương ứng. Bỏ `margin-top`, đổi thành `padding` ngang (việc 1) → **lệch còn 0px**.
+
+> Lưu ý cách đọc: hộp trái cao `1338`, card phải cao `394` — chênh này là **do nội dung** (5 món so với một cụm tóm tắt) và không ép bằng nhau được nếu không đẻ ra khoảng trắng lớn. Cái sửa được, và cũng là cái đập vào mắt, là **đỉnh phải thẳng hàng**.
+
+**3. Quà theo mốc đơn nằm luôn trong hộp giỏ hàng.** Trước đó `#orderGift` là hộp thứ hai đứng riêng, cách 12px — mà quà theo mốc là **hệ quả của chính giỏ này**, tách ra thành khối riêng đọc như một mục không liên quan. Nay bỏ khe + mặt riêng, chỉ giữ một kẻ mảnh ngăn với danh sách món (cùng loại kẻ đang ngăn giữa các món) nên nó đọc ra là **dòng cuối của hộp**.
+
+**Chỗ dễ sót của việc 3 — đáy hộp phải DI CHUYỂN:**
+
+```css
+html.skin-mt [data-screen="cart"] #cartList:has(+ #orderGift [data-gift-tier]) {
+  border-bottom-width: 0; padding-bottom: 0;
+}
+```
+
+Khối quà đang hiện thì **nó** là đáy hộp, danh sách nhả kẻ + khoảng thở cho nó. Nhưng khi mốc quà chưa đạt, khối quà bị `display:none` bởi rule tạm ẩn — thiếu nhánh `:has()` này thì hộp **mất hẳn viền dưới** đúng trong trường hợp đó.
+
+**Đo lại — desktop:** đỉnh hộp trái `185` = card phải `185`, **lệch 0**; `title x=40` = `chọn tất cả x=40` = `nội dung món x=40`; `#cartList` nhả `bdB=0 pb=0`, `#orderGift` giữ `bdT/bdB=0.8px pb=16`, **khe giữa hai khối = 0**. **Mobile:** chuỗi liền mạch `y=60→112→147→1171→1381` (một hộp duy nhất), khe = 0, `title x=16` = `nội dung món x=16`. **Trường hợp mốc quà rớt:** bỏ tick toàn bộ → `#orderGift display:none` và `#cartList` lấy lại `bdB=0.8px pb=16px` — nhánh `:has()` chạy đúng. `skin-mp` và bộ da Mặc định không lệch số nào. Console sạch trên tab mới.
+
+> Bẫy đo đạc gặp lại: đo ngay sau `go('cart')` thì khe ra **10px** vì `.rise` chưa chạy xong transform. Phải tắt `transition/animation/transform` trước khi đọc `getBoundingClientRect`.
+
+## Footer theo `skin-mt`: nhãn nhóm chữ hoa (20/08/2026, CẢ 2 BẢN)
+
+User: *"update lại footer theo skin mt luôn nhé"*.
+
+Footer là **chỗ cuối còn sót** của bộ da: nó có 6 **nhãn nhóm đứng trên danh sách** — đúng cái vai mà `skin-mt` đã viết hoa ở 3 chỗ khác (nhãn menu drawer · nhãn nhóm mega panel · tiêu đề mục bộ lọc) — nhưng vẫn đang chữ thường. Kéo về cùng bậc nhãn: **12/16 + chữ hoa**, weight để blanket của bộ da lo (400), tracking kế thừa `body` (0.5px). Chữ hoa là đòn bẩy **duy nhất**, không nâng weight — đúng lý do đã chốt ở bộ lọc.
+
+6 nhãn: `Liên hệ với chúng tôi` · `Chăm sóc khách hàng` · `Chính sách` · `Theo dõi chúng tôi` · `Chấp nhận thanh toán` · `Đối tác vận chuyển`.
+
+**Bắt nhãn nhóm bằng CẤU TRÚC, không bằng danh sách chuỗi** — chỗ khó của việc này:
+
+| Mảnh selector | Loại được gì |
+|---|---|
+| `div:not(:has(img)) > p.font-medium` | cột nào chứa **logo** là khối thương hiệu, `p` trong đó ("DAFC - A subsidiary of IPPG") là dòng mô tả công ty. Ở **desktop đây là cách duy nhất** phân biệt được: cả 4 cột đều là `p` + `div.flex-col` theo sau, chỉ khác ở chỗ có logo hay không |
+| `:not(.text-\[18px\])` | tiêu đề newsletter "Cập nhật thông tin mới nhất từ DAFC" — tiêu đề khối, không phải nhãn danh sách |
+| `.acc-trigger > span:first-child` | mobile gói 3 nhóm link vào **accordion** nên nhãn nằm trong `span`; desktop trải 4 cột nên không có nhánh này. Giữ trong selector để 2 file khai giống hệt |
+
+**Hook `.bg-secondary.mt-4`** = footer ở cả 2 khổ (mobile `bg-secondary pt-8 pb-8 px-2 mt-4`, desktop `bg-secondary mt-4`) và **không trúng panel ưu đãi ở giỏ** (`py-6 px-4 bg-secondary …`, không có `mt-4`) — chỗ đó cũng có `p.font-medium` ("Ưu đãi chương trình DAFC Rewards", "Tổng cộng") mà viết hoa lên là sai.
+
+**Không đụng vách accordion footer.** Bộ da đang để `#dfdfdf` (chốt 18/08 "nội dung nhẹ nhàng hơn"). Hệ gạch `#ececec` chỉ nhạt hơn nền `#f2f2f2` đúng **6/255** nên đưa về đó là mất luôn vạch.
+
+**Đo lại:** `skin-mt` ở cả 2 file ra **6/6 nhãn `12px uppercase`**, còn "Cập nhật thông tin…" (`18px`) và "DAFC - A subsidiary of IPPG" giữ `tt=none`. Quét rò rỉ: chữ hoa **ngoài** footer ở `plp · pdp · cart · checkout` = **0** ở mobile, và **0** ngoài footer+nav ở desktop. `skin-mp` và bộ da Mặc định ra `14px tt=none` cho cả 6 nhãn — không lệch số nào. Console sạch trên tab mới.
+
+## Gỡ đen đặc #000000 khỏi bảng token của 2 bộ da (20/08/2026, CẢ 2 BẢN)
+
+User: *"trong bộ color system của tôi hình như không có màu đen 000000, bạn đang sử dụng mã đen 0000 khá nhiều, hãy kiểm tra lại nhé"*. **Kiểm rồi — user đúng.**
+
+**`tokens.css` không có token nào là đen đặc.** Mực đậm nhất của hệ:
+
+| Token | Mode D | Mode GM |
+|---|---|---|
+| `--general-foreground` · `--general-primary` | `#0a0a0a` | `#0a0a0a` |
+| `--general-body-text` | `#404040` | — |
+| `--unofficial-contrast` | `#010101` | `#0a0a0a` |
+| `--surface-dark` | `#262626` | — |
+
+`#000000` chỉ xuất hiện **5 lần, tất cả đều KÈM ALPHA**: `--unofficial-backdrop: #00000099` · `--unofficial-ghost-hover: #0000000d` · `--unofficial-outline-hover: #00000008` · `--unofficial-outline-active: #0000000d` · `--unofficial-ghost-active: #0000001a`. Tức trong hệ này đen đặc là **lớp phủ**, không phải **mực**.
+
+**Đen đặc nằm ở đâu:** chỉ trong **khối bộ da**, không có ở base. `index.html` 21 chỗ code · `desktop.html` 27 chỗ code. Nguồn: số đo mytheresa (18/08 — "mực ĐEN THẬT" từng được ghi là nét nhận dạng của `skin-mt`) và mrporter (20/08 — đo trang chủ ra `#000`).
+
+**Đã kéo hết về `#0a0a0a`** — lệch 10/255 nên mắt không phân biệt được, mà bộ da không còn đẻ sắc nằm ngoài color system. Ba ranh giới khi thay:
+
+- **Giữ nguyên mọi giá trị có alpha** (`rgba(0,0,0,.5)`, `.05`, `.04`…) — hệ token gốc cũng dùng đen alpha, nên chúng đúng hệ.
+- **Giữ nguyên chữ `#000` trong comment ghi số đo** của site tham chiếu — đó là ghi chép đo đạc, sửa đi là làm sai lịch sử. Thay bằng 3 mẫu code chính xác (`: #000000;` · `: #000;` · `solid #000;`) nên 14 dòng comment ở mobile và 17 dòng ở desktop **không bị đụng**.
+- **Bộ da "Mặc định" không đổi một số nào** — nó vốn đã đọc thẳng từ `tokens.css`.
+
+**Đo lại:** `skin-mt` và `skin-mp` ở cả 2 file ra `foreground = primary = contrast = surface-dark = popover = #0a0a0a`, `backdrop` vẫn `rgba(0,0,0,.5)`. Bộ da Mặc định giữ `contrast #010101` · `surface-dark #262626` · `backdrop #00000099`. Quét **mọi phần tử có chữ** ở `plp · pdp · cart · checkout`: **0 chữ nào còn render `rgb(0,0,0)`** ở cả 2 file. Console sạch trên tab mới.
+
+> `body` vẫn báo `color: rgb(0,0,0)` — đó là giá trị mặc định của trình duyệt cho thẻ `body`, không phải token; đã kiểm là **không phần tử chữ nào kế thừa nó** (mọi chữ đều đi qua class `text-*`). Muốn triệt để thì khai `body { color: var(--general-body-text) }` ở base — chưa làm vì đó là đổi mặc định toàn site, ngoài phạm vi câu hỏi.
+
+**Quy ước từ nay:** cần đen thật cho một bộ da thì **thêm token vào color system trước**, đừng khai thẳng hex trong khối bộ da.
+
 ## Bộ lọc: chốt cứng thang chữ 14 / 12 cho 2 tầng tiêu đề (20/08/2026, CẢ 2 BẢN)
 
 User: *"ở filter, dialog title filter sẽ font 14 UPPERCASE, cate danh mục …. sẽ UPPERCASE font size 12"*.
