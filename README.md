@@ -783,6 +783,62 @@ Scan 6 view (`login/register/otp/reginfo/setpass/forgot`) + popup đăng nhập 
 
 **Còn tồn — thuộc tầng remap skin-mt (Phần 6, đã chốt 20/08 nhưng demo chưa sửa), KHÔNG tự đổi:** tiêu đề view `24/32 font-light` (300 bị §1.1 cấm — nhưng là spec Figma gốc "Tiêu đề Light 24", tầng bộ da sẽ ép weight khi remap; hiện blanket 400 của skin-mt ĐÃ đè nó khi đo) · `tracking-wide` trong `abtn` (đo skin-mt ra ls0.5px — khối chặn hiện có ĐÃ vô hiệu nó, chỉ còn là rác markup) · input popup đăng nhập nhanh desktop dùng `font-light` (lệch với input `afield` 400) · ô OTP viền `border-border-3` #cfcfcf (nhập về V2 #dfdfdf khi remap viền §3.1). Đo sau sửa: thân màn auth desktop skin-mt đồng nhất `12/20 · w400 · ls0.5` (nhịp 12/20 sẽ siết về 12/18 ở Phần 6 việc 1), console sạch cả 2 bản.
 
+## Bộ lọc: tiêu đề mục "Ưu đãi" màu ĐỎ (19/08/2026, CẢ 2 BẢN)
+
+Yêu cầu user. Đây là mục **giảm giá** (sheet "Promo") nên tô đỏ như mọi tín hiệu khuyến mãi khác của dự án — mục "Khuyến mãi" trên nav và badge `-%` đều dùng `--general-destructive`. **Dùng đúng token đó, không chế màu mới.**
+
+```css
+[data-facc="Ưu đãi"] .facc-trigger > span:first-child { color: var(--general-destructive); }
+```
+
+- Khai ở **tầng base**, không phải trong khối bộ da — giống hệt cách nav "Khuyến mãi" làm, nên **đỏ ở cả 3 bộ da** và tự đổi theo token của từng bộ.
+- **`data-facc` = hook mới thêm vào `fSection()`**, lấy thẳng `title`. Muốn tô mục nào sau này chỉ cần thêm 1 selector, không phải đẻ tham số mới.
+- **Chỉ tô nhãn chữ.** Icon `+/−` giữ mực chung: nó là nút điều khiển dùng chung cho mọi mục, đổi màu riêng ở đây là phá tính nhất quán vừa gom được của bộ icon.
+
+**Đo lại — 2 file × 3 bộ da × 2 biến thể thân bộ lọc:**
+
+| Bộ da | `Ưu đãi` | `Danh mục` / `Khác` |
+|---|---|---|
+| mặc định · Mytheresa | **`rgb(214,40,69)`** = `#d62845` | `rgb(10,10,10)` |
+| MR PORTER | **`rgb(216,30,5)`** = `#d81e05` (token riêng của bộ da) | `rgb(10,10,10)` |
+
+Chỉ duy nhất mục "Ưu đãi" đổi màu, các mục khác giữ mực. Console sạch trên tab mới ở cả 2 file.
+
+## Bộ lọc: mục "Ưu đãi" (sheet Promo) — bật cho MỌI ngành + lọc THẬT (19/08/2026, CẢ 2 BẢN)
+
+User báo sheet **Promo** của `Filter - Beauty cate demo.xlsx` chưa được đưa vào bộ lọc, kèm 5 lựa chọn: `Full-priced · 10% - 30% · 30% - 50% · 50% - 70% · From 70%`.
+
+**Kiểm lại thì `FILTER_PROMOS` đã có sẵn từ trước, đúng 5 lựa chọn và đúng nhãn** — bản VI `Nguyên giá · 10% - 30% · 30% - 50% · 50% - 70% · Trên 70%`, i18n đã map sẵn `Nguyên giá → Full-priced` và `Trên 70% → From 70%` (3 nhãn khoảng số giống nhau ở 2 ngôn ngữ nên không cần luật dịch). **Vấn đề nằm ở 2 chỗ khác:**
+
+| # | Lỗi | Sửa |
+|---|---|---|
+| 1 | Mục "Ưu đãi" **chỉ dựng cho PLP làm đẹp** (`beauty ? … : ''`) | dựng cho **mọi PLP** — mức giảm giá thì ngành nào cũng có |
+| 2 | Nó **không lọc gì cả** — tick vào lưới không đổi | thêm lọc thật vào `matchProducts` |
+
+Lỗi 2 đáng kể: từ 12/08 bộ lọc của dự án là **lọc thật**, để một facet trang trí là lệch hẳn khỏi phần còn lại.
+
+```js
+const PROMO_RANGES = { 'Nguyên giá': null, '10% - 30%': [10,30], '30% - 50%': [30,50],
+                       '50% - 70%': [50,70], 'Trên 70%': [70, Infinity] };
+const discountPct = p => { const m = /(\d+)/.exec(p.off || ''); return m ? +m[1] : 0; };
+```
+
+**Biên khoảng `[lo, hi)`** — giảm đúng 30% rơi vào `30% - 50%`, không phải `10% - 30%`. Chọn vậy để 4 khoảng **không chồng nhau**, tick 2 ô liền kề không đếm trùng một sản phẩm. `Nguyên giá` = không có `p.off`. Tick nhiều ô là **HỢP (OR)** như mọi facet khác.
+
+Kèm theo: thêm `FILTER_PROMOS` vào **phần dùng chung** của `facetLabelsFor()` (trước nằm trong nhánh `beauty`), không thì chuyển ngành là chip ưu đãi bị dọn mất.
+
+**Đo lại — logic lọc trên data thật** (24 SP: 18 nguyên giá · `-10 -15 -15 -20 -25` · `-30`):
+
+| Tick | Kết quả |
+|---|---|
+| `Nguyên giá` | **18** SP, toàn bộ không giảm |
+| `10% - 30%` | **5** SP: `-20 -15 -25 -10 -15` |
+| `30% - 50%` | **1** SP: `-30` ← biên đúng như thiết kế |
+| `50% - 70%` · `Trên 70%` | **0** (data chưa có) |
+| `Nguyên giá` + `10% - 30%` | **23** = 18 + 5, không trùng |
+
+**Đo lại — luồng UI đầy đủ, cả 2 file:** mục "Ưu đãi" xuất hiện ở **cả 2 ngành** (thời trang 7 mục · làm đẹp 6 mục), đủ **5 lựa chọn**; số trên nút Áp dụng **khớp khít** số thẻ trong lưới (`(10) → 10` · `(5) → 5` · `(0) → 0` kèm empty state); chip hiện đúng nhãn; **Đặt lại** trả về đủ 16 SP và xoá chip. Console sạch trên tab mới ở cả 2 file.
+
 ## Vào checkout LUÔN mở bước "Vận chuyển" (19/08/2026, CẢ 2 BẢN)
 
 User: *"khi từ checkout vào cart, dù đăng nhập rồi hay chưa đều phải trả về trang chọn vận chuyển hay chọn mua tại cửa hàng"*.

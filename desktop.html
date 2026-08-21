@@ -388,6 +388,17 @@ window.RESP = (function () {
   .facc .facc-ico { display: none; } .facc .facc-ico-plus { display: block; }
   .facc.open .facc-ico { display: block; } .facc.open .facc-ico-plus { display: none; }
 
+  /* ── MỤC "ƯU ĐÃI" TRONG BỘ LỌC: TIÊU ĐỀ MÀU ĐỎ (19/08/2026, yêu cầu user) ────
+   Đây là mục giảm giá (sheet "Promo" của file Excel) nên tô đỏ như mọi tín hiệu
+   khuyến mãi khác của dự án: mục "Khuyến mãi" trên nav và badge -% đều dùng
+   `--general-destructive`. Dùng ĐÚNG token đó, không chế màu mới.
+   Khai ở TẦNG BASE (không phải trong khối bộ da) — giống hệt cách nav "Khuyến
+   mãi" làm, nên đỏ ở CẢ 3 bộ da.
+   `data-facc` = hook mới thêm vào fSection: lấy thẳng title, nhờ vậy muốn tô
+   mục nào chỉ cần thêm 1 selector, không phải đẻ tham số mới.
+   CHỈ tô NHÃN CHỮ. Icon +/- giữ mực chung: nó là nút điều khiển dùng chung cho
+   mọi mục, đổi màu riêng ở đây là phá tính nhất quán của bộ icon. */
+  [data-facc="Ưu đãi"] .facc-trigger > span:first-child { color: var(--general-destructive); }
   /* cấp con của danh mục — mặc định ĐÓNG */
   .fcat-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s cubic-bezier(.22,1,.36,1); }
   .fcat.open .fcat-body { grid-template-rows: 1fr; }
@@ -5738,6 +5749,7 @@ function matchProducts(list, labels) {
   const colors = labels.filter(l => FILTER_COLORS.some(([n]) => n === l));
   const flags  = labels.filter(l => FILTER_FLAGS.includes(l));
   const sizes  = labels.filter(l => FILTER_VOLUMES.includes(l));
+  const promos = labels.filter(l => FILTER_PROMOS.includes(l));
   return list.filter(({ p }) => {
     if (brands.length && !brands.includes(p.brand)) return false;
     if (colors.length) {
@@ -5753,10 +5765,46 @@ function matchProducts(list, labels) {
       const has = p.sizes || [];
       if (!sizes.some(v => has.includes(v))) return false;
     }
+    /* Ưu đãi LỌC THẬT theo mức giảm — xem PROMO_RANGES. Tick nhiều ô là HỢP
+       (OR) như mọi facet khác, và các khoảng không chồng nhau nên không đếm
+       trùng. Data hiện có: 6 SP giảm 10-30%, 2 SP nguyên giá; 3 khoảng sâu hơn
+       chưa có SP nào -> tick vào ra lưới rỗng kèm empty state, đúng như mọi
+       facet không khớp khác. */
+    if (promos.length) {
+      const pct = discountPct(p);
+      const hit = promos.some(l => {
+        const r = PROMO_RANGES[l];
+        return r ? (pct >= r[0] && pct < r[1]) : pct === 0;
+      });
+      if (!hit) return false;
+    }
     return true;
   });
 }
 const FILTER_PROMOS  = ['Nguyên giá','10% - 30%','30% - 50%','50% - 70%','Trên 70%'];
+/* ── ƯU ĐÃI = MỨC GIẢM GIÁ — sheet "Promo" của Filter - Beauty cate demo.xlsx ──
+   (bổ sung 19/08/2026, user báo thiếu). 5 lựa chọn khớp đúng file Excel; nhãn
+   tiếng Anh đã có sẵn trong I18N: Nguyên giá -> Full-priced, Trên 70% -> From 70%.
+   3 nhãn khoảng số giữ nguyên ở cả 2 ngôn ngữ nên không cần luật dịch.
+
+   2 thứ ĐÃ SỬA cùng lúc, vì thiếu cái nào thì mục này cũng vô dụng:
+     1. Trước đây mục "Ưu đãi" CHỈ dựng cho PLP làm đẹp (`beauty ? ... : ''`).
+        Mức giảm giá thì ngành nào cũng có -> nay dựng cho MỌI PLP.
+     2. Trước đây nó KHÔNG lọc gì cả — tick vào lưới không đổi. Từ 12/08 bộ lọc
+        của dự án là lọc THẬT, để một facet trang trí là lệch hẳn.
+
+   BIÊN KHOẢNG: [lo, hi) — giảm đúng 30% rơi vào "30% - 50%", không phải
+   "10% - 30%". Chọn vậy để 4 khoảng KHÔNG chồng nhau, tick 2 ô liền kề không
+   đếm trùng một sản phẩm. "Nguyên giá" = không có p.off. */
+const PROMO_RANGES = {
+  'Nguyên giá': null,
+  '10% - 30%': [10, 30],
+  '30% - 50%': [30, 50],
+  '50% - 70%': [50, 70],
+  'Trên 70%':  [70, Infinity],
+};
+/* p.off dạng '-30%' -> 30; không giảm -> 0 */
+const discountPct = p => { const m = /(\d+)/.exec(p.off || ''); return m ? +m[1] : 0; };
 /* ── KÍCH THƯỚC THEO NHÓM — sheet "Size" của Filter - Beauty cate demo.xlsx,
    đồng bộ từ index.html 20/08/2026 (KHAI GIỐNG HỆT 2 file): mỗi nhóm là MỘT MỤC
    ĐÓNG/MỞ khuôn .fcat; "Giày dép" đứng đầu + MỞ SẴN, "Khác" đóng (gộp Phụ kiện +
@@ -5824,7 +5872,7 @@ const fsubRow = (label, depth, toggle = '') => `
    Cấp con của Danh mục (.fcat) và cấp 3 (.fsub) VỐN ĐÃ đóng sẵn, không đụng. */
 function fSection(title, body, open = false, h = 72, count = '') {
   return `
-  <div class="facc ${open ? 'open' : ''}">
+  <div class="facc ${open ? 'open' : ''}" data-facc="${title}">
     <button class="facc-trigger w-full px-4 flex items-center justify-between press" style="height:${h}px">
       <span class="text-[16px] font-light leading-6 text-foreground">${title}${count ? `<span data-fscount="${count}"></span>` : ''}</span>
       <span class="facc-ico">${IcoMinus}</span>
@@ -6071,7 +6119,7 @@ function filterBody(beauty) {
       ? fSection('Dung tích', sizeGrid(volumes))
       : fSection('Kích thước', `<div class="pb-4">${sizeGroups}</div>`)}
     ${fSection('Khoảng giá', price)}
-    ${beauty ? fSection('Ưu đãi', `<div class="px-4 pb-6 flex flex-col gap-1">${promos}</div>`) : ''}
+    ${fSection('Ưu đãi', `<div class="px-4 pb-6 flex flex-col gap-1">${promos}</div>`)}
     ${fSection('Khác', `<div class="px-4 pb-6 flex flex-col gap-1">
       ${['Chỉ hàng có sẵn','Đang giảm giá','Hàng mới về'].map(t => `
         <button class="h-9 w-full flex items-center gap-2 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('')}
@@ -6132,9 +6180,9 @@ function renderFilterBody() {
 function facetLabelsFor(beauty) {
   const out = new Set(FILTER_BRANDS);
   ['Chỉ hàng có sẵn', 'Đang giảm giá', 'Hàng mới về'].forEach(t => out.add(t));
+  FILTER_PROMOS.forEach(t => out.add(t));   // mục Ưu đãi nay có ở MỌI ngành hàng
   if (beauty) {
     FILTER_VOLUMES.forEach(v => out.add(v));
-    FILTER_PROMOS.forEach(t => out.add(t));
   } else {
     FILTER_COLORS.forEach(([n]) => out.add(n));
     FILTER_SIZES.forEach(v => out.add('Size ' + v));
