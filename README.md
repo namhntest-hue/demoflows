@@ -159,6 +159,26 @@ Sửa kèm ở JS: `applySkin` phải add/remove **theo từng class** (`classLi
 - **Bộ chọn da** hiện đủ 4 dòng, tick đúng dòng Maika; bấm qua UI (`mytheresa → maika`) ra đúng `skin-mp skin-mk`. Ghi chú dòng Maika không có bản dịch EN — **giống 3 dòng còn lại** (popover Cài đặt là công cụ dev, §5 STYLE-RULES).
 - **Font mix vẫn giữ chữ hoa cho menu Maika** ✓ — nó thừa hưởng rule `html.skin-mp.font-pair …` (có `!important`) của mục trên.
 - Giữ theo skin-mp có chủ ý: nav ngành hàng của **màn Search** (`.search-tab`) — nó là nội dung trang, mà thân trang Maika là skin-mp.
+### Brand name của Maika dùng MẶT CHỮ CỦA HEADING (cả 2 bản)
+
+User: *"ở skin maika, brand name sẽ dùng font của heading luôn nhé, đồng bộ khi swap mix font thì font brand name cũng phải dùng font của heading"*.
+
+Cách làm: dùng **đúng biến của cơ chế cặp font** thay vì khai tên font — `font-family: var(--font-head, var(--font-app))` cho `.pc-brand` + dòng brand trong hàng giỏ. Nhờ vậy:
+- **chưa chọn cặp** → `--font-head` chưa có → rơi về `--font-app` (mặt chữ thân bài) → không đổi gì so với trước;
+- **chọn/đổi cặp** → `--font-head` là inline style trên `<html>` nên brand **đổi theo ngay**, không cần rule riêng cho từng cặp.
+
+Đo (bấm chọn cặp qua UI, cả 2 bản cho cùng kết quả):
+
+| | brand card | brand PDP | brand hàng giỏ | tên sp | giá / body |
+|---|---|---|---|---|---|
+| Maika, chưa cặp | Montserrat | Montserrat | Montserrat | Montserrat | Montserrat |
+| Maika + **Fraunces**+Mont | **Fraunces** | **Fraunces** | **Fraunces** | Montserrat | Montserrat |
+| Maika + **Libre Bodoni**+Inter | **Libre Bodoni** | **Libre Bodoni** | **Libre Bodoni** | Inter | Inter |
+
+Chỉ đổi **mặt chữ**; cỡ/dòng/tracking/weight của brand giữ theo bộ da (muốn brand lấy luôn tracking + line-height của heading thì thêm 2 khai).
+
+*Phát hiện kèm (không sửa, vì user chỉ nói Maika)*: ở **skin-mt và skin-mp**, khi bật cặp font thì **brand ở PDP đổi mặt chữ nhưng brand trên card thì không** — vì khối "CẶP FONT THỬ" bắt `h1` (PDP brand là `h1.pc-brand`) mà không bắt `.pc-brand`. Tức 2 bộ da đó đang một trang một mặt chữ. Maika nay khớp cả 3 chỗ; muốn đồng bộ luôn cho 2 bộ kia thì thêm `.pc-brand` vào khối đó — 1 dòng.
+
 ### Vá tiếp: viền trong menu Maika = Y CHANG skin-mt (cả 2 bản)
 
 User: *"skin-maika menu phải có border y chang skin-mt luôn chứ"*. (Trước đó tôi để viền menu ăn token của skin-mp và ghi là "cố ý" — user bác, nên sửa lại theo.)
