@@ -153,10 +153,17 @@ Quy ước toàn dự án là **không dùng UPPERCASE**. `skin-mt` là ngoại 
 2. Nhãn nhóm trong menu / mega panel — `.ms-view > p` · `.dk-mega-grid > div > p` · tiêu đề màn con
 3. Tiêu đề panel + tiêu đề mục trong bộ lọc — `#filterSheet` 2 tầng nhãn
 4. Nhãn nhóm ở footer *(21/08/2026: **tên chương trình quà tặng RÚT KHỎI vai này** — user đảo chốt 20/08: "tên chương trình không cần uppercase". Nó về họ nội dung 12/16 · 400 · mực chính; khối quà nhấn bằng mặt nền, xem §2.3)*
-5. Nhãn mở mục trong giỏ — trigger "Bạn có phiếu mua hàng?" + "Ưu đãi & khuyến mãi",
-   và **hàng "Tổng cộng"** (nhãn hàng tổng + con số — số không có chữ cái nên hoa vô hại)
+5. Nhãn nhóm & nhãn mở mục trong giỏ — trigger "Bạn có phiếu mua hàng?", **2 title của
+   panel ưu đãi** ("Ưu đãi thành viên" + "Ưu đãi & khuyến mãi"), và **hàng "Tổng cộng"**
+   (nhãn hàng tổng + con số — số không có chữ cái nên hoa vô hại)
    *(thêm 20/08/2026 khi chốt việc 8A; mở rộng "Tổng cộng" tối 20/08 — C4a: user muốn
    500, luật buộc trọn cặp → thành nhãn thay vì đẻ ngoại lệ thứ hai)*
+   *(Cập nhật 24/08/2026 — đợt đồng bộ 2 khối ưu đãi về một concept "title + nội dung":
+   nhãn "Ưu đãi & khuyến mãi" **chuyển vai** từ nhãn-trong-nút sang **title của khối**, và
+   khối thành viên có title cùng bậc. Vai không nở thêm chỗ nào: hàng bấm còn lại là chữ
+   HÀNH ĐỘNG "Chọn mã ưu đãi" → họ nội dung 12/18 · 400, **không hoa**. Title khối thành
+   viên phải rút chữ còn "Ưu đãi thành viên": tên chương trình "DAFC Rewards" bị mục 4 cấm
+   viết hoa, nên tên chương trình lùi vào nội dung/toast, nhãn dùng tên chức năng.)*
 6. ~~Tên thương hiệu — `.pc-brand`~~ **ĐÃ RÚT KHỎI DANH SÁCH 24/08/2026** (user: *"tên brand
    không cần uppercase toàn bộ"*, đảo chốt C1 20/08). Brand nay là **họ nội dung: T3 14/20 ·
    400 · chữ thường · mực chính**, ở cả 3 vị trí (card + hàng gợi ý, PDP + quick-add, hàng
@@ -217,6 +224,11 @@ theo hướng bộ da editorial — "không bị trong khuông khổ". Các kh�
 kẻ mảnh; chỉ khối quà tặng mang tấm nền nhấn accent-0 (ngoại lệ §2.3); cột tóm tắt desktop
 giữ hộp. Câu "canvas giỏ về #f2f2f2" phía trên hết hiệu lực; việc khai tử #f7f7f7 cho các
 MẶT còn lại vẫn giữ.)*
+*(Cập nhật 24/08/2026 — lệnh user: **block tổng tiền của giỏ lấy lại mặt xám `#f2f2f2`**,
+full-bleed, theo bản Figma (ngoại lệ §2.3 mục 2). Nền TRANG giỏ vẫn trắng — đây là một VÙNG
+xám trong dòng chảy, không phải canvas. Trên màn giỏ nay có 2 vùng nền: quà `#f7f7f7`
+(accent-0) và block tổng `#f2f2f2` (mặt xám) — cách nhau 1 nấc, đúng quan hệ Figma đặt giữa
+2 khối này; cặp này KHÔNG mở lại `#f7f7f7` cho các mặt khác.)*
 
 **Bỏ mặt hồng `#fef2f2`** trên badge `-20%`. Giữ **chữ đỏ** (đã chốt: badge giảm giá và viền
 lỗi form phải đọc ra là cảnh báo), nhưng bỏ nền tô — đây là mảng màu **duy nhất** trên toàn
@@ -252,6 +264,21 @@ Không nhấn bằng: mảng màu nhạt · bo góc · đổ bóng · gradient �
 > token tự lo. (2 bản thử cùng ngày đã bác: `--general-secondary` full-bleed khi CÒN hộp, và
 > tấm con inset 16px.) Đi cùng việc tên chương trình rút khỏi vai hoa (§1.5 mục 4). Danh sách
 > ngoại lệ mảng-màu này ĐÓNG — chỗ thứ hai muốn nền nhấn thì quay về 4 đòn bẩy trên.
+
+> **Ngoại lệ ghi danh thứ 2 (24/08/2026, lệnh user: *"ở skin-mt ở cart cái block sum giá nên
+> nhấn màu xuống tương tự bản figma"*):** khối tổng tiền trong GIỎ (`discountPanel` — thẻ ưu đãi
+> + các dòng giảm + hàng "Tổng cộng" + dòng điểm thưởng) được nhấn bằng **dải nền
+> `--general-secondary` (`#f2f2f2` — chính MẶT XÁM của §2.2, không phải bậc mới), FULL-BLEED 375**.
+> Căn cứ: đo bản Figma trên trang chạy (skin mặc định, cùng markup) — panel `bg-secondary`
+> `#f5f5f5` full-bleed **không kẻ trên**, thẻ voucher trắng nổi bên trong, dải quà `#fafafa`;
+> tức Figma đặt block sum **sâu hơn dải quà đúng 1 nấc**. Map sang thang xám skin-mt giữ đúng
+> quan hệ đó: sum `#f2f2f2` · quà `#f7f7f7`. Hợp lệ cùng lý do như mục quà: trang giỏ là nền
+> trắng không hộp nên dải màu là một VÙNG trong dòng chảy, không cắt ngang hộp nào; thẻ voucher
+> trắng bên trong lúc này đọc ra đúng đòn bẩy 3 (mặt trắng trên xám). **2 kẻ gỡ theo:** kẻ trên
+> `discountPanel` và kẻ trên `#cartCta` — hai mép của dải màu đã tự ngăn, giữ kẻ nữa là ngăn hai
+> lần ở cùng một mép (và Figma border 0 ở đúng 2 mép này). Chỉ MOBILE; cột phải desktop vẫn là
+> hộp `bg-card` + viền. Danh sách ngoại lệ mảng-màu nay có **đúng 2 mục** và ĐÓNG ở 2 — cả hai
+> đều nằm trong màn GIỎ, chỗ thứ ba muốn nền nhấn thì quay về 4 đòn bẩy trên.
 
 ---
 

@@ -1351,23 +1351,83 @@ window.RESP = (function () {
     background: var(--general-background);
     border-color: var(--unofficial-border-1);
   }
-  /* KHỐI TỔNG (discountPanel) + CTA: TRẦN TRÊN NỀN TRẮNG, NGĂN BẰNG KẺ ──────────
-     (21/08/2026 — thay "HỘP 2 CHECKOUT SUMMARY" của khối maison cũ: bỏ mặt trắng
-     + viền đáy hộp. Panel markup gốc là `bg-secondary` xám -> cho TRONG SUỐT như
-     skin-mp; mỗi khối một kẻ trên, cùng loại kẻ của cả trang giỏ.) */
-  html.skin-mt [data-screen="cart"] .bg-secondary:has(#discountLines) {
+  /* KHỐI TỔNG (discountPanel): DẢI NHẤN MÀU FULL-BLEED, THEO BẢN FIGMA ───────────
+     (24/08/2026, lệnh user: *"ở skin-mt ở cart cái block sum giá nên nhấn màu
+     xuống tương tự bản figma"* — ĐẢO nhịp 21/08 "trần trên nền trắng, ngăn bằng
+     kẻ" vốn thay hộp "CHECKOUT SUMMARY" của khối maison cũ.)
+     Đo bản Figma trên trang chạy (skin mặc định, CÙNG markup): panel `bg-secondary`
+     = **#f5f5f5 full-bleed 375, KHÔNG kẻ trên**, thẻ voucher trắng nổi bên trong;
+     dải quà = #fafafa. Tức Figma đặt block sum **sâu hơn dải quà đúng 1 nấc**.
+     Map sang thang xám skin-mt giữ nguyên quan hệ đó: sum = `--general-secondary`
+     #f2f2f2 · quà giữ `--unofficial-accent-0` #f7f7f7 — không đẻ bậc xám mới.
+     -> Bỏ HẲN override `background: transparent`: nền để markup `bg-secondary` tự
+     ăn token (màu qua token, không hardcode). Không cần rule nào ở đây nữa.
+     2 KẺ GỠ THEO: kẻ trên panel + kẻ trên `#cartCta` chỉ tồn tại vì hồi 21/08 cả
+     hai khối đều trần trên nền trắng. Nay hai MÉP của dải màu đã tự ngăn — giữ kẻ
+     nữa là ngăn hai lần ở cùng một mép (§2.3 "hết đòn bẩy thì dừng"), mà bản Figma
+     cũng border 0 ở đúng 2 mép này.
+     Ngoại lệ mảng-màu §2.3 nay có 2 mục: khối quà + block sum (STYLE-RULES đã ghi
+     TRƯỚC khi sửa đây). Các kẻ khác của trang giỏ (Chọn tất cả · giữa các món ·
+     trên #orderGift) không đổi. Chỉ MOBILE — cột phải desktop vẫn là hộp bg-card. */
+
+  /* ── 2 KHỐI ƯU ĐÃI TRONG DẢI TỔNG: MỘT CONCEPT = NHÃN NHÓM + NỘI DUNG ──────────
+     (24/08/2026, lệnh user: *"đồng bộ lại block Ưu đãi chương trình thành viên và
+     ưu đãi khuyến mãi chung 1 concept hiển thị"*; chốt tiếp: *"thêm cái title tương
+     tự ưu đãi thành viên, không đóng khung nguyên block ưu đãi thành viên nữa"* —
+     radio GIỮ NGUYÊN tại chỗ, không dọn vào sheet.)
+     Đo trước sửa (375, đã đăng nhập) — 3 thứ lệch, không chỉ là vỏ:
+       (1) nhãn: rewards `12/16 · 400 · thường` vs voucher `12/16 · 500 · HOA`;
+       (2) mô hình: rewards mở sẵn / voucher thu gọn 1 hàng → sheet;
+       (3) rewards là HỘP LỒNG HỘP 3 tầng: dải xám → thẻ trắng 343×193 → thẻ radio
+           có viền. §2.3 không cho nhấn bằng cách xếp hộp.
+     Concept chốt: TITLE trần trên dải xám + NỘI DUNG trong mặt trắng. 4 rule dưới:
+       · gỡ khung bao của khối rewards — markup GIỮ khung để bộ da mặc định vẫn là
+         "bản Figma sống" dùng để đo đối chiếu (xem README);
+       · 2 title = nhãn nhóm `12/16 · 500 · HOA` — cùng bậc nhãn với footer/menu/bộ
+         lọc, §1.5 vai 5 (nhãn cũ trong nút voucher nhường vai này nên rule "3 chỗ
+         +1 nấc weight" phía dưới đã rút `#voucherTrigger > span.flex-1`; hàng bấm
+         về họ nội dung `12/18 · 400`, chữ đổi thành "Chọn mã ưu đãi" ở markup);
+       · `.opt` lấy mặt trắng: bỏ khung bao rồi thì thẻ radio nằm TRỰC TIẾP trên dải
+         xám, mà markup không khai nền → sẽ là xám-trên-xám, mất hẳn hình thẻ;
+       · nhịp: title→nội dung 8 (markup gap-2 của khối voucher, khai lại 8 cho khối
+         rewards vì markup nó là gap-4), giữa 2 khối 16 — nhóm phải thoáng hơn nội
+         bộ nhóm, không thì 2 khối đọc ra một danh sách 4 dòng. */
+  html.skin-mt [data-screen="cart"] .bg-secondary:has(#discountLines) > div:first-child {
+    gap: 16px;
+  }
+  html.skin-mt [data-screen="cart"] div:has(> #rewardOpts) {
     background: transparent;
-    border-top: 1px solid var(--unofficial-border-1);
+    border: 0;
+    padding: 0;
+    gap: 8px;
   }
-  html.skin-mt [data-screen="cart"] #cartCta {
-    border-top: 1px solid var(--unofficial-border-1);
+  html.skin-mt [data-screen="cart"] #rewardOpts .opt {
+    background: var(--general-background);
   }
+  /* (Rule kéo viền thẻ hàng bấm #ececec -> #dfdfdf đã GỠ 24/08: ô chọn mã nay dựng
+     theo component `pickField`, markup của nó vốn dùng `border-border` = #dfdfdf nên
+     hai mặt trắng trên dải xám tự cùng sắc viền, không cần override. Lý do phải là
+     #dfdfdf vẫn giữ: #ececec chỉ nhạt hơn nền #f2f2f2 đúng 6/255 nên MẤT vạch.) */
+  /* Title bắt cả `label`: khối voucher đổi title sang `<label for>` khi dựng theo
+     component (bấm title cũng mở sheet). Khối thành viên vẫn `<p>` vì nhãn của nó
+     đứng trên một NHÓM radio, không trỏ vào một control đơn. */
+  html.skin-mt [data-screen="cart"] .bg-secondary:has(#discountLines) :is(p, label).font-medium {
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
   /* Thẻ khuyến mãi: khe quanh nó là 24 (từ `py-6` của phần bọc) trong khi khe giữa
      mọi hộp khác là 12 -> nhịp dọc nhảy 12·24·12. Bỏ padding dọc của phần bọc, để
-     chính margin 12 lo khoảng cách, thành 12 đều. Thẻ bên trong không đổi gì. */
+     chính margin 12 lo khoảng cách, thành 12 đều. Thẻ bên trong không đổi gì.
+     24/08/2026 — user chỉ đích danh phần tử này (`div.py-6.px-4.rise`, không phải thẻ
+     viền bên trong): *"block Chương trình khuyến mãi bổ sung padding bottom 12px"*.
+     `padding-bottom: 0` -> **12px**: dưới phần bọc là DẢI XÁM của khối tổng, nên 0 làm
+     thẻ viền dán thẳng vào mép dải màu; 12 cho nó khe trắng bằng đúng khe trên (margin
+     12), thành 12 đều cả hai đầu. Thẻ bên trong vẫn `py-2` — bản thử đổi padding của
+     THẺ đã gỡ. KHAI GIỐNG HỆT ở desktop.html. */
   html.skin-mt [data-screen="cart"] div:has(> div > #promoPeek) {
     padding-top: 0;
-    padding-bottom: 0;
+    padding-bottom: 12px;
     margin-top: 12px;
   }
   /* Chân trang cũng `bg-secondary`: giữ nền, thêm đúng một kẻ để không dính liền
@@ -1395,8 +1455,11 @@ window.RESP = (function () {
      vai 5 mở rộng (C4a, đã sửa §1.5 TRƯỚC khi sửa đây). Nhịp 16 = 1 dòng ×1.33.
      Số tiền #cartTotal cũng ăn hoa: toàn chữ số nên vô hại, đổi lại 2 đầu hàng
      cùng một bậc. */
+  /* 24/08/2026 — RÚT `#voucherTrigger > span.flex-1` khỏi nhóm này: nhãn đó đã lên
+     thành TITLE của khối (rule nhãn nhóm ở trên lo), hàng bấm còn lại là hành động
+     "Chọn mã ưu đãi" nên về họ nội dung 12/18 · 400 do blanket lo. Vai hoa 5 §1.5
+     không mất chỗ nào — nó chuyển từ "nhãn trong nút" sang "title của khối". */
   html.skin-mt [data-screen="cart"] div:has(> #cartTotal) > span,
-  html.skin-mt [data-screen="cart"] #voucherTrigger > span.flex-1,
   html.skin-mt [data-screen="cart"] #cartCta .acc-trigger > span:first-child {
     font-weight: 500;
     text-transform: uppercase;
@@ -1433,8 +1496,11 @@ window.RESP = (function () {
          nên nhãn nằm trong `span`, desktop trải thành 4 cột nên không có nhánh này.
      Hook `.bg-secondary.mt-4` = footer ở CẢ 2 khổ (mobile `bg-secondary pt-8 pb-8
      px-2 mt-4`, desktop `bg-secondary mt-4`), và KHÔNG trúng panel ưu đãi ở giỏ
-     (`py-6 px-4 bg-secondary …`, không có `mt-4`) — chỗ đó cũng có `p.font-medium`
-     ("Ưu đãi chương trình DAFC Rewards", "Tổng cộng") mà viết hoa lên là sai.
+     (`py-6 px-4 bg-secondary …`, không có `mt-4`) — chỗ đó có `p.font-medium` riêng.
+     *(Cập nhật 24/08/2026: 2 `p.font-medium` trong panel ưu đãi giờ ĐÚNG là nhãn
+     nhóm và ĐƯỢC viết hoa, nhưng bằng rule riêng ở khối 6c — hook footer vẫn phải
+     không trúng chúng, vì bậc nhãn ở đó là chuyện của màn giỏ. "Tổng cộng" cũng đã
+     thành nhãn hàng tổng viết hoa từ chốt C4a 20/08.)*
 
      KHÔNG đụng vách accordion footer: bộ da đang để `#dfdfdf` (chốt 18/08 "nội
      dung nhẹ nhàng hơn"). Hệ gạch `#ececec` chỉ nhạt hơn nền `#f2f2f2` đúng 6/255
@@ -1686,7 +1752,7 @@ window.RESP = (function () {
     #filterSheet .facc-trigger > span, #filterSheet .facc > span,
     .bg-secondary.mt-4 p, .bg-secondary.mt-4 .acc-trigger > span,
     [data-screen="cart"] div:has(> #cartTotal) > span,
-    [data-screen="cart"] #voucherTrigger > span,
+    [data-screen="cart"] .bg-secondary:has(#discountLines) :is(p, label).font-medium,
     [data-screen="cart"] .cart-row p, [data-screen="cart"] .acc-trigger > span,
     .ms-view > p, .dk-mega-grid > div > p
   ) { text-transform: none; }
@@ -4340,8 +4406,12 @@ function orderGiftBox() {
 function dafcRewards() {
   /* Rich Radio Group (2843:45234/45235): card viền + radio tròn, chọn 1 trong 2.
      Card đang chọn -> viền border-5 (#737373) đậm hơn card thường (border #e5e5e5).
-     Không còn wrapper riêng — nằm trong card "Ưu đãi chương trình DAFC Rewards"
-     của discountPanel(), padding/heading do khối cha cấp (theo Figma 3428:55499). */
+     Không còn wrapper riêng — nằm trong card "Ưu đãi thành viên" của discountPanel(),
+     padding/heading do khối cha cấp (theo Figma 3428:55499).
+     *(24/08/2026: ở skin-mt khung bao của card đó bị gỡ — `.opt` nằm trực tiếp trên
+     dải xám nên khối 6c cấp cho nó mặt trắng; markup vẫn để nguyên khung cho bộ da
+     mặc định. Title đổi chữ từ "Ưu đãi chương trình DAFC Rewards" để nhãn nhóm viết
+     hoa không đụng luật cấm hoa tên chương trình.)* */
   const opt = (id, title, sub) => {
     const on = cartReward === id;
     return `
@@ -4363,17 +4433,29 @@ function dafcRewards() {
   </div>`;
 }
 
-/* Dòng thu gọn (chốt user 17/08/2026): TRÁI luôn là tên mục tĩnh "Ưu đãi &
-   khuyến mãi", PHẢI là con số — 2 trạng thái:
-     · chưa chọn: "( N )" với N = số mã ĐANG ĐỦ ĐIỀU KIỆN. Mã ẩn và mã chưa đạt
-       mức không tính: đếm cả những thứ bấm vào không dùng được thì số nói dối.
-     · đã chọn:  "( Đã áp dụng N )".
-   Không in số tiền giảm ở đây — khối tóm tắt ngay dưới đã có từng dòng
-   "Giảm giá(<CODE>)" rồi. */
+/* Dòng thu gọn (chốt user 17/08/2026): TRÁI luôn là tên mục tĩnh, PHẢI là con số —
+   2 trạng thái: chưa chọn "( N )" với N = số mã ĐANG ĐỦ ĐIỀU KIỆN (mã ẩn và mã chưa
+   đạt mức không tính: đếm cả thứ bấm vào không dùng được thì số nói dối) · đã chọn
+   "( Đã áp dụng N )". Không in số tiền giảm ở đây — khối tóm tắt ngay dưới đã có
+   từng dòng "Giảm giá(<CODE>)" rồi.
+
+   24/08/2026 — DỰNG LẠI THEO COMPONENT `pickField` (lệnh user: *"cái chọn mã ưu đãi
+   hãy improve ux ui lại cho gọn và chuẩn chỉnh theo component"*). Ô chọn của dự án
+   chỉ có MỘT slot chữ (`.pick-label`), nên 2 phần của chốt 17/08 gộp vào 1 chuỗi và
+   trạng thái chuyển sang đúng cơ chế của component: đổi MỰC (placeholder mực phụ ->
+   giá trị mực chính) do `setPickLabel()` lo, không còn cột số riêng bên phải.
+     · chưa áp: "Chọn mã ưu đãi ( 6 )" — hết mã đủ điều kiện thì BỎ phần số, không
+       in "( 0 )" vô nghĩa (trước đây có in);
+     · đã áp:  "Đã áp dụng 2 mã" — mã nào thì khối tóm tắt ngay dưới liệt kê rồi. */
 const voucherAvailCount = () => VOUCHERS.filter(v => !v.hidden && voucherEligible(v)).length;
-const voucherHint = () => activeVouchers().length
-  ? `( Đã áp dụng ${activeVouchers().length} )`
-  : `( ${voucherAvailCount()} )`;
+const voucherPlaceholder = () => {
+  const n = voucherAvailCount();
+  return n ? `Chọn mã ưu đãi ( ${n} )` : 'Chọn mã ưu đãi';
+};
+const voucherPickValue = () => {
+  const n = activeVouchers().length;
+  return n ? `Đã áp dụng ${n} mã` : '';
+};
 
 /* Phiếu mua hàng: demo không có backend tra cứu mã thật, nên sinh số tiền giảm
    ổn định theo chuỗi mã (cùng 1 mã luôn ra cùng 1 số tiền) — 50,000 .. 1,000,000đ,
@@ -4449,10 +4531,23 @@ function cartTotalNow() { return Math.max(0, cartSubtotal() - cartDiscountTotal(
    "Đặt hàng" tăng 8px→16px theo số liệu mới. */
 /* Tổng phải trả lấy thẳng từ cartTotalNow() (trước đây truyền qua tham số
    cùng tên nên che mất hàm) */
+/* 24/08/2026 — HAI KHỐI ƯU ĐÃI VỀ MỘT CONCEPT HIỂN THỊ (lệnh user: *"đồng bộ lại
+   block Ưu đãi chương trình thành viên và ưu đãi khuyến mãi chung 1 concept hiển
+   thị"* → chốt tiếp: *"cho phần ưu đãi khuyến mãi thêm cái title tương tự ưu đãi
+   thành viên, không đóng khung nguyên block ưu đãi thành viên nữa"*, và radio
+   **giữ nguyên tại chỗ**, KHÔNG dọn vào sheet).
+   Concept: mỗi khối = NHÃN NHÓM (title) + nội dung bên dưới. Markup lo phần NỘI
+   DUNG (thêm title cho khối voucher, nhãn của trigger nhường vai title nên hàng
+   đó đổi sang chữ hành động "Chọn mã ưu đãi"); phần GỠ KHUNG BAO + bậc nhãn chữ
+   hoa nằm ở khối 6c của skin-mt, nên bộ da MẶC ĐỊNH vẫn giữ đúng 2 thẻ như bản
+   Figma (dùng để đo đối chiếu).
+   Tên khối rút còn "Ưu đãi thành viên" (chữ user dùng): nhãn nhóm của skin-mt là
+   CHỮ HOA, mà tên chương trình thì luật cấm viết hoa (§1.5 vai 4 + chốt 24/08 cho
+   brand) → nhãn dùng tên chức năng, tên "DAFC Rewards" lùi vào toast/nội dung. */
 function discountPanel() {
   const rewardsCard = ckAuth ? `
     <div class="bg-background border border-border-1 rounded-md p-3 flex flex-col gap-4">
-      <p class="text-[16px] font-medium leading-6 text-foreground">Ưu đãi chương trình DAFC Rewards</p>
+      <p class="text-[16px] font-medium leading-6 text-foreground">Ưu đãi thành viên</p>
       ${dafcRewards()}
     </div>` : '';
   return `
@@ -4465,14 +4560,32 @@ function discountPanel() {
            thêm một hàng chip nữa là nói 2 lần. Lý do bỏ ô input: 90% người mua
            không thuộc mã, ô trống chỉ chiếm chỗ; danh sách ưu đãi trong sheet
            mới là thứ họ cần thấy. -->
-      <div class="bg-background border border-border-1 rounded-md py-1 px-3">
-        <div class="py-2">
-          <button id="voucherTrigger" class="w-full min-h-9 flex items-center gap-2 press text-left">
-            <span class="w-5 h-5 flex items-center justify-center shrink-0">${I.ticket()}</span>
-            <span class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground">Ưu đãi &amp; khuyến mãi</span>
-            <span id="voucherHintText" class="text-[14px] leading-5 text-muted-foreground truncate">${voucherHint()}</span>
-            <span class="w-3.5 h-3.5 shrink-0 flex items-center justify-center">${I.chevR('var(--general-muted-foreground)')}</span>
+      <!-- Title tách khỏi hàng bấm (24/08/2026): trước đây nhãn "Ưu đãi & khuyến
+           mãi" nằm TRONG nút, nên khối này không có nhãn nhóm như khối thành viên.
+           Nay nhãn lên thành title cùng khuôn với title khối thành viên.
+           Ô bên dưới = ĐÚNG COMPONENT pickField (ô chọn địa giới ở checkout) — cùng
+           vai "bấm mở bottom sheet để chọn", nên dùng lại nguyên khuôn thay vì tự dựng
+           hàng riêng: label[for] + button h-10 viền --general-border pl-2 pr-9 +
+           chevron chevD 14 cách mép phải 12 + aria-haspopup="dialog", chữ trong ô là
+           span.pick-label (đổi mực theo trạng thái qua setPickLabel).
+           Bỏ so với bản trước: 2 div bọc (card py-1 > div py-2), icon ticket 20, cột
+           số riêng bên phải, rounded-md, chevR. Cao 62 -> 40.
+           label[for] cũng là nâng cấp a11y: bấm cả title cũng mở được sheet, và trình
+           đọc màn hình đọc được tên nút (trước chỉ đọc chữ bên trong).
+           LƯU Ý CHO LẦN SAU: comment này nằm TRONG template literal — không được dùng
+           dấu backtick ở đây, nó ngắt chuỗi và làm sập cả script. -->
+      <div class="flex flex-col gap-2">
+        <label for="voucherTrigger" class="text-[16px] font-medium leading-6 text-foreground">Ưu đãi &amp; khuyến mãi</label>
+        <div class="relative">
+          <button type="button" id="voucherTrigger" aria-haspopup="dialog" class="w-full h-10 bg-background border border-border rounded-xs pl-2 pr-9 text-[14px] text-left flex items-center btn-o press transition-colors focus:border-primary">
+            <span class="pick-label truncate ${voucherPickValue() ? 'text-foreground' : 'text-muted-foreground'}">${voucherPickValue() || voucherPlaceholder()}</span>
           </button>
+          <!-- MŨI TÊN SANG PHẢI, không phải xuống (24/08/2026, lệnh user): pickField gốc
+               là dropdown/picker nên dùng chevD, còn ô này MỞ MỘT LỚP KHÁC (#vcSheet) —
+               mũi tên phải mới nói đúng việc "đi sang chỗ khác chọn". chevR cùng 14x14
+               nên vị trí right-3 giữ nguyên; class acc-chev có sẵn trong icon chỉ xoay
+               khi nằm trong .acc.open, ở đây không có nên nó đứng yên. -->
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevR('var(--general-primary)')}</span>
         </div>
       </div>
     </div>
@@ -6798,6 +6911,9 @@ const I18N = {
      VALUE nên 2 key trùng bản dịch thì key sau đè key trước, dịch ngược EN→VN
      sẽ trả nhãn ở giỏ về dạng thiếu dấu &. */
   'Ưu đãi & khuyến mãi':'Promotions & offers',
+  /* 24/08/2026 — 2 chuỗi của đợt đồng bộ 2 khối ưu đãi: title khối thành viên (đổi
+     từ "Ưu đãi chương trình DAFC Rewards") + chữ hành động của hàng bấm mở sheet. */
+  'Ưu đãi thành viên':'Member offers', 'Chọn mã ưu đãi':'Choose a promo code',
   'Ưu đãi vận chuyển':'Shipping offers', 'Ưu đãi mua nhiều':'Multi-buy offers', 'Chọn tối đa 1':'Up to 1',
   'Nhập mã ưu đãi':'Enter offer code', 'Dùng mã':'Use code',
   'Chưa chọn ưu đãi nào':'No offers selected', 'Mã không hợp lệ':'Invalid code',
@@ -7236,7 +7352,12 @@ const I18N_RE = [
   [/^Giảm giá\((.+)\)$/,              'Discount ($1)'],
   [/^Tiết kiệm ([\d,]+)đ$/,           'Save $1đ'],
   // sheet chọn ưu đãi — số tiền/số lượng là data nên phải là luật động
-  [/^\( Đã áp dụng (\d+) \)$/,        '( $1 applied )'],
+  /* Ô chọn mã (24/08/2026, component `pickField`): 2 chuỗi thay cho "( Đã áp dụng N )"
+     của bản cột-số cũ. Luật số ÍT đặt TRƯỚC luật chung — tr() lấy luật khớp đầu tiên,
+     và EN có phân biệt code/codes (giống cặp "1 quà" / "N quà" ở dưới). */
+  [/^Chọn mã ưu đãi \( (\d+) \)$/,    'Choose a promo code ( $1 )'],
+  [/^Đã áp dụng 1 mã$/,               '1 code applied'],
+  [/^Đã áp dụng (\d+) mã$/,           '$1 codes applied'],
   [/^Đã chọn (\d+) ưu đãi$/,          '$1 offers selected'],
   [/^Đã áp dụng (\d+) ưu đãi$/,       '$1 offers applied'],
   [/^Đã gỡ (\d+) ưu đãi do đơn không còn đủ điều kiện$/, '$1 offers removed — the order no longer qualifies'],
@@ -7286,7 +7407,9 @@ const I18N_REV_RE = [
   [/^Use (\d+) points$/,              'Dùng $1 điểm'],
   [/^Discount \((.+)\)$/,             'Giảm giá($1)'],
   [/^Save ([\d,]+)đ$/,                'Tiết kiệm $1đ'],
-  [/^\( (\d+) applied \)$/,           '( Đã áp dụng $1 )'],
+  [/^Choose a promo code \( (\d+) \)$/, 'Chọn mã ưu đãi ( $1 )'],
+  [/^1 code applied$/,                'Đã áp dụng 1 mã'],
+  [/^(\d+) codes applied$/,           'Đã áp dụng $1 mã'],
   [/^(\d+) offers selected$/,         'Đã chọn $1 ưu đãi'],
   [/^(\d+) offers applied$/,          'Đã áp dụng $1 ưu đãi'],
   [/^(\d+) offers removed — the order no longer qualifies$/, 'Đã gỡ $1 ưu đãi do đơn không còn đủ điều kiện'],
@@ -8794,8 +8917,11 @@ function giftAppear(el, skipLang) {
    thể TỰ RỚT khi giỏ teo lại. Tên mục bên trái là chữ tĩnh, không đụng tới. */
 function renderVoucherUI(root) {
   if (!root) return;
-  const hint = root.querySelector('#voucherHintText');
-  if (hint) { hint.textContent = voucherHint(); localizeNew(hint); }
+  /* 24/08/2026 — ô chọn mã nay là component `pickField`, nên cập nhật bằng CHÍNH
+     helper của component (`setPickLabel`): nó lo cả chữ lẫn mực (giá trị = mực
+     chính, placeholder = mực phụ). Trước đây chỉ đổi textContent của cột số. */
+  const btn = root.querySelector('#voucherTrigger');
+  if (btn) { setPickLabel(btn, voucherPickValue(), voucherPlaceholder()); localizeNew(btn); }
 }
 
 function refreshCartSummary(root) {

@@ -118,6 +118,104 @@ Kèm 2 tinh chỉnh khai **theo từng cặp** (`tune` trong `FONT_PAIRS` → bi
 
 **Bật cặp font = TẮT nhãn hoa của bộ da** (24/08/2026, user: *"ở các option font không nhất thiết phải theo rule uppercase toàn bộ theo skin mt"*): rule cuối `<style>` cho `html.font-pair` trả `text-transform: none` cho nav ngành hàng · nhãn nhóm menu/mega · tiêu đề mục bộ lọc · nhãn footer · nhãn mở mục trong giỏ · brand. Vì uppercase che đúng phần chữ thường (x-height, đuôi g/y, bụng a/e) — chỗ để nhận ra một serif — nên ép hoa làm hỏng việc thử font. Bỏ chọn cặp là hoa trở lại; đo 2 chiều ở cả 2 bản: `.dk-dept`/`.ms-tab` `uppercase → none → uppercase`.
 
+## Port cụm ưu đãi sang DESKTOP + padding block khuyến mãi (24/08/2026, CẢ 2 BẢN)
+
+Lệnh user: *"áp dụng cho bản desktop luôn nhé, với block Chương trình khuyến mãi bổ sung padding bottom: 12px luôn"*.
+
+**1) Desktop — cụm ưu đãi ở cột tóm tắt (427px)**. Khổ này khác mobile ở chỗ khối thành viên VỐN ĐÃ đúng concept (title + radio, không khung bao) nên chỉ còn 3 việc:
+
+| | Trước | Sau |
+|---|---|---|
+| Title khối thành viên | "Ưu đãi chương trình DAFC Rewards" · 12px w400 thường | **"Ưu đãi thành viên" · 12/16 · 500 · HOA** |
+| Khối "Ưu đãi & khuyến mãi" | không có title; nhãn nằm TRONG nút `h-12` + icon ticket + cột số + `chevR` | **title `label[for]` cùng bậc** + ô `h-10` viền #dfdfdf `pl-3 pr-9` + `chevR` cách mép phải 12 + `span.pick-label` |
+| Nhịp title → nội dung | 12 (`gap-3`) | **8** — bằng nhịp của chính `pickField` desktop (`gap-2`) |
+
+- Ô chọn lấy khuôn `pickField` **của khổ desktop** (`pl-3`, không phải `pl-2` như mobile) nhưng **khác 2 điểm có ý thức**: `aria-haspopup="dialog"` (panel ưu đãi là hộp thoại, không phải listbox) và **không mang `data-pick-dd` / `data-pick-caret`** — 2 attribute đó là hook của dropdown desktop, gắn vào là handler dropdown bám nhầm.
+- Hook nhãn nhóm của skin-mt desktop: `.dk-sticky-side :is(p, label).font-medium` — trúng đúng 2 title ("Tổng cộng" là `span` do rule khác lo; dòng điểm thưởng và support phiếu mua hàng không có `font-medium`). `#voucherTrigger > span.flex-1` đã rút khỏi rule 500+hoa, và khỏi danh sách `.font-pair` (ở CẢ 2 file).
+- `voucherHint()` → `voucherPlaceholder()` + `voucherPickValue()`; `renderVoucherUI()` gọi `setPickLabel()`; i18n dict + 4 luật động (2 chiều, có tách số ít) khai giống hệt index.html.
+- **KHÔNG port**: dải nhấn màu `#f2f2f2` của block tổng. Ở desktop khối tổng nằm trong **hộp trắng `bg-card` + viền** của cột phải (chốt 21/08 "cột phải desktop giữ hộp"), nên dải full-bleed không có chỗ áp; muốn nhấn thì phải là **tấm con inset** theo hệ lề của card — chờ user chốt.
+- Đo sau sửa (1440, đã đăng nhập): 2 title `12/16 · 500 · HOA · #0a0a0a`, cả 2 khối `gap 8`, ô `393×40 · #dfdfdf · r0 · chữ 12/18`, chevron 14 cách mép phải 12, `aria-haspopup="dialog"`, `label[for]` đúng. Bấm title mở panel ✓ áp mã → mực chính ✓ gỡ mã → placeholder mực phụ ✓. 3 bộ da đều ra ô 40px với viền/bo của chính nó.
+- `discountPanel()` trong desktop.html là **hàm chết** (tàn dư lúc fork; cột phải tự dựng markup) — chỉ cập nhật chỗ gọi hàm đã đổi tên để file không tham chiếu hàm không tồn tại, chưa xoá.
+
+**2) Block "Chương trình khuyến mãi" — `padding-bottom` của PHẦN BỌC, 0 → 12px** (CẢ 2 BẢN).
+
+User chỉ đích danh phần tử trong DevTools: `div.py-6.px-4.rise` (phần bọc, đang `padding: 0 16px` vì rule skin-mt zero cả `py`), **không phải** thẻ viền bên trong. Nên giá trị vào đúng rule đang giữ padding đó — `html.skin-mt [data-screen="cart"] div:has(> div > #promoPeek)`: `padding-bottom: 0` → **12px**. Dưới phần bọc là **dải xám của khối tổng**, nên 0 làm thẻ viền dán thẳng vào mép dải màu; 12 cho nó khe trắng bằng đúng khe trên (`margin-top: 12`).
+
+Đo lại (đóng băng `.rise` trước khi đo — animation đang chạy trả số sai, bẫy verify 3): mobile khe trên **12** · khe dưới **12**; desktop y hệt 12/12. Thẻ viền bên trong giữ nguyên `py-2` — **bản thử đầu đổi padding của THẺ (`pt-2 pb-3`) đã gỡ khỏi cả 2 file**, nó không phải chỗ user chỉ.
+
+`node --check` trên script inline của cả 2 file: OK. Không cần rebuild tailwind (`pl-3`/`pr-9`/`h-10` đều có sẵn trong build; thay đổi padding là CSS của bộ da, không thêm class).
+
+## Ô "Chọn mã ưu đãi" dựng lại theo component `pickField` (24/08/2026, mọi bộ da, CHỈ MOBILE)
+
+User: *"cái chọn mã ưu đãi hãy improve ux ui lại cho gọn và chuẩn chỉnh theo component"*. Dự án **đã có** linh kiện đúng vai "bấm mở bottom sheet để chọn": `pickField` (ô chọn tỉnh/phường ở checkout, cùng cách PDP thay `<select>` bằng sheet) — nên dùng lại nguyên khuôn thay vì tự dựng hàng riêng.
+
+**Đo 2 bên trước khi sửa (skin-mt, 375):**
+
+| | hàng cũ | `pickField` (component sẵn) |
+|---|---|---|
+| Cao | **62** = 3 tầng đệm lồng nhau (card `py-1` + `div py-2` + button `min-h-9`) | **40** (`h-10`), 1 tầng |
+| Vỏ | `div.bg-background.border.rounded-md` > `div.py-2` > `button` | button CHÍNH là ô, không div bọc |
+| Viền | `border-border-1` #ececec — trên nền #f2f2f2 chênh 6/255, **mất vạch** | `border-border` #dfdfdf, đúng sắc viền thẻ radio bên trên |
+| Trái | icon `ticket` 20 + nhãn mực chính | 1 slot `.pick-label` |
+| Phải | cột số `( 6 )` mực phụ + `chevR` 14 mực phụ | `chevR` 14 **mực chính**, cách mép phải 12 (xem ghi chú mũi tên dưới) |
+| Trạng thái | đổi CHỮ ở cột số | đổi **MỰC**: placeholder mực phụ ↔ giá trị mực chính (`setPickLabel`) |
+| a11y | không | `aria-haspopup="dialog"` + `label[for]` |
+
+**Sau khi dựng lại**: `label[for="voucherTrigger"]` (chính là title của khối) + `button h-10` viền #dfdfdf `pl-2 pr-9` + mũi tên phải `absolute right-3` + `span.pick-label`. Bỏ: 2 div bọc, icon ticket, cột số riêng, `rounded-md`; mũi tên chuyển từ TRONG nút (mực phụ, đứng sau cột số) ra ngoài dạng `absolute` **mực chính**. **Cao 62 → 40**, panel 469 → **447**. Bấm cả title cũng mở được sheet (label[for] gắn vào button — button là labelable element).
+
+> **Mũi tên: `chevR` chứ không phải `chevD`** (24/08/2026, lệnh user, CẢ 2 BẢN). `pickField` gốc là dropdown/picker nên mũi tên XUỐNG đúng cho nó; còn ô này **mở một lớp khác** (`#vcSheet` — mobile trượt lên từ đáy, desktop trượt vào từ mép phải) nên mũi tên SANG PHẢI mới nói đúng việc. `chevR` cùng `14×14` với `chevD` nên vị trí `right-3` không đổi; icon có sẵn class `.acc-chev` nhưng nó chỉ xoay 90° khi nằm trong `.acc.open` — ở đây không có nên mũi tên đứng yên (đo `transform: none` ở cả 2 bản). **`pickField` và các dropdown size vẫn giữ `chevD`** — chỉ ô voucher đổi (grep xác nhận: `I.chevD` còn 5 chỗ ở index.html, 2 ở desktop.html, không chỗ nào là ô voucher).
+
+- **Nội dung 1 slot, giữ trọn thông tin của chốt 17/08** (tên mục + con số): chưa áp = `Chọn mã ưu đãi ( 6 )` mực phụ · đã áp = `Đã áp dụng 2 mã` mực chính. Hết mã đủ điều kiện thì **bỏ luôn phần số** (trước đây in `( 0 )`).
+- `voucherHint()` → **`voucherPlaceholder()` + `voucherPickValue()`**; `renderVoucherUI()` gọi thẳng `setPickLabel()` của component (lo cả chữ lẫn mực) thay vì tự set `textContent`.
+- **i18n**: 2 luật động cũ (`( Đã áp dụng N )`) thay bằng 4 luật mới cho cả 2 chiều, có tách số ít (`1 code applied` / `N codes applied`). Đo cả 2 chiều: `Đã áp dụng 1 mã ↔ 1 code applied`, `Chọn mã ưu đãi ( 6 ) ↔ Choose a promo code ( 6 )`.
+- **Áp cho MỌI bộ da** (component là chuyện toàn dự án, không phải da): skin-mt `h40 · #dfdfdf · r0 · chữ 12/18` · mặc định `h40 · #e5e5e5 · r2 · chữ 14/21` — mỗi bộ da ra đúng ô chọn của chính nó, giống ô ở checkout.
+- Kiểm: bấm title mở sheet ✓ · chọn mã + Áp dụng → ô đổi sang mực chính ✓ · gỡ mã → về placeholder mực phụ ✓ · chưa/đã đăng nhập đều đúng khuôn ✓ · console sạch, không cần rebuild tailwind.
+
+> **BẪY ĐÃ SẬP MỘT LẦN TRONG ĐỢT NÀY**: comment HTML nằm TRONG template literal thì **không được chứa dấu backtick** — tôi viết \`pickField\` trong comment và nó ngắt luôn chuỗi, cả `<script>` 544KB không parse được (`SyntaxError: Unexpected identifier 'pickField'`, `go is not defined`). Đã ghi cảnh báo ngay tại comment đó.
+
+## Hai khối ưu đãi trong giỏ về MỘT concept: title + nội dung (24/08/2026, skin-mt, CHỈ MOBILE)
+
+User: *"đồng bộ lại block Ưu đãi chương trình thành viên và ưu đãi khuyến mãi chung 1 concept hiển thị"* → chốt tiếp khi được hỏi: *"cho phần ưu đãi khuyến mãi thêm cái title tương tự ưu đãi thành viên, không đóng khung nguyên block ưu đãi thành viên nữa"*, và **radio giữ nguyên tại chỗ** (bác phương án dọn vào sheet).
+
+**Đo trước sửa (375, đã đăng nhập) — 3 thứ lệch, không chỉ là vỏ:**
+
+| | Ưu đãi chương trình DAFC Rewards | Ưu đãi & khuyến mãi |
+|---|---|---|
+| Nhãn | 12/16 · **400 · chữ thường** | 12/16 · **500 · HOA** (nằm TRONG nút) |
+| Mô hình | mở sẵn, radio 1-trong-2 | thu gọn 1 hàng → sheet |
+| Vỏ | thẻ trắng 343×193, **bên trong 2 thẻ radio có viền** → hộp lồng hộp 3 tầng | thẻ trắng 343×62 |
+
+**Concept chốt: TITLE trần trên dải xám + NỘI DUNG trong mặt trắng, không khung bao cả khối.**
+
+- **Markup** (mọi bộ da — vì title là nội dung): khối voucher được bọc `flex flex-col gap-2` + thêm `<p>` title "Ưu đãi & khuyến mãi" **cùng class với title khối thành viên**; nhãn cũ trong nút nhường vai đó nên hàng bấm đổi sang chữ hành động **"Chọn mã ưu đãi"** (hint `( N )` / `( Đã áp dụng N )` không đổi công thức). Title khối thành viên rút còn **"Ưu đãi thành viên"** — nhãn nhóm skin-mt là chữ HOA, mà tên chương trình bị §1.5 mục 4 cấm hoa, nên "DAFC Rewards" lùi vào toast/nội dung.
+- **skin-mt CSS** (khối 6c, 5 rule): gap giữa 2 khối 8 → **16** (nhóm phải thoáng hơn nhịp title→nội dung 8) · gỡ khung bao khối thành viên (`background/border/padding` + gap 8) · `.opt` lấy **mặt trắng** (bỏ khung bao rồi thì thẻ radio nằm trực tiếp trên xám, markup không khai nền → xám-trên-xám) · 2 title = `p.font-medium` trong panel → **HOA + 500** · viền thẻ hàng bấm `#ececec` → **`--general-border` #dfdfdf** cho khớp thẻ radio (trên nền #f2f2f2 thì #ececec chỉ chênh 6/255, mất hẳn vạch).
+- **Vì sao khung bao gỡ ở CSS chứ không ở markup**: giữ khung trong markup thì bộ da **mặc định vẫn là "bản Figma sống"** để đo đối chiếu (đúng cách đã dùng ở mục dưới).
+- **Rule "3 chỗ +1 nấc weight" rút `#voucherTrigger > span.flex-1`**: nhãn đó lên thành title, hàng bấm về họ nội dung 12/18 · 400 do blanket lo.
+- **Đo sau sửa** — 2 khối giống nhau tuyệt đối: title `12/16 · 500 · HOA · #0a0a0a`, wrap trong suốt/không viền/gap 8, hộp nội dung **trắng + viền #dfdfdf**, rộng đúng 343 (trước bị thụt còn 318 vì khung bao). Panel 486 → **469** (đã đăng nhập) / **276** (chưa đăng nhập, khối thành viên không render — vẫn đúng khuôn). Console sạch, **không cần rebuild tailwind** (dùng lại class có sẵn).
+- **Kiểm chức năng**: sheet "Chọn ưu đãi" vẫn mở/đóng từ hàng bấm · radio vẫn đổi (`points → member`, dòng tóm tắt nhảy sang "Giảm giá thành viên −7.442.280đ") · EN dịch đúng: "Member offers" / "Promotions & offers" / "Choose a promo code" (2 chuỗi mới thêm vào `I18N` trước `I18N_REV`).
+- **Chưa chạm desktop** và chưa kéo "Bạn có phiếu mua hàng?" về cùng khuôn (user để ngỏ): nó vẫn là accordion mở tại chỗ dưới nút Đặt hàng theo Figma 3428:55499 — nhãn thì đã cùng bậc 12/16 · 500 · HOA.
+- **STYLE-RULES**: §1.5 mục 5 ghi lại vai — "Ưu đãi & khuyến mãi" chuyển từ nhãn-trong-nút sang **title của khối**, thêm title "Ưu đãi thành viên"; hàng bấm KHÔNG hoa.
+
+## Block tổng tiền trong giỏ: NHẤN MÀU XUỐNG theo bản Figma (24/08/2026, skin-mt, CHỈ MOBILE)
+
+User: *"ở skin-mt ở cart cái block sum giá nên nhấn màu xuống tương tự bản figma"* — đảo nhịp 21/08 cho `discountPanel` **trong suốt + kẻ trên**.
+
+**Đo bản Figma trước khi sửa** (bật skin mặc định trên trang chạy — cùng markup, nên nó chính là số Figma):
+
+| | block sum (`discountPanel`) | thẻ voucher bên trong | dải quà | canvas |
+|---|---|---|---|---|
+| Bản Figma (skin mặc định) | `#f5f5f5` full-bleed 375, **không kẻ trên** | trắng, viền `#f5f5f5` | `#fafafa` | trắng |
+| skin-mt TRƯỚC | trong suốt + kẻ `#ececec` | trắng, viền `#ececec` | `#f7f7f7` | trắng |
+| skin-mt SAU | **`#f2f2f2` full-bleed 375, không kẻ** | trắng, viền `#ececec` | `#f7f7f7` | trắng |
+
+Figma đặt block sum **sâu hơn dải quà đúng 1 nấc** → map sang thang xám skin-mt giữ nguyên quan hệ đó: sum `--general-secondary` `#f2f2f2` · quà `--unofficial-accent-0` `#f7f7f7`. Không đẻ bậc xám mới — `#f2f2f2` chính là **mặt xám §2.2**, vốn đang dùng cho footer cùng màn.
+
+- **Cách sửa**: gỡ HẲN override `background: transparent` trong khối 6c, để markup `bg-secondary` tự ăn token (màu qua token, không hardcode). Không thêm rule nào.
+- **2 kẻ gỡ theo**: kẻ trên `discountPanel` + kẻ trên `#cartCta`. Hai kẻ đó chỉ có lý khi cả 2 khối đều trần trên nền trắng; nay **hai mép của dải màu tự ngăn**, giữ kẻ nữa là ngăn hai lần ở cùng một mép (§2.3 "hết đòn bẩy thì dừng") — và bản Figma cũng border 0 ở đúng 2 mép này. Các kẻ còn lại của trang giỏ ("Chọn tất cả" · giữa các món · trên `#orderGift`) KHÔNG đổi.
+- **Không đổi**: dải quà `#f7f7f7`, thẻ khuyến mãi trắng + viền, toàn bộ typography/weight/hoa của cart. Cột phải desktop vốn là hộp `bg-card` + viền (đã có mặt riêng) nên `desktop.html` không sửa.
+- **Đo sau sửa** (mobile 375, bust cache): panel `rgb(242,242,242)` · x=0 w=375 · `border-top: 0` · pad 24/16 — thẻ voucher trắng 343 nổi trên xám (đọc ra đòn bẩy 3 §2.3); `#cartCta` trong suốt, border-top 0; dải quà vẫn `#f7f7f7`; footer `#f2f2f2`. Console sạch. **Không cần rebuild tailwind** (không thêm class mới).
+- **STYLE-RULES sửa TRƯỚC code**: §2.3 thêm **ngoại lệ ghi danh thứ 2** (danh sách mảng-màu nay đóng ở đúng 2 mục, cả 2 đều trong màn giỏ) + §2.2 ghi lại 2 vùng nền của màn giỏ.
+
 ## Tên thương hiệu THÔI chữ hoa (24/08/2026, CẢ 2 BẢN, skin-mt)
 
 User: *"tên brand không cần uppercase toàn bộ"* — đảo chốt C1 (20/08 "brand = họ nhãn 500 + HOA"). Brand nay là **họ nội dung: 14/20 · 400 · chữ thường · mực chính `#0a0a0a`** ở cả 3 vị trí (`.pc-brand` trên card + hàng gợi ý + PDP + quick-add, và `.cart-row p:has(+ .del)` trong giỏ).
@@ -141,8 +239,8 @@ Chip/hàng chọn size ở **PDP + quick add** (và dải size hover trên card 
 
 User đảo 2 chốt 20/08 ("nền xám nhấn block" + "đóng hộp maison kitsuné"): *"style ở cart kiểu của editorial đang đẹp, dùng nền trang cart màu trắng, cái nào quà tặng thì nhấn màu xuống, không bị trong khuông khổ — dùng style đó áp dụng lại cho skin-mt"*. Chuẩn đích ĐO từ skin-mp trên trang chạy rồi áp cho skin-mt bằng token của chính nó:
 
-- **Gỡ**: rule canvas xám `body/#viewport` (nền về trắng mặc định) · bg trắng 3 phần HỘP 1 + viền bao đỉnh/đáy + lề bù tiêu đề (desktop) + khe `mt-12` (mobile) · nhánh "đáy hộp di chuyển" `#cartList:has(...)` · bg + viền đáy `#orderGift` · **HỘP 2 mobile**: `discountPanel` về **trong suốt** (markup gốc `bg-secondary` xám), `#cartCta` bỏ viền đáy + pb-24 · rule dải mờ `#cartStickyCta` fade về #f2f2f2 (gradient markup fade trắng lại đúng).
-- **Giữ / thêm kẻ**: mỗi vùng ngăn nhau đúng MỘT kẻ `--unofficial-border-1` (#ececec): "Chọn tất cả"──kẻ──danh sách · kẻ giữa các món · kẻ trên `#orderGift` · kẻ trên khối tổng + kẻ trên `#cartCta` (mobile). Thẻ khuyến mãi giữ viền (thẻ bấm được, không phải hộp). **Cột phải desktop giữ nguyên hộp** `bg-card` + viền — như chính skin-mp.
+- **Gỡ**: rule canvas xám `body/#viewport` (nền về trắng mặc định) · bg trắng 3 phần HỘP 1 + viền bao đỉnh/đáy + lề bù tiêu đề (desktop) + khe `mt-12` (mobile) · nhánh "đáy hộp di chuyển" `#cartList:has(...)` · bg + viền đáy `#orderGift` · **HỘP 2 mobile**: `discountPanel` về **trong suốt** (markup gốc `bg-secondary` xám) *(24/08 ĐẢO: panel lấy lại `bg-secondary` #f2f2f2 theo bản Figma)*, `#cartCta` bỏ viền đáy + pb-24 · rule dải mờ `#cartStickyCta` fade về #f2f2f2 (gradient markup fade trắng lại đúng).
+- **Giữ / thêm kẻ**: mỗi vùng ngăn nhau đúng MỘT kẻ `--unofficial-border-1` (#ececec): "Chọn tất cả"──kẻ──danh sách · kẻ giữa các món · kẻ trên `#orderGift` · ~~kẻ trên khối tổng + kẻ trên `#cartCta`~~ *(2 kẻ này ĐÃ GỠ 24/08 khi block tổng lấy lại mặt xám — xem mục "Block tổng tiền trong giỏ")*. Thẻ khuyến mãi giữ viền (thẻ bấm được, không phải hộp). **Cột phải desktop giữ nguyên hộp** `bg-card` + viền — như chính skin-mp.
 - **Không đổi**: tấm quà accent-0 (mục dưới), toàn bộ khối typography/weight/hoa của cart.
 - Đo sau sửa (cả 2 bản): body trắng, mọi khối cột trái `transparent`, kẻ đúng 4 vị trí, tấm quà #f7f7f7, console sạch. STYLE-RULES §2.2 đã ghi đè câu "canvas giỏ về #f2f2f2" (hết hiệu lực).
 
