@@ -53,7 +53,7 @@ Panel Cài đặt có thêm mục **"Cặp font · heading + body"** — 4 cặp
 
 | Cặp | Heading | Body | Hướng |
 |---|---|---|---|
-| Montserrat + Inter | Montserrat | Inter | geometric + grotesque |
+| ~~Montserrat + Inter~~ → **Fraunces + Montserrat** | Fraunces | Montserrat | serif mới, nền Montserrat *(thay 24/08/2026 — xem mục dưới)* |
 | Playfair + Montserrat | Playfair Display | Montserrat | giữ Montserrat làm nền |
 | Editorial · tạp chí thời trang | Playfair Display | Work Sans | serif tương phản cao |
 | Thanh lịch · maison cổ điển | Cormorant Garamond | Be Vietnam Pro | garamond mảnh |
@@ -102,7 +102,7 @@ Kèm 2 tinh chỉnh khai **theo từng cặp** (`tune` trong `FONT_PAIRS` → bi
 
 | Cặp | line-height heading | tracking heading | Vì sao |
 |---|---|---|---|
-| Montserrat + Inter | 1.33 (31.9px) | 0.5px | heading vẫn Montserrat → giữ số bộ da |
+| ~~Montserrat + Inter~~ → **Fraunces + Montserrat** | 1.32 | 0 | body là chính Montserrat nên `adj .53` không đổi gì; heading serif x-height 47 → bỏ tracking dương, nới dòng *(thay 24/08/2026)* |
 | Playfair + Montserrat · Editorial | 1.30 (31.2px) | 0 | dấu ệ của Playfair cao **81/100** — cao nhất 24 font đo |
 | Thanh lịch (Cormorant) | 1.36 (32.6px) | 0 | = 53/39, bù đúng phần x-height hụt |
 | Đương đại (Fraunces) | 1.32 | 0 | x-height 47 thấp hơn body 1 nhịp |
@@ -117,6 +117,148 @@ Kèm 2 tinh chỉnh khai **theo từng cặp** (`tune` trong `FONT_PAIRS` → bi
 > 2. **Panel Cài đặt tràn màn hình** — thêm 6 cặp font làm card cao **1030px** trên viewport 812 → mép trên bị cắt −354px, mất 2 mục đầu (Ngôn ngữ, Bộ da) và **không cuộn được** (`overflow: visible`). Đã cho `.sp-card` `max-height: calc(100vh - 160px)` + `overflow-y: auto` + `overscroll-behavior: contain`. Đo lại: mobile cao 632/812, desktop 621/800, cuộn tới được cặp cuối, mục đầu trở lại.
 
 **Bật cặp font = TẮT nhãn hoa của bộ da** (24/08/2026, user: *"ở các option font không nhất thiết phải theo rule uppercase toàn bộ theo skin mt"*): rule cuối `<style>` cho `html.font-pair` trả `text-transform: none` cho nav ngành hàng · nhãn nhóm menu/mega · tiêu đề mục bộ lọc · nhãn footer · nhãn mở mục trong giỏ · brand. Vì uppercase che đúng phần chữ thường (x-height, đuôi g/y, bụng a/e) — chỗ để nhận ra một serif — nên ép hoa làm hỏng việc thử font. Bỏ chọn cặp là hoa trở lại; đo 2 chiều ở cả 2 bản: `.dk-dept`/`.ms-tab` `uppercase → none → uppercase`.
+
+## Đổi cặp font: Montserrat + Inter → FRAUNCES + MONTSERRAT (24/08/2026, CẢ 2 BẢN)
+
+User: *"thay bộ font Montserrat + inter thành Fraunces + montserrat nhé, áp dụng 2 phiên bản"*.
+
+- **Verify trước khi thay** (quy trình bắt buộc với mọi font mới): tải CSS thật `fonts.googleapis.com/css2?family=Fraunces:wght@400;500` → có subset **`vietnamese`** (2 khối `unicode-range` chứa `U+1EA0`). Kiểm tiếp trên trang: `document.fonts.check("500 24px Fraunces", "ệ ộ ậ ữ")` = **true** ở cả 2 bản, và face vietnamese đã `loaded`. Fraunces vốn đã nằm trong thẻ `<link>` (cặp `modern`) nên **không thêm request nào**.
+- **`tune` của cặp**: `{ adj: 0.53, headLs: '0', headLh: 1.32 }` — body là *chính Montserrat* nên `adj .53` không đổi gì (thân bài y hệt bộ da); heading Fraunces là serif display, x-height 47 (thấp hơn body 53 một nhịp) nên bỏ tracking dương + nới dòng 1.32, cùng số đã dùng cho cặp `modern`.
+- **Đo sau khi đổi** (chọn cặp qua UI popover Cài đặt): `--font-head` = Fraunces · `--font-app` = Montserrat · heading newsletter ra **Fraunces 18/24** (mobile) / **24/32** (desktop, đúng T1), tracking `normal` (do headLs 0); nav/brand/body vẫn Montserrat ls .5px.
+- Id đổi `mont-inter` → `fraunces-mont`. Id cũ còn ghim ở đâu đó sẽ trượt `FONT_PAIRS.find` → rơi về mặc định, vô hại.
+- **Hệ quả cần biết**: danh sách cặp nay **không còn cặp sans+sans nào** — toàn bộ heading là serif, đi từ gần hiện trạng nhất (giữ Montserrat làm body: Fraunces+Mont, Playfair+Mont) tới xa nhất (didone tạp chí). Ghi chú "4 cặp đi từ gần hiện trạng tới xa nhất" trong code đã sửa theo. Cặp `modern` (Fraunces + Manrope) vẫn còn, nên giờ có **2 cặp heading Fraunces** khác nhau ở body.
+
+## Bộ da thứ 4: MAIKA (`skin-mk`) — 24/08/2026, CHỈ MOBILE
+
+User: *"tạo thêm 1 skin-mk tên là maika, dùng menu của bộ skin-mt (uppercase menu) và dùng body trang với các heading lớn như bộ skin-mp"*.
+
+**Cách dựng — GHÉP, không nhân bản.** Ô class của Maika mang **2 class**: `skin-mp skin-mk`.
+
+- `skin-mp` → nguyên bộ **thân trang + heading lớn** của MR PORTER (token, thang chữ, cart editorial, checkout, promo bar…) dùng lại 100%, **không sửa một rule nào**.
+- `skin-mk` → lớp phủ **chỉ 6 rule**, khai lại phần **menu** theo số của skin-mt.
+
+Lợi: Maika tự thừa hưởng mọi thay đổi sau này của skin-mp, và "diff" của nó gọn đúng một khối — thay vì copy ~40 rule rồi phải sửa song song mãi.
+
+Sửa kèm ở JS: `applySkin` phải add/remove **theo từng class** (`classList.add("a b")` ném `InvalidCharacterError`), nên 2 dòng đổi thành `...x[2].split(' ')`. Đã test vòng đời `mytheresa → maika → editorial → maika → default`: class trên `<html>` sạch đúng từng bước, không sót `skin-mk`.
+
+**Vì sao khối menu phải khai lại cả cỡ/dòng, không chỉ `text-transform`**: skin-mp giờ cũng hoa menu rồi (mục trên), nên "menu của skin-mt" chỉ còn khác ở **thang** — menu skin-mt là hệ compact `14/20 · 12/16 · ls .5px`, skin-mp là `16/24 · 14/20 · ls .2px`. Lấy đúng bộ số của skin-mt để menu Maika tương phản với thân trang lớn của nó.
+
+Đo sau khi dựng (375, drawer mở):
+
+| | Maika | (đối chiếu) skin-mt | (đối chiếu) skin-mp |
+|---|---|---|---|
+| Tab ngành hàng | `14/20 · 500 · HOA · ls .5` | y hệt | 16/24 · 500 · HOA · ls .2 |
+| Hàng danh mục cấp 1 | `12/16 · 400 · HOA` | y hệt | 14/20 · 500 · HOA |
+| Tiêu đề màn con | `12/16 · 500 · HOA` | y hệt | 16/24 · 500 · HOA |
+| Hàng cấp 2 | **thường** (sao y ngoại lệ skin-mt) | thường | thường |
+| Brand card / tên sp | `14/20 · 500` / `14/20 · 400` | 14/20 · 400 / 12/18 | **giống Maika** |
+| Heading newsletter | `18/28 · 500` | 18/24 · 400 | **giống Maika** |
+| Nhãn footer | `14/20 · 500 · thường` | 12/16 · 500 · HOA | **giống Maika** |
+| Promo bar | đen, chữ `#f0f0f0` | đen, chữ trắng | **giống Maika** |
+
+- **Bộ chọn da** hiện đủ 4 dòng, tick đúng dòng Maika; bấm qua UI (`mytheresa → maika`) ra đúng `skin-mp skin-mk`. Ghi chú dòng Maika không có bản dịch EN — **giống 3 dòng còn lại** (popover Cài đặt là công cụ dev, §5 STYLE-RULES).
+- **Font mix vẫn giữ chữ hoa cho menu Maika** ✓ — nó thừa hưởng rule `html.skin-mp.font-pair …` (có `!important`) của mục trên.
+- Giữ theo skin-mp có chủ ý: nav ngành hàng của **màn Search** (`.search-tab`) — nó là nội dung trang, mà thân trang Maika là skin-mp.
+- Vách giữa các hàng menu dùng `var(--unofficial-border-1)` nên ra `#ebebeb` (token của skin-mp) chứ không phải `#ececec` của skin-mt — **cố ý**: Maika giữ bảng màu của skin-mp, chỉ lấy THANG CHỮ của menu skin-mt.
+### Bản desktop (làm ngay sau đó, cùng ngày)
+
+Cùng cách ghép (`skin-mp skin-mk` + `applySkin` split), lớp phủ **8 rule**. Ở khổ này "menu của skin-mt" = **thanh nav trên cùng + mega panel**; drawer `#menuSheet` **không có nhánh nào** vì chính skin-mt ở desktop cũng để chữ thường.
+
+| Vai | skin-mp | skin-mt (đích) | Maika sau khi dựng |
+|---|---|---|---|
+| `.dk-dept` | 16/24 · 400 · HOA · ls .2 | 12/16 · 500 · HOA · ls .5 | **12/16 · 500 · HOA · ls .5** ✓ |
+| `.dk-nav-link` | 14/20 · 400 · HOA · ls .2 | 12/16 · 500 · HOA · ls .5 | **y hệt skin-mt** ✓ |
+| Nhãn nhóm mega | 14/20 · 600 · ls 2.1px **+ vạch 32×1px** | 12/18 · 500 · ls .5, không vạch | **12/18 · 500 · ls .5**, vạch `display:none` ✓ |
+| Hàng trong mega | 14/20 · 400 · ls .2 | 12/18 · 400 · ls .5 | **12/18 · 400 · ls .5** ✓ |
+| Heading newsletter (thân trang) | **32/40 · 300** | 24/32 · 400 | **32/40 · 300** (giữ skin-mp) ✓ |
+| Brand card (thân trang) | 14/20 · 500 | 14/20 · 400 | **14/20 · 500** (giữ skin-mp) ✓ |
+
+- **Gỡ vạch `::after` 32×1px** dưới nhãn nhóm mega (+ `padding-bottom` về 0): vạch đó là trang trí riêng của menu MR PORTER, menu skin-mt không có. Muốn giữ thì xoá 2 khai đó — 1 dòng.
+- Kiểm: vòng đời `mytheresa → maika → editorial → maika → default → maika` cho class sạch từng bước; bộ chọn da đủ 4 dòng và tick đúng Maika; **font mix vẫn giữ chữ hoa** cho cả 3 vai menu (thừa hưởng rule `!important` của skin-mp); `node --check` OK; cân `/* */` 242/242.
+
+## Thanh promo trên header trả về NỀN ĐEN (24/08/2026, CẢ 2 BẢN, cả skin-mt + skin-mp)
+
+User: *"promo bar nằm trên thanh header sẽ màu đen nhé"*.
+
+Đo trước khi sửa mới thấy: **bản gốc/markup vốn đã đen** — mobile `div.h-8.bg-primary`, desktop nền inline `var(--surface-dark)`, chữ `text-primary-foreground`. Chính **2 bộ da** đang đảo nó thành xám nhạt chữ đen (`#d9d9d9` ở skin-mp · `--general-secondary` ở skin-mt, desktop còn `!important` vì nền gốc là inline style). Nên việc phải làm là **gỡ 4 rule đè** (2 nền + 2 màu chữ), không phải khai màu đen mới.
+
+- Giữ lại đúng `opacity: 1` của mobile (markup để slide mờ nhẹ; 2 bộ da vốn kéo về đục, không đổi cùng lượt này). Token `--surface-dark` không đụng — nó còn tô thẻ "mặt tối lớn" ở màn khác.
+- Đo sau sửa: nền `rgb(10,10,10)` cao 32 ở **cả 2 bản × cả 2 bộ da**; chữ trắng (`#ffffff` skin-mt · `#f0f0f0` skin-mp, đúng token `primary-foreground` của từng da). Quét toàn bộ subtree của thanh: **0 phần tử còn chữ/icon mực tối** nên không có chỗ nào bị chìm vào nền đen. Bộ da mặc định giữ nguyên (đối chứng: `#0a0a0a` + `#fafafa` + opacity .9).
+- **STYLE-RULES §2.2 đã ghi ngoại lệ trước khi sửa code**: mặt tối `#0a0a0a` nay có **vai thứ 3** — thanh promo — và là vai duy nhất mà mặt tối làm *nền của một dải nội dung*; hợp lệ vì dải này nằm TRÊN header, không thuộc dòng chảy trang. Danh sách vai của mặt tối đóng ở 3.
+
+## Menu của skin-mp (MR PORTER) lấy chữ hoa giống skin-mt (24/08/2026, CHỈ MOBILE)
+
+User: *"ở skin mr porter, hãy lấy bộ menu uppercase giống skin-mt nhé, còn các nội dung trang thì giữ nguyên"*.
+
+Lấy đúng **bộ vai** mà skin-mt viết hoa trong menu (§1.5 vai 1 + vai 2), **không lấy thang chữ** của nó — cỡ/dòng/tracking của skin-mp giữ nguyên vì user chỉ đổi chữ hoa, và cỡ thoáng hơn chính là chữ ký editorial của bộ da này:
+
+| Vai trong `#menuSheet` | skin-mt | skin-mp trước | skin-mp sau |
+|---|---|---|---|
+| Tab ngành hàng `.ms-tab` | 14/20 · 500 · HOA | 16/24 · **500/400** · thường | 16/24 · **500** · **HOA** |
+| Hàng danh mục cấp 1 | 12/16 · 400 · HOA | 14/20 · 500 · thường | 14/20 · 500 · **HOA** |
+| Tiêu đề màn con `.glass-95 > p` | 12/16 · 500 · HOA | 16/24 · 500 · thường | 16/24 · 500 · **HOA** |
+| Nhãn nhóm `.ms-view > p` | 500 · HOA | (không xuất hiện ở danh mục đang test) | rule đã đặt sẵn |
+| **Hàng cấp 2 (màn con)** | **thường** (rule 4b gỡ hoa) | thường | **thường** — sao y ngoại lệ |
+
+- **Sao y cả phần ngoại lệ**: skin-mt có rule riêng gỡ hoa cho hàng cấp 2 (chốt 19/08 "trên desktop là viết hoa chữ cái đầu"), nên "giống skin-mt" nghĩa là ở đây cũng phải có rule gỡ — không có nó thì rule cha phủ luôn màn con.
+- **Kéo cả 3 tab về w500**: markup chỉ cho 500 cho tab đang chọn, 2 tab kia 400 → hoa mà 400 là nửa cặp (§1.1), mà skin-mt thì cả 3 tab đều 500. Trạng thái đang chọn vẫn đọc được bằng gạch chân sẵn có.
+- **Không chạm nội dung trang**: mọi selector nằm trong `#menuSheet`. Nav ngành hàng của **màn Search** (`button.search-tab`) tuy cùng vai 1 ở skin-mt nhưng nằm ngoài menu nên **không lấy**. Đo đối chứng sau sửa: brand card / nút Bộ lọc / tiêu đề mục PDP của skin-mp vẫn `14/20 · 500 · thường`, `14/21`, `18/28` — y như trước.
+### Bản desktop (làm ngay sau đó, cùng ngày)
+
+Ở khổ 1440, "bộ menu" của skin-mt **chỉ gồm 2 vai** — đã đo để chắc trước khi viết rule:
+
+| Vai | skin-mt desktop | skin-mp trước | skin-mp sau |
+|---|---|---|---|
+| Nav ngành hàng `.dk-dept` | 12/16 · 500 · HOA | 16/24 · 400 · thường | 16/24 · 400 · **HOA** |
+| Nav danh mục `.dk-nav-link` | 12/16 · 500 · HOA | 14/20 · 400 · thường | 14/20 · 400 · **HOA** |
+| Nhãn nhóm mega panel | 12/18 · 500 · HOA | **vốn đã HOA** (14/20 · 600 · ls 2.1px + gạch `::after` — idiom uppercase của chính bộ da) | không đổi |
+| Hàng trong mega | thường | thường | thường |
+| **Drawer `#menuSheet`** | **thường** (đo: toàn bộ w400 chữ thường) | thường | **thường** — không hoa |
+
+- **Drawer desktop không hoa** là điểm khác bản mobile: ở mobile drawer CHÍNH LÀ menu nên skin-mt hoa nó; ở desktop menu chính là thanh nav + mega panel, drawer là nav phụ và skin-mt cũng để chữ thường → "giống skin-mt" nghĩa là để nguyên.
+- **Giữ w400 có chủ ý** (khác mobile, nơi tôi kéo tab về 500): rule sẵn có của skin-mp khai 400 cho cả 4 selector nav **theo số đo thật của MR PORTER** (*"nav MR PORTER là regular"*, đánh dấu state bằng gạch chân + mực chứ không bằng độ đậm). Đổi chữ hoa không có lý do gì đảo chốt đó. Đây là chỗ duy nhất trong bộ da lệch cặp "500 đi với hoa" của skin-mt — lệch có căn cứ. Trạng thái đang chọn vẫn đọc được: mực `#0a0a0a` vs `#656565` + gạch 2px `.dk-nav-item::after`.
+- Đo đối chứng: nội dung trang skin-mp không đổi (tiêu đề mục PDP `18/28 · 500 · thường`, brand card `14/20 · 500 · thường`); skin-mt cũng không bị chạm.
+
+### Vá tiếp: menu skin-mp giữ chữ hoa KỂ CẢ khi đang thử cặp font (CẢ 2 BẢN)
+
+User: *"sao khi tôi chuyển font mix thì lại mất uppercase nhỉ, ở skin-mp cho uppercase cả menu kể cả khi switch font"*.
+
+**Nguyên nhân — bẫy specificity của `:is()`**: khối `html.font-pair :is(…)` (tắt nhãn hoa khi thử font) không phân biệt bộ da, và `:is()` lấy specificity của **nhánh đậm nhất**. Danh sách có nhánh mang **id** (`#filterSheet …`, `:has(#discountLines)`) nên cả khối đứng ở **(1,4,2)** ở mobile / (1,2,2) ở desktop — cao hơn rule menu của skin-mp (kể cả khi bám `#menuSheet` cũng chỉ (1,3,1)), nên nó đè mất chữ hoa.
+
+**Đã thử 2 đường rồi bỏ, ghi lại để không ai lặp:**
+1. *Bọc `:where()` cho các nhánh id để "gọn specificity" khối font-pair* → khối tụt xuống (0,4,2) và **lập tức làm skin-mt mất hành vi "thử font = bỏ hoa"** (nhãn menu + bộ lọc của nó bám id nên thắng lại). Đã hoàn tác, và ghi cảnh báo ⚠ ngay trên khối: **độ mạnh của khối này là có chủ ý, đừng dọn**.
+2. *Nhồi selector cho đủ điểm* → chỉ hoà (1,4,2) rồi thắng bằng **thứ tự khai**, vỡ ngay khi có người chèn rule mới.
+
+**Cách chốt**: rule riêng có `!important`, phạm vi hẹp đúng một thuộc tính · một trạng thái (`skin-mp` + `font-pair`) · đúng các phần tử menu:
+- mobile: `html.skin-mp.font-pair #menuSheet .ms-tab` (đo được: ở khổ này font-pair chỉ giết chữ hoa của `.ms-tab`; hàng danh mục cấp 1 và tiêu đề màn con không nằm trong danh sách nên vẫn hoa — thêm selector nữa vào đây sẽ vô tình lật cả rule "hàng cấp 2 giữ chữ thường").
+- desktop: `.navbar .dk-dept` · `.navbar .dk-nav-link` · `.navbar .dk-mega-grid > div > p` (cả 3 đều bị giết; nhãn mega hoa bằng utility `uppercase` trong markup nên cũng thua khối đó).
+
+**Đo lại 4 tổ hợp × 2 bản** — đúng hết: `skin-mp` HOA · `skin-mp + font mix` **HOA** · `skin-mt` HOA · `skin-mt + font mix` **thường** (giữ đúng chốt 24/08 cho bộ da mặc định). Brand / footer / nhãn giỏ / bộ lọc của skin-mp vẫn về chữ thường khi thử font — đúng mục đích chế độ thử.
+
+*Lệch sẵn có (không phải do đợt này)*: khi bật font mix, **hàng danh mục cấp 1 trong drawer của skin-mt vẫn hoa** vì selector đó (`.ms-view button > span`) chưa có trong danh sách của khối font-pair. Muốn nó cũng về chữ thường thì thêm 1 nhánh — nhưng phải thêm kèm rule giữ ngoại lệ cho skin-mp.
+
+## Dọn TOÀN BỘ điểm lệch theo STYLE-RULES + bộ shadcn (24/08/2026, CẢ 2 BẢN)
+
+Sau bản dò [AUDIT-TYPO-SHADCN-2026-08-24.md](AUDIT-TYPO-SHADCN-2026-08-24.md), user: *"hãy sửa tất cả các điểm còn lệch vào luôn"*. Chi tiết luật + 4 quyết định mới ghi ở `STYLE-RULES.md` **Phần 7**; đây là phần "làm thế nào".
+
+| Trục | Trước (mobile · desktop) | Sau |
+|---|---|---|
+| Cặp cỡ/dòng | 341 · 489 | **0 · 0** |
+| Cỡ ngoài thang | 30 · 67 | **0 · 0** |
+| Mực ngoài 3 bậc | 4 · 57 | **0 · 0** |
+| Sắc viền ngoài 3 tầng | 66 · 62 | **0 · 0** |
+| Bo góc ≠ 0 | 46 · 55 | **0 · 0** |
+| Đổ bóng | 1 · 1 | **0 · 0** |
+| Hex trong rule bộ da | 12 · 19 | **0 · 0** |
+
+- **Khối `:where()` thay 7 rule "chỉ đổi cỡ"** (§4.2). Chìa khoá là `:where()`: cả khối có specificity `(0,1,1)` → thắng utility Tailwind `(0,1,0)` nhưng **nhường mọi rule tường minh của bộ da** `(0,2,1)+`, nên `.pc-brand` 14/20, `.dk-dept`/`.ms-tab`/`.search-tab`, tiêu đề panel bộ lọc và các khối scope theo màn giữ nguyên số **mà không phải chèn `:not()` cho từng chỗ**. Trước khi viết đã dò toàn file các cặp `text-[Npx]` × `leading-*` thật sự tồn tại và xác nhận **mỗi utility dòng chỉ gặp đúng một họ cỡ** — nên khai theo utility là đủ.
+- **2 bản nay CÙNG một bảng remap** — desktop bỏ `16→14`, `18→16`, `22/24→18` và thêm `11→12`. Hệ quả thị giác ở desktop: tiêu đề trang (Thông tin / Đăng nhập / Tóm tắt đơn hàng) `18/32 → 24/32`, tiêu đề mục PDP `16/28 → 18/24`, dòng "Đã thông báo Bộ Công Thương" `11 → 12`.
+- **Gộp `#cfcfcf` vào V2 bằng token** (`--unofficial-border-3: var(--general-border)`) — một dòng phủ 84 chỗ (ô tick `.chk`, vòng radio), không sửa từng selector.
+- **`statusTag()` port sang desktop**: pill `bg-warning-subtle` + mực `#8a6100` + bo `9999px` (3 vi phạm trong 1 phần tử) → chấm 6px token `success/warning/info` + chữ 12/16 mực chính, dùng chung cho cả list và màn chi tiết. `STATUS_DOT` + `statusTag` khai giống hệt index.html.
+- **`bg-destructive-subtle` bỏ nền toàn app** (trước chỉ trong màn giỏ) · **`rounded-[3px]`/pill dài/`#topFab`/`.quick-add` về bo 0** · **`#topFab` bỏ bóng cả `:hover`** (nhánh hover chỉ có ở desktop) · **"hết hàng" = gạch ngang + `#666`** thay vì hạ mực `#999`/`#a3a3a3` · **nhãn PBH cột tóm tắt desktop** nay hoa 500 như mobile.
+- **31 hex trong rule bộ da → token** (`--general-primary` · `--general-border` · `--unofficial-border-1` · `--general-secondary` · `--general-background`); còn lại đúng khối định nghĩa token và `theme-dplus`.
+- **Cách đo lại**: bộ scan là 1 hàm cài qua console, kiểm 12 luật cùng lúc (thang cỡ · cặp cỡ/dòng · weight · cặp 500⇄hoa · tracking · mực · mặt · sắc viền · độ dày viền · bo góc · bóng · danh mục chữ hoa), miễn trừ công cụ dev §5 và ô màu sản phẩm. Chạy: cài hàm → vòng qua danh sách màn → gom theo rule. **Nhớ đóng băng `.rise/.reveal` trước khi đo** (animation đang chạy trả số sai — bẫy verify 3).
+- Không cần rebuild tailwind (chỉ thêm rule CSS + tái dùng class đã có trong build). `node --check` script inline của cả 2 file: OK.
 
 ## Port cụm ưu đãi sang DESKTOP + padding block khuyến mãi (24/08/2026, CẢ 2 BẢN)
 

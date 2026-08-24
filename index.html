@@ -889,13 +889,17 @@ window.RESP = (function () {
      thật (8px) — token radius không với tới nên phải đè đúng nó. Mọi bottom sheet
      khác vốn đã `border-radius: 0`. */
   html.skin-mp #settingsPanel .sp-card, html.skin-mt #settingsPanel .sp-card { border-radius: 0; }
-  /* Thanh promo trên cùng: bản gốc là nền `bg-primary` (đen) chữ trắng; 2 bộ da
-     đảo thành nền xám nhạt chữ đen, giống 2 bản desktop.
-     `bg-primary` là utility (0,1,0) nên `html.skin-* div:has(...)` (0,2,1) đè
-     được, KHÔNG cần !important (khác desktop — ở đó nền là inline style). */
-  html.skin-mp div:has(> #promoSlider) { background: #d9d9d9; }
-  html.skin-mt div:has(> #promoSlider) { background: #f2f2f2; }
-  html.skin-mp #promoSlider span, html.skin-mt #promoSlider span { color: #0a0a0a; opacity: 1; }
+  /* Thanh promo trên cùng: TRẢ VỀ NỀN ĐEN CHỮ TRẮNG (24/08/2026, lệnh user: *"promo
+     bar nằm trên thanh header sẽ màu đen nhé"*).
+     Bản gốc/markup vốn đã đúng thế — `div.h-8.bg-primary` + chữ `text-primary-foreground`
+     — chính 2 bộ da đang đảo nó thành nền xám nhạt chữ đen (`#d9d9d9` ở skin-mp,
+     `--general-secondary` ở skin-mt). Nên việc phải làm là GỠ phần đè đó, không phải
+     khai màu đen mới: gỡ 2 rule nền + gỡ khai `color` -> utility trong markup ăn lại.
+     `opacity: 1` GIỮ: markup để slide mờ nhẹ, 2 bộ da vốn kéo về đục và không có lý do
+     gì đổi cùng lượt này.
+     Với skin-mt đây là vai thứ 3 của MẶT TỐI (§2.2 trước chỉ cho nút chính + backdrop)
+     — đã ghi ngoại lệ vào STYLE-RULES trước khi sửa đây. */
+  html.skin-mp #promoSlider span, html.skin-mt #promoSlider span { opacity: 1; }
 
   /* ── 4. CHỮ HOA cho nhãn menu — chỉ bộ da Mytheresa ──
      Mobile không có 2 hàng nav như desktop; "nhãn menu" ở đây là drawer danh mục
@@ -1020,7 +1024,7 @@ window.RESP = (function () {
      bắt hôm nay. Bản gốc + MR PORTER = hộp xám, Mytheresa = gạch dưới. */
   html.skin-mt .search-field {
     background: transparent; border-radius: 0;
-    border-bottom: 1px solid #0a0a0a;
+    border-bottom: 1px solid var(--general-primary);
     padding-left: 0; padding-right: 0;
   }
 
@@ -1043,7 +1047,7 @@ window.RESP = (function () {
   /* Vách dưới mỗi hàng danh mục = "underline của cate trong menu". HẠ 1 NẤC
      #dfdfdf -> #ececec (yêu cầu user 18/08/2026: nhẹ nhàng hơn). #ececec là bậc
      nhạt hơn liền kề trong chính bảng màu của bộ da này. */
-  html.skin-mt #menuSheet .ms-view > button { border-bottom: 1px solid #ececec; }
+  html.skin-mt #menuSheet .ms-view > button { border-bottom: 1px solid var(--unofficial-border-1); }
   html.skin-mt { --unofficial-border-1: #ececec; }
   /* Accordion PDP: vách TRÊN đen; triệt utility `border-b` trong markup kẻo 2 vách.
      BẮT BUỘC bám `.acc.border-b`, KHÔNG bám `.acc` trơn: class .acc còn dùng cho
@@ -1052,9 +1056,9 @@ window.RESP = (function () {
   /* Vách accordion HẠ TỪ #000 -> #dfdfdf (yêu cầu user: nội dung PDP nhẹ nhàng
      hơn). Số đo của họ là #000 — lệch CÓ Ý THỨC vì vạch đen chạy ngang cả PDP đọc
      ra rất nặng. Giữ hướng vách TRÊN (đúng họ), chỉ đổi màu. */
-  html.skin-mt .acc.border-b { border-top: 1px solid #dfdfdf; border-bottom-width: 0; }
+  html.skin-mt .acc.border-b { border-top: 1px solid var(--general-border); border-bottom-width: 0; }
   /* .btn-p: KHÔNG khai gì — nút chính của họ nền đen chữ trắng, trùng dự án sẵn. */
-  html.skin-mt [data-size-trigger] { border-color: #0a0a0a; }
+  html.skin-mt [data-size-trigger] { border-color: var(--general-primary); }
   /* DẤU CHỌN SWATCH MÀU trên card (AUDIT B7, chốt 20/08/2026): bỏ kỹ thuật ring —
      ring là box-shadow nên dính luật cấm bóng §3.3, và ô CHƯA chọn (`ring-0`) vẫn
      compose shadow với ring xanh dương MẶC ĐỊNH của Tailwind vì --tw-ring-color
@@ -1131,12 +1135,37 @@ window.RESP = (function () {
   html.skin-mt .font-light, html.skin-mt .font-normal, html.skin-mt .font-medium,
   html.skin-mt .font-semibold, html.skin-mt .font-bold,
   html.skin-mt b, html.skin-mt strong { font-weight: 400; }
-  /* Ô 12px — thân bài / giá / nút / nhãn: gom 11·13·14·15·16 về đây */
-  html.skin-mt .text-\[11px\], html.skin-mt .text-\[13px\], html.skin-mt .text-\[14px\],
-  html.skin-mt .text-\[15px\], html.skin-mt .text-\[16px\] { font-size: 12px; }
-  /* Ô 18px — tiêu đề mục: GIỮ NGUYÊN, không hạ (đây là chỗ bản trước làm sai) */
-  /* Ô 24px — tiêu đề trang: 22 và 32 dồn về đây, 24 giữ nguyên */
-  html.skin-mt .text-\[22px\], html.skin-mt .text-\[32px\] { font-size: 24px; }
+  /* ── §4.2 THI HÀNH: REMAP THEO CẶP CỠ + DÒNG, TOÀN APP (24/08/2026) ────────────
+     Thay 2 rule "chỉ đổi cỡ" cũ — chính chúng là nguyên nhân gốc của 341 (mobile) /
+     489 (desktop) điểm lệch cặp mà bản dò 24/08 đếm được: cỡ bị kéo về 12 nhưng
+     `leading-5` (20) trong markup vẫn nguyên -> tỉ lệ 1.67, không có trong thang.
+     Trước khi viết, đã dò TOÀN FILE các cặp `text-[Npx]` × `leading-*` thật sự tồn
+     tại: mỗi utility dòng chỉ gặp ĐÚNG MỘT họ cỡ (leading-3 ⇢ 10px · leading-4/6 ⇢
+     12px · leading-5 ⇢ 12px · leading-7 ⇢ 18px · leading-8/10/none/snug ⇢ 24px),
+     nên khai theo utility là đủ, không cần liệt kê từng cặp.
+     Bọc trong `:where()` cho cả khối có specificity (0,1,1): vẫn thắng utility
+     Tailwind (0,1,0) nhưng NHƯỜNG mọi rule tường minh của bộ da (0,2,1)+ — nhờ vậy
+     các vai T3 khai riêng (`.pc-brand`, `.ms-tab`, `.search-tab`, tiêu đề panel bộ
+     lọc 14/20) và các khối scope theo màn vẫn giữ số của mình, không phải đi chèn
+     `:not()` cho từng chỗ.
+     Thang đích = §1.2: T7 10/14 · T4 12/16 · T5 12/18 · T2 18/24 · T1 24/32.
+     KHAI GIỐNG HỆT ở desktop.html — luật §1.2 đòi 2 bản CÙNG thang (trước đây lệch
+     5/12 cỡ: 16→14, 18→16, 22/24→18, 11 không remap). */
+  html.skin-mt :where(.text-\[9px\], .text-\[10px\]) { font-size: 10px; line-height: 14px; }
+  html.skin-mt :where(.text-\[11px\], .text-\[13px\], .text-\[14px\], .text-\[15px\], .text-\[16px\]) { font-size: 12px; line-height: 18px; }
+  html.skin-mt :where(.text-\[18px\]) { font-size: 18px; line-height: 24px; }
+  html.skin-mt :where(.text-\[22px\], .text-\[24px\], .text-\[32px\], .text-\[48px\]) { font-size: 24px; line-height: 32px; }
+  /* Dòng theo utility — viết SAU khối cỡ để thắng nó (cùng specificity, sau thắng trước) */
+  html.skin-mt :where(.leading-3) { line-height: 14px; }
+  html.skin-mt :where(.leading-4, .leading-6) { line-height: 16px; }
+  html.skin-mt :where(.leading-5, .leading-relaxed) { line-height: 18px; }
+  html.skin-mt :where(.leading-7, .leading-\[28px\], .leading-\[25px\]) { line-height: 24px; }
+  html.skin-mt :where(.leading-8, .leading-10, .leading-none, .leading-snug) { line-height: 32px; }
+  /* Ô chọn của component `pickField` là chữ MỘT DÒNG (`truncate`) trong ô cao 40 ->
+     1.33, không phải 1.50 mặc định của họ 12px (AUDIT 24/08 mục B-7; bảng bàn giao
+     shadcn ghi hàng Select = `text-sm` 12/16). Sửa ở đây là sửa luôn ô chọn tỉnh /
+     phường ở checkout — cùng một component. */
+  html.skin-mt .pick-label { line-height: 16px; }
   /* BRAND = HỌ NỘI DUNG, CHỮ THƯỜNG (24/08/2026 — user: *"tên brand không cần
      uppercase toàn bộ"*, ĐẢO chốt C1 20/08 "brand = họ nhãn 500 + HOA").
      Gỡ hoa thì theo §1.1 phải gỡ luôn 500 (cặp không tách rời) -> brand về 400.
@@ -1177,9 +1206,9 @@ window.RESP = (function () {
        · vách chân panel, tách cụm nút Đặt lại/Áp dụng khỏi danh sách
      Mục CUỐI cố ý không kẻ: chân panel đã có gạch trên, kẻ nữa là 2 vạch sát nhau.
      KHÔNG đụng markup/layout — đúng quy ước của mọi bộ da. */
-  html.skin-mt .filterbar::after { background: #ececec; }
-  html.skin-mt #filterSheet .facc:not(:last-child) { border-bottom: 1px solid #ececec; }
-  html.skin-mt #filterSheet .safe-b { border-top: 1px solid #ececec; }
+  html.skin-mt .filterbar::after { background: var(--unofficial-border-1); }
+  html.skin-mt #filterSheet .facc:not(:last-child) { border-bottom: 1px solid var(--unofficial-border-1); }
+  html.skin-mt #filterSheet .safe-b { border-top: 1px solid var(--unofficial-border-1); }
   /* ── TIÊU ĐỀ MỤC TRONG BỘ LỌC: CHỮ THƯỜNG, ĐẬM HƠN 1 NẤC (19/08/2026) ────────
      Danh mục · Thương hiệu · Màu sắc · Kích thước · Khoảng giá · Ưu đãi · Khác
      — hàng tiêu đề của từng mục (`.facc-trigger`).
@@ -1527,10 +1556,8 @@ window.RESP = (function () {
   html.skin-mt [class*="tracking-"] { letter-spacing: 0.5px; }
   /* Phần 5 luật: popover Cài đặt là công cụ dev, được miễn — trả lại eyebrow của nó */
   html.skin-mt #settingsPanel [class*="tracking-"] { letter-spacing: 0.12em; }
-  html.skin-mt [data-screen="cart"] .leading-5 { line-height: 18px; }
-  html.skin-mt [data-screen="cart"] .leading-6 { line-height: 16px; }
-  html.skin-mt [data-screen="cart"] .text-\[18px\] { line-height: 24px; }
-  html.skin-mt [data-screen="cart"] .text-\[10px\] { line-height: 14px; }
+  /* (4 rule cặp cỡ/dòng của riêng màn giỏ đã GỠ 24/08: khối `:where()` toàn app ở
+     mục 5 khai đúng các giá trị này cho MỌI màn — giữ lại là khai hai lần.) */
   html.skin-mt [data-screen="cart"] .bg-destructive-subtle {
     background: transparent;
     padding: 0;
@@ -1621,6 +1648,78 @@ window.RESP = (function () {
          "không dùng UPPERCASE" vì nằm trong bộ da phải tự bật — cùng lý do đã
          chấp nhận cho nhãn menu của `skin-mt`)
        · chữ phụ #656565 và nút đen bo 2px đã có sẵn qua token, không cần rule */
+  /* ── MENU CHỮ HOA CHO skin-mp (24/08/2026, lệnh user: *"ở skin mr porter, hãy lấy
+     bộ menu uppercase giống skin-mt, còn các nội dung trang thì giữ nguyên"*) ──────
+     Lấy ĐÚNG bộ vai mà skin-mt viết hoa trong menu (§1.5 vai 1 + vai 2), KHÔNG lấy
+     thang chữ của nó: cỡ/dòng/tracking của skin-mp giữ nguyên (ms-tab 16/24 · hàng
+     danh mục 14/20 · ls 0.2px) vì user chỉ đổi CHỮ HOA — và cỡ chữ thoáng hơn chính
+     là chữ ký editorial của bộ da này.
+     Cặp 500+hoa (§1.1) tự đúng, không phải khai thêm: cả 3 vai dưới ở skin-mp vốn đã
+     w500 (đo trước khi sửa: ms-tab 16/24·500, hàng danh mục 14/20·500, tiêu đề màn
+     con 16/24·500).
+     SAO Y CẢ PHẦN NGOẠI LỆ của skin-mt: **hàng cấp 2 trong màn con GIỮ chữ thường** —
+     skin-mt có rule riêng gỡ hoa đúng chỗ đó (mục 4b, theo chỉ đạo 19/08: "trên
+     desktop là viết hoa chữ cái đầu"), nên "giống skin-mt" nghĩa là ở đây cũng không
+     hoa. Không có rule này thì rule trên phủ luôn cả màn con.
+     GIỮ NGUYÊN NỘI DUNG TRANG: mọi selector đều nằm trong `#menuSheet`. Nav ngành
+     hàng của MÀN SEARCH (`button.search-tab`) tuy cùng vai 1 ở skin-mt nhưng nằm
+     NGOÀI menu — thuộc "nội dung trang" theo cách user chia — nên KHÔNG lấy. */
+  html.skin-mp #menuSheet .ms-tab,
+  html.skin-mp #menuSheet .ms-view button > span:first-child,
+  html.skin-mp #menuSheet .glass-95 > p,
+  html.skin-mp #menuSheet .ms-view > p {
+    text-transform: uppercase;
+  }
+  /* Tab ngành hàng: markup chỉ cho w500 cho tab ĐANG CHỌN, 2 tab kia w400 -> hoa mà
+     400 là nửa cặp, và skin-mt thì cả 3 tab đều 500 (rule của nó khai weight tường
+     minh). Kéo cả 3 về 500 cho đúng "giống skin-mt"; trạng thái đang chọn vẫn đọc
+     được bằng gạch chân sẵn có, không cần chênh weight. */
+  html.skin-mp #menuSheet .ms-tab { font-weight: 500; }
+  html.skin-mp #menuSheet .ms-panel:has(.glass-95 > p) .ms-view button > span:first-child {
+    text-transform: none;
+  }
+
+  /* ══ MAIKA (`skin-mk`) — 24/08/2026 ═══════════════════════════════════════════
+     Lệnh user: *"tạo thêm 1 skin-mk tên là maika, dùng menu của bộ skin-mt (uppercase
+     menu) và dùng body trang với các heading lớn như bộ skin-mp"*.
+     CÁCH DỰNG — GHÉP, KHÔNG NHÂN BẢN: bộ chọn da gắn CẢ HAI class lên <html>:
+       · `skin-mp` -> nguyên bộ thân trang + heading lớn của MR PORTER (token, thang
+         chữ, cart editorial, checkout…) dùng lại 100%, không sửa một rule nào;
+       · `skin-mk` -> ĐÚNG khối dưới đây, khai lại phần MENU theo số của skin-mt.
+     Nhờ vậy Maika tự thừa hưởng mọi thay đổi sau này của skin-mp, và "diff" của nó gọn
+     đúng một khối. Xem `SKINS`/`applySkin` (đã sửa để add/remove theo từng class).
+     VÌ SAO PHẢI KHAI LẠI CẢ CỠ/DÒNG chứ không chỉ `text-transform`: skin-mp giờ cũng
+     hoa menu rồi (chốt trước đó), nên "menu của skin-mt" chỉ còn khác ở THANG — menu
+     của skin-mt là hệ compact 14/20 · 12/16 · tracking .5px, còn skin-mp là 16/24 ·
+     14/20 · tracking .2px. Lấy đúng bộ số của skin-mt để menu Maika tương phản với
+     thân trang lớn của nó.
+     Đặt NGAY SAU khối menu của skin-mp: 2 bên cùng specificity (1,2,1) nên ai viết sau
+     thắng — đổi chỗ khối này là mất tác dụng.
+     Giữ theo skin-mp có chủ ý: nav ngành hàng của MÀN SEARCH (`.search-tab`) — nó là
+     nội dung trang, mà thân trang Maika là skin-mp. */
+  html.skin-mk #menuSheet .ms-tab {
+    font-size: 14px; line-height: 20px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  html.skin-mk #menuSheet .ms-view button > span:first-child {
+    font-size: 12px; line-height: 16px; font-weight: 400;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  html.skin-mk #menuSheet .glass-95 > p,
+  html.skin-mk #menuSheet .ms-view > p {
+    font-size: 12px; line-height: 16px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--general-foreground);
+  }
+  /* Hàng cấp 2 GIỮ chữ thường — sao y ngoại lệ của skin-mt (chốt 19/08: "trên desktop
+     là viết hoa chữ cái đầu"). Rule này phải bám `.ms-panel:has(...)` để thắng rule
+     hàng cấp 1 ở trên. */
+  html.skin-mk #menuSheet .ms-panel:has(.glass-95 > p) .ms-view button > span:first-child {
+    text-transform: none;
+  }
+  /* Vách giữa các hàng menu: skin-mt dùng V3 `#ececec`, skin-mp để mặc định của file. */
+  html.skin-mk #menuSheet .ms-view > button { border-bottom: 1px solid var(--unofficial-border-1); }
+
   /* Danh sách hàng: mỗi món ngăn nhau bằng một hairline. Dùng `:not(:first-child)`
      chứ không `+`: dải quà `.gift-group` chèn giữa các dòng, mà quà phải DÍNH món
      của nó — kẻ chỉ được rơi vào đầu mỗi món mới. */
@@ -1736,6 +1835,55 @@ window.RESP = (function () {
     border-bottom: 1px solid var(--unofficial-border-1);
   }
 
+  /* ── ĐỢT THI HÀNH AUDIT 24/08/2026 — DỌN NỐT CÁC ĐIỂM LỆCH ────────────────────
+     Lệnh user: *"hãy sửa tất cả các điểm còn lệch vào luôn"*. Nguồn: bản dò
+     `AUDIT-TYPO-SHADCN-2026-08-24.md`; 4 điểm còn treo lấy đúng khuyến nghị mục E.
+     Khối đặt CUỐI phần bộ da (chỉ trước khối `.font-pair`) để thắng rule cũ cùng
+     specificity. KHAI GIỐNG HỆT ở desktop.html. */
+
+  /* §3.1 — GỘP #cfcfcf VÀO V2. `--unofficial-border-3` là tầng viền dùng nhiều nhất
+     (ô tick `.chk`, vòng radio) mà không có trong luật 3 tầng. Remap ở TOKEN nên phủ
+     cả 40 chỗ, không phải sửa từng selector. */
+  html.skin-mt { --unofficial-border-3: var(--general-border); }
+
+  /* §3.1 — `.opt.on` là DẤU ĐANG CHỌN nên lấy V1 đen, không phải #333 (mực nội dung
+     đem đi làm viền). Chốt E-1. */
+  html.skin-mt .opt.on { border-color: var(--general-primary); }
+
+  /* §3.1 — vách checkout đang lấy `--general-secondary` (#f2f2f2) làm viền -> V3
+     (#ececec). skin-mp đã đúng từ trước; đây là port sang bộ da mặc định. */
+  html.skin-mt [data-screen="checkout"] .ck-sec { border-top-color: var(--unofficial-border-1); }
+  html.skin-mt [data-screen="checkout"] .ck-notice { border-bottom-color: var(--unofficial-border-1); }
+
+  /* §3.2 — bo góc về 0: nhãn VISA/MASTER/TIKINOW (`rounded-[3px]`) và pill chỉ báo
+     trang ở PDP (`h-1 rounded-full` 24×4 — pill DÀI, không phải hình tròn thật nên
+     không thuộc ngoại lệ w==h). */
+  html.skin-mt :where(.rounded-\[3px\]) { border-radius: 0; }
+  html.skin-mt .h-1.rounded-full { border-radius: 0; }
+  /* pill chọn trang chính sách (154×28) — cũng là pill dài, không phải chấm tròn.
+     Bắt bằng `.px-3` để không đụng chấm/vòng thật (w==h thì không có padding ngang). */
+  html.skin-mt .h-7.px-3.rounded-full { border-radius: 0; }
+
+  /* §3.2 + §3.3 — 2 nút nổi tròn: `#topFab` vuông + BỎ BÓNG (bóng duy nhất còn lại
+     của mặt tiền, §3.3 đã ghi tên nó), `.quick-add` vuông (chốt E-4: giữ chức năng
+     thêm nhanh, thôi làm vật thể tròn duy nhất trên bộ da vuông — desktop vốn đã ẩn). */
+  html.skin-mt #topFab { border-radius: 0; box-shadow: none; }
+  html.skin-mt .quick-add { border-radius: 0; }
+
+  /* §2.2 — badge -% bỏ nền hồng `#fef2f2`, GIỮ chữ đỏ (việc 5 chốt 20/08, trước chỉ
+     áp trong màn giỏ -> nay toàn app). */
+  html.skin-mt .bg-destructive-subtle { background: transparent; padding: 0; }
+
+  /* §2.1 — "hết hàng" thôi hạ mực dưới sàn `#666` (chốt E-3): chuyển sang GẠCH NGANG
+     + mực phụ, cùng khuôn `.pc-size.is-oos` của desktop. Bỏ luôn mảng nền
+     `rgba(0,0,0,.04)` — mặt thứ ba không có trong §2.2, mà gạch ngang đã đủ nói
+     "không mua được". */
+  html.skin-mt .chip.off {
+    background: transparent;
+    color: var(--general-muted-foreground);
+    text-decoration: line-through;
+  }
+
   /* ── THỬ CẶP FONT = TẮT NHÃN HOA CỦA BỘ DA (24/08/2026, yêu cầu user: *"ở các
      option font không nhất thiết phải theo rule uppercase toàn bộ theo skin mt"*) ──
      Chữ hoa là chữ ký của `skin-mt` (nav ngành hàng · nhãn nhóm menu · tiêu đề mục
@@ -1747,6 +1895,14 @@ window.RESP = (function () {
      skin-mt mặc định (§5 luật: công cụ thử không được sửa mặt tiền).
      Đặt CUỐI <style> để thắng các rule hoa của bộ da ở trên (cùng specificity
      (0,2,1), ai viết sau thắng — bẫy đã dính 3 lần, xem README). */
+  /* ⚠ ĐỘ MẠNH CỦA KHỐI NÀY LÀ CÓ CHỦ Ý — ĐỪNG "dọn" nó (ghi 24/08/2026 sau khi thử
+     và phải hoàn tác): `:is()` lấy specificity của nhánh ĐẬM NHẤT, và trong danh sách
+     có nhánh mang id (`#filterSheet`, `:has(#discountLines)`) nên cả khối đứng ở
+     (1,4,2). Đó chính là cái làm nó đè được MỌI rule nhãn hoa của bộ da — nhiều rule
+     trong số đó cũng bám id (`#menuSheet`, `#filterSheet`). Thử bọc `:where()` cho các
+     nhánh id để "gọn specificity" thì khối tụt về (0,4,2) và lập tức mất tác dụng với
+     nhãn menu/bộ lọc của skin-mt. Muốn một chỗ nào đó GIỮ chữ hoa khi thử font thì
+     dùng rule riêng có `!important` (xem khối skin-mp ngay dưới), đừng hạ khối này. */
   html.font-pair :is(
     .dk-dept, .dk-nav-link, .ms-tab, .search-tab, .pc-brand,
     #filterSheet .facc-trigger > span, #filterSheet .facc > span,
@@ -1756,6 +1912,28 @@ window.RESP = (function () {
     [data-screen="cart"] .cart-row p, [data-screen="cart"] .acc-trigger > span,
     .ms-view > p, .dk-mega-grid > div > p
   ) { text-transform: none; }
+
+  /* ── skin-mp: MENU GIỮ CHỮ HOA KỂ CẢ KHI ĐANG THỬ CẶP FONT (24/08/2026) ────────
+     User: *"sao khi tôi chuyển font mix thì lại mất uppercase nhỉ, ở skin-mp cho
+     uppercase cả menu kể cả khi switch font"*.
+     Vì sao mất: khối `.font-pair` ngay trên trả `text-transform: none` cho danh sách
+     nhãn và nó KHÔNG phân biệt bộ da. `:is()` lấy specificity của đối số ĐẬM NHẤT
+     (`[data-screen="cart"] … .font-medium`) nên cả khối lên (0,4,2), cao hơn rule menu
+     của skin-mp (0,3,1) -> đè mất. Rule dưới bám `#menuSheet` (id) nên thắng chắc.
+     Đo trên trang: ở khổ này font-pair chỉ giết chữ hoa của `.ms-tab` — hàng danh mục
+     cấp 1 và tiêu đề màn con KHÔNG nằm trong danh sách của khối trên nên vẫn hoa. Vì
+     vậy chỉ trả lại đúng `.ms-tab`; thêm selector khác vào đây sẽ vô tình lật cả rule
+     "hàng cấp 2 giữ chữ thường" (specificity gần bằng nhau).
+     VÌ SAO PHẢI `!important` (đã thử 2 đường trước khi chọn): khối font-pair đứng ở
+     (1,4,2) do có nhánh mang id, cao hơn mọi tổ hợp selector hợp lý ở đây — bám thêm
+     `#menuSheet` cũng chỉ tới (1,3,1). Hai đường kia đều tệ hơn: hạ specificity khối
+     font-pair thì skin-mt mất hành vi "thử font = bỏ hoa" (đã thử, phải hoàn tác), còn
+     nhồi selector cho đủ điểm thì thắng bằng THỨ TỰ, vỡ ngay khi ai đó chèn rule mới.
+     Phạm vi `!important` này rất hẹp: đúng một thuộc tính, đúng một trạng thái
+     (`skin-mp` + đang thử font), đúng một phần tử.
+     skin-mt CỐ Ý KHÔNG có rule này — chốt 24/08: bộ da mặc định trả nhãn về chữ thường
+     khi thử font để xem được mặt chữ thường. Đây là chỗ 2 bộ da khác nhau có chủ ý. */
+  html.skin-mp.font-pair #menuSheet .ms-tab { text-transform: uppercase !important; }
 
   /* ── MOCKUP: THI HÀNH (khối giải thích nằm ở "CẶP FONT THỬ" đầu <style>) ──────
      Phải đứng CUỐI: khối cart-scope của bộ da khai `line-height` ở cùng
@@ -9113,8 +9291,11 @@ let currentFont = 'montserrat';
       cần đủ 400 + 500 (STYLE-RULES chỉ dùng 2 nấc này, 300/600/700 bị cấm).
    Mốc thẩm mỹ: đo font THẬT của mytheresa.com (24/08) = "AvenirNextLTPro-Medium"
    cho cả tiêu đề 44px lẫn UI 13-15px, fallback "Futura, Century Gothic,
-   Gill Sans" -> họ đi HỆ GEOMETRIC SANS, KHÔNG serif. 4 cặp dưới đi từ gần
-   hiện trạng (sans+sans) tới xa nhất (didone tạp chí) để so trực tiếp.
+   Gill Sans" -> họ đi HỆ GEOMETRIC SANS, KHÔNG serif.
+   *(Cập nhật 24/08/2026: cặp sans+sans "Montserrat + Inter" đã bị thay bằng
+   "Fraunces + Montserrat" theo lệnh user, nên danh sách nay TOÀN BỘ là heading serif
+   — đi từ gần hiện trạng nhất (giữ Montserrat làm body: Fraunces+Mont, Playfair+Mont)
+   tới xa nhất (didone tạp chí). Không còn cặp nào để so "sans thuần".)*
    Load: chỉ wght@400;500 cho mỗi font mới — đúng 2 nấc dự án dùng, đỡ nặng. */
 const FONT_PAIRS = [
   /* 2 cặp CÓ MONTSERRAT (24/08/2026, user chốt "thử cả 2 cặp A và B") — chọn từ
@@ -9134,12 +9315,21 @@ const FONT_PAIRS = [
      Work Sans 50 · Be Vietnam Pro 53 · Manrope 54 · Playfair 52 · Fraunces 47 ·
      Libre Bodoni 45 · Cormorant 39) và độ cao dấu ệ (Playfair 81 · Manrope 76 ·
      Be Vietnam Pro 77 · Montserrat 73 · phần lớn còn lại 67). */
-  ['mont-inter', 'Montserrat + Inter', 'Montserrat', "'Montserrat', ui-sans-serif, system-ui, sans-serif", 'Inter', "'Inter', ui-sans-serif, system-ui, sans-serif",
-    'geometric + grotesque',
-    /* Inter x-height 55 > Montserrat 53 -> ở cùng px thân chữ Inter đọc TO hơn
-       thang gốc; cân về 0.53 là lấy lại đúng nhịp. Heading vẫn Montserrat nên
-       tracking/line-height giữ số của bộ da. */
-    { adj: 0.53, headLs: '0.5px', headLh: 1.33 }],
+  /* 24/08/2026 — THAY cặp "Montserrat + Inter" bằng "Fraunces + Montserrat" (lệnh
+     user, áp cả 2 bản). Verify trước khi thay, đúng quy trình bắt buộc: tải CSS thật
+     `fonts.googleapis.com/css2?family=Fraunces:wght@400;500` -> có subset
+     **`vietnamese`** (2 khối `unicode-range` chứa U+1EA0), nên dấu 2 tầng ế/ộ/ậ/ữ
+     không rơi sang font fallback. Fraunces cũng đã nằm trong thẻ <link> từ trước
+     (cặp 'modern') nên không phải thêm request nào.
+     `tune`: body là CHÍNH Montserrat -> `adj 0.53` không đổi gì (thân bài y hệt bộ
+     da). Heading Fraunces là serif display, x-height 47 (thấp hơn body 53 một nhịp)
+     nên bỏ tracking dương + nới dòng 1.32 — cùng số đã dùng cho cặp 'modern'.
+     Lưu ý: sau lần thay này danh sách KHÔNG còn cặp sans+sans nào; ghi chú "4 cặp đi
+     từ gần hiện trạng tới xa nhất" ở khối trên đã sửa theo. Id cũ 'mont-inter' còn
+     ghim ở đâu đó sẽ trượt `FONT_PAIRS.find` -> rơi về mặc định, vô hại. */
+  ['fraunces-mont', 'Fraunces + Montserrat', 'Fraunces', "'Fraunces', ui-serif, Georgia, serif", 'Montserrat', "'Montserrat', ui-sans-serif, system-ui, sans-serif",
+    'serif mới, nền Montserrat',
+    { adj: 0.53, headLs: '0', headLh: 1.32 }],
   ['playfair-mont', 'Playfair + Montserrat', 'Playfair Display', "'Playfair Display', ui-serif, Georgia, serif", 'Montserrat', "'Montserrat', ui-sans-serif, system-ui, sans-serif",
     'giữ Montserrat làm nền',
     /* Body là chính Montserrat -> adj 0.53 không đổi gì (đúng ý: thân bài y cũ).
@@ -9181,10 +9371,19 @@ let currentPair = '';
    `font` = phông đi kèm bộ da: đổi da thì RESET phông về mặc định của da đó và xoá
    .font-override, không thì lựa chọn phông cũ còn ghim lại và ra serif trên bảng
    màu gốc (hoặc ngược lại). */
+/* MAIKA (24/08/2026, lệnh user: *"tạo thêm 1 skin-mk tên là maika, dùng menu của bộ
+   skin-mt (uppercase menu) và dùng body trang với các heading lớn như bộ skin-mp"*)
+   dựng bằng CÁCH GHÉP, không nhân bản: ô class của nó mang **2 class** —
+   `skin-mp` (để nguyên bộ thân trang + heading lớn của MR PORTER, ~40 rule dùng lại
+   không sửa gì) + `skin-mk` (lớp phủ chỉ khai lại phần MENU theo skin-mt).
+   Nhờ vậy sau này skin-mp đổi gì thì Maika thừa hưởng luôn, và diff của Maika chỉ đúng
+   một khối menu — xem khối "MAIKA" trong <style>.
+   Đổi lại `applySkin` phải add/remove theo TỪNG class (classList.add("a b") là lỗi). */
 const SKINS = [
   ['default',   'Mặc định · Grey-Gold',  '',         'Bảng màu Figma của dự án',            'montserrat'],
   ['editorial', 'Editorial · MR PORTER', 'skin-mp',  'Trắng–đen, Montserrat, góc vuông',    'montserrat'],
   ['mytheresa', 'Mytheresa · chữ hoa',   'skin-mt',  'Nhãn menu CHỮ HOA, đen thật, đơn sắc', 'montserrat'],
+  ['maika',     'Maika',                 'skin-mp skin-mk', 'Menu CHỮ HOA của Mytheresa + thân trang lớn của MR PORTER', 'montserrat'],
 ];
 let currentSkin = 'mytheresa';   // khớp class skin-mt đặt sẵn trên thẻ <html>
 /* Cùng khuôn applyTheme: gỡ mọi class skin rồi gắn class của skin đích. */
@@ -9193,8 +9392,10 @@ function applySkin(id) {
   if (!s) return null;
   currentSkin = s[0];
   const html = document.documentElement;
-  SKINS.forEach(x => { if (x[2]) html.classList.remove(x[2]); });
-  if (s[2]) html.classList.add(s[2]);
+  /* `.split(' ')` vì Maika mang 2 class (skin-mp + skin-mk) — classList.add/remove
+     KHÔNG nhận chuỗi có khoảng trắng, sẽ ném InvalidCharacterError. */
+  SKINS.forEach(x => { if (x[2]) html.classList.remove(...x[2].split(' ')); });
+  if (s[2]) html.classList.add(...s[2].split(' '));
   /* Trả phông về mặc định của bộ da: xoá cả class .font-override lẫn biến inline
      --font-app (2 thứ mà nút chọn phông đặt lên <html>) để --font-app lại do CSS
      của bộ da cấp. */

@@ -240,7 +240,13 @@ bộ bộ da, và bộ da này nhấn bằng chữ hoa + kẻ mảnh chứ khôn
 phải mặt thứ ba cho nội dung — không dùng cho khối tĩnh, không thêm độ mờ thứ hai.
 Token bàn giao: `--surface-sticky` (xem `shadcn-theme/`).
 
-Mặt tối `#0a0a0a` chỉ dùng cho: nút chính · backdrop (đen 60%, token `--overlay`).
+Mặt tối `#0a0a0a` chỉ dùng cho: nút chính · backdrop (đen 60%, token `--overlay`) ·
+**thanh promo trên đầu trang** *(thêm 24/08/2026, lệnh user "promo bar nằm trên thanh header
+sẽ màu đen": đây là vai thứ 3 và là vai duy nhất mà mặt tối làm NỀN CỦA MỘT DẢI NỘI DUNG.
+Hợp lệ vì nó không thuộc dòng chảy trang — nó là dải thông báo nằm TRÊN header, chữ trắng
+`--general-primary-foreground`. Bản gốc/Figma vốn đã như vậy; bộ da từng đảo nó thành xám
+nhạt chữ đen, nay gỡ phần đảo đó ở CẢ 2 BẢN và cả `skin-mp`. Danh sách vai của mặt tối
+đóng ở 3.)*
 *(Đính chính 20/08 theo số đo thật: badge trên ảnh — `.badge-label` Pre-order/New season —
 là **mặt trắng chữ đen**, không phải mặt tối; bộ Figma đã dựng theo số thật này.)*
 
@@ -491,6 +497,83 @@ NHẤN    chữ hoa → kẻ mảnh → mặt trắng trên xám → mặt đen 
 
 MUỐN NỔI HƠN?  Nhãn → 500 + hoa.  Nội dung → lên 1 bậc CỠ.  Không có lựa chọn thứ ba.
 ```
+
+---
+
+## Phần 7 — ĐÃ THI HÀNH 24/08/2026 (lệnh user: *"sửa tất cả các điểm còn lệch vào luôn"*)
+
+Nguồn: bản dò `AUDIT-TYPO-SHADCN-2026-08-24.md` (11 màn mobile · 10 màn desktop). Sửa ở
+**CẢ 2 FILE**, đo lại sau sửa bằng chính bộ scan đó.
+
+| Trục | Trước | Sau |
+|---|---|---|
+| §1.3 cặp cỡ/dòng | 341 (mobile) · 489 (desktop) | **0 · 0** |
+| §1.2 cỡ ngoài thang | 30 · 67 | **0 · 0** |
+| §2.1 mực ngoài 3 bậc | 4 · 57 | **0 · 0** |
+| §3.1 sắc viền ngoài 3 tầng | 66 · 62 | **0 · 0** |
+| §3.2 bo góc ≠ 0 (không phải tròn thật) | 46 · 55 | **0 · 0** |
+| §3.3 đổ bóng | 1 · 1 (`#topFab`) | **0 · 0** |
+| §4.3-3 hex trong rule bộ da | 12 · 19 | **0 · 0** (còn khối định nghĩa token + `theme-dplus`) |
+| §4.3-4 hai bản khai giống hệt | 6 điểm lệch | **0** |
+
+### 7.1 Cách thi hành §4.2 — khối `:where()` một chỗ, cả app
+
+Thay các rule "chỉ đổi cỡ" bằng **cặp cỡ+dòng**, bọc `:where()` cho specificity `(0,1,1)`:
+thắng utility Tailwind `(0,1,0)` nhưng **nhường mọi rule tường minh của bộ da** `(0,2,1)+`,
+nên các vai khai riêng (`.pc-brand`, `.ms-tab`/`.search-tab`, `.dk-dept`/`.dk-nav-link`,
+tiêu đề panel bộ lọc, các khối scope theo màn) giữ nguyên số mà không cần `:not()`.
+
+| Utility trong markup | Ra | Vai |
+|---|---|---|
+| `text-[9px]` `text-[10px]` | **10 / 14** | T7 |
+| `text-[11px]` `[13px]` `[14px]` `[15px]` `[16px]` | **12 / 18** (mặc định) | T5 |
+| `leading-4` `leading-6` | dòng **16** | T4 (chữ một dòng trong hàng cao cố định) |
+| `leading-5` `leading-relaxed` | dòng **18** | T5 |
+| `leading-3` | dòng **14** | T7 |
+| `text-[18px]` · `leading-7` `leading-[28px]` `leading-[25px]` | **18 / 24** | T2 |
+| `text-[22px]` `[24px]` `[32px]` `[48px]` · `leading-8` `leading-10` `leading-none` `leading-snug` | **24 / 32** | T1 |
+| `.pick-label` (component `pickField`) | dòng **16** | T4 — chữ một dòng `truncate` trong ô cao 40 |
+
+Đã dò toàn file trước khi viết: **mỗi utility dòng chỉ gặp đúng một họ cỡ**, nên khai theo
+utility là đủ, không phải liệt kê từng cặp. 4 rule cặp của riêng màn giỏ (khối 6e) đã gỡ —
+khối toàn app khai đúng các giá trị đó cho mọi màn.
+
+**Hệ quả cần biết:** `leading-5` → 18 nên **giá trên card ra 12/18** (T5) chứ không phải
+12/16 như bảng §1.2 xếp cho "giá". Chỗ nào muốn T4 thì markup phải dùng `leading-4`/`leading-6`.
+Đây là đánh đổi của việc remap theo utility (đúng chốt việc 1+3 hồi 20/08), không phải bỏ luật.
+
+### 7.2 Bốn quyết định mới, ghi danh
+
+1. **`.opt.on` (thẻ đang chọn) = V1 `#0a0a0a` 1px** — trước là `#333` (mực nội dung đem đi
+   làm viền). Nó là *dấu đang chọn*, không phải kết cấu hộp.
+2. **Vòng `.radio` giữ 2px** — ngoại lệ ghi danh của §3.1 ("2px chỉ cho dấu đang chọn"):
+   vòng radio là **hình tròn thật**, hạ 1px thì mảnh hơn ô tick vuông đứng cạnh. Danh sách
+   ngoại lệ 2px nay có 2 mục: dấu nav đang chọn + vòng radio.
+3. **"Hết hàng" = gạch ngang + mực phụ `#666`** (`.chip.off` mobile · `.pc-size.is-oos`
+   desktop) — thay cách hạ mực xuống `#999`/`#a3a3a3` (dưới sàn đọc được của §2.1). Bỏ luôn
+   mảng nền `rgba(0,0,0,.04)` của chip: mặt thứ ba không có trong §2.2.
+4. **`.quick-add` vuông** (mobile; desktop vẫn ẩn) — giữ chức năng thêm nhanh, thôi làm vật
+   thể tròn duy nhất trên bộ da vuông. `#topFab` cũng **vuông + bỏ bóng** (§3.3 đã ghi tên nó;
+   khổ desktop có thêm nhánh `:hover` đổ bóng, đã tắt cả hai).
+
+### 7.3 Các việc Phần 6 nay đã thi hành trên CẢ 2 BẢN
+
+* **việc 1+3** (cặp cỡ+dòng): từ chỗ chỉ áp trong màn giỏ → **toàn app, một khối duy nhất**.
+* **việc 5** (badge `-%` bỏ nền hồng `#fef2f2`, giữ chữ đỏ): toàn app.
+* **§3.1 gộp `#cfcfcf` vào V2**: remap ở token `--unofficial-border-3` nên phủ hết 84 chỗ
+  (ô tick `.chk`, vòng radio) — không sửa từng selector.
+* **AUDIT B2** (khuôn trạng thái đơn = chấm 6px + chữ 12/16 mực chính): **đã port sang
+  desktop** (`STATUS_DOT` + `statusTag()` khai giống hệt index.html), thay pill
+  `bg-warning-subtle` + mực `#8a6100` + bo `9999px`.
+* **AUDIT B3/B4** (badge giỏ 9px, nhãn `VISA`/`MASTER`/`TIKINOW` `rounded-[3px]`): nay
+  **10/14 + bo 0**. Việc thay 2 chỗ này bằng icon thương hiệu vẫn còn nguyên trong backlog —
+  đây chỉ là chỉnh style về thang trong lúc chờ.
+* **nhãn "Bạn có phiếu mua hàng?"** ở cột tóm tắt desktop: nay hoa 500 như mobile (vai 5 §1.5).
+
+### 7.4 Còn lại đúng 3 nhóm, tất cả là HỢP LỆ
+
+`glass-95` (chữ ký bộ da, §2.2) · gạch 2px của tab/nav đang chọn + vòng radio (§3.1 + 7.2-2) ·
+chấm màu hệ thống của trạng thái đơn và chấm phân cách `#666` (hình tròn thật, §3.2).
 
 ---
 
