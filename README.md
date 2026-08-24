@@ -159,7 +159,21 @@ Sửa kèm ở JS: `applySkin` phải add/remove **theo từng class** (`classLi
 - **Bộ chọn da** hiện đủ 4 dòng, tick đúng dòng Maika; bấm qua UI (`mytheresa → maika`) ra đúng `skin-mp skin-mk`. Ghi chú dòng Maika không có bản dịch EN — **giống 3 dòng còn lại** (popover Cài đặt là công cụ dev, §5 STYLE-RULES).
 - **Font mix vẫn giữ chữ hoa cho menu Maika** ✓ — nó thừa hưởng rule `html.skin-mp.font-pair …` (có `!important`) của mục trên.
 - Giữ theo skin-mp có chủ ý: nav ngành hàng của **màn Search** (`.search-tab`) — nó là nội dung trang, mà thân trang Maika là skin-mp.
-### Cục "Ưu đãi khuyến mãi" ở PDP: chốt KHỐI XÁM, áp cho cả 6 bản × CẢ 2 BẢN (24/08/2026)
+### PDP: cụm accordion bỏ KẺ MỞ ĐẦU (24/08/2026, 6 bản × CẢ 2 BẢN)
+
+User: *"ở pdp, cục mô tả sản phẩm sẽ không có border top nhé, hãy bỏ ra ở toàn bộ ver pdp cả mobile và desktop"*.
+
+Gốc của cái kẻ đó: `skin-mt` đổi `border-b` của mỗi hàng accordion thành **KẺ TRÊN** (rule `.acc.border-b` trong khối bộ da), nên hàng đầu — "Mô tả sản phẩm" — tự mang một kẻ nằm **ngay dưới khối xám CTKM** → ngăn hai lần ở cùng một mép.
+
+```css
+html.skin-mt [data-screen^="pdp"] .acc.border-b:first-child { border-top-width: 0; }
+```
+
+- Một rule, `^="pdp"` phủ cả 6 bản, khai giống hệt ở 2 file.
+- `:first-child` trúng **đúng** hàng đầu của cụm tab PDP — đã đo trước khi viết: accordion ở **footer không phải con đầu** của cha nó (có phần tử khác đứng trước) nên không bị ảnh hưởng.
+- Đo sau sửa: **6/6 bản × 2 khổ** → hàng "Mô tả sản phẩm" `top 0px`, hàng 2 và các hàng sau vẫn `top 1px` (vẫn ngăn nhau), accordion footer vẫn `top 1px`. Đối chứng `skin-mp`: hàng đầu vốn `top 0 · bottom 1px` (bộ da đó dùng kẻ dưới) nên **không cần và không bị** đụng.
+
+## Cục "Ưu đãi khuyến mãi" ở PDP: chốt KHỐI XÁM, áp cho cả 6 bản × CẢ 2 BẢN (24/08/2026)
 
 User: *"chốt sẽ dùng cục của pdp số 3, túi đeo vai da Emblème, hãy adapt style cục ưu đãi đó cho toàn bộ ver của pdp"* → tôi hiểu sai thành hàng accordion (PDP3 bản MOBILE dùng accordion), user chỉnh: *"sai rồi, ý tôi là dùng block màu xám này nè, sửa lại bản mobile và áp dụng cho cả bản desktop"*.
 
