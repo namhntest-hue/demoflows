@@ -94,14 +94,16 @@ window.RESP = (function () {
            **Mulish + Lora bỏ 24/08/2026 theo lệnh user** — Lora từng là mặt chữ serif
            của bộ da MR PORTER nhưng bộ da đó đã về Montserrat từ 20/08 nên không còn
            chỗ nào dùng; đã gỡ khỏi cả thẻ link này).
-     Cặp mix heading+body: thêm Playfair Display · Work Sans · Fraunces · Libre Bodoni
-          (Inter/Manrope đã có ở trên; **cặp Cormorant Garamond + Be Vietnam Pro bỏ
-          24/08/2026 theo lệnh user** -> 2 family đó cũng gỡ khỏi link).
+     Cặp mix heading+body: thêm Playfair Display · Fraunces · Libre Bodoni
+          (Inter/Manrope đã có ở trên; 24/08/2026 theo lệnh user đã bỏ **cặp Cormorant
+          Garamond + Be Vietnam Pro** rồi **cặp Playfair + Work Sans** -> 3 family
+          Cormorant Garamond · Be Vietnam Pro · Work Sans cũng gỡ khỏi link. Playfair
+          Display GIỮ vì cặp 'playfair-mont' còn dùng).
      Font của CẶP chỉ load wght@400;500 — đúng 2 nấc STYLE-RULES cho phép, đỡ nặng.
      Mọi font ở đây đã kiểm CÓ subset `vietnamese` bằng cách tải CSS thật từ
      fonts.googleapis.com; Inter kiêm mặt chữ riêng của PDP6 (.font-inter).
      KHAI GIỐNG HỆT ở index.html — sửa 1 file nhớ sửa cả 2. -->
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500&family=Work+Sans:wght@400;500&family=Fraunces:wght@400;500&family=Libre+Bodoni:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500&family=Fraunces:wght@400;500&family=Libre+Bodoni:wght@400;500&display=swap" rel="stylesheet">
 <!-- Tailwind đã biên dịch sẵn (không cần CDN, chạy offline). Build lại: xem README.md -->
 <link rel="stylesheet" href="tokens.css">
 <link rel="stylesheet" href="tailwind.css">
@@ -3615,6 +3617,33 @@ const PDP_PROMOS = {
    với bản mobile, chỉ bỏ wrapper px-4 vì panel 427px đã có padding riêng.
    · promoCardGrouped (pdp2): 1 card gộp, dòng gạch chân, bấm mở info sheet
    · promoCardsSplit  (pdp) : mỗi chương trình 1 card, extend tại chỗ bằng .acc */
+/* ── KHUÔN CHỐT cho cục "Ưu đãi khuyến mãi" của MỌI bản PDP (24/08/2026) ──────────
+   User chốt lấy **KHỐI XÁM** đang có ở PDP3 của CHÍNH khổ này (*"ý tôi là dùng block
+   màu xám này nè, sửa lại bản mobile và áp dụng cho cả bản desktop"*): thẻ `bg-accent-0`
+   bo `rounded-sm` pad 16 gap 4, tiêu đề 14/20 Medium mực chính, mỗi chương trình MỘT
+   DÒNG 14/20 mực nội dung với phần đầu dòng Medium.
+   Trước đây khổ này chia 3 nhánh (pdp = card tách · pdp2 = card gộp · 4 bản còn lại =
+   khối xám); nay CẢ 6 kind dùng khối xám. `promoPairs` quy đổi danh sách key của
+   catalogue PROMOS về dạng cặp để pdp/pdp2 giữ đúng nội dung của mình.
+   Tham số `wrap` để mobile chèn gutter `px-4 pb-2`; ở khổ này cột đã có padding riêng
+   nên gọi với chuỗi rỗng. KHAI GIỐNG HỆT ở index.html. */
+const PROMO_TAB = 'Ưu đãi khuyến mãi';
+const promoBox = (items, wrap = 'px-4 pb-2') => `
+    <div class="${wrap} rise">
+      <div class="flex flex-col gap-1 rounded-sm bg-accent-0 p-4">
+        <p class="text-[14px] font-medium leading-5 text-foreground">${PROMO_TAB}</p>
+        ${items.map(it => Array.isArray(it)
+          ? `<p class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${it[0]}</span>${it[1] || ''}</p>`
+          : `<p class="text-[14px] leading-5 text-secondary-foreground">${it}</p>`).join('')}
+      </div>
+    </div>`;
+const promoPairs = keys => keys.map(k => {
+  const p = PROMOS[k];
+  return [p.title, p.line === p.title ? '' : ` — ${p.line}`];
+});
+
+/* ⚠ 2 hàm layout A/B dưới KHÔNG còn được gọi sau chốt 24/08 (mọi PDP dùng khối xám).
+   Giữ vì chúng ghi số đo Figma của 2 layout đã từng chốt. */
 function promoCardGrouped(keys) {
   return `
     <div class="pb-2 rise">
@@ -3859,16 +3888,12 @@ function dkScreenPDP(kind) {
           <!-- CTA -->
           <div id="pdpCta" class="py-6 rise">${cta}</div>
 
-          <!-- KHUYẾN MÃI — pdp2 gộp 1 card, pdp tách từng card (PDP_PROMOS);
-               4 PDP còn lại giữ khối tóm tắt Frame 28 (bg accent-0, p-16, r-4) -->
-          ${kind === 'pdp2' ? promoCardGrouped(PDP_PROMOS.pdp2)
-          : kind === 'pdp'  ? promoCardsSplit(PDP_PROMOS.pdp)
-          : `
-          <div class="flex flex-col gap-1 rounded-sm bg-accent-0 p-4 rise">
-            <p class="text-[14px] font-medium leading-5 text-foreground">Ưu đãi khuyến mãi</p>
-            ${(D.promos || PDP_PROMOS_STD).map(([strong, rest]) => `
-            <p class="text-[14px] leading-5 text-secondary-foreground"><span class="font-medium">${strong}</span>${rest}</p>`).join('')}
-          </div>`}
+          <!-- KHUYẾN MÃI — KHỐI XÁM cho CẢ 6 kind (chốt 24/08; trước đây pdp/pdp2 dùng
+               2 layout card riêng, nay bỏ). pdp/pdp2 lấy nội dung từ catalogue PROMOS
+               qua promoPairs, 4 bản còn lại dùng promos của chính chúng. -->
+          ${promoBox(kind === 'pdp'  ? promoPairs(PDP_PROMOS.pdp)
+                   : kind === 'pdp2' ? promoPairs(PDP_PROMOS.pdp2)
+                   : (D.promos || PDP_PROMOS_STD), '')}
 
           <!-- Info tabs: accordion 56px, label Light 16, icon +/− -->
           <div class="pt-2 pb-4">
@@ -9696,9 +9721,6 @@ const FONT_PAIRS = [
   ['playfair-mont', 'Playfair + Montserrat', 'Playfair Display', "'Playfair Display', ui-serif, Georgia, serif", 'Montserrat', "'Montserrat', ui-sans-serif, system-ui, sans-serif",
     'giữ Montserrat làm nền',
     { adj: 0.53, headLs: '0', headLh: 1.3 }],
-  ['editorial', 'Editorial · tạp chí thời trang', 'Playfair Display', "'Playfair Display', ui-serif, Georgia, serif", 'Work Sans', "'Work Sans', ui-sans-serif, system-ui, sans-serif",
-    'serif tương phản cao',
-    { adj: 0.53, headLs: '0', headLh: 1.3 }],
   ['modern',    'Đương đại · serif mới',          'Fraunces', "'Fraunces', ui-serif, Georgia, serif", 'Manrope', "'Manrope', ui-sans-serif, system-ui, sans-serif",
     'serif hiện đại',
     { adj: 0.53, headLs: '0', headLh: 1.32 }],
@@ -9756,8 +9778,36 @@ const SKINS = [
   ['default',   'Mặc định · Grey-Gold',  '',         'Bảng màu Figma của dự án',            'montserrat'],
   ['editorial', 'Editorial · MR PORTER', 'skin-mp',  'Trắng–đen, Montserrat, góc vuông',    'montserrat'],
   ['mytheresa', 'Mytheresa · chữ hoa',   'skin-mt',  'Nav CHỮ HOA 12px, đen thật, đơn sắc', 'montserrat'],
-  ['maika',     'Maika',                 'skin-mp skin-mk', 'Menu CHỮ HOA của Mytheresa + thân trang lớn của MR PORTER', 'montserrat'],
+  /* Ô thứ 6 = CẶP font mặc định của bộ da (lệnh user 24/08/2026: *"mặc định ở skin
+     maika sẽ là font mix libre và inter"*). Chỉ Maika có; 3 bộ kia để trống -> vẫn về
+     font đơn của ô thứ 5 như trước. */
+  ['maika',     'Maika',                 'skin-mp skin-mk', 'Menu CHỮ HOA của Mytheresa + thân trang lớn của MR PORTER', 'montserrat', 'couture'],
 ];
+/* Áp một CẶP font (heading + body). Tách khỏi handler của nút để `applySkin` gọi lại
+   được — bộ da Maika khai cặp mặc định là 'couture' (Libre Bodoni + Inter), lệnh user
+   24/08/2026: *"mặc định ở skin maika sẽ là font mix libre và inter"*.
+   Trả về bản ghi cặp để chỗ gọi tự lo toast/đóng popover; null nếu id lạ. */
+function applyFontPair(id) {
+  const p = FONT_PAIRS.find(x => x[0] === id);
+  if (!p) return null;
+  currentPair = p[0];
+  currentFont = '';   // cặp đang bật — không font đơn nào được tick
+  const html = document.documentElement;
+  html.style.setProperty('--font-app', p[5]);   // body
+  html.style.setProperty('--font-head', p[3]);  // heading
+  /* MOCKUP best practice của cặp (chưa chốt): cân x-height + tracking/dòng heading.
+     Thiếu `tune` thì rơi về default trong CSS. */
+  const t = p[7] || {};
+  html.style.setProperty('--pair-adj', t.adj ?? 0.53);
+  html.style.setProperty('--pair-head-ls', t.headLs ?? '0.5px');
+  html.style.setProperty('--pair-head-lh', t.headLh ?? 1.33);
+  html.classList.add('font-override', 'font-pair');
+  document.querySelectorAll('#settingsPanel [data-font] .fo-tick').forEach(x => x.classList.add('opacity-0'));
+  document.querySelectorAll('#settingsPanel [data-font-pair]').forEach(x =>
+    x.querySelector('.fp-tick').classList.toggle('opacity-0', x.dataset.fontPair !== p[0]));
+  return p;
+}
+
 let currentSkin = 'mytheresa';   // khớp class skin-mt đặt sẵn trên thẻ <html>
 /* Cùng khuôn applyTheme: gỡ mọi class skin rồi gắn class của skin đích. */
 function applySkin(id) {
@@ -9785,6 +9835,9 @@ function applySkin(id) {
     x.querySelector('.fo-tick').classList.toggle('opacity-0', x.dataset.font !== currentFont));
   document.querySelectorAll('#settingsPanel [data-skin]').forEach(x =>
     x.querySelector('.sk-tick').classList.toggle('opacity-0', x.dataset.skin !== s[0]));
+  /* Bộ da có CẶP FONT MẶC ĐỊNH (ô thứ 6) thì áp luôn sau khi đã reset ở trên — phải
+     đứng CUỐI vì `applyFontPair` ghi đè currentFont/tick mà khối reset vừa đặt. */
+  if (s[5]) applyFontPair(s[5]);
   return s;
 }
 
@@ -9942,23 +9995,8 @@ document.body.insertAdjacentHTML('beforeend', `
 
   panel.querySelectorAll('[data-font-pair]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const p = FONT_PAIRS.find(x => x[0] === btn.dataset.fontPair);
+      const p = applyFontPair(btn.dataset.fontPair);
       if (!p) return;
-      currentPair = p[0];
-      currentFont = '';   // cặp đang bật — không font đơn nào được tick
-      const html = document.documentElement;
-      html.style.setProperty('--font-app', p[5]);   // body
-      html.style.setProperty('--font-head', p[3]);  // heading
-      /* MOCKUP best practice của cặp (chưa chốt): cân x-height + tracking/dòng
-         heading. Thiếu `tune` thì rơi về default trong CSS. */
-      const t = p[7] || {};
-      html.style.setProperty('--pair-adj', t.adj ?? 0.53);
-      html.style.setProperty('--pair-head-ls', t.headLs ?? '0.5px');
-      html.style.setProperty('--pair-head-lh', t.headLh ?? 1.33);
-      html.classList.add('font-override', 'font-pair');
-      panel.querySelectorAll('[data-font] .fo-tick').forEach(t => t.classList.add('opacity-0'));
-      panel.querySelectorAll('[data-font-pair]').forEach(x =>
-        x.querySelector('.fp-tick').classList.toggle('opacity-0', x.dataset.fontPair !== p[0]));
       closeP();
       toast('Cặp font: ' + p[1]);
     });

@@ -159,6 +159,40 @@ Sửa kèm ở JS: `applySkin` phải add/remove **theo từng class** (`classLi
 - **Bộ chọn da** hiện đủ 4 dòng, tick đúng dòng Maika; bấm qua UI (`mytheresa → maika`) ra đúng `skin-mp skin-mk`. Ghi chú dòng Maika không có bản dịch EN — **giống 3 dòng còn lại** (popover Cài đặt là công cụ dev, §5 STYLE-RULES).
 - **Font mix vẫn giữ chữ hoa cho menu Maika** ✓ — nó thừa hưởng rule `html.skin-mp.font-pair …` (có `!important`) của mục trên.
 - Giữ theo skin-mp có chủ ý: nav ngành hàng của **màn Search** (`.search-tab`) — nó là nội dung trang, mà thân trang Maika là skin-mp.
+### Cục "Ưu đãi khuyến mãi" ở PDP: chốt KHỐI XÁM, áp cho cả 6 bản × CẢ 2 BẢN (24/08/2026)
+
+User: *"chốt sẽ dùng cục của pdp số 3, túi đeo vai da Emblème, hãy adapt style cục ưu đãi đó cho toàn bộ ver của pdp"* → tôi hiểu sai thành hàng accordion (PDP3 bản MOBILE dùng accordion), user chỉnh: *"sai rồi, ý tôi là dùng block màu xám này nè, sửa lại bản mobile và áp dụng cho cả bản desktop"*.
+
+**Khuôn chốt** = **khối xám** đang có ở PDP3 **bản DESKTOP**: thẻ `bg-accent-0` bo `rounded-sm` pad 16 gap 4 · tiêu đề "Ưu đãi khuyến mãi" 14/20 Medium mực chính · **mỗi chương trình MỘT DÒNG** 14/20 mực nội dung, phần đầu dòng Medium. Không bullet, không accordion, không bấm mở chi tiết. Vị trí: giữa cụm CTA và cụm accordion.
+
+Trước khi sửa có **6 kiểu** rải trên 2 bản:
+
+| | Mobile trước | Desktop trước | Sau (cả 2 bản) |
+|---|---|---|---|
+| PDP v1 | `promoCardsSplit` — mỗi chương trình 1 card, bấm mở chi tiết | `promoCardsSplit` | **khối xám** |
+| PDP2 | `promoCardGrouped` — 1 card gộp, dòng gạch chân → bottom sheet | `promoCardGrouped` | ↑ |
+| PDP3 | hàng accordion "Ưu đãi khuyến mãi" mở sẵn | **khối xám (khuôn chốt)** | ↑ |
+| PDP4 | hộp `bg-accent-0` + bullet 14/20 | khối xám | ↑ |
+| PDP5 | hộp `bg-secondary` p-3 + bullet | khối xám | ↑ |
+| PDP6 | hộp `bg-secondary` p-2 + bullet 12/16 | khối xám | ↑ |
+
+- **Một helper `promoBox(items, wrap)`** khai giống hệt ở 2 file, nhận đúng 2 dạng dữ liệu đang có sẵn (cặp `['Tên', ' phần còn lại']` · câu đơn của pdp6) nên **mỗi PDP giữ nguyên nội dung, chỉ đổi vỏ**. `promoPairs(keys)` quy đổi danh sách key catalogue `PROMOS` (pdp, pdp2) sang dạng cặp: `title` làm phần đậm, `line` làm mô tả (bỏ khi trùng). Tham số `wrap` để mobile chèn gutter `px-4 pb-2`, desktop gọi rỗng vì cột đã có padding.
+- Mobile: cụm accordion trả về nguyên trạng — hàng đầu lại là "Mô tả sản phẩm", không hàng nào mở sẵn; 3 chỗ `<p>`→`<div>` của lần làm sai cũng revert.
+- Desktop: bỏ hẳn thế 3 nhánh trong `dkScreenPDP` (pdp card tách · pdp2 card gộp · 4 bản còn lại khối xám) → 1 lời gọi `promoBox` cho cả 6 kind.
+- 2 hàm `promoCardsSplit` / `promoCardGrouped` nay **không còn được gọi ở cả 2 file** — giữ kèm cảnh báo vì chúng ghi số đo Figma của 2 layout từng chốt.
+- **Đo sau sửa, 6 bản × 2 khổ**: nền `#f7f7f7` (accent-0) · pad 16 · gap 4 · tiêu đề `12/18 · 400 · #0a0a0a` · dòng `12/18 · 400 · #333` · rộng 343 (mobile) / 427 (desktop) · **0 card layout cũ còn lại** (`[data-promo]` = 0). Số dòng đúng theo từng bản: pdp 4 · pdp2 3 · pdp3–6 2. Cỡ ra 12/18 chứ không 14/20 vì skin-mt remap 14→12 — giống mọi chữ khác trong bộ da.
+- **Mất so với trước**: pdp/pdp2 không còn xem được chi tiết từng chương trình (điều kiện/thời gian/lưu ý trong `PROMOS.rows`). Đó là hệ quả của khuôn chốt (1 dòng/chương trình) — nói nếu muốn mở rộng.
+
+## Bỏ cặp Playfair + Work Sans · Maika mặc định là cặp Libre Bodoni + Inter (cả 2 bản)
+
+User: *"bỏ font worksan mix playfair luôn nhé, và mặc định ở skin maika sẽ là font mix libre và inter nhé"*.
+
+- **Bỏ cặp `editorial`** (Playfair Display + Work Sans). `Work+Sans` gỡ luôn khỏi thẻ `<link>`; **Playfair Display GIỮ** vì cặp `playfair-mont` còn dùng. Còn **4 cặp**: Fraunces+Mont · Playfair+Mont · Đương đại (Fraunces+Manrope) · Couture (Libre Bodoni+Inter). Link còn **6 family**.
+- **Bộ da có cặp font mặc định** — thêm **ô thứ 6** vào bản ghi `SKINS`: Maika = `'couture'`. 3 bộ da kia để trống → vẫn về font đơn ở ô thứ 5 như trước.
+- Để `applySkin` dùng lại được đúng logic của nút chọn cặp, **tách `applyFontPair(id)` ra module-level** (trước đây nằm trong click handler): nó set `--font-app`/`--font-head` + 3 biến `tune`, thêm class `font-override font-pair`, cập nhật tick. Handler giờ chỉ gọi hàm rồi `closeP()` + toast. `applySkin` gọi hàm này **ở cuối** — phải sau khối reset, vì reset vừa đặt `currentFont`/tick theo font đơn.
+- Đo (bấm chọn Maika qua UI, cả 2 bản): `--font-head` = **Libre Bodoni** · `--font-app` = **Inter** · tune `adj .53 · ls −0.2px · lh 1.25`; heading ra **Libre Bodoni**, body/brand/nav ra **Inter**; tick nằm ở cặp `couture`, không font đơn nào tick.
+- Đổi sang bộ da khác vẫn reset đúng: bấm Mytheresa → `--font-head` bị xoá, `currentPair` rỗng, `currentFont = montserrat`, heading + body về Montserrat.
+
 ### ROLLBACK + dọn font (24/08/2026, cả 2 bản)
 
 User: *"sửa lại không dùng font heading cho brand name ở listing nữa nhé (coi như rollback lại như ver trước đó); đồng thời bỏ bộ font Cormorant Garamond + Be Vietnam Pro, font Mulish và Lora"*.
