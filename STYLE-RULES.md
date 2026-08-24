@@ -157,12 +157,13 @@ Quy ước toàn dự án là **không dùng UPPERCASE**. `skin-mt` là ngoại 
    và **hàng "Tổng cộng"** (nhãn hàng tổng + con số — số không có chữ cái nên hoa vô hại)
    *(thêm 20/08/2026 khi chốt việc 8A; mở rộng "Tổng cộng" tối 20/08 — C4a: user muốn
    500, luật buộc trọn cặp → thành nhãn thay vì đẻ ngoại lệ thứ hai)*
-6. Tên thương hiệu — `.pc-brand`: card + hàng gợi ý **T6 12/16**, PDP + quick-add **T3 14/20**,
-   **hàng trong giỏ** (`.cart-row p:has(+ .del)`, T6 — user bổ sung 20/08 "brand trong cart
-   chưa đồng bộ với bên ngoài", rule đã vào code đúng cặp 500+hoa+16)
-   *(chốt 20/08/2026, AUDIT C1: user cần brand đậm hơn tên sản phẩm → thay chốt
-   "500 chữ thường" 18/08 bằng bậc nhãn có sẵn trong thang — đủ cả size lẫn weight,
-   không phải đẻ ngoại lệ)*
+6. ~~Tên thương hiệu — `.pc-brand`~~ **ĐÃ RÚT KHỎI DANH SÁCH 24/08/2026** (user: *"tên brand
+   không cần uppercase toàn bộ"*, đảo chốt C1 20/08). Brand nay là **họ nội dung: T3 14/20 ·
+   400 · chữ thường · mực chính**, ở cả 3 vị trí (card + hàng gợi ý, PDP + quick-add, hàng
+   trong giỏ). Bỏ hoa → bỏ luôn 500 theo §1.1; yêu cầu "brand nổi hơn tên sản phẩm" (còn hiệu
+   lực từ 18/08) chuyển sang đúng đòn bẩy của họ nội dung: **lên 1 bậc cỡ** (brand 14 vs tên
+   sp 12). Đo trước khi sửa: brand chỉ hơn tên sp 34/255 về mực nên mực một mình không gánh
+   được phân cấp — cùng kết luận với việc 8.
 
 **Không bao giờ hoa:** tên sản phẩm · giá · chữ trên nút · nhãn form ·
 thông báo lỗi · nội dung hàng trong danh sách (kể cả hàng cấp 2 của drawer) · đoạn văn.
@@ -170,7 +171,13 @@ thông báo lỗi · nội dung hàng trong danh sách (kể cả hàng cấp 2 
 **Luôn viết hoa bằng `text-transform`, không gõ hoa vào chuỗi** — chuỗi gốc là key i18n,
 gõ hoa vào là mất bản dịch.
 
-Muốn thêm vai thứ 7 vào danh sách này thì phải sửa file này trước, sửa CSS/Figma sau.
+Muốn thêm vai mới vào danh sách này thì phải sửa file này trước, sửa CSS/Figma sau.
+
+> **Miễn trừ khi đang THỬ CẶP FONT (24/08/2026, yêu cầu user):** class `.font-pair` (bật khi
+> chọn một cặp heading+body trong popover Cài đặt) **tắt toàn bộ chữ hoa** của các vai trên.
+> Lý do: uppercase che phần chữ thường (x-height, đuôi g/y, bụng a/e) — đúng chỗ để nhận ra
+> một mặt chữ serif, nên ép hoa làm hỏng việc thử. Bỏ chọn cặp là các vai hoa trở lại nguyên
+> trạng; đây là hành vi của CÔNG CỤ THỬ (§5), không phải sửa mặt tiền bộ da.
 
 ### 1.6 Mặt chữ
 

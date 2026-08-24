@@ -1,0 +1,131 @@
+<meta charset="utf-8">
+<title>probe</title>
+<pre id="out" style="font:11px monospace;white-space:pre-wrap">…</pre>
+<script>
+const ALL = [
+ ["Montserrat",1],
+ ["Playfair Display",1],["Cormorant Garamond",1],["EB Garamond",1],["Lora",1],["Newsreader",1],
+ ["Fraunces",1],["Spectral",1],["Crimson Pro",1],["Libre Bodoni",1],["Petrona",1],["Literata",1],
+ ["Source Serif 4",1],["Noto Serif Display",1],["Vollkorn",1],["Faustina",1],["Bitter",1],
+ ["Old Standard TT",0],["Yeseva One",0],["Prata",0],
+ ["Inter",1],["Mona Sans",1],["Manrope",1],["Mulish",1],["Work Sans",1],["Public Sans",1],
+ ["Be Vietnam Pro",1],["Archivo",1],["Geist",1],["Epilogue",1],["Plus Jakarta Sans",1],
+ ["Lexend",1],["Raleway",1],["Nunito Sans",1],["Chivo",1],["Familjen Grotesk",1],
+ ["Hanken Grotesk",1],["Wix Madefor Text",1],["Bricolage Grotesque",1],["Josefin Sans",1]
+];
+const B = +(new URLSearchParams(location.search).get("b")||0);
+const FAM = ALL.slice(B*8,B*8+8);
+const C={e_hat_acute:"ế",u_horn_tilde:"ữ",a_breve_grave:"ằ",o_hat_dot:"ộ",e_hat_dot:"ệ",
+ a_hat_dot:"ậ",A_hat_acute:"Ấ",E_hat_acute:"Ế",O_horn_dot:"Ợ",a_dot:"ạ",i_dot:"ị",D_bar:"Đ"};
+const VNP="ếẤộằỮ";
+const LIST2="Giày cao gót Barocco Silk 105mm";
+const LIST="Đầm lụa in họa tiết Barocco";
+const LABEL="NGÀNH HÀNG NỮ";
+const PRICE="12.450.000 ₫";
+const PARA="Sản phẩm được chế tác từ lụa in họa tiết Barocco, may thủ công tại Ý, giao trong 3-5 ngày.";
+FAM.forEach(([f,w])=>{const l=document.createElement("link");l.rel="stylesheet";
+ l.href="https://fonts.googleapis.com/css2?family="+f.replace(/ /g,"+")+(w?":wght@400;500":"")+"&display=block";
+ document.head.appendChild(l);});
+const cv=document.createElement("canvas");cv.width=1600;cv.height=500;
+const cx=cv.getContext("2d",{willReadFrequently:true});
+function m(fam,wt,size,txt){cx.font=wt+" "+size+"px '"+fam+"'";const t=cx.measureText(txt);
+ return {w:t.width,a:t.actualBoundingBoxAscent,d:t.actualBoundingBoxDescent};}
+function fbw(size,txt){cx.font="400 "+size+"px '__nope__'";return cx.measureText(txt).width;}
+function runsRow(fam,wt,ch,rowFrac){cx.clearRect(0,0,cv.width,cv.height);cx.fillStyle="#000";
+ cx.textBaseline="alphabetic";cx.font=wt+" 200px '"+fam+"'";cx.fillText(ch,20,380);
+ const mm=cx.measureText(ch);const top=380-mm.actualBoundingBoxAscent,bot=380+mm.actualBoundingBoxDescent;
+ const y=Math.max(0,Math.min(cv.height-1,Math.round(top+(bot-top)*rowFrac)));
+ const d=cx.getImageData(0,y,cv.width,1).data;const r=[];let n=0;
+ for(let x=0;x<cv.width;x++){if(d[x*4+3]>110)n++;else if(n){r.push(n);n=0;}}if(n)r.push(n);return r;}
+function runsCol(fam,wt,ch,colFrac){cx.clearRect(0,0,cv.width,cv.height);cx.fillStyle="#000";
+ cx.textBaseline="alphabetic";cx.font=wt+" 200px '"+fam+"'";cx.fillText(ch,20,380);
+ const mm=cx.measureText(ch);const x=Math.round(20+mm.width*colFrac);
+ const d=cx.getImageData(x,0,1,cv.height).data;const r=[];let n=0;
+ for(let y=0;y<cv.height;y++){if(d[y*4+3]>110)n++;else if(n){r.push(n);n=0;}}if(n)r.push(n);return r;}
+function inkAt(fam,wt,px,txt){cx.clearRect(0,0,cv.width,cv.height);cx.fillStyle="#000";
+ cx.textBaseline="alphabetic";cx.font=wt+" "+px+"px '"+fam+"'";cx.fillText(txt,10,60);
+ const w=Math.ceil(cx.measureText(txt).width)+4;
+ const d=cx.getImageData(8,Math.round(60-px*1.4),w,Math.round(px*2)).data;let s=0;
+ for(let i=3;i<d.length;i+=4)s+=d[i];return s/255;}
+function digitWidths(fam,tab){const el=document.createElement("span");
+ el.style.cssText="position:absolute;left:-9999px;font:400 100px '"+fam+"';white-space:pre;"+(tab?"font-variant-numeric:tabular-nums;":"");
+ document.body.appendChild(el);const ws=[];
+ for(let i=0;i<10;i++){el.textContent=String(i).repeat(4);ws.push(el.getBoundingClientRect().width/4);}
+ el.remove();return ws;}
+function normalLH(fam){const el=document.createElement("div");
+ el.style.cssText="position:absolute;left:-9999px;width:400px;font:400 100px '"+fam+"';line-height:normal";
+ el.textContent="Hxg";document.body.appendChild(el);const h=el.getBoundingClientRect().height;el.remove();return h/100;}
+function lines(fam,px,txt,boxW,lh){const el=document.createElement("div");
+ el.style.cssText="position:absolute;left:-9999px;width:"+boxW+"px;font:400 "+px+"px '"+fam+"';line-height:"+lh+"px;letter-spacing:0.5px;";
+ el.textContent=txt;document.body.appendChild(el);
+ const n=Math.round(el.getBoundingClientRect().height/lh);el.remove();return n;}
+const R=v=>Math.round(v*1000)/1000;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function ensure(fam){
+  for(let k=0;k<8;k++){
+    try{await document.fonts.load("400 100px '"+fam+"'",VNP);
+        await document.fonts.load("500 100px '"+fam+"'",VNP);
+        await document.fonts.load("400 100px '"+fam+"'","Hxglon0123456789");
+        await document.fonts.load("500 100px '"+fam+"'","Hxglon0123456789");
+        await document.fonts.load("400 100px '"+fam+"'","₫");}catch(e){}
+    const okChk=document.fonts.check("400 100px '"+fam+"'",VNP);
+    const w=m(fam,400,100,VNP).w, wf=fbw(100,VNP);
+    if(okChk && Math.abs(w-wf)>0.5) return {ok:true,tries:k+1};
+    await sleep(400);
+  }
+  return {ok:false,tries:8};
+}
+(async()=>{
+  const res={};
+  for(const [fam,w5] of FAM){
+    const e=await ensure(fam);
+    const o={vn_ok:e.ok,tries:e.tries};
+    const H=m(fam,400,100,"H"),x=m(fam,400,100,"x"),n=m(fam,400,100,"n"),oo=m(fam,400,100,"o");
+    o.cap=R(H.a);o.xh=R(x.a);o.xh_cap=R(x.a/H.a);
+    for(const k in C){const t=m(fam,400,100,C[k]);o["asc_"+k]=R(t.a);o["desc_"+k]=R(t.d);}
+    o.desc_g=R(m(fam,400,100,"g").d);o.asc_l=R(m(fam,400,100,"l").a);
+    o.headroom_over_cap=R(o.asc_e_hat_acute-o.cap);
+    o.headroom_over_asc=R(o.asc_e_hat_acute-o.asc_l);
+    o.mark_zone_lc=R(o.asc_e_hat_acute-o.xh);
+    o.asc_uc_max=R(Math.max(o.asc_A_hat_acute,o.asc_E_hat_acute,o.asc_O_horn_dot));
+    o.stack_lc=R(Math.max(o.asc_e_hat_acute,o.asc_a_breve_grave,o.asc_u_horn_tilde)+
+                 Math.max(o.desc_a_hat_dot,o.desc_o_hat_dot,o.desc_e_hat_dot));
+    o.stack_uc=R(o.asc_uc_max+o.desc_O_horn_dot);
+    o.clr_12_16=R(16-o.stack_lc*0.12);o.clr_12_18=R(18-o.stack_lc*0.12);
+    o.clr_14_20=R(20-o.stack_lc*0.14);o.clr_uc_12_16=R(16-o.stack_uc*0.12);
+    o.fits_own_lh=R(o.normalLH_ink=normalLH(fam)*100-o.stack_uc);
+    o.normalLH=R(normalLH(fam));
+    o.w_list_12=R(m(fam,400,12,LIST).w);o.w_list2_12=R(m(fam,400,12,LIST2).w);
+    o.w_label_12=R(m(fam,500,12,LABEL).w);o.w_price_12=R(m(fam,400,12,PRICE).w);
+    o.w_para_12=R(m(fam,400,12,PARA).w);
+    o.w_lc_alpha=R(m(fam,400,100,"abcdefghijklmnopqrstuvwxyz").w/26);
+    o.w_n=R(n.w);o.w_o=R(oo.w);o.w_n_per_xh=R(n.w/x.a);
+    o.lines_card_171=lines(fam,12,LIST,171,18);o.lines_card2_171=lines(fam,12,LIST2,171,18);
+    o.lines_para_343=lines(fam,12,PARA,343,18);
+    const d0=digitWidths(fam,false),d1=digitWidths(fam,true);
+    o.dig_spread_def=R(Math.max(...d0)-Math.min(...d0));o.dig_spread_tnum=R(Math.max(...d1)-Math.min(...d1));
+    o.dig_1_vs_0=R(d0[1]/d0[0]);o.dig_native_tabular=o.dig_spread_def<0.6;
+    o.has_tnum=(o.dig_spread_def>0.6&&o.dig_spread_tnum<0.6)||Math.abs(d0[1]-d1[1])>0.6;
+    o.dig_w_12=R(d0[0]*0.12);
+    o.dong_ok=document.fonts.check("400 100px '"+fam+"'","₫") && Math.abs(m(fam,400,100,"₫").w-fbw(100,"₫"))>0.5;
+    const s4=runsRow(fam,400,"l",0.5),s5=runsRow(fam,500,"l",0.5);
+    o.stem400=R(s4.length?Math.max(...s4)/2:0);o.stem500=R(s5.length?Math.max(...s5)/2:0);
+    o.stem_delta_pct=o.stem400?R((o.stem500-o.stem400)/o.stem400*100):0;
+    o.stem_delta_at12=R((o.stem500-o.stem400)*0.12);
+    o.stem400_at12=R(o.stem400*0.12);
+    o.ink12_400=R(inkAt(fam,400,12,LABEL));o.ink12_500=R(inkAt(fam,500,12,LABEL));
+    o.ink12_delta_pct=R((o.ink12_500-o.ink12_400)/o.ink12_400*100);
+    o.ink12lc_400=R(inkAt(fam,400,12,LIST));o.ink12lc_500=R(inkAt(fam,500,12,LIST));
+    o.ink12lc_delta_pct=R((o.ink12lc_500-o.ink12lc_400)/o.ink12lc_400*100);
+    const rr=runsRow(fam,400,"o",0.5).filter(v=>v>1),ccx=runsCol(fam,400,"o",0.5).filter(v=>v>1);
+    o.thick=R(rr.length?Math.min(...rr)/2:0);o.thin=R(ccx.length?Math.min(...ccx)/2:0);
+    o.contrast=o.thin?R(o.thick/o.thin):0;o.thin_at_12px=R(o.thin*0.12);
+    const acc=runsRow(fam,400,C.e_hat_acute,0.05);
+    o.accent_ink_at_12=R((acc.length?Math.max(...acc)/2:0)*0.12);
+    o.mark_runs=runsCol(fam,400,C.e_hat_acute,0.5).join("/");
+    res[fam]=o;
+  }
+  window.__R=res;document.title="done";
+  document.getElementById("out").textContent=JSON.stringify(res);
+})();
+</script>

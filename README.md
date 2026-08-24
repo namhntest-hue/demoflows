@@ -45,7 +45,50 @@ Ngoài luồng mua hàng còn 3 trang tĩnh vào từ footer: `privacy` · `term
 - Menu mobile (`MENU_DATA`): mỗi tab Nam/Nữ/Làm đẹp mở đầu bằng **"Sản phẩm mới"** (bổ sung 10/08/2026 theo yêu cầu — vị trí "New In" của Farfetch, Figma Menu `3358:54912` chưa có dòng này). Bấm vào mở **submenu theo menu THẬT của shop.dafc.com.vn nhưng BỎ tầng giới tính** (tab đã là giới tính rồi): nhóm "Bộ sưu tập mới" (`MENU_NEW_COLLECTIONS` — MCM AW26 / Stefano Ricci / D&G Maiolica 2026, data thật 10/08/2026) + nhóm "Danh mục" theo giới tính đang chọn (Nữ thêm Trang sức, đúng site thật) + Quà tặng. Submenu hỗ trợ item dạng `{header}` — tiêu đề nhóm 12px muted, không bấm được. Site thật không có mục làm đẹp trong Sản phẩm mới → tab Làm đẹp giữ `sub=null`, bấm là sang thẳng PLP.
 - **Desktop đã chuẩn hoá theo (10/08/2026)**: `MENU_DATA` + `MENU_NEW_COLLECTIONS` copy y hệt mobile; subheader thêm mục **"Sản phẩm mới" đứng đầu** (`DK_NAV_CATS` → `{newIn:true}`, Header component Figma `2171:13006` chưa có mục này). Mega panel dựng 3 cột: **Bộ sưu tập mới · Nam · Nữ** — desktop **GIỮ tầng giới tính** (khác mobile) vì subheader không gắn giới tính và mọi mục khác cũng dựng 2 cột Nam/Nữ; đúng luôn với menu thật của DAFC. Helper `splitByHeader()` cắt mảng `items` (khai 1 cột kiểu mobile, có `{header}` xen giữa) thành nhóm để đổ ra cột.
 - i18n VI/EN thật: từ điển 2 chiều + regex cho chuỗi có số, áp dụng qua `applyLang()`, gọi lại mỗi khi render màn mới.
-- Settings FAB (góc phải dưới): đổi ngôn ngữ + đổi font. Bộ font thử (21/08/2026, 3 nhịp yêu cầu user — thay Inter/Jakarta bằng 4 font mới → Inter trở lại thế chỗ Quicksand → thêm Josefin Sans + Jost): **Montserrat · Mona Sans · Inter · Mulish · Manrope · Josefin Sans · Jost · Lora** — Lora là mặt chữ bộ da Editorial·MR PORTER, Inter kiêm mặt chữ riêng của PDP6 (`.font-inter`); Jakarta + Quicksand bỏ hẳn khỏi link Google Fonts.
+- Settings FAB (góc phải dưới): đổi ngôn ngữ + đổi font. **Font đơn:** Montserrat · Mona Sans · Inter · Mulish · Manrope · Lora (Lora = mặt chữ bộ da Editorial·MR PORTER; Inter kiêm mặt chữ riêng của PDP6 `.font-inter`). Đã bỏ khỏi panel qua các nhịp: Plus Jakarta Sans · Quicksand · **Jost** · **Josefin Sans** (24/08/2026). **Cặp mix heading+body:** xem mục "Cặp font" bên dưới.
+
+## Cặp font thử: heading 1 font + body 1 font (24/08/2026, CẢ 2 BẢN)
+
+Panel Cài đặt có thêm mục **"Cặp font · heading + body"** — 4 cặp bấm là đổi trực tiếp trên trang:
+
+| Cặp | Heading | Body | Hướng |
+|---|---|---|---|
+| Montserrat + Inter | Montserrat | Inter | geometric + grotesque |
+| Playfair + Montserrat | Playfair Display | Montserrat | giữ Montserrat làm nền |
+| Editorial · tạp chí thời trang | Playfair Display | Work Sans | serif tương phản cao |
+| Thanh lịch · maison cổ điển | Cormorant Garamond | Be Vietnam Pro | garamond mảnh |
+| Đương đại · serif mới | Fraunces | Manrope | serif hiện đại |
+| Couture · didone thuần | Libre Bodoni | Inter | didone Vogue-esque |
+
+**Cơ chế** (`FONT_PAIRS` + class `.font-pair`): chọn cặp thì body đi đường `--font-app` sẵn có, heading đi `--font-head` áp cho `h1-h3` + các cỡ display 18/24/32/48. Chọn font đơn hoặc đổi bộ da sẽ tự tắt chế độ cặp. Cặp không vào RESP hash (công cụ thử, chuyển bản là về mặc định).
+
+**2 dữ liệu ĐO CỨNG dẫn tới 4 cặp này** (không lấy từ blog):
+1. **Vietnamese subset** — tải CSS thật từ `fonts.googleapis.com` cho ~80 font, giữ font có subset `vietnamese` (unicode-range U+1EA0-1EF9). Loại ở bước này: **Jost** · DM Sans · DM Serif Display · Instrument Serif/Sans · Bodoni Moda · Libre Baskerville · Marcellus · Cinzel · Italiana · Tenor Sans · Gilda Display · Antic Didone · Forum · Bellefair · Cardo · Karla · Figtree · Outfit · Sora · Syne · Urbanist · Rubik — **nhiều cái trong đó là font "luxury" hay được khuyên trên blog nước ngoài nhưng không dùng được cho tiếng Việt**.
+2. **Weights thật** — gọi API từng nấc 300→700. Loại Prata (chỉ có 400) vì dự án cần đủ 400 + 500.
+
+**Mốc thẩm mỹ** — đo font thật của `mytheresa.com` (24/08/2026): `AvenirNextLTPro-Medium` cho cả tiêu đề 44px lẫn UI 13-15px, fallback `Futura, Century Gothic, Gill Sans` → họ đi **hệ geometric sans, KHÔNG serif**. 4 cặp trên là 4 hướng serif khác nhau để so với hiện trạng sans thuần. (net-a-porter + ssense chặn bot, không đo được.)
+
+**Verify sau khi lắp**: 6 face mới tải thật (`document.fonts.check` = true), canvas-probe chuỗi dấu 2 tầng `ệỗữặẩ` cho thấy cả 6 render bằng chính font đó (không rơi fallback), 4 cặp đổi đúng 2 tầng ở cả mobile + desktop, console sạch.
+
+**2 cặp CÓ MONTSERRAT (24/08/2026, user hỏi "có font nào mix được với Montserrat")** — chọn bằng số đo thật, chuẩn hoá 100px trên chuỗi `Nhận thông báo khi có hàng`:
+
+| Font | x-height | cap-height | Bề rộng chuỗi VN | Cao dấu (ệ) |
+|---|---|---|---|---|
+| **Montserrat** | 53 | 70 | **1438 — rộng nhất /24 font đo** | **73** |
+| Inter | 55 | 73 | 1320 (−8%) | 67 |
+| Archivo | 53 | 69 | 1220 (−15%) | 67 |
+| Playfair Display | 52 | 71 | 1247 | 81 |
+| Cormorant Garamond | 39 | 63 | 1104 | 73 |
+
+Kết luận từ số đo: Montserrat **rộng nhất** và **dấu cao nhất trong nhóm sans** → vai tự nhiên của nó là *heading*; body nên nhường cho font hẹp hơn, dấu thấp hơn. Cặp **Montserrat + Inter** (A) sửa đúng điểm đó (Inter hẹp 8%, dấu thấp hơn 6 đơn vị → hàng danh sách 12-14px ít wrap). Cặp **Playfair + Montserrat** (B) giữ Montserrat làm nền chữ chính, heading Playfair khớp metrics gần tuyệt đối (cap 71 vs 70, x-height 52 vs 53 → hai tầng cùng bậc, chỉ khác giọng); dấu Playfair cao nhất bảng (81) nên tiêu đề nhiều dòng cần line-height ≥1.33. **Đã loại vì số đo:** Cormorant Garamond + Montserrat (x-height 39 vs 53 lệch quá xa → tiêu đề trông nhỏ hơn thân bài dù cỡ lớn hơn). Cặp C (Montserrat + Archivo, hẹp 15% với x-height y hệt) chưa lắp — user chốt A + B.
+
+**Bật cặp font = TẮT nhãn hoa của bộ da** (24/08/2026, user: *"ở các option font không nhất thiết phải theo rule uppercase toàn bộ theo skin mt"*): rule cuối `<style>` cho `html.font-pair` trả `text-transform: none` cho nav ngành hàng · nhãn nhóm menu/mega · tiêu đề mục bộ lọc · nhãn footer · nhãn mở mục trong giỏ · brand. Vì uppercase che đúng phần chữ thường (x-height, đuôi g/y, bụng a/e) — chỗ để nhận ra một serif — nên ép hoa làm hỏng việc thử font. Bỏ chọn cặp là hoa trở lại; đo 2 chiều ở cả 2 bản: `.dk-dept`/`.ms-tab` `uppercase → none → uppercase`.
+
+## Tên thương hiệu THÔI chữ hoa (24/08/2026, CẢ 2 BẢN, skin-mt)
+
+User: *"tên brand không cần uppercase toàn bộ"* — đảo chốt C1 (20/08 "brand = họ nhãn 500 + HOA"). Brand nay là **họ nội dung: 14/20 · 400 · chữ thường · mực chính `#0a0a0a`** ở cả 3 vị trí (`.pc-brand` trên card + hàng gợi ý + PDP + quick-add, và `.cart-row p:has(+ .del)` trong giỏ).
+
+Vì sao đổi cỡ chứ không chỉ gỡ hoa: bỏ hoa thì theo §1.1 phải bỏ luôn 500 (cặp không tách rời), mà yêu cầu "brand nổi hơn tên sản phẩm" (18/08) vẫn còn hiệu lực. Đo trước khi sửa: brand chỉ hơn tên sp **34/255** về mực (`#0a0a0a` vs `#333`) — chính STYLE-RULES việc 8 đã kết luận mức đó "không đọc ra bậc". Nên phân cấp chuyển sang đúng đòn bẩy của họ nội dung: **lên 1 bậc cỡ** (brand 14 · tên sp 12). Ở desktop brand trong giỏ đã được **tách khỏi** selector dùng chung với "Tổng cộng"/trigger ưu đãi — 2 cái đó là NHÃN nên giữ trọn cặp 500 + hoa. STYLE-RULES §1.5 đã rút brand khỏi danh sách vai chữ hoa.
 - **Nút về đầu trang `#topFab`** (góc phải dưới, ngay trên Settings FAB) — mọi màn, cả 2 bản. Xem mục "Nút về đầu trang".
 
 ## Tiền tố hệ đo size (21/08/2026, CẢ 5 BẢN kể cả 3 skin desktop)
