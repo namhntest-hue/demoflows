@@ -182,7 +182,11 @@ Muốn thêm vai mới vào danh sách này thì phải sửa file này trước
 ### 1.6 Mặt chữ
 
 `Montserrat` 300–700, gọi qua `--font-app`. Không serif. Không mặt chữ thứ hai.
-(Nút chọn phông trong popover Cài đặt là công cụ dev — xem §5.)
+(Nút chọn phông trong popover Cài đặt là công cụ dev — xem §5. **Miễn trừ ghi rõ 24/08/2026:**
+mục "Cặp font · heading + body" trong popover đó **được** cấp 2 mặt chữ cùng lúc — heading qua
+`--font-head`, body qua `--font-app` — vì đó là công cụ THỬ để chốt hệ chữ, không phải trạng
+thái mặc định của bộ da. Nếu sau này chốt dùng thật một cặp thì **phải sửa mục 1.6 này trước**,
+rồi mới đưa vào bộ da.)
 
 ---
 

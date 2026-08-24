@@ -82,6 +82,40 @@ Panel Cài đặt có thêm mục **"Cặp font · heading + body"** — 4 cặp
 
 Kết luận từ số đo: Montserrat **rộng nhất** và **dấu cao nhất trong nhóm sans** → vai tự nhiên của nó là *heading*; body nên nhường cho font hẹp hơn, dấu thấp hơn. Cặp **Montserrat + Inter** (A) sửa đúng điểm đó (Inter hẹp 8%, dấu thấp hơn 6 đơn vị → hàng danh sách 12-14px ít wrap). Cặp **Playfair + Montserrat** (B) giữ Montserrat làm nền chữ chính, heading Playfair khớp metrics gần tuyệt đối (cap 71 vs 70, x-height 52 vs 53 → hai tầng cùng bậc, chỉ khác giọng); dấu Playfair cao nhất bảng (81) nên tiêu đề nhiều dòng cần line-height ≥1.33. **Đã loại vì số đo:** Cormorant Garamond + Montserrat (x-height 39 vs 53 lệch quá xa → tiêu đề trông nhỏ hơn thân bài dù cỡ lớn hơn). Cặp C (Montserrat + Archivo, hẹp 15% với x-height y hệt) chưa lắp — user chốt A + B.
 
+**Kiểm chứng bằng workflow đa tác nhân (24/08/2026)** — 4 agent tra nguồn song song về ghép cặp với Montserrat (1 agent thứ 5 mất kết nối giữa dòng). Nó **khớp** kết luận từ số đo ở trên (Montserrat nên ở heading; hoặc giữ body + heading serif), và thêm 2 điểm số đo không thấy được:
+
+1. **Newsreader có trục optical-size (`opsz` 6–72)** nên đứng vững đúng ở thang 18/24px của dự án — trong khi Playfair Display và Libre Bodoni là *display face*, được vẽ cho cỡ lớn. Đây là ứng viên heading hợp thang chữ hiện tại hơn cả 2 cặp đã lắp.
+2. **Cảnh báo cho cặp Couture (Libre Bodoni)**: nét hairline của Didone chỉ thật sự sống từ **32px** trở lên; ở 24px — cỡ tiêu đề lớn nhất của dự án — nó dễ bết. Muốn dùng cặp này thì phải mở thêm bậc display 32/48, tức sửa thang chữ (§1.2).
+3. Ứng viên body đáng thử tiếp: **Be Vietnam Pro** — dấu tiếng Việt do người Việt vẽ, khoảng từ x-height tới đỉnh dấu rộng hơn Montserrat (0.384em vs 0.265em) nên ế/ộ/ậ/ữ ở 12px không bết. Đổi lại: ở 12-14px gần như không nhận ra đang có 2 font.
+
+Nguồn chính workflow dùng: [typewolf.com/montserrat](https://www.typewolf.com/montserrat) · [pimpmytype.com/montserrat-font-pairs](https://pimpmytype.com/montserrat-font-pairs/) · [sparkinteract — Montserrat body font problem](https://www.sparkinteract.com.au/branding/montserrat-body-font-problem/) · [rsms.me/inter](https://rsms.me/inter/) · [Google Fonts — pairing within a superfamily](https://fonts.google.com/knowledge/choosing_type/pairing_typefaces_within_a_family_superfamily) · metadata font của Newsreader/Libre Bodoni/Be Vietnam Pro trên fonts.google.com.
+
+### MOCKUP best practice cho cặp mix — CHƯA CHỐT, chưa vào STYLE-RULES (24/08/2026)
+
+User: *"font size hiện tại có vẻ chưa phù hợp với font mix, hãy mockup luôn best practice… lưu ý chỉ là demo chưa chốt nên không ghi vào rule"*.
+
+**Chẩn đoán**: thang chữ 10/12/14/18/24 của dự án được vẽ quanh Montserrat (x-height 0.53em). Áp y số px đó cho font khác thì ra **cảm giác cỡ khác nhau** — đo ở 100px: Cormorant Garamond 39 · Libre Bodoni 45 · Fraunces 47 · Work Sans 50 · Playfair 52 · Montserrat 53 · Inter 55. Cùng 24px, Cormorant trông nhỏ hơn Montserrat gần ¼.
+
+**Best practice áp dụng: cân x-height bằng `font-size-adjust`, không chỉnh px từng chỗ.** `font-size-adjust: ex-height 0.53` bắt trình duyệt scale sao cho x-height/font-size = 0.53 — tức mọi font body ra đúng cảm giác cỡ mà thang chữ đang giả định, **không phải sửa một con số px nào trong markup**, và tự đúng ở cả 3 chỗ remap khác nhau của skin-mt (`text-[24px]` ra 18px ở login nhưng 24px ở giỏ). Đo chứng minh nó hoạt động: bề rộng chuỗi `Nhận thông báo` ở 12px — Cormorant 82.8 → **111px (+34%, đúng tỉ lệ 53/39)**, Inter 97.8 → 95.1 (−3%, vì x-height 55 vốn cao hơn chuẩn), Montserrat gần như không đổi.
+
+Kèm 2 tinh chỉnh khai **theo từng cặp** (`tune` trong `FONT_PAIRS` → biến `--pair-*`):
+
+| Cặp | line-height heading | tracking heading | Vì sao |
+|---|---|---|---|
+| Montserrat + Inter | 1.33 (31.9px) | 0.5px | heading vẫn Montserrat → giữ số bộ da |
+| Playfair + Montserrat · Editorial | 1.30 (31.2px) | 0 | dấu ệ của Playfair cao **81/100** — cao nhất 24 font đo |
+| Thanh lịch (Cormorant) | 1.36 (32.6px) | 0 | = 53/39, bù đúng phần x-height hụt |
+| Đương đại (Fraunces) | 1.32 | 0 | x-height 47 thấp hơn body 1 nhịp |
+| Couture (Libre Bodoni) | 1.25 (30px) | −0.2px | didone cần đặc lại; hairline chỉ sống từ ~32px |
+
+**Bẫy specificity đã vá**: 2 rule thi hành phải nằm **cuối `<style>`** — khối cart-scope của bộ da khai `line-height` ở cùng specificity (0,3,1) nhưng viết sau, nên đặt ở đầu file là bị đè (đo được: rule mockup index 61 vs khối cart index 361; line-height ra 32px thay vì 31.2px). Nhánh thứ hai có `[data-screen]` để ngang specificity đó.
+
+**Giới hạn còn lại** (nếu chốt dùng thật thì phải xử, và lúc đó mới sửa STYLE-RULES): cặp Cormorant vẫn cần **nâng hẳn bậc cỡ heading** chứ không chỉ nới dòng; cặp Libre Bodoni cần **mở bậc display 32/48** vì thang dự án dừng ở 24. `font-size-adjust` cần Chrome 127+/Firefox — đã kiểm trên pane (Chrome 148, hỗ trợ cả 3 dạng cú pháp).
+
+> **2 lỗi phát sinh từ đợt này, đã vá (user báo "không thấy button thiết lập bên dưới back to top nữa"):**
+> 1. **Comment CSS lệch** — khi chuyển 2 rule mockup xuống cuối `<style>`, đoạn văn giải thích còn lại nằm SAU dấu `*/` đã đóng rồi lại có thêm `*/` → parser coi phần đó là rác và **hủy luôn rule ngay sau nó**, tức `#settingsFab { position: fixed … }`. Nút Cài đặt rơi về `position: static` và trôi xuống cuối dòng chảy trang (đo được: y = 3273). Đã gộp đoạn văn vào trong comment ở **cả 2 file**; thêm script kiểm cân `/* */` trong `<style>` — nay open=close, không còn dấu đóng lạc.
+> 2. **Panel Cài đặt tràn màn hình** — thêm 6 cặp font làm card cao **1030px** trên viewport 812 → mép trên bị cắt −354px, mất 2 mục đầu (Ngôn ngữ, Bộ da) và **không cuộn được** (`overflow: visible`). Đã cho `.sp-card` `max-height: calc(100vh - 160px)` + `overflow-y: auto` + `overscroll-behavior: contain`. Đo lại: mobile cao 632/812, desktop 621/800, cuộn tới được cặp cuối, mục đầu trở lại.
+
 **Bật cặp font = TẮT nhãn hoa của bộ da** (24/08/2026, user: *"ở các option font không nhất thiết phải theo rule uppercase toàn bộ theo skin mt"*): rule cuối `<style>` cho `html.font-pair` trả `text-transform: none` cho nav ngành hàng · nhãn nhóm menu/mega · tiêu đề mục bộ lọc · nhãn footer · nhãn mở mục trong giỏ · brand. Vì uppercase che đúng phần chữ thường (x-height, đuôi g/y, bụng a/e) — chỗ để nhận ra một serif — nên ép hoa làm hỏng việc thử font. Bỏ chọn cặp là hoa trở lại; đo 2 chiều ở cả 2 bản: `.dk-dept`/`.ms-tab` `uppercase → none → uppercase`.
 
 ## Tên thương hiệu THÔI chữ hoa (24/08/2026, CẢ 2 BẢN, skin-mt)
