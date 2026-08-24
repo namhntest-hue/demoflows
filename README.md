@@ -159,7 +159,17 @@ Sửa kèm ở JS: `applySkin` phải add/remove **theo từng class** (`classLi
 - **Bộ chọn da** hiện đủ 4 dòng, tick đúng dòng Maika; bấm qua UI (`mytheresa → maika`) ra đúng `skin-mp skin-mk`. Ghi chú dòng Maika không có bản dịch EN — **giống 3 dòng còn lại** (popover Cài đặt là công cụ dev, §5 STYLE-RULES).
 - **Font mix vẫn giữ chữ hoa cho menu Maika** ✓ — nó thừa hưởng rule `html.skin-mp.font-pair …` (có `!important`) của mục trên.
 - Giữ theo skin-mp có chủ ý: nav ngành hàng của **màn Search** (`.search-tab`) — nó là nội dung trang, mà thân trang Maika là skin-mp.
-### Brand name của Maika dùng MẶT CHỮ CỦA HEADING (cả 2 bản)
+### ROLLBACK + dọn font (24/08/2026, cả 2 bản)
+
+User: *"sửa lại không dùng font heading cho brand name ở listing nữa nhé (coi như rollback lại như ver trước đó); đồng thời bỏ bộ font Cormorant Garamond + Be Vietnam Pro, font Mulish và Lora"*.
+
+- **Rollback**: rule cho `.pc-brand` + brand hàng giỏ ăn `--font-head` đã **gỡ hẳn** khỏi khối Maika ở cả 2 file. Đo lại (Maika + cặp Fraunces·Montserrat): brand listing `Montserrat` · brand hàng giỏ `Montserrat` · tên sp/body `Montserrat` — đúng như trước khi thêm. Brand ở **PDP vẫn ra Fraunces** vì nó là `h1.pc-brand` và khối "CẶP FONT THỬ" bắt `h1` — **hành vi có từ trước**, không phải rule của Maika.
+- **Bỏ 2 font đơn** `Mulish` + `Lora` và **bỏ cặp** `Cormorant Garamond + Be Vietnam Pro` (id `elegant`). Lora vào file 18/08 để làm mặt chữ serif của bộ da MR PORTER, nhưng bộ da đó đã về Montserrat từ chốt 20/08 → không còn chỗ dùng nào (grep xác nhận: chỉ còn trong mảng + comment, không rule CSS nào).
+- **Gỡ luôn 4 family khỏi thẻ `<link>` Google Fonts**: `Mulish` · `Lora` · `Cormorant+Garamond` · `Be+Vietnam+Pro`. Còn lại 7 family: Montserrat · Inter · Manrope · Playfair Display · Work Sans · Fraunces · Libre Bodoni.
+- Sau dọn: **3 font đơn** (Montserrat · Inter · Manrope) và **5 cặp** (Fraunces+Mont · Playfair+Mont · Editorial · Đương đại · Couture). Popover Cài đặt render từ mảng nên tự đúng số dòng (đã đo cả 2 bản).
+- Id cũ (`mulish`, `lora`) còn ghim ở hash chuyển bản sẽ trượt `FONTS.find` → rơi về mặc định, vô hại; cặp không vào hash nên chỉ cần bỏ khỏi mảng.
+
+### ~~Brand name của Maika dùng MẶT CHỮ CỦA HEADING~~ (đã rollback — xem mục trên)
 
 User: *"ở skin maika, brand name sẽ dùng font của heading luôn nhé, đồng bộ khi swap mix font thì font brand name cũng phải dùng font của heading"*.
 
