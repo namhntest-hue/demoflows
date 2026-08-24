@@ -159,7 +159,23 @@ Sửa kèm ở JS: `applySkin` phải add/remove **theo từng class** (`classLi
 - **Bộ chọn da** hiện đủ 4 dòng, tick đúng dòng Maika; bấm qua UI (`mytheresa → maika`) ra đúng `skin-mp skin-mk`. Ghi chú dòng Maika không có bản dịch EN — **giống 3 dòng còn lại** (popover Cài đặt là công cụ dev, §5 STYLE-RULES).
 - **Font mix vẫn giữ chữ hoa cho menu Maika** ✓ — nó thừa hưởng rule `html.skin-mp.font-pair …` (có `!important`) của mục trên.
 - Giữ theo skin-mp có chủ ý: nav ngành hàng của **màn Search** (`.search-tab`) — nó là nội dung trang, mà thân trang Maika là skin-mp.
-- Vách giữa các hàng menu dùng `var(--unofficial-border-1)` nên ra `#ebebeb` (token của skin-mp) chứ không phải `#ececec` của skin-mt — **cố ý**: Maika giữ bảng màu của skin-mp, chỉ lấy THANG CHỮ của menu skin-mt.
+### Vá tiếp: viền trong menu Maika = Y CHANG skin-mt (cả 2 bản)
+
+User: *"skin-maika menu phải có border y chang skin-mt luôn chứ"*. (Trước đó tôi để viền menu ăn token của skin-mp và ghi là "cố ý" — user bác, nên sửa lại theo.)
+
+**Đo 2 bộ da rồi mới viết rule**, hoá ra không chỉ lệch sắc:
+
+| Khổ | Chỗ lệch | skin-mt | Maika trước |
+|---|---|---|---|
+| Mobile | hàng tab (kẻ dưới) · viền 2 nút Đăng ký/Đăng nhập | `#dfdfdf` | `#e0e0e0` |
+| Mobile | vách mỗi hàng danh mục | `#ececec` | `#ebebeb` |
+| Mobile | kẻ trên khối "Tài khoản" + hàng "Ngôn ngữ" | `#f2f2f2` | `#f0f0f0` |
+| Desktop | `#dkNavRow` kẻ dưới · `.dk-sub` kẻ dưới | `#ececec` | **KHÔNG CÓ** (skin-mp không kẻ 2 chỗ này) |
+| Desktop | `.dk-mega` kẻ dưới · `.dk-mega-teaser` kẻ dọc | `#dfdfdf` | `#e0e0e0` |
+
+**Cách sửa — khoanh token vào phạm vi menu**, không liệt kê từng phần tử: `html.skin-mk #menuSheet { --unofficial-border-1 / --general-border / --unofficial-border-0 / --general-secondary }` ở mobile và `html.skin-mk .navbar { --unofficial-border-1 / --general-border }` ở desktop (biến CSS thừa kế nên mega panel nằm trong navbar cũng ăn theo). Nhờ vậy viền menu thêm sau này tự đúng, và **ngoài menu Maika vẫn giữ nguyên bảng màu skin-mp**. Desktop thêm đúng 4 khai viền (2 kẻ mà skin-mp thiếu + 2 sắc).
+
+**Đo lại**: mobile **9/9 viền khớp tuyệt đối** với skin-mt (0 lệch); desktop **4 chỗ menu khớp hết**, còn đúng 3 dòng lệch và cả 3 là **cùng một phần tử `#dkNavSearchField`** — ô tìm kiếm trong nav: skin-mt vẽ nó thành **gạch chân đen** (bỏ hộp), skin-mp để **hộp viền đen 4 cạnh**. Tôi **cố ý không đụng**: đó là khuôn của Ô NHẬP, không phải viền của menu. Muốn lấy luôn kiểu gạch chân thì thêm 1 rule.
 ### Bản desktop (làm ngay sau đó, cùng ngày)
 
 Cùng cách ghép (`skin-mp skin-mk` + `applySkin` split), lớp phủ **8 rule**. Ở khổ này "menu của skin-mt" = **thanh nav trên cùng + mega panel**; drawer `#menuSheet` **không có nhánh nào** vì chính skin-mt ở desktop cũng để chữ thường.
