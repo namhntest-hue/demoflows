@@ -4,6 +4,10 @@
 > Chốt 20/08/2026. Đây là văn bản **quy phạm** — khi có tranh chấp, luật này thắng số đo,
 > thắng ghi chú trong code, thắng cả các quyết định lẻ đã ghi trong `README.md`.
 > `README.md` giữ vai lịch sử (vì sao thành thế này); file này giữ vai luật (từ nay thế nào).
+>
+> **CẬP NHẬT 25/08/2026 — đổi stack:** dự án **không dùng Tailwind CSS và shadcn/ui** nữa.
+> Luật §1–§7 dưới đây **giữ nguyên hiệu lực** (là luật thiết kế, không phải luật framework),
+> chỉ đổi cách thi hành: CSS ngữ nghĩa viết tay + token, không utility class. Xem **Phần 8**.
 
 ---
 
@@ -178,6 +182,32 @@ Bộ da phải tự vô hiệu hoá chúng — xem §4.1.
 Quy ước toàn dự án là **không dùng UPPERCASE**. `skin-mt` là ngoại lệ **có giới hạn**, và
 đây là danh sách đóng:
 
+> **CẬP NHẬT 25/08/2026 — vai 1 và vai 2 KHÔNG còn là ngoại lệ của riêng `skin-mt`.**
+> Chốt user: *"Thanh menu header 2 thiết bị sẽ theo skin-mt (có thể khác font tùy theo set
+> up) áp dụng các skin còn lại"*. Thanh menu nay là **một khuôn chung cho MỌI bộ da** ở cả 2
+> bản: `skin-mp` đã lấy chữ hoa 24/08, Maika lấy trọn bộ số từ đầu, và **bộ da mặc định**
+> (`SKINS` ô `['default', …, '']`) áp 25/08 — khối *"THANH MENU: MỘT KHUÔN CHUNG THEO
+> skin-mt"*, khai giống hệt ở `index.html` và `desktop.html`, bám
+> `html:not([class*="skin-"])`.
+> Hệ quả phải nói rõ: lý lẽ *"ngoại lệ AN TOÀN vì nằm trong một bộ da phải tự bật, mặc định
+> của file không đổi"* — ghi ở đầu khối nav của cả 2 file — **hết hiệu lực cho vai 1 + vai 2**.
+> Mở demo ra là thấy menu chữ hoa, không cần bật bộ da nào. Vai 3–7 vẫn chỉ sống trong
+> `skin-mt`.
+> **Font KHÔNG đi theo:** khối chung chỉ chạm CỠ · DÒNG · ĐẬM · HOA · TRACKING, không khai
+> `font-family` — mỗi bộ da giữ mặt chữ của set up riêng (mặc định Montserrat, `skin-mp` /
+> Maika Inter + Libre Bodoni).
+> **Số áp là số ĐO ĐƯỢC của `skin-mt`, không phải số của luật** (user chốt lấy số đo đang
+> chạy). Nên 2 chỗ lệch dưới đây nay có mặt ở cả 4 bộ da, và phải sửa CÙNG LÚC cả 4 + `home.html`:
+> · hàng danh mục drawer để **HOA + 400** — nửa cặp mà §1.1 cấm, và Phần 6 việc 7 đã chốt
+>   *"mọi chữ hoa lên 500"*;
+> · nav ngành hàng ở khổ desktop để **12/16** trong khi §1.2 ghi T3 **14/20 giống hệt cả 2 bản**
+>   (mobile đang đúng 14/20).
+> **Còn 1 chỗ CHƯA theo khuôn chung, cố ý:** `.dk-nav-link` của `skin-mp` giữ **14/20** (thang
+> nav 2 tầng — *"cỡ chữ thoáng hơn chính là chữ ký editorial của bộ da này"*, chốt 24/08), và
+> `.search-tab` của `skin-mp`/Maika giữ **12/16 · 400 · chữ thường** (chốt 24/08 xếp hàng tab
+> màn Search ra ngoài "bộ menu"). Chờ user quyết có kéo 2 chỗ này vào khuôn chung hay không.
+
+
 1. Nav ngành hàng + nav danh mục — `.dk-dept` · `.dk-nav-link` · `.ms-tab` · `.search-tab`
 2. Nhãn nhóm trong menu / mega panel — `.ms-view > p` · `.dk-mega-grid > div > p` · tiêu đề màn con
 3. Tiêu đề panel + tiêu đề mục trong bộ lọc — `#filterSheet` 2 tầng nhãn
@@ -201,16 +231,21 @@ Quy ước toàn dự án là **không dùng UPPERCASE**. `skin-mt` là ngoại 
    sp 12). Đo trước khi sửa: brand chỉ hơn tên sp 34/255 về mực nên mực một mình không gánh
    được phân cấp — cùng kết luận với việc 8.
 
-7. **Nhãn accordion — CHỈ bản PDP2** — `[data-screen="pdp2"] [data-pdp-acc] .acc-trigger > span`
-   *(thêm 25/08/2026, lệnh user: "ở trang PDP ver số 2, hãy cho toàn bộ các Accordion (mô tả
-   sản phẩm,...) được uppercase hết trên font 12")*. Nhãn chuyển từ họ nội dung sang **họ
-   nhãn T6 12/16 · 500 · HOA** — đúng khuôn nhãn nhóm ở footer đang chạy (đã đo cùng ngày:
-   12/16 · 500 · uppercase), nên không đẻ khuôn mới. §1.1 buộc hoa đi cặp với 500, không tách.
-   **Phạm vi khoá vào đúng PDP2**: 5 bản PDP kia giữ nhãn ở họ nội dung (12/18 · 400 · thường)
-   để còn so hai hướng. Nội dung + bảng thông số bên trong accordion **vẫn chữ thường 12** —
-   xem "Không bao giờ hoa" ngay dưới. Đã thêm vào danh sách `.font-pair` như 6 vai kia.
-   Khai **giống hệt ở cả 2 file** (port sang `desktop.html` 25/08). Vai này **chỉ sống
-   trong `skin-mt`**: bộ da Maika kéo cụm accordion về 14/20 · 400 · chữ thường (xem §1.2).
+7. **Nhãn accordion PDP — cả 6 bản** — `[data-pdp-acc] .acc-trigger > span`
+   *(thêm 25/08/2026 cho riêng PDP2 theo lệnh "ở trang PDP ver số 2… uppercase hết trên font
+   12", rồi **mở ra cả 6 bản cùng ngày**: "ở skin-mt uppercase rồi cũng tăng fontweight cho
+   accordion luôn nhé")*. Nhãn chuyển từ họ nội dung sang **họ nhãn T6 12/16 · 500 · HOA**;
+   riêng **pdp3 giữ bậc cỡ 14/20** (lệnh cùng ngày cho cụm accordion bản đó lên 14). §1.1 buộc
+   hoa đi cặp với 500, không tách.
+   Đây **không phải khuôn mới**: accordion **footer** và **giỏ hàng** của `skin-mt` đã là
+   12/16 · 500 · HOA từ trước (đo 25/08) — cụm PDP ở 12/18 · 400 mới là chỗ lệch, nay hết.
+   Nội dung + bảng thông số bên trong accordion **vẫn chữ thường 400** — xem "Không bao giờ
+   hoa" ngay dưới; muốn nội dung nổi thì lên bậc **cỡ**, đúng thứ pdp3 đang làm.
+   Chữ hoa do **bộ da** quyết, không nằm trong markup: markup 6 bản dùng chung khuôn, nhờ vậy
+   `skin-mp` / Maika không dính chữ hoa. Đã thêm vào danh sách `.font-pair`.
+   Khai **giống hệt ở cả 2 file**. Vai này **chỉ sống trong `skin-mt`**: Maika kéo cụm
+   accordion về 14/20 · **500** · chữ thường (xem §1.2).
+   ⚠ **Hệ quả:** PDP2 hết điểm riêng — khác biệt giữa 6 bản nay chỉ còn cỡ 14 của pdp3.
 
 **Không bao giờ hoa:** tên sản phẩm · giá · chữ trên nút · nhãn form ·
 thông báo lỗi · nội dung hàng trong danh sách (kể cả hàng cấp 2 của drawer) · đoạn văn.
@@ -234,6 +269,29 @@ mục "Cặp font · heading + body" trong popover đó **được** cấp 2 m�
 `--font-head`, body qua `--font-app` — vì đó là công cụ THỬ để chốt hệ chữ, không phải trạng
 thái mặc định của bộ da. Nếu sau này chốt dùng thật một cặp thì **phải sửa mục 1.6 này trước**,
 rồi mới đưa vào bộ da.)
+
+**CẬP NHẬT 25/08/2026 — khách ĐÃ CHỐT một cặp, điều kiện trên đã kích hoạt.**
+Khách chọn **Inter (thân bài) + Libre Bodoni (trưng bày)**. Phạm vi áp: **chỉ bộ da Maika**
+(`skin-mp skin-mk`) — `skin-mt` giữ nguyên Montserrat cho tới khi khách nói khác. Với Maika,
+cặp 2 mặt chữ **không còn là công cụ thử** mà là trạng thái thật, nên miễn trừ ở trên hết vai
+"tạm thời" và được thay bằng một văn bản quy phạm riêng: **`FONT-LIBRE-INTER.md`**.
+
+Bốn điểm của luật đó đụng thẳng vào Phần 1 này, ghi ở đây để đọc §1 không hiểu nhầm:
+
+* **§1.2 (thang đóng ở 24):** Maika **mở thêm 2 bậc trưng bày** — `T0` 32/40 và `T00` 48/60 —
+  vì nét mảnh Libre Bodoni chỉ đạt 1 pixel thiết bị từ cỡ 32 (đo: nét mảnh = 0,031 × cỡ).
+  Hai bậc này vốn có sẵn trong thang text style Figma, không phải bịa mới. **Chỉ Maika.**
+* **§1.4 (tracking đúng một giá trị 0,5px):** Maika lệch **đúng 2 chỗ, ghi danh** — `T0`/`T00`
+  dùng `0` (serif Didone tự có nhịp chân chữ), `T0h` chữ hoa dùng `+2px`. Thân bài Inter giữ
+  nguyên 0,5px.
+* **§1.6 (không mặt chữ thứ hai):** với Maika là **hai** — Inter mọi bậc ≤ 24, Libre Bodoni
+  **chỉ** bậc ≥ 32. Ranh giới là bậc cỡ, không phải thẻ `h1/h2/h3`.
+* **§1.3 (cỡ và dòng đi thành cặp):** Maika **cấm `font-size-adjust`**, vì nó làm cỡ dùng thật
+  khác cỡ khai và mọi phép tính nhịp dòng sai theo.
+
+Ngoài ra `FONT-LIBRE-INTER.md` nâng một luật mềm thành luật cứng: dấu `ằ` của Inter cao **93/100**
+(Montserrat 83), nên bậc **12/16 chỉ dùng cho chữ chắc chắn một dòng** — chữ có thể xuống dòng
+phải là 12/18. Ở skin-mt đây là chuyện nhịp; với Inter là chuyện chạm dấu.
 
 ---
 
@@ -628,3 +686,92 @@ của phần tử đang hiện có text trực tiếp. Nhớ bust cache CSS trư
 Bẫy đo viền: xem trang qua preview pane bị thu nhỏ thì computed `border-width` bị scale
 theo khung — rule khai `1px` đọc ra `0.8px`. Trước khi kết luận về độ dày viền phải soi
 rule gốc trong stylesheet, đừng tin mỗi `getComputedStyle`.*
+
+---
+
+## Phần 8 — Stack: BỎ Tailwind CSS và shadcn/ui (chốt 25/08/2026)
+
+> Lệnh user 25/08/2026: *"rule mới là sẽ không cần thiết sử dụng tailwind css và thư viện shadcn"*.
+> Đây là luật **stack**, không phải luật thẩm mỹ — nó đổi *cách viết*, không đổi *cái được vẽ ra*.
+
+### 8.1 Từ nay việc mới viết bằng gì
+
+* **CSS ngữ nghĩa viết tay** — class đặt theo VAI (`.hp-hero`, `.pc-brand`), không theo thuộc tính.
+* **Giá trị lấy từ biến token** (`tokens.css`, sinh từ `tokens07.json`), không gõ số trần.
+* **Không thêm utility class Tailwind mới** vào markup; không dựng thêm file nào phụ thuộc
+  `tailwind.css` / `tailwind.config.js`.
+* **Không lấy component từ registry shadcn/ui**, không nhập convention biến của nó cho code mới.
+  Chuẩn a11y (role/aria/data-state/roving tabindex) thì **vẫn giữ** — đó là chuẩn ARIA, không
+  phải tài sản của shadcn.
+* **Khuôn mẫu đã có sẵn để noi theo:** `home.html` — CSS ngữ nghĩa `.hp-*`, không link
+  `tailwind.css`, sửa không cần rebuild. Đo được 0 vi phạm luật ở cả 3 khổ.
+
+### 8.2 Cái gì KHÔNG bị lật
+
+* **Toàn bộ §1–§7 giữ nguyên.** Thang chữ 12/14/16/18/24/32/48 · cặp cỡ+dòng bắt buộc đi đôi ·
+  500 luôn đi cặp với chữ hoa · 2 tầng viền · 0 bóng · bo 0 — đó là luật thiết kế, thi hành
+  bằng CSS tay cũng y hệt như thi hành bằng utility.
+* **Pipeline token nguyên vẹn:** `tokens07.json` → `gen_tokens.py` → `tokens.css`. Không dính
+  Tailwind, không đụng tới.
+* **`index.html` / `desktop.html` KHÔNG refactor** *(user chốt 25/08/2026 — giữ nguyên,
+  không migrate)* — 2 demo vẫn chạy trên `tailwind.css` đã build sẵn. Khi sửa 2 file này:
+  **ưu tiên khai rule trong `<style>`** thay vì thêm class mới; nếu vẫn phải dùng class thì
+  grep `tailwind.css` trước (luật cũ ở README — class không có trong build là **rơi im lặng**).
+
+### 8.3 Bộ bàn giao `shadcn-theme/` — đóng băng, không xoá
+
+`theme.css` · `tailwind.preset.js` · `SHADCN-NOTES.md` (dựng 20/08) giữ lại làm **tư liệu**:
+
+* `theme.css` vẫn dùng được **như một bảng biến CSS thuần** — `home.html` đang link nó và
+  không phụ thuộc gì vào Tailwind hay React. Giữ nguyên.
+* `tailwind.preset.js` **hết vai** (không còn build Tailwind để nướng luật vào). Số đo trong
+  đó vẫn là bản ghi hợp lệ của thang chữ §1.
+* `SHADCN-NOTES.md` (2 con đường Magento Hyvä vs headless React) **hết hiệu lực làm định
+  hướng** — hướng Magento vẫn còn, phần chọn Tailwind/shadcn thì không.
+
+### 8.4 ĐÃ THI HÀNH 25/08/2026 — thang chữ đặt tên theo VAI
+
+Tên cũ (`text-xl/lg/md/sm/base/micro`) là key của `tailwind.preset.js`, tức đặt theo **cỡ
+tương đối**. Cách đó **đã gãy một lần ngay trong dự án này**: preset không có bậc 14px, tới
+khi §1.5 mục 6 thêm vai "thân bài 14px" thì phải bịa thêm key `text-md`. Khách chưa chốt font
+thì thang còn đổi, nên tên phải mang **vai** — đổi số chỉ sửa 6 dòng rule, markup đứng yên.
+
+| Cũ | Mới | Ra | Vai |
+|---|---|---|---|
+| `.text-xl` | **`.t-title`** | 24/32 | T1 tiêu đề trang · hero |
+| `.text-lg` | **`.t-section`** | 18/24 | T2 tiêu đề mục · sheet · modal |
+| `.text-md` | **`.t-body`** | 14/20 | T3 thân bài cấp 1 |
+| `.text-sm` | **`.t-ui`** | 12/16 | T4 chữ trong linh kiện (1 dòng) |
+| `.text-base` | **`.t-copy`** | 12/18 | T5 đoạn nhiều dòng |
+| `.text-micro` | **`.t-micro`** | 10/14 | T7 vi mô |
+| `.label` | **`.t-label`** | 12/16 · 500 · HOA | T6 nhãn cấp 2 |
+| `.label-1` | **`.t-label-1`** | 14/20 · 500 · HOA | T3 nhãn cấp 1 |
+
+Phạm vi: `home.html` (182 lượt) + `shadcn-theme/theme.css` (2 selector — file này chỉ
+`home.html` link, `index/desktop` không dính). Đo lại sau khi đổi: 7/7 vai ra đúng số,
+`.t-label` giữ đủ `500 + uppercase`, DOM không còn tên cũ, console sạch, **0 pixel thay đổi**.
+
+Kèm theo, 2 việc bàn giao treo ở `HOMEPAGE.md` **đóng luôn**: (a) thêm key `text-md` vào
+`tailwind.preset.js` — hết hiệu lực (bỏ preset); (b) `.label` đụng nghĩa nhãn form 400 chữ
+thường của §5 — đã xử bằng chính lượt đổi tên này.
+
+*(Câu hỏi "2 demo cũ có migrate không" đã chốt 25/08/2026: **không** — xem §8.2.)*
+
+### 8.5 Quy chuẩn đặt tên → `NAMING-MAGENTO.md`
+
+Luật đặt tên đầy đủ tách sang **`NAMING-MAGENTO.md`** (chốt 25/08/2026), vì nó phục vụ việc
+bàn giao cho đội dev Magento chứ không phải phân xử thẩm mỹ. Năm quy tắc, rút từ số đo trên
+chính `shop.dafc.com.vn`:
+
+1. **kebab-case phẳng** — không `__`, không `--`. Site thật chạy 42% kebab, `__` chỉ 0,6%, `--` 0%.
+2. **Trùng vai với block Magento thì dùng thẳng tên của họ** (`product-item-name`, `price-box`,
+   `action primary`, `toolbar`, `fieldset`/`control`) — dev grep ra ngay, khỏi dịch.
+3. **Biến thể = class thứ hai** (kiểu `.action.primary`), không phải hậu tố `--`.
+4. **Trạng thái = tiền tố `_`** (`_active`, `_open`) — đúng thứ widget Magento tự gắn lúc chạy.
+5. **`dafc-`** cho phần thiết kế mới không có block Magento tương ứng.
+
+Ngoại lệ ghi danh: **`dk-*` không đổi tên** (port 1:1 menu bar từ `desktop.html`, giữ nguyên
+để port ngược là copy thẳng), kể cả 2 tên còn mang `--`.
+
+Đợt quét áp quy tắc 1–4 cho phần còn lại của `home.html` (114 tên, trong đó 57 tên viết tắt
+1–2 chữ cần giãn) **chưa chạy** — chờ duyệt bảng tên, xem `NAMING-MAGENTO.md` Phần 7.

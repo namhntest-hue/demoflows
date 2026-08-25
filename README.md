@@ -2,6 +2,11 @@
 
 Demo e-commerce flow cho **DAFC** (nhà phân phối đa thương hiệu luxury tại Việt Nam), dựng bằng HTML + Tailwind CSS thuần, không dùng framework. Nội dung sản phẩm là **dữ liệu thật** scrape từ `shop.dafc.com.vn` (re-scrape 07/08/2026): 16 SP thời trang Versace + 8 nước hoa (Versace/D&G/Montblanc/Moschino), kèm **ảnh thật tải từ `cdn.dafc.com.vn`** (1200×1484, đặt tên `pN-*.jpg` / `x*.jpg` / `b*.jpg` trong `assets/` — chỉ bản mobile dùng; desktop vẫn dùng bộ `p*.png` cũ). Giá giảm/badge -% là dữ liệu tự tạo để demo.
 
+> **Rule stack 25/08/2026 — không dùng Tailwind CSS và shadcn/ui nữa.** Mô tả "HTML + Tailwind"
+> ở trên là **hiện trạng của 2 demo cũ** (`index.html` / `desktop.html`), không phải hướng đi tiếp.
+> Việc mới viết **CSS ngữ nghĩa + biến token** (khuôn mẫu: `home.html`). Luật thiết kế trong
+> `STYLE-RULES.md` không đổi — xem **Phần 8** của file đó để biết cái gì bị bỏ, cái gì giữ.
+
 Hai phiên bản dùng chung assets/tokens/tailwind.css, **nối với nhau ở mốc 768px** (xem "Cầu nối responsive"):
 - `index.html` — bản **mobile**, dùng khi bề ngang **< 768px** (thiết kế theo 360–412px)
 - `desktop.html` — bản **desktop**, dùng khi bề ngang **≥ 768px**, nội dung bó trong max-w 1440 (xem mục "Bản desktop")
