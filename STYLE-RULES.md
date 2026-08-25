@@ -153,6 +153,17 @@ Khác biệt responsive nằm ở **bố cục và mật độ**, không nằm �
 > **Chưa đụng:** accordion **checkout** trong Maika vẫn 400 (footer/giỏ đã 500, không nâng
 > tiếp được — 600 bị §1.1 cấm hẳn).
 
+> **Bộ da `skin-li` lấy đúng quyết định này (25/08/2026, lệnh user: *"Trong pdp ở skin-li, các
+> accordions sẽ không uppercase toàn bộ, chỉ tăng font lên 14, tăng nhẹ font weight là được"*):**
+> cả **6 bản PDP**, cả 2 khổ — nhãn **14/20 · 500 · chữ thường**, nội dung và bảng thông số
+> **14/20 · 400 · chữ thường**. Số giống Maika từng con một, cố ý, để 2 bộ da không đẻ bậc thứ
+> ba. Trước đó `skin-li` đang có **3 mức** ở cụm này (nhãn 12/16·500·HOA · pdp3 14/20·500·HOA ·
+> nội dung 12/18 với bảng thông số pdp2 12/16).
+> `skin-mt` vẫn giữ 3 mức khác nhau để còn so. Khối *"CỤM ACCORDION PDP: MỘT CỠ 14"* trong khối
+> `skin-li`, khai giống hệt ở 2 file. **Kèm theo:** thân accordion PDP phải RA KHỎI danh sách rà
+> F5 12/16→12/18 của `skin-li` — hook đó (0,5,2) thắng rule mới (0,4,2), để lại là nhãn 14 mà
+> thân 12.
+
 ### 1.3 Line-height đi kèm cỡ chữ, không bao giờ tách rời
 
 **Luật:** mọi rule đổi `font-size` trong `skin-mt` **bắt buộc** khai luôn `line-height`.
@@ -405,8 +416,18 @@ Phải gỡ khỏi bộ da: **`#cfcfcf`** (3092 chỗ — `border-border-3` trê
 
 ### 3.2 Bo góc — 0
 
-`border-radius: 0` cho mọi thứ. **Một ngoại lệ:** hình tròn thật, tức phần tử có
-`width == height` và về bản chất là chấm/vòng (badge số trong giỏ, dot phân cách, radio).
+`border-radius: 0` cho mọi thứ. **Hai ngoại lệ:**
+
+1. **Hình tròn thật** — phần tử có `width == height` và về bản chất là chấm/vòng: badge số
+   trong giỏ, dot phân cách, radio, **ô màu trên thẻ sản phẩm** (đảo 25/08, xem đính chính
+   dưới đây).
+2. **`.quick-add` 36×36 ở mobile** — ngoại lệ ghi danh **thứ hai**, thêm 25/08/2026 theo lệnh
+   user *"Icon quick add to cart ở bản mobile sẽ hình tròn như cũ nhé"*. Nó **đảo** chốt Phần 6
+   việc 4 (20/08 chốt "vuông"), và là đúng **phương án C** mà chính câu hỏi đó đã nêu:
+   *"giữ tròn, ghi vào luật thành ngoại lệ thứ hai của §3.2"*. `w == h` nên nó cũng thoả ngoại
+   lệ 1 về mặt hình học; ghi riêng vì nó là **nút**, không phải chấm/vòng.
+   Ngoại lệ này KHÔNG kéo theo `#topFab` — nút đó vẫn vuông + không bóng.
+   Hệ quả ghi thẳng: bộ da vuông nay có đúng **một** vật thể tròn nổi.
 *(~~Đính chính 20/08: **ô màu KHÔNG thuộc ngoại lệ này** — skin-mt đã vuông hóa swatch từ trước,
 `[data-swatches] .cw { border-radius: 0 }`, đo thật 18×18 vuông.~~ **ĐẢO 25/08/2026**, lệnh user:
 *"ô hình vuông chọn màu ở product listing sẽ trả về hình tròn toàn bộ nhé"*. Ô màu trên thẻ sản
@@ -421,8 +442,9 @@ Còn vi phạm:
   ở **riêng desktop** (mobile đã đè, desktop quên)
 * `999px` vs `9999px` — hai cách viết cùng một pill, 72 chỗ ở desktop
 * pill **không phải hình tròn**: thanh tiến độ (386×6, 108×6) · grabber (39×4) · segmented control (185×35)
-* `.quick-add` 36×36 tròn — đúng luật `w == h` về mặt chữ nghĩa, nhưng một nút nổi tròn trên
-  bộ da vuông đọc ra là vật thể lạ. Desktop đã ẩn nó (`display: none`), mobile còn. → §6, câu hỏi 4.
+* ~~`.quick-add` 36×36 tròn — đúng luật `w == h` về mặt chữ nghĩa, nhưng một nút nổi tròn trên
+  bộ da vuông đọc ra là vật thể lạ. Desktop đã ẩn nó (`display: none`), mobile còn. → §6, câu hỏi 4.~~
+  **HẾT LÀ VI PHẠM 25/08/2026** — user chốt giữ tròn, nay là ngoại lệ ghi danh thứ 2 ở đầu §3.2.
 
 ### 3.3 Đổ bóng — không có
 
@@ -470,8 +492,15 @@ Hai fix này một mình đã cắt hơn **một nửa** độ trộn, và khôn
    không rải hex. Hiện có **16 hex rải rác** trong khối `skin-mt` của `index.html`.
 4. Rule nào khai *"giống hệt ở cả 2 file"* thì phải **thật sự giống hệt**. Bảng §0 cho thấy
    quy ước này đã vỡ ở 5 cỡ chữ, 1 radius, 1 cỡ `.search-tab`.
-5. Không thử nghiệm trong `skin-mt`. Nó là bộ da mặc định — khách mở ra là thấy ngay.
-   Thử ở `skin-mp`, chốt xong mới port sang.
+5. Không thử nghiệm trong bộ da **VÀO-TRANG** — khách mở ra là thấy ngay. Thử ở một bộ da
+   phải TỰ BẬT, chốt xong mới port sang.
+   **CẬP NHẬT 25/08/2026** (lệnh user: *"từ giờ mặc định vào sẽ là chọn skin-li nhé"*): bộ da
+   vào-trang nay là **`skin-mt skin-li`**, không còn là `skin-mt` trơn. Hệ quả kép, cả hai đều
+   siết chặt hơn chứ không nới:
+   * `skin-mt` vẫn **không được thử nghiệm** — chặt hơn trước, vì `skin-li` chỉ là lớp phủ hệ
+     chữ trên chính nó, sửa `skin-mt` là sửa luôn thứ mở ra thấy ngay;
+   * **`skin-li` cũng thôi là chỗ để thử** — nó đã lên làm mặc định.
+   Còn lại để thử: `skin-mp` (Editorial) và Maika (`skin-mk`).
 
 ---
 
@@ -523,7 +552,14 @@ Desktop sẽ đổi nhiều hơn mobile (`text-[16px]` 14→12 · `text-[18px]` 
 **4. `.quick-add` tròn 36×36 ở mobile**
 → **Đề xuất: vuông.** Desktop đã ẩn nó khỏi `skin-mt`; để mobile giữ nút tròn là 2 bản nói 2 giọng.
 Phương án B: ẩn luôn như desktop. Phương án C: giữ tròn, ghi vào luật thành ngoại lệ thứ hai của §3.2.
-**Chốt 20/08/2026: làm theo đề xuất (vuông).**
+~~**Chốt 20/08/2026: làm theo đề xuất (vuông).**~~
+**ĐẢO 25/08/2026 — chốt PHƯƠNG ÁN C** (lệnh user: *"Icon quick add to cart ở bản mobile sẽ hình
+tròn như cũ nhé"*). Rule vuông hoá đã **gỡ khỏi `index.html`**; `desktop.html` không phải sửa vì
+khổ đó vẫn ẩn nút. Đo lại: cả 5 bộ da ra `9999px`, 36×36, đồng nhất trên mọi thẻ sản phẩm.
+Ghi vào §3.2 thành ngoại lệ thứ hai, đúng như phương án C đã nêu.
+*(Ghi chú lịch sử đáng giữ: từ 20/08 tới 25/08 luật ghi "vuông" nhưng demo vẫn tròn — rule
+`border-radius: 0` là code chết vì markup đặt `border-radius` **inline**. Tức bản đang chạy suốt
+5 ngày qua chính là bản user vừa chốt.)*
 
 **5. Xám `#f7f7f7` và mặt hồng `#fef2f2`**
 → **Đề xuất: bỏ cả hai.** `#f7f7f7` nhập vào `#f2f2f2`; badge `-%` giữ chữ đỏ, bỏ nền tô.
@@ -654,9 +690,10 @@ khối toàn app khai đúng các giá trị đó cho mọi màn.
 3. **"Hết hàng" = gạch ngang + mực phụ `#666`** (`.chip.off` mobile · `.pc-size.is-oos`
    desktop) — thay cách hạ mực xuống `#999`/`#a3a3a3` (dưới sàn đọc được của §2.1). Bỏ luôn
    mảng nền `rgba(0,0,0,.04)` của chip: mặt thứ ba không có trong §2.2.
-4. **`.quick-add` vuông** (mobile; desktop vẫn ẩn) — giữ chức năng thêm nhanh, thôi làm vật
-   thể tròn duy nhất trên bộ da vuông. `#topFab` cũng **vuông + bỏ bóng** (§3.3 đã ghi tên nó;
-   khổ desktop có thêm nhánh `:hover` đổ bóng, đã tắt cả hai).
+4. ~~**`.quick-add` vuông** (mobile; desktop vẫn ẩn) — giữ chức năng thêm nhanh, thôi làm vật
+   thể tròn duy nhất trên bộ da vuông.~~ **ĐÃ ĐẢO 25/08** — `.quick-add` **tròn lại**, ngoại lệ
+   ghi danh thứ 2 của §3.2 (xem Phần 6 việc 4). `#topFab` **KHÔNG đảo theo**: vẫn **vuông + bỏ
+   bóng** (§3.3 đã ghi tên nó; khổ desktop có thêm nhánh `:hover` đổ bóng, đã tắt cả hai).
 
 ### 7.3 Các việc Phần 6 nay đã thi hành trên CẢ 2 BẢN
 

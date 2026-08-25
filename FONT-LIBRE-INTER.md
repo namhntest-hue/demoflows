@@ -850,3 +850,117 @@ Khối `if (s[6])` phải đứng **SAU** `if (s[5]) applyFontPair(s[5])`, cùng
 popover hứa "Libre Bodoni + Inter" nhưng gác F1 chặn nên brand PDP vẽ ra `Inter 24/32`. Chốt
 phương án **C** ở 13.8 (bỏ gác) đã xử: desktop nay có 2–5 phần tử Bodoni mỗi màn, dấu tích và
 thứ vẽ ra khớp nhau ở cả 2 khổ.
+
+### 13.11 Cụm accordion PDP: một cỡ 14, không chữ hoa *(chốt user 25/08)*
+
+Lệnh user: *"Trong pdp ở skin-li, các accordions sẽ không uppercase toàn bộ, chỉ tăng font lên
+14, tăng nhẹ font weight là được"*.
+
+Đây là quyết định mà khối `skin-li` trước đây **cố ý không lấy** của Maika — ghi thẳng ở đầu
+khối: *"Maika còn một quyết định riêng mà bộ da này KHÔNG lấy: cụm accordion PDP một cỡ 14 chữ
+thường"*. Nay lấy, và lấy **đúng bằng số của Maika** để 2 bộ da không đẻ ra bậc thứ ba.
+
+| | nhãn (`.acc-trigger > span:first-child`) | nội dung (`.acc-inner`) |
+|---|---|---|
+| `skin-mt` *(không đổi)* | 12/16 · 500 · **HOA** — riêng pdp3 14/20 · 500 · HOA | 12/16 · 400 · thường |
+| **`skin-li` sau lượt này** | **14/20 · 500 · chữ thường** | **14/20 · 400 · chữ thường** |
+| Maika *(để so)* | 14/20 · 500 · chữ thường | 14/20 · 400 · chữ thường |
+
+*"Tăng nhẹ font weight"* chỉ có một nghĩa: **500**. §1.1 cấm hẳn 300 · 600 · 700 nên không có
+nấc nào khác để nhích.
+
+**`500` + chữ thường là NGOẠI LỆ, không phải sơ suất.** §1.1 khai `500` và `chữ hoa` là cặp
+không tách rời. Tiền lệ đã ghi danh: Maika mang đúng cặp này ở chính cụm này, và trong CHÍNH bộ
+da gốc thì trigger accordion ở **footer** (12/16 · 500) và ở **giỏ hàng** (14/20 · 500) vốn đã
+là 500 từ trước — cụm PDP mới là chỗ lệch, không phải chỗ này.
+
+**Lệnh này gom 3 mức về 1.** Đo trước khi sửa (`skin-li`): nhãn `12/16 · 500 · HOA` ở 5 bản và
+`14/20 · 500 · HOA` ở riêng pdp3; nội dung `12/18` (mục 5 vừa kéo lên) trừ bảng thông số của
+pdp2 còn `12/16`.
+
+**Hai chỗ phải xử kèm, không thì rule mới không tới đích:**
+
+1. **Gỡ thân accordion PDP khỏi danh sách F5** (13.2 mục 4 / mục 5 trong code). Hook cũ
+   `[data-pdp-acc] .acc-inner :is(p, div).text-[12px]` là **(0,5,2)**, rule mới là **(0,4,2)** —
+   để lại thì hook cũ THẮNG và riêng thân accordion tuột về 12/18 trong khi nhãn đã 14/20.
+   Gỡ được vì 14/20 tự đạt F5: điều kiện không chạm dòng của Inter là `1,14 × cỡ` = 15,96 ≤ 20.
+   Danh sách F5 nay còn **6 hook**. Accordion **CHECKOUT** (`#shipOpts`/`#ckSections`) **GIỮ**
+   trong danh sách — nó không nằm trong `[data-pdp-acc]` nên rule mới không với tới, và nó vẫn
+   ở cỡ 12.
+2. **Khai cả nhánh `[data-screen="pdp3"]`.** Rule pdp3 của `skin-mt` là (0,4,2) — đúng bằng
+   nhánh chung — và khai SAU trong file nên cùng specificity thì nó thắng. Với cỡ/dòng thì vô
+   hại (cùng 14/20), nhưng để vậy là để rule của bộ da khác quyết số của bộ da mình. Thêm nhánh
+   cho lên (0,5,2). Maika làm y vậy.
+
+**Bảng thông số lên 14 luôn.** Mục 5 trước đây cố ý chừa `span` để không đổi nhịp bảng; nay cả
+cụm cùng một cỡ nên không còn lý do chừa — `:is(div, p, span)` phủ cả 3 (2 file dựng ruột
+accordion khác nhau: mobile để chữ thẳng trong `div`, desktop bọc thêm `<p>` và hàng thông số
+`<span>`).
+
+**Đo sau khi áp — cả 2 bản, cả 6 bản PDP:**
+
+| | kết quả |
+|---|---|
+| Nhãn · nội dung | **14/20 · 500 · thường** · **14/20 · 400 · thường** — giống Maika từng con số |
+| Số tổ hợp typo ở PDP | 9 → **10** *(thêm đúng 1: `Inter 14/20 500 thường` của nhãn)* |
+| Vi phạm ngoài 2 ngoại lệ ghi danh | **0** ở cả 4 mục |
+| 12/16 mà chữ xuống dòng | **0** *(F5 vẫn đạt)* |
+| `.acc-inner` bị kẹp chữ khi mở hết | **0** — cơ chế mở là `grid-template-rows: 0fr → 1fr`, cao theo nội dung nên không có `max-height` để tràn. Hộp cao thêm: 64 → **76px** (thân 3 dòng), bảng thông số pdp2 192 → **224px** |
+| `skin-mt` · accordion FOOTER · ghi chú accordion CHECKOUT | **không đổi** *(12/16·500·HOA · 12/16·500·HOA · 12/18)* |
+| Console | sạch |
+
+**HỆ QUẢ phải nói rõ:** sau lượt này **6 bản PDP của `skin-li` không còn khác nhau ở cụm
+accordion** — kể cả pdp3 (vốn là bản duy nhất ở cỡ 14) và pdp2 (bảng thông số). Lệnh là "toàn
+bộ" nên tôi làm toàn bộ; muốn giữ pdp3 khác để còn so thì nói.
+
+### 13.12 `skin-li` lên làm BỘ DA VÀO-TRANG *(chốt user 25/08)*
+
+Lệnh user: *"từ giờ mặc định vào sẽ là chọn skin-li nhé"*. Trước đó là `skin-mt` trơn (chốt
+19/08). Vì `skin-li` = `skin-mt` + lớp phủ hệ chữ, đây là **thêm một class**, không phải đổi
+bộ da nền.
+
+**Đổi mặc định = sửa 4 chỗ, ở cả 2 file** — trước đây chỉ 2, vì bộ da mới dùng một CẶP font:
+
+| # | Chỗ | Từ | Thành |
+|---|---|---|---|
+| 1 | class thẻ `<html>` | `skin-mt` | **`skin-mt skin-li`** |
+| 2 | `let currentSkin` | `'mytheresa'` | **`'libre-inter'`** |
+| 3 | `let currentFont` | `'montserrat'` | **`''`** — skin-li không tích phông ĐƠN nào |
+| 4 | `let currentPair` | `''` | **`'couture'`** — tích CẶP qua ô thứ 7 |
+
+Kèm một sửa nhỏ ở markup popover: dấu tích cặp font trước đây khai cứng `opacity-0` nên chỉ
+hiện sau khi user tự đổi bộ da một lượt; nay render từ `currentPair` (`${id === currentPair ?
+'' : 'opacity-0'}`) để đúng ngay từ lần vẽ đầu.
+
+**Vẫn KHÔNG gọi `applySkin()` lúc boot** — giữ đúng lý lẽ của chốt 19/08: gọi bằng JS thì trang
+vẽ một nhịp bằng bảng màu gốc rồi mới nhảy sang bộ da, nhìn ra nháy. Ba biến 2·3·4 chỉ lo DẤU
+TÍCH; mặt chữ đến từ 2 token CSS của bộ da, **không** đi qua `applyFontPair` (F3 cấm
+`font-size-adjust`).
+
+**Đo lúc VÀO TRANG, không gọi một hàm JS nào — cả 2 bản:**
+
+| | kết quả |
+|---|---|
+| class `<html>` | `skin-mt skin-li` |
+| Tích Bộ da · phông đơn · cặp font | `libre-inter` · **rỗng** · `couture` |
+| Biến inline `--font-app`/`--font-head`/`--pair-adj` | không có cái nào |
+| class `.font-pair` / `.font-override` | không |
+| `font-size-adjust` trên `body` | `none` *(F3 đạt)* |
+| Mặt chữ thân bài | Inter |
+| Brand PDP | **24/32 · 400 · thường · Libre Bodoni** *(cả desktop dpr 1 — nhờ phương án C ở 13.8)* |
+| Nhãn accordion PDP | 14/20 · 500 · thường · Inter |
+| Title lớp nổi · quick add | 16/24 · 500 · HOA · Inter · nút tròn `9999px` |
+| Đổi sang `skin-mt` / `default` rồi quay lại | dấu tích và class về đúng trạng thái mỗi lượt |
+| Console | sạch |
+
+**⚠ HỆ QUẢ QUAN TRỌNG NHẤT: `skin-li` thôi là "bộ da thử".** Từ nay mọi thứ trong nó là thứ
+khách mở ra thấy ngay — **kể cả 3 chỗ lệch luật đã ghi danh**:
+
+1. **Bậc trưng bày 24 không gác `@media`** → lệch F1 (0,74 device px ở dpr 1 · 0,93 ở dpr 1,25).
+   Xem 13.8. Đây là chỗ đáng cân lại nhất, vì nay nó là mặt tiền chứ không còn là bản thử.
+2. **`500` chữ thường** ở cây bộ lọc và ở cụm accordion PDP → 2 ngoại lệ của §1.1.
+3. **Cỡ 16 của title lớp nổi** → ngoài thang §1.2 (thang đã bỏ hẳn bậc 16).
+
+Luật §4.5 của `STYLE-RULES.md` đã cập nhật theo: bộ da còn lại để thử nghiệm là `skin-mp`
+(Editorial) và Maika. `skin-mt` thì **chặt hơn trước** — `skin-li` là lớp phủ trên chính nó nên
+sửa `skin-mt` là sửa luôn mặt tiền.

@@ -9,7 +9,8 @@
 > nhận: mobile 3.465 / desktop 3.757 phần tử, 100% chỗ lệch so với `skin-mt` đều dính
 > `font-family` (kèm width/height do Inter hẹp hơn Montserrat) — **0 chỗ lệch về style**.
 >
-> · **A3 đã vá** ở chính `skin-mt`: `.quick-add` nay vuông thật (chi tiết trong bảng A dưới).
+> · ~~**A3 đã vá** ở chính `skin-mt`: `.quick-add` nay vuông thật (chi tiết trong bảng A dưới).~~
+> **A3 GỠ HẲN 25/08** — user chốt *"Icon quick add to cart ở bản mobile sẽ hình tròn như cũ"*, nên `.quick-add` trở về tròn `9999px` ở cả 5 bộ da; không còn gì để sync.
 > · **A2** lấy trọn theo bạn chọn: ẩn nút, dùng dải size hover.
 > · Ngoại lệ duy nhất giữ lại: cụm accordion PDP của Maika 14/20 · nhãn 500 · **chữ thường**.
 > · **G và H CHƯA làm** — đang chờ bạn quyết sau khi xem phần chỉ rõ ở cuối file này.
@@ -36,7 +37,7 @@
 |---|---|---|---|
 | **A1** | **Mobile: quick add chỉ còn TÊN + MÀU + SIZE.** Bỏ hẳn dải ảnh gallery và khối giá **ở tầng markup** (`quickAddBody`, chốt 19/08 — bỏ ở markup chứ không ẩn bằng CSS vì dải ảnh tải tới 9 ảnh) | dựng đủ gallery 9 ảnh + giá + badge `-%` + giá gạch | [index.html:10392](index.html:10392) · [index.html:10412](index.html:10412). Đây là **cấu trúc**, không phải style |
 | **A2** | **Desktop: BỎ nút quick add, thay bằng dải size hiện khi rê chuột.** `.quick-add{display:none!important}` + 8 rule dựng `.pc-sizes` (lưới 3 cột · `.is-few` xếp hàng ngang · hiện khi `.group:hover` hoặc `:focus-within`) và `.pc-size` (cao 36 · pad 0 8 · hover nền ghost · `.is-oos` gạch ngang) | nút tròn 36×36 vẫn hiện · `.pc-sizes` `display:none`, **tính năng không tồn tại** | Đo được: skin-mt `pc-sizes` = `grid`, 3 bộ kia = `none`. Đây là upgrade **tương tác**, nặng nhất trong danh sách |
-| **A3** | Mobile: quick add **vuông** (chốt Phần 6 việc 4, 20/08) | tròn 9999px | ⚠ **RULE ĐANG KHÔNG ĂN Ở CHÍNH skin-mt**: markup đặt `border-radius: var(--rounded-infinite, 9999px)` **inline** nên thắng rule bộ da. Đo ra skin-mt vẫn tròn → phải sửa bug này trước, chưa có gì để sync |
+| ~~**A3**~~ *(hết hiệu lực 25/08)* | ~~Mobile: quick add **vuông** (chốt Phần 6 việc 4, 20/08)~~ → **tròn**, ngoại lệ §3.2 thứ 2 | tròn 9999px — **nay khớp** | ⚠ **RULE ĐANG KHÔNG ĂN Ở CHÍNH skin-mt**: markup đặt `border-radius: var(--rounded-infinite, 9999px)` **inline** nên thắng rule bộ da. Đo ra skin-mt vẫn tròn → phải sửa bug này trước, chưa có gì để sync |
 | **A4** | `.pc-brand` = 14/20 · 400 · chữ thường (chốt 24/08, đảo C1) | skin-mp + Maika **12/18** · 400 · thường · mặc định 14/20 · **500** | Lệch cả cỡ lẫn độ đậm |
 | **A5** | `.pc-badges { gap: 8px }` (desktop) | nhịp badge của base | Nhỏ |
 
@@ -101,7 +102,7 @@
 
 ## Gợi ý thứ tự nếu bạn muốn tôi khuyến nghị
 
-1. **A3 trước tiên** — nó là **bug**, không phải việc sync: rule của chính `skin-mt` đang bị inline style đè.
+1. ~~**A3 trước tiên** — nó là **bug**, không phải việc sync: rule của chính `skin-mt` đang bị inline style đè.~~ **XONG theo hướng ngược lại 25/08:** user chốt giữ tròn, nên rule vuông hoá gỡ hẳn — 5 bộ da nay cùng `9999px`, hết lệch.
 2. **A2** — upgrade đáng giá nhất về trải nghiệm (dải size hover thay nút quick add), và là thứ 3 bộ da kia **không có tính năng**, chứ không phải khác màu.
 3. **A1** — cùng cụm quick add, gọn: chỉ là mở/đóng 2 nhánh markup theo bộ da.
 4. **B1 + G1** — 2 chốt đã duyệt ở Phần 6, sync là trả đúng quyết định cho mọi bộ da.
