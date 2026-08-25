@@ -138,6 +138,16 @@ Khác biệt responsive nằm ở **bố cục và mật độ**, không nằm �
 > duy nhất cho cụm accordion PDP một cỡ chữ duy nhất — `skin-mt` vẫn giữ 3 mức khác nhau
 > (pdp/4/5/6 · pdp2 · pdp3) để còn so. Khối *"MAIKA: CỤM ACCORDION PDP VỀ MỘT CỠ 14"*,
 > khai giống hệt ở 2 file.
+>
+> **Bổ sung cùng ngày** (*"ở skin-maika, accordion tăng fontweight lên 1 nấc nhé, áp dụng
+> toàn bộ và cả desktop và mobile"*): **nhãn** cụm accordion PDP lên **500**, **nội dung giữ
+> 400**. Đây KHÔNG phải ngoại lệ mới của §1.1: luật cặp `500 ⇔ HOA` mở đầu bằng *"mọi chữ
+> trong `skin-mt`"*, mà Maika là `skin-mp skin-mk`. Đo trên trang: trong Maika, trigger
+> accordion ở **footer** (14/21 · 500) và ở **giỏ hàng** (14/20 · 500) đã là 500 chữ thường
+> từ trước — cụm PDP ở 400 mới là chỗ lệch trong chính bộ da của nó. Nội dung không lên theo
+> vì đó là đoạn văn: §1.1 bảo muốn nội dung nổi hơn thì lên bậc **cỡ**, và cỡ đã lên 14 rồi.
+> **Chưa đụng:** accordion **checkout** trong Maika vẫn 400 (footer/giỏ đã 500, không nâng
+> tiếp được — 600 bị §1.1 cấm hẳn).
 
 ### 1.3 Line-height đi kèm cỡ chữ, không bao giờ tách rời
 

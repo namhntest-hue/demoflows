@@ -107,17 +107,38 @@ input { font: inherit; letter-spacing: inherit; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   1 — THANG CHỮ (§1.2) — 7 vai, 5 cỡ, cỡ đi CẶP với dòng (§1.3)
-   Khai thành class thay vì rải utility: mỗi rule ở đây khai đủ 2 trục nên
-   không thể sinh lại lỗi "đổi cỡ quên dòng" đã làm vỡ skin-mt.
-   Tracking không khai lại — body của theme.css đã đặt 0.5px cho MỌI chữ (§1.4).
+   1 — THANG CHỮ — TÊN CLASS LÀ KEY CỦA `tailwind.preset.js` (§3 sổ tay)
+   Trước đây trang khai thang riêng `.t1…t7`. Đúng số nhưng SAI TÊN: port sang
+   build Hyvä/React là phải dịch từng class. Nay dùng thẳng key của preset, nên
+   markup ở đây copy sang bản Tailwind là chạy, và ngược lại — component shadcn
+   copy vào đây cũng ăn đúng thang.
+
+   | class        | ra     | vai (§1.2) |
+   | text-xl      | 24/32  | T1 tiêu đề trang · hero      (preset: text-xl = text-2xl) |
+   | text-lg      | 18/24  | T2 tiêu đề mục · sheet · modal |
+   | text-md      | 14/20  | T3 thân bài cấp 1 — xem CẢNH BÁO dưới |
+   | text-sm      | 12/16  | T4 thân bài 1 dòng: nút, giá, hàng  (preset: = text-xs) |
+   | text-base    | 12/18  | T5 thân bài nhiều dòng |
+   | text-micro   | 10/14  | T7 vi mô |
+   | .label       | 12/16 · 500 · HOA | T6 nhãn cấp 2 — theme.css cấp |
+   | .label-1     | 14/20 · 500 · HOA | T3 nhãn cấp 1 — theme.css cấp |
+
+   CẢNH BÁO — `text-md` CHƯA CÓ TRONG PRESET:
+   Sổ tay §3 viết *"Không có 14px nội dung — cỡ 14 chỉ sống trong .label-1"*.
+   Nhưng STYLE-RULES §1.5 mục 6 (chốt SAU, 24/08/2026) đã rút tên thương hiệu
+   khỏi vai chữ hoa và đưa về **họ nội dung T3 14/20 · 400 · chữ thường**. Tức
+   luật nay CÓ 14px nội dung mà preset chưa có key cho nó. Trang này dùng vai đó
+   ở 3 chỗ: tên nhà mốt trên card, tiêu đề danh mục, tiêu đề hàng dịch vụ.
+   → Phải thêm key `text-md: ['14px', '20px']` vào `tailwind.preset.js` và cập
+   nhật bảng §3 của sổ tay. Chưa làm ở đây vì đó là file BÀN GIAO, sửa nó là một
+   commit riêng cùng với STYLE-RULES.
    ══════════════════════════════════════════════════════════════════════════ */
-.t1 { font-size: 24px; line-height: 32px; }  /* tiêu đề trang / hero */
-.t2 { font-size: 18px; line-height: 24px; }  /* tiêu đề mục */
-.t3 { font-size: 14px; line-height: 20px; }  /* thân bài cấp 1 · tên nhà mốt */
-.t4 { font-size: 12px; line-height: 16px; }  /* 1 dòng: nút, giá, hàng danh sách */
-.t5 { font-size: 12px; line-height: 18px; }  /* nhiều dòng: mô tả, đoạn văn */
-.t7 { font-size: 10px; line-height: 14px; }  /* vi mô: badge, nhãn pháp lý */
+.text-xl { font-size: 24px; line-height: 32px; }
+.text-lg { font-size: 18px; line-height: 24px; }
+.text-md { font-size: 14px; line-height: 20px; }
+.text-sm { font-size: 12px; line-height: 16px; }
+.text-base { font-size: 12px; line-height: 18px; }
+.text-micro { font-size: 10px; line-height: 14px; }
 .ink-body { color: var(--ink-body); }
 .ink-mute { color: var(--ink-mute); }
 
@@ -167,8 +188,12 @@ html.props-eyebrow .hp-eyebrow { display: block; }
    cùng tầng viền với chính nút. Nút ĐẶC không có kẻ trong: kẻ trắng trên đen
    là sắc viền thứ tư, mà §3.1 chỉ có 3.
    ══════════════════════════════════════════════════════════════════════════ */
+/* Khuôn Button của shadcn: chính nút mang `text-sm` (12/16 theo preset), có
+   size `sm` cho form, và có trạng thái disabled — 3 thứ component gốc luôn có
+   mà bản trước thiếu. Chữ 400: §5 sổ tay bỏ `font-medium` khỏi Button. */
 .hp-btn {
   display: inline-flex; align-items: stretch; min-height: 48px;
+  font-size: 12px; line-height: 16px;
   border: 1px solid var(--border-strong);
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease), transform .2s var(--ease);
 }
@@ -176,7 +201,11 @@ html.props-eyebrow .hp-eyebrow { display: block; }
 .hp-btn__i { display: flex; align-items: center; justify-content: center; width: 48px; }
 .hp-btn__i svg { transition: transform var(--dur) var(--ease); }
 .hp-btn:hover .hp-btn__i svg { transform: translate(3px, -1px); }
-.hp-btn:active { transform: scale(.99); }   /* nhấn xuống — transform, không đụng layout */
+.hp-btn:active { transform: scale(.99); }
+.hp-btn:disabled, .hp-btn[aria-disabled="true"] { pointer-events: none; opacity: .5; }
+.hp-btn--sm { min-height: 40px; }                  /* size sm — dùng cho form */
+.hp-btn--sm .hp-btn__l { padding: 0 16px; }
+.hp-btn--sm .hp-btn__i { width: 40px; }   /* nhấn xuống — transform, không đụng layout */
 
 .hp-btn--solid { background: var(--primary); color: var(--primary-foreground); }
 .hp-btn--solid:hover { background: var(--primary-hover); }
@@ -525,13 +554,20 @@ html.skin-min.no-grain body::after { display: none; }
 /* ══════════════════════════════════════════════════════════════════════════
    3 — NÚT — vuông (§3.2), không bóng (§3.3)
    ══════════════════════════════════════════════════════════════════════════ */
-.nu-btn { display: inline-flex; align-items: stretch; min-height: 48px; border: 1px solid var(--border-strong); transition: background var(--dur) var(--ease), color var(--dur) var(--ease), transform .18s var(--ease); }
+/* Khuôn Button của shadcn: chính nút mang `text-sm` (12/16 theo preset), có
+   size `sm` cho form, và có trạng thái disabled — 3 thứ component gốc luôn có
+   mà bản trước thiếu. Chữ 400: §5 sổ tay bỏ `font-medium` khỏi Button. */
+.nu-btn { display: inline-flex; align-items: stretch; min-height: 48px; font-size: 12px; line-height: 16px; border: 1px solid var(--border-strong); transition: background var(--dur) var(--ease), color var(--dur) var(--ease), transform .18s var(--ease); }
 .nu-btn__l { display: flex; align-items: center; padding: 0 24px; }
 .nu-btn__i { display: flex; align-items: center; justify-content: center; width: 48px; }
 .nu-btn__i svg { transition: transform var(--dur) var(--ease); }
 .nu-btn__i svg path { stroke: currentColor; }
 .nu-btn:hover .nu-btn__i svg { transform: translate(3px, -1px); }
 .nu-btn:active { transform: scale(.98); }
+.nu-btn:disabled, .nu-btn[aria-disabled="true"] { pointer-events: none; opacity: .5; }
+.nu-btn--sm { min-height: 40px; }                  /* size sm — dùng cho form */
+.nu-btn--sm .nu-btn__l { padding: 0 16px; }
+.nu-btn--sm .nu-btn__i { width: 40px; }
 .nu-btn--solid { background: var(--primary); color: var(--primary-foreground); }
 .nu-btn--solid:hover { background: var(--primary-hover); }
 .nu-btn--out { background: var(--background); color: var(--foreground); }
@@ -643,7 +679,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 .hp-card__was { color: var(--ink-mute); text-decoration: line-through; }
 .hp-sw { display: flex; align-items: center; gap: 8px; padding-top: 4px; }
 .hp-sw__b { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 9999px; }
-.hp-sw__b[aria-current] { border-color: var(--border-strong); }
+.hp-sw__b[data-state="checked"] { border-color: var(--border-strong); }
 .hp-sw__d { width: 16px; height: 16px; border-radius: 9999px; }
 
 /* Lưới sản phẩm: 4 cột desktop; mobile thành dải trượt có điểm dừng, đúng
@@ -708,7 +744,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
    ══════════════════════════════════════════════════════════════════════════ */
 .hp-news { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
 .hp-news__f { display: flex; width: 100%; max-width: 480px; margin-top: 8px; }
-.hp-news__i { flex: 1; min-width: 0; height: 48px; padding: 0 12px; background: var(--background); border: 1px solid var(--input); border-right: 0; color: var(--ink); outline: none; transition: border-color var(--dur) var(--ease); }
+.hp-news__i { flex: 1; min-width: 0; height: 40px; padding: 0 12px; background: var(--background); border: 1px solid var(--input); border-right: 0; color: var(--ink); outline: none; transition: border-color var(--dur) var(--ease); }
 .hp-news__i::placeholder { color: var(--ink-mute); }
 .hp-news__i:focus { border-color: var(--border-strong); }
 
@@ -758,8 +794,8 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 .hp-props__b { padding: 4px 12px 10px; }
 .hp-props__r { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; width: 100%; text-align: left; }
 .hp-props__r + .hp-props__r { border-top: 1px solid var(--border-subtle); }
-.hp-props__box { flex: none; width: 16px; height: 16px; margin-top: 1px; border: 1px solid var(--border-strong); display: flex; align-items: center; justify-content: center; color: transparent; }
-.hp-props__r[aria-pressed="true"] .hp-props__box { background: var(--primary); color: var(--primary-foreground); }
+.hp-props__box { flex: none; width: 16px; height: 16px; margin-top: 1px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: transparent; }
+.hp-props__r[data-state="checked"] .hp-props__box { background: var(--primary); color: var(--primary-foreground); }
 .hp-props.is-min { width: auto; }
 .hp-props.is-min .hp-props__b { display: none; }
 .hp-props.is-min .hp-props__h { border-bottom: 0; }
@@ -925,7 +961,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 
 .nu-news { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; padding: 64px 0; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
 .nu-news__f { display: flex; width: 100%; max-width: 480px; margin-top: 8px; }
-.nu-news__i { flex: 1; min-width: 0; height: 48px; padding: 0 12px; background: var(--background); border: 1px solid var(--input); border-right: 0; color: var(--ink); outline: none; transition: border-color var(--dur) var(--ease); }
+.nu-news__i { flex: 1; min-width: 0; height: 40px; padding: 0 12px; background: var(--background); border: 1px solid var(--input); border-right: 0; color: var(--ink); outline: none; transition: border-color var(--dur) var(--ease); }
 .nu-news__i::placeholder { color: var(--ink-mute); }
 .nu-news__i:focus { border-color: var(--border-strong); }
 
@@ -949,8 +985,8 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 .nu-props__b { padding: 4px 12px 10px; }
 .nu-props__r { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; width: 100%; text-align: left; }
 .nu-props__r + .nu-props__r { border-top: 1px solid var(--border-subtle); }
-.nu-props__box { flex: none; width: 16px; height: 16px; margin-top: 1px; border: 1px solid var(--border-strong); display: flex; align-items: center; justify-content: center; color: transparent; }
-.nu-props__r[aria-pressed="true"] .nu-props__box { background: var(--primary); color: var(--primary-foreground); }
+.nu-props__box { flex: none; width: 16px; height: 16px; margin-top: 1px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: transparent; }
+.nu-props__r[data-state="checked"] .nu-props__box { background: var(--primary); color: var(--primary-foreground); }
 .nu-props.is-min { width: auto; }
 .nu-props.is-min .nu-props__b { display: none; }
 .nu-props.is-min .nu-props__h { border-bottom: 0; }
@@ -993,7 +1029,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
   .nu-tree__c, .nu-foot__col { gap: 2px; }
   .nu-tree__c a, .nu-foot__col a { padding: 8px 0; }     /* 18 -> 34px, nhịp 36 */
   .nu-tree__c a::after, .nu-foot__col a::after { bottom: 8px; }
-  .nu-foot__col > p.label, .nu-foot__col > p.t3 { margin-bottom: 6px; }
+  .nu-foot__col > p.label, .nu-foot__col > p.text-md { margin-bottom: 6px; }
   .nu-props { display: none; }
   .nu-top { right: var(--gut); bottom: var(--gut); }
 }
@@ -1113,7 +1149,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
   padding: 48px 0; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
 .bt-news__x { display: flex; flex-direction: column; gap: 10px; }
 .bt-news__f { display: flex; max-width: 420px; margin-top: 10px; }
-.bt-news__i { flex: 1; min-width: 0; height: 48px; padding: 0 12px; background: var(--background);
+.bt-news__i { flex: 1; min-width: 0; height: 40px; padding: 0 12px; background: var(--background);
   border: 1px solid var(--input); border-right: 0; color: var(--ink); outline: none; transition: border-color var(--dur) var(--ease); }
 .bt-news__i::placeholder { color: var(--ink-mute); }
 .bt-news__i:focus { border-color: var(--border-strong); }
@@ -1264,31 +1300,31 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 
       <div class="hp-hero__copy">
         <p class="label ink-mute rv" style="--d:.05s">Bộ sưu tập Thu Đông 2026</p>
-        <h1 class="hp-hero__h1 t1 rv" style="--d:.1s">Broken Jewels — đá quý vỡ trên nền lụa twill</h1>
-        <p class="hp-hero__lead t5 ink-body rv" style="--d:.15s">
+        <h1 class="hp-hero__h1 text-xl rv" style="--d:.1s">Broken Jewels — đá quý vỡ trên nền lụa twill</h1>
+        <p class="hp-hero__lead text-base ink-body rv" style="--d:.15s">
           Hoạ tiết được dựng lại từ kho lưu trữ của maison, in trên lụa twill dệt tại Ý.
           Có mặt tại boutique DAFC và trên cửa hàng trực tuyến từ hôm nay.
         </p>
         <div class="hp-hero__cta rv" style="--d:.2s">
           <button class="hp-btn hp-btn--solid">
-            <span class="hp-btn__l t4">Mua hàng nữ</span>
+            <span class="hp-btn__l text-sm">Mua hàng nữ</span>
             <span class="hp-btn__i" aria-hidden="true">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 18 18 6m0 0h-8m8 0v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
           </button>
           <button class="hp-btn hp-btn--out">
-            <span class="hp-btn__l t4">Xem cả bộ sưu tập</span>
+            <span class="hp-btn__l text-sm">Xem cả bộ sưu tập</span>
             <span class="hp-btn__i" aria-hidden="true">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 18 18 6m0 0h-8m8 0v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
           </button>
         </div>
         <div class="hp-hero__meta rv" style="--d:.25s">
-          <span class="t7 ink-mute">Versace</span>
+          <span class="text-micro ink-mute">Versace</span>
           <span class="hp-dot" aria-hidden="true"></span>
-          <span class="t7 ink-mute">42 mẫu</span>
+          <span class="text-micro ink-mute">42 mẫu</span>
           <span class="hp-dot" aria-hidden="true"></span>
-          <span class="t7 ink-mute">Giao từ 26/08/2026</span>
+          <span class="text-micro ink-mute">Giao từ 26/08/2026</span>
         </div>
       </div>
 
@@ -1312,19 +1348,19 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
     <div class="hp-hair hp-trust rv">
       <div class="hp-trust__c">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5 19 6v6c0 4.2-3 7.2-7 8.5-4-1.3-7-4.3-7-8.5V6l7-2.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="t4">100% hàng chính hãng</span>
+        <span class="text-sm">100% hàng chính hãng</span>
       </div>
       <div class="hp-trust__c">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7h11v10H3zM14 10h4l3 3v4h-7z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><circle cx="7" cy="18" r="1.6" stroke="currentColor" stroke-width="1.2"/><circle cx="17.5" cy="18" r="1.6" stroke="currentColor" stroke-width="1.2"/></svg>
-        <span class="t4">Giao nhanh trong 2 giờ</span>
+        <span class="text-sm">Giao nhanh trong 2 giờ</span>
       </div>
       <div class="hp-trust__c">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.7-5.6M20 12a8 8 0 0 1-13.7 5.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M17.5 3.5v3.2h-3.2M6.5 20.5v-3.2h3.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="t4">Đổi trả trong 30 ngày</span>
+        <span class="text-sm">Đổi trả trong 30 ngày</span>
       </div>
       <div class="hp-trust__c">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9.5 12 4l8 5.5V20H4V9.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M9.5 20v-6h5v6" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
-        <span class="t4">12 boutique toàn quốc</span>
+        <span class="text-sm">12 boutique toàn quốc</span>
       </div>
     </div>
   </div>
@@ -1338,9 +1374,9 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
     <div class="hp-sechead rv">
       <div class="hp-sechead__t">
         <p class="hp-eyebrow label">Danh mục</p>
-        <h2 class="t2">Mua theo danh mục</h2>
+        <h2 class="text-lg">Mua theo danh mục</h2>
       </div>
-      <button class="hp-more t4">Tất cả danh mục
+      <button class="hp-more text-sm">Tất cả danh mục
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -1357,15 +1393,15 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
     <div class="hp-sechead rv">
       <div class="hp-sechead__t">
         <p class="hp-eyebrow label">Vừa về</p>
-        <h2 class="t2">Sản phẩm mới</h2>
+        <h2 class="text-lg">Sản phẩm mới</h2>
       </div>
-      <button class="hp-more t4">Xem tất cả
+      <button class="hp-more text-sm">Xem tất cả
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
-    <div class="hp-tabs t4 rv" id="tabs" role="group" aria-label="Lọc sản phẩm mới theo danh mục"></div>
+    <div class="hp-tabs text-sm rv" id="tabs" role="tablist" aria-label="Lọc sản phẩm mới theo danh mục"></div>
     <div style="height:24px"></div>
-    <div class="hp-prods" id="prods"></div>
+    <div class="hp-prods" id="prods" role="tabpanel" tabindex="0"></div>
   </div>
 </section>
 
@@ -1378,9 +1414,9 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
     <div class="hp-sechead rv">
       <div class="hp-sechead__t">
         <p class="hp-eyebrow label">Tiêu điểm</p>
-        <h2 class="t2">Tiêu điểm tháng này</h2>
+        <h2 class="text-lg">Tiêu điểm tháng này</h2>
       </div>
-      <button class="hp-more t4">Tất cả câu chuyện
+      <button class="hp-more text-sm">Tất cả câu chuyện
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -1390,12 +1426,12 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
         <div class="hp-edit__m rv-img rv"><img src="assets/p1-0.jpg" alt="Bộ sưu tập Broken Jewels" loading="lazy"></div>
         <div class="hp-edit__x">
           <p class="label ink-mute">Bộ sưu tập</p>
-          <h3 class="t1">Lụa in hoạ tiết, mặc từ sáng tới tiệc</h3>
-          <p class="t5 ink-body">
+          <h3 class="text-xl">Lụa in hoạ tiết, mặc từ sáng tới tiệc</h3>
+          <p class="text-base ink-body">
             Bốn cách phối đầm lụa Broken Jewels cho một ngày ở Sài Gòn — từ họp sáng
             tới bữa tối muộn. Cùng chất liệu, đổi phụ kiện.
           </p>
-          <button class="hp-more t4">Đọc bài
+          <button class="hp-more text-sm">Đọc bài
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
@@ -1405,12 +1441,12 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
         <div class="hp-edit__m rv-img rv"><img src="assets/p3-0.jpg" alt="Túi đeo vai da Emblème" loading="lazy"></div>
         <div class="hp-edit__x">
           <p class="label ink-mute">Nghề thủ công</p>
-          <h3 class="t1">Emblème — 42 công đoạn cho một chiếc túi</h3>
-          <p class="t5 ink-body">
+          <h3 class="text-xl">Emblème — 42 công đoạn cho một chiếc túi</h3>
+          <p class="text-base ink-body">
             Da nappa cừu non, khoá Medusa dập nguội, quai điều chỉnh 20 cm.
             Ghi chép từ xưởng của maison tại Ý.
           </p>
-          <button class="hp-more t4">Đọc bài
+          <button class="hp-more text-sm">Đọc bài
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
@@ -1429,9 +1465,9 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
     <div class="hp-sechead rv">
       <div class="hp-sechead__t">
         <p class="hp-eyebrow label">Bán chạy</p>
-        <h2 class="t2">Đang được quan tâm</h2>
+        <h2 class="text-lg">Đang được quan tâm</h2>
       </div>
-      <button class="hp-more t4">Xem tất cả
+      <button class="hp-more text-sm">Xem tất cả
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -1447,9 +1483,9 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
     <div class="hp-sechead rv">
       <div class="hp-sechead__t">
         <p class="hp-eyebrow label">Nhà mốt</p>
-        <h2 class="t2">Thương hiệu tại DAFC</h2>
+        <h2 class="text-lg">Thương hiệu tại DAFC</h2>
       </div>
-      <button class="hp-more t4">Tất cả 25 thương hiệu
+      <button class="hp-more text-sm">Tất cả 25 thương hiệu
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -1468,30 +1504,30 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
       </div>
       <div class="hp-serv__x rv" style="--d:.12s">
         <p class="label ink-mute">Dịch vụ</p>
-        <h2 class="t1">Mua sắm như tại boutique, từ điện thoại của bạn</h2>
-        <p class="t5 ink-body" style="max-width:46ch">
+        <h2 class="text-xl">Mua sắm như tại boutique, từ điện thoại của bạn</h2>
+        <p class="text-base ink-body" style="max-width:46ch">
           Đội ngũ tư vấn của 12 boutique DAFC nhận yêu cầu trực tiếp: giữ hàng,
           tìm size, gói quà, giao trong ngày.
         </p>
         <div class="hp-serv__list">
           <button class="hp-serv__row">
             <span class="x">
-              <span class="t3">Tư vấn mua sắm riêng</span>
-              <span class="t5 ink-mute">Hẹn giờ tại boutique hoặc gọi video, miễn phí</span>
+              <span class="text-md">Tư vấn mua sắm riêng</span>
+              <span class="text-base ink-mute">Hẹn giờ tại boutique hoặc gọi video, miễn phí</span>
             </span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <button class="hp-serv__row">
             <span class="x">
-              <span class="t3">Giao trong ngày</span>
-              <span class="t5 ink-mute">Đặt trước 15:00 tại TP. Hồ Chí Minh và Hà Nội</span>
+              <span class="text-md">Giao trong ngày</span>
+              <span class="text-base ink-mute">Đặt trước 15:00 tại TP. Hồ Chí Minh và Hà Nội</span>
             </span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <button class="hp-serv__row">
             <span class="x">
-              <span class="t3">Gói quà theo yêu cầu</span>
-              <span class="t5 ink-mute">Hộp và thiệp viết tay của maison, không thu thêm phí</span>
+              <span class="text-md">Gói quà theo yêu cầu</span>
+              <span class="text-base ink-mute">Hộp và thiệp viết tay của maison, không thu thêm phí</span>
             </span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
@@ -1509,20 +1545,20 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
   <div class="hp-rail">
     <div class="hp-news rv" style="border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle); padding:56px 0">
       <p class="label ink-mute">Bản tin</p>
-      <h2 class="t1" style="max-width:24ch">Cập nhật thông tin mới nhất từ DAFC</h2>
-      <p class="t5 ink-body" style="max-width:48ch">
+      <h2 class="text-xl" style="max-width:24ch">Cập nhật thông tin mới nhất từ DAFC</h2>
+      <p class="text-base ink-body" style="max-width:48ch">
         Nhận thông tin về các bộ sưu tập và chương trình ưu đãi mới nhất, trước khi lên kệ.
       </p>
       <form class="hp-news__f" id="nsForm" novalidate>
-        <input class="hp-news__i t4" id="nsMail" type="email" inputmode="email" placeholder="ban@email.com" aria-label="Địa chỉ email">
-        <button class="hp-btn hp-btn--solid" type="submit">
-          <span class="hp-btn__l t4">Đăng ký</span>
+        <input class="hp-news__i text-sm" id="nsMail" type="email" inputmode="email" placeholder="ban@email.com" aria-label="Địa chỉ email">
+        <button class="hp-btn hp-btn--solid hp-btn--sm" type="submit">
+          <span class="hp-btn__l text-sm">Đăng ký</span>
           <span class="hp-btn__i" aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </span>
         </button>
       </form>
-      <p class="t7 ink-mute" id="nsNote" style="max-width:52ch">
+      <p class="text-micro ink-mute" id="nsNote" style="max-width:52ch">
         Bằng việc đăng ký, bạn đồng ý với chính sách bảo mật của DAFC. Có thể huỷ nhận tin bất cứ lúc nào.
       </p>
     </div>
@@ -1543,8 +1579,8 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 
       <div class="hp-foot__co rv">
         <img src="assets/logo.png" alt="DAFC" style="height:28px;width:130px;object-fit:contain;object-position:left">
-        <p class="t3">DAFC - A subsidiary of IPPG</p>
-        <div class="hp-foot__links t5 ink-body" style="gap:4px">
+        <p class="text-md">DAFC - A subsidiary of IPPG</p>
+        <div class="hp-foot__links text-base ink-body" style="gap:4px">
           <p>Tầng 3, Tòa nhà Centec, 72-74 Nguyễn Thị Minh Khai, Phường Xuân Hòa, TP. Hồ Chí Minh</p>
           <p>Đường dây nóng: 1900 2666</p>
           <p>Giờ làm việc: 8:30 đến 22:00</p>
@@ -1565,7 +1601,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 
       <div class="hp-foot__col rv" style="--d:.04s">
         <p class="label">Liên hệ với chúng tôi</p>
-        <div class="hp-foot__links t5">
+        <div class="hp-foot__links text-base">
           <button>Thông tin về DAFC</button>
           <button>Tuyển dụng</button>
           <button>Liên hệ</button>
@@ -1575,7 +1611,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 
       <div class="hp-foot__col rv" style="--d:.08s">
         <p class="label">Chăm sóc khách hàng</p>
-        <div class="hp-foot__links t5">
+        <div class="hp-foot__links text-base">
           <button>Chương trình thành viên</button>
           <button>Câu hỏi thường gặp</button>
           <button>Chính sách vận chuyển</button>
@@ -1587,7 +1623,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 
       <div class="hp-foot__col rv" style="--d:.12s">
         <p class="label">Chính sách</p>
-        <div class="hp-foot__links t5">
+        <div class="hp-foot__links text-base">
           <button>Chính sách bảo mật</button>
           <button>Chính sách thu thập và xử lý dữ liệu cá nhân</button>
           <button>Điều khoản và điều kiện</button>
@@ -1602,16 +1638,16 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
              (ngoại lệ của quy ước "không uppercase"). Bo góc 0: §3.2 đã gỡ
              rounded-[3px] mà 2 demo còn mang. Backlog: thay bằng icon thương hiệu. -->
         <div class="hp-foot__pays">
-          <span class="hp-foot__pay t7">VISA</span>
-          <span class="hp-foot__pay t7">MASTERCARD</span>
-          <span class="hp-foot__pay t7">JCB</span>
-          <span class="hp-foot__pay t7">AMEX</span>
-          <span class="hp-foot__pay t7">MOMO</span>
+          <span class="hp-foot__pay text-micro">VISA</span>
+          <span class="hp-foot__pay text-micro">MASTERCARD</span>
+          <span class="hp-foot__pay text-micro">JCB</span>
+          <span class="hp-foot__pay text-micro">AMEX</span>
+          <span class="hp-foot__pay text-micro">MOMO</span>
         </div>
         <div class="hp-foot__pays">
-          <span class="hp-foot__pay t7">TIKINOW</span>
+          <span class="hp-foot__pay text-micro">TIKINOW</span>
         </div>
-        <div class="hp-foot__links t5" style="padding-top:8px">
+        <div class="hp-foot__links text-base" style="padding-top:8px">
           <button>Theo dõi đơn hàng</button>
           <button>Kiểm tra bảo hành</button>
         </div>
@@ -1619,7 +1655,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 
     </div>
 
-    <div class="hp-foot__bot t7">
+    <div class="hp-foot__bot text-micro">
       <p>© Copyright 2026 DAFC — Công ty cổ phần thời trang và mỹ phẩm Duy Anh</p>
       <p>GPĐKKD: 0304130177 do Sở KH &amp; ĐT TP.HCM cấp lần đầu 22/11/2005. Địa chỉ: 72-74 Nguyễn Thị Minh Khai, Phường Xuân Hòa, TP. Hồ Chí Minh</p>
     </div>
@@ -1644,11 +1680,11 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
       <div class="nu-hero__copy">
         <p class="label ink-mute rv">Nữ · Thu Đông 2026</p>
         <h1 class="nu-hero__h1 d1 rv" style="--i:1">Lụa in, da nappa và những đôi gót 90</h1>
-        <p class="nu-read t5 ink-body rv" style="--i:2">
+        <p class="nu-read text-base ink-body rv" style="--i:2">
           Bộ sưu tập nữ của Versace về boutique DAFC tuần này: hoạ tiết Broken Jewels
           trên lụa twill dệt tại Ý, túi Emblème da cừu non, và ba phom gót cao 80–115.
         </p>
-        <nav class="nu-hero__links t3 rv" style="--i:3" aria-label="Danh mục ngành Nữ">
+        <nav class="nu-hero__links text-md rv" style="--i:3" aria-label="Danh mục ngành Nữ">
           <a href="#danh-muc">Quần áo</a>
           <a href="#danh-muc">Giày dép</a>
           <a href="#danh-muc">Túi xách</a>
@@ -1681,7 +1717,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
         <p class="label ink-mute">Danh mục</p>
         <h2 class="d2">Mua theo danh mục</h2>
       </div>
-      <button class="nu-more t4">Tất cả danh mục nữ
+      <button class="nu-more text-sm">Tất cả danh mục nữ
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -1695,25 +1731,25 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
       </button>
       <button class="nu-tile nu-tile--sm">
         <img src="assets/p4-v1.jpg" alt="Giày dép nữ" loading="lazy">
-        <span class="nu-tile__x"><span><span class="t3">Giày dép</span>
+        <span class="nu-tile__x"><span><span class="text-md">Giày dép</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span></span>
       </button>
       <button class="nu-tile nu-tile--sm">
         <img src="assets/p3-0.jpg" alt="Túi xách nữ" loading="lazy">
-        <span class="nu-tile__x"><span><span class="t3">Túi xách</span>
+        <span class="nu-tile__x"><span><span class="text-md">Túi xách</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span></span>
       </button>
       <button class="nu-tile nu-tile--sm">
         <img src="assets/p10-0.jpg" alt="Phụ kiện nữ" loading="lazy">
-        <span class="nu-tile__x"><span><span class="t3">Phụ kiện</span>
+        <span class="nu-tile__x"><span><span class="text-md">Phụ kiện</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span></span>
       </button>
       <button class="nu-tile nu-tile--sm">
         <img src="assets/p2-0.jpg" alt="Trang sức và khăn lụa" loading="lazy">
-        <span class="nu-tile__x"><span><span class="t3">Trang sức</span>
+        <span class="nu-tile__x"><span><span class="text-md">Trang sức</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span></span>
       </button>
@@ -1731,7 +1767,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
         <p class="label ink-mute">Vừa về boutique</p>
         <h2 class="d2">Sản phẩm mới cho nữ</h2>
       </div>
-      <button class="nu-more t4">Xem tất cả
+      <button class="nu-more text-sm">Xem tất cả
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -1749,12 +1785,12 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
       <div class="nu-edit__x rv" style="--i:1">
         <p class="label ink-mute">Bộ sưu tập</p>
         <h2 class="d2">Broken Jewels</h2>
-        <p class="t5 ink-body">
+        <p class="text-base ink-body">
           Hoạ tiết đá quý vỡ được dựng lại từ kho lưu trữ của maison, in trên lụa
           twill dệt tại Ý. Bộ sưu tập có đầm mini, đầm midi và khăn vuông 90 × 90 cm
           dùng chung một bảng màu.
         </p>
-        <button class="nu-more t4">Đọc bài
+        <button class="nu-more text-sm">Đọc bài
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
@@ -1776,19 +1812,19 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
     <div class="nu-occ rv">
       <div class="nu-occ__c">
         <div class="nu-occ__m"><img src="assets/x6.jpg" alt="Trang phục đi làm" loading="lazy"></div>
-        <div class="nu-occ__x"><p class="d3">Đi làm</p><p class="t5 ink-mute">Sơ mi lụa, chân váy, gót 80</p></div>
+        <div class="nu-occ__x"><p class="d3">Đi làm</p><p class="text-base ink-mute">Sơ mi lụa, chân váy, gót 80</p></div>
       </div>
       <div class="nu-occ__c">
         <div class="nu-occ__m"><img src="assets/p1-0.jpg" alt="Trang phục tiệc tối" loading="lazy"></div>
-        <div class="nu-occ__x"><p class="d3">Tiệc tối</p><p class="t5 ink-mute">Đầm lụa, clutch, gót 115</p></div>
+        <div class="nu-occ__x"><p class="d3">Tiệc tối</p><p class="text-base ink-mute">Đầm lụa, clutch, gót 115</p></div>
       </div>
       <div class="nu-occ__c">
         <div class="nu-occ__m"><img src="assets/x5.jpg" alt="Trang phục cuối tuần" loading="lazy"></div>
-        <div class="nu-occ__x"><p class="d3">Cuối tuần</p><p class="t5 ink-mute">Áo cotton, giày thể thao, túi tote</p></div>
+        <div class="nu-occ__x"><p class="d3">Cuối tuần</p><p class="text-base ink-mute">Áo cotton, giày thể thao, túi tote</p></div>
       </div>
       <div class="nu-occ__c">
         <div class="nu-occ__m"><img src="assets/p9-0.jpg" alt="Trang phục du lịch" loading="lazy"></div>
-        <div class="nu-occ__x"><p class="d3">Du lịch</p><p class="t5 ink-mute">Túi tote, khăn lụa, dép bệt</p></div>
+        <div class="nu-occ__x"><p class="d3">Du lịch</p><p class="text-base ink-mute">Túi tote, khăn lụa, dép bệt</p></div>
       </div>
     </div>
   </div>
@@ -1804,7 +1840,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
         <p class="label ink-mute">Bán chạy</p>
         <h2 class="d2">Đang được quan tâm</h2>
       </div>
-      <button class="nu-more t4">Xem tất cả
+      <button class="nu-more text-sm">Xem tất cả
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -1824,7 +1860,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
         <h2 class="d2">Danh mục nữ</h2>
       </div>
     </div>
-    <div class="nu-tree t5" id="tree"></div>
+    <div class="nu-tree text-base" id="tree"></div>
   </div>
 </section>
 
@@ -1838,7 +1874,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
         <p class="label ink-mute">Nhà mốt</p>
         <h2 class="d2">Thương hiệu nữ</h2>
       </div>
-      <button class="nu-more t4">Tất cả thương hiệu
+      <button class="nu-more text-sm">Tất cả thương hiệu
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -1856,21 +1892,21 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
       <div class="nu-serv__x rv" style="--i:1">
         <p class="label ink-mute">Dịch vụ</p>
         <h2 class="d2">Có người chọn cùng bạn</h2>
-        <p class="nu-read t5 ink-body">
+        <p class="nu-read text-base ink-body">
           Đội ngũ tư vấn của 12 boutique DAFC nhận yêu cầu trực tiếp: giữ hàng theo
           size, tìm bản màu khác, gói quà, giao trong ngày.
         </p>
         <div class="nu-serv__list">
           <button class="nu-serv__row">
-            <span class="x"><span class="t3">Tư vấn mua sắm riêng</span><span class="t5 ink-mute">Hẹn giờ tại boutique hoặc gọi video, miễn phí</span></span>
+            <span class="x"><span class="text-md">Tư vấn mua sắm riêng</span><span class="text-base ink-mute">Hẹn giờ tại boutique hoặc gọi video, miễn phí</span></span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <button class="nu-serv__row">
-            <span class="x"><span class="t3">Sửa và chỉnh phom</span><span class="t5 ink-mute">Lên gấu, chỉnh eo cho đầm và quần, 3 ngày làm việc</span></span>
+            <span class="x"><span class="text-md">Sửa và chỉnh phom</span><span class="text-base ink-mute">Lên gấu, chỉnh eo cho đầm và quần, 3 ngày làm việc</span></span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <button class="nu-serv__row">
-            <span class="x"><span class="t3">Giao trong ngày</span><span class="t5 ink-mute">Đặt trước 15:00 tại TP. Hồ Chí Minh và Hà Nội</span></span>
+            <span class="x"><span class="text-md">Giao trong ngày</span><span class="text-base ink-mute">Đặt trước 15:00 tại TP. Hồ Chí Minh và Hà Nội</span></span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
@@ -1887,15 +1923,15 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
     <div class="nu-news rv">
       <p class="label ink-mute">Bản tin</p>
       <h2 class="d2" style="max-width:26ch">Biết trước khi bộ sưu tập lên kệ</h2>
-      <p class="nu-read t5 ink-body">Mỗi tuần một thư, chỉ về hàng mới của ngành nữ và lịch mở bán tại boutique.</p>
+      <p class="nu-read text-base ink-body">Mỗi tuần một thư, chỉ về hàng mới của ngành nữ và lịch mở bán tại boutique.</p>
       <form class="nu-news__f" id="nsFormNu" novalidate>
-        <input class="nu-news__i t4" id="nsMailNu" type="email" inputmode="email" placeholder="ban@email.com" aria-label="Địa chỉ email">
-        <button class="nu-btn nu-btn--solid" type="submit">
-          <span class="nu-btn__l t4">Đăng ký</span>
+        <input class="nu-news__i text-sm" id="nsMailNu" type="email" inputmode="email" placeholder="ban@email.com" aria-label="Địa chỉ email">
+        <button class="nu-btn nu-btn--solid nu-btn--sm" type="submit">
+          <span class="nu-btn__l text-sm">Đăng ký</span>
           <span class="nu-btn__i" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         </button>
       </form>
-      <p class="t7 ink-mute" id="nsNoteNu" style="max-width:52ch">Bằng việc đăng ký, bạn đồng ý với chính sách bảo mật của DAFC. Có thể huỷ nhận tin bất cứ lúc nào.</p>
+      <p class="text-micro ink-mute" id="nsNoteNu" style="max-width:52ch">Bằng việc đăng ký, bạn đồng ý với chính sách bảo mật của DAFC. Có thể huỷ nhận tin bất cứ lúc nào.</p>
     </div>
   </div>
 </section>
@@ -1911,31 +1947,31 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
     <div class="nu-foot__top">
       <div class="nu-foot__col rv">
         <img src="assets/logo.png" alt="DAFC" style="height:28px;width:130px;object-fit:contain;object-position:left">
-        <p class="t3">DAFC - A subsidiary of IPPG</p>
-        <p class="t5 ink-body" style="max-width:44ch">Tầng 3, Tòa nhà Centec, 72-74 Nguyễn Thị Minh Khai, Phường Xuân Hòa, TP. Hồ Chí Minh</p>
-        <p class="t5 ink-body">Đường dây nóng: 1900 2666 · 8:30 – 22:00</p>
+        <p class="text-md">DAFC - A subsidiary of IPPG</p>
+        <p class="text-base ink-body" style="max-width:44ch">Tầng 3, Tòa nhà Centec, 72-74 Nguyễn Thị Minh Khai, Phường Xuân Hòa, TP. Hồ Chí Minh</p>
+        <p class="text-base ink-body">Đường dây nóng: 1900 2666 · 8:30 – 22:00</p>
       </div>
-      <div class="nu-foot__col rv t5" style="--i:1">
+      <div class="nu-foot__col rv text-base" style="--i:1">
         <p class="label">Chăm sóc khách hàng</p>
         <a href="#">Chương trình thành viên</a>
         <a href="#">Câu hỏi thường gặp</a>
         <a href="#">Chính sách vận chuyển</a>
         <a href="#">Chính sách đổi trả</a>
       </div>
-      <div class="nu-foot__col rv t5" style="--i:2">
+      <div class="nu-foot__col rv text-base" style="--i:2">
         <p class="label">Chính sách</p>
         <a href="#">Chính sách bảo mật</a>
         <a href="#">Điều khoản và điều kiện</a>
         <a href="#">Chính sách bảo hành</a>
       </div>
-      <div class="nu-foot__col rv t5" style="--i:3">
+      <div class="nu-foot__col rv text-base" style="--i:3">
         <p class="label">Liên hệ</p>
         <a href="#">Danh sách cửa hàng</a>
         <a href="#">Thông tin về DAFC</a>
         <a href="#">Tuyển dụng</a>
       </div>
     </div>
-    <div class="nu-foot__bot t7">
+    <div class="nu-foot__bot text-micro">
       <p>© Copyright 2026 DAFC — Công ty cổ phần thời trang và mỹ phẩm Duy Anh</p>
     </div>
   </div>
@@ -1960,10 +1996,10 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
          và giá. Hai con số ở dòng dưới ĐẾM TỪ DATA (xem #btHeroCount). -->
     <div class="bt-banner__x">
       <p class="label ink-mute">Làm đẹp</p>
-      <h1 class="t1">Nước hoa &amp; hương thơm</h1>
-      <p class="t5 ink-body" id="btHeroCount">—</p>
+      <h1 class="text-xl">Nước hoa &amp; hương thơm</h1>
+      <p class="text-base ink-body" id="btHeroCount">—</p>
       <button class="hp-btn hp-btn--solid">
-        <span class="hp-btn__l t4">Xem tất cả</span>
+        <span class="hp-btn__l text-sm">Xem tất cả</span>
         <span class="hp-btn__i" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </button>
     </div>
@@ -1977,10 +2013,10 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
       <div class="bt-split rv">
         <div class="bt-split__x">
           <p class="label ink-mute">Vừa về</p>
-          <p class="t1 bt-split__n" id="btBigNum">—</p>
-          <p class="t5 ink-body">loại sản phẩm trong <span id="btNGroups">—</span> nhóm, từ nước hoa tới hương thơm không gian.</p>
+          <p class="text-xl bt-split__n" id="btBigNum">—</p>
+          <p class="text-base ink-body">loại sản phẩm trong <span id="btNGroups">—</span> nhóm, từ nước hoa tới hương thơm không gian.</p>
           <button class="hp-btn hp-btn--out">
-            <span class="hp-btn__l t4">Xem tất cả</span>
+            <span class="hp-btn__l text-sm">Xem tất cả</span>
             <span class="hp-btn__i" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           </button>
         </div>
@@ -1996,8 +2032,8 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
         <button class="bt-duo__c">
           <span class="bt-duo__m"><img src="assets/b6.jpg" alt="Hương thơm không gian" loading="lazy"></span>
           <span class="bt-duo__x">
-            <span class="t3">Hương thơm không gian</span>
-            <span class="hp-more t4">Nến, que khuếch tán và xịt phòng
+            <span class="text-md">Hương thơm không gian</span>
+            <span class="hp-more text-sm">Nến, que khuếch tán và xịt phòng
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
           </span>
@@ -2005,8 +2041,8 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
         <button class="bt-duo__c">
           <span class="bt-duo__m"><img src="assets/b8.jpg" alt="Tắm và dưỡng thể" loading="lazy"></span>
           <span class="bt-duo__x">
-            <span class="t3">Tắm &amp; dưỡng thể</span>
-            <span class="hp-more t4">Bảy loại, phần lớn có bản refill
+            <span class="text-md">Tắm &amp; dưỡng thể</span>
+            <span class="hp-more text-sm">Bảy loại, phần lớn có bản refill
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
           </span>
@@ -2021,13 +2057,13 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
       <div class="bt-band__in">
         <div class="bt-band__x rv">
           <p class="label ink-mute">Nhà mốt</p>
-          <h2 class="t1">Montblanc</h2>
-          <p class="t5 ink-body">
+          <h2 class="text-xl">Montblanc</h2>
+          <p class="text-base ink-body">
             Explorer Platinum và Legend Blue — hai hướng của cùng một nhà, cả hai đều có
             hai dung tích để chọn.
           </p>
           <button class="hp-btn hp-btn--out">
-            <span class="hp-btn__l t4">Xem cả nhà mốt</span>
+            <span class="hp-btn__l text-sm">Xem cả nhà mốt</span>
             <span class="hp-btn__i" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           </button>
         </div>
@@ -2043,8 +2079,8 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
         <button class="bt-duo__c">
           <span class="bt-duo__m"><img src="assets/b4.jpg" alt="Quà tặng" loading="lazy"></span>
           <span class="bt-duo__x">
-            <span class="t3">Quà tặng</span>
-            <span class="hp-more t4">Set quà, set khám phá và lịch Giáng sinh
+            <span class="text-md">Quà tặng</span>
+            <span class="hp-more text-sm">Set quà, set khám phá và lịch Giáng sinh
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
           </span>
@@ -2052,8 +2088,8 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
         <button class="bt-duo__c">
           <span class="bt-duo__m"><img src="assets/b2.jpg" alt="Du lịch" loading="lazy"></span>
           <span class="bt-duo__x">
-            <span class="t3">Du lịch</span>
-            <span class="hp-more t4">Size du lịch và set mini
+            <span class="text-md">Du lịch</span>
+            <span class="hp-more text-sm">Size du lịch và set mini
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
           </span>
@@ -2067,10 +2103,10 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
     <div class="hp-rail">
       <div class="bt-split rv">
         <div class="bt-split__x">
-          <h2 class="t1">Versace</h2>
-          <p class="t5 ink-body">Ba dòng nước hoa đang có tại DAFC.</p>
+          <h2 class="text-xl">Versace</h2>
+          <p class="text-base ink-body">Ba dòng nước hoa đang có tại DAFC.</p>
           <button class="hp-btn hp-btn--out">
-            <span class="hp-btn__l t4">Xem cả nhà mốt</span>
+            <span class="hp-btn__l text-sm">Xem cả nhà mốt</span>
             <span class="hp-btn__i" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           </button>
         </div>
@@ -2090,11 +2126,11 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
         <div class="bt-journal__x rv">
           <div class="bt-journal__t">
             <p class="label ink-mute">Tạp chí</p>
-            <h2 class="t1">Mua vỏ một lần, sau đó chỉ mua phần thay</h2>
+            <h2 class="text-xl">Mua vỏ một lần, sau đó chỉ mua phần thay</h2>
           </div>
           <div class="bt-journal__t">
-            <p class="t5 ink-body" id="btJournalCopy">—</p>
-            <button class="hp-more t4">Đọc bài
+            <p class="text-base ink-body" id="btJournalCopy">—</p>
+            <button class="hp-more text-sm">Đọc bài
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
           </div>
@@ -2107,8 +2143,8 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
   <section class="hp-sec--sm" style="padding-top:0">
     <div class="hp-rail">
       <div class="bt-sechead">
-        <h2 class="t2">Thêm chủ đề</h2>
-        <button class="hp-more t4">Tất cả chủ đề
+        <h2 class="text-lg">Thêm chủ đề</h2>
+        <button class="hp-more text-sm">Tất cả chủ đề
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
@@ -2122,27 +2158,27 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
       <div class="bt-news rv">
         <div class="bt-news__x">
           <p class="label">Thư về hàng làm đẹp</p>
-          <p class="t5 ink-body" style="max-width:52ch">
+          <p class="text-base ink-body" style="max-width:52ch">
             Mỗi tháng một thư: dòng mới về boutique và lịch mở bán bản giới hạn.
           </p>
           <form class="bt-news__f" id="nsFormBt" novalidate>
-            <input class="bt-news__i t4" id="nsMailBt" type="email" inputmode="email" placeholder="ban@email.com" aria-label="Địa chỉ email">
-            <button class="hp-btn hp-btn--solid" type="submit">
-              <span class="hp-btn__l t4">Đăng ký</span>
+            <input class="bt-news__i text-sm" id="nsMailBt" type="email" inputmode="email" placeholder="ban@email.com" aria-label="Địa chỉ email">
+            <button class="hp-btn hp-btn--solid hp-btn--sm" type="submit">
+              <span class="hp-btn__l text-sm">Đăng ký</span>
               <span class="hp-btn__i" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
             </button>
           </form>
-          <p class="t7 ink-mute" id="nsNoteBt" style="max-width:52ch">Bằng việc đăng ký, bạn đồng ý với chính sách bảo mật của DAFC. Có thể huỷ nhận tin bất cứ lúc nào.</p>
+          <p class="text-micro ink-mute" id="nsNoteBt" style="max-width:52ch">Bằng việc đăng ký, bạn đồng ý với chính sách bảo mật của DAFC. Có thể huỷ nhận tin bất cứ lúc nào.</p>
         </div>
         <div class="bt-news__help">
           <div>
             <p class="label">Cần hỗ trợ?</p>
-            <p class="t5 ink-body">Đường dây nóng 1900 2666, 8:30 – 22:00 mỗi ngày.</p>
-            <p class="t5 ink-body">dafconline@dafc.com.vn</p>
+            <p class="text-base ink-body">Đường dây nóng 1900 2666, 8:30 – 22:00 mỗi ngày.</p>
+            <p class="text-base ink-body">dafconline@dafc.com.vn</p>
           </div>
           <div>
             <p class="label">Khu vực</p>
-            <p class="t5 ink-body">Việt Nam · VND · Tiếng Việt</p>
+            <p class="text-base ink-body">Việt Nam · VND · Tiếng Việt</p>
           </div>
         </div>
       </div>
@@ -2155,31 +2191,31 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
       <div class="nu-foot__top">
         <div class="nu-foot__col">
           <img src="assets/logo.png" alt="DAFC" style="height:28px;width:130px;object-fit:contain;object-position:left">
-          <p class="t3">DAFC - A subsidiary of IPPG</p>
-          <p class="t5 ink-body" style="max-width:44ch">Tầng 3, Tòa nhà Centec, 72-74 Nguyễn Thị Minh Khai, Phường Xuân Hòa, TP. Hồ Chí Minh</p>
-          <p class="t5 ink-body">Đường dây nóng: 1900 2666 · 8:30 – 22:00</p>
+          <p class="text-md">DAFC - A subsidiary of IPPG</p>
+          <p class="text-base ink-body" style="max-width:44ch">Tầng 3, Tòa nhà Centec, 72-74 Nguyễn Thị Minh Khai, Phường Xuân Hòa, TP. Hồ Chí Minh</p>
+          <p class="text-base ink-body">Đường dây nóng: 1900 2666 · 8:30 – 22:00</p>
         </div>
-        <div class="nu-foot__col t5">
+        <div class="nu-foot__col text-base">
           <p class="label">Chăm sóc khách hàng</p>
           <a href="#">Chương trình thành viên</a>
           <a href="#">Câu hỏi thường gặp</a>
           <a href="#">Chính sách vận chuyển</a>
           <a href="#">Chính sách đổi trả</a>
         </div>
-        <div class="nu-foot__col t5">
+        <div class="nu-foot__col text-base">
           <p class="label">Chính sách</p>
           <a href="#">Chính sách bảo mật</a>
           <a href="#">Điều khoản và điều kiện</a>
           <a href="#">Chính sách bảo hành</a>
         </div>
-        <div class="nu-foot__col t5">
+        <div class="nu-foot__col text-base">
           <p class="label">Liên hệ</p>
           <a href="#">Danh sách cửa hàng</a>
           <a href="#">Thông tin về DAFC</a>
           <a href="#">Tuyển dụng</a>
         </div>
       </div>
-      <div class="nu-foot__bot t7">
+      <div class="nu-foot__bot text-micro">
         <p>© Copyright 2026 DAFC — Công ty cổ phần thời trang và mỹ phẩm Duy Anh</p>
       </div>
     </div>
@@ -2194,25 +2230,25 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 <aside class="hp-props" id="props" data-props-for="nam">
   <div class="hp-props__h">
     <p class="label">Đề xuất sửa luật</p>
-    <button id="propsMin" class="t4 ink-mute" aria-label="Thu gọn bảng">—</button>
+    <button id="propsMin" class="text-sm ink-mute" aria-label="Thu gọn bảng">—</button>
   </div>
   <div class="hp-props__b">
-    <button class="hp-props__r" data-prop="props-display" aria-pressed="false">
+    <button class="hp-props__r" role="checkbox" data-prop="props-display" aria-checked="false" data-state="unchecked">
       <span class="hp-props__box" aria-hidden="true">
         <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </span>
       <span style="min-width:0">
-        <span class="t4" style="display:block">Bậc chữ hero 48/56</span>
-        <span class="t7 ink-mute" style="display:block">§1.2 đang chốt cao nhất 24/32</span>
+        <span class="text-sm" style="display:block">Bậc chữ hero 48/56</span>
+        <span class="text-micro ink-mute" style="display:block">§1.2 đang chốt cao nhất 24/32</span>
       </span>
     </button>
-    <button class="hp-props__r" data-prop="props-eyebrow" aria-pressed="false">
+    <button class="hp-props__r" role="checkbox" data-prop="props-eyebrow" aria-checked="false" data-state="unchecked">
       <span class="hp-props__box" aria-hidden="true">
         <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </span>
       <span style="min-width:0">
-        <span class="t4" style="display:block">Nhãn eyebrow trên tiêu đề mục</span>
-        <span class="t7 ink-mute" style="display:block">§1.5 chưa cấp vai hoa cho tiêu đề mục</span>
+        <span class="text-sm" style="display:block">Nhãn eyebrow trên tiêu đề mục</span>
+        <span class="text-micro ink-mute" style="display:block">§1.5 chưa cấp vai hoa cho tiêu đề mục</span>
       </span>
     </button>
   </div>
@@ -2221,35 +2257,35 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 <aside class="nu-props" id="propsNu" data-props-for="nu" hidden>
   <div class="nu-props__h">
     <p class="label">Hướng minimalist</p>
-    <button id="propsMinNu" class="t4 ink-mute" aria-label="Thu gọn bảng">—</button>
+    <button id="propsMinNu" class="text-sm ink-mute" aria-label="Thu gọn bảng">—</button>
   </div>
   <div class="nu-props__b">
-    <button class="nu-props__r" data-prop="skin-min" data-target="html" aria-pressed="true">
+    <button class="nu-props__r" role="checkbox" data-prop="skin-min" data-target="html" aria-checked="true" data-state="checked">
       <span class="nu-props__box" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <span style="min-width:0">
-        <span class="t4" style="display:block">Bật cả hướng minimalist</span>
-        <span class="t7 ink-mute" style="display:block">Tắt = trang về đúng STYLE-RULES</span>
+        <span class="text-sm" style="display:block">Bật cả hướng minimalist</span>
+        <span class="text-micro ink-mute" style="display:block">Tắt = trang về đúng STYLE-RULES</span>
       </span>
     </button>
-    <button class="nu-props__r" data-prop="no-bone" aria-pressed="false">
+    <button class="nu-props__r" role="checkbox" data-prop="no-bone" aria-checked="false" data-state="unchecked">
       <span class="nu-props__box" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <span style="min-width:0">
-        <span class="t4" style="display:block">Bỏ nền bone, về trắng</span>
-        <span class="t7 ink-mute" style="display:block">§2.2 chỉ có #fff và #f2f2f2</span>
+        <span class="text-sm" style="display:block">Bỏ nền bone, về trắng</span>
+        <span class="text-micro ink-mute" style="display:block">§2.2 chỉ có #fff và #f2f2f2</span>
       </span>
     </button>
-    <button class="nu-props__r" data-prop="no-serif" aria-pressed="false">
+    <button class="nu-props__r" role="checkbox" data-prop="no-serif" aria-checked="false" data-state="unchecked">
       <span class="nu-props__box" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <span style="min-width:0">
-        <span class="t4" style="display:block">Bỏ serif, về Montserrat 24/32</span>
-        <span class="t7 ink-mute" style="display:block">§1.6 một mặt chữ · §1.2 cao nhất 24</span>
+        <span class="text-sm" style="display:block">Bỏ serif, về Montserrat 24/32</span>
+        <span class="text-micro ink-mute" style="display:block">§1.6 một mặt chữ · §1.2 cao nhất 24</span>
       </span>
     </button>
-    <button class="nu-props__r" data-prop="no-grain" aria-pressed="false">
+    <button class="nu-props__r" role="checkbox" data-prop="no-grain" aria-checked="false" data-state="unchecked">
       <span class="nu-props__box" aria-hidden="true"><svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       <span style="min-width:0">
-        <span class="t4" style="display:block">Bỏ lớp hạt giấy</span>
-        <span class="t7 ink-mute" style="display:block">Luật không có texture</span>
+        <span class="text-sm" style="display:block">Bỏ lớp hạt giấy</span>
+        <span class="text-micro ink-mute" style="display:block">Luật không có texture</span>
       </span>
     </button>
   </div>
@@ -2316,8 +2352,12 @@ function setScreen(id, { push = true } = {}) {
   /* Subheader đổi theo ngành (bản gốc: `dkNavCats()`); ngành Làm đẹp ra 11 mục */
   renderSubheader(SCREEN_DEPT[target.dataset.screen] || 'Nam');
   document.title = TITLES[target.dataset.screen] || TITLES.nam;
+  /* Đóng bảng ngành hàng: phải hạ CẢ `hidden` LẪN `data-state`, kẻo 2 nguồn
+     trạng thái lệch nhau (đo được: sheet đã ẩn mà data-state vẫn "open"). */
   const mob = document.getElementById('dkMobMenu');
-  if (mob) mob.setAttribute('hidden', '');
+  if (mob) { mob.setAttribute('hidden', ''); mob.setAttribute('data-state', 'closed'); }
+  const mobBtn = document.getElementById('dkMenuBtn');
+  if (mobBtn) { mobBtn.setAttribute('data-state', 'closed'); mobBtn.setAttribute('aria-expanded', 'false'); }
   if (push) {
     const h = target.dataset.screen === 'nam' ? '' : '#' + target.dataset.screen;
     if (location.hash !== h) history.replaceState(null, '', location.pathname + h);
@@ -2527,8 +2567,16 @@ function wireMega() {
       next.style.height = from + 'px';
       void next.offsetHeight;               // ép layout ở mốc `from` để transition có chỗ chạy
     }
-    panels.forEach(p => p.classList.toggle('open', p === next));
-    items.forEach(it => it.classList.toggle('on', it.dataset.mega === id));
+    /* data-state đi KÈM class, không thay class: CSS vẫn chạy bằng `.open`/`.on`
+       nên port ngược về desktop.html vẫn là copy; data-state chỉ để markup đọc ra
+       đúng khuôn NavigationMenu của shadcn (trigger + content cùng phơi trạng thái). */
+    panels.forEach(p => { const on = p === next;
+      p.classList.toggle('open', on); p.setAttribute('data-state', on ? 'open' : 'closed'); });
+    items.forEach(it => { const on = it.dataset.mega === id;
+      it.classList.toggle('on', on);
+      const btn = it.querySelector('.dk-nav-link');
+      if (btn) { btn.setAttribute('data-state', on ? 'open' : 'closed'); btn.setAttribute('aria-expanded', String(on)); }
+    });
     sub.classList.toggle('mega-open', id != null);
     if (swapping) {
       next.style.height = to + 'px';
@@ -2601,6 +2649,7 @@ const ICO_CLOSE = '<svg viewBox="-0.26 -0.26 24.51 24.51"><path d="M23.854,23.14
 
 function openSearch() {
   navbarEl.classList.add('search-open');
+  navbarEl.setAttribute('data-state', 'open');
   ['dkSearchBtn', 'dkSearchBtnMb'].forEach(id => {
     const b = document.getElementById(id);
     if (b) { b.innerHTML = ICO_CLOSE; b.setAttribute('aria-label', 'Đóng tìm kiếm'); }
@@ -2610,6 +2659,7 @@ function openSearch() {
 function closeSearch() {
   if (!navbarEl.classList.contains('search-open')) return;
   navbarEl.classList.remove('search-open');
+  navbarEl.setAttribute('data-state', 'closed');
   ['dkSearchBtn', 'dkSearchBtnMb'].forEach(id => {
     const b = document.getElementById(id);
     if (b) { b.innerHTML = ICO_SEARCH; b.setAttribute('aria-label', 'Tìm kiếm'); }
@@ -2630,7 +2680,9 @@ const dkMobMenu = document.getElementById('dkMobMenu');
 document.getElementById('dkMenuBtn').addEventListener('click', () => {
   const on = dkMobMenu.hasAttribute('hidden');
   if (on) dkMobMenu.removeAttribute('hidden'); else dkMobMenu.setAttribute('hidden', '');
+  dkMobMenu.setAttribute('data-state', on ? 'open' : 'closed');   /* khuôn Sheet của shadcn */
   document.getElementById('dkMenuBtn').setAttribute('aria-expanded', String(on));
+  document.getElementById('dkMenuBtn').setAttribute('data-state', on ? 'open' : 'closed');
 });
 
 /* ══════════ SCREEN `nam` — bọc IIFE để không đụng tên với screen Nữ ══════════ */
@@ -2711,10 +2763,12 @@ const ARROW = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-
 function card(p, i) {
   const oos = p.oos || [];
   const sizes = (p.sizes || []).map(s =>
-    '<button class="hp-size t4' + (oos.includes(s) ? ' is-oos' : '') + '">' + sizeLabel(s) + '</button>').join('');
-  const tags = p.tag ? '<div class="hp-card__tags"><span class="hp-card__tag t4">' + p.tag + '</span></div>' : '';
-  const sw = (p.colors && p.colors.length) ? '<div class="hp-sw">' + p.colors.map((c, ci) =>
-        '<button class="hp-sw__b" data-cw="' + ci + '"' + (ci === 0 ? ' aria-current="true"' : '') + ' title="' + c.name + '" aria-label="Màu ' + c.name + '">' +
+    '<button class="hp-size text-sm' + (oos.includes(s) ? ' is-oos' : '') + '">' + sizeLabel(s) + '</button>').join('');
+  const tags = p.tag ? '<div class="hp-card__tags"><span class="hp-card__tag text-sm">' + p.tag + '</span></div>' : '';
+  /* Khuôn RadioGroup của shadcn: chọn 1 trong N -> role radiogroup/radio +
+     aria-checked + data-state, không phải aria-current. */
+  const sw = (p.colors && p.colors.length) ? '<div class="hp-sw" role="radiogroup" aria-label="Chọn màu">' + p.colors.map((c, ci) =>
+        '<button class="hp-sw__b" role="radio" data-cw="' + ci + '" aria-checked="' + (ci === 0) + '" data-state="' + (ci === 0 ? 'checked' : 'unchecked') + '" title="' + c.name + '" aria-label="Màu ' + c.name + '">' +
           '<span class="hp-sw__d" style="background:' + c.hex + (['#ffffff','#f1f1f1','#fafafa'].includes(c.hex.toLowerCase()) ? ';border:1px solid var(--border)' : '') + '"></span>' +
         '</button>').join('') + '</div>' : '';
 
@@ -2727,12 +2781,12 @@ function card(p, i) {
       '<div class="hp-sizes">' + sizes + '</div>' +
     '</div>' +
     '<div class="hp-card__b">' +
-      '<p class="t3">' + p.brand + '</p>' +
-      '<p class="t5 hp-card__nm">' + p.name + '</p>' +
+      '<p class="text-md">' + p.brand + '</p>' +
+      '<p class="text-base hp-card__nm">' + p.name + '</p>' +
       '<div class="hp-card__pr">' +
-        '<p class="t4' + (p.off ? ' hp-card__pr--sale' : '') + '">' + p.price + '</p>' +
-        (p.off ? '<span class="t4 hp-card__off">' + p.off + '</span>' : '') +
-        (p.was ? '<span class="t7 hp-card__was">' + p.was + '</span>' : '') +
+        '<p class="text-sm' + (p.off ? ' hp-card__pr--sale' : '') + '">' + p.price + '</p>' +
+        (p.off ? '<span class="text-sm hp-card__off">' + p.off + '</span>' : '') +
+        (p.was ? '<span class="text-micro hp-card__was">' + p.was + '</span>' : '') +
       '</div>' +
       sw +
     '</div>' +
@@ -2745,11 +2799,11 @@ function card(p, i) {
 document.getElementById('cats').innerHTML = CATEGORIES.map((c, i) => '' +
   '<button class="hp-cat rv" style="--d:' + (0.04 * i).toFixed(2) + 's">' +
     '<span class="hp-cat__m"><img src="' + A + c.img + '" alt="' + c.label + '" loading="lazy"></span>' +
-    '<span class="hp-cat__l"><span class="t4">' + c.label + '</span>' + ARROW + '</span>' +
+    '<span class="hp-cat__l"><span class="text-sm">' + c.label + '</span>' + ARROW + '</span>' +
   '</button>').join('');
 
 document.getElementById('maisons').innerHTML = MAISONS.map(b =>
-  '<button class="hp-maison t3">' + b + '</button>').join('');
+  '<button class="hp-maison text-md">' + b + '</button>').join('');
 
 document.getElementById('prods2').innerHTML = TRENDING.map(card).join('');
 
@@ -2761,8 +2815,19 @@ const elTabs = document.getElementById('tabs');
 const elProds = document.getElementById('prods');
 let curTab = 'Tất cả';
 
-elTabs.innerHTML = TABS.map(t =>
-  '<button class="hp-tab" data-tab="' + t + '" aria-pressed="' + (t === curTab) + '"' + (t === curTab ? ' aria-current="true"' : '') + '>' + t + '</button>').join('');
+/* Khuôn Tabs của shadcn (Radix): role tablist/tab · aria-selected · aria-controls
+   · data-state active|inactive · roving tabindex (chỉ tab đang chọn nhận Tab key,
+   các tab khác đi bằng phím mũi tên). Trước đây hàng này là `role=group` +
+   `aria-pressed` — đọc ra là một cụm nút bật/tắt, không phải bộ tab; mà §5 sổ tay
+   xếp đúng khuôn thị giác này (gạch chân 2px) vào component Tabs. */
+const tabId = t => 'tab-' + TABS.indexOf(t);
+elTabs.innerHTML = TABS.map(t => {
+  const on = t === curTab;
+  return '<button class="hp-tab" id="' + tabId(t) + '" role="tab" data-tab="' + t + '"' +
+    ' aria-selected="' + on + '" aria-controls="prods" data-state="' + (on ? 'active' : 'inactive') + '"' +
+    ' tabindex="' + (on ? '0' : '-1') + '"' + (on ? ' aria-current="true"' : '') + '>' + t + '</button>';
+}).join('');
+elProds.setAttribute('aria-labelledby', tabId(curTab));
 
 function renderProds() {
   const list = curTab === 'Tất cả' ? NEW_IN : NEW_IN.filter(p => p.cat === curTab);
@@ -2773,15 +2838,35 @@ function renderProds() {
   RV.observe(elProds.querySelectorAll('.rv'));
 }
 
-elTabs.addEventListener('click', e => {
-  const b = e.target.closest('[data-tab]');
-  if (!b) return;
+function selectTab(b) {
   curTab = b.dataset.tab;
   elTabs.querySelectorAll('.hp-tab').forEach(t => {
-    t.setAttribute('aria-pressed', String(t === b));
-    if (t === b) t.setAttribute('aria-current', 'true'); else t.removeAttribute('aria-current');
+    const on = t === b;
+    t.setAttribute('aria-selected', String(on));
+    t.setAttribute('data-state', on ? 'active' : 'inactive');
+    t.tabIndex = on ? 0 : -1;
+    if (on) t.setAttribute('aria-current', 'true'); else t.removeAttribute('aria-current');
   });
+  elProds.setAttribute('aria-labelledby', b.id);
   renderProds();
+}
+elTabs.addEventListener('click', e => {
+  const b = e.target.closest('[data-tab]');
+  if (b) selectTab(b);
+});
+/* Phím mũi tên đi giữa các tab, Home/End về đầu/cuối — đúng hành vi Radix Tabs */
+elTabs.addEventListener('keydown', e => {
+  const keys = { ArrowRight: 1, ArrowLeft: -1, Home: 'first', End: 'last' };
+  if (!(e.key in keys)) return;
+  const tabs = [...elTabs.querySelectorAll('.hp-tab')];
+  const i = tabs.indexOf(document.activeElement);
+  if (i < 0) return;
+  e.preventDefault();
+  const k = keys[e.key];
+  const next = k === 'first' ? tabs[0] : k === 'last' ? tabs[tabs.length - 1]
+             : tabs[(i + k + tabs.length) % tabs.length];
+  next.focus();
+  selectTab(next);
 });
 
 /* Lượt vẽ ĐẦU của lưới sản phẩm. Trước khi gộp, lời gọi này nằm trong khối
@@ -2794,8 +2879,11 @@ renderProds();
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-cw]');
   if (!b) return;
-  b.closest('.hp-sw').querySelectorAll('[data-cw]').forEach(x => x.removeAttribute('aria-current'));
-  b.setAttribute('aria-current', 'true');
+  b.closest('.hp-sw').querySelectorAll('[data-cw]').forEach(x => {
+    const on = x === b;
+    x.setAttribute('aria-checked', String(on));
+    x.setAttribute('data-state', on ? 'checked' : 'unchecked');
+  });
 });
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -2823,8 +2911,9 @@ const props = document.getElementById('props');
 props.addEventListener('click', e => {
   const r = e.target.closest('[data-prop]');
   if (r) {
-    const on = r.getAttribute('aria-pressed') !== 'true';
-    r.setAttribute('aria-pressed', String(on));
+    const on = r.getAttribute('aria-checked') !== 'true';
+    r.setAttribute('aria-checked', String(on));
+    r.setAttribute('data-state', on ? 'checked' : 'unchecked');
     document.documentElement.classList.toggle(r.dataset.prop, on);
     return;
   }
@@ -2894,22 +2983,22 @@ const NU_MAISONS = ['Versace','Zimmermann','Dolce&Gabbana','Burberry','Balmain',
 function card(p, i) {
   const oos = p.oos || [];
   const sizes = (p.sizes || []).map(s =>
-    '<button class="nu-size t4' + (oos.includes(s) ? ' is-oos' : '') + '">' + sizeLabel(s) + '</button>').join('');
+    '<button class="nu-size text-sm' + (oos.includes(s) ? ' is-oos' : '') + '">' + sizeLabel(s) + '</button>').join('');
   return '' +
   '<article class="nu-card rv" style="--i:' + i + '">' +
     '<div class="nu-card__m">' +
       '<img class="is-main" src="' + A + p.img + '" alt="' + p.name + '" loading="lazy">' +
       '<img class="is-alt" src="' + A + p.alt + '" alt="" aria-hidden="true" loading="lazy">' +
-      (p.tag ? '<div class="nu-card__tags"><span class="nu-card__tag t4">' + p.tag + '</span></div>' : '') +
+      (p.tag ? '<div class="nu-card__tags"><span class="nu-card__tag text-sm">' + p.tag + '</span></div>' : '') +
       '<div class="nu-sizes">' + sizes + '</div>' +
     '</div>' +
     '<div class="nu-card__b">' +
-      '<p class="t3">' + p.brand + '</p>' +
-      '<p class="t5 nu-card__nm">' + p.name + '</p>' +
+      '<p class="text-md">' + p.brand + '</p>' +
+      '<p class="text-base nu-card__nm">' + p.name + '</p>' +
       '<div class="nu-card__pr">' +
-        '<p class="t4' + (p.off ? ' nu-card__pr--sale' : '') + '">' + p.price + '</p>' +
-        (p.off ? '<span class="t4 nu-card__off">' + p.off + '</span>' : '') +
-        (p.was ? '<span class="t7 nu-card__was">' + p.was + '</span>' : '') +
+        '<p class="text-sm' + (p.off ? ' nu-card__pr--sale' : '') + '">' + p.price + '</p>' +
+        (p.off ? '<span class="text-sm nu-card__off">' + p.off + '</span>' : '') +
+        (p.was ? '<span class="text-micro nu-card__was">' + p.was + '</span>' : '') +
       '</div>' +
     '</div>' +
   '</article>';
@@ -2925,7 +3014,7 @@ document.getElementById('tree').innerHTML = NU_TREE.map(([title, items], i) =>
   '</div>').join('');
 
 document.getElementById('maisonsNu').innerHTML = NU_MAISONS.map(b =>
-  '<button class="nu-maison t3">' + b + '</button>').join('');
+  '<button class="nu-maison text-md">' + b + '</button>').join('');
 
 /* ══════════════════════════════════════════════════════════════════════════
    BẢN TIN — đổi dòng chú thích tại chỗ; sai định dạng thì đổi MỰC + viền,
@@ -2952,8 +3041,9 @@ props.addEventListener('click', e => {
   const r = e.target.closest('[data-prop]');
   if (r) {
     const cls = r.dataset.prop;
-    const on = r.getAttribute('aria-pressed') !== 'true';
-    r.setAttribute('aria-pressed', String(on));
+    const on = r.getAttribute('aria-checked') !== 'true';
+    r.setAttribute('aria-checked', String(on));
+    r.setAttribute('data-state', on ? 'checked' : 'unchecked');
     document.documentElement.classList.toggle(cls, on);
     /* Tắt cả hướng thì 3 công tắc con thành vô nghĩa -> mờ đi cho khỏi bấm oan */
     if (cls === 'skin-min') {
@@ -3002,9 +3092,9 @@ props.addEventListener('click', e => {
         '<img class="is-alt" src="' + A + p.alt + '" alt="" aria-hidden="true" loading="lazy">' +
       '</div>' +
       '<div class="hp-card__b">' +
-        '<p class="t3">' + p.brand + '</p>' +
-        '<p class="t5 hp-card__nm">' + p.name + '</p>' +
-        '<div class="hp-card__pr"><p class="t4">' + p.price + '</p></div>' +
+        '<p class="text-md">' + p.brand + '</p>' +
+        '<p class="text-base hp-card__nm">' + p.name + '</p>' +
+        '<div class="hp-card__pr"><p class="text-sm">' + p.price + '</p></div>' +
       '</div>' +
     '</article>';
 
@@ -3046,7 +3136,7 @@ props.addEventListener('click', e => {
   document.getElementById('btStories').innerHTML = STORIES.map(([name, group], i) =>
     '<button class="bt-story">' +
       '<span class="bt-story__m"><img src="' + A + STORY_IMG[i] + '" alt="' + name + '" loading="lazy"></span>' +
-      '<span class="bt-story__x"><span class="t4">' + name + '</span><span class="t7 ink-mute">' + group + '</span></span>' +
+      '<span class="bt-story__x"><span class="text-sm">' + name + '</span><span class="text-micro ink-mute">' + group + '</span></span>' +
     '</button>').join('');
 
   /* ── Bản tin ── */
