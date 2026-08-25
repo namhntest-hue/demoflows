@@ -339,8 +339,12 @@ Phải gỡ khỏi bộ da: **`#cfcfcf`** (3092 chỗ — `border-border-3` trê
 
 `border-radius: 0` cho mọi thứ. **Một ngoại lệ:** hình tròn thật, tức phần tử có
 `width == height` và về bản chất là chấm/vòng (badge số trong giỏ, dot phân cách, radio).
-*(Đính chính 20/08: **ô màu KHÔNG thuộc ngoại lệ này** — skin-mt đã vuông hóa swatch từ trước,
-`[data-swatches] .cw { border-radius: 0 }`, đo thật 18×18 vuông. Bộ Figma dựng theo đúng thế.)*
+*(~~Đính chính 20/08: **ô màu KHÔNG thuộc ngoại lệ này** — skin-mt đã vuông hóa swatch từ trước,
+`[data-swatches] .cw { border-radius: 0 }`, đo thật 18×18 vuông.~~ **ĐẢO 25/08/2026**, lệnh user:
+*"ô hình vuông chọn màu ở product listing sẽ trả về hình tròn toàn bộ nhé"*. Ô màu trên thẻ sản
+phẩm **thuộc ngoại lệ**: `w == h` và bản chất là chấm màu, cùng nhóm với badge số giỏ và vòng
+radio. Rule vuông hoá đã gỡ khỏi cả 2 file; markup vốn đã `rounded-full` nên không cần rule thay
+thế. **Bộ Figma đang dựng theo bản vuông — lệch với demo cho tới khi dựng lại.**)*
 
 Còn vi phạm:
 
