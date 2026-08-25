@@ -124,34 +124,34 @@ Vì sao **hai bản giống nhau**: divergence 5/12 cỡ ở bảng trên là ng
 tính năng. Một bản demo dùng để chốt thiết kế thì "cùng markup, khác kết quả" là hỏng.
 Khác biệt responsive nằm ở **bố cục và mật độ**, không nằm ở thang chữ.
 
-> **Biến thể đang thử — PDP3 (25/08/2026, lệnh user: *"ở trang pdp sản phẩm số 3 thì tăng
-> font size lên 14 cho toàn bộ các Accordion"*):** cụm accordion của **riêng PDP3** dùng
-> **14/20 cho CẢ nhãn lẫn nội dung**, họ nội dung · 400 · chữ thường — tức giữ nguyên vai,
-> chỉ **lên một bậc cỡ**. Không đẻ cỡ mới (14 đã có trong thang) nhưng có **mượn cặp của T3
-> — vốn là họ nhãn — cho nội dung**, nên phạm vi khoá vào đúng bản PDP3 để còn so với 5 bản
-> kia (nhãn 12/18 · nội dung 12/16). Chốt bản nào thì lúc đó mới sửa bảng trên.
-> Khai ở khối *"PDP2 + PDP3: THANG CHỮ RIÊNG CHO CỤM ACCORDION"*, **giống hệt ở cả 2 file**
-> (port sang `desktop.html` 25/08).
-
-> **Bộ da Maika (`skin-mk`) — cụm accordion PDP về MỘT cỡ 14 (25/08/2026, lệnh user: *"ở
-> skin maika, cho toàn bộ các Accordion (mô tả sản phẩm,...) up lên font 14 hết, không cần
-> uppercase"*):** cả **6 bản PDP**, cả 2 khổ, nhãn lẫn nội dung lẫn bảng thông số đều
-> **14/20 · 400 · chữ thường**. Rule này dập luôn 3 chỗ vốn đã lệch luật ở nhánh `skin-mp`
-> mà Maika thừa hưởng: nhãn desktop đang **16/24** (§1.2 đã bỏ 16 khỏi thang) · **weight
-> 300** (§1.1 cấm hẳn) · và cặp HOA + 500 mà riêng PDP2 mang theo từ markup. Đây là bộ da
-> duy nhất cho cụm accordion PDP một cỡ chữ duy nhất — `skin-mt` vẫn giữ 3 mức khác nhau
-> (pdp/4/5/6 · pdp2 · pdp3) để còn so. Khối *"MAIKA: CỤM ACCORDION PDP VỀ MỘT CỠ 14"*,
-> khai giống hệt ở 2 file.
+> **CỤM ACCORDION PDP — NHỊP CHỐT CUỐI 25/08/2026: nhãn 14/20 · nội dung 12/16.**
+> Lệnh user: *"nội dung bên trong accordions sẽ là font size 12, title accordions giữ ở 14"*,
+> phạm vi user chốt là **"cả demo, mọi bộ da"**. Nhịp này **DẸP mọi biến thể dựng trong ngày**
+> (xem lịch sử ở cuối mục): 6 bản PDP nay giống hệt nhau trong từng bộ da, và 5 bộ da chỉ còn
+> khác nhau ở **chữ hoa / độ đậm**, không khác ở **bậc cỡ**:
 >
-> **Bổ sung cùng ngày** (*"ở skin-maika, accordion tăng fontweight lên 1 nấc nhé, áp dụng
-> toàn bộ và cả desktop và mobile"*): **nhãn** cụm accordion PDP lên **500**, **nội dung giữ
-> 400**. Đây KHÔNG phải ngoại lệ mới của §1.1: luật cặp `500 ⇔ HOA` mở đầu bằng *"mọi chữ
-> trong `skin-mt`"*, mà Maika là `skin-mp skin-mk`. Đo trên trang: trong Maika, trigger
-> accordion ở **footer** (14/21 · 500) và ở **giỏ hàng** (14/20 · 500) đã là 500 chữ thường
-> từ trước — cụm PDP ở 400 mới là chỗ lệch trong chính bộ da của nó. Nội dung không lên theo
-> vì đó là đoạn văn: §1.1 bảo muốn nội dung nổi hơn thì lên bậc **cỡ**, và cỡ đã lên 14 rồi.
-> **Chưa đụng:** accordion **checkout** trong Maika vẫn 400 (footer/giỏ đã 500, không nâng
-> tiếp được — 600 bị §1.1 cấm hẳn).
+> | bộ da | nhãn | nội dung |
+> |---|---|---|
+> | mặc định · `skin-mp` | 14/20 · 400 · thường | 12/16 · 400 |
+> | `skin-mt` | 14/20 · **500 · HOA** | 12/16 · 400 |
+> | Maika (`skin-mt skin-mk`) | 14/20 · **500** · thường | 12/16 · 400 |
+> | `skin-li` (`skin-mt skin-li`) | 14/20 · **500** · thường | 12/**18** · 400 |
+>
+> Vì sao nhãn 14 mà nội dung 12: đúng cặp **T3 14/20 (họ nhãn) + T4 12/16 (họ nội dung)** của
+> bảng trên, và đúng nhịp §1.1 "nhãn hơn nội dung một bậc cỡ". Mọi bộ da đều cần rule riêng
+> vì khối remap của chúng kéo `text-[14px]` về 12/18 — để yên là nhãn nhỏ bằng nội dung.
+> Vì sao **riêng `skin-li` lấy 12/18**: đó là Inter và là đoạn văn xuống dòng — ca mà **F5**
+> của `FONT-LIBRE-INTER.md` đòi tỉ lệ 1,5; 12/18 cũng đúng bằng 6 hook rà F5 của bộ da đó,
+> nên thân accordion nằm chung họ với mọi đoạn 12px khác của nó. 4 bộ da còn lại chạy
+> Montserrat và có thân 12px ở 12/16, nên theo 12/16.
+> **Bảng thông số pdp2** đi cùng nội dung (`:is(div, p, span)`); muốn trả nó về 12/16 trong
+> `skin-li` — nó là hàng một dòng, đúng ra 1,33 — thì tách `span` ra một rule.
+> **Chưa đụng:** accordion **checkout / giỏ / footer** — không mang móc `[data-pdp-acc]`.
+>
+> *Lịch sử trong ngày (đã bị nhịp trên thay thế, giữ để đọc ra vì sao):* PDP2 từng riêng
+> 12/16·500·HOA · PDP3 từng riêng cả cụm 14/20 · Maika và `skin-li` từng để nội dung 14/20.
+> Cả 3 biến thể nay đã tan; **6 bản PDP không còn khác nhau ở cụm accordion**, muốn so 6 bản
+> thì phải cấp nét khác.
 
 > **Bộ da `skin-li` lấy đúng quyết định này (25/08/2026, lệnh user: *"Trong pdp ở skin-li, các
 > accordions sẽ không uppercase toàn bộ, chỉ tăng font lên 14, tăng nhẹ font weight là được"*):**
@@ -163,6 +163,12 @@ Khác biệt responsive nằm ở **bố cục và mật độ**, không nằm �
 > `skin-li`, khai giống hệt ở 2 file. **Kèm theo:** thân accordion PDP phải RA KHỎI danh sách rà
 > F5 12/16→12/18 của `skin-li` — hook đó (0,5,2) thắng rule mới (0,4,2), để lại là nhãn 14 mà
 > thân 12.
+>
+> ⚠ **Phần NỘI DUNG của ghi chú này đã bị nhịp chốt cuối ngày thay thế** (xem khối "CỤM
+> ACCORDION PDP — NHỊP CHỐT CUỐI" ở trên): nội dung + bảng thông số của `skin-li` nay là
+> **12/18**, không còn 14/20. Nhãn thì giữ nguyên **14/20 · 500 · chữ thường** như ghi chú này.
+> Việc "ra khỏi danh sách rà F5" vẫn đúng về cơ chế — cỡ/dòng do rule mục 7 quyết — chỉ là hai
+> chỗ nay cùng số 12/18.
 
 ### 1.3 Line-height đi kèm cỡ chữ, không bao giờ tách rời
 
@@ -266,18 +272,17 @@ Quy ước toàn dự án là **không dùng UPPERCASE**. `skin-mt` là ngoại 
 7. **Nhãn accordion PDP — cả 6 bản** — `[data-pdp-acc] .acc-trigger > span`
    *(thêm 25/08/2026 cho riêng PDP2 theo lệnh "ở trang PDP ver số 2… uppercase hết trên font
    12", rồi **mở ra cả 6 bản cùng ngày**: "ở skin-mt uppercase rồi cũng tăng fontweight cho
-   accordion luôn nhé")*. Nhãn chuyển từ họ nội dung sang **họ nhãn T6 12/16 · 500 · HOA**;
-   riêng **pdp3 giữ bậc cỡ 14/20** (lệnh cùng ngày cho cụm accordion bản đó lên 14). §1.1 buộc
-   hoa đi cặp với 500, không tách.
+   accordion luôn nhé")*. Nhãn chuyển từ họ nội dung sang **họ nhãn T3 14/20 · 500 · HOA** —
+   bậc cỡ chốt lại cuối ngày, xem "NHỊP CHỐT CUỐI" ở §1.2. §1.1 buộc hoa đi cặp với 500.
    Đây **không phải khuôn mới**: accordion **footer** và **giỏ hàng** của `skin-mt` đã là
-   12/16 · 500 · HOA từ trước (đo 25/08) — cụm PDP ở 12/18 · 400 mới là chỗ lệch, nay hết.
-   Nội dung + bảng thông số bên trong accordion **vẫn chữ thường 400** — xem "Không bao giờ
-   hoa" ngay dưới; muốn nội dung nổi thì lên bậc **cỡ**, đúng thứ pdp3 đang làm.
+   500 · HOA từ trước (đo 25/08) — cụm PDP ở 400 · chữ thường mới là chỗ lệch, nay hết.
+   Nội dung + bảng thông số bên trong accordion **vẫn chữ thường 400 · cỡ 12** — xem "Không
+   bao giờ hoa" ngay dưới; muốn nội dung nổi thì lên bậc **cỡ**, không nâng độ đậm.
    Chữ hoa do **bộ da** quyết, không nằm trong markup: markup 6 bản dùng chung khuôn, nhờ vậy
-   `skin-mp` / Maika không dính chữ hoa. Đã thêm vào danh sách `.font-pair`.
-   Khai **giống hệt ở cả 2 file**. Vai này **chỉ sống trong `skin-mt`**: Maika kéo cụm
-   accordion về 14/20 · **500** · chữ thường (xem §1.2).
-   ⚠ **Hệ quả:** PDP2 hết điểm riêng — khác biệt giữa 6 bản nay chỉ còn cỡ 14 của pdp3.
+   `skin-mp` / Maika / `skin-li` không dính chữ hoa. Đã thêm vào danh sách `.font-pair`.
+   Khai **giống hệt ở cả 2 file**. Vai HOA này **chỉ sống trong `skin-mt`**: 4 bộ da kia dùng
+   cùng bậc cỡ nhưng để chữ thường (§1.2).
+   ⚠ **Hệ quả:** 6 bản PDP không còn khác nhau ở cụm accordion trong bất kỳ bộ da nào.
 
 **Không bao giờ hoa:** tên sản phẩm · giá · chữ trên nút · nhãn form ·
 thông báo lỗi · nội dung hàng trong danh sách (kể cả hàng cấp 2 của drawer) · đoạn văn.
