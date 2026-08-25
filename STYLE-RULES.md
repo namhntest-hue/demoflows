@@ -120,6 +120,25 @@ Vì sao **hai bản giống nhau**: divergence 5/12 cỡ ở bảng trên là ng
 tính năng. Một bản demo dùng để chốt thiết kế thì "cùng markup, khác kết quả" là hỏng.
 Khác biệt responsive nằm ở **bố cục và mật độ**, không nằm ở thang chữ.
 
+> **Biến thể đang thử — PDP3 (25/08/2026, lệnh user: *"ở trang pdp sản phẩm số 3 thì tăng
+> font size lên 14 cho toàn bộ các Accordion"*):** cụm accordion của **riêng PDP3** dùng
+> **14/20 cho CẢ nhãn lẫn nội dung**, họ nội dung · 400 · chữ thường — tức giữ nguyên vai,
+> chỉ **lên một bậc cỡ**. Không đẻ cỡ mới (14 đã có trong thang) nhưng có **mượn cặp của T3
+> — vốn là họ nhãn — cho nội dung**, nên phạm vi khoá vào đúng bản PDP3 để còn so với 5 bản
+> kia (nhãn 12/18 · nội dung 12/16). Chốt bản nào thì lúc đó mới sửa bảng trên.
+> Khai ở khối *"PDP2 + PDP3: THANG CHỮ RIÊNG CHO CỤM ACCORDION"*, **giống hệt ở cả 2 file**
+> (port sang `desktop.html` 25/08).
+
+> **Bộ da Maika (`skin-mk`) — cụm accordion PDP về MỘT cỡ 14 (25/08/2026, lệnh user: *"ở
+> skin maika, cho toàn bộ các Accordion (mô tả sản phẩm,...) up lên font 14 hết, không cần
+> uppercase"*):** cả **6 bản PDP**, cả 2 khổ, nhãn lẫn nội dung lẫn bảng thông số đều
+> **14/20 · 400 · chữ thường**. Rule này dập luôn 3 chỗ vốn đã lệch luật ở nhánh `skin-mp`
+> mà Maika thừa hưởng: nhãn desktop đang **16/24** (§1.2 đã bỏ 16 khỏi thang) · **weight
+> 300** (§1.1 cấm hẳn) · và cặp HOA + 500 mà riêng PDP2 mang theo từ markup. Đây là bộ da
+> duy nhất cho cụm accordion PDP một cỡ chữ duy nhất — `skin-mt` vẫn giữ 3 mức khác nhau
+> (pdp/4/5/6 · pdp2 · pdp3) để còn so. Khối *"MAIKA: CỤM ACCORDION PDP VỀ MỘT CỠ 14"*,
+> khai giống hệt ở 2 file.
+
 ### 1.3 Line-height đi kèm cỡ chữ, không bao giờ tách rời
 
 **Luật:** mọi rule đổi `font-size` trong `skin-mt` **bắt buộc** khai luôn `line-height`.
@@ -171,6 +190,17 @@ Quy ước toàn dự án là **không dùng UPPERCASE**. `skin-mt` là ngoại 
    lực từ 18/08) chuyển sang đúng đòn bẩy của họ nội dung: **lên 1 bậc cỡ** (brand 14 vs tên
    sp 12). Đo trước khi sửa: brand chỉ hơn tên sp 34/255 về mực nên mực một mình không gánh
    được phân cấp — cùng kết luận với việc 8.
+
+7. **Nhãn accordion — CHỈ bản PDP2** — `[data-screen="pdp2"] [data-pdp-acc] .acc-trigger > span`
+   *(thêm 25/08/2026, lệnh user: "ở trang PDP ver số 2, hãy cho toàn bộ các Accordion (mô tả
+   sản phẩm,...) được uppercase hết trên font 12")*. Nhãn chuyển từ họ nội dung sang **họ
+   nhãn T6 12/16 · 500 · HOA** — đúng khuôn nhãn nhóm ở footer đang chạy (đã đo cùng ngày:
+   12/16 · 500 · uppercase), nên không đẻ khuôn mới. §1.1 buộc hoa đi cặp với 500, không tách.
+   **Phạm vi khoá vào đúng PDP2**: 5 bản PDP kia giữ nhãn ở họ nội dung (12/18 · 400 · thường)
+   để còn so hai hướng. Nội dung + bảng thông số bên trong accordion **vẫn chữ thường 12** —
+   xem "Không bao giờ hoa" ngay dưới. Đã thêm vào danh sách `.font-pair` như 6 vai kia.
+   Khai **giống hệt ở cả 2 file** (port sang `desktop.html` 25/08). Vai này **chỉ sống
+   trong `skin-mt`**: bộ da Maika kéo cụm accordion về 14/20 · 400 · chữ thường (xem §1.2).
 
 **Không bao giờ hoa:** tên sản phẩm · giá · chữ trên nút · nhãn form ·
 thông báo lỗi · nội dung hàng trong danh sách (kể cả hàng cấp 2 của drawer) · đoạn văn.
