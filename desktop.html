@@ -2832,9 +2832,23 @@ window.RESP = (function () {
     [data-pdp-acc] .acc-trigger > span
   ) { text-transform: none; }
 
-  /* ── skin-mp: MENU GIỮ CHỮ HOA KỂ CẢ KHI ĐANG THỬ CẶP FONT (24/08/2026) ────────
-     User: *"sao khi tôi chuyển font mix thì lại mất uppercase nhỉ, ở skin-mp cho
-     uppercase cả menu kể cả khi switch font"* — áp cả 2 bản.
+  /* ── MENU HEADER GIỮ CHỮ HOA KỂ CẢ KHI ĐANG THỬ CẶP FONT — **MỌI BỘ DA** ───────
+     Chốt 25/08/2026, lệnh user: *"menu header bản desktop ở mọi phiên bản mọi skin,
+     mọi font đều phải uppercase nhé"*. Trước đó bản vá này chỉ có ở `skin-mp`
+     (24/08: *"sao khi tôi chuyển font mix thì lại mất uppercase nhỉ, ở skin-mp cho
+     uppercase cả menu kể cả khi switch font"*), và có ghi rõ *"skin-mt CỐ Ý không có
+     rule này"* — nay **ĐẢO chốt đó**: gỡ tiền tố `skin-mp`, một rule phủ cả 5 bộ da
+     kể cả bộ da không mang class nào.
+     Đo trước khi nới (khổ 1440, bật cặp `fraunces-inter`): **4/5 bộ da mất chữ hoa**
+     ở cả 3 vai menu (`default` · `skin-mt` · Maika · `skin-li` ra `none`); chỉ
+     `skin-mp` giữ được, đúng vì nó là bộ duy nhất có bản vá.
+     ⚠ `.search-tab` CỐ Ý KHÔNG vào rule này: nó là hàng tab ngành hàng ở màn Search,
+     nằm NGOÀI `.navbar` — không phải menu header. Khi thử cặp font nó vẫn về chữ
+     thường. Muốn kéo vào thì nói.
+     `!important` vẫn cần, không phải cho vui: khối `.font-pair` ở trên đứng ở (1,2,2)
+     nhờ nhánh mang id, còn chuỗi hợp lý nhất ở đây chỉ (0,3,1) — không có id nào bọc
+     được `.dk-nav-link`/nhãn mega. Phạm vi hẹp: đúng một thuộc tính, đúng một trạng
+     thái (đang thử cặp font).
      Vì sao mất: khối `.font-pair` ngay trên trả `text-transform: none` cho danh sách
      nhãn và KHÔNG phân biệt bộ da; `:is()` lấy specificity của đối số ĐẬM NHẤT
      (`[data-screen="cart"] … .font-medium`) nên cả khối lên (0,4,2) — cao hơn rule menu
@@ -2852,9 +2866,9 @@ window.RESP = (function () {
      đó: skin-mt ở desktop cũng không hoa drawer) nên không có nhánh nào cho nó.
      skin-mt CỐ Ý không có rule này (chốt 24/08). KHAI GIỐNG HỆT ở index.html — bản
      mobile chỉ cần 1 nhánh vì ở đó font-pair chỉ giết `.ms-tab`. */
-  html.skin-mp.font-pair .navbar .dk-dept,
-  html.skin-mp.font-pair .navbar .dk-nav-link,
-  html.skin-mp.font-pair .navbar .dk-mega-grid > div > p {
+  html.font-pair .navbar .dk-dept,
+  html.font-pair .navbar .dk-nav-link,
+  html.font-pair .navbar .dk-mega-grid > div > p {
     text-transform: uppercase !important;
   }
 
@@ -10277,6 +10291,48 @@ const FONT_PAIRS = [
   ['modern',    'Đương đại · serif mới',          'Fraunces', "'Fraunces', ui-serif, Georgia, serif", 'Manrope', "'Manrope', ui-sans-serif, system-ui, sans-serif",
     'serif hiện đại',
     { adj: 0.53, headLs: '0', headLh: 1.32 }],
+  /* 25/08/2026 — THÊM cặp **Fraunces + Inter** (lệnh user: *"trong bộ font dùng thử,
+     hãy thử thêm font mix giữa inter và Fraunces"*). Vai: Fraunces là mặt TRƯNG BÀY
+     (serif display), Inter là THÂN BÀI — cùng khuôn với 3 cặp còn lại, không đảo.
+
+     Đo trước khi thêm, chuẩn hoá 100px, ĐÃ nạp kèm chuỗi tiếng Việt
+     (`document.fonts.load(spec, 'ệằữẳẵ…')` — thiếu chuỗi thì chỉ kéo subset latin và
+     số đo ra của font dự phòng):
+
+       |                | Fraunces | Inter | Libre Bodoni | Montserrat |
+       | x-height       |    47    |  55   |      45      |     53     |
+       | cap-height     |    70    |  73   |      76      |     70     |
+       | dấu ằ          |    82    |  93   |      82      |     83     |
+       | chân chữ p     |  **24**  |  21   |      32      |     20     |
+       | dòng tối thiểu | **1,06** | 1,14  |     1,14     |    1,03    |
+       | rộng chuỗi VN  |   1309   | 1332  |     1248     |    1438    |
+
+     Tiếng Việt ĐẠT: `document.fonts.check('100px "Fraunces"', 'ệằữ')` = true, và cả 2
+     family VỐN ĐÃ nằm trong thẻ <link> (`Fraunces:wght@400;500` + `Inter:wght@…`) nên
+     KHÔNG thêm request nào.
+
+     `adj: 0.55` — KHÁC 0.53 của 3 cặp kia, và đây là chỗ quan trọng nhất của hàng này.
+     `--pair-adj` đi vào `font-size-adjust: ex-height`, tức nó neo x-height của THÂN
+     BÀI. Cặp này thân bài là **Inter (x-height 55)** nên phải neo 0.55; để 0.53 (neo
+     về Montserrat) là bóp Inter **2,75%** — chữ khai 12px vẽ ra ~11,67px, đúng bậc 11
+     mà §1.2 cấm. Con số 0.55 lấy từ chính bảng đo của F3: *"ex-height .55 cho 124,20px
+     — lệch +0,7% so với không adjust, tức trung tính với Inter"*.
+     (Cặp `couture` cũng thân bài Inter và cũng đang để 0.53 — đó là mục 2 Phần 8 của
+     `FONT-LIBRE-INTER.md`, "sửa lỗi, CHƯA áp". Hàng mới thì làm đúng ngay.)
+
+     `headLs: '0.5px'` — theo §1.4 một-giá-trị và F4 (sửa 25/08 sau khi đo mytheresa:
+     họ giữ 0,5px trên 100% phần tử ở cả 2 khổ, kể cả mặt trưng bày cỡ 48). Hai hàng
+     Fraunces cũ còn để `'0'` vì viết trước lần sửa luật đó — cũng là mục 2 Phần 8.
+
+     `headLh: 1.32` — GIỮ ĐÚNG số của 2 hàng Fraunces kia, có chủ ý: điều kiện không
+     chạm dòng của Fraunces chỉ là **1,06** (thoáng nhất trong 3 mặt trưng bày) nên
+     1,32 dư sức; giữ nguyên thì biến duy nhất thay đổi giữa 3 hàng là MẶT CHỮ THÂN
+     BÀI, đúng thứ cần so. Fraunces xH 47 thấp hơn Inter 55 **15%** — khoảng cách lớn
+     nhất trong 3 cặp (Montserrat 53 → 11% · Manrope 54 → 13%), nên đây cũng là cặp
+     tương phản 2 tầng mạnh nhất. */
+  ['fraunces-inter', 'Fraunces + Inter', 'Fraunces', "'Fraunces', ui-serif, Georgia, serif", 'Inter', "'Inter', ui-sans-serif, system-ui, sans-serif",
+    'serif mới, nền Inter',
+    { adj: 0.55, headLs: '0.5px', headLh: 1.32 }],
   ['couture',   'Couture · didone thuần',         'Libre Bodoni', "'Libre Bodoni', ui-serif, Georgia, serif", 'Inter', "'Inter', ui-sans-serif, system-ui, sans-serif",
     'didone Vogue-esque',
     /* Didone: hairline chỉ sống từ ~32px mà thang dự án dừng ở 24 -> tracking âm

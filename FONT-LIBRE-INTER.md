@@ -964,3 +964,88 @@ khách mở ra thấy ngay — **kể cả 3 chỗ lệch luật đã ghi danh**
 Luật §4.5 của `STYLE-RULES.md` đã cập nhật theo: bộ da còn lại để thử nghiệm là `skin-mp`
 (Editorial) và Maika. `skin-mt` thì **chặt hơn trước** — `skin-li` là lớp phủ trên chính nó nên
 sửa `skin-mt` là sửa luôn mặt tiền.
+
+---
+
+## Phần 14 — Cặp thử **Fraunces + Inter** *(25/08/2026, cả 2 bản)*
+
+Lệnh user: *"trong bộ font dùng thử, hãy thử thêm font mix giữa inter và Fraunces"*. Thêm vào
+`FONT_PAIRS` — tức **công cụ dev** trong popover Cài đặt (§5 miễn trừ), không phải bộ da.
+Vai: **Fraunces = mặt trưng bày · Inter = thân bài**, cùng khuôn 3 cặp còn lại.
+
+### 14.1 Số đo Fraunces — đo mới, không lấy lại từ ghi chú cũ
+
+Chuẩn hoá 100px, đã nạp kèm chuỗi tiếng Việt (`document.fonts.load(spec, 'ệằữẳẵ…')` — thiếu
+chuỗi thì chỉ kéo subset latin và ra số của font dự phòng, đúng cái bẫy Phần 0 đã ghi):
+
+| | **Fraunces** | Inter | Libre Bodoni | Montserrat |
+|---|---|---|---|---|
+| x-height | **47** | 55 | 45 | 53 |
+| cap-height | 70 | 73 | 76 | 70 |
+| dấu `ằ` | 82 | **93** | 82 | 83 |
+| dấu `ệ` | 69 | 76 | 73 | 73 |
+| chân chữ `p` | **24** | 21 | 32 | 20 |
+| **dòng tối thiểu** (`ằ + chân p`) | **1,06** | 1,14 | 1,14 | 1,03 |
+| rộng "Nhận thông báo khi có hàng" | 1309 | 1332 | 1248 | 1438 |
+
+Bốn cột khớp đúng bảng Phần 0 ở 3 font đã đo trước → phép đo tin được.
+**Tiếng Việt ĐẠT:** `document.fonts.check('100px "Fraunces"', 'ệằữ')` = `true`. Cả 2 family
+**vốn đã nằm trong thẻ `<link>`** nên **không thêm request nào**.
+
+**Fraunces là mặt trưng bày THOÁNG NHẤT trong 3 mặt đã đo** — dòng tối thiểu chỉ 1,06 (Bodoni
+1,14) vì chân chữ chỉ sâu 24/100 so với 32 của Bodoni. Đổi lại x-height 47 thấp hơn Inter 55
+**15%** — khoảng cách 2 tầng LỚN NHẤT trong 3 cặp Fraunces (Montserrat 53 → 11% · Manrope 54 →
+13%), nên đây là cặp tương phản mạnh nhất.
+
+### 14.2 `tune`: một chỗ CỐ Ý khác 3 hàng cũ
+
+| | hàng mới | 3 hàng cũ | vì sao |
+|---|---|---|---|
+| `adj` | **0,55** | 0,53 | `--pair-adj` đi vào `font-size-adjust: ex-height`, tức nó neo x-height của **THÂN BÀI**. Cặp này thân bài là Inter (xH 55) nên phải neo 0,55 |
+| `headLs` | **0,5px** | `'0'` | §1.4 một-giá-trị + F4 (sửa 25/08 sau khi đo mytheresa: 0,5px trên 100% phần tử, kể cả mặt trưng bày cỡ 48) |
+| `headLh` | 1,32 | 1,32 | GIỮ nguyên có chủ ý — 1,32 dư sức so với sàn 1,06, và giữ nguyên thì biến duy nhất thay đổi giữa 3 hàng Fraunces là MẶT CHỮ THÂN BÀI, đúng thứ cần so |
+
+**`adj` đã đo để chắc, không suy:** chuỗi thân bài 12px Inter, `letter-spacing: 0.5px`
+
+| | không adjust | `ex-height 0.53` | `ex-height 0.55` |
+|---|---|---|---|
+| bề rộng | 172,83 | 168,17 | 174,03 |
+| lệch | — | **−2,70%** | **+0,69%** |
+| cỡ vẽ ra thật | 12,00px | **11,68px** | **12,08px** |
+
+`0.53` bóp Inter về **11,68px** — đúng bậc 11 mà §1.2 cấm, và khớp con số 2,75% / 11,67px mà F3
+đã ghi. `0.55` lệch 0,69%, coi như trung tính. *(Cặp `couture` cũng thân bài Inter và cũng đang
+để 0.53 — đó là **Phần 8 mục 2**, "sửa lỗi, CHƯA áp". Hàng mới làm đúng ngay; đo được `couture`
+vẫn ra `adj 0.53` khi bật.)*
+
+### 14.3 Đo sau khi thêm — cả 2 bản
+
+| | kết quả |
+|---|---|
+| Hàng trong popover | **`Fraunces` / `+ Inter · serif mới, nền Inter`** — đặt cạnh 2 hàng Fraunces kia để so được ngay |
+| Biến inline khi bật | `--font-head` Fraunces · `--font-app` Inter · `--pair-adj 0.55` · `--pair-head-ls 0.5px` · `--pair-head-lh 1.32` |
+| `font-size-adjust` trên `body` | `0.55` |
+| Brand PDP · tiêu đề mục | **24/32 · Fraunces** *(mobile và desktop)* |
+| Thân bài · nhãn accordion | 12/18 · Inter · 14/20 · 500 · thường · Inter |
+| Phần tử ăn Fraunces ở PDP | **4** — đúng 4 phần tử của bậc trưng bày *(3 span "Fraunces" còn lại là nhãn xem trước trong chính popover)* |
+| Chọn lại bộ da = reset | `adj` về `none`, brand về Libre Bodoni, dấu tích về `couture`, `.font-pair` gỡ — sạch cả 2 lượt thử |
+| Console | sạch |
+
+### 14.4 Hai chỗ méo của CƠ CHẾ cặp font — không phải của cặp này
+
+Popover cặp font là công cụ dev có từ trước và nó **đè lên** bộ da bằng inline + class
+`.font-pair`. Khi bật thử trên `skin-li` (nay là bộ da vào-trang) có 2 chỗ lệch khỏi hệ thống đã
+dựng — biết để khỏi đọc nhầm là lỗi của Fraunces:
+
+1. **`.font-pair` giao `--font-head` theo THẺ** (`h1, h2, h3`) và cho cả `.text-[18px]` →
+   **chữ cái avatar và 6 ô OTP ăn Fraunces**, đúng 2 phần tử mà `skin-li` cố ý chừa
+   (13.4). Đo được: avatar = `18px Fraunces`.
+   *May là với cặp này nó vô hại về chất lượng nét:* F1 chỉ nói về Didone (hairline 0,031 ×
+   cỡ). Fraunces là serif mềm, không có nét mảnh thật, nên ở 18px nó không bị bôi xám như
+   Libre Bodoni.
+2. **`.font-pair` trả mọi nhãn về chữ thường** (khối *"THỬ CẶP FONT = TẮT NHÃN HOA"*, chốt
+   24/08) → title lớp nổi và nhãn cấp 2 mất chữ hoa trong lúc thử.
+
+Cả hai là hành vi CÓ TỪ TRƯỚC của công cụ, không sửa trong lượt này. Muốn thử cặp này "sạch"
+theo đúng hệ thống thì phải làm như `skin-li`: khai 2 token CSS trong một bộ da, không đi qua
+`applyFontPair` — nói thì làm.

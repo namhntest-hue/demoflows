@@ -110,3 +110,35 @@
 6. **D + F1/F2** — hệ viền; nên đi cùng nhau, vì sync lẻ sẽ ra nửa hệ.
 7. **E1** — chờ bạn chốt bằng tay (không có số đo để dựa).
 8. **H** — bỏ.
+
+---
+
+## Menu header khổ desktop: chữ hoa ở MỌI bản, MỌI bộ da, MỌI phông *(25/08/2026)*
+
+Lệnh user: *"menu header bản desktop ở mọi phiên bản mọi skin, mọi font đều phải uppercase nhé"*.
+Đo trước khi sửa, khổ 1440, `getComputedStyle` trên `.navbar .dk-dept` · `.navbar .dk-nav-link` ·
+`.dk-mega-grid > div > p`:
+
+| File | Trạng thái TRƯỚC | Nguyên nhân |
+|---|---|---|
+| `desktop.html` | chữ hoa ở cả 5 bộ da khi KHÔNG thử font; **mất ở 4/5 bộ** khi bật cặp font *(chỉ `skin-mp` giữ)* | khối `.font-pair` trả `text-transform: none` và không phân biệt bộ da; bản vá 24/08 chỉ khai cho `skin-mp` |
+| `desktop-neutral.html` | **chữ thường** — `.dk-dept` 14/20 · **600** | fork đóng băng 21/08, chưa có khuôn menu chung 25/08. Không có bộ chọn da, không có `FONT_PAIRS` |
+| `desktop-editorial.html` | **chữ thường** ở bộ da nó đang chạy (`skin-mp`, 16/24 · 400) và ở `neutral` (14/20 · 600); chỉ `skin-mt` hoa | như trên |
+| `desktop-atelier.html` | **chữ thường** ở bộ mặc định (16/24 · **600**) và `editorial` (16/24 · 400); nhãn mega vốn đã hoa nhưng **600** | như trên |
+
+**Cách sửa.** `desktop.html`: gỡ tiền tố `skin-mp` khỏi bản vá font-pair → `html.font-pair .navbar
+…`, phủ cả bộ da không mang class nào. 3 fork: thêm một khối cuối `<style>`, khai **`font-weight:
+500` + `text-transform: uppercase`** (cặp không tách rời của §1.1 — các fork đang ở 600 hoặc 400,
+thêm hoa mà giữ nấc cũ là đổi vi phạm này thành vi phạm khác). **Không chạm cỡ/dòng** — thang menu
+riêng của từng fork là bố cục của nó.
+
+`!important` ở cả 4 file: khối `.font-pair` đứng (1,2,2) nhờ nhánh mang id, còn rule bộ da ở fork
+là (0,3,1) — không có chuỗi không-id nào với tới. Phạm vi hẹp: 1–2 thuộc tính, đúng 3 vai menu.
+
+**Đo sau khi sửa:** `desktop.html` **25/25 tổ hợp** (5 bộ da × [không cặp + 4 cặp font]) ra
+`uppercase · 500`. Ba fork: mọi bộ da của mỗi file ra `uppercase · 500`, **0 mục nào tràn ngang**,
+chiều cao thanh header không đổi. Console sạch cả 4 file.
+
+**Chưa vào phạm vi, có chủ ý:** `.search-tab` (ngoài `.navbar`, không phải menu header) vẫn về chữ
+thường khi thử cặp font. Và **khổ mobile không sửa** — ở đó `.font-pair` giết chữ hoa của `.ms-tab`
++ `.search-tab`, bản vá vẫn chỉ có cho `skin-mp` (`index.html`).

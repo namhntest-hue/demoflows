@@ -207,6 +207,27 @@ Quy ước toàn dự án là **không dùng UPPERCASE**. `skin-mt` là ngoại 
 > **Font KHÔNG đi theo:** khối chung chỉ chạm CỠ · DÒNG · ĐẬM · HOA · TRACKING, không khai
 > `font-family` — mỗi bộ da giữ mặt chữ của set up riêng (mặc định Montserrat, `skin-mp` /
 > Maika Inter + Libre Bodoni).
+>
+> **SIẾT THÊM 25/08/2026 — menu header khổ DESKTOP luôn chữ hoa, không có ngoại lệ nào**
+> (lệnh user: *"menu header bản desktop ở mọi phiên bản mọi skin, mọi font đều phải uppercase
+> nhé"*). Hai chỗ phải xử, đo ra mới thấy:
+> * **`desktop.html`, khi đang THỬ CẶP FONT:** khối `.font-pair` trả `text-transform: none` cho
+>   `.dk-dept`/`.dk-nav-link`/nhãn mega và **không phân biệt bộ da** → đo được **4/5 bộ da mất
+>   chữ hoa**; chỉ `skin-mp` giữ được vì nó là bộ DUY NHẤT có bản vá (24/08). Nay gỡ tiền tố
+>   `skin-mp` khỏi bản vá đó → một rule phủ cả 5 bộ da. **Việc này ĐẢO ghi chú cũ**
+>   *"skin-mt CỐ Ý không có rule này"*.
+> * **3 bản fork desktop** (`desktop-neutral` · `desktop-editorial` · `desktop-atelier`): đóng
+>   băng từ 21/08 nên **chưa hề có** khối khuôn menu chung của 25/08 — đo được menu chữ THƯỜNG
+>   ở mọi bộ da trừ `skin-mt`. Đã thêm một khối cuối `<style>` mỗi file.
+>   Khối đó khai **cả `font-weight: 500`**, không chỉ `text-transform`: các fork đang để
+>   `.dk-dept` ở **600** (§1.1 cấm hẳn) hoặc **400** (hoa-mà-400, §1.1 cấm đích danh) — thêm hoa
+>   mà không sửa nấc đậm là đổi một vi phạm thành vi phạm khác.
+>   **CỐ Ý không chạm CỠ/DÒNG** ở các fork: mỗi bản có thang menu riêng (16/24 · 14/20 · 12/16)
+>   và đó là bố cục của nó; kéo về 12/16 như khuôn chung là đổi nhịp thanh header, cần chốt riêng.
+> **Chưa vào phạm vi, ghi rõ:** `.search-tab` (hàng tab ngành hàng ở màn Search, nằm NGOÀI
+> `.navbar`) vẫn về chữ thường khi thử cặp font — nó không phải menu header. Và **khổ MOBILE
+> không sửa** trong lượt này: ở đó `.font-pair` giết chữ hoa của `.ms-tab` + `.search-tab`, và
+> bản vá vẫn chỉ có cho `skin-mp`.
 > **Số áp là số ĐO ĐƯỢC của `skin-mt`, không phải số của luật** (user chốt lấy số đo đang
 > chạy). Nên 2 chỗ lệch dưới đây nay có mặt ở cả 4 bộ da, và phải sửa CÙNG LÚC cả 4 + `home.html`:
 > · hàng danh mục drawer để **HOA + 400** — nửa cặp mà §1.1 cấm, và Phần 6 việc 7 đã chốt
