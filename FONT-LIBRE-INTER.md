@@ -1049,3 +1049,162 @@ dựng — biết để khỏi đọc nhầm là lỗi của Fraunces:
 Cả hai là hành vi CÓ TỪ TRƯỚC của công cụ, không sửa trong lượt này. Muốn thử cặp này "sạch"
 theo đúng hệ thống thì phải làm như `skin-li`: khai 2 token CSS trong một bộ da, không đi qua
 `applyFontPair` — nói thì làm.
+
+---
+
+## Phần 15 — Cặp thử **Cormorant Garamond + Inter** *(25/08/2026, cả 2 bản)*
+
+Lệnh user: *"thêm lựa chọn font mix Cormorant Garamond và inter vào luôn nhé"*. Vào `FONT_PAIRS`
+— công cụ dev trong popover (§5 miễn trừ). Vai: Cormorant = trưng bày · Inter = thân bài.
+
+### 15.1 Verify tiếng Việt TRƯỚC khi thêm — bắt buộc, vì đây là family MỚI
+
+Cormorant Garamond **không có** trong thẻ `<link>` (đã gỡ 24/08 cùng cặp Cormorant + Be Vietnam
+Pro). Thêm family mới thì luật dự án bắt tải CSS thật:
+
+`fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500` → **HTTP 200**, **10 khối
+`@font-face`** (5 subset × 2 nấc), subset khai gồm `cyrillic-ext · cyrillic · vietnamese ·
+latin-ext · latin` — **có `vietnamese`**, `unicode-range` chứa **`U+1EA0`**. ĐẠT.
+Đây là request font **thứ 6**, khác 2 lượt trước (Fraunces và Inter vốn đã có sẵn).
+
+### 15.2 ⚠ Đây là mặt chữ TỪNG BỊ LOẠI VÌ SỐ ĐO
+
+Ghi chú đầu bảng `FONT_PAIRS` vẫn còn nguyên câu: *"Đã loại vì số đo: Cormorant Garamond +
+Montserrat (xH 39 vs 53, lệch quá xa → tiêu đề trông NHỎ hơn thân bài dù cỡ lớn hơn)"*.
+
+Đo lại 25/08, x-height chuẩn hoá 100px — **con số cũ đúng**:
+
+| | Cormorant | Fraunces | Libre Bodoni | Inter *(thân bài)* |
+|---|---|---|---|---|
+| x-height | **39** | 47 | 45 | 55 |
+| so với thân bài Inter | **−29%** | −15% | −18% | — |
+| cap-height | **63** | 70 | 76 | 73 |
+| dấu thường cao nhất | `ệ` **73** | `ằ` 82 | `ắ` 83 | `ằ` 93 |
+| chân chữ sâu nhất | 28 | 24 | 32 | 21 |
+| rộng chuỗi VN | **1104** | 1309 | 1248 | 1332 |
+
+**Cặp tương phản 2 tầng MẠNH NHẤT trong 5 cặp**, và hẹp nhất (1104 vs 1332 của Inter = −17%).
+Nhưng **bản 24/08 khác bản này ở một chỗ quyết định**: lúc đó cặp Cormorant chạy `adj 0.53` (neo
+về Montserrat) nên thân bài Inter còn bị bóp thêm 2,75%. Bản này `adj 0.55` neo đúng Inter, và
+chính `font-size-adjust` là thứ chữa cái bệnh *"tiêu đề trông nhỏ hơn thân bài"* — nó phóng
+Cormorant lên cho bằng cảm giác cỡ.
+
+### 15.3 `headLh: 1.52` — chỗ DUY NHẤT phải tính theo cỡ DÙNG THẬT
+
+`font-size-adjust: ex-height 0.55` bắt trình duyệt scale sao cho `x-height / cỡ = 0,55`.
+Cormorant tự nhiên chỉ **0,39** → **phóng 1,41×**: chữ khai 24px vẽ ra bằng em ~**31,7px**
+(đo trên trang). Dấu và chân chữ to lên theo, nên nhịp dòng phải tính trên cỡ đã phóng:
+
+```
+dấu ệ 0,73 + chân chữ 0,28 = 1,01 × cỡ   (mặt chữ trần)
+× hệ số phóng 1,41                        = 1,424 × cỡ KHAI   ← sàn thật
+chọn 1,52                                 → thở ~6,5%
+```
+
+Biên 6,5% lấy đúng theo hàng `fraunces-inter` (sàn 1,24 → chọn 1,32). **Bản nháp đầu tôi đặt
+1,30 — kẹp dấu, đã đo ra và sửa.**
+
+**Hai phát hiện kèm theo, đáng giữ:**
+
+1. **Công thức của F2 (`dấu ằ + chân chữ`) không đúng cho mọi mặt chữ.** Cormorant có
+   `ệ` (73) **cao hơn** `ằ` (68) — ngược cả 3 font kia. Lấy `ằ` cho riêng font này là ra số
+   thiếu. Phải quét cả bộ dấu rồi lấy MAX.
+   *(Nếu tính cả chữ HOA có dấu chồng — `Ẳ` cao 88 ở Cormorant, 111 ở Bodoni/Inter — thì mọi
+   `headLh` trong bảng đều thiếu. Dự án cố ý tính theo chữ thường vì luật là "chỉ viết hoa chữ
+   đầu", nên chữ hoa mang dấu chồng gần như không xuất hiện ở tiêu đề.)*
+2. **Cặp `couture` đang kẹp dấu.** Libre Bodoni với `adj 0.53` phóng 1,222× → sàn
+   `1,15 × 1,222 = 1,406`, mà hàng đó để `headLh: 1.25`. Chưa sửa: thuộc mục 2 Phần 8
+   ("sửa lỗi, CHƯA áp") và là công cụ dev.
+
+### 15.4 Đo sau khi thêm
+
+| | kết quả |
+|---|---|
+| Hàng trong popover | **"Cormorant Garamond / + Inter · garamond cổ điển, nền Inter"** — 5 cặp, xếp cạnh 3 hàng serif kia |
+| Biến inline khi bật | `--font-head` Cormorant · `--pair-adj 0.55` · `--pair-head-ls 0.5px` · `--pair-head-lh 1.52` |
+| Thân bài | 12/18 · Inter · **vượt hộp 0px** |
+| Menu header desktop khi bật cặp | **HOA 12/16 · 500** *(bản vá lượt trước vẫn giữ)* |
+| Chọn lại bộ da = reset | `adj` về `none`, mặt chữ về của bộ da — sạch |
+| Console | sạch cả 2 bản |
+
+### 15.5 ⚠ CHỖ PHẢI BIẾT: trên `skin-li`, `headLh` của cặp KHÔNG có hiệu lực
+
+`--pair-head-lh` được khai qua `html.font-pair [data-screen] :is(h1, h2, h3, .text-[…])` =
+**(0,2,2)**. Trên `skin-li`, bậc trưng bày bị ghim bởi rule của chính bộ da — `:is(h1,h2,p):is(…)`
+(0,3,2) và brand `.pc-brand.h-7` (0,4,1) — nên **line-height đứng nguyên 32px**, `1.52` bị bỏ qua.
+
+Đo trên PDP, hộp tiêu đề 32px, phần ink vượt ra:
+
+| bộ da | line-height thật | `cormorant-inter` | `fraunces-inter` | `couture` |
+|---|---|---|---|---|
+| **`skin-li`** *(bộ da vào-trang)* | ghim **24/32** | **vượt 5px** ⚠ | vượt 1px | vượt 1px |
+| `default` | 18 × 1.52 = 27,36 | vượt 1px | 0 | 0 |
+| `skin-mt` | 14 × 1.52 = 21,28 | **0** | 0 | 0 |
+| `skin-mp` | 18 × 1.52 = 27,36 | vượt 1px | 0 | 0 |
+
+Tức cơ chế cặp font **chạy đúng ở 3 bộ da**, chỉ `skin-li` chặn vì thang chữ của nó được ghim có
+chủ ý (13.3). Không có tổ tiên nào `overflow: hidden` nên chữ **không bị cắt**, chỉ tràn ra chèn
+vào dòng dưới. Hai đường xử, đều 1 dòng, **chưa làm — chờ chốt**:
+
+* **A.** để nguyên — coi đây là giới hạn đã biết của công cụ thử (cùng họ với 2 chỗ méo ở 14.4);
+* **B.** nâng specificity của rule `--pair-head-lh` cho nó thắng bộ da. Đổi hành vi cho **cả 5
+  cặp** trên mọi bộ da, nên không tự ý làm.
+
+---
+
+## Phần 16 — Đồng bộ bộ text style trong Figma sang Inter *(25/08/2026)*
+
+Lệnh user: *"trước đó tôi có kêu bạn tạo bộ typo theo montserrat, giờ đã đổi sang font Inter body
+và đang chờ chốt font heading. hãy vào link figma mà bạn tạo sửa lại typo nhé"* —
+file **Test agent** `XFfjTNMuPfaTeZvdbVIO2F`, 23 trang.
+
+### 16.1 Đo trước khi sửa
+
+| | |
+|---|---|
+| Text style | **7** (T1 · T2 · T3 · T4 · T5 · T6 · T7), **tất cả Montserrat** |
+| Text node | **358 — 100% Montserrat** |
+| Node CÓ gắn style | 296, phủ đủ 7 style *(small/regular 159 · micro 40 · paragraph 35 · mini/medium 23 · heading 1 17 · heading 2 13 · small/medium 9)* |
+| Node **KHÔNG** gắn style | **62** — đổi style không cứu được, phải sửa riêng. Toàn bộ nằm ở trang tài liệu: Cover 1 · Getting started 2 · Color 39 · Typography 7 · Spacing & Radius 13 |
+| Nấc đang dùng ở 62 node đó | chỉ `Regular` + `Medium` |
+
+**Cái bẫy tránh được:** tên nấc của 2 họ font KHÔNG trùng — Montserrat có `SemiBold`/`ExtraBold`
+(liền), Inter có `Semi Bold`/`Extra Bold` (có dấu cách). Đổi họ font theo kiểu giữ nguyên tên nấc
+sẽ **ném lỗi** ở mọi node SemiBold. Đã đếm trước: 62 node chỉ dùng Regular/Medium nên không vướng;
+nếu sau này có node SemiBold thì phải map tên tay.
+
+### 16.2 Đã làm
+
+* **7 text style → Inter**, giữ nguyên cỡ / dòng / tracking / chữ hoa. Không đổi tên style nên
+  **không phải re-link node nào** (khác lượt 20/08 phải re-link 8.593 node vì đổi cấu trúc tên).
+* **62 node lẻ → Inter**, giữ nguyên nấc. 0 node bị bỏ qua.
+* **Viết lại description của cả 7 style**: ghi rõ thân bài = Inter (chốt 25/08), 2 style heading
+  là **mặt chữ CHỜ CHỐT** kèm 3 ứng viên, và 2 ngoại lệ mới của demo (accordion PDP `Medium` chữ
+  thường; bậc 18 nay rỗng).
+* **Thêm khung `[doc] Mặt chữ — trạng thái`** vào trang *Foundations · Typography* (720×260, dưới
+  khung specimen sẵn có) — để người nhận file thấy trạng thái mà không phải bấm vào từng style.
+
+**Đo lại sau khi sửa:** **358/358 node là Inter**, 0 Montserrat còn sót, 0 node tên/chữ trên canvas
+còn chữ "Montserrat", 7/7 style ra đúng `Inter Regular|Medium · cỡ/dòng cũ · ls 0.5px · case cũ`.
+Chụp lại trang Typography và Product card: dấu tiếng Việt (`ộ ắ ố ã ữ`) vẽ đủ, không rơi fallback.
+5 node báo `textTruncation: ENDING` là thuộc tính **tác giả đặt** cho tên sản phẩm trên card —
+không phải hệ quả của lượt này, và Inter hẹp hơn Montserrat 7,4% nên chỗ cắt còn lùi ra sau.
+
+### 16.3 Heading để Inter là bản TẠM — vì sao không để nguyên Montserrat
+
+Chờ chốt thì đứng yên là hợp lý, nhưng Montserrat **không còn trong thương hiệu**, nên để 2 style
+heading trên Montserrat là file bàn giao mang một font đã bỏ. Để Inter thì file nhất quán, và nó
+cũng đúng hành vi thật của demo: F1 quy định *"mọi bậc dưới sàn là Inter"*, tức khi mặt chữ trưng
+bày không đạt điều kiện thì heading rơi về chính thân bài.
+Chốt xong chỉ phải đổi **2 style**, **30 node** tự cập nhật.
+
+### 16.4 CÒN LỆCH giữa Figma và demo — chờ chốt trước khi dựng lại
+
+1. **Bậc trưng bày**: demo nay chỉ còn MỘT cấp `24/32` (13.1), nên `heading 2` 18/24 thành **bậc
+   rỗng**. Giữ style lại để 13 node đang dùng không mất liên kết.
+2. **Title sheet/modal** `16/24 · Medium · HOA` — **chưa có style** trong file (16 là cỡ ngoài
+   thang §1.2, ngoại lệ user chốt cho vai này).
+3. **Nhãn accordion PDP** `14/20 · Medium · chữ THƯỜNG` — phá cặp `medium ⇔ HOA` mà cả 7
+   description đang giả định. Ngoại lệ ghi danh, chưa có style riêng.
+4. *(ngoài typo, phát hiện khi chụp kiểm)* Product card trong Figma vẫn dựng theo **bản vuông**:
+   ô màu và nút quick-add đều vuông, trong khi demo đã đảo **cả hai về tròn** ngày 25/08.
