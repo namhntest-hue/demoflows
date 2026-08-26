@@ -2348,7 +2348,15 @@ window.RESP = (function () {
      hai vừa đá nhau vừa chồng chỗ (nút ở góc phải-dưới, đúng chỗ dải size).
      `display` của nút là INLINE STYLE trong markup nên buộc !important. */
   html.skin-mt .quick-add { display: none !important; }
-  .pc-sizes { display: none; }
+  /* `.pc-quick` = TẤM (nền mờ, ghim đáy ảnh) · `.pc-sizes` = LƯỚI SIZE bên trong.
+     Trước 26/08 hai vai này gộp vào một phần tử. Tách ra khi thêm TITLE hành động
+     (yêu cầu user): title phải nằm CÙNG tấm để dùng chung nền mờ, mà nhồi nó vào
+     lưới 4 cột thì phải `grid-column: 1/-1`, và biến thể `.is-few` lại đổi sang
+     `grid-auto-flow: column` nên item full-width ở đó không có nghĩa. Bọc thêm một
+     tầng flex-column là hết vướng, đổi lại chỉ 1 thẻ div.
+     `data-pc-sizes` DỜI RA tấm ngoài — `pcSizeClick` đọc bằng
+     `btn.closest('[data-pc-sizes]')` nên vẫn tìm thấy. */
+  .pc-quick { display: none; }
   /* ĐO THẬT hugoboss.com/us/men-clothing (19/08/2026, user gửi làm tham chiếu) —
      tấm `.product-tile-plp__quickshop` của họ:
        absolute, ghim ĐÁY tile, rộng hết bề ngang · nền rgba(249,249,249,.9)
@@ -2365,10 +2373,8 @@ window.RESP = (function () {
      LƯỚI CỐ ĐỊNH 4 CỘT (chốt 19/08/2026, yêu cầu user "1 line sẽ có 4 ô size").
      Trước đó dùng auto-fit nên số cột đổi theo bề ngang card — 4 cột cố định thì
      ô size rộng bằng nhau ở mọi mật độ lưới, và bộ 6 size xuống đúng 2 hàng. */
-  html.skin-mt .pc-sizes {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 4px;
+  html.skin-mt .pc-quick {
+    display: flex; flex-direction: column; gap: 8px;
     position: absolute; left: 0; right: 0; bottom: 0;
     padding: 12px;
     /* NỀN LẤY ĐÚNG BỘ MÀU CỦA HEADER (chốt 19/08/2026, yêu cầu user).
@@ -2392,6 +2398,50 @@ window.RESP = (function () {
     opacity: 0; transform: translateY(6px); pointer-events: none;
     transition: opacity .18s ease, transform .18s ease;
   }
+  /* LƯỚI SIZE — nay là con của `.pc-quick`, chỉ còn lo việc xếp ô. Số đo giữ
+     nguyên bộ đã chốt 19/08 (4 cột cố định, gap 4). */
+  html.skin-mt .pc-sizes {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+  /* TITLE HÀNH ĐỘNG của tấm hover (26/08/2026, yêu cầu user: *"ở bản desktop thêm
+     title trên quickadd này"* — quick add ở đây là DẢI HOVER trên card, không phải
+     dialog 2 cột).
+     Nội dung: việc sẽ làm khi bấm một ô size ("Thêm vào giỏ hàng" / "Đặt trước"),
+     và với hàng pre-order thì kèm ngày nhận dự kiến. Đọc từ `p.preorder` —
+     nguồn duy nhất ở PRODUCTS, không thêm cờ riêng.
+     VÌ SAO VIẾT CSS TAY chứ không dùng utility `text-[14px]`: trong bộ da vào-trang
+     (skin-mt skin-li) mọi utility 14 và 16 bị bóp về 12 và mọi 500 về 400, nên khai
+     bằng class utility thì title RA ĐÚNG BẰNG chữ trong ô size — mất hẳn bậc. Class
+     tự viết thì bộ da không với tới, y như `.pc-size` bên dưới đang tự khai 12/16.
+     Cặp cỡ/dòng 14/20 và 12/16 đều là cặp có sẵn trong thang chữ dự án; giữ 400 cho
+     chữ thường (§1.1: 500 chỉ đi cặp với chữ hoa). */
+  /* CĂN TRÁI title + dòng ngày (26/08/2026, yêu cầu user). Đường đi của quyết định
+     này, ghi đủ để không ai lật lại: bản đầu căn GIỮA (theo chốt 19/08 của cụm size)
+     -> user đổi sang PHẢI -> user chốt lại là TRÁI. Riêng NHÃN TRONG Ô SIZE thì trả
+     về CĂN GIỮA "như lúc đầu" (`.pc-size` bên dưới) — nên tấm này có 2 mốc căn khác
+     nhau CÓ CHỦ Ý: chữ của đầu tấm căn trái, chữ trong ô size căn giữa ô.
+     KHÔNG đệm `padding-left` cho khớp pad 8px của `.pc-size`: nhãn size nay căn
+     giữa ô nên không còn "mép chữ bên trái" nào để mà khớp: title căn thẳng mép
+     trong của tấm, tức trùng mép NỀN HOVER của ô size đầu tiên. */
+  html.skin-mt .pc-quick-head { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+  html.skin-mt .pc-quick-act {
+    font-size: 14px; line-height: 20px; font-weight: 400; letter-spacing: .5px;
+    color: var(--general-foreground);
+  }
+  html.skin-mt .pc-quick-eta {
+    font-size: 12px; line-height: 16px; font-weight: 400; letter-spacing: .5px;
+    color: var(--general-secondary-foreground);
+  }
+  /* NGÀY tách ra span RIÊNG vì 2 lẽ, cả hai đều theo lối dự án đang làm ở thẻ giỏ:
+     · I18N tra theo TEXT NODE đã trim -> gộp ngày vào cùng node thì key hoá thành
+       "Nhận hàng dự kiến 30/09/2026" và mỗi lần đổi ngày là chết dịch. Tách ra thì
+       node nhãn khớp key tĩnh 'Nhận hàng dự kiến' đã có sẵn.
+     · Nhấn ngày bằng MÀU (đậm hơn nhãn) chứ không bằng weight — thẻ giỏ dùng
+       `font-medium`, nhưng §1.1 cấm 500 đi với chữ thường và bộ da cũng kéo về 400,
+       nên ở đây nhấn bằng màu là cách duy nhất còn ăn. */
+  html.skin-mt .pc-quick-date { color: var(--general-foreground); }
   /* ÍT SIZE (dưới 4 — Onesize, 1 dung tích, hay 2 khổ khăn lụa): bỏ lưới 4 cột,
      xếp thành MỘT HÀNG ô tự co theo nội dung rồi CĂN GIỮA.
      `grid-auto-flow: column` + `grid-auto-columns: minmax(96px, auto)`:
@@ -2404,11 +2454,16 @@ window.RESP = (function () {
     grid-template-columns: none;
     grid-auto-flow: column;
     grid-auto-columns: minmax(96px, auto);
-    justify-content: center;
+    /* `start` = dồn CẢ HÀNG ô về TRÁI, theo cùng mốc căn với title (26/08). Ở biến
+       thể này lưới KHÔNG phủ hết bề ngang nên mốc căn của hàng mới là thứ quyết chỗ
+       đứng — để `center` như bản 19/08 thì cụm 1-2 ô đứng giữa trong khi title đã
+       căn trái, lệch mốc ngay trong một tấm.
+       (Nhãn TRONG ô vẫn căn giữa — đó là chuyện của `.pc-size`, không phải chỗ này.) */
+    justify-content: start;
   }
   /* `.group` = thẻ bọc card, đã có sẵn trong markup */
-  html.skin-mt .group:hover .pc-sizes,
-  html.skin-mt .pc-sizes:focus-within { opacity: 1; transform: none; pointer-events: auto; }
+  html.skin-mt .group:hover .pc-quick,
+  html.skin-mt .pc-quick:focus-within { opacity: 1; transform: none; pointer-events: auto; }
   /* KHÔNG VIỀN (chốt 19/08/2026, yêu cầu user "thử bỏ outline ra khỏi các buttons
      size") — trở lại đúng cách hugoboss làm.
      HOVER LẤY ĐÚNG CỦA CỤM NAM/NỮ/LÀM ĐẸP trên header (chốt 19/08/2026, yêu cầu
@@ -2423,6 +2478,8 @@ window.RESP = (function () {
      xuống dòng trong ô cao 36px và bị cắt mất dòng dưới. */
   html.skin-mt .pc-size {
     height: 36px; padding: 0 8px;
+    /* Nhãn CĂN GIỮA ô — bộ số gốc của chốt 19/08, giữ nguyên. (26/08 có thử đổi
+       sang `flex-end` theo lượt căn phải, user chốt lại "như lúc đầu".) */
     display: flex; align-items: center; justify-content: center;
     border: 0; background: transparent; white-space: nowrap;
     font-size: 12px; line-height: 16px; font-weight: 400; letter-spacing: .5px;
@@ -3307,9 +3364,23 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
            Gồm cả 1 size (Onesize của pdp3, 1 dung tích của hàng làm đẹp) lẫn 2
            size (khăn lụa pdp2). Lưới 4 cột cứng bóp ô về 76px, mà nhãn
            "90 × 90 cm" cần rộng hơn -> chữ bị cắt (user báo 19/08/2026). */
+        /* TITLE nói việc sẽ làm khi bấm một ô size, kèm ngày nhận dự kiến nếu là
+           hàng pre-order (26/08/2026, yêu cầu user). Ngày đọc từ p.preorder.
+           data-i18n-skip KHÔNG cần ở đây: "Đặt trước" là chuỗi có key thật, khác
+           badge "Pre-order" là wordmark. */
+        /* HÀNG CUỐI LẺ Ô: KHÔNG cần chèn gì. Lưới 4 cột tự xếp từ trái nên bộ 6 size
+           ra hàng 2 ở cột 1-2 — đúng mốc căn TRÁI của tấm. (Lượt căn phải 26/08 từng
+           phải đẩy ô đầu hàng cuối bằng `grid-column-start` vì lúc đó mép phải hụt
+           ~160px so với title; căn trái thì mặc định của lưới đã đúng.) */
         return `
-      <div class="pc-sizes${list.length < 4 ? ' is-few' : ''}" data-pc-sizes="${i}">
-        ${list.map(s => `<button class="pc-size press${s.oos ? ' is-oos' : ''}" data-pc-size="${s.label}"${s.oos ? ' data-oos="1"' : ''}>${s.label}</button>`).join('')}
+      <div class="pc-quick" data-pc-sizes="${i}">
+        <div class="pc-quick-head">
+          <span class="pc-quick-act">${p.preorder ? 'Đặt trước' : 'Thêm vào giỏ hàng'}</span>
+          ${p.preorder ? `<span class="pc-quick-eta">Nhận hàng dự kiến <span class="pc-quick-date">${p.preorder}</span></span>` : ''}
+        </div>
+        <div class="pc-sizes${list.length < 4 ? ' is-few' : ''}">
+          ${list.map(s => `<button class="pc-size press${s.oos ? ' is-oos' : ''}" data-pc-size="${s.label}"${s.oos ? ' data-oos="1"' : ''}>${s.label}</button>`).join('')}
+        </div>
       </div>`;
       })()}
       <button class="quick-add press" data-quick="${i}" aria-label="Thêm nhanh vào giỏ"
@@ -11356,11 +11427,14 @@ function quickAddMedia(p, idx) {
    vùng cuộn #qaBody).
    "Xem chi tiết" DỜI XUỐNG ĐÂY, nằm DƯỚI nút chính và CĂN GIỮA (theo tham chiếu:
    "View Details" gạch chân ở đáy panel). Trước đây nó nằm cạnh tên sản phẩm —
-   chỗ đó nay chỉ còn tên, đúng tham chiếu. */
+   chỗ đó nay chỉ còn tên, đúng tham chiếu.
+   Nhãn nút đọc `p.preorder` (26/08/2026) — trước đó in cứng "Thêm vào giỏ hàng"
+   nên SP#1 pre-order có nút nói sai việc nó làm. Dòng NGÀY ở khổ này KHÔNG đặt
+   cạnh nút mà làm title ngay trên ô chọn size — xem ghi chú ở quickAddBody. */
 function quickAddCta(p) {
   return `
     <div class="px-6 pt-4 pb-6 flex flex-col gap-3">
-      <button id="qaAdd" data-quick-img="${A}${p.img}" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium btn-p press">Thêm vào giỏ hàng</button>
+      <button id="qaAdd" data-quick-img="${A}${p.img}" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium btn-p press">${p.preorder ? 'Đặt trước' : 'Thêm vào giỏ hàng'}</button>
       <button id="qaDetail" class="self-center text-[14px] leading-5 underline press" style="color:var(--unofficial-ghost-foreground)">Xem chi tiết</button>
     </div>`;
 }

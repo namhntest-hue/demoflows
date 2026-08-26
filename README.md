@@ -1762,6 +1762,68 @@ Khối quà đang hiện thì **nó** là đáy hộp, danh sách nhả kẻ + k
 
 > Bẫy đo đạc gặp lại: đo ngay sau `go('cart')` thì khe ra **10px** vì `.rise` chưa chạy xong transform. Phải tắt `transition/animation/transform` trước khi đọc `getBoundingClientRect`.
 
+## Quick add: đồng bộ hàng PRE-ORDER (26/08/2026, CẢ 2 BẢN)
+
+User phát hiện: *"ở pdp sản phẩm số 1 là preorder nhưng có vẻ quick add chưa có sync với bên trong nhỉ"*. Đo lại cả chuỗi thì đúng — **sheet quick add là mắt DUY NHẤT bị đứt**:
+
+| Bước | Trước 26/08 |
+|---|---|
+| Card ở PLP | ✅ badge "Pre-order" |
+| **Sheet quick add** | ❌ không một chữ nào; nút in cứng "Thêm vào giỏ hàng" |
+| Sheet xác nhận đã thêm | ✅ "Pre-order · Nhận hàng dự kiến 30/09/2026" |
+| Giỏ · Checkout | ✅ badge + "Nhận hàng dự kiến" |
+| PDP | ✅ badge + "Dự kiến giao hàng vào ngày …" + nút "Đặt trước" |
+
+Data vốn đã chảy đúng (`quickAddCta(p)` nhận cả object `p`, và ngay dưới đó *có* truyền `preorder: p.preorder` sang sheet xác nhận) — chỉ nhãn nút là không đọc. Điều kiện dùng `p.preorder` (ngày nhận dự kiến, nguồn duy nhất ở `PRODUCTS`), **không thêm cờ riêng** kẻo sinh 2 nguồn sự thật.
+
+**2 khổ có 2 lối quick add khác nhau, nên thông tin đặt ở 2 chỗ khác nhau:**
+
+| | Lối quick add | Nhãn nút / hành động | Ngày nhận dự kiến |
+|---|---|---|---|
+| `index.html` | sheet quick add (nút CTA ghim đáy) | `Đặt trước` | dòng 12/16 secondary **ngay trên nút** — đúng khuôn `#pdpCta` của PDP |
+| `desktop.html` — `skin-mt` | **dải hover trên card** (`.pc-quick`) | title `Đặt trước` 14/20 | dòng `Nhận hàng dự kiến <span>30/09/2026</span>` 12/16 ngay dưới title |
+| `desktop.html` — bộ da khác | dialog quick add 2 cột | `Đặt trước` | (chưa có — dialog chỉ sửa nhãn nút) |
+
+Lý do desktop đặt ở dải hover: ở `skin-mt` (gồm cả bộ da vào-trang) **nút giỏ tròn bị ẩn** và dải size hover LÀ lối thêm nhanh duy nhất từ card — bấm thẳng một ô size là vào giỏ, không qua dialog. Nên câu "đang đặt trước, nhận ngày nào" phải nằm ngay trên dải đó.
+
+**Tách `.pc-sizes` thành 2 tầng**: `.pc-quick` = tấm (ghim đáy ảnh, nền mờ + blur, hover mới hiện) · `.pc-sizes` = lưới size bên trong. Trước đó một phần tử gánh cả hai vai, mà nhồi title vào lưới 4 cột thì phải `grid-column: 1/-1`, và biến thể `.is-few` lại đổi sang `grid-auto-flow: column` nên item full-width ở đó vô nghĩa. `data-pc-sizes` dời ra tấm ngoài — `pcSizeClick` đọc bằng `closest('[data-pc-sizes]')` nên không phải sửa JS.
+
+> **Title dải hover phải VIẾT CSS TAY, đừng đổi sang utility.** Bộ da vào-trang (`skin-mt skin-li`) bóp mọi utility 14 **và 16** về 12 rồi kéo 500 về 400, nên khai `text-[14px]` là title ra **đúng bằng** chữ trong ô size — mất hẳn bậc. Class tự viết thì bộ da không với tới, y như `.pc-size` vẫn tự khai 12/16. Đo sau sửa: title **14/20 · 400 · `#0a0a0a`** · dòng ngày **12/16 · 400 · `#333`** (ngày `#0a0a0a`) · ô size **12/16** → có bậc thật. Ngày nhấn bằng MÀU chứ không bằng weight vì §1.1 cấm 500 đi với chữ thường.
+
+I18N **không phải thêm key nào**: `'Đặt trước'`, `'Thêm vào giỏ hàng'`, `'Dự kiến giao hàng vào ngày'`, `'Nhận hàng dự kiến'` đều có sẵn. Ngày tách vào `<span>` riêng đúng lối thẻ giỏ đang làm, để node nhãn còn khớp key tĩnh. Đo EN: mobile `Pre-order` + `Estimated delivery 30/09/2026`; dải hover desktop `Pre-order` + `Estimated arrival 30/09/2026`.
+
+### Mốc căn của dải hover: title TRÁI, nhãn trong ô GIỮA (chốt 26/08/2026)
+
+Đường đi của quyết định, ghi đủ để không ai lật lại: bản đầu **giữa** (theo chốt 19/08 của cụm size) → user đổi sang **phải** → user chốt lại **trái**, kèm *"các size bên trong button thì align center như lúc đầu"*.
+
+Nên tấm này **có 2 mốc căn khác nhau, CÓ CHỦ Ý**:
+
+| Chỗ | Mốc căn | Khai ở |
+|---|---|---|
+| title + dòng ngày | **trái**, thẳng mép trong của tấm | `.pc-quick-head { text-align: left }` |
+| nhãn **trong ô** size | **giữa ô** — nguyên bộ số 19/08 | `.pc-size { justify-content: center }` |
+| cả HÀNG ô của `.is-few` | **trái**, cùng mốc với title | `.pc-sizes.is-few { justify-content: start }` |
+
+2 chỗ đáng ghi vì lượt căn phải trước đó phải xử mà lượt căn trái thì **không**:
+
+- **`padding-right: 8px` cho `.pc-quick-head`** — cần khi căn phải, vì nhãn size lùi vào 8px (pad ngang của `.pc-size`) nên title lệch 8px so với nhãn (đo được 353 vs 345). Căn trái thì nhãn size đã căn giữa ô → **không còn mép chữ bên trái nào để mà khớp**, title căn thẳng mép trong tấm là xong. Đã gỡ.
+- **`grid-column-start` đẩy ô đầu hàng cuối** — cần khi căn phải, vì bộ 6 size để hàng 2 ở cột 1–2, mép phải hụt ~160px so với title. Căn trái thì mặc định của lưới đã đúng. Đã gỡ (đo lại: **0 inline style** trên các ô).
+
+`.pc-sizes.is-few` **không** trả về `center` như bản 19/08: cụm 1–2 ô đứng giữa trong khi title đã căn trái là lệch mốc ngay trong một tấm. Muốn về giữa thì đổi `start` → `center`, một dòng.
+
+Đo sau sửa (desktop 1440, `skin-mt skin-li`) — title, dòng ngày, mép trái ô đầu **và cả 2 hàng** của lưới 6 ô đều trùng một mốc:
+
+| | Mép trong tấm | Title / ngày | Ô đầu từng hàng | Nhãn trong ô đầu |
+|---|---:|---:|---:|---|
+| SP#1 · 6 size | 36 | 36 · 36 | 36 · 36 | 58–90 trong ô 36–112 → giữa ✓ |
+| SP#2 · 2 size (`is-few`) | 381 | 381 | 381 | 394–464 trong ô 381–477 → giữa ✓ |
+| SP#3 · Onesize (`is-few`) | 727 | 727 | 727 | 750–799 trong ô 727–823 → giữa ✓ |
+| SP#4 · 6 size | 1072 | 1072 | 1072 · 1072 | 1094–1126 trong ô 1072–1148 → giữa ✓ |
+
+Thứ tự `IT 39 → IT 44` không đảo · bấm ô còn hàng (IT 42) vào giỏ 5→6 và sheet xác nhận ra "Pre-order · Nhận hàng dự kiến 30/09/2026" · console 0 lỗi.
+
+> **Còn 1 mìn chưa tháo**: sheet chọn size (`#szAdd`, đường quick add của SP#2/3/5/6) cũng in cứng nhãn ở **3 chỗ** mỗi file (`index.html` + `desktop.html`). Hôm nay chưa lộ vì mấy sản phẩm đó không pre-order; gắn `preorder` cho một trong chúng là đứt y hệt.
+
 ## Footer: BỎ khối newsletter (26/08/2026, CẢ 2 BẢN)
 
 Yêu cầu user: *"ở footer bỏ block newsletter"* → *"bỏ ở desktop luôn nhé"*. Gỡ tiêu đề "Cập nhật thông tin mới nhất từ DAFC" + dòng mô tả + cặp input email/nút Đăng ký, **kèm luôn vạch `h-px` đứng ngay sau nó** ở cả 2 file — khối đi rồi thì vạch đó thành sợi kẻ lửng ở mép trên footer, không còn ngăn cách gì.
