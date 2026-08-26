@@ -1762,6 +1762,26 @@ Khối quà đang hiện thì **nó** là đáy hộp, danh sách nhả kẻ + k
 
 > Bẫy đo đạc gặp lại: đo ngay sau `go('cart')` thì khe ra **10px** vì `.rise` chưa chạy xong transform. Phải tắt `transition/animation/transform` trước khi đọc `getBoundingClientRect`.
 
+## Footer: BỎ khối newsletter (26/08/2026, CẢ 2 BẢN)
+
+Yêu cầu user: *"ở footer bỏ block newsletter"* → *"bỏ ở desktop luôn nhé"*. Gỡ tiêu đề "Cập nhật thông tin mới nhất từ DAFC" + dòng mô tả + cặp input email/nút Đăng ký, **kèm luôn vạch `h-px` đứng ngay sau nó** ở cả 2 file — khối đi rồi thì vạch đó thành sợi kẻ lửng ở mép trên footer, không còn ngăn cách gì.
+
+| | Khối bị gỡ | Con đầu mới của footer | Đo sau sửa |
+|---|---|---|---|
+| `index.html` | block dọc + `h-px bg-border mx-2` | `div.flex.flex-col.gap-4.py-5.px-2` (logo + địa chỉ) | footer **848px**, 0 `input[type=email]` |
+| `desktop.html` | band canh giữa (Figma 2257:110556, tiêu đề 32px) + `h-px bg-border` | `div.flex.gap-6.items-start` (lưới điều hướng) | footer **414px**, pad band `32/40`, `gap-8` còn nguyên |
+
+Cả 2 file: `pt-8` của cha lo khoảng thở nên **không bù padding**. Footer sạch trên `plp · pdp · cart` (+ `privacy` ở mobile), console tab mới 0 lỗi.
+
+**2 hệ quả về CSS/i18n, cả hai đều GIỮ NGUYÊN có chủ ý:**
+
+- 2 key I18N của khối (`'Cập nhật thông tin mới nhất từ DAFC'`, `'Nhận ngay thông tin…'`) giữ lại ở cả 2 file: 3 bản fork desktop vẫn dùng, và bật lại khối thì không phải dịch lần nữa. `'Đăng ký'` / `'Đăng ký thành công'` vốn dùng chung với luồng tài khoản nên không liên quan.
+- `.text-[32px]` giờ chỉ còn **đúng một vai ở cả hai file** — số điểm thưởng `span` ở màn Tài khoản — nên nhánh `.text-\[32px\]` của rule `skin-li` mục 2 (`:is(h1,h2,p):is(.text-[18px], .text-[32px])`) **không còn trúng gì ở đâu**. Giữ vì nó là cái chặn: thêm `p.text-[32px]` mới là tự vào bậc trưng bày. Tương tự, nhánh `:not(.text-\[18px\])` của rule nhãn nhóm footer cũng thành rỗng ở mobile.
+
+> **3 bản fork desktop VẪN CÒN khối newsletter** (`desktop-neutral` · `desktop-editorial` · `desktop-atelier`, mỗi bản 1 khối). `home.html` không có khối này.
+
+> **Bẫy đã dính đúng lượt này**: comment HTML thay cho khối bị bỏ nằm TRONG template literal của `footer()`, viết `` `h-px` `` có backtick là đứt chuỗi ngay → `SyntaxError: Unexpected identifier 'h'`, cả file JS chết. Đã bỏ backtick. Lưu ý kèm: console của browser pane **không xoá khi reload**, nên lỗi cũ còn nằm trong buffer sau khi đã sửa — muốn chắc thì mở tab mới rồi đọc console.
+
 ## Footer theo `skin-mt`: nhãn nhóm chữ hoa (20/08/2026, CẢ 2 BẢN)
 
 User: *"update lại footer theo skin mt luôn nhé"*.
@@ -1775,7 +1795,7 @@ Footer là **chỗ cuối còn sót** của bộ da: nó có 6 **nhãn nhóm đ�
 | Mảnh selector | Loại được gì |
 |---|---|
 | `div:not(:has(img)) > p.font-medium` | cột nào chứa **logo** là khối thương hiệu, `p` trong đó ("DAFC - A subsidiary of IPPG") là dòng mô tả công ty. Ở **desktop đây là cách duy nhất** phân biệt được: cả 4 cột đều là `p` + `div.flex-col` theo sau, chỉ khác ở chỗ có logo hay không |
-| `:not(.text-\[18px\])` | tiêu đề newsletter "Cập nhật thông tin mới nhất từ DAFC" — tiêu đề khối, không phải nhãn danh sách |
+| `:not(.text-\[18px\])` | tiêu đề newsletter "Cập nhật thông tin mới nhất từ DAFC" — tiêu đề khối, không phải nhãn danh sách. *(26/08: mobile đã **bỏ khối newsletter** nên nhánh này không còn trúng gì ở `index.html`; giữ để 2 file khai giống hệt — desktop vẫn còn khối đó)* |
 | `.acc-trigger > span:first-child` | mobile gói 3 nhóm link vào **accordion** nên nhãn nằm trong `span`; desktop trải 4 cột nên không có nhánh này. Giữ trong selector để 2 file khai giống hệt |
 
 **Hook `.bg-secondary.mt-4`** = footer ở cả 2 khổ (mobile `bg-secondary pt-8 pb-8 px-2 mt-4`, desktop `bg-secondary mt-4`) và **không trúng panel ưu đãi ở giỏ** (`py-6 px-4 bg-secondary …`, không có `mt-4`) — chỗ đó cũng có `p.font-medium` ("Ưu đãi chương trình DAFC Rewards", "Tổng cộng") mà viết hoa lên là sai.
@@ -2402,7 +2422,11 @@ Khớp sản phẩm bằng **tên + giá trùng khít** với `PRODUCTS`:
 
 > Bản cũ dùng text tự viết và **sai nội dung**: `pdp` + `pdp4` đều tả "túi satchel canvas A.P.C." trong khi SP#1 là đầm lụa Versace và SP#4 là giày cao gót Versace (tab "Về thương hiệu APC" cũng sai theo). Đã sửa cả tab thương hiệu về Versace.
 
-**Chưa hiển thị**: `features` (danh sách gạch đầu dòng) và `sku` có thật trong data nhưng markup 6 PDP chưa có chỗ; `specs` chỉ `pdp2` đang render thành bảng, 5 PDP còn lại có data mà chưa dựng bảng.
+> **Lượt 2 — 26/08/2026, kéo ĐỦ ĐỘ DÀI THẬT (mobile)**: lượt 05/08 mới lấy đoạn mô tả + **một câu `care` đã rút gọn**, nên không đo được ô cần cuộn hay không. Nay mỗi entry mang trọn 3 panel như trang thật (`meta` dòng nhãn:giá trị · `careLead` câu dẫn · `care` thành **mảng bullet nguyên văn**), thêm 2 hằng dùng chung `CARE_SHOES` (bộ bullet giày, 3 đôi dùng chung) + `RETURN_POLICY` (khối đổi hàng, **giống hệt trên cả 6 trang thật**), và một hàm `pdpTabs(i)` dựng nội dung cho cả 6 màn. Số đo từng ô (cả 2 khổ), phương án scroll và các mục chờ chốt: **[PDP-DATA-THAT.md](PDP-DATA-THAT.md)**. Làm ở **CẢ 2 BẢN** cùng ngày; desktop vốn chỉ có MỘT renderer `dkScreenPDP` nên chỉ phải đổi `pdpTabs` — kèm bỏ 2 tuỳ chọn `specs` / `returnTab` và 2 hằng `PDP_RETURN_TAB` / `PDP_BRAND_TAB`. **3 bản fork desktop** (`desktop-neutral` / `desktop-editorial` / `desktop-atelier`) vẫn dùng data rút gọn của lượt 1.
+
+> **Chỗ chật lộ ra khi đo desktop** (có từ trước, không do data): cột `.dk-sticky-info` ghim ở `top: 152px` nên chỉ có `900 − 152 = 748px`, mà cột **đóng hết 4 ô đã cao 762px**; mở ô dài nhất (bảo quản túi da) là 1.140px. Đuôi không mất — cha cột cao 1.731px nên sau ~591px cuộn là cột nhả ghim và trôi lên — nhưng cảm giác là cuộn một đoạn thấy trang không nhích rồi cả cột đột ngột trượt. 3 phương án ở PDP-DATA-THAT.md mục 3.2, **chưa chốt**.
+
+**2 chỗ hở của lượt 1 đã đóng**: `features` (danh sách gạch đầu dòng) nay render trong panel Mô tả cho cả 6 màn — kèm luôn 4 dòng thật của SP#4 vốn để mảng rỗng; `specs` đổi tên thành `meta` và render ở **cả 6 màn** thay vì chỉ `pdp2`, gộp thêm thương hiệu + mã SP nên `sku` cũng đã lên mặt. Trang thật có **3 tab**, không có tab "Về thương hiệu" — tab thứ 4 của demo là text tự viết, chưa có nguồn copy thật (đã kiểm cả trang brand `shop.dafc.com.vn/versace`).
 
 ## Trang tĩnh / chính sách
 

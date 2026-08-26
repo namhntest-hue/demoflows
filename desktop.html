@@ -491,6 +491,12 @@ window.RESP = (function () {
   .acc-inner { overflow: hidden; }
   .acc.open .acc-chev { transform: rotate(90deg); }
   .acc-chev { transition: transform .3s ease; }
+  /* Bullet trong thân accordion (đặc điểm / bảo quản / chính sách đổi hàng ở PDP):
+     thụt treo để dòng 2 thẳng hàng với dòng 1 thay vì lùi về sát dấu "·".
+     Viết tay chứ không dùng `pl-3 -indent-3`: tailwind.css build sẵn CÓ .pl-3
+     nhưng chỉ có .-indent-4, mà 16px thì hở tới 9px sau dấu "·" ở cỡ 12.
+     KHAI GIỐNG HỆT ở index.html. */
+  .acc-bullet { padding-left: 12px; text-indent: -12px; }
   /* ── Peek + "Xem tất cả" (khác accordion: mặc định đã hiện mấp mé, không thu về 0) ──
      73px = chiều cao clip đúng theo Figma 2843:45226 (nội dung bị cắt ngang, không phải bội số dòng).
      ::after tạo dải mờ dần (fade-to-bg) ở đáy khi đang thu gọn, thay vì cắt cứng
@@ -1566,6 +1572,10 @@ window.RESP = (function () {
      phải là Bodoni). Bám class thì không có cách nào khai giống hệt 2 file; bám
      `:is(h1, h2, p)` thì MỘT rule đúng cả hai: `span` tự rơi ra, `p` tự vào. Đây là
      lý do rule này không dùng `:where()` blanket theo cỡ như skin-mt.
+     *(26/08: khối newsletter đã BỎ ở CẢ 2 BẢN nên `.text-[32px]` giờ chỉ còn ĐÚNG
+     MỘT vai ở cả hai file — số điểm thưởng `span` — tức nhánh `.text-\[32px\]` của
+     rule này không còn trúng gì ở đâu. GIỮ nhánh đó: nó là cái chặn để nếu sau này
+     thêm `p.text-[32px]` thì tự vào bậc trưng bày, và để 2 file khai giống hệt.)*
      KHAI GIỐNG HỆT ở index.html và desktop.html. */
   html.skin-mt.skin-li :is(h1, h2, p):is(.text-\[18px\], .text-\[32px\]) {
     font-size: 24px; line-height: 32px; font-weight: 400;
@@ -3092,67 +3102,174 @@ const PRODUCT_GALLERY = [
   ['p9-0.jpg', 'p9-1.jpg', 'p9-2.jpg', 'p9-3.jpg', 'p9-4.jpg', 'p9-5.jpg', 'p9-6.jpg', 'p9-7.jpg'],
   ['p10-0.jpg', 'p10-1.jpg', 'p10-2.jpg'],
 ];
-/* ── Mô tả sản phẩm — DỮ LIỆU THẬT, kéo từ shop.dafc.com.vn (05/08/2026) ──
-   Trước đây phần mô tả / bảo quản của 6 PDP là text tự viết, và sai khá nặng:
-   pdp + pdp4 đều tả "túi satchel canvas A.P.C." trong khi SP#1 là đầm lụa
-   Versace và SP#4 là giày cao gót Versace.
+/* ── Mô tả sản phẩm — DỮ LIỆU THẬT, kéo từ shop.dafc.com.vn ──────────────
+   Lượt 1 (05/08/2026) sửa cái sai nội dung: trước đó mô tả / bảo quản của 6 PDP
+   là text tự viết, pdp + pdp4 đều tả "túi satchel canvas A.P.C." trong khi SP#1
+   là đầm lụa Versace và SP#4 là giày cao gót Versace.
 
-   Mỗi entry gồm desc + care + specs copy nguyên văn từ trang chi tiết, kèm
-   `src` là slug trang gốc để đối chiếu lại khi cần. Khớp sản phẩm bằng TÊN +
-   GIÁ trùng khít với PRODUCTS ở trên (tên/giá vốn cũng là data thật đã scrape).
+   Lượt 2 (26/08/2026) kéo ĐỦ ĐỘ DÀI THẬT, vì lượt 1 mới lấy đoạn mô tả + một
+   câu care đã bị rút gọn, nên không đo được ô cần cuộn hay không. Nay mỗi entry
+   mang trọn 3 panel như trang thật:
+     · desc     — đoạn mô tả (1 đoạn)
+     · meta     — các dòng "Nhãn: giá trị" nằm NGAY TRONG panel Mô tả của trang
+                  thật (thương hiệu, mã SP kèm ID, chất liệu, kích thước, xuất xứ)
+     · features — danh sách gạch đầu dòng, cũng trong panel Mô tả
+     · careLead — câu dẫn của panel Bảo quản (chỉ vài nhóm hàng có)
+     · care     — MẢNG bullet, nguyên văn và đủ số dòng (túi da: 6 bullet)
+   `src` là slug trang gốc để đối chiếu lại khi cần. Khớp sản phẩm bằng TÊN + GIÁ
+   trùng khít với PRODUCTS ở trên (tên/giá vốn cũng là data thật đã scrape).
 
-   `features` (danh sách gạch đầu dòng) và `sku` cũng có thật trên trang nhưng
-   markup 6 PDP hiện chưa có chỗ hiển thị — xem README mục "Mô tả sản phẩm".
-   Chỉ pdp2 đang render bảng specs; 5 PDP còn lại có specs trong data nhưng
-   chưa dựng bảng. */
+   2 chỗ CỐ Ý không bê nguyên trang thật:
+   1. Dấu nháy cong “Broken Jewels” của trang thật giữ ở dạng thẳng "Broken
+      Jewels" — I18N đang khoá key theo dạng thẳng, đổi glyph là chết bản dịch.
+   2. SP#2 trên trang thật có dòng `Khối lượng: TÂM (kg)` — lỗi nhập liệu của
+      site (tên người rơi vào ô khối lượng), KHÔNG đưa vào demo.
+
+   Panel "Chính sách đổi hàng" GIỐNG HỆT trên cả 6 trang thật nên tách ra hằng
+   RETURN_POLICY dùng chung, không nhân bản vào từng entry. */
+/* Bộ bullet bảo quản của NHÓM GIÀY — trang thật dùng ĐÚNG một bộ cho cả 3 đôi
+   (SP#4/5/6), nên khai một lần rồi trỏ vào, khỏi lệch nhau về sau. */
+const CARE_SHOES = [
+  'Vệ sinh bằng khăn vải cotton mềm',
+  'Tránh tiếp xúc với chất lỏng, hoá chất (nước hoa, kem dưỡng da, keo xịt tóc, v.v.) và các sản phẩm có màu đậm (denim, jeans, v.v.), giấy báo, chứng từ,… để tránh lem màu, đặc biệt đối với sản phẩm da bóng.',
+  'Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao. Không dùng máy sấy khi sản phẩm bị ẩm ướt.',
+  'Xem thêm trên tag sản phẩm',
+];
+
+/* Panel "Chính sách đổi hàng" — GIỐNG HỆT trên cả 6 trang sản phẩm thật, và là
+   một khối 3 tầng (câu dẫn → 2 nhóm nhãn + bullet), không phải một câu như bản
+   tự viết trước đây.
+   ⚠ Nội dung này là CHÍNH SÁCH ĐỔI HÀNG (exchange) chứ không phải đổi TRẢ — xem
+   ghi chú ở `pdpTabs` về nhãn tab đang lệch. */
+const RETURN_POLICY = {
+  lead: 'Sản phẩm áp dụng: Sản phẩm nguyên giá hoặc tổng giá trị sản phẩm (bao gồm % giảm giá và voucher khuyến mãi áp dụng kèm theo) không giảm quá 30%.',
+  groups: [
+    ['Sản phẩm không áp dụng:', [
+      'Đồ lót, đồ tắm',
+      'Nước hoa',
+      'Phụ kiện: Đồng hồ, mắt kính, trang sức',
+      'Phiếu quà tặng',
+    ]],
+    ['Thời gian đổi hàng:', [
+      'Sản phẩm bị lỗi do nhà sản xuất: 14 ngày kể từ ngày nhận được sản phẩm',
+      'Thay đổi nhu cầu: 07 ngày kể từ ngày nhận được sản phẩm',
+    ]],
+  ],
+};
+
 const PRODUCT_INFO = [
-  { // SP#1 — Đầm lụa mini Broken Jewels · 72.557.000 ₫
+  { // SP#1 — Đầm lụa mini Broken Jewels · 72.557.000 ₫ — nhóm QUẦN ÁO
     src: 'printed-silk-twill-mini-dress-10254991a186725ge70',
     sku: '10254991A186725GE70',
     desc: 'Đầm mini không tay bằng lụa twill, nổi bật với họa tiết "Broken Jewels" và chi tiết thắt nút ở vai lấy cảm hứng từ cách tạo kiểu khăn lụa.',
+    meta: [
+      ['Thương hiệu','Versace'],
+      ['Mã sản phẩm','10254991A186725GE70 - ID: 1226388'],
+      ['Thành phần vải','100% Silk'],
+      ['Xuất xứ thương hiệu','Ý'],
+      ['Sản xuất tại','Ý'],
+    ],
     features: ["Phối họa tiết 'Broken Jewels'", 'Sát nách', 'Cổ quấn', 'Lưng thun co giãn'],
-    specs: [['Thành phần vải','100% Silk'],['Xuất xứ thương hiệu','Ý'],['Sản xuất tại','Ý']],
-    care: 'Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể. Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
   },
-  { // SP#2 — Khăn lụa in họa tiết Broken Jewels 90 x 90 cm · 15.611.000 ₫
+  { // SP#2 — Khăn lụa in họa tiết Broken Jewels 90 x 90 cm · 15.611.000 ₫ — nhóm PHỤ KIỆN
     src: 'printed-silk-twill-scarf-90-x-90-cm-10016001a188205ge70',
     sku: '10016001A188205GE70',
     desc: 'Khăn lụa twill nổi bật với họa tiết "Broken Jewels". Khăn lụa mang đến nhiều cách tạo kiểu linh hoạt như choàng vai, quấn cổ hoặc buộc quanh đầu.',
+    meta: [
+      ['Thương hiệu','Versace'],
+      ['Mã sản phẩm','10016001A188205GE70 - ID: 1226373'],
+      ['Chất liệu','100% Silk'],
+      ['Xuất xứ thương hiệu','Ý'],
+      ['Sản xuất tại','Ý'],
+      ['Màu sắc','Xanh lá'],
+      ['Kích thước','D90 x R90 (cm)'],
+    ],
     features: ['Khổ vuông', 'In họa tiết Broken Jewels'],
-    specs: [['Chất liệu','100% Silk'],['Kích thước','D90 x R90 (cm)'],['Xuất xứ thương hiệu','Ý'],['Sản xuất tại','Ý']],
-    care: 'Sử dụng vải mềm để làm sạch nhẹ nhàng. Bảo quản ở nơi thoáng mát, tránh ánh nắng trực tiếp. Tránh tiếp xúc với nước, nước hoa, và hóa chất.',
+    careLead: ['Đối với phụ kiện thông thường và sản phẩm da:'],
+    care: [
+      'Sử dụng vải mềm để làm sạch nhẹ nhàng.',
+      'Bảo quản phụ kiện ở nơi thoáng mát, tránh ánh nắng trực tiếp vào sản phẩm.',
+      'Tránh tiếp xúc với nước, nước hoa, và hóa chất.',
+      'Xem thêm trên tag sản phẩm.',
+    ],
   },
-  { // SP#3 — Túi đeo vai da Emblème · 50.957.000 ₫
+  { // SP#3 — Túi đeo vai da Emblème · 50.957.000 ₫ — nhóm TÚI DA (panel bảo quản DÀI NHẤT)
     src: 'embleme-nappa-bowling-bag-10243181a174491gt4j',
     sku: '10243181A174491GT4J',
     desc: 'Túi đeo vai Emblème kiểu bowling được chế tác từ da nappa siêu mềm. Phụ kiện đa năng này được nhấn bằng chi tiết kim loại Medusa 3D của Versace và có thể dễ dàng đeo vai hoặc xách tay nhờ quai da điều chỉnh được.',
-    features: ['Chi tiết kim loại Medusa', 'Khóa kéo phía trên', 'Quai xách có thể điều chỉnh độ dài (20 cm)', '2 ngăn trong'],
-    specs: [['Chất liệu','100% Lamb Skin'],['Kích thước','D27 x C12 x R10 (cm)'],['Xuất xứ thương hiệu','Ý'],['Sản xuất tại','Ý']],
-    care: 'Tránh tiếp xúc nhiệt độ cao và độ ẩm. Dùng khăn mềm thấm khô khi bị ẩm. Độn giấy và hạt hút ẩm khi không sử dụng. Tránh tiếp xúc chất lỏng và hóa chất. Lau chùi thường xuyên bằng khăn cotton.',
+    meta: [
+      ['Thương hiệu','Versace'],
+      ['Mã sản phẩm','10243181A174491GT4J - ID: 1226346'],
+      ['Chất liệu','100% Lamb Skin'],
+      ['Kích thước','D27 x C12 x R10 (cm)'],
+      ['Xuất xứ thương hiệu','Ý'],
+      ['Sản xuất tại','Ý'],
+    ],
+    features: ['Chi tiết kim loại Medusa', 'Khóa kéo phía trên', 'Quai xách có thể điều chỉnh độ dài (Độ dài: 20 cm)', '2 ngăn trong'],
+    care: [
+      'Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao vì sẽ làm biến dạng da. Không dùng máy sấy khi sản phẩm bị ẩm ướt.',
+      'Khi sản phẩm bị ẩm, dùng khăn mềm thấm khô sản phẩm, không chùi để tránh tạo vệt. Độn giấy và thêm hạt hút ẩm vào sản phẩm khi không sử dụng. Không cất sản phẩm da trong túi nilon, không thắt túi chống bụi quá chặt vì có thể gây ẩm mốc sản phẩm. Giữ sản phẩm trên mặt phẳng khi không sử dụng để giữ dáng cho sản phẩm.',
+      'Tránh tiếp xúc với chất lỏng, hoá chất (nước hoa, kem dưỡng da, keo xịt tóc, v.v.) và các sản phẩm có màu đậm (denim, jeans, v.v.), giấy báo, chứng từ,… để tránh lem màu, đặc biệt đối với sản phẩm da bóng.',
+      'Không để sản phẩm da gần các vật dụng sắt nhọn vì có thể làm hư hại sản phẩm. Không để son phấn, bút viết trực tiếp vào túi da, nên để vào túi nhỏ để tránh lem màu.',
+      'Thường xuyên lau chùi sản phẩm bằng khăn vải cotton mềm để tránh bụi bẩn. Nên sử dụng sản phẩm thường xuyên (ít nhất 1 lần mỗi tháng) để giữ độ bóng đẹp cho sản phẩm.',
+      'Xem thêm trên tag sản phẩm',
+    ],
   },
-  { // SP#4 — Giày cao gót da nappa Gianni 90 · 45.066.000 ₫
+  { // SP#4 — Giày cao gót da nappa Gianni 90 · 45.066.000 ₫ — nhóm GIÀY
     src: 'gianni-nappa-pumps-90-10253491a001982b13j',
     sku: '10253491A001982B13J',
     desc: 'Đôi giày cao gót Gianni nổi bật với cấu trúc hai lớp gồm da nappa đen được cắt laser, để lộ lớp da nappa phủ laminate bên dưới. Thiết kế này tạo chiều sâu và đường nét rõ nét hơn, trong khi phần viền đen giúp tôn lên phom dáng với nét hiện đại. Gót giày được trang trí bằng vòng đính đá với chi tiết Medusa 3D đặc trưng.',
-    features: [],
-    specs: [['Chiều cao gót giày','9 cm'],['Thành phần chất liệu','100% Lamb Skin'],['Xuất xứ thương hiệu','Ý'],['Sản xuất tại','Ý']],
-    care: 'Vệ sinh bằng khăn vải cotton mềm. Tránh tiếp xúc với chất lỏng, hoá chất và các sản phẩm có màu đậm. Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao.',
+    meta: [
+      ['Thương hiệu','Versace'],
+      ['Mã sản phẩm','10253491A001982B13J - ID: 1226327'],
+      ['Chiều cao gót giày','9 (cm)'],
+      ['Thành phần chất liệu','100% Lamb Skin'],
+      ['Xuất xứ thương hiệu','Ý'],
+      ['Sản xuất tại','Ý'],
+    ],
+    /* Lượt 1 để mảng RỖNG vì lúc đó chưa lấy được; trang thật có đủ 4 dòng. */
+    features: ['Chi tiết Medusa kim loại', 'Mũi nhọn', 'In logo tương phản phần đế trong', 'Logo dập chìm ở đế giày'],
+    care: CARE_SHOES,
   },
-  { // SP#5 — Giày loafer da Manu · 35.248.000 ₫
+  { // SP#5 — Giày loafer da Manu · 35.248.000 ₫ — nhóm GIÀY
     src: 'manu-leather-loafers-10233201a144571b55j',
     sku: '10233201A144571B55J',
     desc: 'Đôi giày lười Manu được chế tác từ da bê đánh bóng, đặt trên đế da thanh mảnh với cấu trúc viền đế kép. Thiết kế được nhấn bằng chi tiết kim loại Medusa 3D phía trước thân giày.',
+    meta: [
+      ['Thương hiệu','Versace'],
+      ['Mã sản phẩm','10233201A144571B55J - ID: 1226340'],
+      ['Chiều cao gót giày','1.5 (cm)'],
+      ['Thành phần chất liệu','100% Calf leather'],
+      ['Xuất xứ thương hiệu','Ý'],
+      ['Sản xuất tại','Ý'],
+    ],
     features: ['Chi tiết kim loại Medusa', 'Mũi tròn', 'Phối viền đế kép', 'Đế trong in logo Versace'],
-    specs: [['Chiều cao gót giày','1.5 cm'],['Thành phần chất liệu','100% Calf leather'],['Xuất xứ thương hiệu','Ý'],['Sản xuất tại','Ý']],
-    care: 'Vệ sinh bằng khăn vải cotton mềm. Tránh tiếp xúc với chất lỏng, hoá chất (nước hoa, kem dưỡng da, keo xịt tóc) và các sản phẩm có màu đậm để tránh lem màu. Tránh nhiệt độ cao và độ ẩm cao. Không dùng máy sấy khi sản phẩm bị ẩm ướt.',
+    care: CARE_SHOES,
   },
-  { // SP#6 — Giày thể thao da lộn Greca Court · 27.393.000 ₫
+  { // SP#6 — Giày thể thao da lộn Greca Court · 27.393.000 ₫ — nhóm GIÀY
     src: 'greca-court-nappa-and-suede-sneakers-10242051a177762nc70',
     sku: '10242051A177762NC70',
     desc: 'Đôi giày thể thao cổ thấp được chế tác từ da nappa trơn kết hợp các chi tiết da lộn, đặt trên đế mỏng họa tiết Greca. Thiết kế có miếng logo Versace trên lưỡi gà bằng nylon. Mẫu Greca Court được sản xuất với định hướng bền vững, sử dụng vật liệu có chứng nhận tái chế và/hoặc có nguồn gốc tái tạo.',
+    meta: [
+      ['Thương hiệu','Versace'],
+      ['Mã sản phẩm','10242051A177762NC70 - ID: 1226342'],
+      ['Thành phần chất liệu','100% Lamb Skin'],
+      ['Xuất xứ thương hiệu','Ý'],
+      ['Sản xuất tại','Ý'],
+    ],
     features: ['Cổ thấp', 'Phối biểu tượng Greca', 'Patch logo Versace ở lưỡi gà', 'Patch logo Versace ở phần gót'],
-    specs: [['Thành phần chất liệu','100% Lamb Skin'],['Xuất xứ thương hiệu','Ý'],['Sản xuất tại','Ý']],
-    care: 'Vệ sinh bằng khăn vải cotton mềm. Tránh tiếp xúc với chất lỏng, hoá chất và các sản phẩm có màu đậm. Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao. Không dùng máy sấy khi sản phẩm bị ẩm ướt.',
+    care: CARE_SHOES,
   },
 ];
 
@@ -3820,18 +3937,13 @@ function footer() {
   return `
   <div class="bg-secondary mt-4">
     <div class="max-w-[1440px] mx-auto px-6 pt-8 pb-10 flex flex-col gap-8">
-      <!-- Newsletter (nằm TRONG footer, cùng nền #f5f5f5 — Figma 2257:110556) -->
-      <div class="flex flex-col items-center gap-4 text-center reveal">
-        <p class="text-[32px] font-light leading-10 text-foreground">Cập nhật thông tin mới nhất từ DAFC</p>
-        <p class="text-[16px] font-light leading-6 text-mid-alt">Nhận ngay thông tin về các bộ sưu tập hoặc các chương trình ưu đãi mới nhất.</p>
-        <div class="flex w-[480px]">
-          <input type="email" placeholder="Your email" class="flex-1 min-w-0 h-10 bg-input border border-border p-2 text-[14px] font-light leading-6 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-          <button data-toast="Đăng ký thành công" class="h-10 px-4 bg-primary text-[14px] font-medium leading-5 text-primary-foreground btn-p press shrink-0">Đăng ký</button>
-        </div>
-      </div>
-
-      <div class="h-px bg-border"></div>
-
+      <!-- Newsletter ĐÃ BỎ (26/08/2026, yêu cầu user) — band canh giữa của Figma
+           2257:110556. Gỡ kèm cả vạch h-px bg-border đứng ngay sau nó: band đi rồi
+           thì vạch đó thành sợi kẻ lửng ở MÉP TRÊN footer, không ngăn cách gì nữa.
+           Lưới điều hướng bên dưới nay là con đầu; pt-8 của cha lo khoảng thở nên
+           không bù padding, và gap-8 giữa các band vẫn đúng cho phần còn lại.
+           ⚠ KHÔNG dùng dấu backtick trong comment này — cả khối nằm trong template
+           literal, backtick là đứt chuỗi (đã dính khi làm chỗ tương ứng ở mobile). -->
       <!-- Navigation grid: company 342px + 4 cột link -->
       <div class="flex gap-6 items-start">
         <div class="w-[342px] shrink-0 flex flex-col gap-4 reveal">
@@ -4413,19 +4525,50 @@ const PDP_PROMOS_STD = [
   ['Miễn phí vận chuyển', ' cho đơn hàng từ 8 triệu'],
 ];
 
-/* Tab thông tin dùng chung cho cả 6 PDP — mô tả + bảo quản lấy từ PRODUCT_INFO
-   (data thật shop.dafc.com.vn), 2 tab cuối là copy chung. Trước đây desktop viết
-   tay 4 tab cho từng PDP và pdp/pdp4 còn tả nhầm thành túi canvas A.P.C.
-   `specs` chỉ pdp2 đang dựng bảng — 5 PDP còn lại có data nhưng chưa có markup. */
-const PDP_RETURN_TAB = ['Chính sách đổi trả', 'Đổi trả trong 7 ngày với sản phẩm còn nguyên tem mác.'];
-const PDP_BRAND_TAB  = ['Về thương hiệu Versace', 'Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo và logo Medusa đặc trưng.'];
-function pdpTabs(idx, { specs = false, returnTab = PDP_RETURN_TAB } = {}) {
+/* ── CỤM TAB PDP: NỘI DUNG — dùng chung cho cả 6 PDP ─────────────────────
+   Lượt 1 (05/08) mới đóng cái sai nội dung: trước đó desktop viết tay 4 tab cho
+   từng PDP và pdp/pdp4 còn tả nhầm thành túi canvas A.P.C.
+   Lượt 2 (26/08) kéo ĐỦ ĐỘ DÀI THẬT, dựng đúng cấu trúc 3 panel của trang thật:
+   Mô tả = đoạn mô tả + các dòng `Nhãn: giá trị` + bullet đặc điểm · Bảo quản =
+   câu dẫn + bullet · Đổi hàng = câu dẫn + 2 nhóm nhãn-và-bullet.
+   Cùng lượt này 2 tuỳ chọn cũ biến mất: `specs` (chỉ pdp2 dựng bảng) vì các dòng
+   thông số nay nằm trong panel Mô tả của CẢ 6 bản, và `returnTab` (pdp2 từng có
+   câu chính sách khác 5 bản kia) vì trang thật dùng CHUNG một khối đổi hàng.
+   KHAI GIỐNG HỆT ở index.html — xem ghi chú dài hơn ở đó về 2 điểm chờ chốt
+   (nhãn tab lệch nghĩa "đổi trả" vs "đổi hàng", và tab 4 không có trên trang
+   thật) cùng lý do bullet phải là `p` chứ không `ul/li`. */
+const accBullet = s => `<p class="acc-bullet"><span>·</span> ${s}</p>`;
+const accMetaRow = ([k, v]) => `
+  <div class="flex items-center justify-between gap-4" style="min-height:24px">
+    <span class="text-muted-foreground shrink-0">${k}</span>
+    <span class="text-foreground text-right">${v}</span>
+  </div>`;
+
+function pdpTabs(idx) {
   const info = PRODUCT_INFO[idx];
+  const R = RETURN_POLICY;
   return [
-    specs ? ['Mô tả sản phẩm', info.desc, info.specs] : ['Mô tả sản phẩm', info.desc],
-    ['Bảo quản sản phẩm', info.care],
-    returnTab,
-    PDP_BRAND_TAB,
+    ['Mô tả sản phẩm', `
+      <div class="flex flex-col gap-2">
+        <p>${info.desc}</p>
+        <div class="flex flex-col">${info.meta.map(accMetaRow).join('')}</div>
+        ${info.features.length ? `<div class="flex flex-col gap-1">${info.features.map(accBullet).join('')}</div>` : ''}
+      </div>`],
+    ['Bảo quản sản phẩm', `
+      <div class="flex flex-col gap-2">
+        ${(info.careLead || []).map(l => `<p>${l}</p>`).join('')}
+        <div class="flex flex-col gap-1">${info.care.map(accBullet).join('')}</div>
+      </div>`],
+    ['Chính sách đổi trả', `
+      <div class="flex flex-col gap-2">
+        <p>${R.lead}</p>
+        ${R.groups.map(([label, items]) => `
+          <div class="flex flex-col gap-1">
+            <p>${label}</p>
+            ${items.map(accBullet).join('')}
+          </div>`).join('')}
+      </div>`],
+    ['Về thương hiệu Versace', '<p>Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo và logo Medusa đặc trưng.</p>'],
   ];
 }
 
@@ -4442,7 +4585,7 @@ const PDP_DATA = {
   pdp2: {
     idx: 1, dropdown: true, installment: '1.301.000 ₫',
     sizes: ['90 × 90 cm', '84 × 5 cm'].map(label => ({ label, oos: '' })),
-    tabs: pdpTabs(1, { specs: true, returnTab: ['Chính sách đổi trả', 'Đổi hàng miễn phí trong 7 ngày với sản phẩm còn nguyên tem mác.'] }),
+    tabs: pdpTabs(1),
   },
   pdp3: {
     idx: 2, dropdown: true, installment: '742.000 ₫',
@@ -4624,7 +4767,7 @@ function dkScreenPDP(kind) {
                ⚠ KHÔNG dùng dấu backtick trong comment này — cả khối nằm trong template
                literal, backtick là đứt chuỗi (đã dính 25/08). -->
           <div class="pt-2 pb-4" data-pdp-acc>
-            ${D.tabs.map(([t, body, sp]) => `
+            ${D.tabs.map(([t, body]) => `
             <div class="acc border-b border-border">
               <button class="acc-trigger w-full h-14 flex items-center justify-between gap-2 px-2 press">
                 <span class="flex-1 min-w-0 text-left text-[14px] leading-5 text-foreground">${t}</span>
@@ -4632,14 +4775,10 @@ function dkScreenPDP(kind) {
                 <span class="acc-ico-minus [&_svg]:w-3.5 [&_svg]:h-3.5">${IcoMinus}</span>
               </button>
               <div class="acc-body"><div class="acc-inner">
-                <div class="pb-4 px-2 flex flex-col gap-2">
-                  <p class="text-[12px] leading-4 text-foreground-alt">${body}</p>
-                  ${sp ? sp.map(([k, v]) => `
-                  <div class="flex items-center justify-between h-6">
-                    <span class="text-[12px] leading-4 text-muted-foreground">${k}</span>
-                    <span class="text-[12px] leading-4 text-foreground">${v}</span>
-                  </div>`).join('') : ''}
-                </div>
+                <!-- div, KHÔNG p: thân tab nay là nhiều đoạn + bullet (block), một
+                     <p> lồng trong <p> sẽ tự đóng thẻ cha và làm vỡ layout. Nhánh
+                     bảng specs riêng của pdp2 đã bỏ — thông số nay nằm trong body. -->
+                <div class="pb-4 px-2 text-[12px] leading-4 text-foreground-alt">${body}</div>
               </div></div>
             </div>`).join('')}
           </div>
@@ -8093,6 +8232,9 @@ const I18N = {
   'Chăm sóc khách hàng':'Customer care', 'Đặc quyền thành viên DAFC':'DAFC member benefits',
   'Về DAFC':'About DAFC', 'Chính sách':'Policies', 'Liên hệ với chúng tôi':'Contact us',
   'Kết nối với chúng tôi':'Follow us', 'Đối tác vận chuyển':'Delivery partners',
+  /* 2 key của khối newsletter footer — khối đã BỎ ở CẢ 2 BẢN 26/08. GIỮ key để nếu
+     khách đổi ý bật lại thì không phải dịch lần nữa (3 bản fork desktop cũng còn
+     dùng). Không có phần tử nào ở file này mang 2 chuỗi này nữa. */
   'Cập nhật thông tin mới nhất từ DAFC':'Stay updated with DAFC',
   'Nhận ngay thông tin về các bộ sưu tập hoặc các chương trình ưu đãi mới nhất.':'Be the first to hear about new collections and exclusive offers.',
   'Giờ làm việc: 8:30 đến 22:00':'Opening hours: 8:30–22:00', 'Giờ làm việc: 8:30 – 22:00':'Opening hours: 8:30–22:00',
@@ -8584,19 +8726,63 @@ Object.assign(I18N, {
   'Thành phần chất liệu':'Composition',
   'Thành phần vải':'Fabric composition',
   'Chiều cao gót giày':'Heel height',
+  'Mã sản phẩm':'Product code',
+  'Xanh lá':'Green',
+  /* 6 câu `care` một dòng của lượt 05/08 ĐÃ GỠ khỏi bảng này cùng lượt 26/08: bản
+     rút gọn không còn được render nữa (nay là mảng bullet nguyên văn bên dưới),
+     để lại chỉ nuôi key chết trong I18N_REV.
+     'Kích thước' dùng lại key sẵn có của bộ lọc nên EN ra "Size" — ở panel Mô tả
+     của khăn lụa nghĩa đúng là "Dimensions". Giá trị đi kèm (L90 x W90) làm rõ
+     nghĩa nên chưa tách key; tách thì phải đổi cả nhãn bộ lọc. */
+
+  // ── Bullet ĐẶC ĐIỂM (panel Mô tả) — nguyên văn 6 trang sản phẩm ──
+  "Phối họa tiết 'Broken Jewels'":"'Broken Jewels' print", 'Sát nách':'Sleeveless',
+  'Cổ quấn':'Wrap neckline', 'Lưng thun co giãn':'Elasticated back',
+  'Khổ vuông':'Square shape', 'In họa tiết Broken Jewels':'Broken Jewels print',
+  'Chi tiết kim loại Medusa':'Medusa hardware', 'Khóa kéo phía trên':'Zip fastening at the top',
+  'Quai xách có thể điều chỉnh độ dài (Độ dài: 20 cm)':'Adjustable handle (drop: 20 cm)',
+  '2 ngăn trong':'2 internal compartments',
+  'Chi tiết Medusa kim loại':'Metal Medusa detail', 'Mũi nhọn':'Pointed toe',
+  'In logo tương phản phần đế trong':'Contrast logo print on the insole',
+  'Logo dập chìm ở đế giày':'Debossed logo on the sole',
+  'Mũi tròn':'Round toe', 'Phối viền đế kép':'Double welt construction',
+  'Đế trong in logo Versace':'Versace logo printed on the insole',
+  'Cổ thấp':'Low top', 'Phối biểu tượng Greca':'Greca motif',
+  'Patch logo Versace ở lưỡi gà':'Versace logo patch on the tongue',
+  'Patch logo Versace ở phần gót':'Versace logo patch at the heel',
+
+  // ── Panel BẢO QUẢN — câu dẫn + bullet, nguyên văn 4 nhóm hàng ──
+  'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.':'To keep this piece looking its best for as long as possible, please read and follow the care instructions on the garment label.',
+  'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:':'General advice for keeping the shape, colour and durability of your piece:',
+  'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.':'Read the care instructions: always check the garment label for specific washing guidance.',
+  'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.':'Washing: use the recommended wash cycle and water temperature.',
+  'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).':'Drying: use a suitable drying method (where applicable).',
+  'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.':'Ironing: use an appropriate temperature when ironing.',
+  'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.':'Dry cleaning: check whether the piece needs professional dry cleaning.',
+  'Đối với phụ kiện thông thường và sản phẩm da:':'For general accessories and leather goods:',
+  'Sử dụng vải mềm để làm sạch nhẹ nhàng.':'Clean gently with a soft cloth.',
+  'Bảo quản phụ kiện ở nơi thoáng mát, tránh ánh nắng trực tiếp vào sản phẩm.':'Store accessories in a cool, airy place, away from direct sunlight.',
+  'Tránh tiếp xúc với nước, nước hoa, và hóa chất.':'Avoid contact with water, perfume and chemicals.',
+  'Xem thêm trên tag sản phẩm.':'See the product label for more.',
+  'Xem thêm trên tag sản phẩm':'See the product label for more',
+  'Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao vì sẽ làm biến dạng da. Không dùng máy sấy khi sản phẩm bị ẩm ướt.':'Keep away from high temperatures and humidity, which distort the leather. Do not tumble dry if the item gets damp.',
+  'Khi sản phẩm bị ẩm, dùng khăn mềm thấm khô sản phẩm, không chùi để tránh tạo vệt. Độn giấy và thêm hạt hút ẩm vào sản phẩm khi không sử dụng. Không cất sản phẩm da trong túi nilon, không thắt túi chống bụi quá chặt vì có thể gây ẩm mốc sản phẩm. Giữ sản phẩm trên mặt phẳng khi không sử dụng để giữ dáng cho sản phẩm.':'If the item gets damp, blot it dry with a soft cloth rather than rubbing, which leaves marks. Pad it with paper and add a desiccant when it is not in use. Never store leather in a plastic bag and do not tie the dust bag too tightly, as both cause mould. Keep the item on a flat surface when not in use so it holds its shape.',
+  'Tránh tiếp xúc với chất lỏng, hoá chất (nước hoa, kem dưỡng da, keo xịt tóc, v.v.) và các sản phẩm có màu đậm (denim, jeans, v.v.), giấy báo, chứng từ,… để tránh lem màu, đặc biệt đối với sản phẩm da bóng.':'Avoid contact with liquids, chemicals (perfume, body lotion, hairspray and so on) and dark-coloured items (denim, jeans and the like), newspaper or printed paper, which can transfer colour — patent leather especially.',
+  'Không để sản phẩm da gần các vật dụng sắt nhọn vì có thể làm hư hại sản phẩm. Không để son phấn, bút viết trực tiếp vào túi da, nên để vào túi nhỏ để tránh lem màu.':'Keep leather away from sharp metal objects, which can damage it. Do not place lipstick, make-up or pens straight into a leather bag; use a pouch to prevent staining.',
+  'Thường xuyên lau chùi sản phẩm bằng khăn vải cotton mềm để tránh bụi bẩn. Nên sử dụng sản phẩm thường xuyên (ít nhất 1 lần mỗi tháng) để giữ độ bóng đẹp cho sản phẩm.':'Wipe the item regularly with a soft cotton cloth to keep dust off. Use it often — at least once a month — to keep the leather supple and lustrous.',
+  'Vệ sinh bằng khăn vải cotton mềm':'Clean with a soft cotton cloth',
+  'Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao. Không dùng máy sấy khi sản phẩm bị ẩm ướt.':'Keep away from high temperatures and humidity. Do not tumble dry if the item gets damp.',
+
+  /* Panel CHÍNH SÁCH ĐỔI HÀNG cố ý ĐỂ NGUYÊN TIẾNG VIỆT — cùng lý do đã ghi ở
+     3 trang chính sách: văn bản có hiệu lực pháp lý thì chờ bản EN chính thức của
+     DAFC, không dịch máy. Bật EN sẽ thấy panel này còn tiếng Việt: đúng chủ ý. */
   'Đổi hàng miễn phí trong 7 ngày với sản phẩm còn nguyên tem mác.':'Free exchanges within 7 days with tags attached.',
   'Đầm mini không tay bằng lụa twill, nổi bật với họa tiết "Broken Jewels" và chi tiết thắt nút ở vai lấy cảm hứng từ cách tạo kiểu khăn lụa.':'A sleeveless mini dress in silk twill with the "Broken Jewels" print and a knotted shoulder detail inspired by the way a silk scarf is styled.',
-  'Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể. Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.':'Always check the garment care label for specific washing instructions. Use the recommended wash cycle and water temperature.',
   'Khăn lụa twill nổi bật với họa tiết "Broken Jewels". Khăn lụa mang đến nhiều cách tạo kiểu linh hoạt như choàng vai, quấn cổ hoặc buộc quanh đầu.':'A silk twill scarf with the "Broken Jewels" print. Style it over the shoulders, around the neck or tied around the head.',
-  'Sử dụng vải mềm để làm sạch nhẹ nhàng. Bảo quản ở nơi thoáng mát, tránh ánh nắng trực tiếp. Tránh tiếp xúc với nước, nước hoa, và hóa chất.':'Clean gently with a soft cloth. Store in a cool, airy place away from direct sunlight. Avoid contact with water, perfume and chemicals.',
   'Túi đeo vai Emblème kiểu bowling được chế tác từ da nappa siêu mềm. Phụ kiện đa năng này được nhấn bằng chi tiết kim loại Medusa 3D của Versace và có thể dễ dàng đeo vai hoặc xách tay nhờ quai da điều chỉnh được.':'The Emblème bowling shoulder bag is crafted in ultra-soft nappa leather. This versatile piece is finished with Versace 3D Medusa hardware and can be carried on the shoulder or by hand thanks to its adjustable leather handle.',
-  'Tránh tiếp xúc nhiệt độ cao và độ ẩm. Dùng khăn mềm thấm khô khi bị ẩm. Độn giấy và hạt hút ẩm khi không sử dụng. Tránh tiếp xúc chất lỏng và hóa chất. Lau chùi thường xuyên bằng khăn cotton.':'Avoid high temperatures and humidity. Blot dry with a soft cloth if it gets damp. Pad with paper and a desiccant when not in use. Avoid contact with liquids and chemicals. Wipe regularly with a cotton cloth.',
   'Đôi giày cao gót Gianni nổi bật với cấu trúc hai lớp gồm da nappa đen được cắt laser, để lộ lớp da nappa phủ laminate bên dưới. Thiết kế này tạo chiều sâu và đường nét rõ nét hơn, trong khi phần viền đen giúp tôn lên phom dáng với nét hiện đại. Gót giày được trang trí bằng vòng đính đá với chi tiết Medusa 3D đặc trưng.':'The Gianni pump features a two-layer construction of laser-cut black nappa leather revealing a laminated nappa layer beneath. The effect adds depth and definition, while the black trim sharpens the silhouette with a contemporary edge. The heel is finished with a crystal-set ring and the signature 3D Medusa.',
-  'Vệ sinh bằng khăn vải cotton mềm. Tránh tiếp xúc với chất lỏng, hoá chất và các sản phẩm có màu đậm. Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao.':'Clean with a soft cotton cloth. Avoid contact with liquids, chemicals and dark-coloured items. Keep away from high temperatures and humidity.',
   'Đôi giày lười Manu được chế tác từ da bê đánh bóng, đặt trên đế da thanh mảnh với cấu trúc viền đế kép. Thiết kế được nhấn bằng chi tiết kim loại Medusa 3D phía trước thân giày.':'The Manu loafer is crafted in polished calf leather on a slim leather sole with a double welt. The upper is finished with 3D Medusa hardware at the vamp.',
-  'Vệ sinh bằng khăn vải cotton mềm. Tránh tiếp xúc với chất lỏng, hoá chất (nước hoa, kem dưỡng da, keo xịt tóc) và các sản phẩm có màu đậm để tránh lem màu. Tránh nhiệt độ cao và độ ẩm cao. Không dùng máy sấy khi sản phẩm bị ẩm ướt.':'Clean with a soft cotton cloth. Avoid contact with liquids, chemicals (perfume, body lotion, hairspray) and dark-coloured items to prevent colour transfer. Keep away from high temperatures and humidity. Do not tumble dry if damp.',
   'Đôi giày thể thao cổ thấp được chế tác từ da nappa trơn kết hợp các chi tiết da lộn, đặt trên đế mỏng họa tiết Greca. Thiết kế có miếng logo Versace trên lưỡi gà bằng nylon. Mẫu Greca Court được sản xuất với định hướng bền vững, sử dụng vật liệu có chứng nhận tái chế và/hoặc có nguồn gốc tái tạo.':'A low-top sneaker in smooth nappa leather with suede inserts, set on a slim Greca-motif sole. A Versace logo patch sits on the nylon tongue. Greca Court is made with sustainability in mind, using certified recycled and/or renewably sourced materials.',
-  'Vệ sinh bằng khăn vải cotton mềm. Tránh tiếp xúc với chất lỏng, hoá chất và các sản phẩm có màu đậm. Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao. Không dùng máy sấy khi sản phẩm bị ẩm ướt.':'Clean with a soft cotton cloth. Avoid contact with liquids, chemicals and dark-coloured items. Keep away from high temperatures and humidity. Do not tumble dry if damp.',
   'Ưu đãi khuyến mãi': 'Offers & promotions',
   'Tóm tắt đơn hàng': 'Order summary',
   'Bộ sưu tập mới': 'New collections',
@@ -9689,7 +9875,11 @@ function wire(root) {
     btn.addEventListener('click', () => {
       const tabs = window.__pdp4Tabs || [];
       const t = tabs[+btn.dataset.sheetIdx];
-      if (t && window.__openInfoSheet) window.__openInfoSheet(t[0], t[1]);
+      /* asHTML=true: thân tab PDP nay là HTML có cấu trúc (26/08), gọi 2 tham số
+         thì openS dùng textContent và sheet in ra nguyên thẻ. Nhánh này hiện
+         KHÔNG có markup nào kích hoạt (PDP4 đã đổi từ bottom sheet sang
+         accordion tại chỗ) — vá cho đúng, không phải vì đang lỗi. */
+      if (t && window.__openInfoSheet) window.__openInfoSheet(t[0], t[1], true);
     });
   });
 
