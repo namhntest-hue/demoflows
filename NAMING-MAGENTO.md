@@ -73,6 +73,23 @@ lúc đo, nhưng dev nhìn `_open` là biết ngay ai điều khiển nó.
 
 **Q5. Namespace `dafc-` cho phần thiết kế MỚI** mà Magento không có sẵn block tương ứng.
 
+> **NGOẠI LỆ 26/08/2026 — FILE FIGMA KHÔNG DÙNG TIỀN TỐ `dafc`** *(lệnh user: "trong bộ của file
+> figma bạn không cần đặt tên có chữ dafc vào đâu. tôi hướng đến sử dụng lâu dài nên cứ đặt tên
+> chung nhất có thể là được")*.
+>
+> Hai tầng phục vụ hai người dùng khác nhau, nên tách:
+>
+> | | Tên dùng | Vì sao |
+> |---|---|---|
+> | **Code bàn giao** (`home.html`, theme Magento) | **giữ `dafc-`** theo Q5 | dev grep một phát ra phần custom, không lẫn với block core |
+> | **Thư viện Figma** (`Test agent`) | **bỏ hẳn `dafc`**, đặt tên phổ thông nhất | file này hướng dùng LÂU DÀI, tái dùng qua nhiều dự án — tên gắn tên khách là hết tái dùng |
+>
+> Đã đổi 26/08: `dafc-badge`→`badge` · `dafc-tab-item`→`tab-item` · `dafc-tab-list`→`tab-list` ·
+> `dafc-select-*`→`select-*` · `dafc-switch`→`switch` · `dafc-cart-row`→`cart-row` ·
+> `dafc-cart-gift`→`cart-gift` · `dafc-qty`→**`quantity-stepper`** · `dafc-empty`→**`empty-state`** ·
+> `dafc-skeleton`→`skeleton`. Sáu tên trang đổi theo. Ánh xạ sang block Magento vẫn nằm trong
+> **mô tả** của từng component, nên không mất giá trị bàn giao.
+
 ---
 
 ## Phần 3 — Thang chữ đặt theo VAI *(ĐÃ ÁP vào `home.html` 25/08/2026)*

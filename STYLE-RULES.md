@@ -368,6 +368,11 @@ xám trong dòng chảy, không phải canvas. Trên màn giỏ nay có 2 vùng 
 **Bỏ mặt hồng `#fef2f2`** trên badge `-20%`. Giữ **chữ đỏ** (đã chốt: badge giảm giá và viền
 lỗi form phải đọc ra là cảnh báo), nhưng bỏ nền tô — đây là mảng màu **duy nhất** trên toàn
 bộ bộ da, và bộ da này nhấn bằng chữ hoa + kẻ mảnh chứ không bằng mảng màu.
+*(Cập nhật 25/08/2026 — lệnh user: **riêng `skin-li` thêm lại nền đỏ cho discount chips**.
+Lệch ghi danh, phạm vi đúng một bộ da: rule mục 9 khối skin-li trả chip về nguyên trạng
+markup — nền token `--unofficial-destructive-subtle` #fef2f2 + đệm 2px 4px, cả 2 bản.
+`skin-mt` trơn và các bộ da khác giữ nguyên chốt "bỏ nền tô" ở trên. Ghi chú "mảng màu
+duy nhất" vì thế chỉ còn đúng cho skin-mt; ở skin-li mảng màu duy nhất là chính chip này.)*
 
 **Mặt thanh dính — chữ ký của bộ da** *(hợp lệ hóa 20/08/2026, AUDIT B11, chốt user
 "hợp lệ hóa như một style signature")*: `rgba(255,255,255,.95)` + blur (`.glass-95`),
