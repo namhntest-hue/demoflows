@@ -636,8 +636,9 @@ bản**. Phần này ghi trạng thái CUỐI.
 | **Nhãn** | Nhãn cấp 1 — nav ngành hàng | 14 / 20 | Inter | **500** | **có** |
 | **Nhãn** | Nhãn cấp 2 — nhãn nhóm menu/footer/accordion | 12 / 16 | Inter | **500** | **có** |
 | Thân bài | Brand ở card / hàng giỏ *(chốt rollback 24/08)* | 14 / 20 | Inter | 400 | không |
+| Thân bài | **Nút hành động** — `.btn-p` + `.btn-o` thật *(chốt 25/08, xem 13.13; KHÔNG tính select `pr-9` · thẻ `.opt` · chip · checkbox)* | **14 / 20** | Inter | 400 | không |
 | Thân bài | Chữ **có thể xuống dòng** — mọi đoạn văn, ghi chú, mô tả | **12 / 18** | Inter | 400 | không |
-| Thân bài | Chữ **chắc chắn một dòng** — hàng danh sách, giá, nhãn form | 12 / 16 | Inter | 400 | không |
+| Thân bài | Chữ **chắc chắn một dòng** — hàng danh sách, giá, nhãn form, nút phụ `.btn-s` | 12 / 16 | Inter | 400 | không |
 | Thân bài | Vi mô — badge, nhãn thẻ thanh toán | 10 / 14 | Inter | tuỳ | tuỳ |
 | *(ngoại lệ ghi danh)* | Cây danh mục panel bộ lọc `#filterSheet` | 12/18 · 12/16 | Inter | **500 chữ thường** | không |
 
@@ -964,6 +965,54 @@ khách mở ra thấy ngay — **kể cả 3 chỗ lệch luật đã ghi danh**
 Luật §4.5 của `STYLE-RULES.md` đã cập nhật theo: bộ da còn lại để thử nghiệm là `skin-mp`
 (Editorial) và Maika. `skin-mt` thì **chặt hơn trước** — `skin-li` là lớp phủ trên chính nó nên
 sửa `skin-mt` là sửa luôn mặt tiền.
+
+### 13.13 Nút hành động lên **14/20** — giữ 400 · chữ thường *(chốt user 25/08, cả 2 bản)*
+
+Lệnh user: *"với font inter không uppercase cho button, có đang ổn ở font 12 không. nếu
+không ổn hãy upsize lên 14 nếu cần"*. Đo xong: **KHÔNG ổn** — mọi `.btn-p/.btn-o/.btn-s`
+đang `12/18 · 400 · thường` (markup khai 13–16px nhưng đều bị blanket remap của skin-mt
+kéo về 12).
+
+**Ba căn cứ, đều là số đo:**
+
+1. **Đảo bậc trên PDP** (đo trước khi sửa): CTA `12/18 · 400` — bằng hệt chữ RUỘT accordion
+   và **thua nhãn accordion `14/20 · 500`** vừa chốt cùng ngày (13.11). Hành động số 1 của
+   màn yếu hơn nhãn của một mục gập/mở.
+2. **Nút chữ thường không còn đòn bẩy nào ngoài CỠ**: §1.5 khoá "chữ trên nút không bao giờ
+   hoa", §1.1 khoá 500 vào chữ hoa. Đúng tiền lệ `.pc-brand` 24/08 — bỏ hoa/500 thì bù bằng
+   lên một bậc cỡ. Định lượng: ở cỡ 12, chữ thường đọc ở x-height **6,6px** (Inter xH 55);
+   bản HOA cũ đọc ở cap-height **8,8px** — bỏ hoa mà giữ 12 là âm thầm hạ ~25% chiều đọc.
+3. **Số đo mytheresa**: nút chính của họ là nhãn **14px/400** (đo 18/08, khối 4b skin-mt).
+   Nấc 12 hiện tại là sản phẩm phụ của remap 14→12 mà căn cứ ghi trong code là "Filters" +
+   giá — không phải CTA. `skin-mp` đã tách đúng vai từ Phần 10.1: *"bậc nhấn 14/20 = nút
+   hành động rộng"*.
+
+**Số chốt** (rule = mục 8 khối skin-li, 2 file giống hệt):
+
+- `.btn-p` + `.btn-o` thật → **14/20 · 400 · chữ thường** — trùng khít vai brand-ở-card nên
+  **không thêm tổ hợp typo mới**.
+- `.btn-s` (pill phụ "Dùng mã"…) giữ cỡ 12, chốt lại dòng **12/16** (T4 một dòng — trước
+  trôi 12/18 vì markup `text-[14px] leading-5` đi qua remap).
+- **Giữ 400** — user chỉ hỏi cỡ; mytheresa 400, skin-mp 400, còn 500-thường phải xin thêm
+  ngoại lệ §1.1, không mở khi không ai đòi.
+
+**⚠ `.btn-o` phải khoanh vùng** — class bị mượn cho 4 thứ không phải nút hành động, tất cả
+ĐỨNG YÊN ở 12 theo bảng 13.1: **ô select giả** (chữ ký `pr-9` = chỗ chừa mũi tên, đủ 6 chỗ
+mobile + 3 desktop; là linh kiện FORM, phải cùng cỡ với input đứng cạnh) · **thẻ option
+`.opt`** (là card) · **chip size bộ lọc `.chip`** · **checkbox `.chk`**. Selector:
+`:is(.btn-p, .btn-o:not(.opt, .chip, .chk, .pr-9))`. `#sortBtn` "Sắp xếp" không phải
+`.btn-*` nên đứng yên 12 — cạnh nó "Bộ lọc" lên 14 theo vai NÚT, y như skin-mp đã sống với
+đúng cặp lệch này (mytheresa cũng để "Filters" ở 12).
+
+**Đo sau khi áp (cả 2 bản):** PLP · panel bộ lọc · PDP · giỏ · checkout · done — nút thật
+14/20 đủ 100%, **0 phần tử bị lây** (select/opt/chip/chk vẫn 12) · `.btn-s` 12/16 · tracking
+0,5px nguyên (blanket `[class*="tracking-"]` của skin-mt phủ sẵn) · 4 bộ da kia không đổi
+(skin-mt 12/18 · default 13 · skin-mp 14/20 vốn có · Maika 12/18) · console sạch cả 2 bản.
+Khối skin-li vẫn **giống hệt từng byte** ở 2 file (nay 363 dòng) — lượt này vá kèm 1 đoạn
+comment mục 7 (accordion) đã bị lệch chữ giữa 2 file từ lượt trước.
+
+**CÒN MỞ:** Maika (`skin-mt skin-mk`) cũng là Inter chữ thường nhưng nút vẫn 12/18 — muốn
+đồng bộ thì thêm rule cùng selector cho `skin-mk` (chưa làm, chờ user gọi).
 
 ---
 
