@@ -123,8 +123,10 @@ có 10 SP thời trang).
 
 > *"Size hiện thiếu bộ lọc cho Quần áo — cần bổ sung đầy đủ các mức size theo chuẩn từ XXS đến XXL"*
 
-Panel Kích thước nay **3 nhóm đóng/mở**: `Giày dép` (mở sẵn, 3 tab đơn vị IT/EU · US · UK) →
-`Quần áo` → `Khác`.
+Panel Kích thước nay **3 nhóm đóng/mở**, thứ tự và trạng thái chốt 26/08 chiều
+(*"swap vị trí của size quần áo lên trên size giày dép ở mọi gender, mặc định không mở sẵn cái nào"*):
+`Quần áo` → `Giày dép` (3 tab đơn vị IT/EU · US · UK) → `Khác` — **cả ba đều đóng**, khớp luôn quy
+ước "filter mặc định closed hết" của các mục lớn.
 
 - `Quần áo` = `XXS · XS · S · M · L · XL · XXL` (7 chip).
 - 4 mức chữ `XS · S · M · L` trước nằm trong nhóm "Khác" đã **dọn hết về Quần áo**: để cả 2 nơi
