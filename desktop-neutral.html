@@ -856,11 +856,15 @@ const PRODUCTS = [
   /* `preorder` = ngày nhận hàng dự kiến (dd/mm/yyyy) — NGUỒN DUY NHẤT cho mọi chỗ
      hiện pre-order (đồng bộ bản mobile 14/08/2026): badge + dòng ETA ở PDP, dòng
      trong giỏ, sheet xác nhận, checkout/hoàn tất/chi tiết đơn. Đổi ngày chỉ sửa ở đây. */
-  { img:'p1-0.jpg',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫', tag:'Best seller', preorder:'30/09/2026', colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
-  { img:'p2-0.jpg',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', price:'15.611.000 ₫', colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
+  /* `multi` = hàng IN HỌA TIẾT nhiều màu → khớp ô "Nhiều màu" (Multi-colour). Khác
+     "SP có nhiều swatch": túi Emblème bán 2 phiên bản, mỗi phiên bản MỘT màu. */
+  { img:'p1-0.jpg',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫', tag:'Best seller', preorder:'30/09/2026', multi:true, colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
+  { img:'p2-0.jpg',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', price:'15.611.000 ₫', multi:true, colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
   { img:'p3-0.jpg',  brand:'Versace', name:'Túi đeo vai da Emblème',                     price:'50.957.000 ₫', off:'-15%', was:'59.949.000 ₫', colors:[{name:'Verde Menta',hex:'#b9dfc6'},{name:'Rosa',hex:'#f5d6e0'}] },
-  { img:'p4-0.jpg',  brand:'Versace', name:'Giày cao gót da nappa Gianni 90',            price:'45.066.000 ₫', tag:'New arrival', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Oro',hex:'#c9a94b'}] },
-  { img:'p5-0.jpg',  brand:'Versace', name:'Giày loafer da Manu',                        price:'35.248.000 ₫', off:'-30%', was:'50.354.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'}] },
+  /* `heel` = chiều cao gót (cm), nguồn là bảng thông số PDP của 2 đôi này (9 và
+     1.5) — có field này thì mục lọc "Độ cao giày" lọc THẬT được. */
+  { img:'p4-0.jpg',  brand:'Versace', name:'Giày cao gót da nappa Gianni 90',            price:'45.066.000 ₫', tag:'New arrival', heel:9, colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Oro',hex:'#c9a94b'}] },
+  { img:'p5-0.jpg',  brand:'Versace', name:'Giày loafer da Manu',                        price:'35.248.000 ₫', off:'-30%', was:'50.354.000 ₫', heel:1.5, colors:[{name:'Nero',hex:'#0a0a0a'}] },
   { img:'p6-0.jpg',  brand:'Versace', name:'Giày thể thao da lộn Greca Court',           price:'27.393.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Bianco',hex:'#f1f1f1'},{name:'Nero Oro',hex:'#8a7040'}] },
   { img:'p7-0.jpg',  brand:'Versace', name:'Túi đeo vai da Vivian East/West cỡ nhỏ',     price:'70.593.000 ₫', off:'-25%', was:'94.124.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'}] },
   { img:'p8-0.jpg',  brand:'Versace', name:'Túi da Lou mini',                            price:'45.066.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'}] },
@@ -1650,6 +1654,21 @@ function goPlp(mode) {
 
 /* PLP đang ở ngành hàng Làm đẹp? — quyết định lọc sản phẩm và bộ lọc nào hiện */
 const isBeautyPlp = () => plpMode.type === 'category' && (plpMode.crumbs || [])[0] === 'Làm đẹp';
+
+/* GIỚI TÍNH của PLP đang đứng — nhận qua ĐÚNG chỗ isBeautyPlp() nhận ngành hàng:
+   crumbs[0] là dept. null ở PLP thương hiệu / tìm kiếm → cây ĐỦ. (26/08 #4) */
+const plpGender = () => {
+  const d = plpMode.type === 'category' ? (plpMode.crumbs || [])[0] : null;
+  return d === 'Nam' || d === 'Nữ' ? d : null;
+};
+/* Mục "Độ cao giày" — CHỐT CUỐI 26/08 chiều (user: "nó sẽ áp dụng luôn khi user
+   chuyển qua Trang chủ nữ chứ không phải khi bấm vào Nữ > Giày mới hiện"): điều kiện
+   duy nhất là NGỮ CẢNH GIỚI TÍNH NỮ. Bảng của khách ghi "chỉ áp dụng vs GIÀY NỮ" nên
+   hàng nam và ngành làm đẹp vẫn không có mục này.
+   Trước đó mục này còn ràng theo nhánh Giày dép (breadcrumb) và tự hiện/ẩn khi tick
+   cate Giày dép trong panel — ĐÃ GỠ cả hai cùng lượt, kèm `syncHeelSection()`,
+   `SHOE_BRANCH_LABELS` và `data-cat-name` vốn chỉ tồn tại để phục vụ cơ chế đó. */
+const heelSection = () => plpGender() === 'Nữ' && !isBeautyPlp();
 
 /* Danh sách sản phẩm theo chế độ PLP (giữ index gốc cho router PDP/quick-add) */
 function plpProducts() {
@@ -4135,8 +4154,86 @@ const FILTER_CATS = [
     ['Du lịch',               ['Sản phẩm size du lịch','Set mini du lịch']],
   ]],
 ];
-const FILTER_BRANDS = ['A.P.C.','Balmain','Burberry','Christian Louboutin','Dolce&Gabbana','Emporio Armani','Ferragamo','Gianvito Rossi','MCM','Montblanc','Moschino','MSGM','Palm Angels','Paul&Shark','Santoni','Stefano Ricci','TUMI','Versace','Versace Jeans Couture','Zimmermann'];
-const FILTER_COLORS = [['Đen','#010101'],['Trắng','#ffffff'],['Beige','#e4d8c9'],['Navy','#213259'],['Đỏ','#d62845'],['Nâu','#664232'],['Xám','#909090']];
+
+/* ════════════════════════════════════════════════════════════════
+   CÂY DANH MỤC TÁCH THEO GIỚI TÍNH — feedback khách 26/08/2026, điểm 4:
+   "Nam-Nữ hiện dùng chung bộ Listing – Filter → cần thiết kế riêng cho từng
+   gender. Ví dụ: Nam không nên có váy đầm, áo hai dây."
+   NGUỒN (26/08 chiều): "Filter - Beauty cate demo (1).xlsx" — sheet
+   "Product categories" nay có cột NOTE = Both / Chỉ NAM / Chỉ NỮ (101/14/26 dòng),
+   đối chiếu khớp 100% với 2 sheet cây riêng "Cate tree_NAM" (113) / "Cate tree_NỮ" (125).
+   Đây là DỮ LIỆU KHÁCH, không còn là bảng mình đoán.
+   Tên khớp NHÁNH Ở BẤT CỨ CẤP NÀO; nhánh hết con thì rụng, cate L1 rỗng cũng rụng.
+   KHÔNG ghi vào bảng nào = UNISEX.
+   ⚠ Cây FILTER_CATS của 3 bản thử skin này là bản CŨ (2 tầng, gọn hơn cây 3 tầng
+   từ Excel ở index/desktop) nên số nhánh bị ẩn ít hơn — bảng vẫn khai GIỐNG HỆT để
+   sau này đồng bộ cây là ăn ngay. */
+/* CHỈ HIỆN Ở PLP NỮ — 26 product type mang note "Chỉ NỮ".
+   Nhánh L2 nào hết con thì catTreeFor() tự cho rụng, nên KHÔNG cần khai tay tên
+   L2: cây nam rụng đúng 10 nhánh (Chân váy · Đầm & áo liền quần · Giày cao gót ·
+   Giày sandals · Giày boots · Giày bệt · Túi xách tay · Túi đeo vai · Bông tai ·
+   Khăn), cây nữ rụng 5 nhánh (Giày tây & monk straps · Giày moccasins ·
+   Túi đựng tài liệu · Túi đeo hông · Chăm sóc sản phẩm).
+   3 dòng mình từng ĐOÁN SAI, nay theo file khách: "Áo dây & croptops" KHÔNG phải
+   cụm riêng của nữ (nam vẫn có "Áo thun ba lỗ" trong cụm đó), "Quần leggings" và
+   "Áo choàng không tay" là hàng CẢ HAI giới. Ngược lại có 9 dòng mình bỏ sót:
+   Bông tai · Khăn · Quần lót · Giày sandals · Giày boots · Túi xách tay ·
+   Túi đeo vai · Vòng cổ choker · Áo kiểu. */
+const CATS_WOMEN_ONLY = new Set([
+  'Bodysuit', 'Bông tai', 'Cài tóc', 'Giày boots', 'Giày bệt', 'Giày cao gót',
+  'Giày hở gót', 'Giày sandals', 'Giày đế xuồng', 'Khăn', 'Kẹp tóc', 'Quần lót',
+  'Túi xách tay', 'Túi đeo vai', 'Váy midi', 'Váy ngắn', 'Vòng cổ choker', 'Áo corset',
+  'Áo croptop', 'Áo hai dây', 'Áo kiểu', 'Áo liền quần', 'Áo lót', 'Áo ngực thể thao',
+  'Đầm dài', 'Đầm ngắn',
+]);
+/* CHỈ HIỆN Ở PLP NAM — 14 product type mang note "Chỉ NAM". Ngoài 5 dòng mình đã
+   đoán đúng (cà vạt · kẹp cà vạt · khuy măng sét · 2 kiểu quần lót nam), file khách
+   xếp thêm CẢ CỤM giày tây/moccasins (oxfords · derby · monk straps · drivers ·
+   moccasins), túi đựng tài liệu, túi đeo hông và 2 dụng cụ chăm sóc sản phẩm. */
+const CATS_MEN_ONLY = new Set([
+  'Cà vạt', 'Dụng cụ chăm sóc sản phẩm', 'Dụng cụ đón gót giày', 'Giày derby',
+  'Giày drivers', 'Giày moccasins', 'Giày monk straps', 'Giày oxfords', 'Khuy măng sét',
+  'Kẹp cà vạt', 'Quần lót nam boxer', 'Quần lót nam tam giác', 'Túi đeo hông',
+  'Túi đựng tài liệu',
+]);
+function catTreeFor(gender) {
+  const src = FILTER_CATS.filter(([c]) => c !== 'Làm đẹp');
+  const drop = gender === 'Nam' ? CATS_WOMEN_ONLY : gender === 'Nữ' ? CATS_MEN_ONLY : null;
+  if (!drop) return src;
+  return src
+    .map(([cat, subs]) => [cat, subs.reduce((acc, sub) => {
+      const name = Array.isArray(sub) ? sub[0] : sub;
+      if (drop.has(name)) return acc;
+      if (!Array.isArray(sub)) { acc.push(sub); return acc; }
+      const kids = sub[1].filter(k => !drop.has(k));
+      if (kids.length) acc.push([sub[0], kids]);
+      return acc;
+    }, [])])
+    .filter(([, subs]) => subs.length);
+}
+const beautyCatTree = () => (FILTER_CATS.find(([c]) => c === 'Làm đẹp') || ['', []])[1];
+
+/* 24 thương hiệu — sheet "Brand" của file khách 26/08 chiều (thêm 4: MessyWeekend
+   · MISBHV · Moschino Jeans · Stand Oil). PRODUCTS chỉ có hàng Versace nên 23 ô kia
+   tick vào ra lưới rỗng kèm empty state, đúng như mọi facet không khớp khác. */
+const FILTER_BRANDS = ['A.P.C.','Balmain','Burberry','Christian Louboutin','Dolce&Gabbana','Emporio Armani','Ferragamo','Gianvito Rossi','MCM','MessyWeekend','MISBHV','Montblanc','Moschino','Moschino Jeans','MSGM','Palm Angels','Paul&Shark','Santoni','Stand Oil','Stefano Ricci','TUMI','Versace','Versace Jeans Couture','Zimmermann'];
+/* ── MÀU SẮC: 15 Ô = BẢNG CỦA KHÁCH, chốt 26/08/2026 ──
+   Black · White · Gold · Silver · Blue · Brown · Green · Red · Pink · Purple ·
+   Yellow · Orange · Beige · Grey · Multi-colour. Khách để mình tự chấm màu nên HEX
+   do mình chọn, TÊN bám đúng bảng — vì vậy KHÔNG còn ô "Navy" (bảng chỉ có Blue)
+   và có thêm ô "Nhiều màu".
+   Hex là màu ĐẠI DIỆN cho Ô LỌC, không phải màu sản phẩm: colorBucketOf() quy màu
+   thật của SP về ô gần nhất theo HSL. Ô "Nhiều màu" không có hex nào đại diện —
+   swatch là vòng conic-gradient, bị loại khỏi bảng chấm, lọc bằng cờ `multi`.
+   KHAI GIỐNG index.html / desktop.html — sửa một bên thì sửa cả ba. */
+const MULTI_SWATCH = 'conic-gradient(#d62845, #ffd93b, #4a8f5b, #2f6fbf, #7b4fa3, #d62845)';
+const FILTER_COLORS = [
+  ['Đen','#010101'],['Trắng','#ffffff'],['Xám','#909090'],['Bạc','#c9ccd1'],
+  ['Kem','#e4d8c9'],['Nâu','#664232'],['Vàng đồng','#c9a24b'],
+  ['Đỏ','#d62845'],['Hồng','#efa3bb'],['Cam','#e0762d'],['Vàng','#ffd93b'],
+  ['Xanh lá','#4a8f5b'],['Xanh dương','#2f6fbf'],['Tím','#7b4fa3'],
+  ['Nhiều màu', MULTI_SWATCH],
+];
 const FILTER_VOLUMES = ['50 ml','75 ml','100 ml'];
 
 /* ── Bộ lọc THẬT lọc lưới (12/08/2026) ──
@@ -4156,9 +4253,9 @@ const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const __colorBucket = {};
 /* Quy màu sản phẩm về ô màu bộ lọc. KHÔNG dùng khoảng cách RGB: RGB không phân
    biệt sắc, nên "gần nhất" từng gán #a5d48c (xanh lá) vào "Xám" và #f5d6e0
-   (hồng) vào "Beige", còn "Đỏ"/"Navy" thì không bao giờ khớp gì.
+   (hồng) vào "Beige", còn "Đỏ"/"Xanh dương" thì không bao giờ khớp gì.
    Cách đúng: tách 2 nhóm.
-   · Ô trung tính (Đen/Trắng/Xám, S < .15) chỉ nhận màu cũng trung tính, chọn
+   · Ô trung tính (Đen/Trắng/Xám/Bạc, S < .15) chỉ nhận màu cũng trung tính, chọn
      theo độ sáng gần nhất.
    · Ô có sắc chỉ nhận màu có sắc và lệch HUE trong 40°; xa hơn thì trả null —
      thà không khớp còn hơn khớp sai. */
@@ -4176,7 +4273,9 @@ function rgbHsl(hex) {
   return { h, s: sat, l };
 }
 const NEUTRAL_S = 0.15, HUE_TOL = 40;
-const __filterHsl = FILTER_COLORS.map(([name, hex]) => ({ name, ...rgbHsl(hex) }));
+const __filterHsl = FILTER_COLORS
+  .filter(([, hex]) => /^#[0-9a-f]{6}$/i.test(hex))   // bỏ ô "Nhiều màu" (gradient)
+  .map(([name, hex]) => ({ name, ...rgbHsl(hex) }));
 function colorBucketOf(hex) {
   hex = (hex || '').toLowerCase();
   if (!/^#[0-9a-f]{6}$/.test(hex)) return null;
@@ -4190,7 +4289,13 @@ function colorBucketOf(hex) {
        CỘNG phạt độ sáng — Nâu (#664232) và Beige (#e4d8c9) gần như cùng hue
        (18° vs 33°), khác nhau ở độ sáng; chỉ so hue thì màu da nâu #a06a3f rơi
        vào Beige. Hệ số 60 đủ để tách 2 ô đó mà không phá các ô còn lại. */
-    const score = c.s < NEUTRAL_S ? Math.abs(f.l - c.l) : hueGap(f) + 60 * Math.abs(f.l - c.l);
+    /* 26/08 CỘNG THÊM phạt ĐỘ NO: bảng 15 ô của khách có ô Cam (#e0762d, h 24.5°)
+       nằm gần như đúng hue của Nâu và của da bò #a06a3f Cuoio (26.6°) — hai thứ chỉ
+       khác nhau ở chỗ cam thì RỰC (s .74) còn da bò thì ĐỤC (s .43). Không có số
+       hạng này thì túi Cuoio bị xếp vào "Cam". */
+    const score = c.s < NEUTRAL_S
+      ? Math.abs(f.l - c.l)
+      : hueGap(f) + 60 * Math.abs(f.l - c.l) + 60 * Math.abs(f.s - c.s);
     if (score < bestScore) { bestScore = score; bestHue = hueGap(f); best = f.name; }
   });
   if (c.s >= NEUTRAL_S && bestHue > HUE_TOL) best = null;   // ngưỡng xét trên HUE, không phải score
@@ -4238,14 +4343,19 @@ function plpGridInner(list, card) {
 }
 function matchProducts(list, labels) {
   const brands = labels.filter(l => FILTER_BRANDS.includes(l));
-  const colors = labels.filter(l => FILTER_COLORS.some(([n]) => n === l));
+  /* "Nhiều màu" tách khỏi mảng màu đơn sắc — nó không có bucket HSL, lọc bằng cờ
+     `multi` của sản phẩm; tick cùng ô màu khác vẫn là HỢP (OR). */
+  const colors = labels.filter(l => l !== 'Nhiều màu' && FILTER_COLORS.some(([n]) => n === l));
+  const multi  = labels.includes('Nhiều màu');
   const flags  = labels.filter(l => FILTER_FLAGS.includes(l));
   const sizes  = labels.filter(l => FILTER_VOLUMES.includes(l));
+  const heels  = labels.filter(l => FILTER_HEELS.some(([n]) => n === l));
   return list.filter(({ p }) => {
     if (brands.length && !brands.includes(p.brand)) return false;
-    if (colors.length) {
+    if (colors.length || multi) {
       const buckets = (p.colors || []).map(c => colorBucketOf(c.hex));
-      if (!colors.some(c => buckets.includes(c))) return false;
+      const hit = colors.some(c => buckets.includes(c)) || (multi && !!p.multi);
+      if (!hit) return false;
     }
     if (flags.includes('Đang giảm giá') && !p.off) return false;
     if (flags.includes('Hàng mới về') && !/new/i.test(p.tag || '')) return false;
@@ -4256,11 +4366,38 @@ function matchProducts(list, labels) {
       const has = p.sizes || [];
       if (!sizes.some(v => has.includes(v))) return false;
     }
+    /* Độ cao giày (feedback 26/08 #3) — SP không khai `heel` thì KHÔNG khớp mức
+       nào. Biên [lo, hi] đóng 2 đầu vì bảng khách đọc là "0 - 5.5". */
+    if (heels.length) {
+      if (p.heel == null) return false;
+      const hit = heels.some(l => {
+        const r = (FILTER_HEELS.find(([n]) => n === l) || ['', [0, 0]])[1];
+        return p.heel >= r[0] && p.heel <= r[1];
+      });
+      if (!hit) return false;
+    }
     return true;
   });
 }
 const FILTER_PROMOS  = ['Nguyên giá','10% - 30%','30% - 50%','50% - 70%','Trên 70%'];
-const FILTER_SIZES  = ['39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55'];
+/* SIZE — feedback khách 26/08 điểm 2: "size hiện thiếu bộ lọc cho Quần áo, cần bổ
+   sung đầy đủ các mức size theo chuẩn từ XXS đến XXL". 7 mức chữ thêm vào ĐẦU dãy.
+   ⚠ 3 bản thử skin này còn dùng DÃY PHẲNG (nền bộ lọc trước 20/08), nên ở đây size
+   quần áo và size giày nằm chung MỘT lưới — khác index.html / desktop.html vốn đã
+   tách 3 nhóm đóng/mở (Giày dép có tab IT/EU · US · UK, Quần áo, Khác). Muốn giống
+   hẳn thì phải đồng bộ nguyên khối bộ lọc cho 3 file này — một lượt riêng. */
+const FILTER_SIZES  = ['XXS','XS','S','M','L','XL','XXL','39','40','41','42','43','44','45','46','47','48','49','50','51','52','53','54','55'];
+
+/* ── ĐỘ CAO GIÀY — feedback khách 26/08 điểm 3, 3 mức lấy NGUYÊN bảng khách gửi
+   (khách chốt "theo sát bảng gửi" nên GIỮ khe hở 5.5–6 và 8.5–9; mốc đúng 9 cm
+   tính vào mức Cao). Nhãn EN Low/Medium/High ở I18N.
+   Chốt cuối 26/08 chiều: mục này hiện ở MỌI PLP ngữ cảnh NỮ — điều kiện ở heelSection().
+   LỌC THẬT nhờ field `heel` cm trên PRODUCTS (Gianni 9 · Manu 1.5). */
+const FILTER_HEELS = [
+  ['Thấp (0 - 5.5 cm)',       [0, 5.5]],
+  ['Trung bình (6 - 8.5 cm)', [6, 8.5]],
+  ['Cao (trên 9 cm)',         [9, Infinity]],
+];
 
 const IcoMinus = `<svg width="14" height="14" viewBox="-0.25 11.25 24.5 1.5" fill="var(--general-primary)"><path d="M23.5,12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H23.5c.276,0,.5,.224,.5,.5s-.224,.5-.5,.5Z"/></svg>`;
 const IcoPlus  = `<svg width="14" height="14" viewBox="-0.25 -0.25 24.5 24.5" fill="var(--general-primary)"><path d="M24,12c0,.276-.224,.5-.5,.5H12.5v11c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5V12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H11.5V.5c0-.276,.224-.5,.5-.5s.5,.224,.5,.5V11.5h11c.276,0,.5,.224,.5,.5Z"/></svg>`;
@@ -4295,7 +4432,7 @@ const fsubRow = (label, depth, toggle = '') => `
    count: khóa nhóm để hiện số đang chọn trong tiêu đề — Figma "Danh mục (1)", "Thương hiệu (2)" */
 function fSection(title, body, open = true, h = 72, count = '') {
   return `
-  <div class="facc ${open ? 'open' : ''}">
+  <div class="facc ${open ? 'open' : ''}" data-facc="${title}">
     <button class="facc-trigger w-full px-4 flex items-center justify-between press" style="height:${h}px">
       <span class="text-[16px] font-light leading-6 text-foreground">${title}${count ? `<span data-fscount="${count}"></span>` : ''}</span>
       <span class="facc-ico">${IcoMinus}</span>
@@ -4401,11 +4538,12 @@ function openSizeChart() {
    · Kích thước ⇄ Dung tích (50/75/100 ml);
    · beauty bỏ Màu sắc, thêm Ưu đãi (nguyên sheet "Promo" của file Excel).
    Vỏ drawer (backdrop / header / footer) dựng 1 lần, chỉ #filterBody thay. */
-function filterBody(beauty) {
+/* 26/08 thêm 2 tham số theo feedback khách: `gender` quyết định cây danh mục
+   (điểm 4), `heel` = có DỰNG mục Độ cao giày hay không — CHỈ ngữ cảnh NỮ (xem
+   heelSection()). Dựng là hiện luôn, không còn trạng thái ẩn nào. */
+function filterBody(beauty, gender, heel) {
   /* ── Danh mục: cha + con (con mặc định ĐÓNG) ── */
-  const catSrc = beauty
-    ? (FILTER_CATS.find(([c]) => c === 'Làm đẹp') || ['', []])[1]
-    : FILTER_CATS.filter(([c]) => c !== 'Làm đẹp');
+  const catSrc = beauty ? beautyCatTree() : catTreeFor(gender);
   const cats = catSrc.map(([cat, subs], i) => `
     <div class="fcat" data-cat="${i}">
       <div class="h-11 flex items-center gap-2 pt-2">
@@ -4420,8 +4558,12 @@ function filterBody(beauty) {
       </div>
       <div class="fcat-body"><div class="acc-inner">
         ${subs.map((sub, si) => {
-          const hasKids = Array.isArray(sub);
-          const label = hasKids ? sub[0] : sub;
+          /* ĐÚNG 1 product type TRÙNG TÊN sub-cate thì KHÔNG dựng cấp 3 — khách chốt
+             26/08: "ẩn mục con nếu trùng tên và chỉ có 1 loại". Nhánh NHIỀU con có 1
+             con trùng tên cha thì GIỮ "+" (bỏ đi là mất lối chọn riêng loại đó). */
+          const same = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+          const hasKids = Array.isArray(sub) && !(sub[1].length === 1 && same(sub[1][0], sub[0]));
+          const label = Array.isArray(sub) ? sub[0] : sub;
           const kids = hasKids ? sub[1] : null;
           if (!hasKids) return fsubRow(label, 1);
           return `
@@ -4451,24 +4593,42 @@ function filterBody(beauty) {
   /* Màu: CHỌN NHIỀU (12/08/2026). Trước đây là chọn-1 và ô đầu bị tô sẵn, phải
      dùng cờ `dataset.colorPicked` để phân biệt "tô sẵn" với "người dùng đã chọn"
      — bỏ luôn cờ đó vì giờ mở ra không ô nào được chọn. */
+  /* 26/08: bảng lên 15 ô nên đổi flex-wrap (ô cứng w-16) sang LƯỚI 4 CỘT — 15 ô rơi
+     đúng 4 hàng đều cột, ô ~90px trong drawer 420 đủ cho nhãn "Xanh dương" ở 12px. */
   const colors = FILTER_COLORS.map(([name, hex]) => `
-    <button class="fcolor w-16 flex flex-col items-center gap-2 press shrink-0" data-color="${name}">
+    <button class="fcolor w-full flex flex-col items-center gap-2 press" data-color="${name}">
       <span class="fcolor-ring w-10 h-10 rounded-full flex items-center justify-center border border-border">
         <span class="w-8 h-8 rounded-full ${hex === '#ffffff' ? 'border border-border-3' : ''}" style="background:${hex}"></span>
       </span>
-      <span class="fcolor-label text-[12px] leading-4 text-muted-foreground">${name}</span>
+      <span class="fcolor-label text-[12px] leading-4 text-muted-foreground truncate max-w-full">${name}</span>
     </button>`).join('');
 
   /* chip dung tích dùng đúng class .fsize để tái dụng luôn handler chọn nhiều.
      w-full vì container là grid 5 cột (xem `sizeGrid`), không còn flex-wrap. */
-  const chips = (arr) => arr.map(s => `
-    <button class="fsize chip w-full h-9 px-1 rounded-xs border border-border bg-background text-[14px] font-medium text-foreground btn-o press" data-size>${s}</button>`).join('');
+  /* data-size = NHÃN LỌC ĐẦY ĐỦ ('Size XS' · '100 ml'), không lấy textContent:
+     textContent bị dịch khi LANG='en' và trùng số giữa các nhóm. Nền cũ của 3 bản
+     thử skin để `data-size` RỖNG nên nhãn size sinh ra là '39' trong khi
+     facetLabelsFor sinh 'Size 39' -> mọi tick size bị pruneFilters dọn sạch ngay
+     lúc điều hướng. Thêm prefix là vá luôn lỗi đó. */
+  const chips = (arr, prefix = '') => arr.map(s => `
+    <button class="fsize chip w-full h-9 px-1 rounded-xs border border-border bg-background text-[14px] font-medium text-foreground btn-o press" data-size="${prefix}${s}">${s}</button>`).join('');
   /* Tối đa 5 ô/dòng — giống lưới size ở PDP (index.html: repeat(5,1fr)) */
   const sizeGrid = inner => `<div class="px-4 pb-6 grid gap-2" style="grid-template-columns:repeat(5,1fr)">${inner}</div>`;
-  const sizes   = chips(FILTER_SIZES);
+  const sizes   = chips(FILTER_SIZES, 'Size ');
   const volumes = chips(FILTER_VOLUMES);
   const promos  = FILTER_PROMOS.map(t => `
     <button class="h-9 w-full flex items-center gap-2 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('');
+  /* Độ cao giày — hàng checkbox dùng `data-other` để ăn sẵn handler tick +
+     pickedLabels + syncFilterToDom, không thêm cơ chế mới. matchProducts nhận nhãn
+     này rồi so với FILTER_HEELS nên nó LỌC THẬT. */
+  const heels = FILTER_HEELS.map(([t]) => `
+    <button class="h-9 w-full flex items-center gap-2 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('');
+  /* MỤC LỚN, CÙNG CẤP với Danh mục / Thương hiệu / Màu sắc / Kích thước (chốt lại
+     26/08 chiều: "nó cùng level của Kích thước luôn, nhưng nằm vị trí dưới Kích
+     thước và trên Khoảng giá"). Nên nó đi qua fSection() như mọi mục khác — cùng
+     hàng tiêu đề 12/16 hoa của bộ da, cùng đóng/mở bằng ±, cùng nhịp kẻ.
+     Vị trí trong return: ngay sau Kích thước, ngay trước Khoảng giá.
+     (Bản dựng khối-trần `.fheel` giữa lượt đã bỏ — mình hiểu sai "ngoài mục lớn".) */
 
   const price = `
     <div class="px-4 pb-6 flex flex-col gap-6">
@@ -4497,10 +4657,11 @@ function filterBody(beauty) {
   return `
     ${fSection('Danh mục', `<div class="px-4 pb-4">${cats}</div>`, true, 72, 'cat')}
     ${fSection('Thương hiệu', `<div class="px-4 pb-6">${brands}</div>`, true, 72, 'brand')}
-    ${beauty ? '' : fSection('Màu sắc', `<div class="pt-2 px-4 pb-4 flex flex-wrap gap-2">${colors}</div>`, true, 56)}
+    ${beauty ? '' : fSection('Màu sắc', `<div class="pt-2 px-4 pb-4 grid gap-2" style="grid-template-columns:repeat(4,1fr)">${colors}</div>`, true, 56)}
     ${beauty
       ? fSection('Dung tích', sizeGrid(volumes))
       : fSection('Kích thước', sizeGrid(sizes))}
+    ${heel ? fSection('Độ cao giày', `<div class="px-4 pb-6 flex flex-col gap-1">${heels}</div>`, true) : ''}
     ${fSection('Khoảng giá', price)}
     ${beauty ? fSection('Ưu đãi', `<div class="px-4 pb-6 flex flex-col gap-1">${promos}</div>`) : ''}
     ${fSection('Khác', `<div class="px-4 pb-6 flex flex-col gap-1">
@@ -4537,13 +4698,17 @@ function filterSheet() {
 
 /* Chỉ dựng lại thân khi ĐỔI ngành hàng — mở lại bộ lọc trong cùng ngành thì
    giữ nguyên các ô đang tick. */
+/* 26/08: KHOÁ mode nay gồm cả GIỚI TÍNH — cây danh mục Nam và Nữ khác nhau nên đi
+   từ PLP nam sang PLP nữ PHẢI dựng lại thân. Mục Độ cao giày KHÔNG vào khoá: dựng
+   theo giới tính rồi ẩn/hiện tại chỗ. */
 let filterMode = null;
 function renderFilterBody() {
   const sh = document.getElementById('filterSheet');
   if (!sh) return;
-  const mode = isBeautyPlp() ? 'beauty' : 'fashion';
+  const beauty = isBeautyPlp(), gender = plpGender();
+  const mode = `${beauty ? 'beauty' : 'fashion'}:${gender || 'all'}`;
   if (filterMode === mode) return;
-  sh.querySelector('#filterBody').innerHTML = filterBody(mode === 'beauty');
+  sh.querySelector('#filterBody').innerHTML = filterBody(beauty, gender, heelSection());
   filterMode = mode;
   wireFilterBody(sh);
   localizeNew(sh);
@@ -4560,15 +4725,27 @@ function renderFilterBody() {
    chạy được khi mở drawer, tức nhãn mồ côi vẫn lọc lưới suốt từ lúc vào trang tới
    lúc user tình cờ mở bộ lọc (áp màu Đen ở thời trang rồi sang beauty -> lưới 0
    sản phẩm, không manh mối). */
-function facetLabelsFor(beauty) {
+/* 26/08 bổ sung: NHÃN DANH MỤC vào set — cây Nam và Nữ khác nhau (điểm 4) nên tick
+   "Đầm & áo liền quần" ở PLP nữ phải rụng khi sang PLP nam, mà tick cùng giới tính
+   thì phải SỐNG (trước đây set không có nhãn cate nào nên mọi tick danh mục bị dọn
+   sạch lúc điều hướng, kể cả trong cùng một PLP). */
+function facetLabelsFor(beauty, gender, heel) {
   const out = new Set(FILTER_BRANDS);
   ['Chỉ hàng có sẵn', 'Đang giảm giá', 'Hàng mới về'].forEach(t => out.add(t));
+  (beauty ? beautyCatTree() : catTreeFor(gender)).forEach(([cat, subs]) => {
+    out.add(cat);
+    subs.forEach(s => {
+      if (!Array.isArray(s)) { out.add(s); return; }
+      out.add(s[0]); s[1].forEach(k => out.add(k));
+    });
+  });
   if (beauty) {
     FILTER_VOLUMES.forEach(v => out.add(v));
     FILTER_PROMOS.forEach(t => out.add(t));
   } else {
     FILTER_COLORS.forEach(([n]) => out.add(n));
     FILTER_SIZES.forEach(v => out.add('Size ' + v));
+    if (heel) FILTER_HEELS.forEach(([n]) => out.add(n));
   }
   return out;
 }
@@ -4576,7 +4753,8 @@ function facetLabelsFor(beauty) {
    dựng lại thân sheet. Trả về true nếu có thay đổi. */
 function pruneFilters() {
   if (!plpFilters.length) return false;
-  const ok = facetLabelsFor(isBeautyPlp());
+  /* Nhãn Độ cao giày hợp lệ ở đúng chỗ mục đó được dựng: mọi PLP ngữ cảnh NỮ. */
+  const ok = facetLabelsFor(isBeautyPlp(), plpGender(), heelSection());
   const kept = plpFilters.filter(l => ok.has(l));
   if (kept.length === plpFilters.length) return false;
   plpFilters = kept;
@@ -5182,7 +5360,17 @@ const I18N = {
   // ── Bộ lọc ──
   'Màu sắc':'Colour', 'Kích thước':'Size', 'Khoảng giá':'Price range', 'Chỉ hàng có sẵn':'In stock only',
   'Đang giảm giá':'On sale', 'Hàng mới về':'New in',
+  /* 15 ô màu = bảng của khách (chốt 26/08) — Beige · Gold giữ nguyên chữ ở cả 2
+     ngôn ngữ nên không cần key. */
   'Đen':'Black', 'Trắng':'White', 'Nâu':'Brown', 'Xám':'Grey', 'Đỏ':'Red',
+  'Bạc':'Silver', 'Hồng':'Pink', 'Cam':'Orange', 'Vàng':'Yellow', 'Xanh lá':'Green',
+  /* 3 nhãn VI lấy ĐÚNG cột "Màu sắc" của sheet Color (file khách 26/08 chiều):
+     Gold = "Vàng đồng", Beige = "Kem", Multi-colour = "Nhiều màu". */
+  'Kem':'Beige', 'Vàng đồng':'Gold',
+  'Xanh dương':'Blue', 'Tím':'Purple', 'Nhiều màu':'Multi-colour',
+  /* Độ cao giày — nhãn EN Low / Medium / High đúng bảng khách gửi. */
+  'Thấp (0 - 5.5 cm)':'Low (0 - 5.5 cm)',
+  'Trung bình (6 - 8.5 cm)':'Medium (6 - 8.5 cm)', 'Cao (trên 9 cm)':'High (from 9 cm)',
 
   // ── PDP ──
   'Thêm vào giỏ hàng':'Add to bag', 'Đặt trước':'Pre-order', 'Chọn kích thước':'Select size',
@@ -5718,6 +5906,13 @@ Object.assign(I18N, {
   'Thành phần chất liệu':'Composition',
   'Thành phần vải':'Fabric composition',
   'Chiều cao gót giày':'Heel height',
+  /* 'Độ cao giày' (nhãn bộ lọc, bảng khách 26/08) phải khai SAU 'Chiều cao gót giày'
+     (nhãn thông số PDP): hai key cùng ra 'Heel height', mà I18N_REV đảo map nên key
+     khai sau là key mà chiều EN->VI chọn. Đặt bộ lọc sau => panel lọc quay về đúng
+     "Độ cao giày" như bảng khách; đổi lại bảng thông số PDP khi dịch ngược cũng đọc
+     là "Độ cao giày" — cùng nghĩa, và đúng kiểu đụng độ đã ghi nhận ở cặp
+     'Kích thước'/'Dimensions' phía trên. */
+  'Độ cao giày':'Heel height',
   'Đổi hàng miễn phí trong 7 ngày với sản phẩm còn nguyên tem mác.':'Free exchanges within 7 days with tags attached.',
   'Đầm mini không tay bằng lụa twill, nổi bật với họa tiết "Broken Jewels" và chi tiết thắt nút ở vai lấy cảm hứng từ cách tạo kiểu khăn lụa.':'A sleeveless mini dress in silk twill with the "Broken Jewels" print and a knotted shoulder detail inspired by the way a silk scarf is styled.',
   'Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể. Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.':'Always check the garment care label for specific washing instructions. Use the recommended wash cycle and water temperature.',
@@ -7611,7 +7806,11 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>`
       : navRoot() + deptTabs() + `
         <div class="ms-view flex-1 overflow-y-auto overscroll-contain pt-4">
-          ${headRow(d.home)}
+          <!-- Hàng "Trang chủ <ngành>" đẩy crumbs=[dept] (26/08 chiều): không có crumbs
+               thì PLP là chế độ 'brand', không mang giới tính, nên bộ lọc thiếu mục
+               Độ cao giày và hiện cây đủ. Hàng dept trên thanh nav vốn đã truyền
+               crumbs=[d] qua dkCatAttrs — nay drawer khớp với nó. -->
+          ${headRow(d.home, `data-plp-title="${d.home}" data-plp-crumbs="${menuTab}"`)}
           ${d.cats.map(([label, sub], i) => row(label, sub ? `data-ms-sub="${i}"` : catAttrs(label, [menuTab]))).join('')}
         </div>
         <!-- Vùng tiện ích ghim đáy — tài khoản là TÍNH NĂNG, tách khỏi nhóm danh mục -->

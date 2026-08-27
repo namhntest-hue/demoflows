@@ -2541,6 +2541,62 @@ Khớp Figma: hàng "Áo kiểu" (`3228:33369`) có 2 frame `leaf`, divider ở 
 
 Icon `091-warning` trong `Checkbox Group` của Figma đang `visible: false` → không render. Checkbox dùng `rounded-xs` (Figma r=2).
 
+### Bộ lọc: file Excel bản tách gender (26/08/2026 chiều, CẢ 5 FILE)
+
+Khách gửi lại **`Filter - Beauty cate demo (1).xlsx`**. Áp vào cả 5 file:
+
+| Sheet | Mới | Đã làm |
+|---|---|---|
+| `Product categories` | thêm cột **Note** = `Both` / `Chỉ NAM` / `Chỉ NỮ` (101 / 14 / 26 dòng) | `CATS_MEN_ONLY` (14) + `CATS_WOMEN_ONLY` (26) nay là **dữ liệu khách**, không còn bảng đoán |
+| `Cate tree_NAM` · `Cate tree_NỮ` | 2 cây riêng | dùng **đối chiếu**: lọc cây đủ theo cột Note ra đúng 113 leaf (nam) / 125 leaf (nữ) — khớp 100% |
+| `Color` | 15 màu + tên tiếng Việt chuẩn | `Gold → Vàng đồng` · `Beige → Kem` · `Multi-colour → Nhiều màu` (bỏ tên "Đa sắc" mình tự đặt), kèm 2 cặp i18n mới |
+| `Brand` | 24 thương hiệu | `FILTER_BRANDS` 20 → **24** (thêm MessyWeekend · MISBHV · Moschino Jeans · Stand Oil) |
+| `Size` | tách **gender × category** | `FILTER_SIZE_OTHER` + `sizeGroupsFor(gender)`: nhóm "Khác" nam = nhẫn 15-21 + thắt lưng 80-115 (12 chip), nữ = nhẫn 11-17 + 38-100 (19 chip), PLP không giới tính = hợp cả hai (24 chip) |
+
+**Đo trên trang chạy** — cây danh mục ra **đúng số của file Excel**: nam `7/39/113` · nữ `7/44/125` · cây đủ `7/49/139` (L1/L2/L3). PLP nam nay có `Áo thun ba lỗ`, `Quần leggings`, cụm giày tây/moccasins, `Túi đựng tài liệu`; PLP nữ có `Bông tai`, `Khăn`, `Túi xách tay`, không còn giày tây. Lọc thật: `Nhiều màu` → 2 SP · `Vàng đồng` → 2 · `Nâu` → 1. Console sạch ở cả 5 file.
+
+> **3 dòng mình từng đoán sai** (nay theo file khách): `Áo dây & croptops` không phải cụm riêng của nữ · `Quần leggings` và `Áo choàng không tay` là hàng cả hai giới. Còn 18 dòng mình bỏ sót (9 chỉ-nữ, 9 chỉ-nam) — chi tiết trong `FILTER-FEEDBACK-2026-08-26.md` mục 0.
+>
+> **Vá cùng lượt**: `I18N_REV` đảo map nên `Chiều cao gót giày` (thông số PDP) và `Độ cao giày` (nhãn lọc) cùng ra `Heel height` — key khai sau thắng ở chiều EN→VI. Đã chuyển cặp bộ lọc xuống sau cặp PDP ở cả 5 file; vòng VI→EN→VI nay giữ đúng "Độ cao giày".
+>
+> Sheet `Price` (4 mức Dưới 10M → Trên 40M) **vẫn chưa dùng** — Khoảng giá đang là thanh trượt; đổi sang 4 chip là quyết định UI, chờ khách. 3 bản thử skin vẫn dùng dãy size phẳng (nền cũ) nên không có phần size theo gender.
+
+### Bộ lọc: 5 điểm feedback của khách (26/08/2026, CẢ 5 FILE)
+
+Chi tiết + các câu còn chờ khách chốt: **`FILTER-FEEDBACK-2026-08-26.md`**. Tóm tắt cái đã đổi trong `index.html`:
+
+| # | Khách nói | Đã làm |
+|---|---|---|
+| 1 | Màu sắc chưa đủ 15 màu | `FILTER_COLORS` **7 → 15 ô đúng bảng khách chốt 26/08** (Black·White·Gold·Silver·Blue·Brown·Green·Red·Pink·Purple·Yellow·Orange·Beige·Grey·**Multi-colour**; tên VI chốt lại theo sheet `Color`: Vàng đồng · Kem · Nhiều màu) — tên bám bảng, hex mình tự chấm; **ô "Navy" bỏ** vì bảng chỉ có Blue. Layout `flex-wrap` → **lưới 4 cột** (ô 79,8px; 15 ô ra 4 hàng `4/4/4/3`, không nhãn nào bị cắt). Ô **Nhiều màu** = swatch conic-gradient, không tham gia quy màu HSL, lọc bằng cờ `multi` trên SP (demo: 2 món Broken Jewels) |
+| 2 | Size thiếu nhóm Quần áo | Trả lại nhóm **`Quần áo` = XXS…XXL**; 4 mức chữ `XS·S·M·L` dọn khỏi nhóm "Khác" (để 2 nơi là 2 chip cùng `data-size`, tick 1 sáng cả 2). Panel size nay 3 nhóm: Giày dép (mở sẵn) · Quần áo · Khác |
+| 3 | Giày nữ thiếu "Độ cao giày" | **Mục lớn cùng cấp với Kích thước**, vị trí giữa Kích thước và Khoảng giá (user chốt 26/08 chiều) — đi qua `fSection()` nên tiêu đề `12/16 · 500 · hoa`, đóng sẵn, nhịp kẻ đều, khớp 100% mục Kích thước. `FILTER_HEELS` 3 mức **theo sát bảng khách** (giữ khe hở 5,5–6 và 8,5–9; mốc đúng 9 cm tính vào mức Cao). Điều kiện hiện (chốt cuối 26/08 chiều): **mọi PLP ngữ cảnh NỮ** — kể cả "Trang chủ nữ" — chứ không ràng theo nhánh Giày dép; nam / làm đẹp / PLP thương hiệu thì không dựng. `heelSection()` là điều kiện duy nhất; đã gỡ `plpHeelFacet` · `syncHeelSection` · `SHOE_BRANCH_LABELS` · `data-cat-name`. Kèm sửa menu: hàng "Trang chủ nam/nữ" nay đẩy `crumbs=[dept]` như "Trang chủ làm đẹp" (trước đó ra PLP chế độ `brand`, không mang giới tính nào) — đổi lại 2 PLP đó thành chế độ category (breadcrumb + tiêu đề, không còn hero). **Lọc thật** nhờ field `heel` (cm) thêm vào 2 SP giày đã có số liệu ở PDP (Gianni 9 · Manu 1,5) |
+| 4 | Nam–Nữ phải có cây riêng | `catTreeFor(gender)` + 2 bảng `CATS_WOMEN_ONLY` / `CATS_MEN_ONLY`; giới tính đọc từ `crumbs[0]` như `isBeautyPlp()`. Đo: **nữ 168 nhánh · nam 147 · cây đủ 173**. Khoá `filterMode` nay gồm giới tính nên đi PLP nam ↔ nữ là dựng lại thân panel |
+| 5 | Sub-cate có 1 product type trùng tên nó | Nhánh đó **thành dòng lá** (không "+", không cấp 3) — `Túi xách tay`, `Nhẫn`, `Balo`, `Dép`, `Khăn`, `Thắt lưng`, `Giày thể thao`, `Giày boots`… Nhánh **nhiều con** có 1 con trùng tên cha (`Túi tote > Túi tote · Túi shopper`) **giữ "+"** — khách chốt: *"ẩn mục con nếu trùng tên **và** chỉ có 1 loại"* |
+
+Kéo theo 3 việc nữa cùng lượt:
+
+- **`colorBucketOf()` cộng thêm phạt ĐỘ NO** (trước chỉ hue + độ sáng): ô `Cam` mới (#e0762d, hue 24,5°) trùng hue với màu da bò `#a06a3f` Cuoio (26,6°) — khác nhau ở chỗ cam thì rực (s .74), da bò thì đục (s .43). Không có số hạng này thì túi Cuoio bị xếp vào "Cam" thay vì "Nâu". Đo lại: 13/13 ô đơn sắc tự nhận đúng hex của mình, 8/8 hex trong `PRODUCTS` ra đúng ô.
+
+- **Nhãn danh mục vào `facetLabelsFor()`**: tick "Đầm dài" ở PLP nữ nay còn khi sang PLP nữ khác, rụng khi sang PLP nam. Trước đây set không có nhãn cate nào nên **mọi** tick danh mục bị dọn sạch lúc điều hướng.
+- **Vá lỗi có sẵn**: `pruneFilters()` gọi `FILTER_SIZES` — biến **không tồn tại** trong file → đã áp bộ lọc rồi điều hướng sang PLP thời trang là `ReferenceError`, đứt `goPlp()`. Nay là `FILTER_SIZE_LABELS`, sinh tự động từ data size + 3 đơn vị giày.
+
+**Đã áp cho cả 5 file** (`index.html` · `desktop.html` · `desktop-neutral` · `desktop-editorial` · `desktop-atelier`). `index` và `desktop` khai **giống hệt nhau**; 3 bản thử skin thì **nền bộ lọc cũ hơn** (fork từ desktop khoảng 18/08) nên kết quả có 3 chỗ lệch — cố ý, không phải lỗi:
+
+| Chỗ | `index` + `desktop` | 3 bản thử skin |
+|---|---|---|
+| Panel Kích thước | 3 nhóm đóng/mở: Giày dép (3 tab IT/EU · US · UK) · Quần áo · Khác | **1 lưới phẳng**: `XXS…XXL` + `39…55` — nền này chưa có cơ chế nhóm/tab của 20/08 |
+| Cây Danh mục | cây 3 tầng từ Excel (8/57/172) → gender lọc **nữ 168 / nam 147** nhánh | cây **2 tầng bản cũ** → bảng gender khai y hệt nhưng ẩn được ít nhánh hơn (`Chân váy`, `Đầm & áo liền quần`, `Áo dây & croptops`, `Giày cao gót`, `Giày bệt`…) |
+| Mục Ưu đãi / trạng thái mục | Ưu đãi ở **mọi** ngành, mọi mục **đóng** sẵn | Ưu đãi chỉ ở beauty, mọi mục **mở** sẵn (nền trước 19/08) |
+
+Nhân lượt port, vá 2 lỗi của nền cũ trong 3 file thử skin (cả 2 đều cần cho feedback lần này chạy được):
+
+- `fSection()` **chưa có `data-facc`** → không có mốc nào để ẩn/hiện mục "Độ cao giày"; đã thêm.
+- chip size để `data-size` **rỗng** nên nhãn lọc sinh ra là `39` trong khi `facetLabelsFor` sinh `Size 39` → **mọi tick size bị `pruneFilters` dọn sạch** ngay lúc điều hướng; nay chip mang nhãn đầy đủ (`chips(arr, 'Size ')`).
+
+> Muốn 3 bản thử skin giống hẳn `desktop.html` (cây 3 tầng + nhóm size + Ưu đãi mọi ngành + mục đóng sẵn) thì phải đồng bộ nguyên khối bộ lọc — một lượt riêng, không nằm trong feedback này.
+
+**Đo lại sau port** (1440px): `desktop` → 15 ô màu `4/4/4/3` ô 91px · 3 nhóm size · mục Độ cao giày hiện ở `Nữ › Giày dép`, không dựng ở PLP nam/beauty, tự hiện khi tick cate *Giày dép* ở PLP `Nữ › Túi xách` · cây nữ 168 / nam 147 · `Cao (trên 9 cm)` → 1 SP, lưới 1 thẻ, header "1 sản phẩm", chip "đang áp dụng" đúng nhãn · EN ra `Heel height` / `Multi-colour`. 3 bản thử skin: 15 ô màu `4/4/4/3` (ô 87px), heel hiện/ẩn đúng, `Nhiều màu` → 2 SP, `#a06a3f` → Nâu, nhãn `Size M` sống qua điều hướng. Console sạch ở cả 4 file.
+
 ## Cầu nối responsive (mốc 768px)
 
 Hai file vẫn là 2 build riêng, nhưng với người dùng thì chúng là **một trang responsive**: mở file nào cũng tự nhảy sang bản khớp bề ngang cửa sổ, kéo giãn cửa sổ qua mốc cũng nhảy theo.

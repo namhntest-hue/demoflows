@@ -1,5 +1,12 @@
 # Trang giỏ hàng dựng vào Figma — 26/08/2026
 
+> **CẬP NHẬT 26/08 tối (đợt gộp page + component, xem FIGMA-PDP-PLP.md Phần 9):** section Cart nay
+> nằm trong page **`screens`** (page `screen — cart` đã gộp và xoá). Header, footer và khối cam kết
+> dịch vụ của CẢ 2 bản đã thành INSTANCE (`page-header-*` / `page-footer-*` /
+> `service-promises-*`); footer component được sửa 2 lỗi ngủ (tiêu đề newsletter cụt chuỗi, fill
+> logo tắt visible). **5 hàng giỏ + nhóm quà vẫn RAW có chủ đích** — ráp `cart-row`/`cart-gift`
+> để đợt sau vì khổ component (ruột 327) khác khổ hàng (375 cả đệm) và desktop cần cột 761 co giãn.
+
 Đích: file **Test agent** (`XFfjTNMuPfaTeZvdbVIO2F`) → trang **Product card** (`35:592`)
 → section **`Cart · Giỏ hàng — mobile 375 + desktop 1440`**, gồm 4 khối:
 
