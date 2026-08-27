@@ -52,6 +52,47 @@ Ngoài luồng mua hàng còn 3 trang tĩnh vào từ footer: `privacy` · `term
 - i18n VI/EN thật: từ điển 2 chiều + regex cho chuỗi có số, áp dụng qua `applyLang()`, gọi lại mỗi khi render màn mới.
 - Settings FAB (góc phải dưới): đổi ngôn ngữ + đổi font. **Font đơn:** Montserrat · Mona Sans · Inter · Mulish · Manrope · Lora (Lora = mặt chữ bộ da Editorial·MR PORTER; Inter kiêm mặt chữ riêng của PDP6 `.font-inter`). Đã bỏ khỏi panel qua các nhịp: Plus Jakarta Sans · Quicksand · **Jost** · **Josefin Sans** (24/08/2026). **Cặp mix heading+body:** xem mục "Cặp font" bên dưới.
 
+## Quick add mobile: bỏ 2 tiêu đề, bật lại dải ảnh (27/08/2026, yêu cầu user, CHỈ MOBILE)
+
+Khách gửi hình tham khảo (Charles & Keith mobile): sheet thêm nhanh mở ra là **dải ảnh trượt**
+ở trên, dưới là tên + ô màu + chip size, không có chữ tiêu đề nào chen giữa.
+
+- **Gỡ tiêu đề "Màu sắc"** và **"Kích thước" / "Dung tích"** khỏi `quickAddBody` — ô màu và chip
+  size tự nói nó là gì.
+- **Gỡ luôn dòng TÊN MÀU** (`.qa-color-name`, lượt sau cùng trong ngày): khối màu giờ chỉ còn
+  đúng hàng ô màu, không một chữ nào. Kéo theo 2 chỗ phải sửa vì `.qa-color-name` vốn là **nguồn
+  chuỗi màu ghi vào giỏ**:
+  · phần nối sự kiện ô màu bỏ đoạn cập nhật text;
+  · `#qaAdd` đổi sang đọc `data-name` của **ô màu đang chọn** (`[data-qa-colors] .sw.on`).
+  Nhờ vậy giỏ + sheet xác nhận vẫn ra đủ `"Oro , IT 41"`, và SP không có màu thì chuỗi chỉ còn
+  size chứ không lòi dấu phẩy thừa.
+- **Dải ảnh dựng lại ở MỌI bộ da** — gỡ điều kiện `skin-mt` vốn có từ 19/08/2026 (nếp cũ: skin-mt
+  chỉ còn tên + màu + size). Vẫn bỏ/dựng ở tầng MARKUP chứ không ẩn bằng CSS, vì dải này tải tới
+  9 ảnh gallery.
+- **GIÁ giữ nguyên nếp cũ**: skin-mt vẫn không dựng. Hình tham khảo có giá — chờ khách chốt.
+
+Đo trên trang chạy (375×812) sau khi bỏ hết chữ: panel cao **545px** ở skin-mt và **571px** ở bộ
+da mặc định, cả hai đều dưới trần 90vh nên **không phải cuộn** — đúng dáng một-màn-thấy-hết của
+hình tham khảo. Nhịp ô màu → lưới size 16px.
+
+**Đã chốt — KHÔNG vá**
+
+- SP#19–24 (`x1..x6`) không khai `PRODUCT_GALLERY` nên dải ảnh rơi về **đúng 1 ảnh 163px**, chừa
+  khoảng trắng bên phải. User chốt 27/08: **để nguyên**. Site thật sản phẩm nào cũng nhiều hơn
+  1 ảnh nên đây là lỗ **DỮ LIỆU DEMO**, không phải lỗi bố cục — đừng "vá" bằng cách cho ảnh giãn
+  full-width, làm vậy là chữa đúng triệu chứng của riêng bản demo rồi lệch với site thật.
+- **KHÔNG port sang desktop** (user chốt 27/08). Khổ desktop ở skin-mt vốn không dùng sheet này:
+  nút giỏ tròn bị tắt (`html.skin-mt .quick-add { display: none !important }`) và thay bằng dải
+  size hiện khi rê chuột (`.pc-quick` / `.pc-sizes`, chốt 19/08). ⚠ Sheet quick add của desktop
+  VẪN CÒN và vẫn vào được ở 2 bộ da kia, nên từ hôm nay 2 file **lệch nhau ở sheet đó** — cố ý,
+  đừng đồng bộ lại.
+
+**Còn mở**
+
+- Bấm ô màu trong sheet **không kéo dải ảnh** sang bản màu tương ứng (dải và ô màu chạy độc lập).
+  Đây là nếp cũ, chưa đụng.
+- **GIÁ ở skin-mt vẫn ẩn** trong khi hình tham khảo có giá — chưa chốt.
+
 ## Cặp font thử: heading 1 font + body 1 font (24/08/2026, CẢ 2 BẢN)
 
 Panel Cài đặt có thêm mục **"Cặp font · heading + body"** — 4 cặp bấm là đổi trực tiếp trên trang:

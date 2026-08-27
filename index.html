@@ -11317,20 +11317,19 @@ function quickAddBody(p, idx, sel = 0) {
      nào ra đúng bộ ảnh của PDP sản phẩm đó. */
   const gallery = PRODUCT_GALLERY[idx] || [p.img];
   return `
-    <!-- ẢNH và GIÁ: chỉ dựng khi KHÔNG ở bộ da Mytheresa.
-         Chốt 19/08/2026, yêu cầu user: ở skin-mt quick add mobile chỉ còn TÊN sản
-         phẩm + MÀU (nếu có) + SIZE. Bỏ hẳn ở tầng markup chứ không ẩn bằng CSS:
-         dải ảnh này tải tới 9 ảnh gallery, ẩn đi vẫn tốn mạng như thường.
-         Đọc trạng thái bộ da qua class trên thẻ html — quickAddBody chỉ chạy lúc
-         MỞ sheet nên luôn đọc được bộ da đang bật. -->
-    ${document.documentElement.classList.contains('skin-mt') ? '' : `
+    <!-- DẢI ẢNH: dựng ở MỌI bộ da (27/08/2026, yêu cầu user + hình tham khảo).
+         Lịch sử: 19/08/2026 skin-mt từng bỏ hẳn dải này để sheet chỉ còn tên +
+         màu + size; nay user muốn có lại slider nên điều kiện skin-mt đã gỡ.
+         GIÁ thì vẫn giữ nếp cũ - skin-mt không dựng (xem khối bên dưới).
+         Vẫn bỏ/dựng ở tầng MARKUP chứ không ẩn bằng CSS: dải này tải tới 9 ảnh
+         gallery, ẩn đi vẫn tốn mạng như thường. -->
     <!-- Gallery: pad 2 + gap 2 (Figma Frame 427319867). Ảnh W=163 -> H=213. -->
     <div class="qa-gallery flex gap-0.5 overflow-x-auto no-scrollbar p-0.5">
       ${gallery.map(img => `
         <div class="shrink-0 w-[163px] overflow-hidden bg-secondary" style="aspect-ratio:163/213">
           <img src="${A}${img}" class="w-full h-full object-cover" alt="${p.name}">
         </div>`).join('')}
-    </div>`}
+    </div>
     <div class="flex flex-col gap-1 pt-2 px-4 pb-2">
       <div class="flex flex-col pb-2 items-start text-left">
         <p class="pc-brand h-7 text-[18px] font-medium leading-7 text-foreground">${p.brand}</p>
@@ -11353,10 +11352,9 @@ function quickAddBody(p, idx, sel = 0) {
     <div class="pt-2 px-4 pb-2 flex flex-col gap-4">
       ${(p.colors && p.colors.length) ? `
       <div class="flex flex-col gap-2">
-        <div class="flex gap-2">
-          <p class="text-[12px] font-medium leading-4 text-foreground">Màu sắc</p>
-          <p class="qa-color-name text-[12px] leading-4 text-muted-foreground">${p.colors[sel].name}</p>
-        </div>
+        <!-- KHÔNG tiêu đề "Màu sắc", cũng KHÔNG dòng tên màu (27/08/2026, yêu cầu
+             user): khối này chỉ còn hàng ô màu, ô màu tự nói nó là gì.
+             Tên màu ghi vào giỏ nay đọc từ data-name của ô ĐANG CHỌN — xem openQA. -->
         <!-- Ô chọn màu dạng ẢNH 44×44 giống PDP (Figma "Image Selection"), thay
              cho ô màu hex 36px trước đây — để quick add và PDP nhìn như một. -->
         <div class="flex gap-2" data-qa-colors>
@@ -11367,9 +11365,9 @@ function quickAddBody(p, idx, sel = 0) {
         </div>
       </div>` : ''}
       <div class="flex flex-col gap-2">
-        <!-- Không có link bảng kích thước ở quick add: node "Bảng size" trong
-             Figma 3373:41590 đang TẮT hiển thị. Muốn xem thì vào trang PDP. -->
-        <p class="text-[12px] font-medium leading-4 text-foreground">${p.sizes ? 'Dung tích' : 'Kích thước'}</p>
+        <!-- KHÔNG có tiêu đề "Kích thước"/"Dung tích" (27/08/2026, yêu cầu user)
+             và cũng không có link bảng kích thước: node "Bảng size" trong Figma
+             3373:41590 đang TẮT hiển thị. Muốn xem bảng size thì vào trang PDP. -->
         <!-- 5 ô / dòng (trước là 4) -> chip hẹp hơn: (358 - 4×8)/5 ≈ 65px.
              SIZES đang có 6 giá trị nên dòng 2 còn lẻ 1 ô — xem README. -->
         <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)" data-qa-sizes>
@@ -11431,8 +11429,6 @@ function quickAddCta(p) {
         if (!btn) return;
         rw.querySelectorAll('.sw').forEach(c => { c.classList.remove('on'); c.classList.add('border-transparent'); });
         btn.classList.add('on'); btn.classList.remove('border-transparent');
-        const nm = rw.parentElement.querySelector('.qa-color-name');
-        if (nm) nm.textContent = btn.dataset.name;
       });
     });
     body.querySelectorAll('[data-qa-sizes]').forEach(rw => {
@@ -11450,9 +11446,11 @@ function quickAddCta(p) {
       if (img) flyToCart(img);
       cartQty++;
       document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
-      const colorName = body.querySelector('.qa-color-name');
+      /* Sheet không còn dòng tên màu (27/08/2026) nên tên đọc từ data-name của ô
+         màu ĐANG CHỌN. Giỏ và sheet xác nhận vẫn ghi đủ chuỗi "màu , size". */
+      const colorBtn = body.querySelector('[data-qa-colors] .sw.on');
       const sizeChip = body.querySelector('[data-qa-sizes] .chip.on');
-      const variant = [colorName ? colorName.textContent.trim() : '', sizeChip ? sizeLabel(sizeChip.dataset.size) : ''].filter(Boolean).join(' , ');
+      const variant = [colorBtn ? colorBtn.dataset.name : '', sizeChip ? sizeLabel(sizeChip.dataset.size) : ''].filter(Boolean).join(' , ');
       closeQA();
       // đợi sheet quick-add trượt xuống xong rồi mở sheet xác nhận
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
