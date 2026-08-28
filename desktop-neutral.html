@@ -4419,9 +4419,9 @@ const frail = (depth) =>
 
 /* 1 dòng chọn ở nhánh con của Danh mục. depth 1 = Sub, 2 = Sub con. */
 const fsubRow = (label, depth, toggle = '') => `
-          <div class="flex gap-1 h-9">
+          <div class="flex gap-1">
             ${frail(depth)}
-            <button class="flex items-center gap-2 flex-1 min-w-0 press text-left" data-sub="${label}">
+            <button class="flex items-center gap-2 flex-1 min-w-0 py-2 press text-left" data-sub="${label}">
               ${fchk(false)}
               <span class="text-[14px] leading-5 text-foreground-alt truncate">${label}</span>
             </button>
@@ -4430,10 +4430,10 @@ const fsubRow = (label, depth, toggle = '') => `
 
 /* Accordion cấp 1 (Danh mục / Thương hiệu / …)
    count: khóa nhóm để hiện số đang chọn trong tiêu đề — Figma "Danh mục (1)", "Thương hiệu (2)" */
-function fSection(title, body, open = true, h = 72, count = '') {
+function fSection(title, body, open = true, pad = 24, count = '') {
   return `
   <div class="facc ${open ? 'open' : ''}" data-facc="${title}">
-    <button class="facc-trigger w-full px-4 flex items-center justify-between press" style="height:${h}px">
+    <button class="facc-trigger w-full px-4 flex items-center justify-between press" style="padding-top:${pad}px;padding-bottom:${pad}px">
       <span class="text-[16px] font-light leading-6 text-foreground">${title}${count ? `<span data-fscount="${count}"></span>` : ''}</span>
       <span class="facc-ico">${IcoMinus}</span>
       <span class="facc-ico-plus hidden">${IcoPlus}</span>
@@ -4546,7 +4546,7 @@ function filterBody(beauty, gender, heel) {
   const catSrc = beauty ? beautyCatTree() : catTreeFor(gender);
   const cats = catSrc.map(([cat, subs], i) => `
     <div class="fcat" data-cat="${i}">
-      <div class="h-11 flex items-center gap-2 pt-2">
+      <div class="flex items-center gap-2 pt-4 pb-2">
         <button class="fcat-check flex items-center gap-2 flex-1 min-w-0 press text-left" data-flabel="${cat}">
           ${fchk(false)}
           <span class="text-[14px] leading-5 text-foreground-alt truncate">${cat}</span>
@@ -4584,8 +4584,18 @@ function filterBody(beauty, gender, heel) {
   /* KHÔNG pre-tick thương hiệu nào (trước đây tick sẵn 2 ô cho đẹp ảnh). Từ khi
      bộ lọc lọc thật + nút Áp dụng đếm kết quả, 2 ô tick sẵn đó làm số kết quả mở
      ra đã là 0 và nút Đặt lại mất ý nghĩa. */
+  /* Ô TÌM THƯƠNG HIỆU (27/08/2026, lệnh user). Danh sách 24 nhà mốt và còn dài
+     ra — cuộn tay tìm một cái tên là việc phải làm mỗi lần mở mục này.
+     Lọc NGAY TRÊN DOM (ẩn/hiện hàng) chứ không dựng lại danh sách: hàng nào đang
+     tick vẫn giữ nguyên trạng thái, khỏi phải đồng bộ lại với plpFilters.
+     So sánh sau khi BỎ DẤU + thường hoá nên gõ "montblanc" hay "MONT" đều ra. */
+  const brandSearch = `
+    <div class="pb-2">
+      <input id="fBrandSearch" type="search" autocomplete="off" placeholder="Tìm thương hiệu" aria-label="Tìm thương hiệu"
+        class="w-full h-9 bg-background border border-border rounded-xs px-2 text-[14px] outline-none focus:border-primary transition-colors">
+    </div>`;
   const brands = FILTER_BRANDS.map(b => `
-    <button class="h-9 w-full flex items-center gap-2 pr-4 press text-left" data-brand="${b}">
+    <button class="w-full flex items-center gap-2 py-2 pr-4 press text-left" data-brand="${b}">
       ${fchk(false)}
       <span class="text-[14px] leading-5 text-foreground-alt truncate">${b}</span>
     </button>`).join('');
@@ -4617,12 +4627,12 @@ function filterBody(beauty, gender, heel) {
   const sizes   = chips(FILTER_SIZES, 'Size ');
   const volumes = chips(FILTER_VOLUMES);
   const promos  = FILTER_PROMOS.map(t => `
-    <button class="h-9 w-full flex items-center gap-2 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('');
+    <button class="w-full flex items-center gap-2 py-2 pr-4 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('');
   /* Độ cao giày — hàng checkbox dùng `data-other` để ăn sẵn handler tick +
      pickedLabels + syncFilterToDom, không thêm cơ chế mới. matchProducts nhận nhãn
      này rồi so với FILTER_HEELS nên nó LỌC THẬT. */
   const heels = FILTER_HEELS.map(([t]) => `
-    <button class="h-9 w-full flex items-center gap-2 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('');
+    <button class="w-full flex items-center gap-2 py-2 pr-4 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('');
   /* MỤC LỚN, CÙNG CẤP với Danh mục / Thương hiệu / Màu sắc / Kích thước (chốt lại
      26/08 chiều: "nó cùng level của Kích thước luôn, nhưng nằm vị trí dưới Kích
      thước và trên Khoảng giá"). Nên nó đi qua fSection() như mọi mục khác — cùng
@@ -4655,9 +4665,9 @@ function filterBody(beauty, gender, heel) {
     </div>`;
 
   return `
-    ${fSection('Danh mục', `<div class="px-4 pb-4">${cats}</div>`, true, 72, 'cat')}
-    ${fSection('Thương hiệu', `<div class="px-4 pb-6">${brands}</div>`, true, 72, 'brand')}
-    ${beauty ? '' : fSection('Màu sắc', `<div class="pt-2 px-4 pb-4 grid gap-2" style="grid-template-columns:repeat(4,1fr)">${colors}</div>`, true, 56)}
+    ${fSection('Danh mục', `<div class="px-4 pb-4">${cats}</div>`, true, 24, 'cat')}
+    ${fSection('Thương hiệu', `<div class="px-4 pb-6">${brandSearch}<div id="fBrandList">${brands}</div><p id="fBrandEmpty" class="hidden pt-2 text-[14px] leading-5 text-muted-foreground">Không tìm thấy thương hiệu</p></div>`, true, 24, 'brand')}
+    ${beauty ? '' : fSection('Màu sắc', `<div class="pt-2 px-4 pb-4 grid gap-2" style="grid-template-columns:repeat(4,1fr)">${colors}</div>`, true)}
     ${beauty
       ? fSection('Dung tích', sizeGrid(volumes))
       : fSection('Kích thước', sizeGrid(sizes))}
@@ -4666,7 +4676,7 @@ function filterBody(beauty, gender, heel) {
     ${beauty ? fSection('Ưu đãi', `<div class="px-4 pb-6 flex flex-col gap-1">${promos}</div>`) : ''}
     ${fSection('Khác', `<div class="px-4 pb-6 flex flex-col gap-1">
       ${['Chỉ hàng có sẵn','Đang giảm giá','Hàng mới về'].map(t => `
-        <button class="h-9 w-full flex items-center gap-2 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('')}
+        <button class="w-full flex items-center gap-2 py-2 pr-4 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('')}
     </div>`, false)}`;
 }
 
@@ -4926,6 +4936,26 @@ function wireFilterBody(sh) {
       }
     });
   });
+
+  /* Ô tìm thương hiệu — lọc tại chỗ trên DOM (27/08/2026).
+     Bỏ dấu bằng NFD + xoá dải dấu kết hợp: "Dolce&Gabbana" không dấu nhưng người
+     dùng VN vẫn có thể gõ tiếng Việt không dấu ở ô này, và cách này miễn phí. */
+  const noAcc = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const brandBox = sh.querySelector('#fBrandSearch');
+  if (brandBox) {
+    const rows = [...sh.querySelectorAll('#fBrandList [data-brand]')];
+    const empty = sh.querySelector('#fBrandEmpty');
+    brandBox.addEventListener('input', () => {
+      const q = noAcc(brandBox.value.trim());
+      let hien = 0;
+      rows.forEach(r => {
+        const on = !q || noAcc(r.dataset.brand).includes(q);
+        r.classList.toggle('hidden', !on);
+        if (on) hien++;
+      });
+      if (empty) empty.classList.toggle('hidden', hien > 0);
+    });
+  }
 
   // màu — CHỌN NHIỀU: mỗi ô tự bật/tắt, không xoá lựa chọn của ô khác
   sh.querySelectorAll('.fcolor').forEach(b => {
@@ -5374,6 +5404,7 @@ const I18N = {
 
   // ── PDP ──
   'Thêm vào giỏ hàng':'Add to bag', 'Đặt trước':'Pre-order', 'Chọn kích thước':'Select size',
+  'Tìm thương hiệu':'Search brands', 'Không tìm thấy thương hiệu':'No brands found',
   'Chọn size':'Choose size', 'Hướng dẫn chọn size':'Size guide', 'Nhận thông báo':'Notify me',
   'Chỉ còn 01 sản phẩm':'Only 1 left in stock', 'Tạm hết hàng':'Out of stock', '*Tạm hết hàng':'*Out of stock',
   'Nhận thông báo khi có hàng':'Notify me when available', 'Đã đăng ký nhận thông báo':'You\u2019re on the list',

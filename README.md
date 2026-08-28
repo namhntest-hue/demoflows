@@ -52,16 +52,18 @@ Ngoài luồng mua hàng còn 3 trang tĩnh vào từ footer: `privacy` · `term
 - i18n VI/EN thật: từ điển 2 chiều + regex cho chuỗi có số, áp dụng qua `applyLang()`, gọi lại mỗi khi render màn mới.
 - Settings FAB (góc phải dưới): đổi ngôn ngữ + đổi font. **Font đơn:** Montserrat · Mona Sans · Inter · Mulish · Manrope · Lora (Lora = mặt chữ bộ da Editorial·MR PORTER; Inter kiêm mặt chữ riêng của PDP6 `.font-inter`). Đã bỏ khỏi panel qua các nhịp: Plus Jakarta Sans · Quicksand · **Jost** · **Josefin Sans** (24/08/2026). **Cặp mix heading+body:** xem mục "Cặp font" bên dưới.
 
-## Quick add mobile: bỏ 2 tiêu đề, bật lại dải ảnh (27/08/2026, yêu cầu user, CHỈ MOBILE)
+## Quick add mobile: bật lại dải ảnh, bỏ dòng tên màu (27/08/2026, yêu cầu user, CHỈ MOBILE)
 
 Khách gửi hình tham khảo (Charles & Keith mobile): sheet thêm nhanh mở ra là **dải ảnh trượt**
-ở trên, dưới là tên + ô màu + chip size, không có chữ tiêu đề nào chen giữa.
+ở trên, dưới là tên + ô màu + chip size.
 
-- **Gỡ tiêu đề "Màu sắc"** và **"Kích thước" / "Dung tích"** khỏi `quickAddBody` — ô màu và chip
-  size tự nói nó là gì.
-- **Gỡ luôn dòng TÊN MÀU** (`.qa-color-name`, lượt sau cùng trong ngày): khối màu giờ chỉ còn
-  đúng hàng ô màu, không một chữ nào. Kéo theo 2 chỗ phải sửa vì `.qa-color-name` vốn là **nguồn
-  chuỗi màu ghi vào giỏ**:
+Chốt qua **3 nhịp trong ngày** — ghi lại đủ vì trạng thái cuối không đọc ra được từ nhịp đầu:
+bỏ cả 2 tiêu đề → bỏ luôn dòng tên màu → **thêm lại riêng 2 tiêu đề**. Kết quả sau cùng:
+
+- **CÓ tiêu đề "Màu sắc"** và **"Kích thước" / "Dung tích"** (12/16, `font-medium` trong markup
+  nhưng skin kéo về w400 — đúng bằng bộ số của nhãn cùng tên ở PDP, đã đối chiếu computed).
+- **KHÔNG có dòng tên màu** (`.qa-color-name` đã gỡ hẳn). Vì phần tử này vốn là **nguồn chuỗi màu
+  ghi vào giỏ**, phải sửa kèm 2 chỗ:
   · phần nối sự kiện ô màu bỏ đoạn cập nhật text;
   · `#qaAdd` đổi sang đọc `data-name` của **ô màu đang chọn** (`[data-qa-colors] .sw.on`).
   Nhờ vậy giỏ + sheet xác nhận vẫn ra đủ `"Oro , IT 41"`, và SP không có màu thì chuỗi chỉ còn
@@ -71,9 +73,10 @@ Khách gửi hình tham khảo (Charles & Keith mobile): sheet thêm nhanh mở 
   9 ảnh gallery.
 - **GIÁ giữ nguyên nếp cũ**: skin-mt vẫn không dựng. Hình tham khảo có giá — chờ khách chốt.
 
-Đo trên trang chạy (375×812) sau khi bỏ hết chữ: panel cao **545px** ở skin-mt và **571px** ở bộ
-da mặc định, cả hai đều dưới trần 90vh nên **không phải cuộn** — đúng dáng một-màn-thấy-hết của
-hình tham khảo. Nhịp ô màu → lưới size 16px.
+Đo trên trang chạy (375×812) ở trạng thái cuối: panel cao **593px**, **không phải cuộn** (trần
+90vh = 731px) — đúng dáng một-màn-thấy-hết của hình tham khảo. Nhịp dọc: tiêu đề → nội dung 8px
+ở cả 2 khối, khối màu → khối size 16px. Đổi sang tiếng Anh thì 2 tiêu đề ra `Colour` / `Size`
+(từ điển sẵn có, không phải bổ sung).
 
 **Đã chốt — KHÔNG vá**
 

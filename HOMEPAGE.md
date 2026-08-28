@@ -330,3 +330,247 @@ tiêu đề mục 18 → 24.
 5. **Ảnh chiến dịch.** Hiện dùng ảnh sản phẩm dọc 1200×1484 cho cả hero và mục
    tiêu điểm. Có ảnh **ngang** (2400×1200 trở lên) thì hero đổi được sang khuôn
    full-bleed như mrporter — nhưng đó là đổi bố cục, không phải đổi ảnh.
+
+---
+
+## 8. Lượt 27/08/2026 — dựng lại screen `nam` theo brief khách + eu.lookfantastic.com
+
+Lệnh user: *"trang homepage khách hàng tôi brief như này https://eu.lookfantastic.com/
+— hãy thử áp dụng vào trang homepage nam"*, kèm 2 ảnh: một trang brief chữ
+(**Fashion – Men / Women**) và một mock trang chủ nam của site khác.
+
+### 8.1 Brief khách có ĐÚNG 6 khối — trang nay đi đúng thứ tự đó
+
+| # | Brief khách | Mục trên trang | Trạng thái trước 27/08 |
+|---|---|---|---|
+| 1 | Hero banner (**slider**) | 1. Hero slider 3 slide | hero TĨNH, không có slider |
+| 2 | Highlight top sub-cate (main cate **by gender**) | 3. Mua theo danh mục — 6 ô | có, nhưng danh mục **hàng nữ** |
+| 3 | New arrivals | 4. Sản phẩm mới — tab + dải trượt | có, nhưng **lưới 4 cột** + hàng nữ |
+| 4 | Brand block (2 khối: **brand day** + **brand list card**) | 5. Thương hiệu trong ngày · 6. Thẻ thương hiệu | chỉ có **lưới TÊN CHỮ**, 1 khối |
+| 5 | USP DAFC Online / QA block | 7. Vì sao mua tại DAFC Online + Câu hỏi thường gặp | USP có; **QA chưa tồn tại** |
+| 6 | Sign up (**loop in footer**) | dải đầu `.hp-foot` | là **section riêng NGOÀI footer** |
+
+Mock ảnh thứ hai của khách khớp cùng khuôn: dải sale trên cùng → hero ảnh lớn có
+`SHOP NOW` → hàng ô danh mục có nhãn (Shoes · Watches · Accessories · Fragrances)
+→ khối một nhà mốt (`SHOP THE BRAND`). Dải sale đã có sẵn = promo bar đen của
+bộ thiết kế gốc.
+
+### 8.2 Đo lookfantastic (thật, tại 1440, 27/08) — lấy gì và CỐ Ý không lấy gì
+
+| Trục | eu.lookfantastic.com | Quyết định |
+|---|---|---|
+| Nhịp giữa mục | **48px** (`mb-6 md:mb-12`) | **KHÔNG lấy.** Giữ 96/128px. Mật độ của họ là siêu thị mỹ phẩm; DAFC là luxury |
+| Tiêu đề mục | 24/28 · **300** · HOA · serif · **canh giữa** | **KHÔNG lấy.** §1.1 không có 300; §1.5 không cấp vai hoa cho tiêu đề mục. Giữ 18/24 · 400 canh trái + kẻ mảnh + "xem tất cả" |
+| Tên thẻ brand | 18/24 · **500** · HOA · ls 2px | **KHÔNG lấy.** Tên brand là họ nội dung chữ thường (§1.5 mục 6) |
+| Hero | carousel **full-bleed** 1425×1069, khối chữ 442 rộng, mũi tên **44×44** hai mép, chấm **8×8** DƯỚI ảnh | **Lấy cơ chế, đổi khuôn.** Kho ảnh dự án là 1200×1484 (dọc) nên slide vẫn CHIA ĐÔI; giữ đúng 44×44 và chấm 8×8 |
+| Hàng hoá | **dải trượt ngang, 5 thẻ một khung nhìn** | **Lấy.** Đây là thay đổi lớn nhất — bỏ lưới 4 cột |
+| Tab lọc | trộn tab danh mục với tab bán hàng (`KOREAN BEAUTY · SALE · BESTSELLERS`) | **Lấy.** Thêm tab "Bán chạy" → mục "Đang được quan tâm" (lưới 4 cột thứ hai) **không còn cần tồn tại** |
+| Thương hiệu | 2 mục liền: một brand lớn + hàng thẻ brand 300 rộng | **Lấy.** Đúng "brand block 2 khối" của brief |
+| Dải USP | `callout` 49px **trên cùng trang** | Giữ dưới hero: vai "dải trên cùng" đã thuộc promo bar gốc |
+
+### 8.3 Mục bị gỡ khỏi screen `nam` — và vì sao
+
+| Mục cũ | Vì sao gỡ |
+|---|---|
+| **Tiêu điểm** (2 khối editorial) | Không có trong brief; ảnh là **đầm lụa + túi nữ** — sai giới ở đúng trang nam. Vai "câu chuyện" nay do 2 mục thương hiệu gánh |
+| **Đang được quan tâm** (lưới 4 cột thứ hai) | Gộp thành **tab "Bán chạy"** ở mục 4 — cùng nội dung, ít hơn một mục cuộn, đúng lối lookfantastic |
+| **Nhà mốt** (lưới tên chữ) | Nâng cấp thành **thẻ thương hiệu có ảnh** (brief: "brand list card") |
+| **Dịch vụ boutique** (2 cột ảnh + 3 hàng) | Gộp vào mục 7 USP/QA — brief xếp hai thứ này thành MỘT khối |
+| **Newsletter** (section riêng, nền xám) | Chuyển vào **đầu footer** (brief: "loop in footer") |
+
+CSS của 4 khối gỡ đã **xoá theo** (`.hp-hero*` · `.hp-edit*` · `.hp-maison*` ·
+`.hp-serv*` + rule khổ nhỏ của chúng), không để rule mồ côi. Công tắc *"bậc chữ
+hiển thị 48/56"* ở bảng đề xuất đã trỏ lại vào `.hp-slide__h` — không thì nó
+thành nút chết sau khi hero đổi khuôn.
+
+### 8.4 Chỗ nghẽn thật: kho ảnh gần như toàn hàng NỮ
+
+Screen `nam` trước 27/08 **không phải trang nam** — hero bán "Đầm lụa midi", nút
+CTA ghi "Mua hàng nữ". Quét cả `assets/` (109 tệp) thì hàng mang được vai NAM chỉ
+có **8**: `brand-hero.png` (look nam toàn thân, ảnh chiến dịch DUY NHẤT) ·
+`x5.jpg` (áo phông) · `p5-*` (giày lười) · `p6-*` (giày thể thao) · `p8-*` (túi da
+đeo chéo) · `p10-*` (thắt lưng) · `b3.jpg` (Dylan Blue) · `b6.jpg` (Montblanc
+Explorer). Toàn bộ dữ liệu mới dựng trên đúng 8 ảnh đó.
+
+Hệ quả còn đọng, **cần tư liệu mới chứ không sửa được bằng code**:
+* `brand-hero.png` phải gánh **2 vai** (slide 1 của hero + ảnh nhà mốt trong ngày).
+* Thẻ thương hiệu: chỉ Versace và Montblanc có ảnh thật. **Dolce&Gabbana ·
+  Burberry · Ferragamo để ô ảnh là MẶT XÁM mang wordmark** — trạng thái chờ tư
+  liệu. Cố ý không mượn ảnh sản phẩm Versace gán cho nhà mốt khác: đó là sai
+  **dữ liệu**, không phải sai đẹp.
+* Không có ảnh **đồng hồ** nên danh mục thứ 6 là "Quà tặng", không phải "Watches"
+  như mock của khách.
+
+### 8.5 Số đo sau khi dựng (đo `getComputedStyle` trên screen `nam`, 3 khổ)
+
+| Trục | Trước (bản 24/08) | **Sau (27/08)** | Luật |
+|---|---|---|---|
+| Tổ hợp typo | 8 | **7** | — |
+| Cỡ chữ | 5 | **5** (10·12·14·18·24) | §1.2 ✓ |
+| Tracking | 1 | **1** (0.5px) | ✓ |
+| Độ đậm | 400 + 500 | **400 + 500**, 500 chỉ ở 14 phần tử **đều HOA** | §1.1 ✓ |
+| Bậc mực | 3 + đỏ + trắng | **3** (`#0a0a0a·#333·#666`) + `#d62845` + trắng | §2.1 ✓ |
+| Sắc viền | 3 | **3** (`#0a0a0a·#dfdfdf·#ececec`) | §3.1 ✓ |
+| Bo góc ≠ 0 | 0 vi phạm | **0 vi phạm** — chỉ ô màu (`.hp-sw__*`, ngoại lệ TRÒN đã chốt) và chấm slider 8×8 | §3.2 ✓ |
+| Đổ bóng | 0 | **0** | §3.3 ✓ |
+| Mặt phẳng | 2 + glass | **2** (`#fff` · `#f2f2f2`) + mặt tối ở nút/promo | §2.2 ✓ |
+| Tràn ngang | không | **không** ở 375 · 1024 · 1440 | ✓ |
+
+Số khung: hero 1425×751 (slide 710 + hàng chấm 40) · chữ slide bắt đầu ở **x=24**,
+đúng lề rail · ảnh slide tràn tới mép phải · thẻ trong dải **263px** = 5 thẻ một
+khung nhìn ở 1440, **228px** = 4 thẻ ở 1024, **62vw** ở 375.
+
+### 8.6 Đã kiểm chạy được
+
+Slider (bấm mũi tên → `translateX(-100%)`, chấm đổi, `inert` chuyển đúng slide) ·
+tự chạy 6s **dừng** khi screen `nam` bị ẩn (đo: sau 7s ở screen Nữ, chấm vẫn ở 0) ·
+7 tab lọc ra đúng số (Tất cả 8 · Bán chạy 5 · Quần áo 2 · Giày dép 2 · Túi xách 1 ·
+Phụ kiện 1 · Nước hoa 2) · mũi tên dải trượt cuộn 80% khung nhìn và tự ẩn ở hai
+đầu · accordion QA mở/đóng · form bản tin ở vị trí mới trong footer báo lỗi và báo
+thành công đúng · router 3 screen còn nguyên (`#nu` bật `skin-min`, về `nam` thì gỡ).
+
+**Hai bẫy đo của pane xem trước phiên này** (pane không composite frame):
+1. `getComputedStyle` đọc **giá trị đang nội suy**, mà transition không bao giờ
+   chạy → `.rv` đọc ra `opacity: 0` dù `.in` đã gắn đủ 44/44, và `transform` của
+   track đọc ra ma trận đơn vị dù `style.transform` đã là `translateX(-100%)`.
+   Cách phân biệt: chèn một `<style>` tắt hết transition rồi đo lại.
+2. Trình duyệt chỉ bắn sự kiện `scroll` trong nhịp khung hình → hai nút của dải
+   trượt đứng nguyên trạng thái cũ. **Đã vá thật**: sau khi cuộn, gọi lại
+   `railSync` bằng `setTimeout(…, 450)` chứ không chỉ dựa vào sự kiện `scroll`.
+
+**Chưa chụp được ảnh màn** — cùng lý do trên.
+
+### 8.7 Cần bạn chốt
+
+1. **Nhịp dọc.** Đang giữ 96/128px của trang. lookfantastic là 48px. Có kéo mật độ
+   xuống 64/96 cho gần khách hơn không? (Ảnh hưởng cả 3 screen nếu đổi biến `--sec`.)
+2. **Tiêu đề mục canh giữa** như lookfantastic, hay giữ canh trái + kẻ mảnh + nút
+   "xem tất cả"? Canh giữa thì mất chỗ đứng của nút "xem tất cả".
+3. **Hero full-bleed thật.** Muốn giống mock của khách 100% thì cần ảnh chiến dịch
+   **NGANG ≥ 2400×1200**. Có thì slide đổi sang một lớp ảnh + chữ đè, bỏ chia đôi.
+4. **3 thẻ thương hiệu đang là mặt xám** (Dolce&Gabbana · Burberry · Ferragamo) —
+   xin tư liệu, hay đổi sang khuôn khác (ví dụ chỉ logo trên nền trắng)?
+5. **Mục Tiêu điểm (editorial) có dựng lại cho nam không?** Đã gỡ vì ảnh sai giới
+   và không có trong brief; nếu khách muốn giữ vai "câu chuyện" thì cần 2 ảnh nam.
+6. **Screen `nu` và `beauty` chưa đụng tới.** Brief ghi "Fashion – Men / Women" —
+   có áp cùng khuôn này sang screen Nữ không?
+
+### 8.8 Lượt chốt 27/08 (chiều) — 5 câu ở mục 8.7 đã có trả lời
+
+| # | Câu | Trả lời của user | Đã làm |
+|---|---|---|---|
+| 1 | Nhịp dọc | *"kéo về 64/94"* | **64 / 96 / 40** — xem ghi chú số dưới |
+| 2 | Tiêu đề mục | *"giữ bên trái"* | Không đụng: giữ canh trái + kẻ mảnh + nút "xem tất cả" |
+| 3 | Hero | *"để tạm ảnh đi, cần show ngang trước"* | Slide đổi sang **khổ NGANG một lớp**, chữ đè lên nửa trái |
+| 4 | 3 thẻ thương hiệu mặt xám | *"thay logo vào là được"* | Cả 5 ô thành **logo trên nền trắng + kẻ V3** |
+| 5 | Có áp sang screen Nữ không | *"tạm thời chỉ cần screen Nam"* | `nu` · `beauty` **không đụng một dòng nào** |
+
+**Ghi chú về "64/94".** Thang nhịp của trang đi bước 8px (40 · 56 · 64 · 96 · 128);
+94 không nằm trên thang nào và lệch 96 đúng 2px — dưới ngưỡng đọc ra được. Tôi
+lấy **96**, tức đúng cặp `64/96` tôi đề xuất ở 8.7 mục 1. Muốn 94 thật thì sửa
+một dòng biến.
+
+**Nhịp mới KHOÁ TRONG screen `nam`, không đặt ở `:root`.** `--sec*` vốn khai ở
+`:root` nên đổi thẳng là đổi cả 3 screen, mà user chỉ chốt cho Nam (câu 5). Nay
+khai đè ngay trong khối biến của screen — `.screen[data-screen="nam"]` có độ đặc
+hiệu (0,2,0) nên thắng `:root` (0,1,0) ở **mọi** khổ, kể cả bên trong media
+query, không phụ thuộc thứ tự viết. Bảng đối chiếu:
+
+| | trước | **sau (chỉ screen `nam`)** | `nu` · `beauty` |
+|---|---|---|---|
+| `--sec` | 96 | **64** | 96 (không đổi) |
+| `--sec-lg` | 128 | **96** | 128 (không đổi) |
+| `--sec-sm` | 56 | **40** | 56 (không đổi) |
+| khổ < 768 | 56 · 72 · 40 | **40 · 56 · 32** | 56 · 72 · 40 (không đổi) |
+
+Đo lại trên trang: 7 mục ra `pad-top` 0 · 0 · **64** · **64** · **96** · **40** ·
+**96**; chiều cao trang 1440 rút từ **5363 → 5028** (−335px, −6%).
+
+**Hero khổ ngang — 4 điều phải nhớ khi thay ảnh thật.**
+`.hp-slide` nay là **một lớp ảnh** cao `clamp(420px, 46vw, 660px)` (1440 → 660,
+tỉ lệ 2,16:1) với lớp chữ `position:absolute` đè lên. Đo được: chữ bắt đầu ở
+**x=24**, đúng lề rail; khối chữ rộng **420px = 29%** bề rộng ảnh ở 1440 và
+**48%** ở 900.
+1. **Không có lớp phủ tối** — §2.2 không có mặt phủ nào. Chữ đọc được là nhờ ảnh
+   dự án đều nền xám sáng `#f1f1f1`. **Luật cho ảnh hero về sau: phần ba bên
+   trái phải trống và sáng**, kẻo mực `#0a0a0a` chìm.
+2. **Ảnh vẫn là 1200×1484 dọc** nên đang bị kéo lên 1425 rộng và cắt còn ~37%
+   chiều cao. Đây là ảnh **tạm** đúng như user nói. Ảnh thật nên ≥ 2400×1200.
+3. `object-position` chỉnh theo trục **Y**, trục X vô tác dụng: `cover` co ảnh
+   theo BỀ RỘNG nên chỉ chiều dọc bị cắt. Đã chỉnh: look nam `center 20%` (giữ
+   đầu + thân trên) · giày `center 56%` · nước hoa `center 58%`.
+4. Lớp chữ đặt `pointer-events: none`, chỉ khối chữ thật nhận lại — nếu không,
+   tấm trong suốt phủ kín ảnh sẽ nuốt cả cú vuốt ngang lẫn hover của 2 mũi tên.
+
+Khổ < 768: lớp chữ **thôi tuyệt đối** (`position: static`) và rơi xuống dưới ảnh
+theo đúng thứ tự nguồn — ảnh nay đứng TRƯỚC chữ trong DOM nên không phải mượn
+`order`. Ảnh về tỉ lệ 4:5 (dáng thật của kho ảnh). Đo ở 375: ảnh 469 cao ở y=80,
+chữ bắt đầu y=549 — không đè. Khổ 768–1023 vẫn đè nhưng khối chữ hẹp lại còn 52%.
+
+**Thẻ thương hiệu = logo trên nền trắng.** Ô đổi từ mặt xám sang **nền trắng +
+kẻ V3**, hover mới đổi sang mặt xám — mặt xám đọc ra là "ô ảnh đang chờ", ô
+trắng có kẻ đọc ra là một **thẻ logo**. Kho chỉ có **một** tệp logo thật:
+`assets/brand-logo.png` (wordmark Versace, 159×27). Bốn nhà mốt còn lại đặt tên
+bằng **chữ**, viết đúng cách hãng viết. Logo cao **tối đa 22px** — không phải %
+của ô — để cả hàng đứng chung một trục quang học dù ô là ảnh hay là chữ (22px ≈
+chiều cao chữ hoa của `.t-title` 24px cộng chút bù cho ký tự thò xuống). Có tệp
+logo thật thì thả vào trường `logo` của `BRAND_CARDS`, **không phải sửa khuôn**;
+chỉnh quang học từng logo là một lượt riêng.
+
+**Đo lại sau lượt này — vẫn 0 vi phạm:** 7 tổ hợp typo · 5 cỡ (10·12·14·18·24) ·
+1 tracking · 3 bậc mực + `#d62845` + trắng · 3 sắc viền · **0 bóng** · bo góc sai
+**0** (chỉ `.hp-sw__*` — ngoại lệ TRÒN đã chốt) · không tràn ngang ở 375 · 900 ·
+1440. `.rv` hiện đủ (0/44 còn ẩn).
+
+**Một bẫy nữa của pane không composite:** `loading="lazy"` chạy bằng
+IntersectionObserver nên **ảnh lazy không bao giờ nạp** trong pane này — đo ra
+`naturalWidth = 0`, và với `width/height: auto` thì logo hiện 0×0, rất giống lỗi
+ảnh hỏng. Cách phân biệt: `new Image()` nạp thẳng tệp đó (ra 159×27 = tệp lành),
+hoặc ép `img.loading = 'eager'` rồi đo lại.
+
+### 8.9 Gỡ nút CTA khỏi hero (lệnh user 27/08: *"ở hero banner sẽ không để CTA gì trên đó nhé"*)
+
+Đây là **lần thứ hai** luật banner được siết, cùng một hướng:
+
+| Ngày | Lệnh | Gỡ khỏi hero |
+|---|---|---|
+| 24/08 | *"hình ảnh banner không cần đính kèm tên và giá sản phẩm"* | thẻ hàng `.hp-shoptag` (brand + tên SP + giá) |
+| **27/08** | *"ở hero banner sẽ không để CTA gì trên đó"* | **2 nút** "Mua hàng nam" + "Xem cả bộ sưu tập" |
+
+Gộp lại thành một luật: **hero là mặt CHIẾN DỊCH — không mang tên SP, không mang
+giá, không mang nút.** Nó nói CHUYỆN; chỗ bấm để mua là card sản phẩm và các mục
+bên dưới.
+
+Khối chữ trên slide nay còn **4 dòng**: nhãn chiến dịch (`.t-label`) → tiêu đề
+(`.t-title`) → đoạn dẫn (`.t-copy`) → hàng meta (`.t-micro`, ngăn bằng chấm).
+Đo lại ở 1440: khối chữ rút **420×344 → 334×216**, tức từ 29% xuống **23%** bề
+rộng ảnh — banner thở ra đúng phần đó. Ở 375 khối chữ rút 400 → **274** cao.
+
+**Gỡ sạch theo, không để mồ côi:** trường `cta` / `cta2` trong `HERO_SLIDES` (3
+slide) · hằng `ARROW_NE` (chỉ 2 nút đó dùng) · rule `.hp-slide__cta` và rule khổ
+nhỏ của nó. Grep còn **0** chỗ nhắc tới cả ba.
+
+**Không đụng nút của mục khác:** "Xem thương hiệu" ở mục Thương hiệu trong ngày
+và nút "Đăng ký" ở dải bản tin vẫn còn — lệnh chỉ nói về hero banner.
+
+**Chỗ bấm của banner.** Sau khi gỡ nút, slide không còn phần tử bấm được nào.
+Khi nối route thật thì **cả tấm banner là một đường dẫn** (đúng cách
+lookfantastic làm: `<a>` bọc trọn `carousel-item`, nút `SHOP NOW` bên trong chỉ
+là phần nhìn thấy được của cùng đường dẫn đó). Ở bản dựng thiết kế này chưa có
+đích để trỏ nên chưa bọc — cần thì nói, một dòng là xong.
+
+Hàng meta nay là dòng cuối khối chữ nên nới `padding-top` 4 → **8px** để nó tách
+khỏi đoạn dẫn. Mũi tên và hàng chấm của slider **không nằm trong** `.hp-slide`
+nên không bị ảnh hưởng: vẫn 2 mũi tên + 3 chấm.
+
+**Đo lại — vẫn 0 vi phạm** ở 375 và 1440: 7 tổ hợp typo · 5 cỡ · 1 tracking ·
+5 bậc mực (3 + đỏ + trắng) · 0 bo góc sai · 0 bóng · không tràn ngang.
+
+### 8.10 Còn mở
+
+* **Ảnh hero ngang thật** (≥ 2400×1200, chừa trống phần ba trái) — đang dùng ảnh
+  dọc cắt tạm theo đúng lệnh "để tạm ảnh đi".
+* **Logo 4 nhà mốt** (Montblanc · Dolce&Gabbana · Burberry · Ferragamo) — đang là
+  chữ.
+* **Ảnh hàng nam** — vẫn 8 SKU trên 8 ảnh (mục 8.4), `brand-hero.png` gánh 2 vai.
+* **Screen `nu` · `beauty`** — user chốt tạm thời chưa áp khuôn này sang.

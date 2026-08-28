@@ -457,7 +457,14 @@ html.props-eyebrow .hp-eyebrow { display: block; }
 
 /* Nhịp vào màn của từng screen — 1 rule .rv dùng chung, chỉ đổi biến */
 .screen[data-screen="nam"] { --ease: cubic-bezier(.32, .72, 0, 1); --dur: .7s;
-  --rv-y: 16px; --rv-dur: .8s; --rv-stagger: 0ms; --rv-img-dur: 1.4s; --rv-img-scale: 1.04; }
+  --rv-y: 16px; --rv-dur: .8s; --rv-stagger: 0ms; --rv-img-dur: 1.4s; --rv-img-scale: 1.04;
+  /* NHỊP DỌC 64/96 — user chốt 27/08, kéo mật độ về gần lookfantastic (48px).
+     Khai ở ĐÂY chứ không ở :root: user chỉ chốt cho screen Nam, mà :root là
+     của cả 3 screen. Selector này (0,2,0) thắng :root (0,1,0) ở mọi khổ. */
+  --sec: 64px; --sec-lg: 96px; --sec-sm: 40px; }
+@media (max-width: 767px) {
+  .screen[data-screen="nam"] { --sec: 40px; --sec-lg: 56px; --sec-sm: 32px; }
+}
 .screen[data-screen="nu"]  { --ease: cubic-bezier(.16, 1, .3, 1);  --dur: .6s;
   --rv-y: 12px; --rv-dur: .6s; --rv-stagger: 80ms; --rv-img-dur: 1.2s; --rv-img-scale: 1.03; }
 
@@ -582,42 +589,11 @@ html.skin-min.no-grain body::after { display: none; }
 .nu-btn--out:hover .nu-btn__i { border-left-color: var(--primary-foreground); }
 
 /* ══════════ SCREEN `nam` — linh kiện .hp-* ══════════ */
-/* ══════════════════════════════════════════════════════════════════════════
-   7 — HERO
-   Chọn khuôn CHIA ĐÔI EDITORIAL, không phải ảnh full-bleed có chữ đè: cả kho
-   ảnh của dự án là 1200×1484 (dọc). Cắt ảnh dọc thành dải ngang thì chỉ còn
-   một lát giữa, mất hết dáng sản phẩm — đây là chỗ phải đo đúng khổ trước khi
-   tham chiếu (memory: dafc-do-dung-kho-khi-tham-chieu). Ảnh giữ tỉ lệ thật,
-   chữ ở nửa còn lại trên mặt trắng -> tương phản không cần lớp phủ đen
-   (§2.2 không có mặt phủ nào).
-   ══════════════════════════════════════════════════════════════════════════ */
-.hp-hero { border-bottom: 1px solid var(--border-subtle); }
-/* Chiều cao hàng lưới do min-height quyết định, KHÔNG do ảnh: ảnh là
-   position:absolute (xem .hp-hero__media > img) nên không kéo hàng. Nếu để ảnh
-   tự tính chiều cao thì 1200×1484 ở cột 7fr ra 993px — vượt màn laptop 900px,
-   hero bị cắt ngay lần đầu mở trang (đo 24/08/2026).
-   clamp: sàn 520 cho màn thấp · trần 760 · ở giữa là "vừa một màn trừ 2 thanh
-   trên đầu" (promo 36 + header 106 + kẻ). dvh chứ không vh — Safari iOS. */
-.hp-hero__in { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); min-height: clamp(520px, calc(100dvh - 148px), 760px); }
-.hp-hero__copy { display: flex; flex-direction: column; justify-content: center; gap: 24px; padding: 96px var(--gut) 96px 0; }
-/* KHÔNG transition font-size/line-height: đó là chuyển động ĐỔI LAYOUT (reflow
-   mỗi khung hình) — cả trang chỉ chạy transform + opacity. Công tắc đề xuất đổi
-   bậc chữ thì đổi tức thì, cũng đúng hơn cho việc so 2 bậc. */
-.hp-hero__h1 { max-width: 15ch; }
-.hp-hero__lead { max-width: 46ch; }
-.hp-hero__cta { display: flex; flex-wrap: wrap; gap: 12px; padding-top: 8px; }
-.hp-hero__meta { display: flex; align-items: center; gap: 12px; padding-top: 16px; margin-top: 8px; border-top: 1px solid var(--border-subtle); }
-
-.hp-hero__media { position: relative; overflow: hidden; background: var(--secondary); }
-.hp-hero__media > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-/* (Đã gỡ 24/08: `.hp-shoptag` — thẻ gắn tên + giá sản phẩm lên ảnh hero. Lệnh
-   user: banner không đính kèm tên và giá. Gỡ cả CSS chứ không để rule mồ côi.) */
-
 /* ĐỀ XUẤT (tắt sẵn) — bậc chữ hiển thị 48/56 cho hero.
    §1.2 chốt 5 cỡ, cao nhất 24. Muốn hero có một khoảnh khắc CỠ thì phải sửa
    §1.2 trước, nên để đây dạng công tắc chứ không nhét thẳng vào trang. */
-html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width: 12ch; }
-@media (max-width: 767px) { html.props-display .hp-hero__h1 { font-size: 32px; line-height: 40px; } }
+html.props-display .hp-slide__h { font-size: 48px; line-height: 56px; max-width: 12ch; }
+@media (max-width: 767px) { html.props-display .hp-slide__h { font-size: 32px; line-height: 40px; } }
 
 /* ══════════════════════════════════════════════════════════════════════════
    8 — DẢI CAM KẾT
@@ -708,47 +684,11 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 .hp-sw__b::before { content: ''; position: absolute; inset: -11px; }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   11 — TIÊU ĐIỂM (2 khối chiến dịch)
-   Bất đối xứng bằng ĐỘ CAO LỆCH, không bằng xoay/đè: xoay -2deg và overlap
-   âm là ngôn ngữ của bộ da CÓ bóng; ở hệ phẳng vuông nó đọc ra như lỗi.
-   Chữ nằm DƯỚI ảnh (khuôn caption editorial) -> không cần lớp phủ tối.
+   14 — Ô NHẬP BẢN TIN
+   27/08: khối bản tin thôi đứng thành SECTION riêng trên nền xám — brief khách
+   xếp nó vào footer ("Sign up — loop in footer"), khuôn chứa nay là
+   `.hp-foot__ns` ở mục 19.6. Chỉ còn lại ô nhập + nút, vì hai thứ đó không đổi.
    ══════════════════════════════════════════════════════════════════════════ */
-.hp-edit { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
-.hp-edit__c:nth-child(2) { margin-top: 96px; }
-.hp-edit__m { position: relative; overflow: hidden; background: var(--secondary); aspect-ratio: 4/5; }
-.hp-edit__m > img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.6s var(--ease); }
-.hp-edit__c:hover .hp-edit__m > img { transform: scale(1.03); }
-.hp-edit__x { display: flex; flex-direction: column; gap: 12px; padding-top: 20px; max-width: 44ch; }
-
-/* ══════════════════════════════════════════════════════════════════════════
-   12 — NHÀ MỐT
-   Tên brand = HỌ NỘI DUNG, chữ thường, T3 14/20 · 400 (§1.5 mục 6, đảo chốt
-   24/08/2026: "tên brand không cần uppercase toàn bộ"). Không dùng .label ở đây.
-   ══════════════════════════════════════════════════════════════════════════ */
-.hp-maisons { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-.hp-maison { display: flex; align-items: center; justify-content: center; height: 72px; text-align: center; padding: 8px 12px; transition: background var(--dur) var(--ease); }
-.hp-maison:hover { background: var(--secondary); }
-
-/* ══════════════════════════════════════════════════════════════════════════
-   13 — DỊCH VỤ (2 cột: ảnh + danh sách hàng)
-   ══════════════════════════════════════════════════════════════════════════ */
-.hp-serv { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: center; }
-.hp-serv__m { position: relative; overflow: hidden; background: var(--secondary); aspect-ratio: 4/5; }
-.hp-serv__m > img { width: 100%; height: 100%; object-fit: cover; }
-.hp-serv__x { display: flex; flex-direction: column; gap: 24px; }
-.hp-serv__list { border-top: 1px solid var(--border-subtle); }
-.hp-serv__row { display: flex; align-items: flex-start; gap: 20px; padding: 20px 0; border-bottom: 1px solid var(--border-subtle); width: 100%; text-align: left; transition: padding-left var(--dur) var(--ease); }
-.hp-serv__row:hover { padding-left: 8px; }
-.hp-serv__row .x { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.hp-serv__row > svg:last-child { margin-left: auto; flex: none; align-self: center; transition: transform var(--dur) var(--ease); }
-.hp-serv__row:hover > svg:last-child { transform: translateX(4px); }
-
-/* ══════════════════════════════════════════════════════════════════════════
-   14 — NEWSLETTER
-   Mặt xám #f2f2f2 — mặt thứ 2 của §2.2, dùng làm VÙNG trong dòng chảy.
-   Không dùng dải đen: vai của mặt tối đã đóng ở 3 (nút · backdrop · promo bar).
-   ══════════════════════════════════════════════════════════════════════════ */
-.hp-news { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
 .hp-news__f { display: flex; width: 100%; max-width: 480px; margin-top: 8px; }
 .hp-news__i { flex: 1; min-width: 0; height: 40px; padding: 0 12px; background: var(--background); border: 1px solid var(--input); border-right: 0; color: var(--ink); outline: none; transition: border-color var(--dur) var(--ease); }
 .hp-news__i::placeholder { color: var(--ink-mute); }
@@ -815,19 +755,13 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
   .hp-cats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .hp-foot__top { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .hp-foot__co { grid-column: 1 / -1; }
-  .hp-serv { gap: 40px; }
 }
 @media (max-width: 767px) {
 
-  .hp-hero__in { grid-template-columns: minmax(0, 1fr); min-height: 0; }
-  .hp-hero__media { order: -1; aspect-ratio: 4/5; }
-  .hp-hero__copy { padding: 32px 0 40px; gap: 20px; }
-  .hp-hero__h1 { max-width: none; }
   .hp-btn { flex: 1 1 auto; justify-content: space-between; }
 
   .hp-trust { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .hp-cats { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
-  .hp-maisons { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 
   /* Lưới sản phẩm -> dải trượt có điểm dừng, tràn qua lề trang */
   .hp-prods {
@@ -839,14 +773,212 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
   .hp-prods > * { flex: 0 0 62vw; scroll-snap-align: start; }
   .hp-sizes { display: none; }                    /* không có :hover trên cảm ứng */
 
-  .hp-edit { grid-template-columns: minmax(0, 1fr); gap: 40px; }
-  .hp-edit__c:nth-child(2) { margin-top: 0; }
-  .hp-serv { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   .hp-foot__top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px 24px; padding: 40px 0; }
   .hp-props { display: none; }                    /* bảng đề xuất chỉ dùng ở khổ lớn */
   .hp-top { right: var(--gut-m); bottom: var(--gut-m); }
 }
 
+
+/* ══════════════════════════════════════════════════════════════════════════
+   19 — KHUÔN LOOKFANTASTIC (screen `nam`, dựng 27/08/2026)
+
+   Số đo tham chiếu — ĐO THẬT trên eu.lookfantastic.com tại khổ 1440:
+   | | lookfantastic | ở đây |
+   | hero | carousel full-bleed 1425×1069, khối chữ 442 rộng, mũi tên 44×44 hai
+   |      | mép, chấm 8×8 nằm DƯỚI ảnh | slider 3 slide, MỖI SLIDE VẪN CHIA ĐÔI
+   |      |   (ảnh kho là 1200×1484 dọc), mũi tên 44×44, chấm 8×8 dưới ảnh |
+   | dải hàng | 5 thẻ một khung nhìn, kéo ngang | 5 thẻ, cùng cơ chế snap |
+   | thẻ brand | 300 rộng, ảnh + tên + 1 dòng | 5 cột, ảnh 4:3 + tên + 1 dòng |
+   | nhịp giữa mục | 48px | GIỮ 96/128px của trang — mật độ họ là siêu thị mỹ
+   |      | phẩm, DAFC là luxury; đây là chỗ CỐ Ý không lấy |
+   | tiêu đề mục | canh GIỮA, 24/28 · 300 · HOA · serif | GIỮ canh trái + kẻ
+   |      | mảnh + nút "xem tất cả" bên phải (chữ ký sẵn của trang, và §1.1
+   |      | không cho 300, §1.5 không cấp vai hoa cho tiêu đề mục) |
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 19.1 HERO SLIDER ─────────────────────────────────────────────────────
+   Slide tràn mép PHẢI (ảnh chạy hết khổ) nhưng lề TRÁI vẫn thẳng hàng rail:
+   padding-left tính bằng % của CHÍNH .hp-slide, mà khối chứa nó là track có
+   bề rộng = bề rộng nội dung trang (đã trừ thanh cuộn) -> không lệch nửa
+   thanh cuộn như cách tính bằng 100vw.
+   Không đặt .rv vào trong slide: slide 2·3 nằm ngoài khung nhìn theo chiều
+   NGANG, IntersectionObserver không bắn -> nội dung sẽ đứng ở opacity 0. */
+.hp-hero2 { position: relative; border-bottom: 1px solid var(--border-subtle); }
+.hp-hero2__vp { overflow: hidden; }
+.hp-hero2__track { display: flex; transition: transform .6s var(--ease); }
+/* KHỔ NGANG — đổi 27/08 theo lệnh user ("để tạm ảnh đi, cần show ngang
+   trước"). Bản trước chia đôi vì kho ảnh là 1200×1484 DỌC; nay một lớp ảnh
+   tràn mép, chữ đè lên nửa trái.
+   KHÔNG có lớp phủ tối (§2.2 không có mặt phủ nào) -> chữ đọc được là nhờ
+   ảnh dự án đều nền xám sáng #f1f1f1 và trống ở dải trái. LUẬT CHO ẢNH HERO
+   VỀ SAU: phần ba bên trái phải trống và sáng, kẻo mực #0a0a0a chìm.
+   `%` trong padding-left của lớp chữ quy về .hp-slide — mà .hp-slide rộng
+   đúng bề rộng NỘI DUNG trang (đã trừ thanh cuộn) -> lề trái thẳng hàng rail,
+   không lệch nửa thanh cuộn như cách tính bằng 100vw. */
+.hp-slide { position: relative; flex: 0 0 100%; min-width: 0; }
+.hp-slide__m { position: relative; overflow: hidden; background: var(--secondary); height: clamp(420px, 46vw, 660px); }
+.hp-slide__m > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* Lớp chữ KHÔNG bắt chuột (pointer-events) — nếu bắt thì tấm trong suốt phủ
+   kín ảnh sẽ nuốt cả cú vuốt ngang lẫn hover của 2 mũi tên. Chỉ khối chữ
+   thật mới nhận lại. */
+.hp-slide__x {
+  position: absolute; inset: 0; display: flex; align-items: center; pointer-events: none;
+  padding-left: max(var(--gut), calc((100% - var(--rail)) / 2 + var(--gut)));
+  padding-right: var(--gut);
+}
+.hp-slide__in { display: flex; flex-direction: column; gap: 20px; max-width: 420px; pointer-events: auto; }
+.hp-slide__h { max-width: 15ch; }
+.hp-slide__lead { max-width: 42ch; }
+/* Không kẻ ngăn ở hàng meta: kẻ V3 #ececec đè lên ảnh thì mất hút. Dấu ngăn
+   là chính các chấm .hp-dot. */
+/* Hàng meta nay là dòng CUỐI của khối chữ (2 nút đã gỡ 27/08) — nới
+   khoảng thở lên trên để nó tách khỏi đoạn dẫn, không dính thành một khối. */
+.hp-slide__meta { display: flex; align-items: center; gap: 12px; padding-top: 8px; }
+
+/* Mũi tên: 44×44 đúng số lookfantastic. Lớp nổi -> viền 1px, KHÔNG bóng, bo 0
+   (memory: dafc-lop-noi-khuon-chung). */
+.hp-hero2__nav {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
+  width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+  background: var(--background); border: 1px solid var(--border); color: var(--ink);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.hp-hero2__nav:hover { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+.hp-hero2__nav.is-prev { left: 16px; }
+.hp-hero2__nav.is-next { right: 16px; }
+
+/* Chấm: 8×8 — hình TRÒN THẬT nên không đụng §3.2 (cùng ngoại lệ với ô màu). */
+.hp-hero2__pips { display: flex; align-items: center; justify-content: center; gap: 10px; height: 40px; }
+.hp-pip { position: relative; width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--border-strong); background: transparent; transition: background var(--dur) var(--ease); }
+.hp-pip[aria-current] { background: var(--foreground); }
+.hp-pip::before { content: ''; position: absolute; inset: -12px; }   /* nới vùng bấm lên 32px */
+
+/* ── 19.2 DẢI TRƯỢT NGANG (thay lưới 4 cột) ───────────────────────────────
+   lookfantastic cho 5 thẻ một khung nhìn ở khổ 1440 — giữ đúng con số đó.
+   `.hp-railx` khai SAU `.hp-prods` nên thắng mà không cần tăng độ đặc hiệu. */
+.hp-railwrap { position: relative; }
+.hp-railx {
+  display: flex; gap: 16px; overflow-x: auto;
+  scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.hp-railx::-webkit-scrollbar { display: none; }
+.hp-railx > * { flex: 0 0 calc((100% - 64px) / 5); scroll-snap-align: start; min-width: 0; }
+.hp-railbtn {
+  position: absolute; top: 0; z-index: 2;
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  background: var(--background); border: 1px solid var(--border); color: var(--ink);
+  transform: translateY(160px);                 /* rơi vào khoảng giữa ô ảnh 3:4 */
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.hp-railbtn:hover { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+.hp-railbtn.is-prev { left: -20px; }
+.hp-railbtn.is-next { right: -20px; }
+.hp-railbtn[disabled] { opacity: 0; pointer-events: none; }
+
+/* ── 19.3 THƯƠNG HIỆU TRONG NGÀY ──────────────────────────────────────────*/
+.hp-bday { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: center; }
+.hp-bday__m { position: relative; overflow: hidden; background: var(--secondary); aspect-ratio: 4/3; }
+.hp-bday__m > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 18%; transition: transform 1.6s var(--ease); }
+.hp-bday:hover .hp-bday__m > img { transform: scale(1.03); }
+.hp-bday__x { display: flex; flex-direction: column; gap: 20px; }
+.hp-bday__facts { display: flex; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+.hp-bday__facts > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 16px 20px; }
+.hp-bday__facts > div:first-child { padding-left: 0; }
+.hp-bday__facts > div + div { border-left: 1px solid var(--border-subtle); }
+.hp-bday__cta { padding-top: 4px; }
+
+/* ── 19.4 THẺ THƯƠNG HIỆU ─────────────────────────────────────────────────
+   Ô ảnh của nhà mốt CHƯA có tư liệu riêng = mặt xám mang wordmark. Không mượn
+   ảnh sản phẩm của nhà mốt khác gán vào — đó là sai dữ liệu, không phải sai đẹp. */
+.hp-bcards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 24px; }
+.hp-bcard { display: flex; flex-direction: column; gap: 12px; text-align: left; min-width: 0; }
+/* Ô thương hiệu = LOGO TRÊN NỀN TRẮNG (user chốt 27/08, thay ảnh sản phẩm).
+   Lý do dùng được cho CẢ 5 nhà mốt: `assets/brand-logo.png` chỉ có wordmark
+   Versace; 4 nhà mốt còn lại đặt tên bằng CHỮ, viết đúng cách hãng viết
+   (Dolce&Gabbana · A.P.C. — đó là wordmark, không phải chữ hoa trang trí).
+   Có tệp logo thật thì thả vào trường `logo` của BRAND_CARDS, không phải sửa
+   khuôn. Ô trắng + kẻ V2 chứ không mặt xám: mặt xám đọc ra là "ô ảnh đang
+   chờ", còn ô trắng có kẻ đọc ra là một THẺ LOGO. */
+.hp-bcard__m { position: relative; background: var(--background); border: 1px solid var(--border-subtle); aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; padding: 24px; transition: background var(--dur) var(--ease); }
+.hp-bcard:hover .hp-bcard__m { background: var(--secondary); }
+/* Logo cao TỐI ĐA 22px, không phải % của ô: cả hàng phải đứng chung một
+   trục quang học, mà ô thương hiệu nào cũng có thể là ẢNH hoặc CHỮ.
+   22px ảnh ~ chiều cao chữ hoa của .t-title 24px (~17px) cộng chút bù cho
+   logo có ký tự thò xuống. Có logo thật của 4 nhà mốt còn lại thì chỉnh
+   quang học từng cái là một lượt riêng — số này chỉ là mức an toàn. */
+.hp-bcard__m > img { max-width: 60%; max-height: 22px; width: auto; height: auto; object-fit: contain; }
+.hp-bcard__wm { color: var(--ink); padding: 0 8px; text-align: center; }
+.hp-bcard__x { display: flex; flex-direction: column; gap: 4px; }
+.hp-bcard__go { display: inline-flex; align-items: center; gap: 6px; padding-top: 4px; color: var(--ink); opacity: 0; transform: translateX(-4px); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
+.hp-bcard:hover .hp-bcard__go { opacity: 1; transform: none; }
+
+/* ── 19.5 USP + CÂU HỎI THƯỜNG GẶP ────────────────────────────────────────*/
+.hp-uspqa { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: start; }
+.hp-uspqa__c { display: flex; flex-direction: column; gap: 16px; }
+.hp-usp { border-top: 1px solid var(--border-subtle); margin-top: 8px; }
+.hp-usp__r { display: flex; align-items: flex-start; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--border-subtle); }
+.hp-usp__r > svg { flex: none; color: var(--ink); margin-top: 1px; }
+.hp-usp__x { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+/* Accordion — khuôn shadcn/Radix: button[aria-expanded] + region.
+   KHÔNG animate chiều cao: guardrail hiệu năng chỉ cho transform + opacity,
+   mà animate height là animate layout. Dấu +/− đổi bằng transform. */
+.hp-qa { border-top: 1px solid var(--border-subtle); margin-top: 8px; }
+.hp-qa__i { border-bottom: 1px solid var(--border-subtle); }
+.hp-qa__q { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; width: 100%; text-align: left; padding: 18px 0; color: var(--ink); }
+.hp-qa__ic { position: relative; flex: none; width: 16px; height: 16px; margin-top: 2px; }
+.hp-qa__ic::before, .hp-qa__ic::after { content: ''; position: absolute; background: var(--ink); transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease); }
+.hp-qa__ic::before { left: 0; right: 0; top: 7px; height: 1px; }
+.hp-qa__ic::after { top: 0; bottom: 0; left: 7px; width: 1px; }
+.hp-qa__q[aria-expanded="true"] .hp-qa__ic::after { transform: rotate(90deg); opacity: 0; }
+.hp-qa__a { padding: 0 40px 20px 0; }
+.hp-qa__a[hidden] { display: none; }
+
+/* ── 19.6 DẢI ĐĂNG KÝ TRONG FOOTER (brief: "Sign up — loop in footer") ────
+   Trước 27/08 đây là một SECTION riêng trên nền xám ngay trên footer. Brief
+   khách xếp nó vào footer, lookfantastic cũng vậy -> chuyển thành dải đầu
+   footer. Dùng lại nguyên `.hp-news__f` / `.hp-news__i`, chỉ đổi khuôn chứa
+   từ cột canh giữa sang 2 cột canh đáy. */
+.hp-foot__ns { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 8px 48px; align-items: end; padding: 40px 0; border-bottom: 1px solid var(--border-subtle); }
+.hp-foot__ns-x { display: flex; flex-direction: column; gap: 8px; }
+.hp-foot__ns .hp-news__f { max-width: none; margin-top: 0; }
+.hp-foot__ns-note { grid-column: 2; }
+
+/* ── 19.7 KHỔ NHỎ ─────────────────────────────────────────────────────────*/
+@media (max-width: 1279px) {
+  .hp-railx > * { flex: 0 0 calc((100% - 48px) / 4); }
+  .hp-bcards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .hp-uspqa { gap: 48px; }
+  .hp-bday { gap: 40px; }
+}
+@media (max-width: 1023px) {
+  .hp-slide__in { max-width: 52%; }
+  .hp-railx > * { flex: 0 0 calc((100% - 32px) / 3); }
+  .hp-uspqa { grid-template-columns: minmax(0, 1fr); gap: 48px; }
+}
+@media (max-width: 767px) {
+  /* Khổ chạm: chữ THÔI đè ảnh — dải ngang 420px cao mà nhét cả tiêu đề, 2
+     nút và hàng meta vào thì chữ chồng lên chính sản phẩm. Ảnh về tỉ lệ 4:5
+     (dáng thật của kho ảnh), chữ xuống dưới trên mặt trắng. */
+  .hp-slide__m { height: auto; aspect-ratio: 4/5; }
+  .hp-slide__x { position: static; padding: 28px var(--gut) 36px; }
+  .hp-slide__in { max-width: none; gap: 18px; }
+  .hp-slide__h { max-width: none; }
+  .hp-hero2__nav { display: none; }            /* khổ chạm: vuốt + chấm là đủ */
+  .hp-hero2__pips { height: 36px; }
+
+  .hp-railx { margin: 0 calc(var(--gut-m) * -1); padding: 0 var(--gut-m); gap: 12px; }
+  .hp-railx > * { flex: 0 0 62vw; }
+  .hp-railbtn { display: none; }
+
+  .hp-bday { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .hp-bday__m { aspect-ratio: 4/5; }
+  .hp-bday__facts > div { padding: 12px 12px; }
+  .hp-bcards { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  .hp-foot__ns { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 32px 0; }
+  .hp-foot__ns-note { grid-column: 1; }
+}
 /* ══════════ SCREEN `nu` — linh kiện .nu-* ══════════ */
 /* ══════════════════════════════════════════════════════════════════════════
    6 — HERO NGÀNH HÀNG
@@ -1297,57 +1429,55 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 <div class="screen" data-screen="nam">
 <main>
 
+
 <!-- ══════════════════════════════════════════════════════════════════════════
-     HERO — chia đôi editorial. Ảnh giữ tỉ lệ dọc thật của kho ảnh dự án.
+     SCREEN `nam` — DỰNG LẠI 27/08/2026 THEO BRIEF KHÁCH + NHỊP eu.lookfantastic.com
+
+     Brief khách (Fashion – Men / Women) liệt kê ĐÚNG 6 khối, trang này đi đúng
+     thứ tự đó:
+       1. Hero banner (slider)                    -> mục 1
+       2. Highlight top sub-cate (main cate by gender) -> mục 3
+       3. New arrivals                            -> mục 4
+       4. Brand block — 2 khối: brand day + brand list card -> mục 5 + 6
+       5. USP DAFC Online / QA block              -> mục 7
+       6. Sign up (loop in footer)                -> dải đầu footer
+
+     LẤY TỪ lookfantastic (đo tại 1440 ngày 27/08): NHỊP MERCHANDISING, không
+     phải linh kiện (memory: tham chiếu ≠ bê nguyên).
+       · hero là CAROUSEL có mũi tên 44×44 hai mép + hàng chấm 8px DƯỚI ảnh
+       · hàng hoá đi bằng DẢI TRƯỢT NGANG, không phải lưới 4 cột
+       · tab lọc nằm NGAY DƯỚI tiêu đề mục, trên dải hàng
+       · thương hiệu chiếm 2 mục liền nhau: một brand lớn (họ gọi
+         "brand spotlight") rồi tới hàng thẻ thương hiệu ("BRAND SPOTLIGHT" 5 thẻ)
+     KHÔNG lấy: chữ hoa 300 canh giữa của họ (§1.1 bắt 500 mới được hoa, §1.5
+     khoá vai hoa), nhịp dọc 48px của họ (mật độ siêu thị — DAFC là luxury,
+     giữ 96/128px), và mọi linh kiện gốc của họ.
      ══════════════════════════════════════════════════════════════════════════ -->
-<section class="hp-hero">
-  <div class="hp-rail">
-    <div class="hp-hero__in">
 
-      <div class="hp-hero__copy">
-        <p class="t-label ink-mute rv" style="--d:.05s">Bộ sưu tập Thu Đông 2026</p>
-        <h1 class="hp-hero__h1 t-title rv" style="--d:.1s">Broken Jewels — đá quý vỡ trên nền lụa twill</h1>
-        <p class="hp-hero__lead t-copy ink-body rv" style="--d:.15s">
-          Hoạ tiết được dựng lại từ kho lưu trữ của maison, in trên lụa twill dệt tại Ý.
-          Có mặt tại boutique DAFC và trên cửa hàng trực tuyến từ hôm nay.
-        </p>
-        <div class="hp-hero__cta rv" style="--d:.2s">
-          <button class="hp-btn hp-btn--solid">
-            <span class="hp-btn__l t-ui">Mua hàng nữ</span>
-            <span class="hp-btn__i" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 18 18 6m0 0h-8m8 0v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-          </button>
-          <button class="hp-btn hp-btn--out">
-            <span class="hp-btn__l t-ui">Xem cả bộ sưu tập</span>
-            <span class="hp-btn__i" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 18 18 6m0 0h-8m8 0v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-          </button>
-        </div>
-        <div class="hp-hero__meta rv" style="--d:.25s">
-          <span class="t-micro ink-mute">Versace</span>
-          <span class="hp-dot" aria-hidden="true"></span>
-          <span class="t-micro ink-mute">42 mẫu</span>
-          <span class="hp-dot" aria-hidden="true"></span>
-          <span class="t-micro ink-mute">Giao từ 26/08/2026</span>
-        </div>
-      </div>
-
-      <div class="hp-hero__media rv rv-img" style="--d:.05s">
-        <img src="assets/x2.jpg" alt="Đầm lụa midi Broken Jewels" fetchpriority="high">
-        <!-- ĐÃ GỠ thẻ hàng (brand + tên sản phẩm + giá) khỏi ảnh hero — lệnh
-             user 24/08: *"hình ảnh banner không cần đính kèm tên và giá sản
-             phẩm"*. Hero là mặt CHIẾN DỊCH, không phải mặt bán một SKU; tên và
-             giá là vai của card/PDP. Thông điệp đã nằm đủ ở cột chữ bên trái. -->
-      </div>
-
-    </div>
+<!-- ══════════════════════════════════════════════════════════════════════════
+     1 — HERO BANNER SLIDER (brief mục 1)
+     3 slide, mỗi slide vẫn CHIA ĐÔI: kho ảnh dự án là 1200×1484 (dọc), cắt
+     thành dải ngang full-bleed kiểu lookfantastic thì mất hết dáng sản phẩm
+     (memory: dafc-do-dung-kho-khi-tham-chieu). Đổi lại, slide TRÀN MÉP hai
+     bên — chữ vẫn thẳng hàng với rail 1440 bằng padding tính theo 100vw.
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="hp-hero2" id="heroSlider" aria-roledescription="carousel" aria-label="Chiến dịch nổi bật">
+  <div class="hp-hero2__vp">
+    <div class="hp-hero2__track" id="heroTrack"></div>
   </div>
+  <button class="hp-hero2__nav is-prev" id="heroPrev" type="button" aria-label="Chiến dịch trước">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <button class="hp-hero2__nav is-next" id="heroNext" type="button" aria-label="Chiến dịch tiếp theo">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <div class="hp-hero2__pips" id="heroPips"></div>
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
-     DẢI CAM KẾT — 4 ô ngăn bằng kẻ 1px (gap 1px + nền V3)
+     2 — DẢI CAM KẾT — 4 ô ngăn bằng kẻ 1px (gap 1px + nền V3)
+     lookfantastic để dải này TRÊN CÙNG trang (callout 49px). Ở đây giữ ngay
+     dưới hero: promo bar đen của bộ thiết kế gốc đã chiếm vai "dải trên cùng".
      ══════════════════════════════════════════════════════════════════════════ -->
 <section>
   <div class="hp-rail">
@@ -1373,7 +1503,12 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
-     DANH MỤC — 6 ô vuông 1:1
+     3 — DANH MỤC NAM (brief: "Highlight top sub-cate — main cate by gender")
+     Danh mục lấy đúng nhánh 'Nam' của MENU_CATS, cộng 2 nhánh ngoài cây quần
+     áo (Nước hoa · Quà tặng) — đúng bộ danh mục một trang chủ NGÀNH cần.
+     lookfantastic làm mục này bằng HÀNG CHIP CHỮ 46px; ở đây giữ ô ảnh 1:1 vì
+     mock khách gửi kèm cũng là ô ảnh có nhãn, và ảnh mới là thứ phân biệt
+     được "Giày dép" với "Phụ kiện" trong một liếc mắt.
      ══════════════════════════════════════════════════════════════════════════ -->
 <section class="hp-sec">
   <div class="hp-rail">
@@ -1382,7 +1517,7 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
         <p class="hp-eyebrow t-label">Danh mục</p>
         <h2 class="t-section">Mua theo danh mục</h2>
       </div>
-      <button class="hp-more t-ui">Tất cả danh mục
+      <button class="hp-more t-ui">Tất cả danh mục nam
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -1391,8 +1526,12 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
-     SẢN PHẨM MỚI — tab lọc + lưới 4 cột (mobile: dải trượt)
-     Card sinh bằng JS từ PRODUCTS, đúng lối template literal của 2 demo.
+     4 — SẢN PHẨM MỚI (brief: "New arrivals")
+     Đổi từ LƯỚI 4 CỘT sang DẢI TRƯỢT NGANG — đây là thay đổi lớn nhất lấy từ
+     lookfantastic: họ cho 5 thẻ một khung nhìn, kéo ngang để xem tiếp, mũi tên
+     hai mép. Tab lọc giữ nguyên khuôn Radix Tabs sẵn có, chỉ đổi bộ nhãn sang
+     danh mục nam và thêm một tab merchandising ("Bán chạy") đúng lối họ trộn
+     tab danh mục với tab bán hàng (KOREAN BEAUTY · SALE · BESTSELLERS).
      ══════════════════════════════════════════════════════════════════════════ -->
 <section class="hp-sec hp-sec--gray">
   <div class="hp-rail">
@@ -1407,166 +1546,120 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
     </div>
     <div class="hp-tabs t-ui rv" id="tabs" role="tablist" aria-label="Lọc sản phẩm mới theo danh mục"></div>
     <div style="height:24px"></div>
-    <div class="hp-prods" id="prods" role="tabpanel" tabindex="0"></div>
+    <div class="hp-railwrap rv">
+      <div class="hp-prods hp-railx" id="prods" role="tabpanel" tabindex="0"></div>
+      <button class="hp-railbtn is-prev" type="button" data-rail="prods" aria-label="Lùi một trang sản phẩm">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="hp-railbtn is-next" type="button" data-rail="prods" aria-label="Tiến một trang sản phẩm">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
   </div>
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
-     TIÊU ĐIỂM — 2 khối chiến dịch, cột phải tụt 96px (bất đối xứng bằng
-     độ cao, không bằng xoay/đè)
+     5 — THƯƠNG HIỆU TRONG NGÀY (brief: "Brand block 1 — Highlight brand day")
+     Khuôn lấy từ khối MEDIK8 của lookfantastic: một nhà mốt chiếm trọn mục —
+     ảnh lớn + một đoạn giới thiệu + CTA, ngay dưới là dải hàng của chính nhà
+     mốt đó. Tên nhà mốt là HỌ NỘI DUNG chữ thường (§1.5 mục 6), không phải
+     nhãn hoa — chỗ này lookfantastic viết hoa 18/24 · 500 · ls 2px, ta không lấy.
      ══════════════════════════════════════════════════════════════════════════ -->
 <section class="hp-sec hp-sec--lg">
   <div class="hp-rail">
     <div class="hp-sechead rv">
       <div class="hp-sechead__t">
-        <p class="hp-eyebrow t-label">Tiêu điểm</p>
-        <h2 class="t-section">Tiêu điểm tháng này</h2>
-      </div>
-      <button class="hp-more t-ui">Tất cả câu chuyện
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-    </div>
-
-    <div class="hp-edit">
-      <article class="hp-edit__c rv" style="--d:.05s">
-        <div class="hp-edit__m rv-img rv"><img src="assets/p1-0.jpg" alt="Bộ sưu tập Broken Jewels" loading="lazy"></div>
-        <div class="hp-edit__x">
-          <p class="t-label ink-mute">Bộ sưu tập</p>
-          <h3 class="t-title">Lụa in hoạ tiết, mặc từ sáng tới tiệc</h3>
-          <p class="t-copy ink-body">
-            Bốn cách phối đầm lụa Broken Jewels cho một ngày ở Sài Gòn — từ họp sáng
-            tới bữa tối muộn. Cùng chất liệu, đổi phụ kiện.
-          </p>
-          <button class="hp-more t-ui">Đọc bài
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
-      </article>
-
-      <article class="hp-edit__c rv" style="--d:.12s">
-        <div class="hp-edit__m rv-img rv"><img src="assets/p3-0.jpg" alt="Túi đeo vai da Emblème" loading="lazy"></div>
-        <div class="hp-edit__x">
-          <p class="t-label ink-mute">Nghề thủ công</p>
-          <h3 class="t-title">Emblème — 42 công đoạn cho một chiếc túi</h3>
-          <p class="t-copy ink-body">
-            Da nappa cừu non, khoá Medusa dập nguội, quai điều chỉnh 20 cm.
-            Ghi chép từ xưởng của maison tại Ý.
-          </p>
-          <button class="hp-more t-ui">Đọc bài
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
-      </article>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════════════════════
-     ĐANG ĐƯỢC QUAN TÂM — lưới 4 cột, cùng card với mục trên
-     Đặt SAU mục tiêu điểm để nhịp trang là: hàng hoá -> câu chuyện -> hàng hoá.
-     Đây là nhịp chung của cả 3 site tham chiếu.
-     ══════════════════════════════════════════════════════════════════════════ -->
-<section class="hp-sec">
-  <div class="hp-rail">
-    <div class="hp-sechead rv">
-      <div class="hp-sechead__t">
-        <p class="hp-eyebrow t-label">Bán chạy</p>
-        <h2 class="t-section">Đang được quan tâm</h2>
-      </div>
-      <button class="hp-more t-ui">Xem tất cả
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-    </div>
-    <div class="hp-prods" id="prods2"></div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════════════════════
-     NHÀ MỐT — tên brand là HỌ NỘI DUNG, chữ thường (§1.5 mục 6)
-     ══════════════════════════════════════════════════════════════════════════ -->
-<section class="hp-sec hp-sec--sm">
-  <div class="hp-rail">
-    <div class="hp-sechead rv">
-      <div class="hp-sechead__t">
         <p class="hp-eyebrow t-label">Nhà mốt</p>
-        <h2 class="t-section">Thương hiệu tại DAFC</h2>
+        <h2 class="t-section">Thương hiệu trong ngày</h2>
       </div>
       <button class="hp-more t-ui">Tất cả 25 thương hiệu
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
-    <div class="hp-hair hp-maisons rv" id="maisons"></div>
-  </div>
-</section>
 
-<!-- ══════════════════════════════════════════════════════════════════════════
-     DỊCH VỤ — ảnh + 3 hàng dịch vụ ngăn bằng kẻ V3
-     ══════════════════════════════════════════════════════════════════════════ -->
-<section class="hp-sec hp-sec--lg hp-sec--gray">
-  <div class="hp-rail">
-    <div class="hp-serv">
-      <div class="hp-serv__m rv rv-img" style="--d:.05s">
-        <img src="assets/brand-hero.png" alt="Boutique DAFC" loading="lazy">
+    <div class="hp-bday">
+      <div class="hp-bday__m rv rv-img" style="--d:.05s">
+        <img src="assets/brand-hero.png" alt="Versace — bộ sưu tập nam Thu Đông 2026" loading="lazy">
       </div>
-      <div class="hp-serv__x rv" style="--d:.12s">
-        <p class="t-label ink-mute">Dịch vụ</p>
-        <h2 class="t-title">Mua sắm như tại boutique, từ điện thoại của bạn</h2>
-        <p class="t-copy ink-body" style="max-width:46ch">
-          Đội ngũ tư vấn của 12 boutique DAFC nhận yêu cầu trực tiếp: giữ hàng,
-          tìm size, gói quà, giao trong ngày.
+      <div class="hp-bday__x rv" style="--d:.12s">
+        <h3 class="t-title">Versace</h3>
+        <p class="t-copy ink-body">
+          Nhà mốt Milan của Gianni và Donatella Versace: hoạ tiết Barocco, khoá
+          Medusa và cắt may Ý. Dòng nam Thu Đông 2026 đi theo hướng sartorial —
+          sơ mi cotton nặng tay, quần âu ống rộng, giày da đế cao su.
         </p>
-        <div class="hp-serv__list">
-          <button class="hp-serv__row">
-            <span class="x">
-              <span class="t-body">Tư vấn mua sắm riêng</span>
-              <span class="t-copy ink-mute">Hẹn giờ tại boutique hoặc gọi video, miễn phí</span>
+        <dl class="hp-bday__facts">
+          <div><dt class="t-micro ink-mute">Thành lập</dt><dd class="t-body">1978, Milan</dd></div>
+          <div><dt class="t-micro ink-mute">Tại DAFC</dt><dd class="t-body">4 boutique</dd></div>
+          <div><dt class="t-micro ink-mute">Đang bán</dt><dd class="t-body">218 mẫu nam</dd></div>
+        </dl>
+        <div class="hp-bday__cta">
+          <button class="hp-btn hp-btn--solid">
+            <span class="hp-btn__l t-ui">Xem thương hiệu</span>
+            <span class="hp-btn__i" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 18 18 6m0 0h-8m8 0v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="hp-serv__row">
-            <span class="x">
-              <span class="t-body">Giao trong ngày</span>
-              <span class="t-copy ink-mute">Đặt trước 15:00 tại TP. Hồ Chí Minh và Hà Nội</span>
-            </span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="hp-serv__row">
-            <span class="x">
-              <span class="t-body">Gói quà theo yêu cầu</span>
-              <span class="t-copy ink-mute">Hộp và thiệp viết tay của maison, không thu thêm phí</span>
-            </span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
       </div>
+    </div>
+
+    <div class="hp-railwrap rv" style="margin-top:40px">
+      <div class="hp-prods hp-railx" id="bdayRail" aria-label="Sản phẩm Versace dành cho nam"></div>
+      <button class="hp-railbtn is-prev" type="button" data-rail="bdayRail" aria-label="Lùi một trang sản phẩm Versace">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="hp-railbtn is-next" type="button" data-rail="bdayRail" aria-label="Tiến một trang sản phẩm Versace">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
   </div>
 </section>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
-     NEWSLETTER — mặt xám #f2f2f2, không dùng dải đen (vai mặt tối đã đóng ở 3)
-     Copy lấy đúng chuỗi đang dùng ở footer 2 demo để 3 chỗ không lệch.
+     6 — THẺ THƯƠNG HIỆU (brief: "Brand block 2 — Brand list card")
+     Thay lưới TÊN CHỮ cũ (`.hp-maisons`) bằng THẺ CÓ ẢNH — đúng khuôn
+     "BRAND SPOTLIGHT" của lookfantastic: ảnh + tên nhà mốt + một dòng.
+     Nhà mốt chưa có ảnh riêng thì ô ảnh là MẶT XÁM mang wordmark — trạng thái
+     chờ tư liệu, không phải mượn ảnh sản phẩm của nhà mốt khác gán vào.
      ══════════════════════════════════════════════════════════════════════════ -->
-<section class="hp-sec">
+<section class="hp-sec hp-sec--sm">
   <div class="hp-rail">
-    <div class="hp-news rv" style="border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle); padding:56px 0">
-      <p class="t-label ink-mute">Bản tin</p>
-      <h2 class="t-title" style="max-width:24ch">Cập nhật thông tin mới nhất từ DAFC</h2>
-      <p class="t-copy ink-body" style="max-width:48ch">
-        Nhận thông tin về các bộ sưu tập và chương trình ưu đãi mới nhất, trước khi lên kệ.
-      </p>
-      <form class="hp-news__f" id="nsForm" novalidate>
-        <input class="hp-news__i t-ui" id="nsMail" type="email" inputmode="email" placeholder="ban@email.com" aria-label="Địa chỉ email">
-        <button class="hp-btn hp-btn--solid hp-btn--sm" type="submit">
-          <span class="hp-btn__l t-ui">Đăng ký</span>
-          <span class="hp-btn__i" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
+    <div class="hp-sechead rv">
+      <div class="hp-sechead__t">
+        <p class="hp-eyebrow t-label">Thương hiệu</p>
+        <h2 class="t-section">Thương hiệu tại DAFC</h2>
+      </div>
+      <button class="hp-more t-ui">Danh sách A – Z
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="hp-bcards" id="bcards"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     7 — VÌ SAO MUA TẠI DAFC ONLINE + CÂU HỎI THƯỜNG GẶP
+     (brief: "USP DAFC Online / QA block" — một mục, hai cột)
+     Cột trái là 4 lời hứa dịch vụ (bản dài của dải cam kết ở mục 2), cột phải
+     là 5 câu hỏi dạng accordion. Khuôn Accordion của shadcn/Radix:
+     button[aria-expanded] + region[aria-labelledby], mở một lúc nhiều mục.
+     ══════════════════════════════════════════════════════════════════════════ -->
+<section class="hp-sec hp-sec--lg hp-sec--gray">
+  <div class="hp-rail">
+    <div class="hp-uspqa">
+      <div class="hp-uspqa__c rv" style="--d:.05s">
+        <p class="t-label ink-mute">Vì sao mua tại DAFC Online</p>
+        <h2 class="t-title" style="max-width:20ch">Cùng dịch vụ của boutique, giao tận nơi</h2>
+        <div class="hp-usp" id="usp"></div>
+      </div>
+      <div class="hp-uspqa__c rv" style="--d:.12s">
+        <p class="t-label ink-mute">Câu hỏi thường gặp</p>
+        <div class="hp-qa" id="qa"></div>
+        <button class="hp-more t-ui" style="margin-top:24px">Tất cả câu hỏi thường gặp
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-      </form>
-      <p class="t-micro ink-mute" id="nsNote" style="max-width:52ch">
-        Bằng việc đăng ký, bạn đồng ý với chính sách bảo mật của DAFC. Có thể huỷ nhận tin bất cứ lúc nào.
-      </p>
+      </div>
     </div>
   </div>
 </section>
@@ -1581,6 +1674,35 @@ html.props-display .hp-hero__h1 { font-size: 48px; line-height: 56px; max-width:
      ══════════════════════════════════════════════════════════════════════════ -->
 <footer class="hp-foot">
   <div class="hp-rail">
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         DẢI ĐĂNG KÝ NHẬN TIN — brief khách: "Sign up (loop in footer)".
+         Trước 27/08 đây là một section riêng trên nền xám NGOÀI footer;
+         brief xếp nó vào footer, lookfantastic cũng đặt ở đúng chỗ này.
+         Giữ nguyên id nsForm / nsMail / nsNote nên handler không phải sửa.
+         ══════════════════════════════════════════════════════════════════ -->
+    <div class="hp-foot__ns rv">
+      <div class="hp-foot__ns-x">
+        <p class="t-label ink-mute">Bản tin</p>
+        <h2 class="t-section">Cập nhật thông tin mới nhất từ DAFC</h2>
+        <p class="t-copy ink-body" style="max-width:52ch">
+          Nhận thông tin về các bộ sưu tập và chương trình ưu đãi mới nhất, trước khi lên kệ.
+        </p>
+      </div>
+      <form class="hp-news__f" id="nsForm" novalidate>
+        <input class="hp-news__i t-ui" id="nsMail" type="email" inputmode="email" placeholder="ban@email.com" aria-label="Địa chỉ email">
+        <button class="hp-btn hp-btn--solid hp-btn--sm" type="submit">
+          <span class="hp-btn__l t-ui">Đăng ký</span>
+          <span class="hp-btn__i" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </button>
+      </form>
+      <p class="t-micro ink-mute hp-foot__ns-note" id="nsNote">
+        Bằng việc đăng ký, bạn đồng ý với chính sách bảo mật của DAFC. Có thể huỷ nhận tin bất cứ lúc nào.
+      </p>
+    </div>
+
     <div class="hp-foot__top">
 
       <div class="hp-foot__co rv">
@@ -2706,60 +2828,111 @@ const A = 'assets/';
 const SIZE_UNIT = 'IT';                     // hàng demo toàn Versace = hệ Ý
 const sizeLabel = s => /^\d+$/.test(s) ? SIZE_UNIT + ' ' + s : s;
 
-const NEW_IN = [
-  { img:'p1-0.jpg', alt:'p1-1.jpg', cat:'Quần áo',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',
-    price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫', tag:'Best seller',
-    sizes:['38','40','42','44'], oos:['44'], colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
-  { img:'x2.jpg', alt:'p1-2.jpg', cat:'Quần áo',  brand:'Versace', name:'Đầm lụa midi Broken Jewels',
-    price:'78.448.000 ₫', tag:'New season', sizes:['38','40','42','44'] },
-  { img:'p3-0.jpg', alt:'p3-v1.jpg', cat:'Túi xách', brand:'Versace', name:'Túi đeo vai da Emblème',
-    price:'50.957.000 ₫', off:'-15%', was:'59.949.000 ₫', sizes:['Onesize'],
-    colors:[{name:'Verde Menta',hex:'#b9dfc6'},{name:'Rosa',hex:'#f5d6e0'}] },
-  { img:'p9-0.jpg', alt:'p9-1.jpg', cat:'Túi xách', brand:'Versace', name:'Túi tote Rivière mini',
-    price:'50.957.000 ₫', off:'-10%', was:'56.619.000 ₫', sizes:['Onesize'],
-    colors:[{name:'Cuoio',hex:'#a06a3f'}] },
-  { img:'p4-0.jpg', alt:'p4-v1.jpg', cat:'Giày dép', brand:'Versace', name:'Giày cao gót da nappa Gianni 90',
-    price:'45.066.000 ₫', tag:'New arrival', sizes:['36','37','38','39'],
-    colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Oro',hex:'#c9a94b'}] },
-  { img:'p6-0.jpg', alt:'p6-v2.jpg', cat:'Giày dép', brand:'Versace', name:'Giày thể thao da lộn Greca Court',
-    price:'27.393.000 ₫', sizes:['39','40','41','42'], oos:['42'],
-    colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Bianco',hex:'#f1f1f1'},{name:'Nero Oro',hex:'#8a7040'}] },
-  { img:'p2-0.jpg', alt:'p2-1.jpg', cat:'Phụ kiện', brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm',
-    price:'15.611.000 ₫', sizes:['90 × 90 cm'], colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
-  { img:'b1.jpg', alt:'b2.jpg', cat:'Làm đẹp', brand:'Versace', name:'Nước hoa Crystal Noir EDP 90ml',
-    price:'4.406.400 ₫', sizes:['90 ml'] },
-];
-
-const TRENDING = [
-  { img:'p5-0.jpg', alt:'p5-1.jpg', brand:'Versace', name:'Giày loafer da Manu',
-    price:'35.248.000 ₫', off:'-30%', was:'50.354.000 ₫', sizes:['40','41','42','43'], oos:['43'],
-    colors:[{name:'Nero',hex:'#0a0a0a'}] },
-  { img:'p8-0.jpg', alt:'p8-1.jpg', brand:'Versace', name:'Túi da Lou mini',
-    price:'45.066.000 ₫', sizes:['Onesize'], colors:[{name:'Nero',hex:'#0a0a0a'}] },
-  { img:'p7-0.jpg', alt:'p7-1.jpg', brand:'Versace', name:'Túi đeo vai da Vivian East/West cỡ nhỏ',
-    price:'70.593.000 ₫', off:'-25%', was:'94.124.000 ₫', sizes:['Onesize'],
-    colors:[{name:'Nero',hex:'#0a0a0a'}] },
-  { img:'p10-0.jpg', alt:'p10-1.jpg', brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm',
-    price:'17.575.000 ₫', off:'-15%', was:'20.676.000 ₫', sizes:['85','90','95','100'],
-    colors:[{name:'Nero',hex:'#0a0a0a'}] },
-];
-
-/* Category card — ảnh vuông 1:1, đúng quy ước CATEGORIES của 2 demo */
-const CATEGORIES = [
-  { img:'p1-0.jpg',  label:'Quần áo'   },
-  { img:'p4-v1.jpg', label:'Giày dép'  },
-  { img:'p3-0.jpg',  label:'Túi xách'  },
-  { img:'p10-0.jpg', label:'Phụ kiện'  },
-  { img:'p4-0.jpg',  label:'Trang sức' },
-  { img:'b1.jpg',    label:'Làm đẹp'   },
-];
-
-/* 10 nhà mốt đầu của MENU_BRANDS. Giữ nguyên cách viết của thương hiệu
-   (Dolce&Gabbana, A.P.C.) — đó là WORDMARK, không phải chữ hoa trang trí. */
-const MAISONS = ['Versace','Burberry','Dolce&Gabbana','Ferragamo','Balmain',
-                 'Christian Louboutin','Montblanc','MCM','TUMI','Zimmermann'];
-
 const ARROW = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DỮ LIỆU — TỦ ĐỒ NAM
+   Kho ảnh của dự án gần như toàn hàng NỮ (đầm, túi nữ, giày cao gót). Bộ dưới
+   đây là TẤT CẢ ảnh mang được vai hàng nam: brand-hero (look nam) · x5 (áo
+   phông) · p5 (giày lười) · p6 (giày thể thao) · p8 (túi da đeo chéo) ·
+   p10 (thắt lưng) · b3 (Dylan Blue) · b6 (Montblanc Explorer).
+   -> 8 SKU. Cần chụp thêm hàng nam thì đây là chỗ nối vào, không phải sửa khuôn.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Hero: 3 slide. `pos` là object-position của ảnh — brand-hero là ảnh NGƯỜI
+   toàn thân 1200×1484, cắt vào khung ngang mà lấy giữa thì mất đầu. */
+const HERO_SLIDES = [
+  { img: 'brand-hero.png', pos: 'center 20%',
+    kicker: 'Bộ sưu tập Thu Đông 2026',
+    title: 'Bản lĩnh Ý, cắt may cho một ngày dài',
+    lead: 'Sơ mi cotton nặng tay, quần âu ống rộng và giày da đế cao su — ba món dựng nên tủ đồ mùa mới của người đàn ông Versace.',
+    meta: ['Versace', '38 mẫu', 'Giao từ 27/08/2026'] },
+  { img: 'p6-0.jpg', pos: 'center 56%',
+    kicker: 'Giày dép',
+    title: 'Greca Court — da lộn nâu, đế gum',
+    lead: 'Đế cao su in hoạ tiết Greca chạy quanh viền, thân da bê phối lộn. Mẫu giày thể thao bán chạy nhất của nhà mốt trong hai mùa liền.',
+    meta: ['Versace', 'IT 39 – 45', 'Đổi size miễn phí'] },
+  { img: 'b3.jpg', pos: 'center 58%',
+    kicker: 'Nước hoa nam',
+    title: 'Dylan Blue — một buổi chiều Địa Trung Hải',
+    lead: 'Bưởi chùm, hương nước biển và gỗ tuyết tùng. Hộp quà và thiệp viết tay của maison, không thu thêm phí.',
+    meta: ['Versace', '30 · 50 · 100 ml', 'Gói quà miễn phí'] },
+];
+
+/* Danh mục — 4 nhánh đầu lấy đúng cây 'Nam' của MENU_CATS, cộng 2 nhánh ngoài
+   cây quần áo mà một trang chủ ngành nam luôn có (Nước hoa · Quà tặng). */
+const CATEGORIES = [
+  { img: 'x5.jpg',          label: 'Quần áo'   },
+  { img: 'p6-0.jpg',        label: 'Giày dép'  },
+  { img: 'p8-0.jpg',        label: 'Túi xách'  },
+  { img: 'p10-0.jpg',       label: 'Phụ kiện'  },
+  { img: 'b3.jpg',          label: 'Nước hoa'  },
+  { img: 'b6.jpg',          label: 'Quà tặng'  },
+];
+
+const NEW_IN = [
+  { img:'brand-hero.png', alt:'brand-hero.png', cat:'Quần áo', brand:'Versace', name:'Sơ mi cotton nhãn Couture',
+    price:'15.611.000 ₫', tag:'New season', sizes:['46','48','50','52'], oos:['52'],
+    colors:[{name:'Nero',hex:'#0a0a0a'}] },
+  { img:'x5.jpg', alt:'x5.jpg', cat:'Quần áo', brand:'Versace', name:'Áo phông cotton in chữ Versace',
+    price:'11.204.000 ₫', off:'-20%', was:'14.005.000 ₫', hot:true, sizes:['S','M','L','XL'], oos:['XL'],
+    colors:[{name:'Rosso',hex:'#9d1c28'},{name:'Nero',hex:'#0a0a0a'}] },
+  { img:'p6-0.jpg', alt:'p6-v2.jpg', cat:'Giày dép', brand:'Versace', name:'Giày thể thao da lộn Greca Court',
+    price:'27.393.000 ₫', tag:'Best seller', hot:true, sizes:['39','40','41','42'], oos:['42'],
+    colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Bianco',hex:'#f1f1f1'},{name:'Nero Oro',hex:'#8a7040'}] },
+  { img:'p5-0.jpg', alt:'p5-1.jpg', cat:'Giày dép', brand:'Versace', name:'Giày lười da Manu',
+    price:'35.248.000 ₫', off:'-30%', was:'50.354.000 ₫', hot:true, sizes:['40','41','42','43'], oos:['43'],
+    colors:[{name:'Nero',hex:'#0a0a0a'}] },
+  { img:'p8-0.jpg', alt:'p8-1.jpg', cat:'Túi xách', brand:'Versace', name:'Túi đeo chéo da Medusa',
+    price:'45.066.000 ₫', tag:'New arrival', sizes:['Onesize'],
+    colors:[{name:'Nero',hex:'#0a0a0a'}] },
+  { img:'p10-0.jpg', alt:'p10-1.jpg', cat:'Phụ kiện', brand:'Versace', name:'Thắt lưng da mặt khoá tròn 3.5 cm',
+    price:'17.575.000 ₫', off:'-15%', was:'20.676.000 ₫', hot:true, sizes:['85','90','95','100'],
+    colors:[{name:'Nero',hex:'#0a0a0a'}] },
+  { img:'b3.jpg', alt:'b3.jpg', cat:'Nước hoa', brand:'Versace', name:'Dylan Blue Pour Homme EDT 100ml',
+    price:'3.290.000 ₫', tag:'Best seller', hot:true, sizes:['100 ml'] },
+  { img:'b6.jpg', alt:'b6.jpg', cat:'Nước hoa', brand:'Montblanc', name:'Explorer Platinum EDP 100ml',
+    price:'3.850.000 ₫', off:'-10%', was:'4.278.000 ₫', sizes:['100 ml'] },
+];
+
+/* Thẻ thương hiệu — ô là LOGO TRÊN NỀN TRẮNG (user chốt 27/08).
+   `logo: null` = chưa có tệp logo của nhà mốt đó, ô đặt tên bằng CHỮ, viết
+   đúng cách hãng viết. Có tệp thì thả vào đây, không phải sửa khuôn.
+   Kho hiện chỉ có MỘT logo thật: `assets/brand-logo.png` (wordmark Versace). */
+const BRAND_CARDS = [
+  { name:'Versace',        logo:'brand-logo.png', line:'Hoạ tiết Barocco, khoá Medusa, cắt may Milan.' },
+  { name:'Montblanc',      logo:null,             line:'Đồ da, bút máy và nước hoa cho ngày làm việc.' },
+  { name:'Dolce&Gabbana',  logo:null,             line:'Sartorial kiểu Sicily, may đo thủ công.' },
+  { name:'Burberry',       logo:null,             line:'Áo khoác trench và hoạ tiết kẻ ca-rô.' },
+  { name:'Ferragamo',      logo:null,             line:'Giày da và phụ kiện thủ công Florence.' },
+];
+
+const ICO = {
+  shield: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5 19 6v6c0 4.2-3 7.2-7 8.5-4-1.3-7-4.3-7-8.5V6l7-2.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  truck:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7h11v10H3zM14 10h4l3 3v4h-7z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><circle cx="7" cy="18" r="1.6" stroke="currentColor" stroke-width="1.2"/><circle cx="17.5" cy="18" r="1.6" stroke="currentColor" stroke-width="1.2"/></svg>',
+  swap:   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.7-5.6M20 12a8 8 0 0 1-13.7 5.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M17.5 3.5v3.2h-3.2M6.5 20.5v-3.2h3.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  store:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9.5 12 4l8 5.5V20H4V9.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M9.5 20v-6h5v6" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>',
+};
+
+const USP = [
+  [ICO.shield, '100% hàng chính hãng', 'Nhập trực tiếp từ nhà mốt, kèm hoá đơn đỏ và phiếu bảo hành của hãng.'],
+  [ICO.truck,  'Giao nhanh trong 2 giờ', 'Nội thành TP. Hồ Chí Minh và Hà Nội, áp dụng cho đơn đặt trước 15:00.'],
+  [ICO.swap,   'Đổi trả trong 30 ngày', 'Đổi size miễn phí tại 12 boutique DAFC trên toàn quốc.'],
+  [ICO.store,  'Tư vấn như tại boutique', 'Đội ngũ boutique nhận giữ hàng, tìm size, gói quà và giao trong ngày.'],
+];
+
+const QA = [
+  ['Hàng trên DAFC Online có phải hàng chính hãng không?',
+   'Toàn bộ sản phẩm nhập trực tiếp từ nhà mốt qua đường chính ngạch, kèm hoá đơn đỏ và phiếu bảo hành của hãng. Mỗi đơn đều có thẻ xác thực của DAFC.'],
+  ['Bao lâu thì tôi nhận được hàng?',
+   'Nội thành TP. Hồ Chí Minh và Hà Nội: giao trong 2 giờ nếu đặt trước 15:00. Các tỉnh thành khác: 1 – 3 ngày làm việc, miễn phí cho đơn từ 5.000.000 ₫.'],
+  ['Tôi đổi trả thế nào?',
+   'Đổi trả trong 30 ngày kể từ ngày nhận, với sản phẩm còn nguyên tem mác và hộp. Nước hoa đã bóc seal và đồ lót không áp dụng đổi trả.'],
+  ['Chọn size nam thế nào cho đúng?',
+   'Mỗi trang sản phẩm có bảng quy đổi IT – EU – US và số đo thật của mẫu. Bạn cũng có thể gọi 1900 2666 để được tư vấn size theo số đo của mình.'],
+  ['Có trả góp không?',
+   'Trả góp 0% lãi suất 3 – 12 tháng qua thẻ tín dụng của 18 ngân hàng liên kết, áp dụng cho đơn từ 5.000.000 ₫.'],
+];
 
 /* ══════════════════════════════════════════════════════════════════════════
    CARD SẢN PHẨM
@@ -2800,6 +2973,96 @@ function card(p, i) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
+   HERO SLIDER (brief mục 1)
+   Chạy bằng setInterval chứ không requestAnimationFrame: pane xem trước của
+   phiên này không composite frame nên rAF không bắn (đã ghi ở HOMEPAGE.md
+   mục 6) — setInterval kiểm được thật.
+   Dừng khi: rê chuột · có focus bên trong · tab trình duyệt ẩn · screen `nam`
+   đang không hiển thị (người dùng đang xem screen Nữ / Làm đẹp).
+   ══════════════════════════════════════════════════════════════════════════ */
+const heroTrack = document.getElementById('heroTrack');
+const heroPips  = document.getElementById('heroPips');
+const heroEl    = document.getElementById('heroSlider');
+const namScreen = document.querySelector('.screen[data-screen="nam"]');
+
+heroTrack.innerHTML = HERO_SLIDES.map((s, i) => '' +
+  '<div class="hp-slide" role="group" aria-roledescription="slide" aria-label="' + (i + 1) + ' trên ' + HERO_SLIDES.length + '">' +
+    /* Ảnh đứng TRƯỚC chữ trong DOM: khổ nhỏ lớp chữ thôi tuyệt đối và rơi
+       xuống dưới ảnh theo đúng thứ tự nguồn — không phải mượn `order`. */
+    '<div class="hp-slide__m"><img src="' + A + s.img + '" alt="' + s.title + '" style="object-position:' + s.pos + '"' + (i ? ' loading="lazy"' : ' fetchpriority="high"') + '></div>' +
+    '<div class="hp-slide__x"><div class="hp-slide__in">' +
+      '<p class="t-label ink-mute">' + s.kicker + '</p>' +
+      '<h' + (i === 0 ? '1' : '2') + ' class="hp-slide__h t-title">' + s.title + '</h' + (i === 0 ? '1' : '2') + '>' +
+      '<p class="hp-slide__lead t-copy ink-body">' + s.lead + '</p>' +
+      /* KHÔNG CÓ NÚT CTA TRÊN HERO — lệnh user 27/08. Banner là mặt CHIẾN
+         DỊCH: đã không mang tên + giá sản phẩm (lệnh 24/08), nay không mang
+         cả nút. Cùng một luật: hero nói CHUYỆN, chỗ bấm để MUA là card và
+         các mục bên dưới. Cả tấm banner sẽ là một đường dẫn khi nối route —
+         chỗ bấm còn nguyên, chỉ là không còn chrome nút. */
+      '<div class="hp-slide__meta">' +
+        s.meta.map((m, k) => (k ? '<span class="hp-dot" aria-hidden="true"></span>' : '') + '<span class="t-micro ink-mute">' + m + '</span>').join('') +
+      '</div>' +
+    '</div></div>' +
+  '</div>').join('');
+
+heroPips.innerHTML = HERO_SLIDES.map((s, i) =>
+  '<button class="hp-pip" type="button" data-pip="' + i + '" aria-label="Chiến dịch ' + (i + 1) + ': ' + s.kicker + '"' + (i === 0 ? ' aria-current="true"' : '') + '></button>').join('');
+
+let heroI = 0, heroTimer = null;
+const HERO_REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function heroGo(i) {
+  const n = HERO_SLIDES.length;
+  heroI = ((i % n) + n) % n;
+  heroTrack.style.transform = 'translateX(' + (-heroI * 100) + '%)';
+  [...heroTrack.children].forEach((s, k) => {
+    /* inert CHỨ KHÔNG chỉ aria-hidden: slide ngoài khung nhìn chứa 2 nút, để
+       aria-hidden trên phần tử còn nhận Tab là đúng lỗi a11y kinh điển. */
+    if (k === heroI) { s.removeAttribute('inert'); s.removeAttribute('aria-hidden'); }
+    else { s.setAttribute('inert', ''); s.setAttribute('aria-hidden', 'true'); }
+  });
+  [...heroPips.children].forEach((p, k) =>
+    k === heroI ? p.setAttribute('aria-current', 'true') : p.removeAttribute('aria-current'));
+}
+function heroStop()  { clearInterval(heroTimer); heroTimer = null; }
+function heroStart() {
+  if (HERO_REDUCED) return;
+  heroStop();
+  heroTimer = setInterval(() => {
+    if (document.hidden || namScreen.hasAttribute('hidden')) return;
+    heroGo(heroI + 1);
+  }, 6000);
+}
+heroGo(0);
+heroStart();
+
+document.getElementById('heroPrev').addEventListener('click', () => { heroGo(heroI - 1); heroStart(); });
+document.getElementById('heroNext').addEventListener('click', () => { heroGo(heroI + 1); heroStart(); });
+heroPips.addEventListener('click', e => {
+  const b = e.target.closest('[data-pip]');
+  if (b) { heroGo(+b.dataset.pip); heroStart(); }
+});
+heroEl.addEventListener('pointerenter', heroStop);
+heroEl.addEventListener('pointerleave', heroStart);
+heroEl.addEventListener('focusin', heroStop);
+heroEl.addEventListener('focusout', heroStart);
+heroEl.addEventListener('keydown', e => {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  e.preventDefault();
+  heroGo(heroI + (e.key === 'ArrowRight' ? 1 : -1));
+  heroStart();
+});
+/* Vuốt ngang ở khổ chạm — mũi tên bị ẩn dưới 768 nên đây là đường đi duy nhất */
+let swX = null;
+heroEl.addEventListener('touchstart', e => { swX = e.touches[0].clientX; heroStop(); }, { passive: true });
+heroEl.addEventListener('touchend', e => {
+  if (swX == null) return;
+  const d = e.changedTouches[0].clientX - swX;
+  if (Math.abs(d) > 40) heroGo(heroI + (d < 0 ? 1 : -1));
+  swX = null; heroStart();
+}, { passive: true });
+
+/* ══════════════════════════════════════════════════════════════════════════
    DỰNG TRANG
    ══════════════════════════════════════════════════════════════════════════ */
 document.getElementById('cats').innerHTML = CATEGORIES.map((c, i) => '' +
@@ -2808,24 +3071,87 @@ document.getElementById('cats').innerHTML = CATEGORIES.map((c, i) => '' +
     '<span class="hp-cat__l"><span class="t-ui">' + c.label + '</span>' + ARROW + '</span>' +
   '</button>').join('');
 
-document.getElementById('maisons').innerHTML = MAISONS.map(b =>
-  '<button class="hp-maison t-body">' + b + '</button>').join('');
+document.getElementById('bcards').innerHTML = BRAND_CARDS.map((b, i) => '' +
+  '<button class="hp-bcard rv" style="--d:' + (0.04 * i).toFixed(2) + 's">' +
+    '<span class="hp-bcard__m">' +
+      (b.logo ? '<img src="' + A + b.logo + '" alt="' + b.name + '" loading="lazy">'
+              : '<span class="hp-bcard__wm t-title">' + b.name + '</span>') +
+    '</span>' +
+    '<span class="hp-bcard__x">' +
+      '<span class="t-body">' + b.name + '</span>' +
+      '<span class="t-copy ink-mute">' + b.line + '</span>' +
+    '</span>' +
+    '<span class="hp-bcard__go t-ui">Xem thương hiệu' + ARROW + '</span>' +
+  '</button>').join('');
 
-document.getElementById('prods2').innerHTML = TRENDING.map(card).join('');
+document.getElementById('usp').innerHTML = USP.map(u => '' +
+  '<div class="hp-usp__r">' + u[0] +
+    '<div class="hp-usp__x"><span class="t-body">' + u[1] + '</span>' +
+      '<span class="t-copy ink-mute">' + u[2] + '</span></div>' +
+  '</div>').join('');
 
-/* Tab lọc — nhãn tab là HỌ NỘI DUNG chữ thường: §1.5 chỉ cấp vai hoa cho nav
-   ngành hàng và nhãn nhóm menu, tab lọc trong thân trang không nằm trong đó.
-   Dấu đang chọn là gạch 2px + mực chính, đủ đọc ra trạng thái. */
-const TABS = ['Tất cả', 'Quần áo', 'Túi xách', 'Giày dép', 'Phụ kiện', 'Làm đẹp'];
+/* Accordion — khuôn shadcn/Radix, mở được nhiều mục cùng lúc (type="multiple") */
+const elQa = document.getElementById('qa');
+elQa.innerHTML = QA.map((q, i) => '' +
+  '<div class="hp-qa__i">' +
+    '<button class="hp-qa__q t-body" type="button" id="qa-q' + i + '" aria-expanded="false" aria-controls="qa-a' + i + '">' +
+      '<span>' + q[0] + '</span><span class="hp-qa__ic" aria-hidden="true"></span>' +
+    '</button>' +
+    '<div class="hp-qa__a" id="qa-a' + i + '" role="region" aria-labelledby="qa-q' + i + '" hidden>' +
+      '<p class="t-copy ink-body">' + q[1] + '</p>' +
+    '</div>' +
+  '</div>').join('');
+elQa.addEventListener('click', e => {
+  const b = e.target.closest('.hp-qa__q');
+  if (!b) return;
+  const on = b.getAttribute('aria-expanded') !== 'true';
+  b.setAttribute('aria-expanded', String(on));
+  document.getElementById(b.getAttribute('aria-controls')).hidden = !on;
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DẢI TRƯỢT NGANG — mũi tên trượt 80% khung nhìn, tự ẩn ở hai đầu
+   Cùng cơ chế thanh danh mục của menu bar gốc (`dkFade*`), viết lại cho khối
+   nội dung: một nút phục vụ một dải, nối bằng `data-rail`.
+   ══════════════════════════════════════════════════════════════════════════ */
+function railSync(el) {
+  const wrap = el.closest('.hp-railwrap');
+  if (!wrap) return;
+  const max = el.scrollWidth - el.clientWidth;
+  const prev = wrap.querySelector('.hp-railbtn.is-prev');
+  const next = wrap.querySelector('.hp-railbtn.is-next');
+  if (prev) prev.disabled = el.scrollLeft <= 1;
+  if (next) next.disabled = el.scrollLeft >= max - 1;
+}
+document.querySelectorAll('.hp-railx').forEach(el =>
+  el.addEventListener('scroll', () => railSync(el), { passive: true }));
+addEventListener('resize', () => document.querySelectorAll('.hp-railx').forEach(railSync));
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-rail]');
+  if (!b) return;
+  const el = document.getElementById(b.dataset.rail);
+  const step = Math.max(200, Math.round(el.clientWidth * 0.8));
+  el.scrollLeft += b.classList.contains('is-next') ? step : -step;
+  /* Không chỉ dựa vào sự kiện scroll: trình duyệt chỉ bắn scroll trong nhịp
+     KHUNG HÌNH, mà pane xem trước của phiên này không composite frame -> hai
+     nút đứng nguyên trạng thái cũ. Gọi lại sau khi cuộn trơn xong (.4s). */
+  setTimeout(() => railSync(el), 450);
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TAB LỌC + DẢI SẢN PHẨM MỚI
+   Nhãn tab là HỌ NỘI DUNG chữ thường: §1.5 chỉ cấp vai hoa cho nav ngành hàng
+   và nhãn nhóm menu, tab lọc trong thân trang không nằm trong đó.
+   Bộ tab trộn tab DANH MỤC với một tab BÁN HÀNG ("Bán chạy") — đúng lối
+   lookfantastic trộn KOREAN BEAUTY · SALE · BESTSELLERS trong một hàng. Nhờ
+   tab này mà mục "Đang được quan tâm" (lưới 4 cột thứ hai của bản cũ) không
+   còn cần tồn tại: cùng nội dung, ít hơn một mục cuộn.
+   ══════════════════════════════════════════════════════════════════════════ */
+const TABS = ['Tất cả', 'Bán chạy', 'Quần áo', 'Giày dép', 'Túi xách', 'Phụ kiện', 'Nước hoa'];
 const elTabs = document.getElementById('tabs');
 const elProds = document.getElementById('prods');
 let curTab = 'Tất cả';
 
-/* Khuôn Tabs của shadcn (Radix): role tablist/tab · aria-selected · aria-controls
-   · data-state active|inactive · roving tabindex (chỉ tab đang chọn nhận Tab key,
-   các tab khác đi bằng phím mũi tên). Trước đây hàng này là `role=group` +
-   `aria-pressed` — đọc ra là một cụm nút bật/tắt, không phải bộ tab; mà §5 sổ tay
-   xếp đúng khuôn thị giác này (gạch chân 2px) vào component Tabs. */
 const tabId = t => 'tab-' + TABS.indexOf(t);
 elTabs.innerHTML = TABS.map(t => {
   const on = t === curTab;
@@ -2835,13 +3161,18 @@ elTabs.innerHTML = TABS.map(t => {
 }).join('');
 elProds.setAttribute('aria-labelledby', tabId(curTab));
 
+function listFor(t) {
+  if (t === 'Tất cả')  return NEW_IN;
+  if (t === 'Bán chạy') return NEW_IN.filter(p => p.hot);
+  return NEW_IN.filter(p => p.cat === t);
+}
 function renderProds() {
-  const list = curTab === 'Tất cả' ? NEW_IN : NEW_IN.filter(p => p.cat === curTab);
-  elProds.innerHTML = list.map(card).join('');
+  elProds.innerHTML = listFor(curTab).map(card).join('');
   /* Card vừa chèn nằm ở opacity 0 (.rv) và observer đã quét xong từ trước ->
-     phải đăng ký lại, kẻo lưới đứng im vô hình. Cùng cái bẫy mà comment
-     .gift-in trong desktop.html đã ghi. */
+     phải đăng ký lại, kẻo dải đứng im vô hình. */
   RV.observe(elProds.querySelectorAll('.rv'));
+  elProds.scrollLeft = 0;
+  railSync(elProds);
 }
 
 function selectTab(b) {
@@ -2874,12 +3205,13 @@ elTabs.addEventListener('keydown', e => {
   next.focus();
   selectTab(next);
 });
-
-/* Lượt vẽ ĐẦU của lưới sản phẩm. Trước khi gộp, lời gọi này nằm trong khối
-   REVEAL của home.html cũ; khối đó nay là observer DÙNG CHUNG ở tầng ngoài nên
-   lời gọi phải chuyển về đây, kẻo lưới rỗng cho tới khi bấm một tab (đo được
-   ngay sau lượt gộp: #prods có 0 card). */
 renderProds();
+
+/* Dải hàng của nhà mốt trong ngày — lọc thẳng từ NEW_IN, không nhân bản data */
+const elBday = document.getElementById('bdayRail');
+elBday.innerHTML = NEW_IN.filter(p => p.brand === 'Versace').map(card).join('');
+RV.observe(elBday.querySelectorAll('.rv'));
+railSync(elBday);
 
 /* Ô chọn màu — đổi dấu đang chọn trong đúng card đó */
 document.addEventListener('click', e => {

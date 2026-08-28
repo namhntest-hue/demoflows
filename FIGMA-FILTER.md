@@ -24,6 +24,13 @@ danh mục 6 nhóm × 3 cấp).
 
 ## 2. Spec đo được (skin-li)
 
+> ⚠️ **Bảng dưới là số ĐO SÁNG 27/08, nay ĐÃ CŨ ở phần cây bộ lọc.** Chiều 27/08 user sửa
+> spacing trong Figma và code đã đi theo — số hiện hành: **MỌI** hàng tiêu đề mục **64**
+> (kể cả Màu sắc — bậc `size=sm` đã bỏ dùng),
+> hàng cấp 1 **42**, hàng cấp 2/3 **34**, hàng chọn phẳng **34**, nhãn nhóm **42**.
+> Xem **Phần 8**. Các số còn lại của bảng (chip · ô màu · tab đơn vị · khoảng giá · footer ·
+> thanh lọc) vẫn đúng.
+
 | Khối | Số đo |
 |---|---|
 | Panel | mobile 375,2 (bottom-sheet, có grabber 40×4) · desktop **420** (drawer phải, **viền 0,8 quanh** đúng khuôn lớp nổi) |
@@ -150,3 +157,125 @@ Xếp 4 cột: linh kiện · bộ phận panel + thanh lọc · 2 bản ráp ·
 4. **Chưa ráp instance vào màn PLP**: thanh lọc trên `PLP / mobile 375` và `PLP / desktop 1440`
    vẫn là raw từ đợt trước — nay đã có `filter-bar` để thay, để đợt ráp riêng cùng lượt với hàng giỏ.
 5. Mục **Độ cao giày** (chỉ ngữ cảnh giày nữ) chưa nằm trong bản ráp sẵn — dùng lại `filter-check-row`.
+
+---
+
+## 8. Đồng bộ ngược Figma → code: spacing cây bộ lọc (27/08/2026, chiều)
+
+Lệnh user: *"ở các spacing filter tôi vừa update lại, bạn hãy đối chiếu figma với thực tế và
+điều chỉnh lại các spacing của cây filter"* — kèm link node `85-1913` (chính là **page `filter`**).
+
+Đây là chiều **ngược** với Phần 1–5: trước là *đo code → dựng Figma*, nay là *đọc Figma → sửa code*.
+Nguồn sự thật của lượt này là Figma.
+
+### 8.1 Đối chiếu — 6 chỗ lệch, 3 chỗ khớp
+
+| Khối | Figma (bạn vừa sửa) | Code trước | Code sau |
+|---|---|---|---|
+| `filter-section-header` **size=lg** | **56** = đệm dọc 20 + chữ 16 | **72** (chiều cao CỨNG) | **56** ✓ |
+| `filter-section-header` **size=sm** (Màu sắc) | **48** = đệm dọc 16 + chữ 16 | **56** (cứng) | **48** ✓ |
+| `filter-tree-row` **level=cat** | **42** = đệm 16/8 + chữ 18 | **44** (`h-11` + `pt-2`) | **42** ✓ |
+| `filter-tree-row` **level=sub-1 · sub-2** | **34** = đệm 8/8 + chữ 18 | **36** (`h-9`) | **34** ✓ |
+| `filter-check-row` (thương hiệu · ưu đãi · độ cao giày · khác) | **34**, đệm `8/16/8/0` | **36**, lề phải 16 CHỈ ở thương hiệu | **34** + lề phải 16 cho **cả 4** chỗ ✓ |
+| `filter-group-header` (nhãn nhóm trong Kích thước) | **42**, đệm `16/16/8/16` | **44** (`h-11` + `pt-2`) | **42** ✓ |
+| thụt cấp 2 / cấp 3 | **24 / 48** (rail 20 + gap 4) | 24 / 48 | **không đụng** ✓ |
+| lưới màu · lưới chip · hàng tab đơn vị · khoảng giá | 8/16/16/16 · 8/16/8/16 · 8/16/12/16 gap 24 · 0/16/24/16 gap 24 | khớp hết | **không đụng** ✓ |
+| khối chứa cây (`px-4 pb-4`) | 0/16/16/16 | khớp | **không đụng** ✓ |
+
+### 8.2 Đổi cách dựng hàng: CHIỀU CAO CỨNG → ĐỆM
+
+Figma nay dựng mọi hàng của cây theo **hug + padding** (42 = 16+18+8, 34 = 8+18+8, 56 = 20+16+20),
+không còn hàng nào đặt chiều cao cố định. Code đi theo đúng vậy:
+
+* `fSection(title, body, open, **h = 72**)` → `fSection(title, body, open, **pad = 20**)`, và
+  `style="height:${h}px"` → `style="padding-top:${pad}px;padding-bottom:${pad}px"`.
+* `.fcat > div`: `h-11 … pt-2` → `pt-4 pb-2`
+* `fsubRow`: bỏ `h-9` ở hàng, chuyển `py-2` **lên chính nút** (đúng chỗ Figma đặt đệm —
+  frame `row-check`), để cột `rail` vẫn kéo hết chiều cao hàng.
+* hàng chọn phẳng: `h-9 … ` → `py-2 pr-4`
+* nhãn nhóm size: `h-11 px-4 pt-2` → `px-4 pt-4 pb-2`
+
+**Vì sao đáng đổi chứ không chỉ hạ số:** hàng theo đệm thì **tự bám thang chữ**. Đo được ngay:
+`index.html` + `desktop.html` (vào trang là `skin-mt skin-li`, chữ 12/18) ra đúng **42 · 34 · 56**;
+3 bản thử skin (`desktop-neutral` · `-editorial` · `-atelier` — **không** nạp `skin-li`, chữ còn
+14/20) ra **44 · 36 · 64** với **cùng một bộ đệm**. Trước đây số cứng 72/44/36 áp chung cho mọi
+bộ da nên bộ da nào chữ to hơn thì hàng chật, chữ nhỏ hơn thì hàng rỗng.
+
+### 8.3 Một bẫy đã sập và đã vá
+
+Lượt sửa đầu chỉ đổi **định nghĩa** `fSection` mà quên **nơi gọi**: 4 file desktop truyền chiều cao
+**72 tường minh** cho 2 mục *Danh mục* và *Thương hiệu* (vì còn tham số thứ 5 `count`) —
+`fSection('Danh mục', …, false, 72, 'cat')`. Đổi nghĩa tham số xong, 72 chảy thẳng vào
+`padding-top/bottom` → hai hàng tiêu đề cao **160px**. Đã sửa cả 8 lời gọi về `20`.
+*Bài học:* đổi Ý NGHĨA một tham số thì phải quét hết nơi gọi, không chỉ nơi khai — grep
+`fSection(` chứ đừng grep `h = 72`.
+
+### 8.4 Đã áp cho 5 file
+
+| File | Số rule áp | Ghi chú |
+|---|---|---|
+| `index.html` · `desktop.html` | **8** | ra đúng số Figma (56 · 48 · 42 · 34) |
+| `desktop-neutral` · `-editorial` · `-atelier` | **7** | thiếu rule nhãn-nhóm-size (3 bản này chưa có khối nhóm size — vẫn là mục còn nợ ở FILTER-FEEDBACK) |
+
+Kiểm chạy sau khi sửa (mobile 375 + desktop 1440, đã bust cache): 7 hàng tiêu đề ra 56/48 ·
+hàng cấp 1 = 42 đệm 16/0/8/0 · cấp 2 = 34 thụt 24 · cấp 3 = 34 thụt 48 · **đường rail liền mạch**
+(khe giữa các đoạn = 0) · hàng phẳng 34 đệm 8/16/8/0 · nhãn nhóm 42 · panel desktop vẫn 420 ·
+mở/đóng đủ 3 cấp bằng chuột thật (mục lớn 0→310 · danh mục 0→374 với 11 hàng con · cấp 3 0→170) ·
+tick ô hoạt động · không tràn ngang.
+
+### 8.6 Lượt chỉnh tiếp — tiêu đề mục lớn lên đệm 24 (lệnh user, ngay sau khi xem bản đã sửa)
+
+*"Tiêu đề mục lớn: tăng padding 24"* — đệm dọc của `filter-section-header` **size=lg**
+đi từ **20 → 24**, tức hàng tiêu đề **56 → 64** (24 + chữ 16 + 24).
+
+| | Figma sáng nay | Sau lượt đồng bộ 8.1 | **Sau lệnh này** |
+|---|---|---|---|
+| Tiêu đề mục lớn | 56 (đệm 20) | 56 (đệm 20) | **64 (đệm 24)** |
+| Tiêu đề Màu sắc (`size=sm`) | 48 (đệm 16) | 48 | **48 — không đụng** |
+| Hàng cấp 1 · cấp 2/3 · hàng phẳng · nhãn nhóm | 42 · 34 · 34 · 42 | như vậy | **không đụng** |
+
+Sửa đúng **một** chỗ ở mỗi file — mặc định `pad` của `fSection` — cộng 2 lời gọi tường minh
+(*Danh mục* · *Thương hiệu*) ở 4 file desktop, tổng 13 chỗ trên 5 file. Đo lại: mobile 375 và
+desktop 1440 đều ra **64 (đệm 24/24)** cho 6 mục lớn, **48** cho Màu sắc, các hàng trong cây
+giữ nguyên 42/34/34, panel desktop vẫn 420, không tràn ngang.
+
+**Figma nay ĐANG LỆCH code ở đúng chỗ này** (component còn đệm 20 → 56). Đẩy 24 vào 2 variant
+`filter-section-header size=lg` là xong — chờ bạn gật.
+
+### 8.7 Bỏ bậc `size=sm`: Màu sắc về chung một hàng tiêu đề với mọi mục
+
+Lệnh user: *"danh mục Màu sắc đang để size sm, hãy cho đồng bộ với các danh mục khác ở filter"*.
+
+`Màu sắc` là mục DUY NHẤT đi bậc nhỏ — di sản từ hồi hàng tiêu đề còn cao 72 và ô màu cần
+kéo lên gần hơn. Nay mọi mục đều đệm 24 nên lý do đó hết. Cách sửa: **bỏ hẳn đối số thứ 4** ở
+lời gọi (`fSection('Màu sắc', …, false, 16)` → `fSection('Màu sắc', …)`) chứ không đổi 16 thành
+24 — để "Màu sắc giống mọi mục" là điều code NÓI RA, không phải hai con số tình cờ bằng nhau;
+mai kia đổi mặc định thì nó tự đi theo.
+
+Đo lại mobile 375 + desktop 1440: **cả 7 hàng tiêu đề đều 64 (đệm 24/24)** — trước đó là
+6×64 + 1×48. Lưới ô màu giữ nguyên đệm `8/16/16/16`, các hàng trong cây giữ 42/34/34,
+panel desktop 420, không tràn ngang.
+
+**Hệ quả cho bộ component:** trục `size` của `filter-section-header` nay chỉ còn **một** giá trị
+sống (`lg`) — `size=sm` thành variant chết. Gộp với việc đệm đã lên 24 (mục 8.6), việc cần làm
+trong Figma là: đổi `size=lg` sang đệm 24 rồi **bỏ luôn trục `size`**, component còn mỗi trục
+`state=_closed|_open`. Chờ bạn gật rồi tôi sửa.
+
+### 8.8 Ô tìm thương hiệu (27/08, cùng đợt với 2 việc PLP khác)
+
+Mục *Thương hiệu* nay có ô nhập lọc tại chỗ ở đầu danh sách — 24 nhà mốt, cuộn tay
+tìm là việc lặp lại mỗi lần. Lọc **ẩn/hiện hàng trên DOM** nên hàng đang tick giữ
+nguyên trạng thái; so sánh sau khi **bỏ dấu + thường hoá**. Đã áp **cả 5 file**,
+kèm 2 khoá i18n. Chi tiết + 2 việc PLP còn lại (badge Pre-order trước tên, quick-add
+bỏ title): **`PLP-FEEDBACK-2026-08-27.md`**.
+
+### 8.5 Thấy được nhưng CHƯA sửa (ngoài phạm vi "cây filter")
+
+1. **Hàng tiêu đề panel.** Figma `filter-panel-header` title-row nay **56** (đệm 16, chữ 24 +
+   icon 16); code đang **64** vì nút đóng là `w-8 h-8` (32) kéo hàng cao lên. Lệch 8px.
+2. **Nút ± quá nhỏ.** Code `w-4 h-4` = **16×16**, Figma còn nhỏ hơn (**14×14**) — cả hai dưới
+   ngưỡng 24×24 của WCAG 2.5.8. Dự án đã có lối vá không xê dịch pixel nào
+   (`::before { inset: -Npx }` như `.hp-tab` · `.hp-sw__b`); áp được ngay khi bạn muốn.
+3. **Khe giữa các hàng chọn phẳng.** Code: *Thương hiệu* khe 0, còn *Ưu đãi · Độ cao giày ·
+   Khác* khe 4 (`gap-1`). Figma không dựng danh sách check-row nên **không có số để đối chiếu** —
+   giữ nguyên, chờ bạn chốt lấy 0 hay 4 cho cả bốn.

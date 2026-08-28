@@ -564,6 +564,10 @@ window.RESP = (function () {
      KHÔNG áp cho badge MANG NGHĨA MÀU: -% giảm giá (đỏ) · chấm đếm giỏ (đỏ) ·
      "Quà tặng" (đen) · pill trạng thái đơn. */
   .badge-label { background: var(--color-white); }
+  /* Bản ĐỨNG TRƯỚC TÊN của cùng badge (27/08/2026): nền phải là MẶT XÁM chứ không
+     trắng — badge trắng nằm trên thẻ trắng thì không đọc ra. Vẫn đúng §2.2 vì
+     #f2f2f2 là mặt thứ 2 có sẵn, không mở mặt mới. */
+  .badge-inline { background: var(--general-secondary); }
 
   /* ── Size / swatch chips ── */
   .chip { transition: border-color .18s ease, background .18s ease, color .18s ease; }
@@ -2426,10 +2430,6 @@ window.RESP = (function () {
      giữa ô nên không còn "mép chữ bên trái" nào để mà khớp: title căn thẳng mép
      trong của tấm, tức trùng mép NỀN HOVER của ô size đầu tiên. */
   html.skin-mt .pc-quick-head { display: flex; flex-direction: column; gap: 2px; text-align: left; }
-  html.skin-mt .pc-quick-act {
-    font-size: 14px; line-height: 20px; font-weight: 400; letter-spacing: .5px;
-    color: var(--general-foreground);
-  }
   html.skin-mt .pc-quick-eta {
     font-size: 12px; line-height: 16px; font-weight: 400; letter-spacing: .5px;
     color: var(--general-secondary-foreground);
@@ -3340,6 +3340,10 @@ const PRODUCT_INFO = [
    giá bán #d62845 Medium 14/20 + badge -%% nền #fef2f2 · giá gốc gạch ngang #737373
    Dùng chung cho: grid PLP, hàng gợi ý PDP, "Show more". */
 function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null } = {}) {
+  /* 27/08: 'Pre-order' THÔI làm nhãn đè ảnh — nó xuống đứng trước TÊN (xem dưới).
+     Chặn ngay tại đây, một chỗ, nên 6 nơi gọi vẫn truyền `badge: 'Pre-order'` như
+     cũ mà không phải sửa nơi nào. Nhãn khác (New Season…) vẫn đè ảnh bình thường. */
+  if (badge === 'Pre-order') badge = '';
   return `
   <div class="bg-card flex flex-col cursor-pointer group ${w}" data-product="${i}">
     <div class="relative w-full overflow-hidden bg-secondary" style="aspect-ratio:189/252">
@@ -3350,9 +3354,9 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
         const tags = [...(badge ? [badge] : []), ...(pillBadges || [])];
         return tags.length ? `
       <div class="pc-badges absolute top-2 left-0 flex flex-col items-start gap-1">
-        <!-- data-i18n-skip khi là wordmark "Pre-order": không có nó thì lượt dịch
-             ngược EN->VN biến badge thành "Đặt trước" (trùng chuỗi với nút) -->
-        ${tags.map(b => `<span ${b === 'Pre-order' ? 'data-i18n-skip ' : ''}class="badge-label px-1 text-[12px] font-medium leading-4 text-foreground">${b}</span>`).join('')}
+        <!-- Chồng này nay CHỈ còn nhãn chiến dịch (New Season / La Vacanza) —
+             'Pre-order' đã bị chặn ở đầu hàm và xuống đứng cạnh tên. -->
+        ${tags.map(b => `<span class="badge-label px-1 text-[12px] font-medium leading-4 text-foreground">${b}</span>`).join('')}
       </div>` : '';
       })()}
       <!-- LỚP SIZE HIỆN KHI RÊ CHUỘT VÀO ẢNH — chỉ bật ở bộ da Mytheresa
@@ -3380,10 +3384,15 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
            ~160px so với title; căn trái thì mặc định của lưới đã đúng.) */
         return `
       <div class="pc-quick" data-pc-sizes="${i}">
-        <div class="pc-quick-head">
-          <span class="pc-quick-act">${p.preorder ? 'Đặt trước' : 'Thêm vào giỏ hàng'}</span>
-          ${p.preorder ? `<span class="pc-quick-eta">Nhận hàng dự kiến <span class="pc-quick-date">${p.preorder}</span></span>` : ''}
-        </div>
+        <!-- BỎ TITLE HÀNH ĐỘNG (27/08/2026, lệnh user: *"quick add to cart sẽ không
+             có title ở phiên bản desktop"*) — đảo chốt 26/08 vốn thêm dòng
+             "Thêm vào giỏ hàng" / "Đặt trước" lên đầu tấm hover.
+             GIỮ dòng NGÀY NHẬN của hàng pre-order: lệnh chỉ gọi tên "title", mà
+             ngày giao là THÔNG TIN, không phải nhan đề. Không còn title thì đầu
+             tấm chỉ dựng khi thật sự có ngày để nói. -->
+        ${p.preorder ? `<div class="pc-quick-head">
+          <span class="pc-quick-eta">Nhận hàng dự kiến <span class="pc-quick-date">${p.preorder}</span></span>
+        </div>` : ''}
         <div class="pc-sizes${list.length < 4 ? ' is-few' : ''}">
           ${list.map(s => `<button class="pc-size press${s.oos ? ' is-oos' : ''}" data-pc-size="${s.label}"${s.oos ? ' data-oos="1"' : ''}>${s.label}</button>`).join('')}
         </div>
@@ -3397,7 +3406,21 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
     <div class="flex flex-col px-1 py-2">
       <div class="flex flex-col gap-0.5 pb-2">
         <p class="pc-brand text-[14px] font-medium leading-5 text-foreground truncate">${p.brand}</p>
-        <p class="text-[14px] leading-5 text-secondary-foreground truncate">${p.name}</p>
+        <!-- BADGE PRE-ORDER ĐỨNG TRƯỚC TÊN (27/08/2026, lệnh user + ảnh đính kèm).
+             Trước đây nó là nhãn ĐÈ LÊN ẢNH, chung chồng với New Season / La Vacanza.
+             Tách ra vì hai thứ nói hai chuyện: nhãn chiến dịch thuộc về ẢNH, còn
+             Pre-order nói TÌNH TRẠNG BÁN của chính SKU — chỗ của nó là cạnh tên.
+             Mặt xám #f2f2f2 (mặt thứ 2 của §2.2) chứ không phải trắng như bản đè
+             ảnh: trên thẻ nền trắng thì badge trắng vô hình.
+             NHÃN TIẾNG VIỆT LÀ "Đặt trước" (user chốt 27/08) nên badge THÔI mang
+             data-i18n-skip: nó nay là chuỗi dịch được, đi bằng khoá có sẵn
+             'Đặt trước' -> 'Pre-order'. Ghi chú cũ ("Pre-order là wordmark, phải
+             skip kẻo lượt dịch ngược biến nó thành Đặt trước") hết hiệu lực —
+             chính "Đặt trước" mới là bản tiếng Việt đúng. -->
+        <div class="flex items-center gap-1.5 min-w-0">
+          ${p.preorder ? `<span class="badge-inline px-1 text-[12px] font-medium leading-4 text-foreground shrink-0">Đặt trước</span>` : ''}
+          <p class="text-[14px] leading-5 text-secondary-foreground truncate min-w-0">${p.name}</p>
+        </div>
       </div>
       <div class="flex flex-col pb-2">
         <div class="flex gap-1 items-center">
@@ -4767,7 +4790,7 @@ function dkScreenPDP(kind) {
           ${gallery.map((s, gi) => `
           <button class="zoomable shimmer relative block w-full overflow-hidden bg-secondary" style="aspect-ratio:469/579" data-zoom="${A}${s}">
             <img src="${A}${s}" class="absolute inset-0 w-full h-full object-cover lazy" alt="${P.name}" onload="this.parentElement.classList.add('loaded')">
-            ${gi === 0 && P.preorder ? '<span data-i18n-skip class="absolute top-3 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
+            ${gi === 0 && P.preorder ? '<span class="absolute top-3 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Đặt trước</span>' : ''}
           </button>`).join('')}
         </div>
 
@@ -5767,7 +5790,7 @@ function screenCART() {
         <!-- alt mang tên hàng: ảnh này là ĐƯỜNG DẪN vào PDP (data-product) và là
              thứ phân biệt các dòng trong giỏ. -->
         <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="${c.brand} ${c.name}">
-        ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
+        ${c.preorder ? '<span class="absolute top-0 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Đặt trước</span>' : ''}
       </div>
       <div class="flex-1 min-w-0 flex flex-col justify-between">
         <div class="flex flex-col">
@@ -6686,7 +6709,7 @@ function screenCHECKOUT() {
               <div class="flex gap-3">
                 <span class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden">
                   <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
-                  ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Pre-order</span>' : ''}
+                  ${c.preorder ? '<span class="absolute top-0 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Đặt trước</span>' : ''}
                 </span>
                 <div class="flex-1 min-w-0 flex flex-col justify-between">
                   <div>
@@ -7303,9 +7326,9 @@ const frail = (depth) =>
 
 /* 1 dòng chọn ở nhánh con của Danh mục. depth 1 = Sub, 2 = Sub con. */
 const fsubRow = (label, depth, toggle = '') => `
-          <div class="flex gap-1 h-9">
+          <div class="flex gap-1">
             ${frail(depth)}
-            <button class="flex items-center gap-2 flex-1 min-w-0 press text-left" data-sub="${label}">
+            <button class="flex items-center gap-2 flex-1 min-w-0 py-2 press text-left" data-sub="${label}">
               ${fchk(false)}
               <span class="text-[14px] leading-5 text-foreground-alt truncate">${label}</span>
             </button>
@@ -7318,10 +7341,10 @@ const fsubRow = (label, depth, toggle = '') => `
    yêu cầu user: "filter mặc định closed hết"). Trước đây 6/7 mục mở sẵn nên
    panel dài lê thê, phải cuộn mới thấy hết tên các mục.
    Cấp con của Danh mục (.fcat) và cấp 3 (.fsub) VỐN ĐÃ đóng sẵn, không đụng. */
-function fSection(title, body, open = false, h = 72, count = '') {
+function fSection(title, body, open = false, pad = 24, count = '') {
   return `
   <div class="facc ${open ? 'open' : ''}" data-facc="${title}">
-    <button class="facc-trigger w-full px-4 flex items-center justify-between press" style="height:${h}px">
+    <button class="facc-trigger w-full px-4 flex items-center justify-between press" style="padding-top:${pad}px;padding-bottom:${pad}px">
       <span class="text-[16px] font-light leading-6 text-foreground">${title}${count ? `<span data-fscount="${count}"></span>` : ''}</span>
       <span class="facc-ico">${IcoMinus}</span>
       <span class="facc-ico-plus hidden">${IcoPlus}</span>
@@ -7456,7 +7479,7 @@ function filterBody(beauty, gender, heel) {
   const catSrc = beauty ? beautyCatTree() : catTreeFor(gender);
   const cats = catSrc.map(([cat, subs], i) => `
     <div class="fcat" data-cat="${i}">
-      <div class="h-11 flex items-center gap-2 pt-2">
+      <div class="flex items-center gap-2 pt-4 pb-2">
         <button class="fcat-check flex items-center gap-2 flex-1 min-w-0 press text-left" data-flabel="${cat}">
           ${fchk(false)}
           <span class="text-[14px] leading-5 text-foreground-alt truncate">${cat}</span>
@@ -7497,8 +7520,18 @@ function filterBody(beauty, gender, heel) {
   /* KHÔNG pre-tick thương hiệu nào (trước đây tick sẵn 2 ô cho đẹp ảnh). Từ khi
      bộ lọc lọc thật + nút Áp dụng đếm kết quả, 2 ô tick sẵn đó làm số kết quả mở
      ra đã là 0 và nút Đặt lại mất ý nghĩa. */
+  /* Ô TÌM THƯƠNG HIỆU (27/08/2026, lệnh user). Danh sách 24 nhà mốt và còn dài
+     ra — cuộn tay tìm một cái tên là việc phải làm mỗi lần mở mục này.
+     Lọc NGAY TRÊN DOM (ẩn/hiện hàng) chứ không dựng lại danh sách: hàng nào đang
+     tick vẫn giữ nguyên trạng thái, khỏi phải đồng bộ lại với plpFilters.
+     So sánh sau khi BỎ DẤU + thường hoá nên gõ "montblanc" hay "MONT" đều ra. */
+  const brandSearch = `
+    <div class="pb-2">
+      <input id="fBrandSearch" type="search" autocomplete="off" placeholder="Tìm thương hiệu" aria-label="Tìm thương hiệu"
+        class="w-full h-9 bg-background border border-border rounded-xs px-2 text-[14px] outline-none focus:border-primary transition-colors">
+    </div>`;
   const brands = FILTER_BRANDS.map(b => `
-    <button class="h-9 w-full flex items-center gap-2 pr-4 press text-left" data-brand="${b}">
+    <button class="w-full flex items-center gap-2 py-2 pr-4 press text-left" data-brand="${b}">
       ${fchk(false)}
       <span class="text-[14px] leading-5 text-foreground-alt truncate">${b}</span>
     </button>`).join('');
@@ -7533,7 +7566,7 @@ function filterBody(beauty, gender, heel) {
      Lưới pb-2; đáy mục do wrapper pb-4 ở fSection lo. */
   const sizeGroups = sizeGroupsFor(gender).map(([g, arr]) => `
     <div class="fcat fsize-group">
-      <button class="fcat-toggle w-full h-11 px-4 pt-2 flex items-center justify-between press text-left">
+      <button class="fcat-toggle w-full px-4 pt-4 pb-2 flex items-center justify-between press text-left">
         <span class="fsg-label text-[14px] leading-5 text-foreground-alt">${g}</span>
         <span class="w-4 h-4 flex items-center justify-center shrink-0">
           <span class="fcat-ico-plus">${IcoPlus}</span>
@@ -7547,12 +7580,12 @@ function filterBody(beauty, gender, heel) {
       </div></div>
     </div>`).join('');
   const promos  = FILTER_PROMOS.map(t => `
-    <button class="h-9 w-full flex items-center gap-2 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('');
+    <button class="w-full flex items-center gap-2 py-2 pr-4 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('');
   /* Độ cao giày — hàng checkbox dùng `data-other` để ăn sẵn handler tick +
      pickedLabels + syncFilterToDom, không thêm cơ chế mới. matchProducts nhận nhãn
      này rồi so với FILTER_HEELS nên nó LỌC THẬT. */
   const heels = FILTER_HEELS.map(([t]) => `
-    <button class="h-9 w-full flex items-center gap-2 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('');
+    <button class="w-full flex items-center gap-2 py-2 pr-4 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('');
   /* MỤC LỚN, CÙNG CẤP với Danh mục / Thương hiệu / Màu sắc / Kích thước (chốt lại
      26/08 chiều: "nó cùng level của Kích thước luôn, nhưng nằm vị trí dưới Kích
      thước và trên Khoảng giá"). Nên nó đi qua fSection() như mọi mục khác — cùng
@@ -7585,9 +7618,9 @@ function filterBody(beauty, gender, heel) {
     </div>`;
 
   return `
-    ${fSection('Danh mục', `<div class="px-4 pb-4">${cats}</div>`, false, 72, 'cat')}
-    ${fSection('Thương hiệu', `<div class="px-4 pb-6">${brands}</div>`, false, 72, 'brand')}
-    ${beauty ? '' : fSection('Màu sắc', `<div class="pt-2 px-4 pb-4 grid gap-2" style="grid-template-columns:repeat(4,1fr)">${colors}</div>`, false, 56)}
+    ${fSection('Danh mục', `<div class="px-4 pb-4">${cats}</div>`, false, 24, 'cat')}
+    ${fSection('Thương hiệu', `<div class="px-4 pb-6">${brandSearch}<div id="fBrandList">${brands}</div><p id="fBrandEmpty" class="hidden pt-2 text-[14px] leading-5 text-muted-foreground">Không tìm thấy thương hiệu</p></div>`, false, 24, 'brand')}
+    ${beauty ? '' : fSection('Màu sắc', `<div class="pt-2 px-4 pb-4 grid gap-2" style="grid-template-columns:repeat(4,1fr)">${colors}</div>`)}
     ${beauty
       ? fSection('Dung tích', sizeGrid(volumes))
       : fSection('Kích thước', `<div class="pb-4">${sizeGroups}</div>`)}
@@ -7596,7 +7629,7 @@ function filterBody(beauty, gender, heel) {
     ${fSection('Ưu đãi', `<div class="px-4 pb-6 flex flex-col gap-1">${promos}</div>`)}
     ${fSection('Khác', `<div class="px-4 pb-6 flex flex-col gap-1">
       ${['Chỉ hàng có sẵn','Đang giảm giá','Hàng mới về'].map(t => `
-        <button class="h-9 w-full flex items-center gap-2 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('')}
+        <button class="w-full flex items-center gap-2 py-2 pr-4 press text-left" data-other="${t}">${fchk(false)}<span class="text-[14px] leading-5 text-foreground-alt">${t}</span></button>`).join('')}
     </div>`, false)}`;
 }
 
@@ -7859,6 +7892,26 @@ function wireFilterBody(sh) {
       }
     });
   });
+
+  /* Ô tìm thương hiệu — lọc tại chỗ trên DOM (27/08/2026).
+     Bỏ dấu bằng NFD + xoá dải dấu kết hợp: "Dolce&Gabbana" không dấu nhưng người
+     dùng VN vẫn có thể gõ tiếng Việt không dấu ở ô này, và cách này miễn phí. */
+  const noAcc = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const brandBox = sh.querySelector('#fBrandSearch');
+  if (brandBox) {
+    const rows = [...sh.querySelectorAll('#fBrandList [data-brand]')];
+    const empty = sh.querySelector('#fBrandEmpty');
+    brandBox.addEventListener('input', () => {
+      const q = noAcc(brandBox.value.trim());
+      let hien = 0;
+      rows.forEach(r => {
+        const on = !q || noAcc(r.dataset.brand).includes(q);
+        r.classList.toggle('hidden', !on);
+        if (on) hien++;
+      });
+      if (empty) empty.classList.toggle('hidden', hien > 0);
+    });
+  }
 
   // màu — CHỌN NHIỀU: mỗi ô tự bật/tắt, không xoá lựa chọn của ô khác
   sh.querySelectorAll('.fcolor').forEach(b => {
@@ -8402,6 +8455,7 @@ const I18N = {
 
   // ── PDP ──
   'Thêm vào giỏ hàng':'Add to bag', 'Đặt trước':'Pre-order', 'Chọn kích thước':'Select size',
+  'Tìm thương hiệu':'Search brands', 'Không tìm thấy thương hiệu':'No brands found',
   'Chọn size':'Choose size', 'Hướng dẫn chọn size':'Size guide', 'Nhận thông báo':'Notify me',
   'Chỉ còn 01 sản phẩm':'Only 1 left in stock', 'Tạm hết hàng':'Out of stock', '*Tạm hết hàng':'*Out of stock',
   'Nhận thông báo khi có hàng':'Notify me when available', 'Đã đăng ký nhận thông báo':'You\u2019re on the list',
