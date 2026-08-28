@@ -1,4 +1,4 @@
-# PLP — 4 việc khách chốt 27/08/2026
+# PLP — 6 việc khách chốt 27–28/08/2026
 
 > Lệnh user (kèm ảnh chụp PLP desktop):
 > 1. *Badge Preorder sẽ nằm trước tên sản phẩm (như hình đính kèm)*
@@ -143,6 +143,77 @@ vì sao lưới `is-few` phải cho ô tự co: luật vẫn đứng (nhãn dài
 > *"Khăn lụa in họa tiết Broken Jewels **90×90cm**"*. Tên mang kích thước mà bảng
 > size lại là S/M/L thì đọc ra hơi nghịch. Tôi không tự đổi vì tên chảy vào cả giỏ
 > hàng, đơn hàng và tìm kiếm. Muốn bỏ đuôi `90×90cm` khỏi tên thì nói một tiếng.
+
+---
+
+## 5. Hai việc chốt thêm
+
+### 5.1 Nền badge "Đặt trước" lên một bậc
+
+`#f2f2f2` → **`#dfdfdf`** (`--general-border`). Tương phản của badge so với thẻ
+trắng: **1,12 → 1,33** — giờ mới đọc ra là một chip. Chữ trên badge vẫn 14,86:1.
+
+**Vì sao nhảy qua `#ececec`:** thang xám của bộ da vào-trang là
+`#ffffff · #f7f7f7 · #f2f2f2 · #ececec · #dfdfdf`. Nấc kế tiếp theo NGHĨA ĐEN là
+`#ececec`, nhưng nó chỉ cách `#f2f2f2` đúng **6/255** — chính khoảng cách mà §2.2
+đã gọi tên và khai tử khi bỏ `#f7f7f7` (*"hai xám cách nhau 5/255 là hai xám không
+phân biệt được"*). `#dfdfdf` là nấc **đầu tiên mắt đọc ra** (19/255).
+Đây là token VIỀN dùng làm MẶT — lệch §2.2 (chỉ có 2 mặt), **ghi danh tại chỗ**,
+phạm vi đúng một badge.
+
+### 5.2 Thuộc tính không còn sản phẩm phù hợp thì **ẨN**
+
+Lệnh user: *"các thuộc tính nào khi không còn sản phẩm phù hợp sẽ ẩn luôn nếu
+không thỏa điều kiện"* — **ẩn**, không phải disable. (Đã cân nhắc disable rồi user
+bác: bày một ô bấm không được vẫn là bày một ngõ cụt.)
+
+Quy tắc: **một lựa chọn biến mất khi tick nó vào bộ lọc HIỆN TẠI sẽ ra 0 sản
+phẩm.** Tính lại sau mỗi lần tick, nên panel co dần theo lựa chọn.
+
+**CHƯA TICK GÌ THÌ BÀY ĐỦ** (user chốt lại ngay sau lượt đầu): *"vì demo nên mặc
+định cứ show đầy đủ các cate đang hiện hữu, chỉ khi nào dùng bộ lọc thì mới ẩn"*.
+Lượt đầu tôi cho ẩn ngay từ lúc mở panel — sai về phía demo: mở ra mà thương hiệu
+chỉ còn 1 dòng thì khách không thấy được bộ facet mình dựng, tưởng bộ lọc sơ sài.
+Việc co danh sách chỉ có nghĩa khi nó **trả lời một lựa chọn**, nên nó chờ tới lúc
+có lựa chọn. Bỏ tick hết cũng qua đúng nhánh đó → danh sách tự bày lại đủ.
+
+**Hai điều phải đúng, sai một cái là bộ lọc tự bóp cổ mình:**
+
+1. **Đếm cho một ô thì BỎ QUA chính nhóm của nó.** Không thì tick "Versace" xong
+   mọi thương hiệu khác đếm ra 0 (một SP không mang 2 brand) → cả danh sách bay
+   sạch, còn trơ đúng ô vừa tick.
+2. **Ô đang tick không bao giờ ẩn** — ẩn rồi thì hết đường bỏ tick.
+
+Dùng lớp riêng `.f-gone`, **không** dùng chung `.hidden` của ô tìm thương hiệu: hai
+cơ chế cùng ẩn một hàng nhưng vì hai lẽ khác nhau, gộp một lớp thì cái này bật lại
+cái kia.
+
+**Đo trên PLP thời trang, cả 3 trạng thái:**
+
+| Nhóm | Mở panel (chưa tick) | Sau khi tick màu **Đen** | Bỏ tick hết |
+|---|---|---|---|
+| Thương hiệu | **24/24** | **1/24** (Versace) | **24/24** |
+| Màu sắc | **15/15** | **7/15** (Đen · Trắng · Nâu · Vàng đồng · Hồng · Xanh lá · Nhiều màu) | **15/15** |
+| Ưu đãi + Khác | **8/8** | **6/8** (mất *50% - 70%*, *Trên 70%*) | **8/8** |
+| Cây danh mục | 173 | **173 — không đụng** | 173 |
+| Size | 43 | **43 — không đụng** | 43 |
+
+Đo ở cả `index.html` @375 và `desktop.html` @1440, số khớp nhau.
+
+Cây danh mục và size thời trang **không co** vì `matchProducts` không đọc 2 facet
+đó (`PRODUCTS` không có trường phân loại, cũng không mang size thời trang) → chúng
+luôn đếm ra nguyên danh sách, không bao giờ chạm ngưỡng 0. Muốn cây cũng co thì
+phải **thêm trường phân loại cho 24 sản phẩm trước** — đó là việc DATA, không phải
+việc của hàm này.
+
+**Co dần theo lựa chọn, kiểm được:** tick *Đen* → nhóm màu giữ nguyên 7 ô (đúng
+luật 1), số kết quả (6). Tick *30% - 50%* → màu co còn **đúng "Đen"**, nhóm Khác
+mất *Hàng mới về*, ô đang tick vẫn hiện, số kết quả (1). Bỏ tick → mọi thứ trở lại.
+Mục nào sạch lựa chọn thì **ẩn cả mục** (chưa xảy ra với data hiện tại).
+
+Nhờ nhánh "chưa tick thì bày đủ" mà **ô tìm thương hiệu** thêm hôm qua vẫn có
+việc: mở panel ra là đủ 24 nhà mốt để gõ tìm. Chỉ sau khi người dùng đã lọc thì
+danh sách mới co lại theo hàng còn khớp.
 
 ---
 

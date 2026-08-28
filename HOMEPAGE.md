@@ -566,7 +566,65 @@ nên không bị ảnh hưởng: vẫn 2 mũi tên + 3 chấm.
 **Đo lại — vẫn 0 vi phạm** ở 375 và 1440: 7 tổ hợp typo · 5 cỡ · 1 tracking ·
 5 bậc mực (3 + đỏ + trắng) · 0 bo góc sai · 0 bóng · không tràn ngang.
 
-### 8.10 Còn mở
+### 8.10 Hero về BANNER THUẦN ẢNH (lệnh user 28/08: *"banner sẽ thuần image thôi"*)
+
+Khách gửi **tấm banner ngang thật đầu tiên** (Holiday Exclusive — nhân đôi điểm
+thưởng, voucher 1.200.000 ₫, 26.08 – 04.09). Tấm này đã mang sẵn **tiêu đề, dòng
+dẫn tiếng Việt, nút SHOP NOW và mốc thời gian** ngay trong tranh. Nên hero bỏ hẳn
+lớp chữ của code: chồng thêm chữ lên là hai giọng nói cùng lúc.
+
+**Đường đi của hero, ghi đủ để không ai lật lại:**
+
+| Ngày | Khuôn | Vì sao đổi |
+|---|---|---|
+| 24/08 | chia đôi editorial (ảnh phải, chữ trái) | kho ảnh toàn ảnh DỌC 1200×1484 |
+| 27/08 | khổ ngang, chữ đè nửa trái | user: *"để tạm ảnh đi, cần show ngang trước"* |
+| 27/08 | bỏ 2 nút CTA | user: *"hero banner không để CTA gì"* |
+| **28/08** | **thuần ảnh, 0 chữ của code** | có tranh thật, tranh tự mang thông điệp |
+
+**Ba thứ tự rụng theo, đều là đơn giản hoá:** hết cần `pointer-events:none` để lớp
+chữ khỏi nuốt cú vuốt · hết cần luật *"phần ba bên trái của ảnh phải trống và
+sáng"* (luật đó sinh ra vì §2.2 không có mặt phủ để đỡ chữ — nay không có chữ) ·
+hết cần tính lề trái theo rail. **Cả tấm là MỘT đường dẫn** — đúng chỗ bấm mà lượt
+gỡ CTA đã bỏ chrome nút đi.
+
+Công tắc *"bậc chữ hero 48/56"* ở bảng đề xuất cũng **gỡ luôn** (cả rule lẫn hàng
+trong bảng): nó là đề xuất sửa §1.2 dựng ngày 24/08, chỉ có nghĩa khi hero CÓ tiêu
+đề để phóng to. Không để nút chết. Đề xuất còn lại (nhãn eyebrow) vẫn nguyên.
+
+**Tỉ lệ khai một chỗ** — `--hero-ratio` trên `.hp-hero2`, để mọi slide cùng khổ;
+slider mà mỗi slide một chiều cao thì lúc trượt trang nhảy lên nhảy xuống.
+Desktop **8/3** (1440 → **534**), khổ nhỏ **4/3** (375 → **281**) vì banner 8/3 ở
+màn 375 chỉ cao 140px, chữ trong tranh không đọc nổi. *Số 8/3 đang là ƯỚC theo ảnh
+khách gửi — đo lại tệp thật rồi chỉnh.* Và cắt bản ngang cho mobile chỉ là **tạm**:
+đúng bài là khách gửi **bản dọc riêng** cho mobile.
+
+**`alt` nay gánh việc thật.** Chữ nằm trong pixel chứ không trong DOM, nên `alt`
+phải mô tả đủ nội dung chữ in trong tranh — đó là lúc duy nhất người dùng trình
+đọc màn hình nghe được thông điệp chiến dịch.
+
+### Lưới an toàn: tấm nào thiếu tệp thì RỚT khỏi slider
+
+Hero thuần ảnh nên một tệp thiếu là một **ô trống chiếm nguyên khổ banner** — tệ
+hơn hẳn việc bớt một slide. Mà tranh chiến dịch thì khách gửi từng đợt, thiếu tấm
+là chuyện sẽ còn lặp. Nên: nghe sự kiện `error` ở tầng track **với capture** (sự
+kiện `error` của `<img>` KHÔNG nổi bọt), rớt tấm hỏng khỏi danh sách rồi dựng lại;
+hết sạch tấm thì ẩn luôn cả mục hero. Còn 1 tấm thì tự ẩn mũi tên + hàng chấm.
+
+**Đo được ngay lúc này:** khai 3 slide, tệp `assets/hero-holiday.jpg` **chưa có**
+→ slider chạy **2 slide**, không hở lỗ nào. Lưu tệp vào là nó tự vào, không phải
+sửa code.
+
+**Hai slide đang chạy là TẠM** — ảnh sản phẩm DỌC bị cắt thành dải ngang, không
+phải tranh chiến dịch. Có banner thật thì **xoá 2 dòng đó** trong `HERO_SLIDES`
+(đã đánh dấu `tam: true`), đừng sửa.
+
+Kiểm chạy: hero `1425×534` ở 1440 và `375×281` ở 375 · `innerText` của hero
+**rỗng** (đúng: 0 chữ của code) · mỗi slide là một `<a>` · bấm mũi tên → track về
+`translateX(-100%)`, chấm và `inert` đi theo · mũi tên ẩn ở khổ nhỏ · không tràn
+ngang · bảng đề xuất còn đúng 1 công tắc.
+
+### 8.11 Còn mở
 
 * **Ảnh hero ngang thật** (≥ 2400×1200, chừa trống phần ba trái) — đang dùng ảnh
   dọc cắt tạm theo đúng lệnh "để tạm ảnh đi".

@@ -369,6 +369,11 @@ window.RESP = (function () {
   #filterSheet.open .fs-panel { transform: translateX(0); }
 
   /* accordion cấp 1 trong sheet */
+  /* ẨN thuộc tính không còn sản phẩm phù hợp (28/08/2026, lệnh user). Lớp
+     riêng, KHÔNG dùng chung `.hidden` của ô tìm thương hiệu: hai cơ chế cùng
+     ẩn một hàng nhưng vì hai lẽ khác nhau, gộp vào một lớp thì cái này bật lại
+     cái kia. `!important` để thắng `.flex`/`.grid` mà ô màu và chip đang mang. */
+  .f-gone { display: none !important; }
   .facc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s cubic-bezier(.22,1,.36,1); }
   .facc.open .facc-body { grid-template-rows: 1fr; }
   .acc .acc-ico-minus { display: none; } .acc .acc-ico-plus { display: block; }
@@ -5575,6 +5580,61 @@ function wireFilter() {
   /* Chân drawer: số kết quả trên nút Áp dụng + hiện/ẩn nút Đặt lại.
      Số đếm trên nhãn ĐANG TICK (chưa áp) nên người dùng thấy trước khi bấm;
      nút Đặt lại theo plpFilters (đã áp trước đó), không theo tick hiện tại. */
+  /* ── ẨN THUỘC TÍNH KHÔNG CÒN SẢN PHẨM PHÙ HỢP (28/08/2026, lệnh user) ──
+     Một lựa chọn biến mất khi tick nó vào bộ lọc HIỆN TẠI sẽ ra 0 sản phẩm.
+     Đây là lối chuẩn của e-commerce (facet count = 0 thì không bày) — và khác
+     hẳn "disable": bày một ô bấm không được vẫn là bày một ngõ cụt.
+
+     HAI ĐIỀU PHẢI ĐÚNG, sai một cái là bộ lọc tự bóp cổ mình:
+       1. Đếm cho một ô thì BỎ QUA chính nhóm của nó. Không thì tick "Versace"
+          xong mọi thương hiệu khác đếm ra 0 (một SP không mang 2 brand) và cả
+          danh sách bay sạch, còn trơ đúng ô vừa tick.
+       2. Ô ĐANG TICK không bao giờ ẩn — ẩn rồi thì hết đường bỏ tick.
+
+     Facet mà `matchProducts` KHÔNG đọc (cây danh mục, size thời trang, khoảng
+     giá) luôn đếm ra nguyên danh sách nên không bao giờ chạm ngưỡng 0 -> hàm
+     này không đụng tới chúng. Muốn cây danh mục cũng co theo thì phải thêm
+     trường phân loại cho PRODUCTS trước, đó là việc DATA. */
+  const facetOf = lbl => {
+    if (FILTER_BRANDS.includes(lbl)) return 'brand';
+    if (lbl === 'Nhiều màu' || FILTER_COLORS.some(([n]) => n === lbl)) return 'color';
+    if (FILTER_FLAGS.includes(lbl)) return 'flag';
+    if (FILTER_PROMOS.includes(lbl)) return 'promo';
+    if (typeof FILTER_HEELS !== 'undefined' && FILTER_HEELS.some(([n]) => n === lbl)) return 'heel';
+    if (FILTER_VOLUMES.includes(lbl)) return 'size';
+    return null;
+  };
+  const OPT_SEL = '[data-brand], .fcolor, [data-other], .fsize';
+  window.pruneEmptyFacets = () => {
+    const picked = pickedLabels();
+    const pool = plpProducts();
+    /* CHƯA TICK GÌ THÌ BÀY ĐỦ (28/08/2026, user chốt lại): *"vì demo nên mặc định
+       cứ show đầy đủ các cate đang hiện hữu, chỉ khi nào dùng bộ lọc thì mới ẩn"*.
+       Lý do đứng về phía demo: mở panel ra mà thương hiệu chỉ còn 1 dòng thì khách
+       không thấy được bộ facet mình dựng, tưởng bộ lọc sơ sài. Việc co danh sách
+       chỉ có nghĩa khi nó TRẢ LỜI một lựa chọn — nên nó chờ tới lúc có lựa chọn.
+       Bỏ tick hết thì cũng qua nhánh này, tức danh sách tự bày lại đủ. */
+    if (!picked.length) {
+      sh.querySelectorAll('.f-gone').forEach(e => e.classList.remove('f-gone'));
+      return;
+    }
+    sh.querySelectorAll(OPT_SEL).forEach(el => {
+      const lbl = (el.dataset.brand || el.dataset.color || el.dataset.other || el.dataset.size || '').trim();
+      const g = facetOf(lbl);
+      if (!g || picked.includes(lbl)) { el.classList.remove('f-gone'); return; }
+      const others = picked.filter(l => facetOf(l) !== g);
+      el.classList.toggle('f-gone', matchProducts(pool, others.concat(lbl)).length === 0);
+    });
+    /* Mục nào sạch lựa chọn thì ẩn cả mục — để trơ hàng tiêu đề với một ngăn
+       rỗng bên dưới còn khó hiểu hơn là không có mục đó. Mục KHÔNG chứa lựa
+       chọn nào thuộc diện xét (Danh mục, Khoảng giá) thì bỏ qua. */
+    sh.querySelectorAll('.facc').forEach(acc => {
+      const opts = acc.querySelectorAll(OPT_SEL);
+      if (!opts.length) return;
+      acc.classList.toggle('f-gone', ![...opts].some(e => !e.classList.contains('f-gone')));
+    });
+  };
+
   window.syncFilterFooter = () => {
     const cnt = sh.querySelector('#filterApplyCount');
     if (cnt) {
@@ -5602,6 +5662,7 @@ function wireFilter() {
     });
     syncSectionCounts();
     syncFilterFooter();
+    pruneEmptyFacets();          /* mở drawer ra là đã đúng: mục rỗng không bày */
   };
 
   sh.querySelector('.fs-backdrop').addEventListener('click', closeFilter);
@@ -5624,7 +5685,7 @@ function wireFilter() {
     syncFilterFooter();
     toast('Đã đặt lại bộ lọc');
   });
-  sh.addEventListener('click', () => setTimeout(() => { syncSectionCounts(); syncFilterFooter(); }, 0));
+  sh.addEventListener('click', () => setTimeout(() => { syncSectionCounts(); syncFilterFooter(); pruneEmptyFacets(); }, 0));
 
   renderFilterBody();   // dựng thân theo ngành hàng của PLP đang xem
 }
