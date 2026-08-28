@@ -236,4 +236,7 @@ ra Ferragamo · không tràn ngang.
    thì đó là **vai mặt tối thứ 4** ngoài 3 vai §2.2 đang cấp (nút · backdrop ·
    promo bar), phải **ghi danh ngoại lệ** trong `STYLE-RULES.md` như đã làm với
    chip `-%` của `skin-li`. Chờ bạn chốt.
-2. **3 bản thử skin** chưa có badge trước tên (thiếu `.badge-label`/`.badge-inline`).
+2. ~~**3 bản thử skin** chưa có badge trước tên (thiếu `.badge-label`/`.badge-inline`)~~ —
+   ✅ **xong 28/08** trong đợt rà soát PLP: badge dùng mặt pre-order sẵn có của từng skin
+   (`tag-note` / `bg-secondary`), kèm đổi nhãn 'Đặt trước' + bỏ `data-i18n-skip` ở cả PDP/giỏ/checkout
+   của 3 fork. Chi tiết: `PLP-RASOAT-2026-08-28.md` mục 4.

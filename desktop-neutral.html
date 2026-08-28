@@ -568,6 +568,10 @@ window.RESP = (function () {
        không nền — markup đã có hover:text-foreground, không cần rule thêm */
   .ghost-hover { transition: background-color .15s ease; }
   .ghost-hover:hover { background: var(--unofficial-ghost-hover); color: var(--general-primary); }
+  /* Hover cho lựa chọn menu Sắp xếp (port 28/08 từ bản chuẩn) — fork này không
+     có khối khuôn-chung-lớp-nổi kiểu skin-mt nên rule đứng cạnh họ ghost-hover,
+     cùng token nấc nhún nền. */
+  #sortMenu .sort-opt:hover, #sortMenu .sort-opt:focus-visible { background: var(--unofficial-ghost-hover); }
   /* ── Nav: thang mực 3 bậc (chỉ đạo user 13/08/2026, theo component) ──
      Khách thấy default và đang chọn chưa khác nhau đủ. Đã đọc thật component
      `Button` (10:11763) và `Header` (2171:13006) trong Figma qua MCP:
@@ -989,6 +993,10 @@ const PRODUCT_INFO = [
    giá bán #d62845 Medium 14/20 + badge -%% nền #fef2f2 · giá gốc gạch ngang #737373
    Dùng chung cho: grid PLP, hàng gợi ý PDP, "Show more". */
 function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null } = {}) {
+  /* 28/08 (port chốt 27/08 của bản chuẩn): 'Pre-order' THÔI làm nhãn đè ảnh —
+     nó xuống đứng trước TÊN, cùng hàng. Chặn một chỗ nên mọi nơi gọi vẫn
+     truyền badge như cũ. Nhãn khác (New Season…) vẫn đè ảnh bình thường. */
+  if (badge === 'Pre-order') badge = '';
   return `
   <div class="bg-card flex flex-col cursor-pointer group ${w}" data-product="${i}">
     <div class="relative w-full overflow-hidden bg-secondary" style="aspect-ratio:189/252">
@@ -1010,14 +1018,22 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
     <div class="flex flex-col px-1 py-2">
       <div class="flex flex-col gap-0.5 pb-2">
         <p class="text-[14px] font-medium leading-5 text-foreground truncate">${p.brand}</p>
-        <p class="text-[14px] leading-5 text-secondary-foreground truncate">${p.name}</p>
+        <!-- Badge pre-order đứng TRƯỚC TÊN, cùng hàng (port 28/08 từ bản chuẩn,
+             chốt khách 27/08): nhãn chiến dịch thuộc về ẢNH, còn pre-order nói
+             TÌNH TRẠNG BÁN của SKU — chỗ của nó là cạnh tên. Dùng lớp tag-note
+             sẵn có của skin này; chuỗi 'Đặt trước' dịch được qua khoá I18N. -->
+        <div class="flex items-center gap-1.5 min-w-0">
+          ${p.preorder ? `<span class="tag-note px-1 text-[12px] font-medium leading-4 shrink-0">Đặt trước</span>` : ''}
+          <p class="text-[14px] leading-5 text-secondary-foreground truncate w-full min-w-0">${p.name}</p>
+        </div>
       </div>
       <div class="flex flex-col pb-2">
+        <!-- whitespace-nowrap (port 28/08): chuỗi giá có space thường trước ₫, hàng flex thiếu chỗ là ký hiệu ₫ rớt xuống dòng riêng -->
         <div class="flex gap-1 items-center">
-          <p class="text-[14px] font-medium leading-5 ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
+          <p class="whitespace-nowrap text-[14px] font-medium leading-5 ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
           ${p.off ? `<span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0">${p.off}</span>` : ''}
         </div>
-        <p class="text-[12px] leading-4 text-muted-foreground line-through ${p.was ? '' : 'invisible'}">${p.was || '&nbsp;'}</p>
+        <p class="whitespace-nowrap text-[12px] leading-4 text-muted-foreground line-through ${p.was ? '' : 'invisible'}">${p.was || '&nbsp;'}</p>
       </div>
       ${(!noColors && p.colors && p.colors.length) ? `
       <!-- Frame 427319709: gap 8, mỗi ô 20×20 (viền 1px khi chọn) bọc chấm màu 16×16 -->
@@ -1773,20 +1789,31 @@ const PLP_TOTAL = 152;
    Figma: Frame 26 wrap gap-x 4px / row-gap 16px (4 cột card 345×590 · 3 cột card 461×695),
    _Component-SortBar (2237:18725): "Bạn đã xem X trong Y sản phẩm" + track 240×2,
    Frame 46: nút Xem thêm Outline Large canh giữa, py 16. */
+/* Mẫu số của thanh tiến độ (port 28/08 từ bản chuẩn): KHÔNG lọc thì là catalog
+   giả lập 152, ĐANG LỌC thì là chính số kết quả khớp — nói "đã xem 1 trong 152"
+   khi bộ lọc chỉ có thể ra 1 là tự mâu thuẫn với con số "N sản phẩm" ở heading.
+   Tử số kẹp về mẫu số vì Xem thêm append thẻ TRÙNG — đủ lượt bấm là vượt tổng. */
+function plpProgressTotal(listLen) {
+  return plpFilters.length ? listLen : PLP_TOTAL;
+}
 function dkProductGrid(list, card) {
+  const total = plpProgressTotal(list.length);
+  const seen = Math.min(list.length, total);
   return `
   <div class="px-6">
     <div id="plpGrid" class="grid ${plpCols === '3' ? 'grid-cols-3' : 'grid-cols-4'} gap-x-1 py-2" style="row-gap:16px">
       ${plpGridInner(list, card)}
     </div>
   </div>
-  <div id="plpProgress" class="flex flex-col items-center gap-6 pt-10">
-    <p data-plp-seen class="text-[14px] leading-5 text-muted-foreground">Bạn đã xem ${list.length} trong ${PLP_TOTAL} sản phẩm</p>
+  <!-- 0 kết quả (bộ lọc lọc sạch) thì tiến độ + nút Xem thêm ẩn từ template —
+       renderPlpGrid toggle lại khi bộ lọc đổi sau đó (port 28/08). -->
+  <div id="plpProgress" class="flex flex-col items-center gap-6 pt-10 ${list.length ? '' : 'hidden'}">
+    <p data-plp-seen class="text-[14px] leading-5 text-muted-foreground">Bạn đã xem ${seen} trong ${total} sản phẩm</p>
     <div class="h-0.5 bg-border" style="width:240px">
-      <div data-plp-bar class="h-full bg-primary" style="width:${Math.min(100, Math.round(list.length / PLP_TOTAL * 100))}%;transition:width .5s ease"></div>
+      <div data-plp-bar class="h-full bg-primary" style="width:${total ? Math.min(100, Math.round(seen / total * 100)) : 0}%;transition:width .5s ease"></div>
     </div>
   </div>
-  <div class="flex justify-center py-4">
+  <div class="flex justify-center py-4 ${list.length ? '' : 'hidden'}">
     <button id="showMore" class="h-12 px-6 rounded-xs border border-border bg-background text-[16px] leading-5 text-foreground btn-o press flex items-center gap-2">Xem thêm</button>
   </div>`;
 }
@@ -1795,7 +1822,8 @@ function dkProductGrid(list, card) {
 function screenPLPList() {
   const m = plpMode;
   const list = plpProducts();
-  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'New' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
+  // badge đọc từ DATA (17/08), port 28/08
+  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
   // Figma 04/05: breadcrumb luôn 2 đoạn ("Trang chủ • Nam") — thiếu crumbs thì lấy tiêu đề;
   // riêng chế độ tìm kiếm dùng nhãn ngắn "Kết quả tìm kiếm" (Figma 01)
   const tail = (m.crumbs && m.crumbs.length) ? m.crumbs
@@ -1835,7 +1863,8 @@ function screenPLPList() {
 
 function screenPLP() {
   if (plpMode.type !== 'brand') return screenPLPList();
-  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'New' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
+  // badge đọc từ DATA (17/08), port 28/08
+  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
 
   return `
   <div class="w-full" data-scroller>
@@ -1951,10 +1980,11 @@ function searchHistoryHTML() {
   </section>`;
 }
 
-/* Khối sản phẩm ngang — "Trending item" khi chưa có lịch sử, "Sản phẩm nổi bật"
-   khi đã có; fixedTitle dùng cho pane no-result (không gắn id động). */
+/* Khối sản phẩm ngang — "Sản phẩm thịnh hành" khi chưa có lịch sử, "Sản phẩm nổi
+   bật" khi đã có; fixedTitle dùng cho pane no-result (không gắn id động).
+   28/08: hết hardcode EN "Trending item" — chuỗi VI + khoá I18N mới. */
 function searchTrendingHTML(fixedTitle = '') {
-  const title = fixedTitle || (searchHistory.length ? 'Sản phẩm nổi bật' : 'Trending item');
+  const title = fixedTitle || (searchHistory.length ? 'Sản phẩm nổi bật' : 'Sản phẩm thịnh hành');
   return `
   <section class="flex flex-col gap-2 py-4">
     <h2 ${fixedTitle ? '' : 'id="trendTitle" '}class="px-4 text-[12px] leading-4 text-muted-foreground">${title}</h2>
@@ -2154,13 +2184,16 @@ const PDP_DATA = {
     sizes: pdpSizes(),
     tabs: pdpTabs(0),
   },
+  /* 28/08 (lệnh user): BỎ cờ `dropdown` — mọi kind chọn size bằng CHIP GRID,
+     nhánh dropdown trong dkScreenPDP đã gỡ. pdp5/pdp6 nhận thêm lowStock vì
+     cùng bộ pdpSizes() với pdp/pdp4 (IT 42 nằm trong SIZE_LOW_STOCK). */
   pdp2: {
-    idx: 1, dropdown: true, installment: '1.301.000 ₫',
+    idx: 1, installment: '1.301.000 ₫',
     sizes: ['S', 'M', 'L'].map(label => ({ label, oos: '' })),   /* S/M/L thay kích thước — 27/08, xem SIZE_SHEET_OPTIONS.pdp2 */
     tabs: pdpTabs(1, { specs: true, returnTab: ['Chính sách đổi trả', 'Đổi hàng miễn phí trong 7 ngày với sản phẩm còn nguyên tem mác.'] }),
   },
   pdp3: {
-    idx: 2, dropdown: true, installment: '742.000 ₫',
+    idx: 2, installment: '742.000 ₫',
     sizes: [{ label: 'Onesize', oos: '' }],
     tabs: pdpTabs(2),
   },
@@ -2170,12 +2203,12 @@ const PDP_DATA = {
     tabs: pdpTabs(3),
   },
   pdp5: {
-    idx: 4, dropdown: true, installment: '742.000 ₫',
+    idx: 4, lowStock: true, installment: '742.000 ₫',
     sizes: pdpSizes(),
     tabs: pdpTabs(4),
   },
   pdp6: {
-    idx: 5, dropdown: true, noColors: true, installment: '742.000 ₫',
+    idx: 5, lowStock: true, noColors: true, installment: '742.000 ₫',
     sizes: pdpSizes(),
     tabs: pdpTabs(5),
   },
@@ -2207,14 +2240,11 @@ function dkScreenPDP(kind) {
       <!-- split: gallery trái + info sticky phải -->
       <div class="flex items-start px-6 pt-4">
         <div id="pdpGallery" class="flex-1 min-w-0 grid grid-cols-2 gap-1">
-          <!-- Badge "Pre-order" đè góc trên trái Ô ẢNH ĐẦU — desktop không có chồng
-               pill New Season như mobile nên badge gắn thẳng vào tile; style pill
-               giữ đúng khuôn New Season (bg-secondary, 12 medium). data-i18n-skip:
-               wordmark giữ nguyên ở mọi ngôn ngữ. -->
+          <!-- 28/08: badge "Đặt trước" THÔI đè ảnh — xuống đứng trước TÊN sản phẩm
+               (xem header), đúng khuôn thẻ PLP 27/08. Ảnh gallery không còn nhãn. -->
           ${gallery.map((s, gi) => `
           <button class="zoomable shimmer relative block w-full overflow-hidden bg-secondary" style="aspect-ratio:469/579" data-zoom="${A}${s}">
             <img src="${A}${s}" class="absolute inset-0 w-full h-full object-cover lazy" alt="${P.name}" onload="this.parentElement.classList.add('loaded')">
-            ${gi === 0 && P.preorder ? '<span data-i18n-skip class="absolute top-3 left-0 tag-note px-2 py-1 text-[12px] font-medium leading-4">Pre-order</span>' : ''}
           </button>`).join('')}
         </div>
 
@@ -2223,7 +2253,13 @@ function dkScreenPDP(kind) {
           <div class="flex flex-col pb-4 rise">
             <div class="flex flex-col gap-2 pb-4">
               <h1 class="text-[24px] font-light leading-8 text-foreground">${P.brand}</h1>
-              <p class="text-[14px] leading-5 text-foreground-alt">${P.name}</p>
+              <!-- Badge Pre-order ĐỨNG TRƯỚC TÊN, cùng hàng — đúng khuôn thẻ PLP
+                   27/08 (tag-note của skin này, nhãn dịch được 'Đặt trước').
+                   28/08 dời từ ô ảnh đầu gallery xuống đây theo lệnh user. -->
+              <div class="flex items-center gap-1.5 min-w-0">
+                ${P.preorder ? `<span class="tag-note px-1 text-[12px] font-medium leading-4 shrink-0">Đặt trước</span>` : ''}
+                <p class="text-[14px] leading-5 text-foreground-alt">${P.name}</p>
+              </div>
             </div>
             <div class="flex flex-col gap-2">
               <div class="flex gap-1.5 items-center">
@@ -2268,21 +2304,16 @@ function dkScreenPDP(kind) {
                 <p class="text-[12px] font-medium leading-4 text-foreground">Kích thước</p>
                 <button data-size-chart aria-label="Mở bảng kích thước" class="text-[12px] leading-4 text-foreground press">Bảng kích thước →</button>
               </div>
-              ${D.dropdown ? `
-              <!-- Select & Combobox (Figma 3111:33591, 358×44 r4). Bản desktop xổ
-                   DROPDOWN ngay dưới ô chọn (không mở popup giữa màn như mobile) —
-                   danh sách dựng trong wire(), nguồn SIZE_SHEET_OPTIONS. -->
-              <div class="relative" data-size-dd>
-                <button type="button" data-size-trigger="${kind}" aria-expanded="false" aria-haspopup="listbox" class="w-full h-11 bg-input border border-border rounded-sm pl-3 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left btn-o press">
-                  <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
-                </button>
-                <span data-size-caret class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200">${I.chevD('var(--general-primary)')}</span>
-                <div data-size-list role="listbox" class="hidden absolute left-0 right-0 top-full mt-1 max-h-[260px] overflow-y-auto no-scrollbar bg-background border border-border rounded-sm shadow-lg z-40"></div>
-              </div>` : `
-              <div class="grid gap-2 ${D.sizes.length > 2 ? 'grid-cols-4' : 'grid-cols-2'}">
+              <!-- CHIP GRID cho CẢ 6 kind — 28/08 bỏ dropdown (lệnh user); nhánh
+                   [data-size-dd] cũ trong wire() đã gỡ. Nguồn size vẫn là
+                   PDP_DATA[kind].sizes, một chỗ khai cho card + PDP.
+                   LUÔN 4 cột (lệnh user 28/08): chip Onesize của pdp3 phải bằng
+                   đúng cỡ ô size thường — nhánh grid-cols-2 cho danh sách ngắn
+                   từng làm ô đó rộng gấp đôi. -->
+              <div class="grid gap-2 grid-cols-4">
                 ${D.sizes.map((s, si) => `
                 <button class="chip w-full h-9 px-2 rounded-xs text-[14px] font-medium border ${si === 0 && !s.oos ? 'on border-primary' : 'border-border'} ${s.oos ? 'off' : 'text-foreground'}" data-size="${s.label}" ${s.oos ? `data-oos="${s.oos}"` : ''}>${s.label}</button>`).join('')}
-              </div>`}
+              </div>
               ${D.lowStock ? `
               <!-- Mặc định ẨN — chỉ hiện khi bấm đúng size sắp hết hàng (SIZE_LOW_STOCK, xem setCta) -->
               <p id="lowStock" class="hidden text-[12px] font-medium leading-4 text-warning flex items-center gap-1.5">
@@ -2329,8 +2360,8 @@ function dkScreenPDP(kind) {
         </div>
       </div>
 
-      <!-- 3 carousel: 5 card/hàng -->
-      ${[['Gợi ý mua kèm', 5], ['Đã xem gần đây', 5], ['Sản phẩm tương tự', 5]].map(([title, n]) => `
+      <!-- 2 carousel: 5 card/hàng (28/08 bỏ hẳn section "Đã xem gần đây" — lệnh user) -->
+      ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 5]].map(([title, n]) => `
       <div class="px-6 py-8 flex flex-col gap-6 reveal">
         <p class="text-[18px] font-medium leading-7 text-foreground">${title}</p>
         <div class="grid grid-cols-5 gap-2">
@@ -3145,7 +3176,7 @@ function screenCART() {
       </div>
       <div class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
         <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
-        ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 tag-note px-2 py-1 text-[12px] font-medium leading-4">Pre-order</span>' : ''}
+        ${c.preorder ? '<span class="absolute top-0 left-0 tag-note px-2 py-1 text-[12px] font-medium leading-4">Đặt trước</span>' : ''}
       </div>
       <div class="flex-1 min-w-0 flex flex-col justify-between">
         <div class="flex flex-col">
@@ -4001,7 +4032,7 @@ function screenCHECKOUT() {
               <div class="flex gap-3">
                 <span class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden">
                   <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
-                  ${c.preorder ? '<span data-i18n-skip class="absolute top-0 left-0 tag-note px-2 py-1 text-[12px] font-medium leading-4">Pre-order</span>' : ''}
+                  ${c.preorder ? '<span class="absolute top-0 left-0 tag-note px-2 py-1 text-[12px] font-medium leading-4">Đặt trước</span>' : ''}
                 </span>
                 <div class="flex-1 min-w-0 flex flex-col justify-between">
                   <div>
@@ -4310,7 +4341,10 @@ function colorBucketOf(hex) {
   if (c.s >= NEUTRAL_S && bestHue > HUE_TOL) best = null;   // ngưỡng xét trên HUE, không phải score
   return (__colorBucket[hex] = best);
 }
-const FILTER_FLAGS = ['Đang giảm giá', 'Hàng mới về'];
+/* 'Chỉ hàng có sẵn' vào danh sách LỌC THẬT (28/08, port bản chuẩn): demo có
+   hàng pre-order (chưa có sẵn) nên facet này có việc — tick vào là loại SP
+   mang p.preorder. Trước đây matchProducts không đọc nó: facet trang trí. */
+const FILTER_FLAGS = ['Đang giảm giá', 'Hàng mới về', 'Chỉ hàng có sẵn'];
 /* labels -> danh sách {p,i} đã lọc. Dùng cho CẢ số trên nút Áp dụng (nhãn đang
    tick, chưa áp) lẫn lưới (nhãn đã áp) nên 2 con số không thể lệch nhau. */
 /* Khối "0 kết quả" — PHẢI dùng được ở cả 2 đường vẽ lưới: template lúc render màn
@@ -4368,6 +4402,7 @@ function matchProducts(list, labels) {
     }
     if (flags.includes('Đang giảm giá') && !p.off) return false;
     if (flags.includes('Hàng mới về') && !/new/i.test(p.tag || '')) return false;
+    if (flags.includes('Chỉ hàng có sẵn') && p.preorder) return false;   // lọc thật 28/08
     /* Dung tích LỌC THẬT: 8 sản phẩm beauty trong PRODUCTS có field `sizes` trùng
        khít FILTER_VOLUMES. (Size quần áo/giày thì vẫn không lọc được — PRODUCTS
        không mang size thời trang, chỉ PDP_DATA có.) */
@@ -4651,15 +4686,17 @@ function filterBody(beauty, gender, heel) {
 
   const price = `
     <div class="px-4 pb-6 flex flex-col gap-6">
+      <!-- w-full min-w-0 trên input + min-w-0 trên label + shrink-0 dấu gạch
+           (28/08): input không co được là hàng tràn ngang panel. -->
       <div class="flex items-end gap-3">
-        <label class="flex-1 flex flex-col gap-1">
+        <label class="flex-1 min-w-0 flex flex-col gap-1">
           <span class="text-[12px] leading-4 text-muted-foreground">Từ</span>
-          <input inputmode="numeric" value="0" class="h-9 bg-input border border-border rounded-xs px-2 text-[14px] outline-none focus:border-primary transition-colors">
+          <input inputmode="numeric" value="0" class="w-full min-w-0 h-9 bg-input border border-border rounded-xs px-2 text-[14px] outline-none focus:border-primary transition-colors">
         </label>
-        <span class="w-2.5 h-px bg-border mb-4"></span>
-        <label class="flex-1 flex flex-col gap-1">
+        <span class="w-2.5 h-px bg-border mb-4 shrink-0"></span>
+        <label class="flex-1 min-w-0 flex flex-col gap-1">
           <span class="text-[12px] leading-4 text-muted-foreground">Đến</span>
-          <input inputmode="numeric" value="50,000,000" class="h-9 bg-input border border-border rounded-xs px-2 text-[14px] outline-none focus:border-primary transition-colors">
+          <input inputmode="numeric" value="50,000,000" class="w-full min-w-0 h-9 bg-input border border-border rounded-xs px-2 text-[14px] outline-none focus:border-primary transition-colors">
         </label>
       </div>
       <div class="flex flex-col gap-3">
@@ -4872,6 +4909,14 @@ function wireFilter() {
     return null;
   };
   const OPT_SEL = '[data-brand], .fcolor, [data-other], .fsize';
+  /* f-gone vừa đổi thì dòng "Không tìm thấy thương hiệu" phải tính lại: hai cơ
+     chế ẩn (tìm kiếm .hidden / 0-kết-quả .f-gone) cùng quyết định "còn gì để
+     thấy". Bắn lại event input là dùng đúng phép đếm của chính ô tìm, không
+     nhân đôi logic; chỉ bắn khi ô đang có chữ. (Port 28/08 từ bản chuẩn.) */
+  const syncBrandEmptyLine = () => {
+    const bb = sh.querySelector('#fBrandSearch');
+    if (bb && bb.value.trim()) bb.dispatchEvent(new Event('input'));
+  };
   window.pruneEmptyFacets = () => {
     const picked = pickedLabels();
     const pool = plpProducts();
@@ -4883,6 +4928,7 @@ function wireFilter() {
        Bỏ tick hết thì cũng qua nhánh này, tức danh sách tự bày lại đủ. */
     if (!picked.length) {
       sh.querySelectorAll('.f-gone').forEach(e => e.classList.remove('f-gone'));
+      syncBrandEmptyLine();
       return;
     }
     sh.querySelectorAll(OPT_SEL).forEach(el => {
@@ -4900,6 +4946,7 @@ function wireFilter() {
       if (!opts.length) return;
       acc.classList.toggle('f-gone', ![...opts].some(e => !e.classList.contains('f-gone')));
     });
+    syncBrandEmptyLine();
   };
 
   window.syncFilterFooter = () => {
@@ -4945,6 +4992,11 @@ function wireFilter() {
     sh.querySelectorAll('.chk.on').forEach(c => c.classList.remove('on'));
     sh.querySelectorAll('.fsize.on').forEach(c => { c.classList.remove('on'); c.classList.replace('border-primary', 'border-border'); });
     sh.querySelectorAll('.fcolor.on').forEach(b => setColorChip(b, false));
+    /* Đặt lại phải dọn cả Ô TÌM thương hiệu: không thì panel "đã đặt lại" mà
+       danh sách brand vẫn bị lọc bởi query cũ. Bắn event input để đi đúng
+       handler sẵn có (port 28/08). */
+    const bb = sh.querySelector('#fBrandSearch');
+    if (bb && bb.value) { bb.value = ''; bb.dispatchEvent(new Event('input')); }
     plpFilters = [];
     refreshActiveFilters(document);
     renderPlpGrid(document, { skeleton: true });
@@ -5016,7 +5068,9 @@ function wireFilterBody(sh) {
       rows.forEach(r => {
         const on = !q || noAcc(r.dataset.brand).includes(q);
         r.classList.toggle('hidden', !on);
-        if (on) hien++;
+        /* Hàng khớp query nhưng đang .f-gone (ẩn vì 0 kết quả với bộ lọc hiện
+           tại) thì người dùng KHÔNG thấy — không được tính là "còn hàng" (28/08). */
+        if (on && !r.classList.contains('f-gone')) hien++;
       });
       if (empty) empty.classList.toggle('hidden', hien > 0);
     });
@@ -5197,7 +5251,7 @@ function refreshSearchHistory(root) {
   // tiêu đề khối trending đổi theo còn/hết lịch sử tìm kiếm
   const t = root.querySelector('#trendTitle');
   if (t) {
-    t.textContent = searchHistory.length ? 'Sản phẩm nổi bật' : 'Trending item';
+    t.textContent = searchHistory.length ? 'Sản phẩm nổi bật' : 'Sản phẩm thịnh hành';
     localizeNew(t.parentElement);
   }
 }
@@ -5242,11 +5296,33 @@ function wireSearchPane(root, pane) {
 }
 
 function wireProductCards(root) {
+  /* IDEMPOTENT qua data-wired (port 28/08): hàm này nay được gọi trên lưới ĐANG
+     SỐNG (Xem thêm append thẻ mới cạnh thẻ cũ) — không có cờ thì thẻ cũ bị gắn
+     trùng listener, 1 click chạy 2 lần. Lưới dựng lại bằng innerHTML thì node
+     mới tinh nên cờ không cản gì. */
   root.querySelectorAll('[data-product]').forEach(el => {
+    if (el.dataset.wired) return;
+    el.dataset.wired = '1';
     el.addEventListener('click', e => {
       const qa = e.target.closest('.quick-add');
       if (qa) { if (window.__openQuickAdd) window.__openQuickAdd(+qa.dataset.quick); return; }
       go(el.dataset.product === '1' ? 'pdp2' : el.dataset.product === '2' ? 'pdp3' : el.dataset.product === '3' ? 'pdp4' : el.dataset.product === '4' ? 'pdp5' : el.dataset.product === '5' ? 'pdp6' : 'pdp');  // SP#2..6 -> bản riêng
+    });
+  });
+
+  /* Swatch trên card — DỌN VỀ ĐÂY từ wire() (28/08, khuôn bản chuẩn): lưới PLP
+     được dựng lại bằng renderPlpGrid (áp/xoá bộ lọc, đổi sắp xếp) mà chỗ đó chỉ
+     gọi hàm này, nên để swatch bên wire() là card mới mất sạch handler chọn màu.
+     Hành vi giữ nguyên bản fork: chỉ dời viền chọn (chưa có đổi ảnh theo màu). */
+  root.querySelectorAll('[data-swatches]').forEach(rw => {
+    if (rw.dataset.wired) return;
+    rw.dataset.wired = '1';
+    rw.addEventListener('click', ev => {
+      const btn = ev.target.closest('.cw');
+      if (!btn) return;
+      ev.stopPropagation();
+      rw.querySelectorAll('.cw').forEach(c => { c.classList.remove('border-primary'); c.classList.add('border-transparent'); });
+      btn.classList.remove('border-transparent'); btn.classList.add('border-primary');
     });
   });
 }
@@ -5269,7 +5345,8 @@ function plpSkeletonCards(n) {
 function renderPlpGrid(root, { skeleton = false } = {}) {
   const grid = root.querySelector('#plpGrid');
   if (!grid) return;
-  const card = (p, i) => productCard(p, i, { badge: i === 0 ? 'New' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
+  // badge đọc từ DATA (17/08), port 28/08
+  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
   const paint = () => {
     const list = sortedProducts();
     grid.innerHTML = plpGridInner(list, card);
@@ -5277,6 +5354,13 @@ function renderPlpGrid(root, { skeleton = false } = {}) {
     localizeNew(grid);
     updatePlpProgress(root);
     updatePlpCount(root, list.length);
+    /* 0 kết quả -> ẩn thanh tiến độ + cụm nút "Xem thêm": cả hai nằm NGOÀI
+       #plpGrid nên innerHTML ở trên không đụng tới được — không ẩn thì dưới
+       khối "không khớp bộ lọc" trơ dòng "Bạn đã xem 0 trong …" + nút chết. */
+    const sm = root.querySelector('#showMore');
+    if (sm) sm.parentElement.classList.toggle('hidden', !list.length);
+    const prog = root.querySelector('#plpProgress');
+    if (prog) prog.classList.toggle('hidden', !list.length);
   };
   if (!skeleton) return paint();
   const n = grid.children.length || 8;
@@ -5290,10 +5374,13 @@ function updatePlpProgress(root) {
   const bar  = root.querySelector('[data-plp-bar]');
   const grid = root.querySelector('#plpGrid');
   if (!seen || !bar || !grid) return;
-  const n = grid.querySelectorAll('[data-product]').length;
-  seen.textContent = `Bạn đã xem ${n} trong ${PLP_TOTAL} sản phẩm`;
+  /* Cùng phép tính với template dkProductGrid — xem chú thích plpProgressTotal:
+     mẫu số theo trạng thái lọc, tử số kẹp về mẫu số (Xem thêm append thẻ trùng). */
+  const total = plpProgressTotal(sortedProducts().length);
+  const n = Math.min(grid.querySelectorAll('[data-product]').length, total);
+  seen.textContent = `Bạn đã xem ${n} trong ${total} sản phẩm`;
   localizeNew(seen);
-  bar.style.width = Math.min(100, Math.round(n / PLP_TOTAL * 100)) + '%';
+  bar.style.width = (total ? Math.min(100, Math.round(n / total * 100)) : 0) + '%';
 }
 
 /* Gắn sự kiện cho hàng chip bộ lọc — chỉ gắn 1 lần cho mỗi nút */
@@ -5419,6 +5506,13 @@ const I18N = {
   'Trang chủ':'Home', 'Quay lại':'Back', 'Bộ lọc':'Filter', 'Sắp xếp':'Sort', 'Đặt lại':'Reset',
   'Áp dụng':'Apply', 'Xác nhận':'Confirm', 'Hoàn tất':'Done', 'Chi tiết':'Details',
   'Thu gọn':'Show less', 'Xem thêm':'Show more', 'Xem chi tiết':'See details', 'Chọn tất cả':'Select all', 'Mặc định':'Default',
+  // ── Bổ sung 28/08 (port đợt vá i18n của bản chuẩn) ──
+  'Đang tải':'Loading',
+  'Phù hợp nhất':'Most relevant', 'Mới nhất':'Newest', 'Bán chạy nhất':'Best sellers',
+  'Giá: Thấp đến cao':'Price: Low to high', 'Giá: Cao đến thấp':'Price: High to low',
+  'Đã bỏ hết bộ lọc':'All filters cleared', 'Đã đặt lại bộ lọc':'Filters reset',
+  'Thêm nhanh vào giỏ':'Quick add to bag',
+  'Sản phẩm thịnh hành':'Trending items',
   'Xóa tất cả':'Clear all', 'Kết quả tìm kiếm':'Search results',
   // Bộ lọc lọc thật -> empty state riêng khi 0 kết quả (12/08/2026)
   'Không có sản phẩm nào khớp bộ lọc':'No products match your filters',
@@ -5770,6 +5864,7 @@ const I18N = {
 const I18N_RE = [
   [/^(\d+) cửa hàng$/,                '$1 stores'],
   [/^(\d+) sản phẩm$/,                '$1 products'],
+  [/^Áp dụng (\d+) bộ lọc$/, 'Applied $1 filters'],
   [/^(\d+) sản phẩm · (.+)$/,         '$1 items · $2'],
   [/^\+ ([\d.]+) điểm$/,              '+ $1 points'],
   [/^− ([\d.]+) điểm$/,               '− $1 points'],
@@ -6069,9 +6164,11 @@ function tr(t, to) {
 
 function applyLang(root, to) {
   if (!root) return;
-  /* [data-i18n-skip] = wordmark giữ nguyên ở MỌI ngôn ngữ (badge "Pre-order"…).
-     Phải chặn ở đây vì dịch ngược EN→VN tra I18N_REV theo text node: badge
-     "Pre-order" trùng chuỗi với nút "Đặt trước" đã dịch nên bị kéo theo. */
+  /* [data-i18n-skip] = wordmark giữ nguyên ở MỌI ngôn ngữ. Ví dụ cũ của ghi chú
+     này là badge "Pre-order" — từ 28/08 badge đó đã thành chuỗi dịch được
+     'Đặt trước' (đi bằng khoá sẵn có), hết vai wordmark. Sau lượt đó bản fork
+     này hiện KHÔNG còn phần tử nào mang attribute (grep 28/08); cơ chế chặn
+     giữ lại làm hạ tầng cho wordmark tương lai (mã kỹ thuật, tên thương hiệu…). */
   const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode: n => n.parentElement && n.parentElement.closest('[data-i18n-skip]')
       ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
@@ -6672,10 +6769,9 @@ function wire(root) {
       document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
       const p = PRODUCTS[SCREEN_PRODUCT[current] || 0];
       const colorEl = root.querySelector('#colorName');
+      // mọi PDP chọn size bằng chip (28/08 — nhánh đọc .size-trigger-label của dropdown đã bỏ)
       const sizeChip = root.querySelector('.chip.on');
-      const sizeLbl = root.querySelector('.size-trigger-label');
-      const size = sizeChip ? sizeChip.dataset.size
-        : (sizeLbl && !sizeLbl.classList.contains('text-muted-foreground') ? sizeLbl.textContent.trim() : '');
+      const size = sizeChip ? sizeChip.dataset.size : '';
       const variant = [colorEl ? colorEl.textContent.trim() : '', size].filter(Boolean).join(' , ');
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
         img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
@@ -6840,8 +6936,8 @@ function wire(root) {
     });
   });
 
-  // (ô chọn size của PDP dropdown giờ xổ dropdown inline — xem khối [data-size-dd]
-  //  bên dưới; không còn gọi __openSizeSheet / popup giữa màn như bản mobile)
+  // (28/08: PDP không còn kiểu chọn size nào ngoài CHIP — khối dropdown inline
+  //  [data-size-dd] đã gỡ cùng cờ PDP_DATA.dropdown)
 
   // checkbox
   root.querySelectorAll('[data-check]').forEach(c => {
@@ -6882,13 +6978,11 @@ function wire(root) {
   });
 
   // PDP: sizes / swatches / gallery
-  // Chạy cho CẢ 2 kiểu chọn size — chip grid (pdp/pdp4) lẫn dropdown
-  // (pdp2/3/5/6) — để cả hai cùng dùng setCta cập nhật nút CTA chính.
+  // (28/08: chỉ còn MỘT kiểu chọn size — chip grid cho cả 6 kind)
   const sizeBtns = [...root.querySelectorAll('[data-size]')];
-  const sizeDD   = root.querySelector('[data-size-dd]');
-  if (sizeBtns.length || sizeDD) {
-    // dòng cảnh báo dưới chips / dưới ô dropdown (Figma: Regular 12 #d62845)
-    const chipRow = sizeBtns.length ? sizeBtns[0].parentElement : sizeDD;
+  if (sizeBtns.length) {
+    // dòng cảnh báo dưới chips (Figma: Regular 12 #d62845)
+    const chipRow = sizeBtns[0].parentElement;
     let note = root.querySelector('#sizeNote');
     if (!note) {
       note = document.createElement('p');
@@ -6946,53 +7040,8 @@ function wire(root) {
       });
     });
 
-    /* ── Dropdown chọn size (pdp2/3/5/6) ──
-       Xổ ngay dưới ô chọn thay vì mở popup giữa màn như mobile. Hàng nào hết
-       hàng thì gạch ngang + "Nhận thông báo"; chọn xong đóng dropdown và để
-       CTA chính của PDP đổi trạng thái qua setCta — y như nhánh chip. */
-    if (sizeDD) {
-      const trigger = sizeDD.querySelector('[data-size-trigger]');
-      const caret   = sizeDD.querySelector('[data-size-caret]');
-      const listBox = sizeDD.querySelector('[data-size-list]');
-      const label   = trigger.querySelector('.size-trigger-label');
-      const opts    = SIZE_SHEET_OPTIONS[trigger.dataset.sizeTrigger] || [];
-      let picked = null;
-
-      const paint = () => {
-        listBox.innerHTML = opts.map(o => {
-          const status = o.oos ? 'Nhận thông báo' : (o.left ? `Còn ${o.left} sản phẩm` : '');
-          return `
-          <button type="button" role="option" aria-selected="${o.label === picked}" data-size-opt="${o.label}"
-                  class="w-full min-h-11 flex items-center gap-1 px-3 py-2 text-left transition-colors press ${o.label === picked ? 'bg-secondary' : 'ghost-hover'}">
-            <span class="flex-1 min-w-0 text-[14px] leading-5 ${o.oos ? 'text-muted-foreground line-through' : 'text-foreground'}">${o.label}</span>
-            ${status ? `<span class="text-[12px] leading-4 text-muted-foreground shrink-0">${status}</span>` : ''}
-          </button>`;
-        }).join('');
-        listBox.querySelectorAll('[data-size-opt]').forEach(b => b.addEventListener('click', () => {
-          picked = b.dataset.sizeOpt;
-          const o = opts.find(x => x.label === picked);
-          label.textContent = picked;
-          label.classList.remove('text-muted-foreground');
-          label.classList.add('text-foreground');
-          close();
-          // oos là boolean trong SIZE_SHEET_OPTIONS -> map về 'oos' | 'notify' như chip
-          // (picked là nhãn có tiền tố hệ đo -> bóc về số thô để tra OOS_MODE)
-          setCta(o && o.oos ? (OOS_MODE[sizeRaw(picked)] || 'oos') : '', picked);
-        }));
-        localizeNew(listBox);
-      };
-      const open  = () => { paint(); listBox.classList.remove('hidden'); trigger.setAttribute('aria-expanded', 'true'); caret.style.transform = 'translateY(-50%) rotate(180deg)'; };
-      const close = () => { listBox.classList.add('hidden'); trigger.setAttribute('aria-expanded', 'false'); caret.style.transform = ''; };
-
-      trigger.addEventListener('click', e => {
-        e.stopPropagation();
-        listBox.classList.contains('hidden') ? open() : close();
-      });
-      listBox.addEventListener('click', e => e.stopPropagation());
-      document.addEventListener('click', close);
-      scrollCleanups.push(() => document.removeEventListener('click', close));
-      trigger.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
-    }
+    /* (Khối "Dropdown chọn size (pdp2/3/5/6)" đã gỡ 28/08 — mọi kind chọn size
+       bằng chip grid ở trên, cùng đường setCta.) */
 
     // 'notify' -> mở form điền email + SĐT
     [mainBtn, stickyBtn].forEach(btn => {
@@ -7254,9 +7303,17 @@ function wire(root) {
 
   // Show more → skeleton then append
   const sm = root.querySelector('#showMore');
-  if (sm) sm.addEventListener('click', () => {
+  if (sm) {
+    /* Bộ lọc ra 0 kết quả thì ẩn cả cụm nút (và updatePlpProgress ẩn thanh tiến
+       độ): không còn gì để nối thêm, nút đứng dưới khối "không khớp bộ lọc" là
+       một ngõ cụt. renderPlpGrid toggle lại mỗi lần áp/xoá bộ lọc; dòng này lo
+       cho lượt render màn đầu tiên khi bộ lọc cũ vẫn đang ra 0 (port 28/08). */
+    sm.parentElement.classList.toggle('hidden', !sortedProducts().length);
+    sm.addEventListener('click', () => {
+    if (!sortedProducts().length) return;   // chốt chặn: nút đáng lẽ đã ẩn
     const grid = root.querySelector('#plpGrid') || sm.closest('[data-scroller]').querySelector('.grid');
     sm.innerHTML = `<svg class="spin" width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="var(--general-primary)" stroke-opacity=".2" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="var(--general-primary)" stroke-width="2" stroke-linecap="round"/></svg> Đang tải`;
+    localizeNew(sm);   // EN mode: nhãn spinner gán động xong phải dịch lại
     const skels = Array(4).fill(`<div class="flex flex-col"><div class="skel w-full" style="aspect-ratio:189/252"></div><div class="px-1 py-2 flex flex-col gap-1"><div class="skel h-3 w-2/3 rounded"></div><div class="skel h-3 w-full rounded"></div><div class="skel h-3 w-1/2 rounded"></div></div></div>`).join('');
     grid.insertAdjacentHTML('beforeend', skels);
     setTimeout(() => {
@@ -7265,16 +7322,25 @@ function wire(root) {
          bản trước nhồi 4 sản phẩm Versace thời trang vào mọi lưới, kể cả khi bộ
          lọc đang ra 0 kết quả -> 4 thẻ nằm ngay dưới câu "không khớp bộ lọc". */
       const more = sortedProducts().slice(0, 4);
+      /* Thẻ append dựng CÙNG options với card fn của renderPlpGrid (badge +
+         pillBadges): bản trước chỉ truyền {w:'reveal'} nên SP#4 xuất hiện lần 2
+         mất nhãn New Season/La Vacanza — cùng một SP hai kiểu thẻ (port 28/08). */
       more.forEach(({ p, i }) => {
-        grid.insertAdjacentHTML('beforeend', productCard(p, i, { w: 'reveal' }));
+        grid.insertAdjacentHTML('beforeend', productCard(p, i, { w: 'reveal', badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null }));
       });
       sm.innerHTML = 'Xem thêm';
       localizeNew(sm);
-      wire(root);
+      /* CHỈ wire phần vừa thêm, KHÔNG gọi wire(root): wire(root) gắn CHỒNG
+         listener toàn màn — sau 2 lượt bấm menu Sắp xếp không mở nổi (toggle
+         chạy nhiều lần/click) và lượt sau append 8 thẻ thay vì 4.
+         wireProductCards tự bỏ qua thẻ đã wired (data-wired). Port 28/08. */
+      wireProductCards(grid);
+      localizeNew(grid);   // EN mode: badge "Đặt trước" trên thẻ mới phải ra "Pre-order"
       observeReveal(root);
       updatePlpProgress(root);
     }, 900);
-  });
+    });
+  }
 
   // brand description expand / collapse
   const bToggle = root.querySelector('#brandToggle');
@@ -7287,6 +7353,7 @@ function wire(root) {
       para.style.overflow = 'hidden';
       para.style.webkitLineClamp = open ? 'unset' : '3';
       bToggle.textContent = open ? 'Thu gọn' : 'Xem thêm';
+      localizeNew(bToggle);   // EN mode: gán động xong phải dịch lại, không thì bấm 1 lần là nút quay về tiếng Việt
     };
     apply();
     bToggle.addEventListener('click', () => { open = !open; apply(); });
@@ -7435,15 +7502,8 @@ function wire(root) {
     if (strip) strip.scrollBy({ left: 316, behavior: 'smooth' });
   }));
 
-  root.querySelectorAll('[data-swatches]').forEach(rw => {
-    rw.addEventListener('click', ev => {
-      const btn = ev.target.closest('.cw');
-      if (!btn) return;
-      ev.stopPropagation();
-      rw.querySelectorAll('.cw').forEach(c => { c.classList.remove('border-primary'); c.classList.add('border-transparent'); });
-      btn.classList.remove('border-transparent'); btn.classList.add('border-primary');
-    });
-  });
+  /* Swatch card KHÔNG wire ở đây nữa — đã dọn vào wireProductCards (28/08) để
+     lưới render lại (renderPlpGrid / Xem thêm) không mất handler chọn màu. */
 
   observeReveal(root);
 }
@@ -8451,10 +8511,10 @@ document.body.insertAdjacentHTML('beforeend', `
 /* Sản phẩm đang xem theo màn PDP — dùng cho sheet xác nhận thêm giỏ */
 const SCREEN_PRODUCT = { pdp: 0, pdp2: 1, pdp3: 2, pdp4: 3, pdp5: 4, pdp6: 5 };
 /* ── Size sheet (Drawer 3281:53948) — HIỆN KHÔNG DÙNG Ở BẢN DESKTOP ──
-   PDP dropdown (pdp2/3/5/6) đã đổi sang dropdown inline xổ ngay dưới ô chọn
-   (khối [data-size-dd] trong wire()). Giữ nguyên khối này + `__openSizeSheet`
-   để bật lại kiểu popup chỉ bằng cách gọi lại hàm đó, và vì bản mobile vẫn
-   dùng đúng markup/logic này. */
+   28/08: PDP đã về CHIP GRID cho cả 6 kind (dropdown inline [data-size-dd]
+   trong wire() gỡ hẳn). Giữ nguyên khối này + `__openSizeSheet` để bật lại
+   kiểu popup chỉ bằng cách gọi lại hàm đó, và vì bản mobile vẫn dùng đúng
+   markup/logic này cho quick add ngoài PLP. */
 document.body.insertAdjacentHTML('beforeend', `
   <div id="sizeSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
     <div class="sz-backdrop absolute inset-0 bg-black/60 opacity-0 transition-opacity duration-300"></div>

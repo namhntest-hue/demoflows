@@ -414,6 +414,12 @@ window.RESP = (function () {
     border: 1px solid var(--general-border);
     box-shadow: none;
   }
+  /* Option trong menu Sắp xếp có phản hồi rê/focus (bổ sung 28/08 — trước đây
+     .sort-opt trần trụi, rê qua không đổi gì): lấy đúng nền ghost-hover đang
+     dùng cho các hàng cùng vai, không mở mặt mới. */
+  #sortMenu .sort-opt:hover, #sortMenu .sort-opt:focus-visible {
+    background: var(--unofficial-ghost-hover);
+  }
 
   /* ── Info Bottom Sheet (versace b-drawer) — đẩy lên thay vì extend ── */
   #infoSheet { position: fixed; inset: 0; z-index: 300; pointer-events: none; }
@@ -503,6 +509,13 @@ window.RESP = (function () {
      Dòng background đầu = fallback đặc cho trình duyệt cũ. */
   .glass-95 { background: var(--general-background); background: color-mix(in srgb, var(--general-background) 95%, transparent); }
   .glass-85 { background: var(--general-background); background: color-mix(in srgb, var(--general-background) 85%, transparent); }
+  /* 80% cho nút ✕ ĐÈ LÊN ẢNH của quick add (28/08/2026, yêu cầu user): nút nằm
+     trên dải gallery nên cần một tấm nền để icon đen luôn đọc được, mà vẫn thấy
+     ảnh sau nó. Vào họ glass-* sẵn có thay vì khai nền riêng cho một nút.
+     (Trước lượt này nút mang class Tailwind `bg-background/90` — tailwind.css là
+     bản BUILD SẴN, không có utility opacity-slash đó, nên nút thực tế TRONG
+     SUỐT: đo computed ra rgba(0,0,0,0).) */
+  .glass-80 { background: var(--general-background); background: color-mix(in srgb, var(--general-background) 80%, transparent); }
   .glass-ink-95 { background: var(--general-primary); background: color-mix(in srgb, var(--general-primary) 95%, transparent); }
 
   /* ── Filter bar: viền dưới vẽ bằng ::after, không đụng tới layout ──
@@ -1179,7 +1192,8 @@ window.RESP = (function () {
      ra rất nặng. Giữ hướng vách TRÊN (đúng họ), chỉ đổi màu. */
   html.skin-mt .acc.border-b { border-top: 1px solid var(--general-border); border-bottom-width: 0; }
   /* .btn-p: KHÔNG khai gì — nút chính của họ nền đen chữ trắng, trùng dự án sẵn. */
-  html.skin-mt [data-size-trigger] { border-color: var(--general-primary); }
+  /* (rule viền đen cho ô dropdown chọn size [data-size-trigger] đã gỡ 28/08 —
+     mọi PDP chọn size bằng chip, markup không còn ô đó) */
   /* DẤU CHỌN SWATCH MÀU trên card (AUDIT B7, chốt 20/08/2026): bỏ kỹ thuật ring —
      ring là box-shadow nên dính luật cấm bóng §3.3, và ô CHƯA chọn (`ring-0`) vẫn
      compose shadow với ring xanh dương MẶC ĐỊNH của Tailwind vì --tw-ring-color
@@ -2966,8 +2980,11 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
              Trước đây nó là nhãn ĐÈ LÊN ẢNH, chung chồng với New Season / La Vacanza.
              Tách ra vì hai thứ nói hai chuyện: nhãn chiến dịch thuộc về ẢNH, còn
              Pre-order nói TÌNH TRẠNG BÁN của chính SKU — chỗ của nó là cạnh tên.
-             Mặt xám #f2f2f2 (mặt thứ 2 của §2.2) chứ không phải trắng như bản đè
-             ảnh: trên thẻ nền trắng thì badge trắng vô hình.
+             Nền là mặt xám chứ không phải trắng như bản đè ảnh (trên thẻ nền
+             trắng thì badge trắng vô hình) — và từ chốt 5.1 (28/08) nó lên nấc
+             #dfdfdf qua token --general-border (xem rule .badge-inline: token
+             VIỀN dùng làm MẶT, lệch §2.2 có ghi danh tại chỗ), vì #f2f2f2 chỉ
+             cách thẻ trắng 1,12:1 — chưa đọc ra là một chip.
              NHÃN TIẾNG VIỆT LÀ "Đặt trước" (user chốt 27/08) nên badge THÔI mang
              data-i18n-skip: nó nay là chuỗi dịch được, đi bằng khoá có sẵn
              'Đặt trước' -> 'Pre-order'. Ghi chú cũ ("Pre-order là wordmark, phải
@@ -2985,11 +3002,15 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
         </div>
       </div>
       <div class="flex flex-col pb-2">
+        <!-- whitespace-nowrap: chuỗi giá dùng space thường trước ₫ nên khi
+             hàng flex thiếu chỗ, trình duyệt được phép bẻ dòng tại đó — ký
+             hiệu ₫ rớt xuống dòng riêng (lỗi (b) đã ghi nhận). Khoá tại phần
+             tử thay vì đổi data sang NBSP để không đụng vndNum/luật regex. -->
         <div class="flex gap-1 items-center">
-          <p class="text-[14px] font-medium leading-5 ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
+          <p class="whitespace-nowrap text-[14px] font-medium leading-5 ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
           ${p.off ? `<span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0">${p.off}</span>` : ''}
         </div>
-        <p class="text-[12px] leading-4 text-muted-foreground line-through ${p.was ? '' : 'invisible'}">${p.was || '&nbsp;'}</p>
+        <p class="whitespace-nowrap text-[12px] leading-4 text-muted-foreground line-through ${p.was ? '' : 'invisible'}">${p.was || '&nbsp;'}</p>
       </div>
       ${(!noColors && p.colors && p.colors.length) ? `
       <div class="flex gap-3 items-center pt-0.5" data-swatches>
@@ -3067,7 +3088,9 @@ const OOS_MODE = { '43': 'oos', '44': 'notify' };
 const SIZE_UNIT = 'IT';
 const sizeLabel = s => /^\d+$/.test(s) ? `${SIZE_UNIT} ${s}` : s;
 
-// Danh sách kích thước cho các PDP dùng "dropdown" (giờ mở bottom sheet thay vì <select>)
+// Bảng size theo kind — 28/08 PDP thôi dùng dropdown (mọi PDP chọn size bằng CHIP,
+// pdp2/pdp3 vẫn đọc nhãn từ đây); #sizeSheet giờ chỉ mở từ quick add ngoài PLP
+// (SIZE_SHEET_BY_PRODUCT) nên bảng này vẫn là nguồn duy nhất, không xoá.
 // `left` = số lượng còn lại, CHỈ gán khi sắp hết -> hàng đó hiện "Còn X sản phẩm";
 // size còn hàng bình thường không hiện trạng thái gì (Figma 3281:53948)
 const SIZE_LOW_STOCK = { '42': 1 };
@@ -3497,7 +3520,14 @@ function screenPLPList() {
      — SP#1 là hàng pre-order, để "New" ở PLP thì bấm vào PDP lại thấy
      "Pre-order", 2 nơi nói 2 chuyện (yêu cầu user 17/08/2026). */
   const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
-  const crumbs = ['Trang chủ', ...(m.crumbs || [])];
+  /* Breadcrumb tối thiểu 2 đoạn như desktop (4261-4264 bên đó): thiếu crumbs
+     (vào từ thẻ danh mục -> crumbs rỗng, hoặc mode search) thì lấy tiêu đề /
+     nhãn "Kết quả tìm kiếm" — trước đây hàng breadcrumb chỉ còn chữ "Trang chủ"
+     đứng một mình, mất vai trò dẫn đường và lệch bản desktop. */
+  const tail = (m.crumbs && m.crumbs.length) ? m.crumbs
+             : m.type === 'search' ? ['Kết quả tìm kiếm']
+             : m.title ? [m.title] : [];
+  const crumbs = ['Trang chủ', ...tail];
   return `
   <div class="w-full" data-scroller>
     ${navBar()}
@@ -3522,7 +3552,7 @@ function screenPLPList() {
       <p data-plp-count class="text-[16px] font-light leading-6 text-foreground">${sortedProducts().length} sản phẩm</p>
       <div class="flex items-center">
         ${[['2', I.gridCols2], ['1', I.gridCols1]].map(([n, ico]) => `
-          <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press text-foreground transition-opacity ${n === '2' ? '' : 'opacity-50'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
+          <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press text-foreground transition-opacity ${n === plpGridCols ? '' : 'opacity-50'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
       </div>
     </div>
 
@@ -3540,12 +3570,12 @@ function screenPLPList() {
       </div>
     </div>
 
-    <div id="plpGrid" class="grid grid-cols-2 gap-x-0.5 px-0.5 pt-2" style="row-gap:24px">
+    <div id="plpGrid" class="grid ${plpGridCols === '1' ? 'grid-cols-1' : 'grid-cols-2'} gap-x-0.5 px-0.5 pt-2" style="row-gap:24px">
       ${plpGridInner(sortedProducts(), card)}
     </div>
 
     <div class="flex justify-center py-6">
-      <button id="showMore" class="h-11 px-8 border border-primary text-[14px] font-semibold text-foreground press flex items-center gap-2">Show more</button>
+      <button id="showMore" class="h-11 px-8 border border-primary text-[14px] font-semibold text-foreground press flex items-center gap-2">Xem thêm</button>
     </div>
 
     ${camKetSection()}` : `
@@ -3637,7 +3667,7 @@ function screenPLP() {
       <p data-plp-count class="text-[16px] font-light leading-6 text-foreground">${sortedProducts().length} sản phẩm</p>
       <div class="flex items-center">
         ${[['2', I.gridCols2], ['1', I.gridCols1]].map(([n, ico]) => `
-          <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press text-foreground transition-opacity ${n === '2' ? '' : 'opacity-50'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
+          <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press text-foreground transition-opacity ${n === plpGridCols ? '' : 'opacity-50'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
       </div>
     </div>
 
@@ -3656,12 +3686,12 @@ function screenPLP() {
     </div>
 
     <!-- grid -->
-    <div id="plpGrid" class="grid grid-cols-2 gap-x-0.5 px-0.5 pt-2" style="row-gap:24px">
+    <div id="plpGrid" class="grid ${plpGridCols === '1' ? 'grid-cols-1' : 'grid-cols-2'} gap-x-0.5 px-0.5 pt-2" style="row-gap:24px">
       ${plpGridInner(sortedProducts(), card)}
     </div>
 
     <div class="flex justify-center py-6">
-      <button id="showMore" class="h-11 px-8 border border-primary text-[14px] font-semibold text-foreground press flex items-center gap-2">Show more</button>
+      <button id="showMore" class="h-11 px-8 border border-primary text-[14px] font-semibold text-foreground press flex items-center gap-2">Xem thêm</button>
     </div>
 
     ${footer()}
@@ -3728,7 +3758,9 @@ function searchHistoryHTML() {
 /* Khối sản phẩm ngang — "Trending item" khi chưa có lịch sử, "Sản phẩm nổi bật"
    khi đã có; fixedTitle dùng cho pane no-result (không gắn id động). */
 function searchTrendingHTML(fixedTitle = '') {
-  const title = fixedTitle || (searchHistory.length ? 'Sản phẩm nổi bật' : 'Trending item');
+  /* 'Trending item' cũ là chuỗi EN hardcode giữa trang tiếng Việt (lỗi 28/08)
+     — nguồn phải là VI, EN đi qua khoá 'Sản phẩm thịnh hành' -> 'Trending items'. */
+  const title = fixedTitle || (searchHistory.length ? 'Sản phẩm nổi bật' : 'Sản phẩm thịnh hành');
   return `
   <section class="flex flex-col gap-2 py-4">
     <h2 ${fixedTitle ? '' : 'id="trendTitle" '}class="px-4 text-[12px] leading-4 text-muted-foreground">${title}</h2>
@@ -3878,8 +3910,9 @@ function screenPDP() {
             <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
           </div>`).join('')}
       </div>
+      <!-- 28/08: badge "Đặt trước" THÔI đè ảnh — xuống đứng trước TÊN (xem header),
+           đồng bộ với PLP 27/08. Chồng nhãn trên ảnh chỉ còn nhãn chiến dịch. -->
       <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
-        ${P.preorder ? '<span class="badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Đặt trước</span>' : ''}
         <span class="badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">New Season</span>
         <span class="badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">La Vacanza</span>
       </div>
@@ -3892,7 +3925,14 @@ function screenPDP() {
     <div class="flex flex-col gap-1 pt-4 px-4 pb-2 rise">
       <div class="flex flex-col pb-4 items-start text-left">
         <p class="pc-brand h-7 text-[18px] font-medium leading-7 text-foreground">${P.brand}</p>
-        <p class="h-5 text-[14px] leading-5 text-foreground-alt">${P.name}</p>
+        <!-- Badge Pre-order ĐỨNG TRƯỚC TÊN, cùng hàng — đúng khuôn thẻ PLP 27/08
+             (.badge-inline nền token viền, nhãn dịch được 'Đặt trước'). 28/08 dời
+             từ chồng nhãn đè ảnh xuống đây theo lệnh user: nhãn chiến dịch thuộc
+             về ẢNH, còn Pre-order nói tình trạng bán của chính SKU. -->
+        <div class="flex items-center gap-1.5 min-w-0">
+          ${P.preorder ? `<span class="badge-inline px-1 text-[12px] font-medium leading-4 text-foreground shrink-0">Đặt trước</span>` : ''}
+          <p class="h-5 text-[14px] leading-5 text-foreground-alt">${P.name}</p>
+        </div>
       </div>
       <div class="flex flex-col gap-2">
         <div class="flex gap-1.5 items-center">
@@ -4206,7 +4246,7 @@ function screenPDP2() {
       </div>
     </div>
 
-    <!-- Frame 15: Element (màu) + Form field (dropdown size) -->
+    <!-- Frame 15: Element (màu) + chip size (28/08 — trước là dropdown) -->
     <div class="flex flex-col gap-4 pt-4 px-4 rise">
       <div class="flex flex-col gap-2">
         <div class="flex gap-2">
@@ -4221,17 +4261,16 @@ function screenPDP2() {
         </div>
       </div>
 
-      <!-- Form field — Select & Combobox (khác bản 1: không dùng chip size) -->
+      <!-- Kích thước: CHIP GRID như PDP1 — 28/08 bỏ dropdown ở MỌI PDP (lệnh user).
+           Nhãn vẫn đọc từ SIZE_SHEET_OPTIONS.pdp2 (S/M/L): quick add ngoài PLP dùng
+           chung bảng đó, không đẻ danh sách thứ hai để 2 nơi khỏi lệch nhau. -->
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <p class="text-[12px] leading-4 text-[#171717]">Kích thước</p>
           <button data-size-chart class="text-[12px] leading-4 text-[#171717] underline">Bảng kích thước</button>
         </div>
-        <div class="relative">
-          <button type="button" data-size-trigger="pdp2" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] outline-none focus:border-primary transition-colors flex items-center text-left btn-o press">
-            <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
-          </button>
-          <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
+        <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)">
+          ${SIZE_SHEET_OPTIONS.pdp2.map((o, oi) => `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${oi===0 && !o.oos ? 'on border-primary' : 'border-border'} ${o.oos ? 'off' : 'text-foreground'}" data-size="${o.label}" ${o.oos ? `data-oos="${OOS_MODE[o.label] || 'oos'}"` : ''}>${o.label}</button>`).join('')}
         </div>
       </div>
     </div>
@@ -4345,17 +4384,18 @@ function screenPDP3() {
         </div>
       </div>
 
-      <!-- Form field — Kích thước (dropdown, đúng mockup 3111:33554) -->
+      <!-- Kích thước: CHIP GRID như PDP1 — 28/08 bỏ dropdown ở MỌI PDP (lệnh user).
+           Nhãn đọc từ SIZE_SHEET_OPTIONS.pdp3 (Onesize) — cùng nguồn với quick add.
+           CÙNG LƯỚI 5 CỘT như các PDP khác (lệnh user 28/08: chip Onesize phải
+           bằng đúng cỡ ô size thường, không nở rộng) — đã đo: skin hiện hành
+           render chữ chip 12px nên "Onesize" 45.9px lọt lòng ô ~52px. -->
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <p class="text-[12px] leading-4 text-[#171717]">Kích thước</p>
           <button data-size-chart class="text-[12px] leading-4 text-[#171717] underline">Bảng kích thước</button>
         </div>
-        <div class="relative">
-          <button type="button" data-size-trigger="pdp3" class="w-full h-11 bg-background border border-border rounded-xs pl-3 pr-9 text-[14px] outline-none focus:border-primary transition-colors flex items-center text-left btn-o press">
-            <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
-          </button>
-          <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
+        <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)">
+          ${SIZE_SHEET_OPTIONS.pdp3.map((o, oi) => `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${oi===0 && !o.oos ? 'on border-primary' : 'border-border'} ${o.oos ? 'off' : 'text-foreground'}" data-size="${o.label}" ${o.oos ? `data-oos="${OOS_MODE[o.label] || 'oos'}"` : ''}>${o.label}</button>`).join('')}
         </div>
       </div>
     </div>
@@ -4947,18 +4987,24 @@ function screenPDP5() {
         </div>
       </div>
 
-      <!-- Form field: gap 8 · Select & Combobox Size=Large 358x44 rounded-4 -->
+      <!-- Kích thước: CHIP GRID đúng khuôn PDP1 — 28/08 bỏ dropdown ở MỌI PDP (lệnh
+           user). Cùng bộ SIZES/DISABLED/OOS_MODE nên hưởng nguyên wiring chip sẵn có
+           (setCta + dòng "Chỉ còn 01 sản phẩm" khi chạm size trong SIZE_LOW_STOCK). -->
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between h-4">
           <span class="text-[12px] leading-4 text-[#171717]">Kích thước</span>
           <button data-size-chart class="text-[12px] leading-4 text-[#171717] underline press">Bảng kích thước</button>
         </div>
-        <div class="relative">
-          <button type="button" data-size-trigger="pdp5" class="w-full h-11 bg-input border border-border rounded-sm pl-2 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left btn-o press">
-            <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
-          </button>
-          <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
+        <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)">
+          ${SIZES.map(s => {
+            const off = DISABLED.includes(s);
+            return `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? `data-oos="${OOS_MODE[s] || 'oos'}"` : ''}>${sizeLabel(s)}</button>`;
+          }).join('')}
         </div>
+        <!-- Mặc định ẨN — chỉ hiện khi bấm đúng size sắp hết hàng (SIZE_LOW_STOCK, xem setCta) -->
+        <p id="lowStock" class="hidden text-[12px] font-medium leading-4 text-warning flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-warning animate-pulse"></span>Chỉ còn 01 sản phẩm
+        </p>
       </div>
     </div>
 
@@ -5073,13 +5119,18 @@ function screenPDP6() {
           <span class="text-[12px] leading-4 tracking-[0.004em] text-[#171717]">Kích thước</span>
           <button data-size-chart class="text-[12px] leading-4 tracking-[0.004em] text-[#171717] underline press">Bảng kích thước</button>
         </div>
-        <!-- Select & Combobox: 358x44 · pad 9.5,8 · stroke #e5e5e5 · r4 -->
-        <div class="relative">
-          <button type="button" data-size-trigger="pdp6" class="w-full h-11 bg-input border border-border rounded-sm pl-2 pr-9 text-[14px] leading-5 outline-none focus:border-primary transition-colors flex items-center text-left btn-o press">
-            <span class="size-trigger-label text-muted-foreground">Chọn kích thước</span>
-          </button>
-          <span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevD('var(--general-primary)')}</span>
+        <!-- Kích thước: CHIP GRID đúng khuôn PDP1 — 28/08 bỏ dropdown ở MỌI PDP
+             (lệnh user). Cùng bộ SIZES/DISABLED/OOS_MODE, hưởng nguyên wiring chip. -->
+        <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)">
+          ${SIZES.map(s => {
+            const off = DISABLED.includes(s);
+            return `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? `data-oos="${OOS_MODE[s] || 'oos'}"` : ''}>${sizeLabel(s)}</button>`;
+          }).join('')}
         </div>
+        <!-- Mặc định ẨN — chỉ hiện khi bấm đúng size sắp hết hàng (SIZE_LOW_STOCK, xem setCta) -->
+        <p id="lowStock" class="hidden text-[12px] font-medium leading-4 text-warning flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-warning animate-pulse"></span>Chỉ còn 01 sản phẩm
+        </p>
       </div>
     </div>
 
@@ -5757,12 +5808,16 @@ function screenCART() {
         </div>
         <!-- giá + stepper ghim đáy ô, giá thường đen / giá khuyến mãi đỏ (item-cart 2851:28705) -->
         <div class="flex items-end justify-between gap-0.5">
+          <!-- whitespace-nowrap trên 2 dòng giá: chuỗi giá mang space thường
+               trước ₫, hàng flex thiếu chỗ (giá dài + chip -%) là ký hiệu ₫
+               rớt xuống dòng riêng — lỗi (b) đã ghi nhận, tái hiện ở 3 hàng
+               có chip khuyến mãi. -->
           <div class="pt-1 flex flex-col justify-end min-w-0">
             <div class="flex gap-1 items-center">
-              <p class="price text-[14px] font-medium leading-5 ${c.off ? 'text-destructive' : 'text-foreground'}">${c.now}</p>
+              <p class="price whitespace-nowrap text-[14px] font-medium leading-5 ${c.off ? 'text-destructive' : 'text-foreground'}">${c.now}</p>
               ${c.off ? `<span class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0">${c.off}</span>` : ''}
             </div>
-            ${c.was ? `<p class="text-[12px] leading-4 text-muted-foreground line-through">${c.was}</p>` : ''}
+            ${c.was ? `<p class="whitespace-nowrap text-[12px] leading-4 text-muted-foreground line-through">${c.was}</p>` : ''}
           </div>
           <!-- stepper ghost không viền (item-cart 2851:28705): [− 12px][02 12 medium][+ 12px], cao 24 -->
           <div class="flex items-center shrink-0">
@@ -6972,7 +7027,11 @@ function colorBucketOf(hex) {
   if (c.s >= NEUTRAL_S && bestHue > HUE_TOL) best = null;   // ngưỡng xét trên HUE, không phải score
   return (__colorBucket[hex] = best);
 }
-const FILTER_FLAGS = ['Đang giảm giá', 'Hàng mới về'];
+/* 'Chỉ hàng có sẵn' vào danh sách LỌC THẬT (28/08): demo có hàng pre-order
+   (chưa có sẵn) nên facet này có việc — tick vào là loại SP mang p.preorder.
+   Trước đây matchProducts không đọc nó: tick không đổi gì, là facet trang trí
+   — lệch mandate "bộ lọc lọc thật" từ 12/08. */
+const FILTER_FLAGS = ['Đang giảm giá', 'Hàng mới về', 'Chỉ hàng có sẵn'];
 /* Khối "0 kết quả" — PHẢI dùng được ở cả 2 đường vẽ lưới: template lúc render màn
    VÀ renderPlpGrid lúc áp bộ lọc. Bản trước chỉ đặt trong renderPlpGrid nên hễ
    điều hướng sang PLP khác (hoặc vào lại chính PLP đó) trong khi bộ lọc ra 0 kết
@@ -7029,6 +7088,7 @@ function matchProducts(list, labels) {
     }
     if (flags.includes('Đang giảm giá') && !p.off) return false;
     if (flags.includes('Hàng mới về') && !/new/i.test(p.tag || '')) return false;
+    if (flags.includes('Chỉ hàng có sẵn') && p.preorder) return false;
     /* Dung tích LỌC THẬT: 8 sản phẩm beauty trong PRODUCTS có field `sizes` trùng
        khít FILTER_VOLUMES. (Size quần áo/giày thì vẫn không lọc được — PRODUCTS
        không mang size thời trang, chỉ PDP_DATA có.) */
@@ -7369,15 +7429,19 @@ function filterBody(beauty, gender, heel) {
 
   const price = `
     <div class="px-4 pb-6 flex flex-col gap-6">
+      <!-- w-full + min-w-0 BẮT BUỘC: input không khai bề rộng thì flex giữ
+           min-width nội tại (~178px), 2 ô cộng lại tràn khỏi sheet 375 — ô
+           "Đến" thò 22px khỏi mép phải (lỗi (c) đã ghi trong FIGMA-FILTER.md).
+           bg-input + bg-border lấy theo desktop cho 2 bản hết lệch token. -->
       <div class="flex items-end gap-3">
-        <label class="flex-1 flex flex-col gap-1">
+        <label class="flex-1 min-w-0 flex flex-col gap-1">
           <span class="text-[12px] leading-4 text-muted-foreground">Từ</span>
-          <input inputmode="numeric" value="0" class="h-9 bg-background border border-border rounded-xs px-2 text-[14px] outline-none focus:border-primary transition-colors">
+          <input inputmode="numeric" value="0" class="w-full min-w-0 h-9 bg-input border border-border rounded-xs px-2 text-[14px] outline-none focus:border-primary transition-colors">
         </label>
-        <span class="w-2.5 h-px bg-[#e0e0e0] mb-4"></span>
-        <label class="flex-1 flex flex-col gap-1">
+        <span class="w-2.5 h-px bg-border mb-4 shrink-0"></span>
+        <label class="flex-1 min-w-0 flex flex-col gap-1">
           <span class="text-[12px] leading-4 text-muted-foreground">Đến</span>
-          <input inputmode="numeric" value="50,000,000" class="h-9 bg-background border border-border rounded-xs px-2 text-[14px] outline-none focus:border-primary transition-colors">
+          <input inputmode="numeric" value="50,000,000" class="w-full min-w-0 h-9 bg-input border border-border rounded-xs px-2 text-[14px] outline-none focus:border-primary transition-colors">
         </label>
       </div>
       <div class="flex flex-col gap-3">
@@ -7692,6 +7756,14 @@ function wireFilter() {
     return null;
   };
   const OPT_SEL = '[data-brand], .fcolor, [data-other], .fsize';
+  /* f-gone vừa đổi thì dòng "Không tìm thấy thương hiệu" phải tính lại: hai cơ
+     chế ẩn (tìm kiếm .hidden / 0-kết-quả .f-gone) cùng quyết định "còn gì để
+     thấy". Bắn lại event input là dùng đúng phép đếm của chính ô tìm, không
+     nhân đôi logic; chỉ bắn khi ô đang có chữ. */
+  const syncBrandEmptyLine = () => {
+    const bb = sh.querySelector('#fBrandSearch');
+    if (bb && bb.value.trim()) bb.dispatchEvent(new Event('input'));
+  };
   window.pruneEmptyFacets = () => {
     const picked = pickedLabels();
     const pool = plpProducts();
@@ -7703,6 +7775,7 @@ function wireFilter() {
        Bỏ tick hết thì cũng qua nhánh này, tức danh sách tự bày lại đủ. */
     if (!picked.length) {
       sh.querySelectorAll('.f-gone').forEach(e => e.classList.remove('f-gone'));
+      syncBrandEmptyLine();
       return;
     }
     sh.querySelectorAll(OPT_SEL).forEach(el => {
@@ -7720,6 +7793,7 @@ function wireFilter() {
       if (!opts.length) return;
       acc.classList.toggle('f-gone', ![...opts].some(e => !e.classList.contains('f-gone')));
     });
+    syncBrandEmptyLine();
   };
 
   window.syncFilterFooter = () => {
@@ -7760,6 +7834,11 @@ function wireFilter() {
     sh.querySelectorAll('.chk.on').forEach(c => c.classList.remove('on'));
     sh.querySelectorAll('.fsize.on').forEach(c => { c.classList.remove('on'); c.classList.replace('border-primary', 'border-border'); });
     sh.querySelectorAll('.fcolor.on').forEach(b => setColorChip(b, false));
+    /* Đặt lại phải dọn cả Ô TÌM thương hiệu: không thì panel "đã đặt lại" mà
+       danh sách brand vẫn bị lọc bởi query cũ (kèm dòng "Không tìm thấy…" nếu
+       query không khớp gì). Bắn event input để đi đúng handler sẵn có. */
+    const bb = sh.querySelector('#fBrandSearch');
+    if (bb && bb.value) { bb.value = ''; bb.dispatchEvent(new Event('input')); }
     plpFilters = [];
     renderPlpGrid(document);
     syncFilterFooter();
@@ -7821,7 +7900,11 @@ function wireFilterBody(sh) {
       rows.forEach(r => {
         const on = !q || noAcc(r.dataset.brand).includes(q);
         r.classList.toggle('hidden', !on);
-        if (on) hien++;
+        /* Hàng khớp query nhưng đang .f-gone (ẩn vì 0 kết quả với bộ lọc hiện
+           tại) thì người dùng KHÔNG thấy — không được tính là "còn hàng", kẻo
+           gõ trúng brand bị f-gone là danh sách trống trơn mà dòng "Không tìm
+           thấy thương hiệu" vẫn im (đo được: tick Đen rồi gõ "bur"). */
+        if (on && !r.classList.contains('f-gone')) hien++;
       });
       if (empty) empty.classList.toggle('hidden', hien > 0);
     });
@@ -7853,6 +7936,16 @@ function wireFilterBody(sh) {
       wrap.innerHTML = shoeUnitInner();
       wireShoeUnits(wrap);
       wireSizeChips(wrap);
+      /* Chip ĐÃ ÁP (nằm trong plpFilters) phải sáng lại trên DOM mới — không
+         thì đảo tab một vòng là tick đã áp "trông như mất", và lượt Áp dụng kế
+         (đọc pickedLabels từ DOM) âm thầm xoá nhãn khỏi bộ lọc. Tick CHƯA áp
+         của đơn vị cũ vẫn reset như cũ, đúng chủ ý ghi ở comment shoeUnitInner. */
+      wrap.querySelectorAll('.fsize').forEach(c => {
+        const on = plpFilters.includes((c.dataset.size || '').trim() || c.textContent.trim());
+        c.classList.toggle('on', on);
+        c.classList.toggle('border-primary', on);
+        c.classList.toggle('border-border', !on);
+      });
       if (window.syncFilterFooter) syncFilterFooter();
     });
   });
@@ -8026,6 +8119,10 @@ const RENDER = {
 
 const viewport = document.getElementById('viewport');
 let current = null, cartQty = 5, history = [], plpSort = 'relevance';
+/* Số cột lưới PLP mobile (28/08) — nhớ qua điều hướng như plpSort, và như
+   plpCols của bản desktop; trước đây template hardcode grid-cols-2 nên đổi
+   PLP là lựa chọn 1 cột của người dùng bay mất. */
+let plpGridCols = '2';
 
 const SORT_OPTIONS = [
   ['relevance', 'Phù hợp nhất'],
@@ -8063,7 +8160,7 @@ function refreshSearchHistory(root) {
   // tiêu đề khối trending đổi theo còn/hết lịch sử tìm kiếm
   const t = root.querySelector('#trendTitle');
   if (t) {
-    t.textContent = searchHistory.length ? 'Sản phẩm nổi bật' : 'Trending item';
+    t.textContent = searchHistory.length ? 'Sản phẩm nổi bật' : 'Sản phẩm thịnh hành';
     localizeNew(t.parentElement);
   }
 }
@@ -8108,16 +8205,25 @@ function wireSearchPane(root, pane) {
 }
 
 function wireProductCards(root) {
+  /* IDEMPOTENT qua data-wired: hàm này nay còn được gọi trên lưới ĐANG SỐNG
+     (Show more append thẻ mới cạnh thẻ cũ) — không có cờ thì thẻ cũ bị gắn
+     trùng listener, 1 click chạy 2 lần. Lưới dựng lại bằng innerHTML thì node
+     mới tinh nên cờ không cản gì. */
   root.querySelectorAll('[data-product]').forEach(el => {
+    if (el.dataset.wired) return;
+    el.dataset.wired = '1';
     el.addEventListener('click', e => {
+      /* MỌI sản phẩm mở CÙNG MỘT quick add (28/08/2026, lệnh user: *"vì không
+         dùng dạng dropdown ở PDP nữa nên thống nhất theo layout quick add của
+         SP số 1"*). Trước lượt này PLP rẽ 2 đường: SP có bảng size riêng
+         (SIZE_SHEET_BY_PRODUCT) mở #sizeSheet dạng DANH SÁCH DÒNG — họ hàng của
+         dropdown vừa bị bỏ khỏi mọi PDP; SP còn lại mở quick add đủ ảnh + màu +
+         chip size. Hai giọng trên cùng một lưới, nên nay chỉ còn một.
+         Bộ size vẫn đúng của từng SP — xem qaSizesOf(). */
       const qa = e.target.closest('.quick-add');
       if (qa) {
-        const idx = +qa.dataset.quick, ci = +(el.dataset.color || 0);
-        const kind = SIZE_SHEET_BY_PRODUCT[idx];
-        if (kind && window.__openSizeSheet) {
-          // ctx cho size sheet biết đang thêm SP nào / màu nào / bay từ ảnh nào
-          window.__openSizeSheet(kind, '', null, { idx, ci, img: el.querySelector('img') });
-        } else if (window.__openQuickAdd) {
+        if (window.__openQuickAdd) {
+          const idx = +qa.dataset.quick, ci = +(el.dataset.color || 0);
           window.__openQuickAdd(idx, ci, el.querySelector('img'));
         }
         return;
@@ -8134,6 +8240,8 @@ function wireProductCards(root) {
      Nằm trong wireProductCards (không phải wire) vì lưới PLP còn được dựng
      lại khi đổi sắp xếp / bấm "Show more" — chỗ đó chỉ gọi hàm này. */
   root.querySelectorAll('[data-swatches]').forEach(rw => {
+    if (rw.dataset.wired) return;   // cùng lý do data-wired ở trên
+    rw.dataset.wired = '1';
     const card = rw.closest('[data-product]');
     if (!card) return;
     const idx = +card.dataset.product;
@@ -8177,6 +8285,10 @@ function renderPlpGrid(root) {
   if (list.length) wireProductCards(grid);
   localizeNew(grid);
   updatePlpCount(root, list.length);
+  /* 0 kết quả -> ẩn cụm nút "Xem thêm" (nó nằm NGOÀI #plpGrid nên đường
+     innerHTML ở trên không đụng tới nó được) — xem chú thích ở chỗ bind nút. */
+  const sm = root.querySelector('#showMore');
+  if (sm) sm.parentElement.classList.toggle('hidden', !list.length);
 }
 /* ckStep = section đang mở · ckMaxStep = section XA NHẤT đã hoàn tất.
    Tách 2 biến để bấm "Thay đổi" ở bước 1 không kéo bước 2-3 về "chưa làm":
@@ -8203,6 +8315,20 @@ const I18N = {
   'Áp dụng':'Apply', 'Xác nhận':'Confirm', 'Hoàn tất':'Done', 'Chi tiết':'Details',
   'Thu gọn':'Show less', 'Xem thêm':'Show more', 'Xem chi tiết':'See details', 'Chọn tất cả':'Select all', 'Mặc định':'Default',
   'Từ':'From', 'Đến':'To', 'Còn':'Only', 'và':'and', 'Khác':'Other', 'Miễn phí':'Free',
+  // Nhãn động của nút Xem thêm lúc đổ skeleton (bổ sung 28/08 — trước đây EN mode kẹt tiếng Việt ~900ms)
+  'Đang tải':'Loading',
+  // 5 nhãn SORT_OPTIONS (bổ sung 28/08 — thiếu khoá nên EN mode menu Sắp xếp đứng nguyên tiếng Việt)
+  'Phù hợp nhất':'Most relevant', 'Mới nhất':'Newest', 'Bán chạy nhất':'Best sellers',
+  'Giá: Thấp đến cao':'Price: Low to high', 'Giá: Cao đến thấp':'Price: High to low',
+  // 2 toast của panel bộ lọc (toast() tự tra tr() nên chỉ cần khoá; câu 'Áp dụng N bộ lọc' đi bằng luật regex)
+  'Đã bỏ hết bộ lọc':'All filters cleared', 'Đã đặt lại bộ lọc':'Filters reset',
+  'Thêm nhanh vào giỏ':'Quick add to bag',
+  'Sản phẩm thịnh hành':'Trending items',
+  // 3 dòng promo bar (PLP brand) + đoạn giới thiệu thương hiệu — trước 28/08 không có khoá, EN mode đứng nguyên tiếng Việt
+  'Giảm thêm 7% cho đơn hàng từ 8 triệu đồng (*)':'Extra 7% off orders from 8 million VND (*)',
+  'Stefano Ricci đã có mặt tại DAFC Online':'Stefano Ricci is now available on DAFC Online',
+  'Giảm thêm 5% cho thẻ Techcombank (*Điều khoản áp dụng)':'Extra 5% off with Techcombank cards (*T&Cs apply)',
+  'Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo, phong cách quyến rũ và logo Medusa đặc trưng. Được thành lập vào năm 1978 bởi Gianni Versace, thương hiệu này đại diện cho sự sang trọng, tự tin và vẻ đẹp hiện đại. Từ những họa tiết ấn tượng đến kỹ thuật cắt may tinh xảo, Versace kết hợp tay nghề thủ công Ý với tinh thần táo bạo, trở thành biểu tượng của thời trang cao cấp và đẳng cấp thời đại.':'Versace is Italy’s iconic luxury fashion house, renowned for bold design, seductive style and the signature Medusa logo. Founded in 1978 by Gianni Versace, the house stands for glamour, confidence and modern beauty. From striking prints to masterful tailoring, Versace pairs Italian craftsmanship with a daring spirit, an enduring symbol of high fashion.',
   'Hiển thị 1 cột':'Show 1 column', 'Hiển thị 2 cột':'Show 2 columns',
   'Mở tìm kiếm':'Open search', 'Mở bảng kích thước':'Open size guide', 'Bảng kích thước':'Size guide',
 
@@ -8775,7 +8901,10 @@ const I18N = {
   'Túi đựng quần áo':'Garment bag', 'Vớ':'Socks',
   'Phụ kiện quần áo khác':'Other clothing accessories', 'Găng tay':'Gloves', 'Cài áo':'Brooch',
   'Thắt lưng':'Belts', 'Phụ kiện khác':'Other accessories', 'Dây đeo mắt kính':'Eyewear chain',
-  'Phụ kiện văn phòng':'Stationery', 'Khác':'Others', 'Sổ tay':'Notebook',
+  /* 'Khác' KHÔNG khai lại ở đây: đã có 'Khác':'Other' ở khối chung — object
+     literal trùng key thì key sau THẮNG, nên bản 'Others' cũ đè mất 'Other'
+     của tiêu đề mục lọc / nhóm size (lỗi phát hiện 28/08). */
+  'Phụ kiện văn phòng':'Stationery', 'Sổ tay':'Notebook',
   'Bao da sổ tay':'Notebook cover', 'Bút máy':'Fountain pen', 'Bút bi nước':'Rollerball',
   'Bút bi':'Ballpoint', 'Bút tạo nét':'Fineliner', 'Bộ văn phòng phẩm':'Stationery set',
   'Ruột bút':'Pen refill', 'Lọ mực':'Ink bottle', 'Ống mực':'Ink cartridges',
@@ -8824,6 +8953,7 @@ const I18N = {
 const I18N_RE = [
   [/^(\d+) cửa hàng$/,                '$1 stores'],
   [/^(\d+) sản phẩm$/,                '$1 products'],
+  [/^Áp dụng (\d+) bộ lọc$/,          'Applied $1 filters'],
   [/^(\d+) sản phẩm · (.+)$/,         '$1 items · $2'],
   [/^\+ ([\d.]+) điểm$/,              '+ $1 points'],
   [/^− ([\d.]+) điểm$/,               '− $1 points'],
@@ -9577,10 +9707,9 @@ function wire(root) {
       document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
       const p = PRODUCTS[SCREEN_PRODUCT[current] || 0];
       const colorEl = root.querySelector('#colorName');
+      // mọi PDP chọn size bằng chip (28/08 — nhánh đọc .size-trigger-label của dropdown đã bỏ)
       const sizeChip = root.querySelector('.chip.on');
-      const sizeLbl = root.querySelector('.size-trigger-label');
-      const size = sizeChip ? sizeLabel(sizeChip.dataset.size)
-        : (sizeLbl && !sizeLbl.classList.contains('text-muted-foreground') ? sizeLbl.textContent.trim() : '');
+      const size = sizeChip ? sizeLabel(sizeChip.dataset.size) : '';
       const variant = [colorEl ? colorEl.textContent.trim() : '', size].filter(Boolean).join(' , ');
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
         img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
@@ -9790,20 +9919,8 @@ function wire(root) {
     });
   });
 
-  // size trigger → bottom sheet (thay <select> gốc)
-  root.querySelectorAll('[data-size-trigger]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const kind = btn.dataset.sizeTrigger;
-      const label = btn.querySelector('.size-trigger-label');
-      if (window.__openSizeSheet) {
-        window.__openSizeSheet(kind, label.textContent, picked => {
-          label.textContent = picked;
-          label.classList.remove('text-muted-foreground');
-          label.classList.add('text-foreground');
-        });
-      }
-    });
-  });
+  // (ô dropdown chọn size của PDP đã bỏ 28/08 — mọi PDP chọn size bằng chip;
+  //  #sizeSheet chỉ còn được mở từ quick add ngoài PLP, xem SIZE_SHEET_BY_PRODUCT)
 
   // checkbox
   root.querySelectorAll('[data-check]').forEach(c => {
@@ -10159,9 +10276,17 @@ function wire(root) {
 
   // Show more → skeleton then append
   const sm = root.querySelector('#showMore');
-  if (sm) sm.addEventListener('click', () => {
+  if (sm) {
+    /* Bộ lọc ra 0 kết quả thì ẩn cả cụm nút: không còn gì để nối thêm, nút đứng
+       dưới khối "không khớp bộ lọc" là một ngõ cụt (bấm chỉ nháy skeleton rồi
+       thôi). renderPlpGrid toggle lại mỗi lần áp/xoá bộ lọc; dòng này lo cho
+       lượt render màn đầu tiên khi bộ lọc cũ vẫn đang ra 0. */
+    sm.parentElement.classList.toggle('hidden', !sortedProducts().length);
+    sm.addEventListener('click', () => {
+    if (!sortedProducts().length) return;   // chốt chặn: nút đáng lẽ đã ẩn
     const grid = sm.closest('[data-scroller]').querySelector('.grid');
     sm.innerHTML = `<svg class="spin" width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="var(--general-primary)" stroke-opacity=".2" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="var(--general-primary)" stroke-width="2" stroke-linecap="round"/></svg> Đang tải`;
+    localizeNew(sm);
     const skels = Array(4).fill(`<div class="flex flex-col"><div class="skel w-full" style="aspect-ratio:189/252"></div><div class="px-1 py-2 flex flex-col gap-1"><div class="skel h-3 w-2/3 rounded"></div><div class="skel h-3 w-full rounded"></div><div class="skel h-3 w-1/2 rounded"></div></div></div>`).join('');
     grid.insertAdjacentHTML('beforeend', skels);
     setTimeout(() => {
@@ -10170,14 +10295,24 @@ function wire(root) {
          bản trước nhồi 4 sản phẩm Versace thời trang vào mọi lưới, kể cả khi bộ
          lọc đang ra 0 kết quả -> 4 thẻ nằm ngay dưới câu "không khớp bộ lọc". */
       const more = sortedProducts().slice(0, 4);
+      /* Thẻ append dựng CÙNG options với renderPlpGrid (badge + pillBadges):
+         bản trước chỉ truyền {w:'reveal'} nên SP#4 xuất hiện lần 2 mất nhãn
+         New Season/La Vacanza — cùng một SP hai kiểu thẻ trên một lưới. */
       more.forEach(({ p, i }) => {
-        grid.insertAdjacentHTML('beforeend', productCard(p, i, { w: 'reveal' }));
+        grid.insertAdjacentHTML('beforeend', productCard(p, i, { w: 'reveal', badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null }));
       });
-      sm.innerHTML = 'Show more';
-      wire(root);
+      sm.innerHTML = 'Xem thêm';
+      localizeNew(sm);
+      /* CHỈ wire phần vừa thêm, KHÔNG gọi wire(root): wire(root) gắn CHỒNG
+         listener toàn màn — đo được sau 2 lượt bấm: menu Sắp xếp không mở nổi
+         (toggle chạy 3 lần/click) và lượt sau append 8 thẻ thay vì 4.
+         wireProductCards tự bỏ qua thẻ đã wired (data-wired). */
+      wireProductCards(grid);
+      localizeNew(grid);   // EN mode: badge "Đặt trước" trên thẻ mới phải ra "Pre-order"
       observeReveal(root);
     }, 900);
-  });
+    });
+  }
 
   // brand description expand / collapse
   const bToggle = root.querySelector('#brandToggle');
@@ -10190,6 +10325,7 @@ function wire(root) {
       para.style.overflow = 'hidden';
       para.style.webkitLineClamp = open ? 'unset' : '3';
       bToggle.textContent = open ? 'Thu gọn' : 'Xem thêm';
+      localizeNew(bToggle);   // EN mode: gán động xong phải dịch lại, không thì bấm 1 lần là nút quay về tiếng Việt
     };
     apply();
     bToggle.addEventListener('click', () => { open = !open; apply(); });
@@ -10288,6 +10424,7 @@ function wire(root) {
   root.querySelectorAll('[data-grid]').forEach(btn => {
     btn.addEventListener('click', () => {
       const cols = btn.dataset.grid;
+      plpGridCols = cols;   // nhớ qua điều hướng (28/08) — desktop vốn đã nhớ plpCols, mobile thì mỗi lần đổi PLP lại về 2 cột
       if (plpGrid) {
         plpGrid.classList.toggle('grid-cols-2', cols === '2');
         plpGrid.classList.toggle('grid-cols-1', cols === '1');
@@ -11421,7 +11558,7 @@ document.body.insertAdjacentHTML('beforeend', `
            đặt ABSOLUTE ở x=350 y=8 (tức cách phải/trên 8px) nên không chiếm
            chiều cao layout — trước đây nó nằm trong 1 hàng h-6 riêng. -->
       <button id="qaClose" aria-label="Đóng"
-              class="absolute top-2 right-2 z-10 w-8 h-8 rounded-xs bg-background/90 flex items-center justify-center press [&_svg]:w-4 [&_svg]:h-4">${I.close}</button>
+              class="glass-80 absolute top-2 right-2 z-10 w-8 h-8 rounded-xs flex items-center justify-center press [&_svg]:w-4 [&_svg]:h-4">${I.close}</button>
       <!-- #qaBody = "group1" trong Figma 3373:41590: gallery + header + khối
            chọn màu/size. Đây là block DUY NHẤT được cuộn khi màn quá thấp
            (flex-1 + min-h-0 để co lại khi panel chạm 90vh). -->
@@ -11444,6 +11581,34 @@ document.body.insertAdjacentHTML('beforeend', `
    · CTA pad 16 gap 10: nút 48 primary + link 24 gạch chân (trước là 36 đậm)
    Các layer NEW SEASON / SKU / "Đã bao gồm thuế" / "*Tạm hết hàng" trong Figma
    đều đang tắt hiển thị nên không dựng. */
+/* Bộ size của quick add = ĐÚNG bộ mà PDP của chính sản phẩm đó đang chào.
+   Cần từ 28/08 khi MỌI sản phẩm trên PLP đổ về một quick add: trước đó hàm này
+   in cứng `p.sizes || SIZES`, tức SP nào không phải hàng làm đẹp cũng ra 39-44 —
+   đúng với SP#1/SP#4 nhưng sai với khăn lụa (S/M/L) và túi (Onesize), hai SP
+   trước đây đi đường #sizeSheet nên chưa lộ.
+   Trả [{label, oos}]:
+     · hàng làm đẹp -> dung tích trong PRODUCTS[i].sizes, không món nào hết;
+     · SP có bảng riêng -> SIZE_SHEET_OPTIONS (khăn lụa · túi · 2 đôi giày);
+     · còn lại -> bộ SIZES mặc định, y như PDP1/PDP4.
+   `label` là nhãn ĐÃ gắn tiền tố hệ đo và dùng luôn cho data-size — đúng cách
+   #sizeSheet làm trước đây, nên biến thể ghi vào giỏ không đổi một chữ.
+   `oos` mang MODE ('oos' | 'notify') chứ không phải cờ boolean, để nút CTA nói
+   đúng việc như PDP. OOS_MODE tra theo SỐ THÔ nên phải bóc tiền tố khỏi nhãn.
+   (SIZE_SHEET_* khai ở CUỐI file — hàm chỉ chạy lúc bấm nên không vướng TDZ,
+   cùng kiểu tham chiếu mà wireProductCards đang dùng.) */
+function qaSizesOf(p, idx) {
+  const mode = label => {
+    const raw = (String(label).match(/\d+$/) || [''])[0];
+    return OOS_MODE[raw] || 'oos';
+  };
+  if (p.sizes && p.sizes.length) return p.sizes.map(label => ({ label, oos: '' }));
+  const kind = SIZE_SHEET_BY_PRODUCT[idx];
+  if (kind && SIZE_SHEET_OPTIONS[kind]) {
+    return SIZE_SHEET_OPTIONS[kind].map(o => ({ label: o.label, oos: o.oos ? mode(o.label) : '' }));
+  }
+  return SIZES.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s) ? (OOS_MODE[s] || 'oos') : '' }));
+}
+
 function quickAddBody(p, idx, sel = 0) {
   /* ĐỒNG NHẤT với PDP: cùng đọc PRODUCT_GALLERY nên quick add của sản phẩm
      nào ra đúng bộ ảnh của PDP sản phẩm đó. */
@@ -11504,11 +11669,16 @@ function quickAddBody(p, idx, sel = 0) {
         <p class="text-[12px] font-medium leading-4 text-foreground">${p.sizes ? 'Dung tích' : 'Kích thước'}</p>
         <!-- 5 ô / dòng (trước là 4) -> chip hẹp hơn: (358 - 4×8)/5 ≈ 65px.
              SIZES đang có 6 giá trị nên dòng 2 còn lẻ 1 ô — xem README. -->
+        <!-- Ô HẾT HÀNG vẫn BẤM ĐƯỢC và đổi nhãn nút, đúng hợp đồng của PDP
+             ("liệt kê đủ size kể cả size đã hết; bấm size hết thì mời nhận
+             thông báo"). Trước 28/08 quick add khoá cứng ô đó bằng thuộc tính
+             disabled — bày một ô bấm không được, mà chính #sizeSheet nó thay
+             thế lại có nhánh "Nhận thông báo khi có hàng".
+             (KHÔNG gõ dấu backtick trong comment này: cả khối nằm trong template
+             literal, backtick sẽ cắt đôi chuỗi — đã dính đúng lỗi đó lúc viết.)
+             Xem setQaCta trong openQA. -->
         <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)" data-qa-sizes>
-          ${(p.sizes || SIZES).map((s, si) => {
-            const off = !p.sizes && DISABLED.includes(s);
-            return `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${(si === 0 && !off) ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? 'disabled' : ''}>${sizeLabel(s)}</button>`;
-          }).join('')}
+          ${qaSizesOf(p, idx).map((o, si) => `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${(si === 0 && !o.oos) ? 'on border-primary' : 'border-border'} ${o.oos ? 'off' : 'text-foreground'}" data-size="${o.label}"${o.oos ? ` data-oos="${o.oos}"` : ''}>${o.label}</button>`).join('')}
         </div>
       </div>
     </div>
@@ -11534,7 +11704,7 @@ function quickAddBody(p, idx, sel = 0) {
 function quickAddCta(p) {
   return `
     <div class="px-4 pt-4 pb-4 flex flex-col gap-2">
-      ${p.preorder ? `<p class="text-[12px] leading-4 text-secondary-foreground">Dự kiến giao hàng vào ngày <span class="font-medium">${p.preorder}</span></p>` : ''}
+      ${p.preorder ? `<p data-qa-eta class="text-[12px] leading-4 text-secondary-foreground">Dự kiến giao hàng vào ngày <span class="font-medium">${p.preorder}</span></p>` : ''}
       <button id="qaAdd" data-quick-img="${A}${p.img}" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium btn-p press">${p.preorder ? 'Đặt trước' : 'Thêm vào giỏ hàng'}</button>
     </div>`;
 }
@@ -11551,7 +11721,14 @@ function quickAddCta(p) {
      khỏi sheet nên `body.querySelector('img')` không còn là ảnh sản phẩm nữa
      (nó rơi trúng ô CHỌN MÀU 44px, hoặc null nếu SP không có màu). */
   let qaSrcImg = null;
+  /* Hẹn giờ gắn aria-hidden của lượt ĐÓNG — phải huỷ khi mở lại, kẻo mở trong
+     vòng 300ms sau khi đóng thì cái hẹn cũ nổ MUỘN và dán aria-hidden="true"
+     lên một dialog đang mở (đo được 28/08: đóng rồi mở lại sau 100ms — panel
+     mở, trình đọc màn hình thì coi như không có gì). Mở nhanh như vậy rất
+     thường: bấm ✕ rồi chạm ngay ô + của thẻ bên cạnh. */
+  let qaHideT = null;
   const openQA = (idx, ci = 0, srcImg = null) => {
+    clearTimeout(qaHideT);
     qaSrcImg = srcImg;
     const p = PRODUCTS[idx];
     body.innerHTML = quickAddBody(p, idx, (p.colors && p.colors[ci]) ? ci : 0);
@@ -11565,15 +11742,45 @@ function quickAddCta(p) {
         btn.classList.add('on'); btn.classList.remove('border-transparent');
       });
     });
+    /* Nhãn nút đi theo SIZE ĐANG CHỌN — cùng hợp đồng với #pdpCta của PDP
+       (28/08): còn hàng -> "Thêm vào giỏ hàng" / "Đặt trước"; size mode 'oos' ->
+       "Tạm hết hàng" và khoá nút (không còn hành động nào khả dụng); mode
+       'notify' -> "Nhận thông báo khi có hàng", bấm là mở khung đăng ký.
+       Nhánh notify này chính là thứ #sizeSheet từng làm cho các SP nay đã dồn
+       về quick add — dồn khuôn thì không được rơi mất việc nó làm được.
+       Dòng NGÀY DỰ KIẾN ẩn khi hết hàng: hứa ngày giao cho một size không bán
+       là tự chọi nhau (PDP cũng ẩn trả góp / "chỉ còn 01" ở trạng thái này). */
+    const qaBtn = ctaBox.querySelector('#qaAdd');
+    const qaEta = ctaBox.querySelector('[data-qa-eta]');
+    const QA_NORMAL = p.preorder ? 'Đặt trước' : 'Thêm vào giỏ hàng';
+    const setQaCta = mode => {
+      qaBtn.dataset.mode = mode || '';
+      qaBtn.textContent = mode === 'oos' ? 'Tạm hết hàng'
+                        : mode === 'notify' ? 'Nhận thông báo khi có hàng'
+                        : QA_NORMAL;
+      const dead = mode === 'oos';
+      qaBtn.disabled = dead;
+      qaBtn.style.opacity = dead ? '.4' : '';
+      qaBtn.style.pointerEvents = dead ? 'none' : '';
+      if (qaEta) qaEta.classList.toggle('hidden', !!mode);
+      localizeNew(ctaBox);
+    };
     body.querySelectorAll('[data-qa-sizes]').forEach(rw => {
       rw.addEventListener('click', ev => {
         const btn = ev.target.closest('.chip');
-        if (!btn || btn.disabled) return;
+        if (!btn) return;
         rw.querySelectorAll('.chip').forEach(c => { c.classList.remove('on', 'border-primary'); c.classList.add('border-border'); });
         btn.classList.remove('border-border'); btn.classList.add('on', 'border-primary');
+        setQaCta(btn.dataset.oos || '');
       });
     });
-    ctaBox.querySelector('#qaAdd').addEventListener('click', e => {
+    qaBtn.addEventListener('click', e => {
+      if (qaBtn.dataset.mode === 'oos') return;
+      if (qaBtn.dataset.mode === 'notify') {
+        closeQA();
+        if (window.__openNotify) window.__openNotify(() => toast('Đã đăng ký · sẽ báo bạn khi có hàng'));
+        return;
+      }
       /* Ưu tiên ảnh của CARD (qaSrcImg); chỉ rơi về ảnh trong sheet khi mở từ
          chỗ không truyền được card. Xem ghi chú ở openQA. */
       const img = qaSrcImg || body.querySelector('.qa-gallery img') || body.querySelector('img');
@@ -11585,10 +11792,15 @@ function quickAddCta(p) {
       const colorBtn = body.querySelector('[data-qa-colors] .sw.on');
       const sizeChip = body.querySelector('[data-qa-sizes] .chip.on');
       const variant = [colorBtn ? colorBtn.dataset.name : '', sizeChip ? sizeLabel(sizeChip.dataset.size) : ''].filter(Boolean).join(' , ');
+      /* Ảnh cho sheet xác nhận lấy theo Ô MÀU ĐANG CHỌN, không phải ảnh mặc
+         định của SP: chọn Rosa rồi xác nhận lại thấy ảnh Verde là hai câu
+         chọi nhau. (#sizeSheet cũ đã làm đúng chuyện này bằng ctx.img — dồn
+         khuôn thì không được rơi mất.) */
+      const confirmImg = colorBtn ? colorBtn.querySelector('img')?.getAttribute('src') : '';
       closeQA();
       // đợi sheet quick-add trượt xuống xong rồi mở sheet xác nhận
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
-        img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
+        img: confirmImg || `${A}${p.img}`, brand: p.brand, name: p.name, variant,
         price: p.price, off: p.off, was: p.was, preorder: p.preorder,
       }), 350);
     });
@@ -11609,7 +11821,8 @@ function quickAddCta(p) {
     panel.classList.add('translate-y-full');
     qa.classList.add('pointer-events-none');
     unlockBodyScroll();
-    setTimeout(() => qa.setAttribute('aria-hidden', 'true'), 300);
+    clearTimeout(qaHideT);
+    qaHideT = setTimeout(() => qa.setAttribute('aria-hidden', 'true'), 300);
   };
   qa.querySelector('.qa-backdrop').addEventListener('click', closeQA);
   qa.querySelector('#qaClose').addEventListener('click', closeQA);
@@ -11795,14 +12008,23 @@ document.body.insertAdjacentHTML('beforeend', `
 
 /* Sản phẩm đang xem theo màn PDP — dùng cho sheet xác nhận thêm giỏ */
 const SCREEN_PRODUCT = { pdp: 0, pdp2: 1, pdp3: 2, pdp4: 3, pdp5: 4, pdp6: 5 };
-/* SP nào mà PDP chọn size bằng dropdown (tức có mặt trong SIZE_SHEET_OPTIONS)
-   thì ngoài PLP KHÔNG mở quick add nữa: màu đã chọn ngay trên card, chỉ còn
-   thiếu size -> mở thẳng #sizeSheet, đúng bộ chọn size của PDP. Nhờ vậy luôn
-   chỉ có 1 bottom sheet trên màn hình, không có chuyện sheet đè sheet. */
+/* Bảng tra "SP nào có bộ size riêng" — chỉ số card -> khoá màn PDP.
+   Nay chỉ còn phục vụ qaSizesOf() (quick add đọc đúng bộ size của từng SP).
+   LỊCH SỬ: bảng này từng là công tắc rẽ đường ở PLP (SP có bộ riêng thì mở
+   #sizeSheet thay vì quick add). 28/08 user chốt MỌI SP mở cùng một quick add,
+   nên nhánh đó đã bỏ — xem wireProductCards. */
 const SIZE_SHEET_BY_PRODUCT = Object.fromEntries(
   Object.entries(SCREEN_PRODUCT).filter(([k]) => SIZE_SHEET_OPTIONS[k]).map(([k, i]) => [i, k]));
 
-/* ── Size sheet — thay cho <select> gốc của trình duyệt (PDP2/3/5/6) ──
+/* ── Size sheet — KHỐI NGỦ, hiện KHÔNG có lối nào mở ──────────────────────
+   Vòng đời: bộ chọn size của PDP (dropdown) -> 28/08 sáng các PDP về chip hết,
+   sheet chỉ còn phục vụ quick add ngoài PLP -> 28/08 chiều user chốt mọi SP
+   dùng CÙNG khuôn quick add (dạng danh sách dòng này là họ hàng của dropdown
+   vừa bỏ), nên `__openSizeSheet` hết nơi gọi.
+   GIỮ LẠI có chủ đích, chưa xoá: repo demo chưa có commit nào nên xoá ~130 dòng
+   là không lấy lại được, và khuôn này có thể còn dùng cho màn khác. Dữ liệu
+   SIZE_SHEET_OPTIONS thì VẪN SỐNG — cả PDP2/PDP3 lẫn qaSizesOf() đọc từ đó.
+   Nói một tiếng nếu muốn dọn hẳn khối này.
    Drawer 3281:53948: bo 10, handle 50×3 đè trên header 52px ("Chọn size" 20/1.4 + ✕ 12px),
    hàng size 36px, link "Hướng dẫn chọn size" dưới list, CTA 48px chữ 16 */
 document.body.insertAdjacentHTML('beforeend', `
