@@ -183,3 +183,167 @@ Kết quả: **73 instance**, cả 4 khung màn giữ đúng từng px (4845 · 
   resize thấp hơn master 22px, khớp đo.
 - Node con dạng FILL trong auto-layout **tự co còn 1px khi chèn sibling** → phép đối chiếu phải
   chốt số đo raw TRƯỚC khi chèn instance (bug "dw1391").
+
+---
+
+## 10. Đợt 3 (28/08) — kéo bản PDP#1 desktop MỚI vào Figma
+
+Lệnh user: *"kéo bản pdp 1 bạn vừa tạo vào figma giúp tôi, lưu ý hãy sử dụng component sát nhất có thể"*
+(kèm link node `72-4482` = chính section `PDP — mobile 375 + desktop 1440`).
+
+**Không ghi đè bản 26/08.** Frame mới `PDP / desktop 1440 · 28-08` đặt cạnh phải trong cùng section
+(`@3020,80`), kèm `[doc] PDP · desktop 1440 · 28-08` (`@3020,3638`). Section tự nới 3020 → **4540**.
+Giữ bản cũ để đối chiếu — user muốn dọn thì xoá 1 frame.
+
+### 10.1 Vì sao khung thấp hơn bản cũ
+
+**1440×3478** (bản 26/08: 4318). Ba việc của 27–28/08 rút chiều cao: bỏ dải *Đã xem gần đây* ·
+*Gợi ý mua kèm* đổi từ dải 5 thẻ sang khuôn **chữ-một-bên + 4 ảnh** · nhịp dọc quanh 2 kẻ ngăn về
+đều **32** (trước 32 · 24 · 64 · 24 · 32).
+
+### 10.2 Pipeline — tái dùng nguyên bộ của 26/08, không dựng lại
+
+`bridge.py` @9225 (phục vụ luôn `D:\doc` nên trang và `/save` cùng origin) → `extractor.js` chạy
+trong trang (`__figxRun('pdpd2808')`) → `builder.js` nạp vào plugin bằng **`new Function(src)`**
+(fetch từ `/js/…`, không phải dán 14,5 KB vào tool call) → `__figxBuild(...)`.
+
+| | Số |
+|---|---|
+| Node trích / dựng | 335 / 353 |
+| Mực chữ bind | **132/132** · kẻ **19/19** · nền 41 (6 ngoại lệ `#fef2f2`) |
+| Text style gắn | **127/132** |
+| Đệm bind | 391 |
+| Auto-layout | 87 (revert 13) |
+| Ảnh | 10 (0 lỗi) · dùng lại hash |
+| Thời gian dựng | 3,2 s |
+
+**2 node chữ không gắn style** (cả hai có lý do): 4 nhãn accordion 14/20 Medium — ngoại lệ 13.11 như
+2 bản trước; **1 tiêu đề 40/50 Libre Bodoni** — cỡ NGOÀI thang dự án (12/14/16/18/24/32/48) và ngoài
+thang trưng bày F2 (24/32 · T0 32/40 · T00 48/60), user chốt 28/08, đã ghi danh ngoại lệ trong code.
+
+### 10.3 Ráp component — 11 instance
+
+| Khối | Component | Khớp |
+|---|---|---|
+| Header | `page-header-desktop` | 161 = 161 · **0px** |
+| Chân trang | `page-footer-desktop` (ẩn `newsletter` + `divider`) | 414 = 414 · **0px** |
+| Cam kết dịch vụ | `service-promises-desktop` | 1392×156 · **0px** |
+| 4 thẻ *Sản phẩm tương tự* | `product-item-info-desktop` **size=rail** | 272×470,7 · **0px** |
+| 4 thẻ *Gợi ý mua kèm* | **size=look — VARIANT MỚI** 265,5×462 | xem 10.4 |
+
+### 10.4 Variant mới `size=look` — vì sao phải thêm
+
+Thẻ của dải mới rộng **265,5** (lưới 4 cột trong 1086, khe 8) và cao **462** (ảnh 354 + info 108).
+Instance của `size=rail` resize được BỀ NGANG (photo FILL + ảnh STRETCH) nhưng **không hạ được chiều
+cao ảnh** 363 → 354: `photo.resize()` và `img.resize()` đều **thất bại im lặng** trên con của
+instance — đúng bẫy đã ghi 26/08. Nên thêm variant, y như lý do đã thêm `size=rail`; trục `size` nay
+là **grid | rail | look**. Thêm variant là phép CỘNG, 53 instance cũ không đổi gì.
+
+**2 thẻ không giảm giá tự nhiên cao 460, không phải 462** — hàng giá chỉ 18 (không có chip -%) thay
+vì 20. Demo ra 462 vì **CSS grid kéo giãn** thẻ theo hàng, không phải vì thẻ cao 462. Hàng vẫn 462
+nên khung không đổi px nào. Dòng giá gạch của 2 thẻ đó **giữ chỗ** bằng nbsp + `opacity 0` — đúng
+cách demo dùng `class="… invisible"` với `&nbsp;`.
+
+### 10.5 Giữ raw có chủ đích — 1 thẻ
+
+Thẻ **pre-order (Đầm lụa)**: từ 28/08 badge *"Đặt trước"* nằm **INLINE trước tên**, còn component
+vẫn để `badge-label` **đè ảnh** (khuôn trước 28/08). Ráp vào là nói sai thiết kế hiện tại, nên giữ
+raw. Muốn ráp thì phải thêm slot `badge-inline` vào `name-block` của `product-item-info-desktop` —
+**chờ chốt**, vì việc đó bọc lại node `product-item-name` và đụng 53 instance sẵn có.
+
+Chưa có component (giữ raw như 2 đợt trước): breadcrumb · gallery lưới · cột mua hàng · accordion ·
+khối chữ của dải gợi ý.
+
+### 10.6 Sự cố đã xử trong đợt
+
+**Footer nhảy lên đỉnh frame.** `div[scroller]` là khung **tuyệt đối** (`layoutMode: NONE`) nên thứ
+tự trong `children` KHÔNG quyết định vị trí — instance footer giữ `y:0` từ lúc tạo tạm trên page.
+Hàm swap dùng cho header/cam kết có nhánh `else { inst.x = rx; inst.y = ry }`, nhưng nhánh riêng của
+footer thì thiếu. Đã đặt lại `y = 3064`. **Bài học: swap trong khung tuyệt đối phải chép x/y, đừng
+tin thứ tự children.**
+
+### 10.7 Đối chiếu Figma ↔ trang chạy
+
+| | Trang chạy @1440 | Figma |
+|---|---|---|
+| Khung | 1440×3478 | 1440×3478 |
+| Cột nội dung | 569 | 569 |
+| Gallery / ô ảnh | 823 / 409,5×505,6 | 823 / 410×506 |
+| Cột chữ dải gợi ý | 282 | 283 |
+| Tiêu đề dải | 40/50 · Bodoni · 2 dòng · căn giữa | y hệt |
+| Lưới 4 ảnh | 1086 · 4 thẻ | 1086 · 4 thẻ |
+
+Kẻ hairline dựng ra **0,8px** ở dải trên và 1px ở dải dưới — artifact sẵn có của extractor (bản
+26/08 cũng ghi "đệm cộng kẻ 0,8"), lệch 0,2px, không sửa.
+
+---
+
+## 11. Đợt 4 (28/08 tối) — Figma → code, và phương án B
+
+Lệnh user: *"hãy adapt thiết kế figma này vào layout 1, tôi có thay đổi bổ sung cho cục gợi ý mua
+kèm; ngoài ra tạo thêm 1 phiên bản như hình đính kèm nhưng align bottom và cho text vào vị trí
+trống ở trên khi align top"* (kèm ảnh tham chiếu: 3 thẻ cao lệch nhau, canh TRÊN).
+
+Lần này chiều đi **NGƯỢC**: user sửa thẳng trên Figma (`Frame 3` = `108:3746` trong frame
+`PDP / desktop 1440 · 28-08`), mình đọc số đo từ Figma rồi port về `desktop.html`.
+
+### 11.1 User đã đổi gì trong Figma (đo từ node)
+
+| | Bản mình dựng | Bản user sửa |
+|---|---|---|
+| Số thẻ | 4 × 265,5 | **3 × 329,8** |
+| Khe thẻ | 8 | **24** |
+| Nền dải | không | **băng xám `#f2f2f2`**, cao **352**, đệm 32 dọc / 24 ngang |
+| Canh thẻ | đỉnh | **đáy băng**, ảnh **trồi lên 227,7** khỏi mép băng |
+| Cột chữ | 282 · căn giữa | **282,6 · căn TRÁI**, đệm trên 16 |
+| Kẻ mảnh | mép trên dải | giữ, nay là mép trên băng |
+
+Khối bọc `Frame 3` cao 625, nội dung **canh đáy**, nên phía trên băng có **273** khoảng trắng để
+ảnh trồi vào (đỉnh ảnh cách đỉnh khối 45,3).
+
+### 11.2 Port về code — bản A
+
+Khai bằng class ngữ nghĩa (`.dk-look-band` · `.dk-look-aside` · `.dk-look-grid`), đặt TRƯỚC các
+`@media` như luật cascade đã ghi ở đợt trước. Điểm cốt lõi: **lưới đặt TUYỆT ĐỐI** (`bottom:32`,
+`left: calc(24px + var(--look-aside) + 24px)`) thay vì nằm trong dòng chảy — nhờ vậy ảnh cao bao
+nhiêu cũng không đẩy băng cao thêm, tự trồi lên phần trống, đúng cách Figma dựng (`grid y = −227,7`,
+băng vẫn 352). `--look-aside` là biến nên dải hẹp chỉ phải đổi một số.
+
+Đo lại trên trang chạy @1425 (thanh cuộn ăn 15): băng 352 · nền `rgb(242,242,242)` · đệm 32/24 ·
+cách khối trên 273 · ảnh trồi 221 · 3 thẻ 324,7 khe 24 · tiêu đề căn trái 2 dòng. **Ở đúng 1440
+(ẩn thanh cuộn) ra chính xác số Figma**: lưới 1037,4 · thẻ 329,8 · trồi 227,7.
+Nhịp dưới không đổi: đáy băng → kẻ dải sau **32**, kẻ → nội dung **33**, đáy dải sau → cam kết **32**.
+
+### 11.3 Bản B — "so le", theo ảnh tham chiếu
+
+Ảnh user gửi xếp thẻ **canh TRÊN**, cao lệch nhau. Lệnh là lật lại: **canh ĐÁY** (mép trên răng
+cưa) và **đặt tiêu đề vào chỗ trống phía trên**. Nên bản B **không có cột chữ riêng**: tiêu đề nằm
+trong **cột 1 của lưới**, ngay trên thẻ thấp nhất.
+
+Cao lệch làm bằng **tỉ lệ ô ảnh** theo cột — `1/1` → `4/5` → `189/252` (mặc định), thấp dần từ
+trái sang phải; `!important` vì `productCard` in `aspect-ratio` bằng style inline. Đo: 3 cột canh
+đáy, thẻ cao **549 · 662 · 697**, mép trên lệch **148 · 35 · 0**, tiêu đề ở đỉnh cột 1.
+
+**Chọn bản bằng tham số URL**: mặc định `A`, xem bản so le bằng `?look=b`
+(`http://localhost:8123/desktop.html?look=b`). Để ở tham số chứ không phải bộ da vì đây là 2
+**phương án bố cục** đang so, không phải style thử — link khách nhận vẫn sạch.
+
+### 11.4 Dựng bản B vào Figma
+
+Frame `PDP / desktop 1440 · 28-08 · look B` (`108:4344`) @4540,80 — **1440×3687**, 339 node, ảnh
+dùng lại hash (0 ảnh nạp mới). Ráp 7 instance: header · cam kết · footer (cả 3 khớp 0px) + 4 thẻ
+dải "Sản phẩm tương tự" (`size=rail`), giữ raw thẻ pre-order như bản A.
+
+**3 thẻ so le GIỮ RAW có chủ đích**: tỉ lệ ảnh 1/1 và 4/5 không có trong component, mà con của
+instance thì không resize được (bẫy đã ghi). Chưa thêm variant vì **B mới là phương án đề xuất,
+chưa chốt** — chốt rồi mới thêm variant, tránh phình DS cho một bản có thể không dùng.
+
+> Frame `PDP / desktop 1440 · 28-08` (107:2725) **giữ nguyên bản user sửa** — không dựng đè, vì đó
+> chính là bản thiết kế gốc của lượt này. Code bản A nay khớp frame đó.
+
+### 11.5 Sự cố đã xử
+
+**Bộ dò lưới bắt nhầm `#pdpGallery`.** Lượt ráp đầu của frame B dò "frame có ≥3 con chứa ảnh" →
+trúng luôn gallery PDP, thay mất 1 ô ảnh bằng thẻ sản phẩm. Đã **xoá frame và dựng lại từ JSON**
+(2 s) rồi ráp lại với bộ dò đi từ TIÊU ĐỀ (`text "Sản phẩm tương tự"` → khối cha → lưới 5 con).
+Bài học: dò node theo **mốc ngữ nghĩa**, đừng dò theo hình dạng cấu trúc.

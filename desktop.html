@@ -624,7 +624,89 @@ window.RESP = (function () {
      này nên cùng specificity với rule trong @media — đứng sau là dải hẹp mất
      hiệu lực. (Các cột w-[…] thì an toàn vì utility nằm ở tailwind.css tải trước.) */
   .dk-sticky-info.dk-info-wide { width: 569px; }
-  .dk-look-aside               { width: 282px; }
+
+  /* ══ BẢN A — dải "Gợi ý mua kèm" ADAPT TỪ FIGMA (28/08, node 108:3746) ══════
+     User sửa thẳng trên Figma rồi bảo port về code. Khác bản dựng đầu:
+       · 4 thẻ nhỏ 265,5 -> 3 THẺ LỚN 329,8, khe 8 -> 24;
+       · hàng có NỀN XÁM (secondary #f2f2f2), cao 352, đệm 32 dọc / 24 ngang,
+         kẻ mảnh 1px vẫn nằm mép trên;
+       · thẻ CANH ĐÁY băng, ẢNH TRỒI LÊN 227,7 khỏi mép băng (đo Figma);
+       · tiêu đề về CANH TRÁI (user đổi), nằm sát mép trên băng.
+     Lưới đặt TUYỆT ĐỐI (bottom 32) chứ không nằm trong dòng chảy: nhờ vậy ảnh
+     cao bao nhiêu cũng KHÔNG đẩy băng cao thêm, tự trồi lên phần trống 273 phía
+     trên — đúng cách Figma dựng (grid y = -227,7, băng vẫn 352).
+     `--look-aside` là biến để dải hẹp chỉ phải đổi MỘT số: lưới đọc theo nó. */
+  .dk-look-band {
+    --look-aside: 282.6px;
+    position: relative;
+    height: 352px;
+    margin-top: 273px;            /* chỗ trống cho ảnh trồi lên; Figma chừa 45,3 trên đỉnh ảnh */
+    padding: 32px 24px;
+    background: var(--general-secondary);
+    border-top: 1px solid var(--general-border);
+  }
+  .dk-look-aside { width: var(--look-aside); padding-top: 16px; }
+  .dk-look-grid {
+    position: absolute; bottom: 32px; right: 24px;
+    left: calc(24px + var(--look-aside) + 24px);
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px; align-items: end;
+  }
+
+  /* ══ BẢN B — "so le" theo ảnh tham chiếu user gửi (28/08) ══════════════════
+     Lệnh: *"tạo thêm 1 phiên bản như hình đính kèm nhưng align bottom và cho
+     text vào vị trí trống ở trên khi align top"*. Ảnh tham chiếu xếp thẻ CANH
+     TRÊN, cao lệch nhau (mép dưới răng cưa). Bản này LẬT LẠI: canh ĐÁY nên mép
+     TRÊN răng cưa, và chỗ trống sinh ra ở trên thẻ thấp nhất chính là chỗ đặt
+     tiêu đề — tiêu đề nằm TRONG lưới (cột 1), không có cột chữ riêng như bản A.
+     Cao lệch = đổi TỈ LỆ ô ảnh theo cột (1/1 · 4/5 · 3/4), thấp -> cao từ trái
+     sang phải. !important vì productCard in aspect-ratio bằng style inline. */
+  .dk-lookb { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; align-items: end; }
+  .dk-lookb-col { display: flex; flex-direction: column; justify-content: flex-end; gap: 24px; }
+  .dk-lookb .lookb-short > div:first-child { aspect-ratio: 1 / 1 !important; }
+  .dk-lookb .lookb-mid   > div:first-child { aspect-ratio: 4 / 5 !important; }
+
+  /* ══ Tiêu đề dải "Gợi ý mua kèm" (PDP#1): 40/50 ═══════════════════════════
+     Lệnh user 28/08: *"bỏ subtitle đi, tăng font lên 40px"*.
+
+     ⚠ NGOẠI LỆ GHI DANH — 40 KHÔNG có trong thang chữ dự án
+     (12/14/16/18/24/32/48) và cũng không có trong thang trưng bày của
+     FONT-LIBRE-INTER F2 (24/32 · T0 32/40 · T00 48/60). Phạm vi ngoại lệ đúng
+     MỘT dòng chữ này, không mở bậc mới cho ai khác dùng. Bậc on-scale gần nhất
+     cho vai "tiêu đề biên tập" là T00 48/60 — đã tính sẵn ở F2, đổi 2 số là
+     sang được nếu user chốt lại.
+     Dòng 50 = 40 × 1,25, đúng tỉ lệ của 2 bậc trưng bày lớn (32/40 · 48/60).
+     Đậm 400: cỡ trưng bày ở đây là chữ THƯỜNG, mà luật buộc 500 luôn đi cặp
+     chữ hoa (STYLE-RULES §1).
+
+     PHẢI là class ngữ nghĩa và PHẢI RỜI class .text-[18px]: hook của skin-li là
+     chính utility đó — rule `html.skin-mt.skin-li :is(h1,h2,p):is(.text-[18px],
+     .text-[32px])` (specificity 0,3,2) gom mọi bậc trưng bày về MỘT bậc 24/32,
+     mang utility đó vào là bị kéo về 24 bất kể khai gì ở class thường.
+     Rời hook nên phải tự cấp họ chữ trưng bày: `--font-head` (Libre Bodoni ở
+     skin-li/Maika, rơi về chữ thân bài ở các bộ da không khai).
+     KHÔNG gác theo dppx như bậc 24: F1 gác vì nét mảnh Bodoni = 0,031 × cỡ, ở
+     24px chỉ 0,74 CSS px nên màn 1× bôi thành xám; ở 40px nét = 1,24 px, sống
+     cả trên màn 1× — đúng lý do F2 cho 2 bậc lớn dùng Bodoni vô điều kiện. */
+  .dk-look-title {
+    font-family: var(--font-head, inherit);
+    font-size: 40px;
+    line-height: 50px;
+    font-weight: 400;
+    /* NGẮT DÒNG CÓ CHỦ ĐÍCH: "Gợi ý / mua kèm" · "Complete / the look"
+       (lệnh user 28/08). Ngắt bằng KÝ TỰ XUỐNG DÒNG trong chuỗi + pre-line,
+       KHÔNG dùng <br>: <br> chẻ tiêu đề thành HAI text node, mà máy dịch tra
+       từ điển theo từng text node -> phải thêm khoá cho 2 mảnh rời "Gợi ý" và
+       "mua kèm". Đã kiểm: "Gợi ý" CÒN đứng riêng ở chỗ khác trong file, thêm
+       khoá cho mảnh đó là dịch lây sang đấy. Giữ một text node thì cả câu vẫn
+       đi bằng MỘT khoá (xem I18N: 'Gợi ý\nmua kèm').
+       pre-line vẫn cho chữ tự wrap thêm khi cột hẹp, chỉ là luôn có sẵn 1 lần
+       ngắt ở đúng chỗ mình đặt. */
+    white-space: pre-line;
+    /* CANH TRÁI — bản Figma user sửa 28/08 để chữ thẳng cột với mép trái băng
+       xám (lượt trước là căn giữa; user đổi khi dựng lại bố cục 3 thẻ lớn). */
+    text-align: left;
+  }
 
   /* ════════════════ DẢI DESKTOP HẸP (768 → 1279) ════════════════
      Trang dựng theo khung Figma 1440: cột phải của PDP/giỏ/thanh toán là
@@ -639,7 +721,7 @@ window.RESP = (function () {
        ở ~563, tức không nhảy bậc khi kéo qua mốc; sàn giữ 292 như các cột khác
        để dải hẹp không bóp chết ô ảnh. */
     .dk-sticky-info.dk-info-wide { width: clamp(292px, 44vw, 569px); }
-    .dk-look-aside              { width: clamp(200px, 22vw, 282px); }   /* cột chữ dải Gợi ý mua kèm (PDP#1) */
+    .dk-look-band               { --look-aside: clamp(200px, 22vw, 282.6px); }   /* cột chữ dải Gợi ý mua kèm (PDP#1) — lưới đọc theo biến này */
     .dk-sticky-side.w-\[427px\] { width: clamp(280px, 32vw, 427px); }   /* tóm tắt giỏ / thanh toán */
     .dk-sticky-side.w-\[280px\] { width: clamp(216px, 22vw, 280px); }
     .dk-policy-aside            { width: clamp(200px, 22vw, 280px); }   /* menu trang chính sách */
@@ -652,11 +734,15 @@ window.RESP = (function () {
     #plpGrid            { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
     .grid.grid-cols-5   { grid-template-columns: repeat(3, minmax(0, 1fr)); }  /* carousel gợi ý */
     .dk-commit-grid     { grid-template-columns: repeat(2, minmax(0, 1fr)); }  /* 4 cam kết DAFC */
-    /* Dải "Gợi ý mua kèm" của PDP#1: dưới 1024 thì cột chữ 200px + 4 ảnh cạnh
-       nhau chỉ còn ~130px/ảnh -> cho chữ LÊN TRÊN, ảnh xuống thành 2×2. */
-    .dk-look-row        { flex-direction: column; }
-    .dk-look-aside      { width: 100%; }
-    .dk-look-grid       { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    /* Dải "Gợi ý mua kèm" của PDP#1 dưới 1024: bỏ trò ảnh TRỒI LÊN (băng cao
+       cứng 352 + lưới tuyệt đối) vì ở khổ này ảnh trồi che mất khối phía trên.
+       Cho băng về dòng chảy thường: chữ lên trên, 3 ảnh xuống dưới. */
+    .dk-look-band       { height: auto; margin-top: 32px; }
+    .dk-look-aside      { width: 100%; padding-bottom: 24px; }
+    .dk-look-grid       { position: static; left: auto; right: auto; bottom: auto; }
+    .dk-lookb           { align-items: stretch; }
+    .dk-lookb .lookb-short > div:first-child,
+    .dk-lookb .lookb-mid   > div:first-child { aspect-ratio: 189 / 252 !important; }
   }
   @media (max-width: 899px) {
     /* Ảnh PDP: 2 cột ở đây chỉ còn ~180px/ảnh, về 1 cột cho ra tấm ảnh thật */
@@ -4817,13 +4903,21 @@ const payOfferRow = amount => amount ? `
       </div>` : '';
 
 /* Dải gợi ý khuôn CŨ: tiêu đề trên, 5 thẻ dưới. Dùng cho "Sản phẩm tương tự"
-   ở mọi PDP, và cho "Gợi ý mua kèm" của 5 PDP không phải PDP#1. */
-function dkRailSection(title, n) {
+   ở mọi PDP, và cho "Gợi ý mua kèm" của 5 PDP không phải PDP#1.
+   `rule` = kẻ mảnh ngăn section ở trên đầu, LẤY ĐÚNG khuôn kẻ của dải "Gợi ý
+   mua kèm" mới (border-t 1px + đệm 32) để 2 dải cùng một nhịp. Chỉ PDP#1 bật —
+   5 PDP kia chưa có kẻ nào nên bật riêng chỗ này sẽ thành một vạch lạc.
+   NHỊP DỌC khi có kẻ (đo 28/08, lệnh user *"canh spacing top và bottom cho đều
+   lại"*): đệm trên kẻ 32 (py-8 của khối ngoài) và dưới kẻ 32 (pt-8 của khối
+   trong) — trước đây dưới kẻ chỉ 24 nên vạch không nằm giữa hai khoảng. */
+function dkRailSection(title, n, rule = false) {
   return `
-      <div class="px-6 py-8 flex flex-col gap-6 reveal">
-        <p class="text-[18px] font-medium leading-7 text-foreground">${title}</p>
-        <div class="grid grid-cols-5 gap-2">
-          ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { noColors: true })).join('')}
+      <div class="px-6 py-8 reveal">
+        <div class="${rule ? 'border-t border-border pt-8 ' : ''}flex flex-col gap-6">
+          <p class="text-[18px] font-medium leading-7 text-foreground">${title}</p>
+          <div class="grid grid-cols-5 gap-2">
+            ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { noColors: true })).join('')}
+          </div>
         </div>
       </div>`;
 }
@@ -4831,6 +4925,8 @@ function dkRailSection(title, n) {
 /* PDP#1 — "Gợi ý mua kèm" khuôn CHỮ MỘT BÊN + 4 ẢNH KẾ BÊN (28/08/2026, lệnh
    user kèm ảnh tham chiếu). Lấy đúng BỐ CỤC của ảnh đó: khối chữ dồn sang trái,
    hàng ảnh chiếm phần còn lại, kẻ mảnh 1px chạy trên đầu cả dải.
+   Khối chữ chỉ còn TIÊU ĐỀ ở cỡ 40 (lệnh bổ sung cùng ngày: bỏ subtitle, tăng
+   cỡ) — ngoại lệ thang chữ đã ghi danh tại rule .dk-look-title.
    KHÔNG bê 3 thứ của ảnh tham chiếu về: chữ HOA (trái luật "chỉ viết hoa chữ
    đầu"), dấu gạch chéo trang trí trước tiêu đề, và cặp nút mũi tên carousel —
    ở đây 4 thẻ đứng yên nên nút đó là nút không việc.
@@ -4838,21 +4934,59 @@ function dkRailSection(title, n) {
    `selfIdx` = SP đang xem, BỊ LOẠI khỏi danh sách: "Gợi ý mua kèm" mà thẻ đầu
    là chính cái đầm đang mở thì đọc ra vô nghĩa (dải 5 thẻ cũ cũng mắc, nhưng ở
    đây 1/4 thẻ nên lộ hẳn). Giữ index GỐC của mỗi SP để thẻ vẫn dẫn đúng PDP. */
-function dkLookSection(selfIdx, n = 4) {
+function dkLookSection(selfIdx, n = 3) {
   const list = PRODUCTS.map((p, i) => ({ p, i })).filter(({ i }) => i !== selfIdx).slice(0, n);
   return `
-      <div class="px-6 py-8 reveal">
-        <div class="dk-look-row border-t border-border pt-6 flex items-start gap-6">
-          <div class="dk-look-aside shrink-0 flex flex-col gap-2">
-            <p class="text-[18px] font-medium leading-7 text-foreground">Gợi ý mua kèm</p>
-            <p class="text-[14px] leading-5 text-muted-foreground">Các món đi cùng thiết kế này, chọn theo chất liệu và tông màu.</p>
+      <!-- BẢN A — adapt từ Figma user sửa 28/08 (node 108:3746).
+           Băng xám cao 352 (đệm 32 dọc / 24 ngang, kẻ mảnh mép trên), tiêu đề
+           canh trái sát mép trên băng, 3 thẻ LỚN canh ĐÁY và ảnh TRỒI LÊN khỏi
+           băng. Số đo + lý do đặt lưới tuyệt đối: xem rule .dk-look-band.
+           KHÔNG có pb ở khối ngoài — 32 phía trên kẻ của dải "Sản phẩm tương
+           tự" là do chính dải đó cấp bằng pt-8 (thêm pb vào đây là cộng dồn 64,
+           đúng lỗi nhịp đã sửa hôm nay). -->
+      <div class="px-6 reveal">
+        <div class="dk-look-band">
+          <div class="dk-look-aside">
+            <p class="dk-look-title text-foreground">${'Gợi ý\nmua kèm'}</p>
           </div>
-          <div class="dk-look-grid flex-1 min-w-0 grid grid-cols-4 gap-2">
+          <div class="dk-look-grid">
             ${list.map(({ p, i }) => productCard(p, i, { noColors: true })).join('')}
           </div>
         </div>
       </div>`;
 }
+
+/* BẢN B — "so le" theo ảnh tham chiếu user gửi 28/08.
+   Ảnh đó xếp thẻ canh TRÊN, cao lệch nhau; lệnh user là lật lại: CANH ĐÁY, và
+   tiêu đề đặt vào CHỖ TRỐNG sinh ra phía trên thẻ thấp nhất. Nên ở đây tiêu đề
+   nằm TRONG cột 1 của lưới (trên thẻ 1/1 thấp nhất), không có cột chữ riêng.
+   Cao lệch làm bằng TỈ LỆ ô ảnh: 1/1 -> 4/5 -> 3/4 (mặc định của productCard),
+   thấp dần từ trái sang phải, nên mép trên răng cưa còn mép dưới thẳng hàng.
+   Xem 3 rule .dk-lookb* để biết chỗ khai tỉ lệ. */
+function dkLookSectionB(selfIdx, n = 3) {
+  const list = PRODUCTS.map((p, i) => ({ p, i })).filter(({ i }) => i !== selfIdx).slice(0, n);
+  const cls = ['lookb-short', 'lookb-mid', ''];
+  const card = (k) => list[k] ? productCard(list[k].p, list[k].i, { noColors: true, w: cls[k] }) : '';
+  return `
+      <div class="px-6 pt-8 reveal">
+        <div class="dk-lookb">
+          <div class="dk-lookb-col">
+            <p class="dk-look-title text-foreground">${'Gợi ý\nmua kèm'}</p>
+            ${card(0)}
+          </div>
+          ${card(1)}
+          ${card(2)}
+        </div>
+      </div>`;
+}
+
+/* Chọn bản dải gợi ý bằng tham số URL: mặc định A (bản Figma user chốt),
+   `?look=b` xem bản so le. Để ở tham số chứ không phải bộ da vì đây là 2
+   PHƯƠNG ÁN BỐ CỤC đang so, không phải style thử — link khách nhận vẫn sạch. */
+const LOOK_VARIANT = (() => {
+  try { return (new URLSearchParams(location.search).get('look') || 'a').toLowerCase(); }
+  catch (e) { return 'a'; }
+})();
 
 function dkScreenPDP(kind) {
   const D = PDP_DATA[kind];
@@ -5004,8 +5138,8 @@ function dkScreenPDP(kind) {
       <!-- 2 dải gợi ý (28/08 bỏ hẳn section "Đã xem gần đây" — lệnh user).
            PDP#1 dùng khuôn CHỮ-MỘT-BÊN cho dải đầu; 5 PDP còn lại vẫn khuôn
            tiêu-đề-trên + 5 thẻ. "Sản phẩm tương tự" giữ khuôn cũ ở MỌI bản. -->
-      ${kind === 'pdp' ? dkLookSection(D.idx, 4) : dkRailSection('Gợi ý mua kèm', 5)}
-      ${dkRailSection('Sản phẩm tương tự', 5)}
+      ${kind === 'pdp' ? (LOOK_VARIANT === 'b' ? dkLookSectionB(D.idx, 3) : dkLookSection(D.idx, 3)) : dkRailSection('Gợi ý mua kèm', 5)}
+      ${dkRailSection('Sản phẩm tương tự', 5, kind === 'pdp')}
 
       ${camKetSection()}
     </div>
@@ -8656,8 +8790,6 @@ const I18N = {
   'Đã bỏ hết bộ lọc':'All filters cleared', 'Đã đặt lại bộ lọc':'Filters reset',
   'Thêm nhanh vào giỏ':'Quick add to bag',
   'Sản phẩm thịnh hành':'Trending items',
-  // Dòng mô tả dải "Gợi ý mua kèm" khuôn chữ-một-bên của PDP#1 (28/08)
-  'Các món đi cùng thiết kế này, chọn theo chất liệu và tông màu.':'Pieces that go with this design, chosen to match its fabric and tones.',
   // 3 dòng promo bar + đoạn giới thiệu thương hiệu (PLP brand) — trước 28/08 không có khoá, EN mode đứng nguyên tiếng Việt
   'Giảm thêm 7% cho đơn hàng từ 8 triệu đồng (*)':'Extra 7% off orders from 8 million VND (*)',
   'Stefano Ricci đã có mặt tại DAFC Online':'Stefano Ricci is now available on DAFC Online',
@@ -8726,6 +8858,11 @@ const I18N = {
   'Mô tả sản phẩm':'Product details', 'Bảo quản sản phẩm':'Care instructions',
   'Chính sách đổi trả':'Returns policy', 'Về thương hiệu Versace':'About Versace', 
   'Gợi ý mua kèm':'Complete the look', 'Sản phẩm tương tự':'You may also like', 'Đã xem gần đây':'Recently viewed',
+  /* Bản NGẮT DÒNG của tiêu đề dải PDP#1 — khoá riêng vì text node của nó mang
+     sẵn ký tự xuống dòng (xem .dk-look-title). Khoá không-ngắt ở trên VẪN DÙNG:
+     5 PDP kia còn dải "Gợi ý mua kèm" một dòng. Hai chuỗi khác nhau nên I18N_REV
+     đảo ngược cũng không đụng nhau. */
+  'Gợi ý\nmua kèm':'Complete\nthe look',
   'Chất liệu':'Material', 'Xuất xứ':'Origin', 
   'Trả trước từ':'From', '/tháng':'/month', 'Xem chính sách trả góp':'View instalment policy',
   // Pre-order: chuỗi có NGÀY nguyên 1 text node dịch bằng luật regex trong
