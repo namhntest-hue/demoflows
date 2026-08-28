@@ -1,4 +1,4 @@
-# PLP — 3 việc khách chốt 27/08/2026
+# PLP — 4 việc khách chốt 27/08/2026
 
 > Lệnh user (kèm ảnh chụp PLP desktop):
 > 1. *Badge Preorder sẽ nằm trước tên sản phẩm (như hình đính kèm)*
@@ -91,14 +91,58 @@ mỗi lần mở mục. Thêm ô nhập ngay đầu mục *Thương hiệu*.
 trên quickadd này"*, nay bỏ. "Quick add" ở đây là **DẢI HOVER trên thẻ**
 (`.pc-quick`), không phải dialog 2 cột.
 
-**Gỡ:** dòng `.pc-quick-act` (*"Thêm vào giỏ hàng"* / *"Đặt trước"*) + rule CSS của
-nó (không để mồ côi).
-**GIỮ:** dòng ngày `.pc-quick-eta` (*"Nhận hàng dự kiến 30/09/2026"*) của hàng
-pre-order — lệnh chỉ gọi tên **"title"**, mà ngày giao là **thông tin**, không phải
-nhan đề. Đầu tấm nay chỉ dựng khi thật sự có ngày để nói: thẻ không pre-order
-**không còn `.pc-quick-head`**, rê chuột vào là thấy thẳng lưới size.
+Việc này đi **hai lệnh liên tiếp** trong cùng buổi:
 
-> Nếu ý bạn là bỏ **cả** dòng ngày thì nói một tiếng — xoá thêm 3 dòng là xong.
+| Lệnh | Gỡ gì |
+|---|---|
+| *"quick add to cart sẽ không có title ở phiên bản desktop"* | dòng `.pc-quick-act` (*"Thêm vào giỏ hàng"* / *"Đặt trước"*) |
+| *"trong quick add desktop bỏ luôn ngày nhận hàng dự kiến"* | dòng `.pc-quick-eta` + cả khối `.pc-quick-head` |
+
+Lượt đầu tôi **giữ** dòng ngày, lập luận rằng lệnh chỉ gọi tên "title" còn ngày
+giao là *thông tin*. User chốt bỏ luôn → **đảo trọn chốt 26/08**: tấm hover trở
+lại đúng bản 19/08, **chỉ còn lưới size**.
+
+Xoá theo cả **3 rule CSS** (`.pc-quick-head` · `.pc-quick-eta` · `.pc-quick-date`)
+và 3 khối comment giải thích chúng, không để mồ côi. Giữ lại một câu ghi rằng
+**nhãn trong ô size vẫn căn GIỮA ô** — đó là chốt riêng của cụm size, không phải
+hệ quả của việc từng có title căn trái ở trên.
+
+**Ngày nhận dự kiến không mất khỏi demo:** vẫn còn ở **PDP** và ở **giỏ hàng**,
+chỉ là lớp hover của thẻ thôi nói nó.
+
+Đo lại: thẻ pre-order và thẻ thường đều chỉ còn `.pc-sizes` trong `.pc-quick`
+(6 ô và 2 ô), `.pc-quick-head` = **0** trên toàn trang.
+
+---
+
+## 4. Khăn lụa: size demo là S / M / L
+
+Lệnh user: *"cái size của khăn lụa in họa tiết hãy demo nó là S M L thay vì kích thước"*.
+
+Khăn lụa (`pdp2`) trước đây chào **kích thước thật** — `90 × 90 cm` và `84 × 5 cm`.
+Nay đổi thành **S · M · L**. Đây là đổi **DỮ LIỆU demo**, không đụng khuôn:
+`sizeLabel()` chỉ gắn tiền tố `IT ` cho nhãn **số thuần**, nên S/M/L đi thẳng,
+không phải rẽ nhánh gì thêm.
+
+**Hai nguồn phải sửa cùng lúc, kẻo 2 màn nói 2 kiểu:**
+
+| Nguồn | Nuôi màn nào | Có ở file nào |
+|---|---|---|
+| `SIZE_SHEET_OPTIONS.pdp2` | sheet/dropdown chọn size | **cả 5 file** |
+| `PDP_DATA.pdp2.sizes` | khối size trên thân PDP | desktop + 3 bản thử skin (index không có khối này) |
+
+Đo lại: dải hover trên thẻ PLP ra đúng **S · M · L** (3 ô, lưới về `is-few` nên xếp
+một hàng căn giữa); cả hai nguồn ở runtime đều đọc ra `['S','M','L']`; quét text
+màn PDP ở cả mobile lẫn desktop — **không còn** chuỗi `90 × 90 cm` / `84 × 5 cm`.
+
+Ba comment cũ lấy `90 × 90 cm` làm ví dụ đã sửa theo, kể cả ghi chú CSS giải thích
+vì sao lưới `is-few` phải cho ô tự co: luật vẫn đứng (nhãn dài nhất còn lại là
+`Onesize` và `90 ml`), chỉ là ví dụ trong ghi chú thành lịch sử.
+
+> **Còn một chỗ chưa khớp — cần bạn quyết:** TÊN sản phẩm vẫn là
+> *"Khăn lụa in họa tiết Broken Jewels **90×90cm**"*. Tên mang kích thước mà bảng
+> size lại là S/M/L thì đọc ra hơi nghịch. Tôi không tự đổi vì tên chảy vào cả giỏ
+> hàng, đơn hàng và tìm kiếm. Muốn bỏ đuôi `90×90cm` khỏi tên thì nói một tiếng.
 
 ---
 
@@ -107,7 +151,7 @@ nhan đề. Đầu tấm nay chỉ dựng khi thật sự có ngày để nói: 
 **desktop 1440:** badge *"Đặt trước"* nền `rgb(242,242,242)` mực `rgb(10,10,10)`
 12/16, **đứng trước tên, cùng hàng**, tên **không cắt** (còn 172) · ảnh **không
 còn** lớp badge · hàng tên cao 18 (badge không làm phình hàng) · quick-add
-**không có title**, còn dòng ngày, thẻ thường không có đầu tấm · badge ở **PDP** và
+**chỉ còn lưới size** (không title, không dòng ngày) · badge ở **PDP** và
 **giỏ hàng** cũng ra *"Đặt trước"*.
 **mobile 375:** badge **cùng hàng** trước tên, tên bị cắt (còn 105 — đánh đổi đã
 chốt) · EN ↔ VI đổi qua lại đúng · ô tìm thương hiệu cao 36 rộng 343, gõ "ferra"
@@ -122,4 +166,3 @@ ra Ferragamo · không tràn ngang.
    promo bar), phải **ghi danh ngoại lệ** trong `STYLE-RULES.md` như đã làm với
    chip `-%` của `skin-li`. Chờ bạn chốt.
 2. **3 bản thử skin** chưa có badge trước tên (thiếu `.badge-label`/`.badge-inline`).
-3. **Dòng ngày quick-add** — giữ hay bỏ (mục 3).
