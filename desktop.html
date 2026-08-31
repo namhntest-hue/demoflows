@@ -867,6 +867,20 @@ window.RESP = (function () {
      Vẫn giữ phần tử để bấm ra ngoài là đóng — bỏ hẳn thì phải nghe click trên
      document rồi tự loại trừ, dài dòng hơn mà cùng kết quả. */
   #cartConfirm .cc-backdrop { background: transparent; }
+  /* TÓM TẮT GIỎ trong tấm (28/08/2026, lệnh user): danh sách CUỘN trong tấm chứ
+     KHÔNG để tấm dài ra khỏi màn — 46vh chứa gọn 4 dòng ở màn cao 900, dài hơn
+     thì cuộn. Kẻ ngăn dòng + kẻ trên khối tổng dùng token viền, KHÔNG dùng
+     utility divide-* (tailwind.css bản build sẵn không chắc có -> class chết). */
+  #ccList { max-height: 46vh; overflow-y: auto; }
+  #ccList > .cc-row + .cc-row { border-top: 1px solid var(--general-border); }
+  #ccFoot { border-top: 1px solid var(--general-border); }
+  /* PEEK = tấm mở do RÊ CHUỘT vào icon giỏ. Khác lần "vừa thêm món": nền chặn
+     KHÔNG được bắt chuột, kẻo tấm mở ra là cả trang hoá vô cảm với con trỏ (nền
+     trong suốt phủ toàn màn). Chỉ CHÍNH TẤM nhận chuột, để rê vào tấm còn giữ
+     được nó và bấm được nút. Bấm-ra-ngoài-để-đóng lúc này không cần: rời chuột
+     là tấm tự rút. */
+  #cartConfirm.cc-peek { pointer-events: none; }
+  #cartConfirm.cc-peek .cc-panel { pointer-events: auto; }
   /* ── Drawer desktop: panel cao hết màn, TRƯỢT VÀO TỪ MÉP PHẢI (yêu cầu user
      17/08/2026 cho sheet chọn ưu đãi). Vẫn dùng chung cờ `translate-y-full` mà
      JS toggle như bottom sheet mobile — nhờ vậy hai bản chạy đúng một đoạn JS,
@@ -5711,6 +5725,47 @@ const rewardPointsEarned = () => Math.floor(cartSubtotal() / 100000);
 function cartSubtotal() {
   return cartItems().reduce((s, c) => s + (c.sel === false ? 0 : vndNum(c.now) * (c.qty || 1)), 0);
 }
+
+/* ── THÊM THẬT VÀO GIỎ (28/08/2026, lệnh user) ───────────────────────────────
+   Trước đây "Thêm vào giỏ" chỉ tăng chấm đếm rồi mở tấm tóm tắt CHÍNH MÓN VỪA
+   THÊM — `CART` không đổi, nên giỏ vẫn y nguyên 5 dòng dựng sẵn. Tấm đó nay đổi
+   vai thành TÓM TẮT GIỎ HÀNG, mà tóm tắt giỏ thiếu món vừa bấm thì vô nghĩa, nên
+   món đi thẳng vào `CART`:
+     · trùng TÊN + BIẾN THỂ -> cộng dồn `qty` (nếp giỏ thật, không đẻ dòng thứ 2);
+     · món mới              -> `unshift` đứng ĐẦU giỏ, mở tấm ra là thấy ngay.
+   Nhờ vậy màn giỏ · thanh toán · mốc quà tặng tự khớp theo — cùng một nguồn.
+   `img` chuẩn hoá về TÊN FILE TRẦN: dòng CART lưu tên trần rồi mỗi nơi tự ghép
+   tiền tố ảnh, còn chỗ gọi (PDP / quick add) truyền sẵn URL đầy đủ. */
+function addToCart(d = {}) {
+  const variant = d.variant || '';
+  const img = String(d.img || '');
+  const hit = CART.find(c => !c.removed && c.name === d.name && (c.variant || '') === variant);
+  if (hit) {
+    hit.qty = (hit.qty || 1) + 1;
+    hit.sel = true; hit.removed = false;   // món đang bỏ tick / đã xoá mà thêm lại thì quay về đơn
+  } else {
+    CART.unshift({
+      img: img.startsWith(A) ? img.slice(A.length) : img,
+      brand: d.brand || '', name: d.name || '', variant,
+      off: d.off || '', was: d.was || '', now: d.price || d.now || '',
+      qty: 1, sel: true, preorder: d.preorder || '',
+    });
+  }
+  syncCartBadge(true);
+}
+/* Chấm đếm nói theo CART chứ không tự `cartQty++` — một nguồn, hết cảnh số trên
+   icon lệch số dòng trong giỏ. Giữ đúng nghĩa cũ = SỐ DÒNG (refreshCartCount
+   cũng đếm dòng), nên lần thêm trùng biến thể chỉ nảy animation mà số không
+   nhích — đúng thực tế: giỏ không có thêm dòng nào.
+   `pop` = chạy lại animation nảy; tắt khi chỉ đồng bộ lại số. */
+function syncCartBadge(pop = false) {
+  cartQty = cartItems().length;
+  document.querySelectorAll('.cart-badge').forEach(b => {
+    b.textContent = cartQty;
+    if (!pop) return;
+    b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+  });
+}
 /* Mốc đã đạt (theo thứ tự mốc) và mốc kế tiếp chưa đạt — dùng cho khối quà
    theo đơn và dòng gợi ý "mua thêm ... để nhận ...". */
 function orderGiftState() {
@@ -8638,17 +8693,16 @@ function pcSizeClick(el, btn) {
   const p = PRODUCTS[idx];
   const img = el.querySelector('img');
   if (img) flyToCart(img);
-  cartQty++;
-  document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
   /* Màu đang chọn lấy từ chính card (ô swatch có viền primary), để dòng biến thể
-     trong tấm xác nhận khớp với thứ user đang nhìn. */
+     ghi vào giỏ khớp với thứ user đang nhìn. */
   const ci = [...el.querySelectorAll('[data-swatches] .cw')].findIndex(c => c.classList.contains('border-primary'));
   const colorName = (p.colors && p.colors[ci > -1 ? ci : 0]) ? p.colors[ci > -1 ? ci : 0].name : '';
-  setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
+  addToCart({
     img: `${A}${p.img}`, brand: p.brand, name: p.name,
     variant: [colorName, size].filter(Boolean).join(' , '),
     price: p.price, off: p.off, was: p.was, preorder: p.preorder,
-  }), 120);
+  });
+  setTimeout(() => window.__openCartConfirm && window.__openCartConfirm(), 120);
   return true;
 }
 
@@ -9022,7 +9076,13 @@ const I18N = {
   'Dự kiến giao hàng vào ngày':'Estimated delivery',
   'Nhận hàng dự kiến':'Estimated arrival',
   'Đã thêm vào giỏ':'Added to bag', 'Đã thêm vào giỏ hàng':'Added to your bag',
-  'Xem giỏ hàng':'Go to cart', 'Tiếp tục mua sắm':'Continue shopping',
+  /* 'Xem giỏ hàng' -> 'Đi đến giỏ hàng' (28/08/2026): nhãn nút duy nhất của tấm
+     tóm tắt giỏ. ĐỔI KEY chứ không thêm key thứ hai cùng ra 'Go to cart' —
+     I18N_REV đảo map nên 2 key trùng giá trị EN thì lượt dịch ngược chỉ giữ được
+     key đứng sau, key kia thành key chết. 'Tiếp tục mua sắm' VẪN GIỮ: khối "Giỏ
+     hàng trống" ở màn giỏ còn dùng. */
+  'Đi đến giỏ hàng':'Go to cart', 'Tiếp tục mua sắm':'Continue shopping',
+  'Giỏ hàng trống':'Your bag is empty',
   
   
   
@@ -10238,6 +10298,17 @@ function wire(root) {
   // cart badges
   root.querySelectorAll('.cart-badge').forEach(b => b.textContent = cartQty);
 
+  /* ── RÊ CHUỘT VÀO ICON GIỎ -> mở tấm tóm tắt giỏ (28/08/2026, lệnh user) ─────
+     Gắn ở wire() vì navBar() DỰNG LẠI mỗi lần đổi màn, gắn một lần ở ngoài là
+     mất listener ngay lần điều hướng đầu. Bấm vào icon vẫn sang màn giỏ như cũ
+     (handler [data-nav] ngay dưới) — chỉ thêm việc đóng tấm để nó không đứng đè
+     lên màn giỏ vừa mở. */
+  root.querySelectorAll('[data-nav="cart"]').forEach(btn => {
+    btn.addEventListener('mouseenter', () => window.__openCartPeek && window.__openCartPeek(btn));
+    btn.addEventListener('mouseleave', () => window.__closeCartPeek && window.__closeCartPeek());
+    btn.addEventListener('click', () => window.__closeCartConfirm && window.__closeCartConfirm());
+  });
+
   // navigation
   root.querySelectorAll('[data-nav]').forEach(el => {
     el.addEventListener('click', e => {
@@ -10464,18 +10535,17 @@ function wire(root) {
       if (btn.dataset.oosState) return;   // đang ở trạng thái hết hàng -> không thêm giỏ
       const img = root.querySelector('#pdpGallery img');
       if (img) flyToCart(img);
-      cartQty++;
-      document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
       const p = PRODUCTS[SCREEN_PRODUCT[current] || 0];
       const colorEl = root.querySelector('#colorName');
       // mọi PDP chọn size bằng chip (28/08 — nhánh đọc .size-trigger-label của dropdown đã bỏ)
       const sizeChip = root.querySelector('.chip.on');
       const size = sizeChip ? sizeChip.dataset.size : '';
       const variant = [colorEl ? colorEl.textContent.trim() : '', size].filter(Boolean).join(' , ');
-      setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
+      addToCart({
         img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
         price: p.price, off: p.off, was: p.was, preorder: p.preorder,
-      }), 450);
+      });
+      setTimeout(() => window.__openCartConfirm && window.__openCartConfirm(), 450);
     });
   });
 
@@ -12402,17 +12472,16 @@ function quickAddBody(p, idx, sel = 0) {
          nguyên là bay nhầm cái thumbnail chọn màu). */
       const img = media.querySelector('img');
       if (img) flyToCart(img);
-      cartQty++;
-      document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
       const colorName = body.querySelector('.qa-color-name');
       const sizeChip = body.querySelector('[data-qa-sizes] .chip.on');
       const variant = [colorName ? colorName.textContent.trim() : '', sizeChip ? sizeChip.dataset.size : ''].filter(Boolean).join(' , ');
-      closeQA();
-      // đợi sheet quick-add trượt xuống xong rồi mở sheet xác nhận
-      setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
+      addToCart({
         img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
         price: p.price, off: p.off, was: p.was, preorder: p.preorder,
-      }), 350);
+      });
+      closeQA();
+      // đợi dialog quick add trượt xuống xong rồi mới thả tấm tóm tắt giỏ
+      setTimeout(() => window.__openCartConfirm && window.__openCartConfirm(), 350);
     });
     // "Xem chi tiết" -> đóng dialog, mở đúng PDP của sản phẩm.
     // Nút này nay nằm trong #qaCta (dưới CTA) chứ không còn trong #qaBody.
@@ -12554,49 +12623,40 @@ document.body.insertAdjacentHTML('beforeend', `
     go('login');
   });
 })();
-/* ── Xác nhận đã thêm vào giỏ — DROPDOWN dưới icon giỏ (19/08/2026) ───────────
-   Đổi từ modal giữa màn sang tấm thả xuống neo vào icon giỏ ở header (yêu cầu
-   user). Nội dung giữ nguyên: hàng item kiểu item-cart (ảnh 3:4 + brand 14 medium
-   + tên 14 + variant 12 + giá), nút chính 48 "Xem giỏ hàng" + nút ghost 36
-   "Tiếp tục mua sắm".
-   3 thứ BỎ vì không còn hợp vai dropdown:
-     · thanh grabber 50×3 — di sản bottom-sheet mobile, tấm này không kéo được;
-     · nền tối 45% — dropdown không được tối cả trang;
-     · khoá cuộn trang — xem ghi chú trong openCC.
-   Bản MOBILE giữ nguyên bottom sheet. */
+/* ── TÓM TẮT GIỎ HÀNG — dropdown dưới icon giỏ ───────────────────────────────
+   Lịch sử: modal giữa màn (14/08) -> dropdown neo vào icon giỏ (19/08) -> nay
+   28/08/2026 đổi VAI theo lệnh user: *"khi add thành công 1 sản phẩm vào giỏ
+   hàng sẽ hiện một cái tóm tắt giỏ hàng luôn thay vì tóm tắt lại sản phẩm bạn
+   đã thêm vào, button sẽ là 1 nút đi đến giỏ hàng và icon tắt thông báo như
+   trên, đồng thời kích hoạt hiệu ứng hover vào giỏ hàng sẽ hiện lại cái đó"*.
+   Tức là 3 thay đổi:
+     1. RUỘT = cả giỏ (mọi dòng + tạm tính), không còn là thẻ món vừa thêm —
+        món vừa thêm đứng ĐẦU danh sách nên vẫn thấy ngay (xem addToCart);
+     2. CHÂN = ĐÚNG MỘT nút "Đi đến giỏ hàng"; nút ghost "Tiếp tục mua sắm" bỏ
+        (đóng tấm nay là việc của ✕ / bấm ra ngoài / rời chuột / 5s tự rút);
+     3. RÊ CHUỘT vào icon giỏ cũng mở đúng tấm này — xem __openCartPeek.
+   Giữ nguyên từ bản dropdown: neo theo icon giỏ, nền chặn TRONG SUỐT, không
+   khoá cuộn trang, không có grabber. Bản MOBILE vẫn là bottom sheet "đã thêm". */
 document.body.insertAdjacentHTML('beforeend', `
   <div id="cartConfirm" class="fixed inset-0 z-[220] pointer-events-none" aria-hidden="true">
     <div class="cc-backdrop absolute inset-0 opacity-0 transition-opacity duration-300"></div>
     <div class="cc-panel cc-drop bg-background translate-y-full flex flex-col"
-         role="dialog" aria-label="Đã thêm vào giỏ hàng">
-      <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
-        <p class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">Đã thêm vào giỏ hàng</p>
+         role="dialog" aria-label="Giỏ hàng">
+      <div class="h-[52px] px-4 flex items-center justify-between gap-2 shrink-0">
+        <!-- Tiêu đề tách 2 thẻ: chữ đi bằng khoá i18n có sẵn ('Giỏ hàng' -> 'Bag'),
+             số đếm đứng riêng nên không phải đẻ luật regex cho từng con số. -->
+        <p class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">
+          <span>Giỏ hàng</span> <span id="ccCount"></span>
+        </p>
         <button id="ccClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
       </div>
-      <div class="px-4 py-2 flex gap-3">
-        <div class="w-20 shrink-0 bg-secondary overflow-hidden" style="aspect-ratio:3/4">
-          <img id="ccImg" src="" class="w-full h-full object-cover" alt="">
+      <div id="ccList" class="flex-1 min-h-0"></div>
+      <div id="ccFoot" class="px-4 pt-3 pb-4 flex flex-col gap-3 shrink-0">
+        <div id="ccSubRow" class="flex items-center justify-between gap-2">
+          <span class="text-[14px] leading-5 text-foreground-alt">Tạm tính</span>
+          <span id="ccSub" class="text-[16px] font-medium leading-6 text-foreground"></span>
         </div>
-        <div class="flex-1 min-w-0 flex flex-col">
-          <p id="ccBrand" class="text-[14px] font-medium leading-5 text-foreground truncate"></p>
-          <p id="ccName" class="text-[14px] leading-5 text-secondary-foreground truncate"></p>
-          <p id="ccVariant" class="text-[12px] leading-4 text-muted-foreground pt-0.5"></p>
-          <p id="ccPre" class="text-[12px] leading-4 text-foreground-alt pt-0.5 hidden"></p>
-          <div class="flex gap-1 items-center pt-1">
-            <p id="ccPrice" class="text-[14px] font-medium leading-5 text-foreground"></p>
-            <span id="ccOff" class="bg-destructive-subtle rounded-xs px-1 py-0.5 text-[12px] font-medium leading-4 text-destructive shrink-0 hidden"></span>
-            <p id="ccWas" class="text-[12px] leading-4 text-muted-foreground line-through hidden"></p>
-          </div>
-          <!-- Dòng "Giỏ hàng hiện có N sản phẩm" ĐÃ BỎ (19/08/2026, yêu cầu user).
-               Số lượng giỏ đã có ở chấm đếm trên icon giỏ — mà tấm này lại thả
-               xuống ngay dưới đúng cái icon đó, nên nhắc lại bằng chữ là thừa.
-               Luật i18n cho chuỗi này VẪN GIỮ trong I18N_RE/I18N_REV: rẻ, và còn
-               dùng nếu bật lại. -->
-        </div>
-      </div>
-      <div class="px-4 pt-2 pb-4 flex flex-col gap-2.5 shrink-0">
-        <button id="ccGoCart" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium btn-p press">Xem giỏ hàng</button>
-        <button id="ccContinue" class="w-full h-9 rounded-xs text-[14px] leading-5 font-medium press" style="color:var(--unofficial-ghost-foreground)">Tiếp tục mua sắm</button>
+        <button id="ccGoCart" class="w-full h-12 rounded-xs bg-primary text-primary-foreground text-[16px] leading-5 font-medium btn-p press">Đi đến giỏ hàng</button>
       </div>
       <div class="safe-b"></div>
     </div>
@@ -12615,8 +12675,8 @@ document.body.insertAdjacentHTML('beforeend', `
      DỰ PHÒNG: màn nào header rút gọn (checkout: logo + cam kết bảo mật, KHÔNG có
      icon giỏ) thì rơi về góc phải-trên. Hiện chưa luồng nào gọi cart-confirm từ
      đó, nhưng thiếu nhánh này là tấm văng ra toạ độ 0,0. */
-  const place = () => {
-    const btn = document.querySelector('[data-nav="cart"]');
+  const place = (anchor = null) => {
+    const btn = anchor || document.querySelector('[data-nav="cart"]');
     const w = panel.offsetWidth || 380;
     if (!btn) { panel.style.top = '72px'; panel.style.left = (innerWidth - w - 16) + 'px'; return; }
     const r = btn.getBoundingClientRect();
@@ -12630,68 +12690,119 @@ document.body.insertAdjacentHTML('beforeend', `
   addEventListener('scroll', () => { if (!panel.classList.contains('translate-y-full')) place(); }, { passive: true });
   addEventListener('resize', () => { if (!panel.classList.contains('translate-y-full')) place(); });
 
-  /* ── Tự đóng sau 5s (chốt 19/08/2026, yêu cầu user) ──────────────────────────
-     Là tấm BÁO VIỆC ĐÃ XONG chứ không phải hộp thoại phải trả lời, nên tự rút đi.
-     `clearTimeout` trước khi hẹn lại: thêm liên tiếp 2-3 món thì openCC gọi nhiều
-     lần, không dọn là các hẹn giờ chồng nhau và cái cũ đóng sập tấm vừa mở lại.
-     TẠM DỪNG KHI RÊ CHUỘT VÀO TẤM: trong tấm có 2 nút bấm được (Xem giỏ hàng /
-     Tiếp tục mua sắm) — 5s mà biến mất đúng lúc user đang với tay tới nút thì
-     thành lỗi. Rời chuột ra thì hẹn lại đủ 5s.
-     Bấm ✕ / bấm ra ngoài / bấm nút vẫn đóng ngay như cũ; closeCC dọn hẹn giờ nên
-     không có chuyện tấm mở lại rồi bị cái hẹn cũ đóng ké. */
-  const CC_MS = 5000;
-  let ccTimer = null;
+  /* ── Tự rút sau 5s khi VỪA THÊM MÓN ─────────────────────────────────────────
+     Là tấm BÁO VIỆC ĐÃ XONG chứ không phải hộp thoại phải trả lời. Nhưng khi mở
+     bằng RÊ CHUỘT (peek) thì KHÔNG hẹn giờ: nó sống theo con trỏ, rời ra là đóng
+     sau một nhịp ngắn cho kịp với tay vào tấm (giữa icon và tấm có khe 8px).
+     `clearTimeout` trước mỗi lần hẹn: thêm liên tiếp 2-3 món thì openCC gọi nhiều
+     lần, không dọn là hẹn giờ cũ đóng sập tấm vừa mở lại.
+     TẠM DỪNG KHI RÊ CHUỘT VÀO TẤM (giữ từ bản 19/08): trong tấm có nút bấm được,
+     5s mà biến mất đúng lúc user đang với tay tới nút thì thành lỗi. Bấm ✕ / bấm
+     ra ngoài vẫn đóng ngay; closeCC dọn hẹn giờ nên không có chuyện tấm mở lại
+     rồi bị cái hẹn cũ đóng ké. */
+  const CC_MS = 5000;      // vừa thêm món -> tự rút sau 5s
+  const CC_PEEK_MS = 220;  // rê chuột -> rời ra là đóng, chừa nhịp bắc cầu qua khe 8px
+  let ccTimer = null, ccPeek = false;
   const disarmCC = () => { clearTimeout(ccTimer); ccTimer = null; };
-  const armCC = () => { disarmCC(); ccTimer = setTimeout(() => closeCC(), CC_MS); };
+  const armCC = (ms) => { disarmCC(); ccTimer = setTimeout(() => closeCC(), ms); };
   panel.addEventListener('mouseenter', disarmCC);
-  panel.addEventListener('mouseleave', () => { if (!panel.classList.contains('translate-y-full')) armCC(); });
+  panel.addEventListener('mouseleave', () => {
+    if (panel.classList.contains('translate-y-full')) return;
+    armCC(ccPeek ? CC_PEEK_MS : CC_MS);
+  });
 
-  const openCC = (d = {}) => {
-    cc.querySelector('#ccImg').src = d.img || '';
-    cc.querySelector('#ccBrand').textContent = d.brand || '';
-    cc.querySelector('#ccName').textContent = d.name || '';
-    const va = cc.querySelector('#ccVariant');
-    va.textContent = d.variant || '';
-    va.classList.toggle('hidden', !d.variant);
-    /* Hàng pre-order: nhắc lại ngày nhận ngay trong sheet — không thì "Đặt trước"
-       và "Thêm vào giỏ" cho ra kết quả y hệt nhau (đồng bộ mobile 14/08/2026). */
-    const pre = cc.querySelector('#ccPre');
-    pre.textContent = d.preorder ? `Pre-order · Nhận hàng dự kiến ${d.preorder}` : '';
-    pre.classList.toggle('hidden', !d.preorder);
-    const price = cc.querySelector('#ccPrice');
-    price.textContent = d.price || '';
-    price.classList.toggle('text-destructive', !!d.off);
-    price.classList.toggle('text-foreground', !d.off);
-    const off = cc.querySelector('#ccOff');
-    off.textContent = d.off || '';
-    off.classList.toggle('hidden', !d.off);
-    const was = cc.querySelector('#ccWas');
-    was.textContent = d.was || '';
-    was.classList.toggle('hidden', !d.was);
+  /* Một dòng giỏ trong tấm — khuôn rút gọn của item-cart ở màn giỏ: ảnh 3:4 56px,
+     brand 14 medium, tên 14 mực phụ, biến thể 12 mực nhạt, giá 14 medium (đỏ khi
+     có giảm, đúng luật màu §2.3). KHÔNG có nút +/- hay xoá: đây là tấm ĐỌC, mọi
+     thao tác sửa giỏ nằm ở màn giỏ — nút "Đi đến giỏ hàng" dẫn sang đó.
+     `× N` chỉ hiện khi mua từ 2 cái trở lên, để dòng 1 cái không phải đeo nhãn thừa. */
+  const ccRow = c => `
+        <div class="cc-row flex gap-3 px-4 py-3">
+          <!-- BỀ RỘNG ĐẶT INLINE, KHÔNG dùng utility: w-14 KHÔNG có trong
+               tailwind.css (bản build sẵn) -> ô ảnh mất chiều rộng, ảnh nở ra
+               kích thước thật và che hết tấm (lỗi user báo 28/08). Cùng họ bẫy
+               với bg-*/NN và w-[569px] đã dính trước đây: utility CHƯA TỪNG
+               dùng trong file là CLASS CHẾT. Số đo inline thì không phụ thuộc
+               build, nên khoá luôn ở đây.
+               (KHÔNG gõ dấu backtick trong comment này — cả khối nằm trong
+               template literal, backtick là đứt chuỗi. Vừa dính đúng lỗi đó.)
+               CAO đặt bằng SỐ (75 = 56 x 4/3) + align-self:flex-start, KHÔNG để
+               aspect-ratio tự tính: hàng là flex nên con bị kéo cao bằng cột chữ
+               (align-items mặc định stretch) -> tỉ lệ 3:4 thành vô nghĩa và ô ảnh
+               cao thấp khác nhau giữa dòng có / không có dòng ngày pre-order. -->
+          <div class="shrink-0 bg-secondary overflow-hidden" style="width:56px;height:75px;align-self:flex-start">
+            <img src="${A}${c.img}" class="w-full h-full object-cover" alt="${c.name}">
+          </div>
+          <div class="flex-1 min-w-0 flex flex-col">
+            <p class="text-[14px] font-medium leading-5 text-foreground truncate">${c.brand}</p>
+            <p class="text-[14px] leading-5 text-secondary-foreground truncate">${c.name}</p>
+            ${c.variant ? `<p class="text-[12px] leading-4 text-muted-foreground pt-0.5 truncate">${c.variant}</p>` : ''}
+            <!-- Ngày TÁCH ra span riêng (đúng nếp dòng pre-order ở màn giỏ): để
+                 nguyên trong text node thì chuỗi thành "Nhận hàng dự kiến 30/09/2026",
+                 không khớp khoá i18n 'Nhận hàng dự kiến' và phải đẻ luật regex. -->
+            ${c.preorder ? `<p class="text-[12px] leading-4 text-foreground-alt pt-0.5">Nhận hàng dự kiến <span class="font-medium">${c.preorder}</span></p>` : ''}
+            <div class="flex items-center justify-between gap-2 pt-1">
+              <span class="text-[12px] leading-4 text-muted-foreground">${(c.qty || 1) > 1 ? '× ' + c.qty : ''}</span>
+              <span class="text-[14px] font-medium leading-5 ${c.off ? 'text-destructive' : 'text-foreground'} whitespace-nowrap">${c.now}</span>
+            </div>
+          </div>
+        </div>`;
+
+  /* Dựng lại ruột tấm từ CART mỗi lần mở — tấm không giữ state riêng, nên thêm
+     món / đổi số lượng / xoá món ở màn giỏ xong rê vào icon là thấy đúng ngay.
+     Giỏ rỗng (sau khi đặt hàng xong CART bị dọn): giấu dòng Tạm tính, giữ nút để
+     vẫn sang được màn giỏ — màn đó có khối "Giỏ hàng trống" đầy đủ. */
+  const renderCC = () => {
+    const items = cartItems();
+    cc.querySelector('#ccCount').textContent = `(${items.length})`;
+    cc.querySelector('#ccList').innerHTML = items.length
+      ? items.map(ccRow).join('')
+      : '<p class="px-4 py-10 text-center text-[14px] leading-5 text-muted-foreground">Giỏ hàng trống</p>';
+    cc.querySelector('#ccSub').textContent = vndCom(cartSubtotal());
+    cc.querySelector('#ccSubRow').classList.toggle('hidden', !items.length);
     localizeNew(panel);
+  };
+
+  /* `peek` = mở do RÊ CHUỘT vào icon giỏ (không thêm gì vào giỏ, không hẹn 5s).
+     `anchor` = đúng nút vừa rê, để place() neo vào nó thay vì nút giỏ đầu tiên
+     tìm thấy trong DOM (màn có dialog quick add mở sẵn cũng có một nút giỏ). */
+  const openCC = ({ peek = false, anchor = null } = {}) => {
+    ccPeek = peek;
+    cc.classList.toggle('cc-peek', peek);   // xem rule .cc-peek: peek thì nền chặn không bắt chuột
+    renderCC();
     cc.classList.remove('pointer-events-none');
     cc.setAttribute('aria-hidden', 'false');
-    cc.querySelector('.cc-backdrop').classList.remove('opacity-0');
+    cc.querySelector('.cc-backdrop').classList.toggle('opacity-0', peek);
     /* place() TRƯỚC khi bỏ cờ đóng: đặt xong toạ độ rồi mới cho hiện, không thì
        tấm nháy một frame ở chỗ cũ. offsetWidth đọc được vì phần tử chỉ mờ chứ
        không display:none. */
-    place();
+    place(anchor);
     panel.classList.remove('translate-y-full');
-    armCC();
+    if (!peek) armCC(CC_MS);
     /* KHÔNG lockBodyScroll: đây là dropdown, không phải modal. Khoá cuộn ở đây
        vừa sai vai vừa gây giật ngang (ẩn scrollbar làm trang rộng thêm ~15px). */
   };
   const closeCC = () => {
     disarmCC();
+    ccPeek = false;
+    cc.classList.remove('cc-peek');
     cc.querySelector('.cc-backdrop').classList.add('opacity-0');
     panel.classList.add('translate-y-full');
     cc.classList.add('pointer-events-none');
     setTimeout(() => cc.setAttribute('aria-hidden', 'true'), 300);
   };
   window.__openCartConfirm = openCC;
+  window.__closeCartConfirm = closeCC;
+  /* ── RÊ CHUỘT VÀO ICON GIỎ (28/08/2026, lệnh user) ───────────────────────────
+     wire() gắn 2 listener này lên [data-nav="cart"] sau mỗi lần dựng header
+     (navBar() dựng lại mỗi lần đổi màn nên không gắn một lần là xong).
+     Nền chặn để TRONG SUỐT và không bắt chuột khi peek: `pointer-events-none` chỉ
+     gỡ ở tấm, còn cc gốc vẫn bắt sự kiện — nên khi peek phải cho backdrop khỏi
+     nuốt chuột, xem class `cc-peek`. */
+  window.__openCartPeek = (btn) => { disarmCC(); openCC({ peek: true, anchor: btn }); };
+  window.__closeCartPeek = () => { if (!panel.classList.contains('translate-y-full')) armCC(CC_PEEK_MS); };
   cc.querySelector('.cc-backdrop').addEventListener('click', closeCC);
   cc.querySelector('#ccClose').addEventListener('click', closeCC);
-  cc.querySelector('#ccContinue').addEventListener('click', closeCC);
   cc.querySelector('#ccGoCart').addEventListener('click', () => { closeCC(); go('cart'); });
 })();
 
@@ -12804,17 +12915,16 @@ document.body.insertAdjacentHTML('beforeend', `
     if (cta.dataset.mode === 'add') {
       const img = document.querySelector('#pdpGallery img');
       if (img) flyToCart(img);
-      cartQty++;
-      document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
       if (onPick) onPick(selected);
       closeSZ();
       const p = PRODUCTS[SCREEN_PRODUCT[current] || 0];
       const colorEl = document.querySelector('.screen #colorName');
       const variant = [colorEl ? colorEl.textContent.trim() : '', selected].filter(Boolean).join(' , ');
-      setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
+      addToCart({
         img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
         price: p.price, off: p.off, was: p.was, preorder: p.preorder,
-      }), 350);
+      });
+      setTimeout(() => window.__openCartConfirm && window.__openCartConfirm(), 350);
     }
   });
   window.__openSizeSheet = openSZ;

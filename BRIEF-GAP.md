@@ -184,6 +184,19 @@ Nhóm nhiều việc nhất. Mini cart chưa tồn tại, thanh tiến trình ch
 | **[Thiếu]** | Trong mini cart: tổng giá gốc − giảm giá − tổng cuối | Logic tính tiền đã có sẵn ở màn giỏ, chỉ thiếu nơi hiển thị. |
 | **[Thiếu]** | Trong mini cart: Add Promotion + tiêu điểm thành viên | Hai khối này hiện chỉ có ở màn Giỏ hàng. |
 
+> **Cập nhật 28/08/2026 — `desktop.html` đã có mini cart (một phần).** Lệnh user: tấm sau khi
+> thêm giỏ đổi vai thành **tóm tắt giỏ hàng**, và **rê chuột vào icon giỏ cũng mở đúng tấm đó**.
+> Nay đạt: liệt kê đủ dòng trong giỏ (món vừa thêm đứng đầu, số lượng cộng dồn khi trùng biến
+> thể) · **Tạm tính** · **một** nút "Đi đến giỏ hàng" · ✕ đóng · tự rút sau 5s khi vừa thêm ·
+> mở bằng hover. Kèm theo, "thêm vào giỏ" từ nay **ghi thật vào `CART`** nên giỏ · thanh toán ·
+> mốc quà tặng tự khớp — trước đó chỉ tăng chấm đếm.
+> Còn thiếu so với brief tr. 18: trượt ra từ **bên phải** (đang là dropdown neo vào icon —
+> hướng đã chốt 19/08) · xoá / đổi số lượng / đổi size / đổi màu **trong** mini cart · dòng
+> giảm giá và tổng cuối (đang chỉ có Tạm tính) · Add Promotion + tiêu điểm thành viên.
+> Phạm vi: **chỉ `desktop.html`**. 3 bản thử skin (`desktop-neutral` · `desktop-editorial` ·
+> `desktop-atelier`) vẫn dùng popup "Đã thêm vào giỏ hàng" **giữa màn** — chúng cũng chưa từng
+> nhận bản dropdown 19/08, nên port là 2 đợt chồng nhau, chờ lệnh.
+
 ### 7.3 Cart overview & checkout (tr. 19–22)
 
 | | Yêu cầu | Hiện trạng |
