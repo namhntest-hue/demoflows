@@ -347,3 +347,209 @@ chưa chốt** — chốt rồi mới thêm variant, tránh phình DS cho một 
 trúng luôn gallery PDP, thay mất 1 ô ảnh bằng thẻ sản phẩm. Đã **xoá frame và dựng lại từ JSON**
 (2 s) rồi ráp lại với bộ dò đi từ TIÊU ĐỀ (`text "Sản phẩm tương tự"` → khối cha → lưới 5 con).
 Bài học: dò node theo **mốc ngữ nghĩa**, đừng dò theo hình dạng cấu trúc.
+
+### 11.6 Bản C — "magazine editorial" cho PDP#2 (HTML)
+
+Lệnh user: *"ở pdp 2 hãy thử demo phương án kiểu magazine editorial cho cục gợi ý đó trên html luôn"*.
+Làm thẳng trong `desktop.html`, gắn cho `kind === 'pdp2'` (PDP#1 vẫn bản A / `?look=b`; PDP#3–#6
+vẫn dải 5 thẻ cũ).
+
+Bố cục báo chí trên lưới 12 của khung 1392: **330 (3 cột) · 684 (6 cột) · 330 (3 cột)**, khe 24 —
+cột giữa để `1fr` nên ở 1440 ra đúng 684, hẹp hơn thì co, 2 cột biên chở CHỮ nên giữ cứng.
+Chất biên tập đến từ: **ảnh chủ đề cắt NGANG 3:2** (ảnh sản phẩm vốn dọc 3:4) · **chú thích ảnh có
+kẻ mảnh phía trên** · **số 01 · 02 · 03** chạy suốt dải · **kẻ DỌC** ngăn cột danh sách · hàng danh
+sách nằm ngang (ảnh 96×128 + chữ), ngăn nhau bằng kẻ mảnh. Không dùng chữ HOA / small-caps dù tạp
+chí hay dùng — luật dự án cấm.
+
+Không đi qua `productCard` (khuôn thẻ cố định: ảnh dọc + info dưới ảnh) nhưng **dùng lại đúng khuôn
+giá/badge** của thẻ qua 2 helper `dkLookPrice` / `dkLookName`, và vẫn gắn `data-product` nên bấm là
+sang đúng PDP (đo: bấm hàng 02 → sang `pdp3`). Dải "Sản phẩm tương tự" của PDP#2 nay cũng bật kẻ
+ngăn để cùng nhịp. Đo: dải cao 570, nhịp 32 · 32 · 33 · 32 như PDP#1, không tràn ngang, console sạch.
+
+**Điểm cắt ảnh phải chỉnh tay**: cắt 3:2 từ ảnh dọc mà để mặc định `50% 50%` là trúng ngang bụng.
+Đặt `object-position: 50% 18%` — đúng mốc hero thương hiệu PLP đang dùng — thì lấy được nút vai +
+thân trên, có khoảng thở.
+
+> **Bẫy pipeline mới**: `extractor.js` chỉ đọc `object-fit`, **không đọc `object-position`**
+> (`builder.js` luôn `scaleMode: FILL` canh giữa) — nên bản dựng Figma KHÔNG phản ánh điểm cắt.
+> Kiểm điểm cắt phải làm ở trình duyệt. Lần này kiểm bằng cách vẽ lại vùng cắt vào `<canvas>` theo
+> đúng công thức `cover` + `object-position`, POST base64 qua cầu nối rồi decode ra PNG để xem —
+> cách này dùng được cho mọi lần cần "nhìn" trang khi pane không chụp được.
+
+---
+
+## 12. Đợt 5 (29/08) — dựng CÁC CASE CÒN LẠI của PLP
+
+Lệnh user: *"tạo các case còn lại của PLP mà bạn đã tạo vào Figma luôn nhé."*
+
+Đích: page **`screens`**, **section MỚI `PLP — trạng thái & biến thể`** đặt ngay DƯỚI section PLP
+cũ (x 0 · y 5305 · 8080×18780, không chồng lấn 3 section sẵn có). Section 26/08 chỉ dựng **một**
+trạng thái — PLP thương hiệu Versace lúc mở trang; đợt này dựng nốt **17 khung** còn lại.
+
+### 12.1 Danh sách khung (mọi số là computed style đo trên trang chạy)
+
+| Nhóm | Khung | Khổ | Node |
+|---|---|---|---|
+| **Màn mobile** | danh mục | 375×4674 | 390 |
+| | làm đẹp (8 SP) | 375×3060 | 223 |
+| | tìm kiếm ("túi" → 4 SP) | 375×2352 | 188 |
+| | 0 kết quả | 375×1865 | 118 |
+| | lưới 1 cột | 375×11933 | 395 |
+| **Lớp nổi** | quick add · mặc định (Đặt trước) | 375×900 | 47 |
+| | quick add · size tạm hết hàng | 375×900 | 43 |
+| | quick add · size nhận thông báo | 375×900 | 43 |
+| | quick add · bộ size riêng (S·M·L) | 375×900 | 35 |
+| | sắp xếp · popover | 240×222 | 8 |
+| **Màn desktop** | danh mục | 1440×3343 | 402 |
+| | đang lọc | 1440×1891 | 245 |
+| | 0 kết quả | 1440×1343 | 186 |
+| | làm đẹp | 1440×2107 | 231 |
+| | tìm kiếm | 1440×1549 | 212 |
+| **Thẻ hover** | 6 size | 345×590 | 30 |
+| | ít size (căn giữa) | 345×590 | 19 |
+
+Kết quả bind: **gắn text style 100%** ở cả 17 khung (939 mực chữ, chỉ còn 5 node không style —
+nằm trong layer `newsletter` ĐANG ẨN của `page-footer-mobile`, việc của DS không phải của đợt này),
+**0 chuỗi chữ raw · 0 icon rỗng · 0 ảnh mất fill · 0 ảnh nạp lỗi**.
+
+### 12.2 Ba quyết định về phạm vi
+
+1. **Popover Sắp xếp chỉ dựng MỘT khung.** Đo cả 2 khổ đều ra đúng 240×222, 5 hàng 44, cùng bộ số —
+   dựng 2 lần là nhân bản. Trạng thái hover của hàng là `:hover` nên không dựng được.
+2. **0 kết quả dùng CẶP lọc "Trắng + Đang giảm giá", không dùng facet đơn.** Cơ chế `.f-gone` ẩn
+   thuộc-tính-0-kết-quả khiến **không facet đơn nào chạm được màn rỗng**: tick "Kem" ra 0 sản phẩm
+   nhưng chính nó bị ẩn khỏi panel. Cặp trên thì mỗi vế đều có hàng, ghép mới rỗng — đúng đường
+   người thật đi tới.
+3. **Quick add tách 4 khung.** Phần làm 28/08 nằm ở chỗ CTA đổi theo size (Đặt trước → Tạm hết hàng
+   → Nhận thông báo, kèm ẩn dòng ngày giao) và ở bộ size đúng của từng SP — gộp một khung thì
+   không thấy được.
+
+### 12.3 Ráp component
+
+**20 instance**, đo trước-thay-sau, lệch chiều cao khung **0px** ở cả 10 màn:
+`page-header-mobile` 375×48 · `page-footer-mobile` 375×847,4 · `page-header-desktop` 1440×161 ·
+`page-footer-desktop` 1440×414 (ẩn layer `divider` trong `inner`; master để 447 vì còn newsletter).
+
+**Sửa component trong lúc ráp:** `page-header-mobile` và `page-header-desktop` có **fill ảnh logo
+DAFC bị tắt visible** — đúng loại lỗi ngủ đã vá cho 2 bản footer hôm 26/08 nhưng **bỏ sót header**,
+nên mọi instance header đều mất wordmark. Đã bật ở master → 7 instance của đợt 26/08 cũng được trả
+lại logo.
+
+**Thẻ sản phẩm GIỮ RAW — chờ duyệt, không phải quên.** Thẻ PLP hiện tại mang badge "Đặt trước"
+đứng TRƯỚC TÊN (chốt 27/08) mà `product-item-info` chưa có slot badge inline; thêm slot là đụng 53
+instance đang sống. Việc này vốn đã nằm trong danh sách chờ gật từ đợt 3.
+
+### 12.4 BA lỗ pipeline vá trong đợt (ảnh hưởng mọi lượt dựng sau)
+
+| # | Lỗi | Hậu quả thấy được | Vá |
+|---|---|---|---|
+| 1 | `colRaw()` chỉ bắt `rgba()`, mà **mọi mặt `color-mix` của dự án compute ra `color(srgb r g b / a)`** | `.filterbar` · `.glass-95` · `.glass-80` · `.pc-quick` **rơi sạch nền**; rõ nhất ở tấm hover — chip size nằm trần trên ảnh | extractor đọc cả 2 dạng |
+| 2 | **173/208 icon** mang `fill="var(--general-primary)"`; `createNodeFromSvg` không hiểu `var()` | path mất fill → **icon ra khung rỗng** | extractor tra thẳng custom property trên chính phần tử rồi thay bằng hex |
+| 3 | builder gỡ `width/height` bằng `replace` trên **CẢ chuỗi** SVG | `<rect width= height=>` bên trong cũng bị gỡ → icon vẽ bằng rect (nút đổi mật độ lưới, cờ Anh) ra rỗng | chỉ gỡ trên thẻ `<svg>` mở đầu |
+
+Lỗi 1 và 2 **có sẵn từ đợt 26/08** — 4 khung PLP/PDP dựng hôm đó cũng dính, nhưng phần lớn icon ở
+đó nay nằm trong instance header/footer (component dựng bằng đường khác nên không dính); chỉ còn
+**1 icon rỗng** sót trong khung `PLP / mobile 375` cũ. Không dựng lại 4 khung đó vì sẽ mất 73
+instance đã ráp — sửa tại chỗ khi có dịp.
+
+**Còn lại một lỗ ĐÃ BIẾT, CHƯA VÁ:** extractor không đọc `object-position`, builder luôn `FILL`
+canh giữa — ảnh hero thương hiệu (`object-position: 50% 18%`) ở 2 khung *0 kết quả* và *lưới 1 cột*
+bị cắt giữa thay vì cắt theo mốc 18%.
+
+### 12.5 Một lỗi DEMO tìm ra nhờ đợt dựng
+
+Xem **PLP-RASOAT-2026-08-28.md mục 9** — ảnh thẻ sản phẩm biến mất sau khi áp bộ lọc (`img.lazy`
+không được gắn `.loaded`). Đã vá cả 5 file; 3 khung Figma dính lỗi này (`đang lọc` · `làm đẹp` ·
+`tìm kiếm` bản desktop) đã trích và dựng lại sau khi vá.
+
+### 12.6 Bổ sung cùng ngày — auto layout + nút dùng component
+
+Lệnh user: *"thêm auto layout vào các frame bạn tạo và các nút nên được dùng component."*
+
+**Auto layout.** Trước đó chỉ các khối con có auto layout (builder tự thử rồi tự kiểm lệch); **trục
+xương sống `frame → #viewport → div[scroller]` vẫn là chồng toạ độ tuyệt đối**. Vướng: khe giữa các
+khối **không đều** — màn danh mục mobile là `8·16·8·0·0·24·24·16` — nên không dùng được một
+`itemSpacing`. Cách làm: khe đầu/cuối đẩy vào **padding** của cột, khe giữa chèn **khung rỗng đặt
+tên `space/8` · `space/16` · `space/24`** (khoá sẵn, không fill). Trục phụ canh **CENTER** — nhờ vậy
+khối thụt lề 16 (h1 rộng 343) và nút Xem thêm canh giữa tự vào đúng chỗ, không cần padding riêng
+cho từng con.
+
+Quét sâu thêm 862 khung còn `NONE` (bỏ qua con nằm trong instance): thuật toán tách **con nằm trong
+dòng chảy** khỏi **con đè** (giao > 50% diện tích của chính nó → `layoutPositioning: ABSOLUTE`, ví
+dụ nút quick-add tròn nằm trên ảnh thẻ), chọn trục theo dải x/y rời nhau, canh trục phụ thử
+MIN/CENTER/MAX rồi lấy cái khớp, và **lệch > 0,5px là trả lại nguyên trạng**.
+
+| Kết quả quét | Số |
+|---|---|
+| Bật được auto layout | **534** |
+| Trả lại vì lệch | 27 |
+| Bỏ qua — con tràn khỏi cha (khối bị cắt, đúng là phải tuyệt đối) | 191 |
+| Bỏ qua — rỗng · không có trục · trục phụ lẫn lộn | 82 · 6 · 22 |
+
+Tổng cuối: **1065/1393 khung có auto layout (76%)**, 130 spacer, **17 khung giữ nguyên từng px**.
+
+3 khuôn đặc biệt làm riêng: **quick add** dựng theo đúng nghĩa bottom-sheet (cột canh `MAX`, lớp phủ
+là con tuyệt đối nằm sau, tấm trắng là con duy nhất trong dòng chảy) · **thẻ hover** cột 2 khối ·
+**popover Sắp xếp** phải **dựng lại 4 hàng dưới** — extractor bóc mất khung của chúng (hàng không
+nền, không icon nên frame một-con bị gộp), trong Figma chỉ còn 1 hàng thật + 4 chữ rời. Nay đủ 5
+hàng `sort-opt` 238×44 cùng khuôn.
+
+**Nút dùng component — thay 8, giữ raw phần còn lại vì LỆCH THANG DS.**
+
+Đã thay: `#qaAdd` ×4 → `action variant=primary size=large` (nhãn qua property) · nút *Xem thêm* bản
+desktop ×4 (121×48) → `action variant=outline size=large`, **có đè màu viền về `#dfdfdf`**.
+
+| Nút giữ raw | Số | Đo được | Bậc DS gần nhất | Lệch |
+|---|---|---|---|---|
+| `btn-o` Bộ lọc · Bộ lọc (2) · Xóa tất cả bộ lọc | 12 | h36, nhãn **14/20** | small h36+12/16 · medium h40+14/20 | cao theo *small* mà chữ theo *medium* |
+| *Xem thêm* bản mobile | 4 | 127×**44**, nhãn 12 | — | h44 **không có trong thang** (36/40/48) |
+| `#sortBtn` | 10 | 102×36 ghost, nhãn 12 | ghost/small khớp cao + chữ | chevron nằm **đuôi**, component chỉ có `lead-icon` |
+| `gridbtn` · `#qaClose` | 10 · 4 | 36×36 · 32×32 | `size=icon` 40×40 | lệch 4px · 8px |
+| chip bộ lọc đang áp `af-chip` | 4 | h32 nền `#f2f2f2` | — | **chưa có component chip** |
+| quick-add tròn trên thẻ | 44 | 36 tròn | thuộc `product-item-info` | theo đợt ráp thẻ |
+
+**5 việc chờ chốt sinh ra từ bảng này** (không tự quyết vì đều là "một trong hai bên phải đổi"):
+màu viền nút outline (`border` #dfdfdf của demo vs `border-strong` #0a0a0a của DS) · bậc h36 +
+nhãn 14/20 (thêm biến thể vào DS, hay hạ nhãn về 12/16?) · nút *Xem thêm* mobile h44 · slot icon
+đuôi cho `action` · component chip cho bộ lọc đang áp.
+
+### 12.7 Ráp thêm component + buộc token spacing
+
+Lệnh user: *"tái sử dụng bộ component mà bạn đã tạo vào các frame mà bạn kéo chứ, sử dụng tokens
+spacing các thứ vào luôn."*
+
+**Tổng cuối: 62 instance gốc / 135 kể cả lồng, thuộc 6 component.**
+
+| Component | Instance | Ghi chú |
+|---|---|---|
+| `page-header-mobile` · `-desktop` | 5 + 5 | đợt trước |
+| `page-footer-mobile` · `-desktop` | 5 + 5 | đợt trước |
+| **`filter-bar`** platform=mobile/desktop | **5 + 5** | MỚI |
+| `action` primary/large · outline/large | 4 + 4 | đợt trước |
+| **`service-promises-mobile`** | **3** | MỚI — khối cam kết, khớp 375×368 từng px |
+| **`filter-size-chip`** default/_selected/_oos/_selected-oos | **13 + 2 + 4 + 2** | MỚI |
+
+**3 lỗi component phát hiện và sửa khi ráp** (đều ở `filter-bar`, component dựng 27/08 mà
+**chưa từng có instance nào** nên sửa master là an toàn):
+
+1. **Cao 53/69 thay vì 52/68** — `counterAxisSizingMode` để AUTO nên chiều cao hug thành
+   `đệm 8 + nội dung 36 + đệm 8 + kẻ 1`. Demo vẽ kẻ NẰM TRONG hộp 52. Đổi về FIXED là khớp.
+2. **Nền trắng đục thay vì trắng 95%** — di chứng của chính lỗi `color(srgb …)` vá hôm nay: lúc
+   dựng 27/08 extractor đọc không ra nền glass nên component nhận trắng đặc.
+3. **Icon đổi mật độ lưới vẽ sai** — component có *"3 gạch ngang (danh sách)" + "lưới 4 ô"*, demo là
+   *"lưới 4 ô" + "3 cột dọc"*. Thay bằng đúng vector đo từ demo, đặt lại tên `icon/view-grid-4` ·
+   `icon/view-cols-3`.
+
+**2 biến thể MỚI thêm vào `filter-size-chip`** — chip quick add đo 61,8×36 trùng khít chip bộ lọc
+62,2×36 (cùng viền, cùng nhãn 12/18) nhưng component thiếu trạng thái: `state=_oos` (gạch ngang,
+mực `#666666`) và `state=_selected-oos` (viền đen + gạch ngang — size hết hàng ĐANG chọn, đúng cảnh
+của 2 khung *tạm hết hàng* và *nhận thông báo*). Thêm biến thể là phép cộng, 5 instance cũ không đổi.
+
+**Token spacing: 3.779/4.715 ô đệm-và-khe đã buộc biến (80%).** 936 ô còn lại **ngoài thang**: đông
+nhất là `2` (330 ô — khe vi mô giá ↔ chip) và `1` (299), rồi cụm **đệm cộng kẻ** `9 · 0,5 · 6,5`
+sinh ra vì stroke của Figma không đẩy nội dung như `border` của CSS (đã ghi từ đợt 26/08). Chiều cao
+spacer cũng buộc biến ở 40/100 khung — số còn lại là khe ngoài thang.
+
+**Việc chờ chốt sinh thêm:** `filter-size-chip` mang tiền tố `filter-` nhưng nay phục vụ cả chọn
+size sản phẩm — đổi tên thành `size-chip` dùng chung hay tách hai component? (theo NAMING-MAGENTO.md).
+Và dải chip bộ lọc **đang áp** (`af-chip` h32 nền `#f2f2f2`) vẫn chưa có component tương ứng.

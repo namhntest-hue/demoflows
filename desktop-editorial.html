@@ -5902,6 +5902,14 @@ function wireSearchPane(root, pane) {
 }
 
 function wireProductCards(root) {
+  /* ẢNH THẺ PHẢI ĐƯỢC "THẮP" LẠI. `img.lazy` đứng ở opacity 0 cho tới khi có
+     class `.loaded`, mà chỗ gắn class đó (`wireLazy`) chỉ chạy trong `wire()`
+     lúc DỰNG MÀN. Mọi thẻ chèn lúc chạy — áp bộ lọc, đổi sắp xếp (renderPlpGrid
+     vẽ lại bằng innerHTML), bấm Xem thêm (append) — đều đi qua đây, nên đây là
+     chỗ duy nhất cần gọi. Không gọi thì lưới sau khi lọc chỉ còn CHỮ, ảnh trong
+     suốt hoàn toàn (lỗi phát hiện 29/08/2026). `wireLazy` idempotent qua
+     `data-lazy-wired` nên gọi lại trên lưới đang sống là vô hại. */
+  wireLazy(root);
   /* IDEMPOTENT qua data-wired (port 28/08): hàm này nay còn được gọi trên lưới
      ĐANG SỐNG (Xem thêm append thẻ mới cạnh thẻ cũ) — không có cờ thì thẻ cũ
      bị gắn trùng listener, 1 click chạy 2 lần. Lưới dựng lại bằng innerHTML

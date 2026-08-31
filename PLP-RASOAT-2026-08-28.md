@@ -307,3 +307,48 @@ trong comment tại chỗ — nói một tiếng nếu muốn dọn hẳn.
 **Kiểm sau sửa:** `node --check` sạch mọi khối script cả 5 file · console sạch ·
 vòng VI→EN→VI các chuỗi mới đúng cả 2 chiều · toàn bộ kịch bản edge đã đo lại trên trang chạy
 (mục 1–3). Deploy Vercel: chỉ cần push như thường lệ, không đổi đường dẫn.
+
+---
+
+## 9 · Bổ sung 29/08 — ảnh thẻ BIẾN MẤT sau khi áp bộ lọc (lỗi nặng, đã vá cả 5 file)
+
+Tìm ra khi dựng các case PLP vào Figma: khung "đang lọc" dựng xong chỉ có chữ, ba ô ảnh trống trơn.
+Không phải lỗi của bộ chuyển — **đo lại trên trang chạy theo đúng đường người dùng** (mở panel →
+tick Đen → bấm Áp dụng) thì **6/6 ảnh sản phẩm đứng ở `opacity: 0`**: lưới còn mỗi brand · tên ·
+giá trên nền trống.
+
+**Cơ chế.** `img.lazy` khai `opacity: 0`, chỉ lên 1 khi có thêm class `.loaded`. Chỗ gắn class đó
+là `wireLazy()` — mà `wireLazy` chỉ được gọi trong `wire()`, tức **một lần lúc dựng màn**.
+`renderPlpGrid()` vẽ lại lưới bằng `grid.innerHTML = …` rồi chỉ gọi `wireProductCards` +
+`localizeNew` + cập nhật đếm: **thẻ mới không bao giờ được thắp**. Ảnh vẫn tải xong
+(`img.complete === true`), vẫn đúng vị trí — chỉ là trong suốt vĩnh viễn.
+
+**Đường dính lỗi** (mọi đường vẽ lại/chèn thêm thẻ): áp bộ lọc · đổi Sắp xếp · bấm Xem thêm ·
+đổi mật độ lưới. Tức là **chạm vào bộ lọc một lần là hỏng cho tới khi đổi màn** — nặng hơn nhiều
+so với vẻ ngoài của nó.
+
+**Vì sao đợt rà soát 28/08 không bắt được:** hôm đó đo bằng DOM/computed **số lượng thẻ, chuỗi chữ,
+toạ độ, trạng thái ẩn/hiện của nút và thanh tiến độ** — tất cả đều đúng. `opacity` của thẻ `<img>`
+bên trong card thì không nằm trong danh sách kiểm, mà pane trình duyệt phiên đó không hiển thị
+được nên cũng không nhìn thấy bằng mắt.
+
+**Sửa (cả 5 file):** gọi `wireLazy(root)` ngay **đầu `wireProductCards()`** — chỗ duy nhất mọi
+đường chèn thẻ đều đi qua, và `wireLazy` idempotent qua `data-lazy-wired` nên gọi lại trên lưới
+đang sống là vô hại. Không vá riêng ở `renderPlpGrid` vì như thế bỏ sót nhánh append của Xem thêm.
+
+**Đo lại sau vá** (`index.html` @375 · `desktop.html` @1440 · 3 fork @1440):
+
+| Kịch bản | Thẻ | Ảnh | Ảnh còn `opacity: 0` |
+|---|---|---|---|
+| Sau khi áp lọc "Đen" | 6 | 6 | **0** |
+| Sau khi đổi Sắp xếp | 6 | 6 | **0** |
+| Sau khi bấm Xem thêm | 20 | 20 | **0** |
+| Đổi sang lưới 1 cột | 20 | 20 | **0** |
+
+Console sạch cả 5 file. Có chạy **kiểm chứng ngược** trên 3 fork: tạm thay `wireLazy` bằng hàm rỗng
+rồi vẽ lại → 6/6 ảnh về `opacity: 0` đúng như hiện tượng gốc, khôi phục thì về 0 — phép đo có thật
+sự bắt được lỗi, không phải "đạt giả".
+
+> Bẫy khi đo: pane trình duyệt ẩn thì trình duyệt đóng băng transition ở giá trị đầu, nên **lúc vừa
+> tải trang** mọi `img.lazy` đọc ra `opacity: 0` dù đã có `.loaded`. Số liệu sau-khi-bấm thì hợp lệ
+> (ảnh đã trong cache, `.loaded` gắn cùng một task, opacity nhảy thẳng lên 1 không qua transition).
