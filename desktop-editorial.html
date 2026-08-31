@@ -1683,6 +1683,31 @@ const SIZE_UNIT = 'IT';
 const sizeLabel = s => /^\d+$/.test(s) ? `${SIZE_UNIT} ${s}` : s;
 const sizeRaw = l => String(l).startsWith(`${SIZE_UNIT} `) ? String(l).slice(SIZE_UNIT.length + 1) : l;
 
+/* GIỚI HẠN HIỂN THỊ SIZE — chốt 28/08/2026 (lệnh user): mọi bộ CHỌN SIZE của
+   sản phẩm hiện TỐI ĐA 9 size, MỖI DÒNG TỐI ĐA 5 ô (9 size => 5 + 4).
+   · capSizes()   cắt danh sách dài hơn 9 — gọi tại MỌI nơi render (PDP + quick add)
+   · SIZE_PER_ROW là số cột của lưới, đọc thẳng vào grid-template-columns
+   Đổi luật chỉ sửa 2 con số ở đây, không phải đi từng màn.
+   KHÔNG áp cho chip size của BỘ LỌC: đó là facet lọc theo danh mục (cần liệt kê
+   đủ dải size đang bán), không phải bộ chọn size của một sản phẩm. */
+const SIZE_MAX_SHOWN = 9;
+const SIZE_PER_ROW = 5;
+const capSizes = list => list.slice(0, SIZE_MAX_SHOWN);
+
+/* BỘ SIZE GIÀY — demo ĐỦ 9 BẬC, đúng trần SIZE_MAX_SHOWN ở trên (lệnh user
+   28/08/2026: *"ở sản phẩm giày thì demo 9 size luôn, còn SML vẫn như bth"*).
+   Vì vậy KHÔNG nới `SIZES` chung: bộ đó còn phục vụ hàng may (đầm lụa PDP#1) và
+   là bộ mặc định của SP chưa khai size — nới ra là cả hai ăn theo ngoài ý user.
+   36–44 giữ nguyên 3 mốc trạng thái của demo (42 sắp hết · 43 tạm hết · 44 nhận
+   thông báo) nên mọi kịch bản cũ vẫn diễn được, và 39 vẫn nằm trong bộ nên ô
+   chọn sẵn của markup không phải sửa. */
+const SIZES_SHOE = ['36','37','38','39','40','41','42','43','44'];
+/* Nhận hàng GIÀY qua TÊN sản phẩm: nhờ vậy áp được cả cho SP không có PDP riêng
+   (giày trong danh sách "Show more") mà không phải khai bảng chỉ số thứ hai —
+   một chỗ sửa, mọi nơi chọn size đọc theo. */
+const isShoe = p => /^(giày|sandal|sneaker|bốt|dép)/i.test((p && p.name) || '');
+const sizesOf = p => isShoe(p) ? SIZES_SHOE : SIZES;
+
 // Danh sách kích thước cho các PDP dùng "dropdown" (giờ mở bottom sheet thay vì <select>)
 // `left` = số lượng còn lại, CHỈ gán khi sắp hết -> hàng đó hiện "Còn X sản phẩm";
 // size còn hàng bình thường không hiện trạng thái gì (Figma 3281:53948)
@@ -1694,8 +1719,8 @@ const SIZE_SHEET_OPTIONS = {
      không phải rẽ nhánh gì thêm. */
   pdp2: ['S', 'M', 'L'].map(label => ({ label, oos: false })),
   pdp3: ['Onesize'].map(label => ({ label, oos: false })),
-  pdp5: SIZES.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
-  pdp6: SIZES.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
+  pdp5: SIZES_SHOE.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
+  pdp6: SIZES_SHOE.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
 };
 
 // Nội dung banner khuyến mãi trên cùng PLP (không viết hoa toàn bộ)
@@ -2769,7 +2794,8 @@ function pdpTabs(idx, { specs = false, returnTab = PDP_RETURN_TAB } = {}) {
 
 /* Gallery/swatch lấy thẳng từ PRODUCT_GALLERY theo quy ước của bản mobile:
    slide = TOÀN BỘ ảnh thật của sản phẩm, swatch = slice đầu mảng theo số màu. */
-const pdpSizes = () => SIZES.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s) ? (OOS_MODE[s] || 'oos') : '' }));
+/* `list` mặc định = SIZES (hàng may). Giày truyền SIZES_SHOE để ra 9 bậc. */
+const pdpSizes = (list = SIZES) => list.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s) ? (OOS_MODE[s] || 'oos') : '' }));
 
 const PDP_DATA = {
   pdp: {
@@ -2792,17 +2818,17 @@ const PDP_DATA = {
   },
   pdp4: {
     idx: 3, lowStock: true, installment: '742.000 ₫',
-    sizes: pdpSizes(),
+    sizes: pdpSizes(SIZES_SHOE),
     tabs: pdpTabs(3),
   },
   pdp5: {
     idx: 4, lowStock: true, installment: '742.000 ₫',
-    sizes: pdpSizes(),
+    sizes: pdpSizes(SIZES_SHOE),
     tabs: pdpTabs(4),
   },
   pdp6: {
     idx: 5, lowStock: true, noColors: true, installment: '742.000 ₫',
-    sizes: pdpSizes(),
+    sizes: pdpSizes(SIZES_SHOE),
     tabs: pdpTabs(5),
   },
 };
@@ -2910,11 +2936,13 @@ function dkScreenPDP(kind) {
               <!-- CHIP GRID cho CẢ 6 kind — 28/08 bỏ dropdown (lệnh user); nhánh
                    [data-size-dd] cũ trong wire() đã gỡ. Nguồn size vẫn là
                    PDP_DATA[kind].sizes, một chỗ khai cho card + PDP.
-                   LUÔN 4 cột (lệnh user 28/08): chip Onesize của pdp3 phải bằng
-                   đúng cỡ ô size thường — nhánh grid-cols-2 cho danh sách ngắn
-                   từng làm ô đó rộng gấp đôi. -->
-              <div class="grid gap-2 grid-cols-4">
-                ${D.sizes.map((s, si) => `
+                   LƯỚI THEO LUẬT CHUNG (chốt 28/08): SIZE_PER_ROW ô mỗi dòng,
+                   danh sách qua capSizes() nên tối đa SIZE_MAX_SHOWN ô. Nhờ lưới
+                   cố định, chip Onesize của pdp3 bằng đúng cỡ ô size thường —
+                   nhánh grid-cols-2 cho danh sách ngắn (từng làm ô đó rộng gấp
+                   đôi) đã bỏ. -->
+              <div class="grid gap-2" style="grid-template-columns:repeat(${SIZE_PER_ROW},1fr)">
+                ${capSizes(D.sizes).map((s, si) => `
                 <button class="chip w-full h-9 px-2 rounded-xs text-[14px] font-medium border ${si === 0 && !s.oos ? 'on border-primary' : 'border-border'} ${s.oos ? 'off' : 'text-foreground'}" data-size="${s.label}" ${s.oos ? `data-oos="${s.oos}"` : ''}>${s.label}</button>`).join('')}
               </div>
               ${D.lowStock ? `
@@ -8914,8 +8942,8 @@ function quickAddBody(p, idx, sel = 0) {
         <p class="text-[12px] font-medium leading-4 text-foreground">${p.sizes ? 'Dung tích' : 'Kích thước'}</p>
         <!-- 5 ô / dòng (trước là 4) -> chip hẹp hơn: (358 - 4×8)/5 ≈ 65px.
              SIZES đang có 6 giá trị nên dòng 2 còn lẻ 1 ô — xem README. -->
-        <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)" data-qa-sizes>
-          ${(p.sizes || SIZES).map((s, si) => {
+        <div class="grid gap-2" style="grid-template-columns:repeat(${SIZE_PER_ROW},1fr)" data-qa-sizes>
+          ${capSizes(p.sizes || sizesOf(p)).map((s, si) => {
             const off = !p.sizes && DISABLED.includes(s);
             return `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${(si === 0 && !off) ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${sizeLabel(s)}" ${off ? 'disabled' : ''}>${sizeLabel(s)}</button>`;
           }).join('')}

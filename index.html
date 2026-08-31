@@ -3088,6 +3088,31 @@ const OOS_MODE = { '43': 'oos', '44': 'notify' };
 const SIZE_UNIT = 'IT';
 const sizeLabel = s => /^\d+$/.test(s) ? `${SIZE_UNIT} ${s}` : s;
 
+/* GIỚI HẠN HIỂN THỊ SIZE — chốt 28/08/2026 (lệnh user): mọi bộ CHỌN SIZE của
+   sản phẩm hiện TỐI ĐA 9 size, MỖI DÒNG TỐI ĐA 5 ô (9 size => 5 + 4).
+   · capSizes()   cắt danh sách dài hơn 9 — gọi tại MỌI nơi render (PDP + quick add)
+   · SIZE_PER_ROW là số cột của lưới, đọc thẳng vào grid-template-columns
+   Đổi luật chỉ sửa 2 con số ở đây, không phải đi từng màn.
+   KHÔNG áp cho chip size của BỘ LỌC: đó là facet lọc theo danh mục (cần liệt kê
+   đủ dải size đang bán), không phải bộ chọn size của một sản phẩm. */
+const SIZE_MAX_SHOWN = 9;
+const SIZE_PER_ROW = 5;
+const capSizes = list => list.slice(0, SIZE_MAX_SHOWN);
+
+/* BỘ SIZE GIÀY — demo ĐỦ 9 BẬC, đúng trần SIZE_MAX_SHOWN ở trên (lệnh user
+   28/08/2026: *"ở sản phẩm giày thì demo 9 size luôn, còn SML vẫn như bth"*).
+   Vì vậy KHÔNG nới `SIZES` chung: bộ đó còn phục vụ hàng may (đầm lụa PDP#1) và
+   là bộ mặc định của SP chưa khai size — nới ra là cả hai ăn theo ngoài ý user.
+   36–44 giữ nguyên 3 mốc trạng thái của demo (42 sắp hết · 43 tạm hết · 44 nhận
+   thông báo) nên mọi kịch bản cũ vẫn diễn được, và 39 vẫn nằm trong bộ nên ô
+   chọn sẵn của markup không phải sửa. */
+const SIZES_SHOE = ['36','37','38','39','40','41','42','43','44'];
+/* Nhận hàng GIÀY qua TÊN sản phẩm: nhờ vậy áp được cả cho SP không có PDP riêng
+   (giày trong danh sách "Show more") mà không phải khai bảng chỉ số thứ hai —
+   một chỗ sửa, mọi nơi chọn size đọc theo. */
+const isShoe = p => /^(giày|sandal|sneaker|bốt|dép)/i.test((p && p.name) || '');
+const sizesOf = p => isShoe(p) ? SIZES_SHOE : SIZES;
+
 // Bảng size theo kind — 28/08 PDP thôi dùng dropdown (mọi PDP chọn size bằng CHIP,
 // pdp2/pdp3 vẫn đọc nhãn từ đây); #sizeSheet giờ chỉ mở từ quick add ngoài PLP
 // (SIZE_SHEET_BY_PRODUCT) nên bảng này vẫn là nguồn duy nhất, không xoá.
@@ -3101,8 +3126,8 @@ const SIZE_SHEET_OPTIONS = {
      không phải rẽ nhánh gì thêm. */
   pdp2: ['S', 'M', 'L'].map(label => ({ label, oos: false })),
   pdp3: ['Onesize'].map(label => ({ label, oos: false })),
-  pdp5: SIZES.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
-  pdp6: SIZES.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
+  pdp5: SIZES_SHOE.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
+  pdp6: SIZES_SHOE.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s), left: SIZE_LOW_STOCK[s] || 0 })),
 };
 
 // Nội dung banner khuyến mãi trên cùng PLP (không viết hoa toàn bộ)
@@ -3962,9 +3987,11 @@ function screenPDP() {
           <p class="text-[12px] font-medium leading-4 text-foreground">Kích thước</p>
           <button data-size-chart class="text-[12px] leading-4 text-foreground">Bảng kích thước</button>
         </div>
-        <!-- 5 ô / dòng (trước là 4). SIZES có 6 giá trị nên dòng 2 còn lẻ 1 ô. -->
-        <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)">
-          ${SIZES.map(s => {
+        <!-- Lưới size theo LUẬT CHUNG: SIZE_PER_ROW ô/dòng, danh sách qua
+             capSizes() (tối đa SIZE_MAX_SHOWN). SIZES đang có 6 giá trị nên
+             dòng 2 còn lẻ 1 ô. -->
+        <div class="grid gap-2" style="grid-template-columns:repeat(${SIZE_PER_ROW},1fr)">
+          ${capSizes(sizesOf(P)).map(s => {
             const off = DISABLED.includes(s);
             return `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? `data-oos="${OOS_MODE[s] || 'oos'}"` : ''}>${sizeLabel(s)}</button>`;
           }).join('')}
@@ -4269,8 +4296,8 @@ function screenPDP2() {
           <p class="text-[12px] leading-4 text-[#171717]">Kích thước</p>
           <button data-size-chart class="text-[12px] leading-4 text-[#171717] underline">Bảng kích thước</button>
         </div>
-        <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)">
-          ${SIZE_SHEET_OPTIONS.pdp2.map((o, oi) => `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${oi===0 && !o.oos ? 'on border-primary' : 'border-border'} ${o.oos ? 'off' : 'text-foreground'}" data-size="${o.label}" ${o.oos ? `data-oos="${OOS_MODE[o.label] || 'oos'}"` : ''}>${o.label}</button>`).join('')}
+        <div class="grid gap-2" style="grid-template-columns:repeat(${SIZE_PER_ROW},1fr)">
+          ${capSizes(SIZE_SHEET_OPTIONS.pdp2).map((o, oi) => `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${oi===0 && !o.oos ? 'on border-primary' : 'border-border'} ${o.oos ? 'off' : 'text-foreground'}" data-size="${o.label}" ${o.oos ? `data-oos="${OOS_MODE[o.label] || 'oos'}"` : ''}>${o.label}</button>`).join('')}
         </div>
       </div>
     </div>
@@ -4394,8 +4421,8 @@ function screenPDP3() {
           <p class="text-[12px] leading-4 text-[#171717]">Kích thước</p>
           <button data-size-chart class="text-[12px] leading-4 text-[#171717] underline">Bảng kích thước</button>
         </div>
-        <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)">
-          ${SIZE_SHEET_OPTIONS.pdp3.map((o, oi) => `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${oi===0 && !o.oos ? 'on border-primary' : 'border-border'} ${o.oos ? 'off' : 'text-foreground'}" data-size="${o.label}" ${o.oos ? `data-oos="${OOS_MODE[o.label] || 'oos'}"` : ''}>${o.label}</button>`).join('')}
+        <div class="grid gap-2" style="grid-template-columns:repeat(${SIZE_PER_ROW},1fr)">
+          ${capSizes(SIZE_SHEET_OPTIONS.pdp3).map((o, oi) => `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${oi===0 && !o.oos ? 'on border-primary' : 'border-border'} ${o.oos ? 'off' : 'text-foreground'}" data-size="${o.label}" ${o.oos ? `data-oos="${OOS_MODE[o.label] || 'oos'}"` : ''}>${o.label}</button>`).join('')}
         </div>
       </div>
     </div>
@@ -4512,8 +4539,8 @@ function screenPDP4() {
           <p class="text-[12px] font-medium leading-4 text-foreground">Kích thước</p>
           <button data-size-chart class="text-[12px] leading-4 text-foreground">Bảng kích thước</button>
         </div>
-        <div class="grid gap-2" style="grid-template-columns:repeat(4,1fr)">
-          ${SIZES.map(s => {
+        <div class="grid gap-2" style="grid-template-columns:repeat(${SIZE_PER_ROW},1fr)">
+          ${capSizes(sizesOf(P)).map(s => {
             const off = DISABLED.includes(s);
             return `<button class="chip w-full h-9 px-2 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? `data-oos="${OOS_MODE[s] || 'oos'}"` : ''}>${sizeLabel(s)}</button>`;
           }).join('')}
@@ -4995,8 +5022,8 @@ function screenPDP5() {
           <span class="text-[12px] leading-4 text-[#171717]">Kích thước</span>
           <button data-size-chart class="text-[12px] leading-4 text-[#171717] underline press">Bảng kích thước</button>
         </div>
-        <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)">
-          ${SIZES.map(s => {
+        <div class="grid gap-2" style="grid-template-columns:repeat(${SIZE_PER_ROW},1fr)">
+          ${capSizes(sizesOf(P)).map(s => {
             const off = DISABLED.includes(s);
             return `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? `data-oos="${OOS_MODE[s] || 'oos'}"` : ''}>${sizeLabel(s)}</button>`;
           }).join('')}
@@ -5121,8 +5148,8 @@ function screenPDP6() {
         </div>
         <!-- Kích thước: CHIP GRID đúng khuôn PDP1 — 28/08 bỏ dropdown ở MỌI PDP
              (lệnh user). Cùng bộ SIZES/DISABLED/OOS_MODE, hưởng nguyên wiring chip. -->
-        <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)">
-          ${SIZES.map(s => {
+        <div class="grid gap-2" style="grid-template-columns:repeat(${SIZE_PER_ROW},1fr)">
+          ${capSizes(sizesOf(P)).map(s => {
             const off = DISABLED.includes(s);
             return `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${s==='39' ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${s}" ${off ? `data-oos="${OOS_MODE[s] || 'oos'}"` : ''}>${sizeLabel(s)}</button>`;
           }).join('')}
@@ -11609,12 +11636,15 @@ function qaSizesOf(p, idx) {
     const raw = (String(label).match(/\d+$/) || [''])[0];
     return OOS_MODE[raw] || 'oos';
   };
-  if (p.sizes && p.sizes.length) return p.sizes.map(label => ({ label, oos: '' }));
+  /* capSizes ở CẢ 3 nhánh (luật 28/08: tối đa SIZE_MAX_SHOWN size) — cắt tại
+     nguồn nên lưới quick add không phải tự lo, và bộ nào dài ra sau này cũng
+     tự vào khuôn. */
+  if (p.sizes && p.sizes.length) return capSizes(p.sizes).map(label => ({ label, oos: '' }));
   const kind = SIZE_SHEET_BY_PRODUCT[idx];
   if (kind && SIZE_SHEET_OPTIONS[kind]) {
-    return SIZE_SHEET_OPTIONS[kind].map(o => ({ label: o.label, oos: o.oos ? mode(o.label) : '' }));
+    return capSizes(SIZE_SHEET_OPTIONS[kind]).map(o => ({ label: o.label, oos: o.oos ? mode(o.label) : '' }));
   }
-  return SIZES.map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s) ? (OOS_MODE[s] || 'oos') : '' }));
+  return capSizes(sizesOf(p)).map(s => ({ label: sizeLabel(s), oos: DISABLED.includes(s) ? (OOS_MODE[s] || 'oos') : '' }));
 }
 
 function quickAddBody(p, idx, sel = 0) {
@@ -11685,7 +11715,7 @@ function quickAddBody(p, idx, sel = 0) {
              (KHÔNG gõ dấu backtick trong comment này: cả khối nằm trong template
              literal, backtick sẽ cắt đôi chuỗi — đã dính đúng lỗi đó lúc viết.)
              Xem setQaCta trong openQA. -->
-        <div class="grid gap-2" style="grid-template-columns:repeat(5,1fr)" data-qa-sizes>
+        <div class="grid gap-2" style="grid-template-columns:repeat(${SIZE_PER_ROW},1fr)" data-qa-sizes>
           ${qaSizesOf(p, idx).map((o, si) => `<button class="chip w-full h-9 px-1 rounded-xs text-[14px] font-medium border ${(si === 0 && !o.oos) ? 'on border-primary' : 'border-border'} ${o.oos ? 'off' : 'text-foreground'}" data-size="${o.label}"${o.oos ? ` data-oos="${o.oos}"` : ''}>${o.label}</button>`).join('')}
         </div>
       </div>

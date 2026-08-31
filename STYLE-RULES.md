@@ -843,3 +843,63 @@ Ngoại lệ ghi danh: **`dk-*` không đổi tên** (port 1:1 menu bar từ `de
 
 Đợt quét áp quy tắc 1–4 cho phần còn lại của `home.html` (114 tên, trong đó 57 tên viết tắt
 1–2 chữ cần giãn) **chưa chạy** — chờ duyệt bảng tên, xem `NAMING-MAGENTO.md` Phần 7.
+
+---
+
+## Phần 9 — Luật bộ chọn size (chốt 28/08/2026)
+
+> Lệnh user: *"về size pick ở trang pdp các ver sẽ chốt rule là tối đa 9 size, 1 line hiển thị
+> tối đa 5 size nhé, áp cho toàn bộ ver pdp, và cả quick add desktop, mobile nữa nhé"*
+
+**Luật:** mọi bộ **chọn size của một sản phẩm** hiển thị **tối đa 9 size**, **mỗi dòng tối đa
+5 ô** (9 size ⇒ 5 + 4). Danh sách dài hơn bị **cắt ở 9**, không cuộn, không "xem thêm".
+
+Phạm vi áp: **6 bản PDP** (mobile) · **6 kind PDP** (desktop, `dkScreenPDP`) · **quick add**
+mobile + desktop. Tổng 5 file: `index.html`, `desktop.html` và 3 bản fork skin.
+
+**Một nguồn duy nhất** — mỗi file khai đúng một chỗ, cạnh `sizeLabel`/`sizeRaw`:
+
+| Hằng | Giá trị | Việc |
+| --- | --- | --- |
+| `SIZE_MAX_SHOWN` | 9 | trần số ô, thi hành bằng `capSizes(list)` tại **mọi** nơi render |
+| `SIZE_PER_ROW` | 5 | số cột, đọc thẳng vào `grid-template-columns:repeat(…,1fr)` |
+
+Đổi luật = sửa 2 con số này, không đi từng màn. **Cấm** hardcode số cột trong markup size —
+đó chính là thứ đã làm PDP4 lệch 4 cột và quick add desktop lệch 6 cột trước 28/08.
+
+**KHÔNG áp cho:**
+
+* **chip size của BỘ LỌC** — đó là facet lọc theo danh mục, phải liệt kê đủ dải size đang bán
+  (XXS–XXL, 35–46, 56–115…), không phải bộ chọn size của một sản phẩm;
+* **lớp size hover trên card PLP desktop** (`.pc-sizes`, riêng `skin-mt`) — vẫn **4 cột**, hẹp
+  hơn trần 5 nên **không phạm luật**; trần 9 thì có áp (qua `pcSizesOf`). Ép cả tấm về đúng 5
+  phải tính lại bề rộng ô trong tấm hover — chưa làm, chờ lệnh.
+
+Số đo sau khi thi hành (đo trên trang chạy): ô size **62,2px** ở mọi PDP mobile · **79px** ở
+desktop (**102,6px** riêng PDP#1 vì cột nội dung rộng 569 — xem `dk-info-wide`) · nhãn dài
+nhất hiện có (`Onesize`, `IT 44`) **không** tràn ô ở cả 2 khổ · bộ 12 size giả lập ra đúng
+9 ô, xếp **5 + 4**.
+
+### 9.1 Các bộ size đang dùng (chốt 28/08/2026)
+
+> Lệnh user: *"ở sản phẩm giày thì demo 9 size luôn, còn SML vẫn như bth"*
+
+| Bộ | Giá trị | Dùng cho |
+| --- | --- | --- |
+| `SIZES_SHOE` | `IT 36 … IT 44` (**9** — đúng trần §9) | mọi **hàng giày**: 3 màn PDP giày (Gianni · Manu · Greca Court) + giày trong danh sách "Show more" |
+| `SIZES` | `IT 39 … IT 44` (6) | hàng may (đầm lụa PDP#1) và là **bộ mặc định** của SP chưa khai size riêng |
+| `SIZE_SHEET_OPTIONS.pdp2` | `S · M · L` | khăn lụa — **giữ nguyên**, lệnh nói rõ |
+| `SIZE_SHEET_OPTIONS.pdp3` | `Onesize` | túi |
+| `PRODUCTS[i].sizes` | dung tích (`50 ml`…) | hàng làm đẹp |
+
+**Định tuyến bằng LOẠI HÀNG, không bằng chỉ số**: `isShoe(p)` đọc tên sản phẩm
+(`Giày|Sandal|Sneaker|Bốt|Dép`), `sizesOf(p)` trả bộ tương ứng. Nhờ vậy giày **không có PDP
+riêng** cũng ra đủ 9 bậc, và thêm hàng giày mới không phải khai thêm bảng chỉ số nào.
+
+**Vì sao không nới thẳng `SIZES` lên 9:** bộ đó còn là bộ mặc định của hàng may + SP chưa khai
+size — nới ra thì đầm lụa và cả nhóm túi/thắt lưng ăn theo, ngoài ý lệnh.
+
+`SIZES_SHOE` giữ nguyên 3 mốc trạng thái của demo — **IT 42** sắp hết · **IT 43** tạm hết ·
+**IT 44** nhận thông báo — nên mọi kịch bản cũ vẫn diễn được, và **IT 39** vẫn nằm trong bộ nên
+ô chọn sẵn của markup không phải sửa. Đo lại sau khi áp: 3 màn giày + quick add giày (cả 2 khổ)
+ra **9 ô xếp 5 + 4**, không tràn chữ; đầm 6 ô (5 + 1) · khăn 3 · túi 1 — **không đổi**.
