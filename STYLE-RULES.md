@@ -249,7 +249,7 @@ Quy ước toàn dự án là **không dùng UPPERCASE**. `skin-mt` là ngoại 
 1. Nav ngành hàng + nav danh mục — `.dk-dept` · `.dk-nav-link` · `.ms-tab` · `.search-tab`
 2. Nhãn nhóm trong menu / mega panel — `.ms-view > p` · `.dk-mega-grid > div > p` · tiêu đề màn con
 3. Tiêu đề panel + tiêu đề mục trong bộ lọc — `#filterSheet` 2 tầng nhãn
-4. Nhãn nhóm ở footer *(21/08/2026: **tên chương trình quà tặng RÚT KHỎI vai này** — user đảo chốt 20/08: "tên chương trình không cần uppercase". Nó về họ nội dung 12/16 · 400 · mực chính; khối quà nhấn bằng mặt nền, xem §2.3)*
+4. Nhãn nhóm ở footer *(21/08/2026: **tên chương trình quà tặng RÚT KHỎI vai này** — user đảo chốt 20/08: "tên chương trình không cần uppercase". Nó về họ nội dung · 400 · mực chính; khối quà nhấn bằng mặt nền, xem §2.3. **31/08/2026 user cho cỡ LÊN 1 BẬC: 12/16 → 14/20** — lệnh *"tăng font của title chương trình lên 1 bậc, và áp dụng cho cả quà tặng của đơn hàng bên dưới luôn"*; áp cho cả 3 chỗ cùng vai (quà kèm sản phẩm · quà theo mốc đơn · ô mốc kế tiếp) ở **CẢ 2 BẢN**. Weight vẫn 400 — §1.1 khoá 500 vào chữ hoa, user chỉ hỏi cỡ. Phải khai `font-size` trong rule bộ da vì blanket remap `13–16 → 12/18` sẽ kéo `text-[14px]` về lại 12)*
 5. Nhãn nhóm & nhãn mở mục trong giỏ — trigger "Bạn có phiếu mua hàng?", **2 title của
    panel ưu đãi** ("Ưu đãi thành viên" + "Ưu đãi & khuyến mãi"), và **hàng "Tổng cộng"**
    (nhãn hàng tổng + con số — số không có chữ cái nên hoa vô hại)
@@ -410,6 +410,16 @@ Không nhấn bằng: mảng màu nhạt · bo góc · đổ bóng · gradient �
 > token tự lo. (2 bản thử cùng ngày đã bác: `--general-secondary` full-bleed khi CÒN hộp, và
 > tấm con inset 16px.) Đi cùng việc tên chương trình rút khỏi vai hoa (§1.5 mục 4). Danh sách
 > ngoại lệ mảng-màu này ĐÓNG — chỗ thứ hai muốn nền nhấn thì quay về 4 đòn bẩy trên.
+>
+> **CẬP NHẬT 31/08/2026 — user đảo lại lần nữa, qua Figma rồi qua lệnh trực tiếp:** dải nhấn
+> quà **THÔI full-bleed**, nay **thụt lề trái 40** để mép trái thẳng cột ẢNH của món (16 lề
+> dòng + 16 ô tick + 8 khe), mép phải vẫn ăn hết cột — số đo lấy từ Figma `Cart / desktop 1440`
+> (node 57:613, wrapper pad 16/0/16/40). Và **cả 3 khối quà dùng CHUNG một khuôn** (lệnh:
+> *"cái cục order gift cũng phải dùng chung style, size của cái gift ở trên luôn, áp dụng cả 2
+> phiên bản"*): quà kèm sản phẩm · quà theo mốc đơn · ô mốc kế tiếp — cùng nền accent-0, cùng
+> thụt 40 (`.gift-group.gift-inset`), nhãn đệm 8/4, thẻ đệm 8 với ảnh **77×102**. Khác nhau duy
+> nhất là nhịp DỌC: khối kèm sản phẩm tự mang 16 trên/dưới vì chèn giữa 2 dòng hàng; khối theo
+> mốc đơn để container lo (flex gap 8). Áp **CẢ 2 BẢN**.
 
 > **Ngoại lệ ghi danh thứ 2 (24/08/2026, lệnh user: *"ở skin-mt ở cart cái block sum giá nên
 > nhấn màu xuống tương tự bản figma"*):** khối tổng tiền trong GIỎ (`discountPanel` — thẻ ưu đãi

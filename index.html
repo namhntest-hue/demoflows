@@ -1699,8 +1699,33 @@ window.RESP = (function () {
     background: transparent;
     padding: 0;
   }
+  /* NHÃN TÊN CHƯƠNG TRÌNH QUÀ LÊN 1 BẬC: 12/16 -> 14/20 (31/08/2026, lệnh user
+     *"tăng font của title chương trình lên 1 bậc, và áp dụng cho cả quà tặng của
+     đơn hàng bên dưới luôn"*). Một rule phủ CẢ BA chỗ vì cùng cấu trúc
+     `.gift-group > div:first-child > p`: quà kèm sản phẩm · quà theo mốc đơn ·
+     ô mốc kế tiếp ("Mua thêm ... để nhận").
+     PHẢI khai font-size ở đây, không thể chỉ đổi utility trong markup: blanket
+     remap của bộ da (`:where(.text-[13px] … .text-[16px]) -> 12/18`) sẽ kéo
+     `text-[14px]` về lại 12. Rule này (0,3,3) thắng blanket (0,1,1).
+     Khai CẢ CẶP cỡ + dòng theo §1.3 — 14/20 là bậc có trong thang, không đẻ mới.
+     Weight vẫn 400: blanket `.font-*` của bộ da trả `font-medium` về 400, và
+     §1.1 khoá 500 vào chữ hoa nên không mở ngoại lệ khi user chỉ hỏi CỠ. */
+  /* KHUÔN CHUNG CHO MỌI KHỐI QUÀ (31/08/2026, lệnh user: *"cái cục order gift
+     cũng phải dùng chung style, size của cái gift ở trên luôn, áp dụng cả 2
+     phiên bản"*): quà kèm sản phẩm · quà theo mốc đơn · ô mốc kế tiếp — tất cả
+     THỤT 40 để mép trái thẳng cột ẢNH của món (16 lề dòng + 16 ô tick + 8 khe),
+     mép phải ăn hết cột.
+     Nhịp DỌC theo bối cảnh: khối kèm sản phẩm chèn GIỮA hai dòng hàng nên tự
+     mang 16 trên/dưới; khối theo mốc đơn để container lo (flex gap 8), thêm
+     margin nữa là cộng dồn.
+     ⚠ Rule này KHÔNG nằm trong bộ da: nó là số đo bố cục theo Figma, phải đúng
+     ở mọi skin. KHAI GIỐNG HỆT ở desktop.html — sửa 1 file nhớ sửa cả 2. */
+  [data-screen="cart"] .gift-group.gift-inset { margin-left: 40px; }
+  [data-screen="cart"] .gift-group.gift-inset[data-gift-of] { margin-top: 16px; margin-bottom: 16px; }
+
   html.skin-mt [data-screen="cart"] .gift-group > div:first-child > p {
-    line-height: 16px;
+    font-size: 14px;
+    line-height: 20px;
     color: var(--general-foreground); /* tên chương trình = mực chính, markup đang #333
                                          (21/08: thôi hoa -> thôi 500, blanket .font-* trả về 400) */
   }
@@ -3379,7 +3404,13 @@ const FOOTER_ROUTES = {
 
 function footer() {
   return `
-  <div class="bg-secondary pt-8 pb-8 px-2 mt-4">
+  <!-- data-footer = mốc cho JS: sticky CTA đáy màn phải NGỪNG hiện khi footer
+       vào khung nhìn (31/08/2026, lệnh user). Dùng thuộc tính riêng thay vì bám
+       .bg-secondary.mt-4 (KHÔNG gõ backtick quanh tên class: cả khối nằm trong
+       template literal, backtick là đứt chuỗi — vừa dính đúng lỗi này) — hook đó
+       vốn để CSS bộ da nhận footer, đổi lớp trang
+       trí là JS chết theo. -->
+  <div data-footer class="bg-secondary pt-8 pb-8 px-2 mt-4">
     <!-- Newsletter ĐÃ BỎ (26/08/2026, yêu cầu user). Gỡ kèm cả vạch h-px bg-border mx-2
          đứng ngay sau nó: khối newsletter đi rồi thì vạch đó thành một sợi kẻ lửng ở
          MÉP TRÊN footer, không còn ngăn cách gì. Khối thương hiệu bên dưới nay là con
@@ -5395,11 +5426,15 @@ function rewardAmount(kind) {
        vị trí stepper để không thủng bố cục.
      · Giá 0 ₫ kèm giá gốc gạch ngang, để thấy được tặng bao nhiêu.
    Badge "Quà tặng" đè góc trên trái ảnh — chỗ mà thẻ sản phẩm để badge -%. */
+/* Số đo lấy từ Figma 31/08/2026 (node 57:740), dùng cho MỌI khối quà: ảnh
+   77x102, đệm trong 8, KHÔNG có cột đệm 16 ở đầu hàng (lề trái do .gift-inset lo).
+   Số đo ảnh đặt INLINE: tailwind.css bản build sẵn không có bậc 77/102 nên
+   utility w-[77px]/h-[102px] là class chết (bài học w-14 ở mini cart 28/08).
+   KHAI GIỐNG HỆT ở desktop.html. */
 function giftCard(g) {
   return `
-  <div class="flex gap-2 px-4 pb-4">
-    <span class="w-4 shrink-0" aria-hidden="true"></span>
-    <span class="relative w-[100px] h-[133px] shrink-0 bg-background overflow-hidden">
+  <div class="flex gap-2 px-2 pb-2">
+    <span class="relative shrink-0 bg-background overflow-hidden" style="width:77px;height:102px">
       <!-- alt PHẢI có nội dung: đây là ảnh mang thông tin (món quà đang được nhận),
            không phải ảnh trang trí. Trước 20/08 alt để rỗng nên trình đọc màn hình
            bỏ qua hẳn — người dùng nghe hết dòng quà mà không biết quà là món gì.
@@ -5468,21 +5503,20 @@ function giftOptionsHTML(pk) {
 /* Nhóm quà = [tên chương trình + nút Đổi quà] + [thẻ quà] + [danh sách đổi].
    Luôn có nhãn chương trình, kể cả chương trình chỉ tặng 1 món: quà phải nói
    được nó từ đâu ra, và đây là chỗ móc sẵn cho việc đổi quà. */
-function giftGroupHTML(pk, attrs = '', tone = 'tint') {
+/* MỘT khuôn cho mọi loại quà (31/08/2026, lệnh user) — trước đó tham số `tone`
+   định nền, nay cả 3 khối cùng nền accent-0 + thụt lề 40 (.gift-inset) + nhãn đệm
+   8/4 + thẻ gọn 77x102. Chỗ gọi chỉ khác nhau ở `attrs` (data-gift-of /
+   data-gift-tier) để refreshCartGifts biết chèn ở đâu. */
+function giftGroupHTML(pk, attrs = '') {
   const p = GIFT_PROGRAMS[pk], g = giftOf(pk);
   if (!p || !g) return '';
   const many = p.gifts.length > 1;
-  /* tone='tint' : tự mang nền (quà kèm sản phẩm — dải riêng dính ngay dưới dòng hàng)
-     tone='bare' : không nền (quà theo đơn — nằm trong dải chung cùng nhãn section,
-                   xem orderGiftInner; nếu tự tô nền nữa thì xám đè xám) */
   return `
-  <div class="gift-group ${tone === 'tint' ? 'bg-accent-0' : ''}" data-gift-prog="${pk}" data-sig="${pk}|${giftPick[pk] || p.gifts[0]}" ${attrs}>
-    <!-- Chừa đúng cột 16px + gap 8 như thẻ quà bên dưới để nhãn chương trình
-         THẲNG HÀNG VỚI ẢNH, không thò ra sát mép (yêu cầu user 13/08/2026).
-         Nút "Đổi quà" vẫn ở mép phải, thẳng cột giá của thẻ. -->
-    <div class="flex items-center gap-2 px-4 pt-3 pb-2">
-      <span class="w-4 shrink-0" aria-hidden="true"></span>
-      <p class="min-w-0 flex-1 text-[12px] font-medium leading-4 text-foreground-alt truncate">${p.name}</p>
+  <div class="gift-group gift-inset bg-accent-0" data-gift-prog="${pk}" data-sig="${pk}|${giftPick[pk] || p.gifts[0]}" ${attrs}>
+    <!-- Nhãn chương trình: đệm 8/4, KHÔNG còn cột đệm 16 ở đầu — mép trái của cả
+         khối đã do lề 40 của .gift-inset lo (xem CSS), thêm spacer nữa là thụt hai lần. -->
+    <div class="flex items-center gap-2 px-2 py-1">
+      <p class="min-w-0 flex-1 text-[14px] font-medium leading-5 text-foreground-alt truncate">${p.name}</p>
       ${many ? `<button data-gift-swap="${pk}" class="shrink-0 text-[12px] font-medium leading-4 text-secondary-foreground underline press">Đổi quà</button>` : ''}
     </div>
     ${giftCard(g)}
@@ -5514,13 +5548,11 @@ function orderGiftInner() {
      regex (có số tiền), tên quà là key riêng trong I18N. Nhét cả câu vào 1 node
      thì tên quà không bao giờ được dịch. */
   const teaser = next ? `
-    <div class="gift-group bg-accent-0" data-gift-next="${next.min}">
-      <div class="flex items-center gap-2 px-4 pt-3 pb-2">
-        <span class="w-4 shrink-0" aria-hidden="true"></span>
-        <p class="min-w-0 flex-1 text-[12px] font-medium leading-4 text-foreground-alt truncate">${GIFT_PROGRAMS[next.program].name}</p>
+    <div class="gift-group gift-inset bg-accent-0" data-gift-next="${next.min}">
+      <div class="flex items-center gap-2 px-2 py-1">
+        <p class="min-w-0 flex-1 text-[14px] font-medium leading-5 text-foreground-alt truncate">${GIFT_PROGRAMS[next.program].name}</p>
       </div>
-      <div class="flex gap-2 px-4 pb-4">
-        <span class="w-4 shrink-0" aria-hidden="true"></span>
+      <div class="flex gap-2 px-2 pb-2">
         <span class="flex-1 min-w-0 flex flex-col gap-1.5">
           <span class="block text-[12px] leading-4 text-muted-foreground">
             <span>Mua thêm ${vndDot(next.min - sub)} để nhận</span>
@@ -10424,22 +10456,33 @@ function wire(root) {
     const cartSticky= root.querySelector('#cartStickyCta');
     const cartCta   = root.querySelector('#cartCta');
 
+    /* Thanh sticky NGỪNG HIỆN KHI TỚI FOOTER (31/08/2026, lệnh user): cuộn tới
+       footer là đã hết phần mua hàng, để thanh nút nằm đè lên footer thì vừa che
+       nội dung vừa nói sai việc. Mốc: mép TRÊN của footer chạm mép dưới khung nhìn
+       -> ẩn. Chọn mốc này (không phải "footer đè vào vùng thanh nút") để nút rút đi
+       TRƯỚC khi kịp phủ lên footer, đúng chữ "ngừng hiện khi xuống tới footer".
+       Dùng chung cho CẢ 2 thanh (PDP + giỏ) qua hàm apply() bên dưới. */
+    const footEl = root.querySelector('[data-footer]');
+
     if (pdpSticky || cartSticky) {
       const onScroll = () => {
         const vh = window.innerHeight;
+        // footer đã lộ ra khỏi mép dưới màn hình chưa
+        const atFooter = !!footEl && footEl.getBoundingClientRect().top <= vh;
+        /* Một chỗ đặt 3 thuộc tính cho cả 2 thanh — trước đây 2 nhánh chép tay,
+           thêm điều kiện nào cũng phải sửa 2 lần. */
+        const apply = (el, show) => {
+          el.style.opacity = show ? '1' : '0';
+          el.style.transform = `translateY(${show ? 0 : 10}px)`;
+          el.style.pointerEvents = show ? 'auto' : 'none';
+        };
         if (pdpSticky && pdpCta) {
           const r = pdpCta.getBoundingClientRect();
-          const show = r.bottom < 0 || r.top > vh;      // nút gốc ra khỏi màn hình
-          pdpSticky.style.opacity = show ? '1' : '0';
-          pdpSticky.style.transform = `translateY(${show ? 0 : 10}px)`;
-          pdpSticky.style.pointerEvents = show ? 'auto' : 'none';
+          apply(pdpSticky, (r.bottom < 0 || r.top > vh) && !atFooter);   // nút gốc ra khỏi màn hình VÀ chưa tới footer
         }
         if (cartSticky && cartCta) {
           const r2 = cartCta.getBoundingClientRect();
-          const show = r2.bottom < 0 || r2.top > vh;   // nút gốc ra khỏi màn hình
-          cartSticky.style.opacity = show ? '1' : '0';
-          cartSticky.style.transform = `translateY(${show ? 0 : 10}px)`;
-          cartSticky.style.pointerEvents = show ? 'auto' : 'none';
+          apply(cartSticky, (r2.bottom < 0 || r2.top > vh) && !atFooter);
         }
       };
       window.addEventListener('scroll', onScroll, { passive: true });
