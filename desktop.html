@@ -769,6 +769,27 @@ window.RESP = (function () {
      KHAI GIỐNG HỆT ở index.html — sửa 1 file nhớ sửa cả 2. */
   [data-screen="cart"] .gift-group.gift-inset { margin-left: 40px; }
   [data-screen="cart"] .gift-group.gift-inset[data-gift-of] { margin-top: 16px; margin-bottom: 16px; }
+  /* OPTION B của khối quà (.gift-plain): KHÔNG mặt nhấn, KHÔNG thụt lề — nó đọc
+     như một dòng hàng nữa nên phải nằm đúng hệ lề của .cart-row. Ô tick ở trạng
+     thái ĐÃ CHỌN + KHOÁ: mờ đi để nói "không bấm được" và chặn luôn con trỏ,
+     KHÔNG dùng `disabled` vì đây là <span> (không phải control).
+     KHAI GIỐNG HỆT ở 2 file — sửa 1 file nhớ sửa cả 2. */
+  [data-screen="cart"] .gift-group.gift-plain { background: transparent; margin-left: 0; }
+  /* (rule .chk-locked đã gỡ 31/08 cùng lúc với ô tick khoá — user bỏ hẳn ô đó) */
+  /* Badge "Quà tặng" của OPTION B: rời khỏi ảnh, đứng TRÊN tên. Giữ nền đen —
+     đó là dấu phân biệt quà với hàng mua (xem ghi chú giftCard). Số đo lấy từ
+     Figma node badge/gift: 10/14, đệm 2/4, Regular (KHÔNG semibold như bản đè
+     ảnh — §1.1 khoá 500+ vào chữ hoa, mà đây là chữ thường).
+     Viết bằng CSS ngữ nghĩa thay vì chuỗi utility: đây là việc MỚI (STYLE-RULES
+     §8) và nhờ vậy không phụ thuộc bậc nào có sẵn trong tailwind.css. */
+  [data-screen="cart"] .gift-badge {
+    display: inline-flex; align-items: center;
+    align-self: flex-start;   /* nằm trong cột dọc (flex-col) nên phải tự co, không thì kéo giãn hết bề ngang */
+    padding: 2px 4px;
+    background: var(--general-primary);
+    color: var(--general-primary-foreground);
+    font-size: 10px; line-height: 14px; font-weight: 400;
+  }
 
   @media (max-width: 1279px) {
     .dk-cart-summary            { width: clamp(280px, 32vw, 448px); }   /* tóm tắt GIỎ (Figma 31/08) */
@@ -3679,7 +3700,10 @@ const CATEGORIES = [
    không lệch); đầm lụa đứng ĐẦU theo kịch bản "vừa bấm Đặt trước ở PDP xong vào
    giỏ" — đồng bộ bản mobile 14/08/2026. */
 const CART_BASE = [
-  { img:'p1-0.jpg', brand:'Versace', name:'Đầm lụa mini Broken Jewels', variant:'Broken Jewels , 39', off:'-20%', was:'90.696.000 ₫', now:'72.557.000 ₫', qty:1, sel:true, preorder: PRODUCTS[0].preorder },
+  /* `giftStyle: 'plain'` = dùng OPTION B (khuôn dòng sản phẩm, không nền nhấn) cho
+     khối quà của dòng này — bản thử 31/08, đặt ở SP#1 theo lệnh user để so trực
+     tiếp với OPTION A đang chạy ở dòng túi Lou mini bên dưới. Bỏ cờ này là về A. */
+  { img:'p1-0.jpg', brand:'Versace', name:'Đầm lụa mini Broken Jewels', variant:'Broken Jewels , 39', off:'-20%', was:'90.696.000 ₫', now:'72.557.000 ₫', qty:1, sel:true, preorder: PRODUCTS[0].preorder, gift:'dressBundle', giftStyle:'plain' },
   { img:'p8-0.jpg', brand:'Versace', name:'Túi da Lou mini',            variant:'Onesize , Black', off:'', was:'', now:'45.066.000 ₫', qty:1, sel:true, gift:'bagBundle' },
   { img:'p5-0.jpg', brand:'Versace', name:'Giày loafer da Manu',        variant:'40 , Black',      off:'-30%', was:'50.354.000 ₫', now:'35.248.000 ₫', qty:1, sel:true },
   { img:'p10-0.jpg',brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm', variant:'95 , Black', off:'-15%', was:'20.676.000 ₫', now:'17.575.000 ₫', qty:1, sel:true },
@@ -5731,6 +5755,9 @@ const GIFT_CATALOG = {
    và danh sách chọn ngay trong nhóm (yêu cầu user 13/08/2026).
    `gifts[0]` là quà mặc định; lựa chọn của user lưu ở giftPick. */
 const GIFT_PROGRAMS = {
+  /* dressBundle = chương trình của SẢN PHẨM #1, thêm 31/08 để có chỗ thử OPTION B
+     của khối quà (xem giftRowPlainHTML). 2 quà để so được cả nút "Đổi quà". */
+  dressBundle: { name: 'Quà tặng kèm đầm lụa Broken Jewels', gifts: ['edt', 'mini'] },
   bagBundle: { name: 'Quà tặng kèm túi Lou mini',  gifts: ['mini', 'edt'] },
   tier150:   { name: 'Ưu đãi đơn từ 150 triệu',    gifts: ['scarf', 'edt'] },
   tier200:   { name: 'Ưu đãi đơn từ 200 triệu',    gifts: ['sneaker'] },
@@ -6017,11 +6044,77 @@ function giftGroupHTML(pk, attrs = '') {
   </div>`;
 }
 
+
+/* ── OPTION B của khối quà (31/08/2026, lệnh user: *"thử thêm 1 option quà tặng
+   nhưng cách hiển thị sẽ là dạng không màu nền, hiển thị như một thẻ sp bth,
+   nhưng không nhấn màu nền, trạng thái selected disable, mang badge quà tặng ra
+   bên trên title"*) ────────────────────────────────────────────────────────
+   Khác OPTION A (giftGroupHTML) đúng 4 điểm, còn lại giữ nguyên:
+     1. KHÔNG mặt nhấn accent-0 và KHÔNG thụt lề — nằm thẳng hàng với các dòng
+        hàng, đọc ra như một dòng giỏ nữa;
+     2. KHÔNG có ô tick (31/08 user bỏ: bản thử đầu có ô đã-chọn-khoá, nhưng quà
+        không phải thứ chọn được nên ô đó chỉ làm rối) — chỉ chừa cột trống 16px
+        để ảnh quà thẳng cột ảnh dòng hàng;
+     3. badge "Quà tặng" rời khỏi ảnh, xuống nằm ở CỘT GIÁ, thay chỗ dòng giá gốc
+        gạch ngang (nên khuôn này KHÔNG hiện giá gốc) — nền đen giữ nguyên vì đó
+        là dấu phân biệt quà với hàng mua;
+     4. ảnh về 100x133 như dòng hàng (option A đang 77x102).
+   Vẫn dùng chung: nhãn tên chương trình + nút Đổi quà, giá 0 ₫ + giá gốc gạch,
+   số lượng in tĩnh 01, và class .gift-group + data-sig để refreshCartGifts()
+   chèn/gỡ/dựng lại y như option A.
+   ĐANG LÀ BẢN THỬ: chỉ sản phẩm mang cờ dữ liệu `giftStyle: 'plain'` mới dùng
+   khuôn này (CART_BASE[0]) — bỏ cờ đó là quay về option A, không phải sửa code. */
+function giftRowPlainHTML(pk, attrs = '') {
+  const p = GIFT_PROGRAMS[pk], g = giftOf(pk);
+  if (!p || !g) return '';
+  const many = p.gifts.length > 1;
+  return `
+  <div class="gift-group gift-plain" data-gift-prog="${pk}" data-sig="${pk}|${giftPick[pk] || p.gifts[0]}" ${attrs}>
+    <div class="flex items-center gap-2 px-4 pt-3 pb-1">
+      <span class="w-4 shrink-0" aria-hidden="true"></span>
+      <p class="min-w-0 flex-1 text-[14px] font-medium leading-5 text-foreground-alt truncate">${p.name}</p>
+      ${many ? `<button data-gift-swap="${pk}" class="shrink-0 text-[12px] font-medium leading-4 text-secondary-foreground underline press">Đổi quà</button>` : ''}
+    </div>
+    <div class="flex gap-2 px-4 pb-4">
+      <!-- Ô TICK ĐÃ BỎ (31/08, lệnh user) — chỉ còn CỘT TRỐNG 16px giữ chỗ để ảnh
+           quà thẳng cột ảnh của các dòng hàng; bỏ luôn cột này là cả thẻ quà lệch
+           trái 24px so với mọi dòng khác. -->
+      <span class="w-4 shrink-0" aria-hidden="true"></span>
+      <div class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden">
+        <img src="${A}${g.img}" class="w-full h-full object-cover lazy" alt="Quà tặng ${g.brand} ${g.name}">
+      </div>
+      <div class="flex-1 min-w-0 flex flex-col justify-between">
+        <div class="flex flex-col">
+          <div class="pb-2">
+            <p class="text-[14px] font-medium leading-5 text-foreground truncate">${g.brand}</p>
+            <p class="text-[14px] leading-5 text-secondary-foreground truncate">${g.name}</p>
+          </div>
+          <p class="text-[12px] leading-4 text-muted-foreground">${g.variant}</p>
+        </div>
+        <div class="flex items-end justify-between gap-0.5">
+          <div class="pt-1 flex flex-col justify-end min-w-0">
+            <p class="text-[14px] font-medium leading-5 text-foreground">0 ₫</p>
+            <!-- Badge THAY CHỖ dòng giá gốc gạch ngang (31/08, lệnh user) — trước đó
+                 nó đứng trước tên, trước nữa là đè ảnh. Giá gốc bỏ hẳn ở khuôn này:
+                 hai thứ không xếp chồng được, và "0 ₫ + Quà tặng" đã nói đủ việc. -->
+            <span class="gift-badge">Quà tặng</span>
+          </div>
+          <span class="w-7 min-h-6 flex items-center justify-center shrink-0 text-[12px] font-medium leading-4" style="color:var(--unofficial-ghost-foreground)">01</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
 /* Nhóm quà theo sản phẩm — chỉ dựng khi item đang tick. `data-gift-of` trỏ về
    chỉ số dòng sản phẩm để refreshCartGifts() biết chèn/gỡ ở đâu. */
 function productGiftHTML(c, i) {
   if (!c.gift || !GIFT_PROGRAMS[c.gift] || c.sel === false) return '';
-  return giftGroupHTML(c.gift, `data-gift-of="${i}"`);
+  /* Chọn khuôn theo DỮ LIỆU của dòng hàng, không theo chỉ số: `giftStyle:'plain'`
+     -> OPTION B (thẻ như dòng sản phẩm, không nền nhấn); mặc định -> OPTION A. */
+  return c.giftStyle === 'plain'
+    ? giftRowPlainHTML(c.gift, `data-gift-of="${i}"`)
+    : giftGroupHTML(c.gift, `data-gift-of="${i}"`);
 }
 
 /* Ruột khối quà theo đơn — tách khỏi vỏ để cập nhật tại chỗ mỗi lần đổi số
