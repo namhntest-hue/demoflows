@@ -35,7 +35,8 @@ Kèm 5 thay đổi cấu trúc:
   và `margin-top` cứng 273 tách thành `--look-rise` (221) + `--look-clear` (52 → **56**, cho vào
   nấc 8) = 277.
 - **Tiêu đề băng 2 bậc + bỏ kẻ ngăn với "Sản phẩm tương tự"** — `Gợi ý` 24/32 (kicker) trên
-  `Mua kèm` 40/50. Hai bậc làm bằng **`::first-line`**, KHÔNG chẻ thành 2 `<span>`: khoá `'Gợi ý'`
+  `Mua kèm` 40/50; bản EN `Complete` / `The look` — hoa cả 2 dòng vì đây là HAI BẬC CHỮ riêng,
+  không phải một câu bị ngắt đôi. Hai bậc làm bằng **`::first-line`**, KHÔNG chẻ thành 2 `<span>`: khoá `'Gợi ý'`
   đã tồn tại trong I18N (màn Search → "Suggestions") nên chẻ ra là dòng đầu bị dịch sai. Bỏ kẻ
   nhưng **giữ nguyên đệm 64**; `.dk-look-aside` pt 16 → 2 để bù quang học, mực chữ vẫn nằm đúng
   48px dưới mép băng như trước.

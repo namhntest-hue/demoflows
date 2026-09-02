@@ -242,12 +242,12 @@ Mua kèm        ← 40/50  (giữ nguyên bậc cũ)
   một text node thì cả câu vẫn đi bằng **một khoá** như ghi chú ngắt dòng cũ đã dặn.
 - **24/32 là bậc CÓ TRONG thang** trưng bày (T1 của FONT-LIBRE-INTER) — không mở thêm ngoại lệ nào
   ngoài bậc 40 vốn đã ghi danh.
-- Text đổi `'Gợi ý
-mua kèm'` → `'Gợi ý
-Mua kèm'` ở cả 3 khuôn A/B/C + khoá i18n.
-  **Bản EN giữ chữ thường** (`'Complete
-the look'`): đó là MỘT câu bị ngắt làm 2 dòng, hoa chữ
-  "The" giữa câu là sai tiếng Anh.
+- Text đổi `'Gợi ý\nmua kèm'` → `'Gợi ý\nMua kèm'` ở cả 3 khuôn A/B/C + khoá i18n.
+  **Bản EN hoa theo** (`'Complete\nThe look'`) — user chốt lại sau khi tôi hỏi. Đây là chủ đích
+  thiết kế chứ không phải lỗi chính tả: hai dòng đọc như **hai bậc chữ riêng** (kicker 24 +
+  tiêu đề 40), không phải một câu bị ngắt đôi, nên mỗi dòng hoa chữ đầu của nó.
+  Giá trị EN vẫn khác khoá một-dòng `'Gợi ý mua kèm' → 'Complete the look'` nên `I18N_REV`
+  đảo ngược không đụng nhau (đã kiểm: EN → VI trả đúng `Gợi ý / Mua kèm`).
 - **Bù quang học `.dk-look-aside` pt 16 → 2.** Dòng đầu xuống 24px nên phần leading trống phía trên
   dày thêm ~14, chữ bị đẩy tụt. Đo trên trang chạy: bản cũ (một bậc 40/50, pt 16) mực chữ nằm
   **48px** dưới mép băng; pt 2 với dòng đầu 24 ra **đúng 48** → giữ nguyên vị trí thị giác đã chốt,
@@ -257,12 +257,11 @@ the look'`): đó là MỘT câu bị ngắt làm 2 dòng, hoa chữ
 
 | | |
 |---|---|
-| 48 SP × 6 PDP | tiêu đề đúng "Gợi ý
-Mua kèm" · 3 thẻ toàn ảnh model · **không còn kẻ** · 0 lỗi |
+| 48 SP × 6 PDP | tiêu đề đúng "Gợi ý\nMua kèm" · 3 thẻ toàn ảnh model · **không còn kẻ** · 0 lỗi |
 | Bậc chữ | dòng 1 cao 30 (24px) · dòng 2 cao 50 (40px) — giống nhau ở cả 6 |
 | Vị trí tiêu đề | mực chữ 48–49px dưới mép băng ở cả 6, **khớp bản trước khi đổi** |
 | Đệm băng → "Sản phẩm tương tự" | **64**, không đổi |
-| EN mode | `Complete / the look`, giữ tương phản cỡ; đảo về VI đúng nguyên văn |
+| EN mode | `Complete / The look` (hoa cả 2 dòng), giữ tương phản cỡ 30/50; đảo về VI đúng nguyên văn |
 | Desktop hẹp 1000 | kicker 30 / tiêu đề 50 / mực 48 / không kẻ |
 | Console · `node --check` | sạch |
 
