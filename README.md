@@ -11,6 +11,41 @@ Hai phiên bản dùng chung assets/tokens/tailwind.css, **nối với nhau ở 
 - `index.html` — bản **mobile**, dùng khi bề ngang **< 768px** (thiết kế theo 360–412px)
 - `desktop.html` — bản **desktop**, dùng khi bề ngang **≥ 768px**, nội dung bó trong max-w 1440 (xem mục "Bản desktop")
 
+## Data 3 thương hiệu + trang thương hiệu chạy bằng data (02/09/2026, CẢ 2 BẢN)
+
+Kéo thêm **24 SKU thật** từ `shop.dafc.com.vn`: **12 Dolce&Gabbana + 12 Zimmermann** (index 24–47
+của `PRODUCTS`, đặt CUỐI mảng vì router PDP/quick add định danh bằng index), kèm **147 ảnh**
+`d*-*.jpg` / `z*-*.jpg`, đủ `PRODUCT_GALLERY` + `PRODUCT_INFO`, và 2 wordmark tách nền
+`brand-logo-dg.png` / `brand-logo-zm.png`. Catalog demo nay là **48 SP / 5 thương hiệu**.
+
+Kèm 5 thay đổi cấu trúc:
+
+- **Trang thương hiệu thôi in cứng Versace** — tách ra `BRAND_PAGES` (logo · hero · mô tả · dải
+  danh mục), `plpProducts()` lọc theo hãng, 25 hàng thương hiệu trong menu 2 bản đều dẫn về đúng
+  trang của mình. Listing danh mục chung hiện lẫn 3 hãng (40 SP thời trang).
+- **"Gợi ý mua kèm" đổi sang ẢNH NGƯỜI MẪU** (`PRODUCTS[].model` — ảnh on-model có thật trong bộ
+  ảnh của chính SP đó, 27/48 SP có). SP không có ảnh model thì bị loại khỏi dải chứ không rơi về
+  ảnh tĩnh. "Sản phẩm tương tự" giữ nguyên ảnh tĩnh.
+- **PDP mở đúng SP được bấm** (`pdpIdx` + `goPdp`) — trước đây mọi SP ngoài SP#1–6 đều mở PDP của
+  SP#1.
+- **Dải "Gợi ý mua kèm" dùng CHUNG MỘT KHUÔN ở cả 6 PDP desktop** — bản A (tiêu đề 40 một bên +
+  3 ảnh model trên băng xám), thay cho 3 kiểu khác nhau trước đây; kẻ trên "Sản phẩm tương tự"
+  bật ở cả 6. Bản B/C giữ làm công cụ so sánh qua `?look=b` · `?look=c` (nay áp cho mọi PDP).
+  Spacing căn lại: cột chữ **282,6 → 282** (đúng 3 cột lưới 12, thẻ ra chẵn **330** thay vì 329,8)
+  và `margin-top` cứng 273 tách thành `--look-rise` (221) + `--look-clear` (52 → **56**, cho vào
+  nấc 8) = 277.
+- **Tiêu đề băng 2 bậc + bỏ kẻ ngăn với "Sản phẩm tương tự"** — `Gợi ý` 24/32 (kicker) trên
+  `Mua kèm` 40/50. Hai bậc làm bằng **`::first-line`**, KHÔNG chẻ thành 2 `<span>`: khoá `'Gợi ý'`
+  đã tồn tại trong I18N (màn Search → "Suggestions") nên chẻ ra là dòng đầu bị dịch sai. Bỏ kẻ
+  nhưng **giữ nguyên đệm 64**; `.dk-look-aside` pt 16 → 2 để bù quang học, mực chữ vẫn nằm đúng
+  48px dưới mép băng như trước.
+
+⚠ **Bẫy Unicode khi scrape thêm data:** HTML của site trả tiếng Việt dạng **NFD**, còn 2 file demo
+là **NFC**. Chữ nhìn giống hệt nhưng so chuỗi luôn sai (i18n tra trượt, tìm kiếm không khớp) —
+phải `unicodedata.normalize('NFC', ...)` trước khi sinh code.
+
+Chi tiết + phần còn mở: **`BRAND-DG-ZIMMERMANN.md`**.
+
 ## Chạy
 
 Mở `index.html` **hoặc** `desktop.html` bằng trình duyệt là xong — không cần build, không cần internet (Tailwind đã biên dịch sẵn vào `tailwind.css`). Mở file nào cũng được: cầu nối sẽ tự đưa sang bản đúng với bề ngang cửa sổ.

@@ -632,7 +632,8 @@ window.RESP = (function () {
 
   /* ══ BẢN A — dải "Gợi ý mua kèm" ADAPT TỪ FIGMA (28/08, node 108:3746) ══════
      User sửa thẳng trên Figma rồi bảo port về code. Khác bản dựng đầu:
-       · 4 thẻ nhỏ 265,5 -> 3 THẺ LỚN 329,8, khe 8 -> 24;
+       · 4 thẻ nhỏ 265,5 -> 3 THẺ LỚN 330, khe 8 -> 24 (Figma ghi 329,8 vì cột
+         chữ bên đó đo ra 282,6 — xem --look-aside);
        · hàng có NỀN XÁM cao 352, đệm 32 dọc / 24 ngang (bản Figma là secondary
          #f2f2f2 + kẻ mảnh mép trên; 31/08 user hạ về accent-0 và gỡ kẻ);
        · thẻ CANH ĐÁY băng, ẢNH TRỒI LÊN 227,7 khỏi mép băng (đo Figma);
@@ -642,11 +643,33 @@ window.RESP = (function () {
      trên — đúng cách Figma dựng (grid y = -227,7, băng vẫn 352).
      `--look-aside` là biến để dải hẹp chỉ phải đổi MỘT số: lưới đọc theo nó. */
   .dk-look-band {
-    --look-aside: 282.6px;
+    /* ── SỐ ĐO CỦA DẢI — ĐẶT TÊN HẾT (02/09/2026, cùng lượt đưa bản A sang cả
+       6 PDP). Trước lượt này 3 số quan trọng nhất là hằng cứng: 273 (chỗ chừa
+       cho ảnh trồi lên), 282,6 (cột chữ), 32/24 (đệm). 273 không nói ra nó gồm
+       những gì, nên thẻ đổi chiều cao là ảnh đâm vào khối trên mà không biết
+       phải sửa số nào — nay nó là phép cộng của 2 biến có tên.
+
+       LƯỚI: khung 1392 (= 1440 − 2×24 của px-6), 12 cột × 94 + 11 máng × 24.
+       · Cột chữ = ĐÚNG 3 cột = 94×3 = 282.
+         Số cũ 282,6 là SAI SỐ ĐO TỪ FIGMA, và nó đẩy 3 thẻ về 329,8 — lẻ pixel
+         (chính con số 329,8 ghi trong ghi chú bản A ở trên là dấu vết của nó).
+         Về 282 thì thẻ ra CHẴN 330 = 3 cột + 2 máng, cả dải khớp lưới:
+             282 + 24 + 330×3 + 24×2 = 1344 = bề ngang TRONG băng. */
+    --look-aside: 282px;
+    --look-pad-y: 32px;      /* đệm dọc băng — cũng là khoảng thẻ cách mép đáy */
+    --look-pad-x: 24px;      /* đệm ngang băng = đúng MỘT máng lưới */
+    --look-h: 352px;         /* chiều cao băng (số Figma) */
+    --look-rise: 221px;      /* phần ảnh TRỒI LÊN khỏi mép trên băng
+                                = chiều cao thẻ (541) − (--look-h − --look-pad-y) */
+    --look-clear: 56px;      /* hở giữa ĐỈNH ẢNH trồi lên và khối phía trên.
+                                Đo ra 52 (273 − 221) — số duy nhất trong cả dải
+                                rơi ngoài nấc 8; kéo lên 56 cho đồng nhịp với
+                                32/24/16 còn lại. Lệch 4px, không đổi bố cục. */
     position: relative;
-    height: 352px;
-    margin-top: 273px;            /* chỗ trống cho ảnh trồi lên; Figma chừa 45,3 trên đỉnh ảnh */
-    padding: 32px 24px;
+    height: var(--look-h);
+    /* Chỗ chừa = phần ảnh trồi lên CỘNG khoảng hở muốn thấy (= 277). */
+    margin-top: calc(var(--look-rise) + var(--look-clear));
+    padding: var(--look-pad-y) var(--look-pad-x);
     /* 31/08/2026 (lệnh user): nấc màu XUỐNG accent-0 (#f7f7f7 ở skin-mt) —
        nhạt hơn secondary #f2f2f2 đúng 1 nấc, tách hẳn khỏi nền ảnh CDN nướng
        sẵn #f1f1f1 nên 3 ô ảnh nổi lên thay vì chìm vào băng. Kẻ mảnh mép trên
@@ -654,10 +677,17 @@ window.RESP = (function () {
        hai lần ở cùng một mép (đúng cách đã xử discountPanel + #cartCta 24/08). */
     background: var(--unofficial-accent-0);
   }
-  .dk-look-aside { width: var(--look-aside); padding-top: 16px; }
+  /* pt = BÙ QUANG HỌC, không phải một nấc đệm riêng: chữ luôn bị thụt xuống bởi
+     phần leading trống phía trên nó, nên phải trừ ngược lại để tiêu đề ĐỌC RA
+     thẳng hàng với mép đệm 32 của băng.
+     16 -> 2 (02/09): dòng đầu xuống 24px (xem ::first-line) nên phần leading
+     trống dày thêm ~14. Đo trên trang chạy: bản cũ (một bậc 40/50, pt 16) mực
+     chữ nằm 48px dưới mép băng; pt 2 với dòng đầu 24 ra ĐÚNG 48 — giữ nguyên
+     vị trí thị giác đã chốt, chỉ đổi cỡ chữ. */
+  .dk-look-aside { width: var(--look-aside); padding-top: 2px; }
   .dk-look-grid {
-    position: absolute; bottom: 32px; right: 24px;
-    left: calc(24px + var(--look-aside) + 24px);
+    position: absolute; bottom: var(--look-pad-y); right: var(--look-pad-x);
+    left: calc(var(--look-pad-x) + var(--look-aside) + 24px);
     display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 24px; align-items: end;
   }
@@ -735,7 +765,7 @@ window.RESP = (function () {
        từ điển theo từng text node -> phải thêm khoá cho 2 mảnh rời "Gợi ý" và
        "mua kèm". Đã kiểm: "Gợi ý" CÒN đứng riêng ở chỗ khác trong file, thêm
        khoá cho mảnh đó là dịch lây sang đấy. Giữ một text node thì cả câu vẫn
-       đi bằng MỘT khoá (xem I18N: 'Gợi ý\nmua kèm').
+       đi bằng MỘT khoá (xem I18N: 'Gợi ý\nMua kèm').
        pre-line vẫn cho chữ tự wrap thêm khi cột hẹp, chỉ là luôn có sẵn 1 lần
        ngắt ở đúng chỗ mình đặt. */
     white-space: pre-line;
@@ -743,6 +773,21 @@ window.RESP = (function () {
        xám (lượt trước là căn giữa; user đổi khi dựng lại bố cục 3 thẻ lớn). */
     text-align: left;
   }
+
+  /* DÒNG ĐẦU nhỏ hơn dòng sau — "Gợi ý" 24/32 trên "Mua kèm" 40/50
+     (lệnh user 02/09/2026). Nhịp kicker-trên-tiêu-đề của trang biên tập.
+
+     ⚠ PHẢI làm bằng ::first-line, KHÔNG được chẻ tiêu đề thành 2 <span>:
+     chẻ ra là mỗi mảnh thành một TEXT NODE riêng, mà máy dịch tra từ điển theo
+     từng text node — và khoá 'Gợi ý' ĐÃ TỒN TẠI trong I18N (màn Search:
+     'Gợi ý' -> 'Suggestions'), nên dòng đầu sẽ bị dịch thành "Suggestions".
+     Giữ MỘT text node thì cả câu vẫn đi bằng một khoá, đúng như ghi chú ngắt
+     dòng ở rule trên đã dặn.
+     Dòng đầu luôn đúng là "Gợi ý" vì chuỗi có sẵn ký tự xuống dòng + pre-line.
+
+     24/32 là bậc CÓ TRONG thang trưng bày (T1 của FONT-LIBRE-INTER) — không mở
+     thêm ngoại lệ nào ngoài bậc 40 vốn đã ghi danh ở rule ngay trên. */
+  .dk-look-title::first-line { font-size: 24px; line-height: 32px; }
 
   /* ════════════════ DẢI DESKTOP HẸP (768 → 1279) ════════════════
      Trang dựng theo khung Figma 1440: cột phải của PDP/giỏ/thanh toán là
@@ -803,7 +848,7 @@ window.RESP = (function () {
        ở ~563, tức không nhảy bậc khi kéo qua mốc; sàn giữ 292 như các cột khác
        để dải hẹp không bóp chết ô ảnh. */
     .dk-sticky-info.dk-info-wide { width: clamp(292px, 44vw, 569px); }
-    .dk-look-band               { --look-aside: clamp(200px, 22vw, 282.6px); }   /* cột chữ dải Gợi ý mua kèm (PDP#1) — lưới đọc theo biến này */
+    .dk-look-band               { --look-aside: clamp(200px, 22vw, 282px); }     /* cột chữ dải Gợi ý mua kèm (mọi PDP từ 02/09) — lưới đọc theo biến này */
     .dk-sticky-side.w-\[427px\] { width: clamp(280px, 32vw, 427px); }   /* tóm tắt giỏ / thanh toán */
     .dk-sticky-side.w-\[280px\] { width: clamp(216px, 22vw, 280px); }
     .dk-policy-aside            { width: clamp(200px, 22vw, 280px); }   /* menu trang chính sách */
@@ -3337,19 +3382,19 @@ const PRODUCTS = [
   /* `multi` = hàng IN HỌA TIẾT nhiều màu → khớp ô "Nhiều màu" (Multi-colour) trong bộ
      lọc. Khác hẳn "SP có nhiều swatch": túi Emblème bán 2 phiên bản Verde Menta /
      Rosa nhưng mỗi phiên bản là MỘT màu, nên không mang cờ này. */
-  { img:'p1-0.jpg',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫', tag:'Best seller', preorder:'30/09/2026', multi:true, colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
+  { img:'p1-0.jpg',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫', tag:'Best seller', preorder:'30/09/2026', multi:true, model:'p1-1.jpg', colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
   { img:'p2-0.jpg',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', price:'15.611.000 ₫', multi:true, colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
-  { img:'p3-0.jpg',  brand:'Versace', name:'Túi đeo vai da Emblème',                     price:'50.957.000 ₫', off:'-15%', was:'59.949.000 ₫', colors:[{name:'Verde Menta',hex:'#b9dfc6'},{name:'Rosa',hex:'#f5d6e0'}] },
+  { img:'p3-0.jpg',  brand:'Versace', name:'Túi đeo vai da Emblème',                     price:'50.957.000 ₫', off:'-15%', was:'59.949.000 ₫', model:'p3-1.jpg', colors:[{name:'Verde Menta',hex:'#b9dfc6'},{name:'Rosa',hex:'#f5d6e0'}] },
   /* `heel` = chiều cao gót (cm) — nguồn là chính bảng thông số ở PDP_DATA của 2 đôi
      này ("Chiều cao gót giày" 9 và 1.5), không bịa thêm. Có field này thì mục lọc
      "Độ cao giày" (feedback khách 26/08) lọc THẬT được. */
-  { img:'p4-0.jpg',  brand:'Versace', name:'Giày cao gót da nappa Gianni 90',            price:'45.066.000 ₫', tag:'New arrival', heel:9, colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Oro',hex:'#c9a94b'}] },
-  { img:'p5-0.jpg',  brand:'Versace', name:'Giày loafer da Manu',                        price:'35.248.000 ₫', off:'-30%', was:'50.354.000 ₫', heel:1.5, colors:[{name:'Nero',hex:'#0a0a0a'}] },
-  { img:'p6-0.jpg',  brand:'Versace', name:'Giày thể thao da lộn Greca Court',           price:'27.393.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Bianco',hex:'#f1f1f1'},{name:'Nero Oro',hex:'#8a7040'}] },
+  { img:'p4-0.jpg',  brand:'Versace', name:'Giày cao gót da nappa Gianni 90',            price:'45.066.000 ₫', tag:'New arrival', heel:9, model:'p4-1.jpg', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Oro',hex:'#c9a94b'}] },
+  { img:'p5-0.jpg',  brand:'Versace', name:'Giày loafer da Manu',                        price:'35.248.000 ₫', off:'-30%', was:'50.354.000 ₫', heel:1.5, model:'p5-1.jpg', colors:[{name:'Nero',hex:'#0a0a0a'}] },
+  { img:'p6-0.jpg',  brand:'Versace', name:'Giày thể thao da lộn Greca Court',           price:'27.393.000 ₫', model:'p6-1.jpg', colors:[{name:'Nero',hex:'#0a0a0a'},{name:'Bianco',hex:'#f1f1f1'},{name:'Nero Oro',hex:'#8a7040'}] },
   { img:'p7-0.jpg',  brand:'Versace', name:'Túi đeo vai da Vivian East/West cỡ nhỏ',     price:'70.593.000 ₫', off:'-25%', was:'94.124.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'}] },
-  { img:'p8-0.jpg',  brand:'Versace', name:'Túi da Lou mini',                            price:'45.066.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'}] },
-  { img:'p9-0.jpg',  brand:'Versace', name:'Túi tote Rivière mini',                      price:'50.957.000 ₫', off:'-10%', was:'56.619.000 ₫', colors:[{name:'Cuoio',hex:'#a06a3f'}] },
-  { img:'p10-0.jpg', brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm',          price:'17.575.000 ₫', off:'-15%', was:'20.676.000 ₫', colors:[{name:'Nero',hex:'#0a0a0a'}] },
+  { img:'p8-0.jpg',  brand:'Versace', name:'Túi da Lou mini',                            price:'45.066.000 ₫', model:'p8-1.jpg', colors:[{name:'Nero',hex:'#0a0a0a'}] },
+  { img:'p9-0.jpg',  brand:'Versace', name:'Túi tote Rivière mini',                      price:'50.957.000 ₫', off:'-10%', was:'56.619.000 ₫', model:'p9-1.jpg', colors:[{name:'Cuoio',hex:'#a06a3f'}] },
+  { img:'p10-0.jpg', brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm',          price:'17.575.000 ₫', off:'-15%', was:'20.676.000 ₫', model:'p10-1.jpg', colors:[{name:'Nero',hex:'#0a0a0a'}] },
   /* ── Hàng làm đẹp (dept:'beauty') ────────────────────────────────────
      Tách bằng cờ `dept` chứ không phải mảng riêng, để index sản phẩm vẫn
      là index trong PRODUCTS — router PDP và quick add đang định danh sản
@@ -3376,6 +3421,46 @@ const PRODUCTS = [
   { img:'x4.jpg', brand:'Versace', name:'Đầm polo tay ngắn thêu logo',                price:'35.248.000 ₫' },
   { img:'x5.jpg', brand:'Versace', name:'Áo thun cotton jersey tay ngắn thêu logo',   price:'9.720.000 ₫' },
   { img:'x6.jpg', brand:'Versace', name:'Áo sơ mi lụa dáng crop',                     price:'37.211.000 ₫' },
+
+  /* ── Dolce&Gabbana + Zimmermann (kéo 02/09/2026 từ shop.dafc.com.vn) ──────
+     Cùng nếp với khối Versace ở trên: tên / giá / size / ảnh là DATA THẬT lấy
+     từ trang thương hiệu + trang chi tiết của chính site; riêng `off`/`was` là
+     số tự tạo để demo đủ 2 trạng thái giá (giống ghi chú ở đầu mảng).
+     Đặt CUỐI mảng, KHÔNG chen vào giữa: router PDP + quick add định danh sản
+     phẩm bằng index nên xê dịch index 0-23 là gãy hết.
+     `model` = ảnh NGƯỜI MẪU MẶC trong chính bộ ảnh của sản phẩm, dùng cho dải
+     "Gợi ý mua kèm" (xem productCard option `model`). SP nào site không chụp
+     on-model (giày lẻ, nón, ví, khăn) thì KHÔNG khai — thà rơi về ảnh tĩnh còn
+     hơn mượn ảnh model của món khác.
+     `colors` mỗi SP đúng MỘT ô: 24 SKU này site đều bán một phiên bản màu; tên
+     màu lấy ở dòng "Màu sắc" của trang thật, SP nào không có dòng đó thì lấy
+     tên colourway trong chính đoạn mô tả (Zimmermann luôn gọi tên colourway).
+     `sizes` nay có ở CẢ hàng thời trang (trước chỉ hàng beauty mang field này)
+     — bộ size thật của từng SKU, quick add đọc qua qaSizesOf(). */
+  { img:'d1-0.jpg', brand:'Dolce&Gabbana', name:'Đầm dài họa tiết Carretto', price:'92.900.000 ₫', tag:'New arrival', sizes:['38','40','42','44'], model:'d1-1.jpg', multi:true, colors:[{name:'Carretto',hex:'#d1402f'}] },
+  { img:'d2-0.jpg', brand:'Dolce&Gabbana', name:'Giày cao gót slingback phối ren', price:'37.900.000 ₫', tag:'New arrival', heel:7.5, sizes:['35','36','37','38','39'], colors:[{name:'Nero',hex:'#1a1414'}] },
+  { img:'d3-0.jpg', brand:'Dolce&Gabbana', name:'Chân váy poplin dài họa tiết Carretto', price:'55.900.000 ₫', off:'-20%', was:'69.875.000 ₫', tag:'New arrival', sizes:['38','40','42','44'], model:'d3-1.jpg', multi:true, colors:[{name:'Carretto',hex:'#d1402f'}] },
+  { img:'d4-0.jpg', brand:'Dolce&Gabbana', name:'Áo khoác da viền dệt gân', price:'175.900.000 ₫', tag:'New arrival', sizes:['46','48'], model:'d4-1.jpg', colors:[{name:'Testa di Moro',hex:'#362a2a'}] },
+  { img:'d5-0.jpg', brand:'Dolce&Gabbana', name:'Thắt lưng da mặt khóa logo DG', price:'15.900.000 ₫', tag:'New arrival', sizes:['85','90','95','100','105'], model:'d5-2.jpg', colors:[{name:'Nero',hex:'#1e1e1e'}] },
+  { img:'d6-0.jpg', brand:'Dolce&Gabbana', name:'Giày loafer da bê', price:'35.900.000 ₫', tag:'New arrival', sizes:['39','40','41','42','43'], colors:[{name:'Nero',hex:'#121212'}] },
+  { img:'d7-0.jpg', brand:'Dolce&Gabbana', name:'Áo khoác tweed dáng lửng', price:'145.900.000 ₫', sizes:['40','42'], model:'d7-1.jpg', multi:true, colors:[{name:'Tweed đa sắc',hex:'#2f2620'}] },
+  { img:'d8-0.jpg', brand:'Dolce&Gabbana', name:'Khăn lụa vuông Maiolica 70 x 70 cm', price:'16.900.000 ₫', colors:[{name:'Rosso Maiolica',hex:'#d62845'}] },
+  { img:'d9-0.jpg', brand:'Dolce&Gabbana', name:'Túi xách tay mini Sicily họa tiết Carretto', price:'75.900.000 ₫', model:'d9-1.jpg', multi:true, colors:[{name:'Carretto',hex:'#de4e4e'}] },
+  { img:'d10-0.jpg', brand:'Dolce&Gabbana', name:'Túi đeo vai da bê Lock', price:'36.900.000 ₫', off:'-15%', was:'43.412.000 ₫', model:'d10-1.jpg', colors:[{name:'Nero',hex:'#121212'}] },
+  { img:'d11-0.jpg', brand:'Dolce&Gabbana', name:'Ví đựng thẻ da bê', price:'8.900.000 ₫', off:'-25%', was:'11.867.000 ₫', colors:[{name:'Arancio',hex:'#f65a36'}] },
+  { img:'d12-0.jpg', brand:'Dolce&Gabbana', name:'Nón lưỡi trai phối patch logo', price:'23.900.000 ₫', sizes:['57','58'], colors:[{name:'Nero',hex:'#1e1e1e'}] },
+  { img:'z1-0.jpg', brand:'Zimmermann', name:'Đầm len merino phối ren Valiant', price:'40.157.000 ₫', sizes:['0','1','2','3','4'], model:'z1-1.jpg', colors:[{name:'Đen / Cream',hex:'#1e1e1e'}] },
+  { img:'z2-0.jpg', brand:'Zimmermann', name:'Đầm midi cổ chữ V Roselight', price:'30.339.000 ₫', sizes:['0','1','2','3','4'], model:'z2-1.jpg', multi:true, colors:[{name:'Blue Tapestry Floral',hex:'#b9c6cf'}] },
+  { img:'z3-0.jpg', brand:'Zimmermann', name:'Đầm ngắn dáng xòe Valiant', price:'53.902.000 ₫', sizes:['0','1','2','3','4'], model:'z3-1.jpg', multi:true, colors:[{name:'Blue Hydrangea',hex:'#c3bfd2'}] },
+  { img:'z4-0.jpg', brand:'Zimmermann', name:'Chân váy midi dáng chữ A Valiant', price:'48.011.000 ₫', off:'-10%', was:'53.346.000 ₫', sizes:['0','1','2','3','4'], model:'z4-1.jpg', multi:true, colors:[{name:'Cream Toile',hex:'#e0b394'}] },
+  { img:'z5-0.jpg', brand:'Zimmermann', name:'Áo kiểu ren phối nơ Valiant', price:'24.448.000 ₫', sizes:['0','1','2','3','4'], model:'z5-1.jpg', colors:[{name:'Cát',hex:'#e8d5bd'}] },
+  { img:'z6-0.jpg', brand:'Zimmermann', name:'Quần culotte len phối khóa Valiant', price:'36.230.000 ₫', sizes:['0','1','2','3','4'], model:'z6-1.jpg', colors:[{name:'Kem',hex:'#ded2ba'}] },
+  { img:'z7-0.jpg', brand:'Zimmermann', name:'Đầm midi trễ vai phối ren', price:'59.793.000 ₫', off:'-30%', was:'85.419.000 ₫', sizes:['0','1','2','3','4'], model:'z7-2.jpg', colors:[{name:'Kem',hex:'#f2e6da'}] },
+  { img:'z8-0.jpg', brand:'Zimmermann', name:'Đầm maxi tay phồng Indra', price:'36.230.000 ₫', sizes:['0','1','2','3','4'], model:'z8-1.jpg', multi:true, colors:[{name:'Pink Tie Dye',hex:'#f4b6b6'}] },
+  { img:'z9-0.jpg', brand:'Zimmermann', name:'Playsuit cổ yếm Awaken', price:'20.520.000 ₫', sizes:['0','1','2','3','4'], model:'z9-1.jpg', colors:[{name:'Kem',hex:'#e8ded2'}] },
+  { img:'z10-0.jpg', brand:'Zimmermann', name:'Quần jeans ống loe Roselight', price:'20.520.000 ₫', off:'-15%', was:'24.141.000 ₫', sizes:['25','26','27'], model:'z10-1.jpg', colors:[{name:'Vintage Cream',hex:'#e6dccd'}] },
+  { img:'z11-0.jpg', brand:'Zimmermann', name:'Áo khoác Rebellion túi hộp', price:'48.011.000 ₫', sizes:['0','1','2','3','4'], model:'z11-1.jpg', colors:[{name:'Xanh oliu',hex:'#b2b59a'}] },
+  { img:'z12-0.jpg', brand:'Zimmermann', name:'Chân váy midi vải tulle chấm bi', price:'24.448.000 ₫', sizes:['0','1','2','3','4'], model:'z12-2.jpg', colors:[{name:'Kem',hex:'#e6d2ae'}] },
 ];
 /* ── Ảnh gallery từng sản phẩm — dùng CHUNG cho PDP và quick add ──
    DATA THẬT: đủ bộ ảnh từ trang chi tiết từng sản phẩm trên shop.dafc.com.vn
@@ -3395,6 +3480,36 @@ const PRODUCT_GALLERY = [
   ['p8-0.jpg', 'p8-1.jpg', 'p8-2.jpg', 'p8-3.jpg', 'p8-4.jpg', 'p8-5.jpg', 'p8-6.jpg', 'p8-7.jpg'],
   ['p9-0.jpg', 'p9-1.jpg', 'p9-2.jpg', 'p9-3.jpg', 'p9-4.jpg', 'p9-5.jpg', 'p9-6.jpg', 'p9-7.jpg'],
   ['p10-0.jpg', 'p10-1.jpg', 'p10-2.jpg'],
+  /* idx 10-17 (beauty) và 18-23 (6 SP Versace bổ sung) KHÔNG có bộ ảnh riêng
+     — để trống bằng null cho đúng vị trí, vì mảng này tra theo INDEX sản phẩm.
+     Mọi nơi đọc đều đi qua `PRODUCT_GALLERY[idx] || [p.img]` nên null là an toàn. */
+  null, null, null, null, null, null, null, null,
+  null, null, null, null, null, null,
+  /* idx 24-47 — D&G (24-35) + Zimmermann (36-47), bộ ảnh thật của từng SP */
+  ['d1-0.jpg', 'd1-1.jpg', 'd1-2.jpg', 'd1-3.jpg', 'd1-4.jpg'],
+  ['d2-0.jpg', 'd2-1.jpg', 'd2-2.jpg', 'd2-3.jpg'],
+  ['d3-0.jpg', 'd3-1.jpg', 'd3-2.jpg', 'd3-3.jpg', 'd3-4.jpg'],
+  ['d4-0.jpg', 'd4-1.jpg', 'd4-2.jpg', 'd4-3.jpg', 'd4-4.jpg'],
+  ['d5-0.jpg', 'd5-1.jpg', 'd5-2.jpg', 'd5-3.jpg', 'd5-4.jpg', 'd5-5.jpg'],
+  ['d6-0.jpg', 'd6-1.jpg', 'd6-2.jpg', 'd6-3.jpg'],
+  ['d7-0.jpg', 'd7-1.jpg', 'd7-2.jpg', 'd7-3.jpg', 'd7-4.jpg'],
+  ['d8-0.jpg', 'd8-1.jpg'],
+  ['d9-0.jpg', 'd9-1.jpg', 'd9-2.jpg', 'd9-3.jpg', 'd9-4.jpg', 'd9-5.jpg', 'd9-6.jpg', 'd9-7.jpg'],
+  ['d10-0.jpg', 'd10-1.jpg', 'd10-2.jpg', 'd10-3.jpg', 'd10-4.jpg', 'd10-5.jpg', 'd10-6.jpg', 'd10-7.jpg'],
+  ['d11-0.jpg', 'd11-1.jpg', 'd11-2.jpg', 'd11-3.jpg'],
+  ['d12-0.jpg', 'd12-1.jpg'],
+  ['z1-0.jpg', 'z1-1.jpg', 'z1-2.jpg', 'z1-3.jpg', 'z1-4.jpg', 'z1-5.jpg', 'z1-6.jpg', 'z1-7.jpg'],
+  ['z2-0.jpg', 'z2-1.jpg', 'z2-2.jpg', 'z2-3.jpg', 'z2-4.jpg', 'z2-5.jpg', 'z2-6.jpg', 'z2-7.jpg'],
+  ['z3-0.jpg', 'z3-1.jpg', 'z3-2.jpg', 'z3-3.jpg', 'z3-4.jpg', 'z3-5.jpg', 'z3-6.jpg', 'z3-7.jpg'],
+  ['z4-0.jpg', 'z4-1.jpg', 'z4-2.jpg', 'z4-3.jpg', 'z4-4.jpg', 'z4-5.jpg', 'z4-6.jpg', 'z4-7.jpg'],
+  ['z5-0.jpg', 'z5-1.jpg', 'z5-2.jpg', 'z5-3.jpg', 'z5-4.jpg', 'z5-5.jpg', 'z5-6.jpg'],
+  ['z6-0.jpg', 'z6-1.jpg', 'z6-2.jpg', 'z6-3.jpg', 'z6-4.jpg', 'z6-5.jpg', 'z6-6.jpg', 'z6-7.jpg'],
+  ['z7-0.jpg', 'z7-1.jpg', 'z7-2.jpg', 'z7-3.jpg', 'z7-4.jpg', 'z7-5.jpg'],
+  ['z8-0.jpg', 'z8-1.jpg', 'z8-2.jpg', 'z8-3.jpg', 'z8-4.jpg', 'z8-5.jpg', 'z8-6.jpg', 'z8-7.jpg'],
+  ['z9-0.jpg', 'z9-1.jpg', 'z9-2.jpg', 'z9-3.jpg', 'z9-4.jpg', 'z9-5.jpg'],
+  ['z10-0.jpg', 'z10-1.jpg', 'z10-2.jpg', 'z10-3.jpg', 'z10-4.jpg', 'z10-5.jpg', 'z10-6.jpg', 'z10-7.jpg'],
+  ['z11-0.jpg', 'z11-1.jpg', 'z11-2.jpg', 'z11-3.jpg', 'z11-4.jpg', 'z11-5.jpg', 'z11-6.jpg', 'z11-7.jpg'],
+  ['z12-0.jpg', 'z12-1.jpg', 'z12-2.jpg', 'z12-3.jpg', 'z12-4.jpg', 'z12-5.jpg'],
 ];
 /* ── Mô tả sản phẩm — DỮ LIỆU THẬT, kéo từ shop.dafc.com.vn ──────────────
    Lượt 1 (05/08/2026) sửa cái sai nội dung: trước đó mô tả / bảo quản của 6 PDP
@@ -3565,12 +3680,572 @@ const PRODUCT_INFO = [
     features: ['Cổ thấp', 'Phối biểu tượng Greca', 'Patch logo Versace ở lưỡi gà', 'Patch logo Versace ở phần gót'],
     care: CARE_SHOES,
   },
+  /* idx 6-23 — SP#7-10, 8 món beauty và 6 SP Versace bổ sung: site không có
+     panel mô tả nào khác để kéo về, nên để null cho ĐÚNG VỊ TRÍ (mảng này tra
+     theo INDEX sản phẩm). pdpTabs() bỏ hẳn 2 tab Mô tả / Bảo quản khi gặp null,
+     chứ không dựng tab rỗng. */
+  null, null, null, null,
+  null, null, null, null, null, null, null, null,
+  null, null, null, null, null, null,
+  /* idx 24-47 — D&G + Zimmermann, kéo 02/09/2026 từ trang chi tiết của site */
+  { // SP#25 (idx 24) — Đầm dài họa tiết Carretto · 92.900.000 ₫
+    src: 'carretto-print-poplin-shirt-dress-f6jfntgddtfs9000',
+    sku: 'F6JFNTGDDTFS9000',
+    desc: 'Đầm sơ mi mang vẻ cuốn hút tươi tắn, hoàn hảo để thêm sắc màu và nét tinh tế cho tủ đồ của bạn. Họa tiết Carretto cùng kỹ thuật chế tác tỉ mỉ làm nổi bật sự độc đáo của thiết kế này, lý tưởng cho những dịp đặc biệt và các sự kiện.',
+    meta: [
+      ['Thương hiệu','Dolce&Gabbana'],
+      ['Mã sản phẩm','F6JFNTGDDTFS9000 - ID: 1227516'],
+      ['Xuất xứ thương hiệu','Ý'],
+    ],
+    features: ['Thiết kế có đường cắt eo', 'Thân áo có nẹp cài gồm 12 nút kéo dài đến gấu và 1 nút ở chân cổ', 'Chân váy xòe rộng có túi hai bên', 'Cạp cao và nút cài ở phía trước', 'Tay ngắn', 'Không có lớp lót', 'Size mẫu mặc: 40 IT - Chiều cao người mẫu: 175 cm'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#26 (idx 25) — Giày cao gót slingback phối ren · 37.900.000 ₫
+    src: 'lace-slingback-cg1049a06108b956',
+    sku: 'CG1049A06108B956',
+    desc: 'Giày slingback thanh lịch, kết hợp ren tinh tế và da bóng patent, phù hợp cho các dịp trang trọng với vẻ đẹp sang trọng, vượt thời gian.',
+    meta: [
+      ['Thương hiệu','Dolce&Gabbana'],
+      ['Mã sản phẩm','CG1049A06108B956 - ID: 1227459'],
+      ['Chiều cao gót giày','7.5 (cm)'],
+      ['Xuất xứ thương hiệu','Ý'],
+    ],
+    features: ['Phom Cardinal New', 'Đế ngoài và đế trong bằng da phối nhãn', 'Phối logo DG đan chéo ở quai giày', 'Phối tấm logo DG mạ vàng'],
+    careLead: [
+      '- Vệ sinh bằng khăn vải cotton mềm',
+      '- Tránh tiếp xúc với chất lỏng, hoá chất (nước hoa, kem dưỡng da, keo xịt tóc, v.v.) và các sản phẩm có màu đậm (denim, jeans, v.v.), giấy báo, chứng từ,… để tránh lem màu, đặc biệt đối với sản phẩm da bóng.',
+      '- Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao. Không dùng máy sấy khi sản phẩm bị ẩm ướt.',
+      '- Xem thêm trên tag sản phẩm',
+    ],
+    care: [],
+  },
+  { // SP#27 (idx 26) — Chân váy poplin dài họa tiết Carretto · 55.900.000 ₫
+    src: 'carretto-print-poplin-long-skirt-f4ddutgddtfs9000',
+    sku: 'F4DDUTGDDTFS9000',
+    desc: 'Chân váy dài bằng poplin nhẹ họa tiết Carretto, lý tưởng để mang đến nét sống động và thủ công cho tủ đồ của bạn. Một thiết kế độc đáo, thể hiện sự giao thoa giữa phong cách và truyền thống.',
+    meta: [
+      ['Thương hiệu','Dolce&Gabbana'],
+      ['Mã sản phẩm','F4DDUTGDDTFS9000 - ID: 1227495'],
+      ['Xuất xứ thương hiệu','Ý'],
+    ],
+    features: ['3 mảnh với ly xếp sâu và eo nhún', 'Đai eo cao 3 cm', 'Mở bên hông', 'Túi hai bên', 'Vạt chồng bên hông cài bằng nút', 'Khóa kéo ẩn ở giữa phía sau', 'Size mẫu mặc: 40 IT - Chiều cao người mẫu: 175 cm'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#28 (idx 27) — Áo khoác da viền dệt gân · 175.900.000 ₫
+    src: 'ribbed-trim-leather-jacket-g9chulhul18m1213',
+    sku: 'G9CHULHUL18M1213',
+    desc: 'Thương hiệu: Dolce&Gabbana',
+    meta: [
+      ['Thương hiệu','Dolce&Gabbana'],
+      ['Mã sản phẩm','G9CHULHUL18M1213 - ID: 1227596'],
+      ['Xuất xứ thương hiệu','Ý'],
+    ],
+    features: ['Viền dệt gân', 'Tay dài', 'Hai túi nắp gập trước ngực và hai túi khóa kéo bên hông', 'Đóng mở bằng nút bấm và khóa kéo ẩn phía trước'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#29 (idx 28) — Thắt lưng da mặt khóa logo DG · 15.900.000 ₫
+    src: 'leather-belt-with-dg-logo-bc4644ax6228v363',
+    sku: 'BC4644AX6228V363',
+    desc: 'Với những đường nét tối giản đầy tinh tế, chiếc thắt lưng da này nổi bật với khóa logo DG bằng kim loại mạ ruthenium sang trọng.',
+    meta: [
+      ['Thương hiệu','Dolce&Gabbana'],
+      ['Mã sản phẩm','BC4644AX6228V363 - ID: 1227438'],
+      ['Xuất xứ thương hiệu','Ý'],
+      ['Màu sắc','Đen'],
+      ['Kích thước','3.5 (cm)'],
+    ],
+    features: ['Nút cài bấm dưới khóa và đai thắt lưng', 'Logo DG mặt ngoài'],
+    careLead: [
+      'Đối với phụ kiện thông thường và sản phẩm da:',
+      '- Sử dụng vải mềm để làm sạch nhẹ nhàng.',
+      '- Bảo quản phụ kiện ở nơi thoáng mát, tránh ánh nắng trực tiếp vào sản phẩm.',
+      '- Tránh tiếp xúc với nước, nước hoa, và hóa chất.',
+      '- Xem thêm trên tag sản phẩm.',
+    ],
+    care: [],
+  },
+  { // SP#30 (idx 29) — Giày loafer da bê · 35.900.000 ₫
+    src: 'calfskin-loafers-a30291a078080999',
+    sku: 'A30291A078080999',
+    desc: 'Thương hiệu: Dolce&Gabbana',
+    meta: [
+      ['Thương hiệu','Dolce&Gabbana'],
+      ['Mã sản phẩm','A30291A078080999 - ID: 1227417'],
+      ['Xuất xứ thương hiệu','Ý'],
+    ],
+    features: ['Bề mặt da bóng mờ', 'Phối tấm logo kim loại', 'Mũi tròn', 'Đường may nổi'],
+    careLead: [
+      '- Vệ sinh bằng khăn vải cotton mềm',
+      '- Tránh tiếp xúc với chất lỏng, hoá chất (nước hoa, kem dưỡng da, keo xịt tóc, v.v.) và các sản phẩm có màu đậm (denim, jeans, v.v.), giấy báo, chứng từ,… để tránh lem màu, đặc biệt đối với sản phẩm da bóng.',
+      '- Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao. Không dùng máy sấy khi sản phẩm bị ẩm ướt.',
+      '- Xem thêm trên tag sản phẩm',
+    ],
+    care: [],
+  },
+  { // SP#31 (idx 30) — Áo khoác tweed dáng lửng · 145.900.000 ₫
+    src: 'short-tweed-jacket-f27jbtfmza5s8031',
+    sku: 'F27JBTFMZA5S8031',
+    desc: 'Chiếc áo khoác tweed dáng lửng này là một thiết kế biểu tượng, mang đến nét tinh tế và sống động cho mọi phong cách. Chất liệu được chế tác tỉ mỉ cùng những chi tiết hoàn thiện tinh xảo khiến sản phẩm trở thành lựa chọn hoàn hảo cho những ai muốn nổi bật một cách thanh lịch.',
+    meta: [
+      ['Thương hiệu','Dolce&Gabbana'],
+      ['Mã sản phẩm','F27JBTFMZA5S8031 - ID: 1227481'],
+      ['Xuất xứ thương hiệu','Ý'],
+    ],
+    features: ['Cổ tròn', 'Xẻ tà hai bên ở mặt trước và mặt sau', 'Tua rua ở gấu áo, mép trước và cổ tay áo', 'Hàng khuy phía trước', 'Tay dài, cổ tay áo cài khuy', 'Bên trong có lớp lót', 'Size mẫu mặc: 40 IT - Chiều cao người mẫu: 175 cm'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#32 (idx 31) — Khăn lụa vuông Maiolica 70 x 70 cm · 16.900.000 ₫
+    src: 'maiolica-print-silk-twill-scarf-70-x-70-cm-fn092rgddu8i73tn',
+    sku: 'FN092RGDDU8I73TN',
+    desc: 'Chiếc khăn lụa twill họa tiết Maiolica, hoàn hảo để mang đến điểm nhấn màu sắc và nét tinh tế cho mọi phong cách. Một phụ kiện biểu tượng, đa dụng và vượt thời gian.',
+    meta: [
+      ['Thương hiệu','Dolce&Gabbana'],
+      ['Mã sản phẩm','FN092RGDDU8I73TN - ID: 1227541'],
+      ['Xuất xứ thương hiệu','Ý'],
+      ['Màu sắc','Đỏ'],
+      ['Kích thước','C70 x D70 (cm)'],
+    ],
+    features: ['Kiểu dáng khăn vuông', 'Họa tiết Maiolica'],
+    careLead: [
+      'Đối với phụ kiện thông thường và sản phẩm da:',
+      '- Sử dụng vải mềm để làm sạch nhẹ nhàng.',
+      '- Bảo quản phụ kiện ở nơi thoáng mát, tránh ánh nắng trực tiếp vào sản phẩm.',
+      '- Tránh tiếp xúc với nước, nước hoa, và hóa chất.',
+      '- Xem thêm trên tag sản phẩm.',
+    ],
+    care: [],
+  },
+  { // SP#33 (idx 32) — Túi xách tay mini Sicily họa tiết Carretto · 75.900.000 ₫
+    src: 'mini-carretto-print-sicily-handbag-bb7116b0816hv6ck',
+    sku: 'BB7116B0816HV6CK',
+    desc: 'Túi cầm tay mini Sicily là sự kết hợp hoàn hảo giữa vẻ đẹp thanh lịch và tính tiện dụng. Được chế tác từ chất liệu Mat co giãn phối da với họa tiết in nổi bật, sản phẩm là điểm nhấn tinh tế giúp nâng tầm phong cách và mang đến nét sang trọng cho mọi trang phục.',
+    meta: [
+      ['Thương hiệu','Dolce&Gabbana'],
+      ['Mã sản phẩm','BB7116B0816HV6CK - ID: 1227427'],
+      ['Kích thước','C13 x D19 x R6 (cm)'],
+      ['Xuất xứ thương hiệu','Ý'],
+    ],
+    features: ['Tay cầm bằng da và dây đeo vai bằng da có thể điều chỉnh và tháo rời', 'Khóa xoay kết hợp ổ khóa', 'Chi tiết mạ vàng', 'Mặt ngoài phối chi tiết kim loại', 'Mặt trong đính con dấu phủ film cùng túi dẹp', ''],
+    careLead: [
+      '- Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao vì sẽ làm biến dạng da. Không dùng máy sấy khi sản phẩm bị ẩm ướt.',
+      '- Khi sản phẩm bị ẩm, dùng khăn mềm thấm khô sản phẩm, không chùi để tránh tạo vệt. Độn giấy và thêm hạt hút ẩm vào sản phẩm khi không sử dụng. Không cất sản phẩm da trong túi nilon, không thắt túi chống bụi quá chặt vì có thể gây ẩm mốc sản phẩm. Giữ sản phẩm trên mặt phẳng khi không sử dụng để giữ dáng cho sản phẩm.',
+      '- Tránh tiếp xúc với chất lỏng, hoá chất (nước hoa, kem dưỡng da, keo xịt tóc, v.v.) và các sản phẩm có màu đậm (denim, jeans, v.v.), giấy báo, chứng từ,… để tránh lem màu, đặc biệt đối với sản phẩm da bóng.',
+      '- Không để sản phẩm da gần các vật dụng sắt nhọn vì có thể làm hư hại sản phẩm. Không để son phấn, bút viết trực tiếp vào túi da, nên để vào túi nhỏ để tránh lem màu.',
+      '- Thường xuyên lau chùi sản phẩm bằng khăn vải cotton mềm để tránh bụi bẩn. Nên sử dụng sản phẩm thường xuyên (ít nhất 1 lần mỗi tháng) để giữ độ bóng đẹp cho sản phẩm.',
+      '- Xem thêm trên tag sản phẩm',
+    ],
+    care: [],
+  },
+  { // SP#34 (idx 33) — Túi đeo vai da bê Lock · 36.900.000 ₫
+    src: 'lock-shoulder-bag-in-calfskin-bb7891az00080999',
+    sku: 'BB7891AZ00080999',
+    desc: 'Chiếc túi đeo vai này là một món phụ kiện linh hoạt và tiện dụng, hoàn hảo để đồng hành cùng bạn trong mọi dịp với phong cách và sự tiện dụng.',
+    meta: [
+      ['Thương hiệu','Dolce&Gabbana'],
+      ['Mã sản phẩm','BB7891AZ00080999 - ID: 1216134'],
+      ['Kích thước','C12 x D20 x R4 (cm)'],
+      ['Xuất xứ thương hiệu','Ý'],
+      ['Sản xuất tại','Ý'],
+    ],
+    features: ['Ổ khóa (padlock) với quai khóa kim loại', 'Mạ kim loại đồng mang phong cách vintage', 'Trang trí bên ngoài bằng thẻ da có logo in dập được phủ lớp bảo vệ', 'Bên trong có ngăn phẳng và logo được in dập tinh tế'],
+    careLead: [
+      '- Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao vì sẽ làm biến dạng da. Không dùng máy sấy khi sản phẩm bị ẩm ướt.',
+      '- Khi sản phẩm bị ẩm, dùng khăn mềm thấm khô sản phẩm, không chùi để tránh tạo vệt. Độn giấy và thêm hạt hút ẩm vào sản phẩm khi không sử dụng. Không cất sản phẩm da trong túi nilon, không thắt túi chống bụi quá chặt vì có thể gây ẩm mốc sản phẩm. Giữ sản phẩm trên mặt phẳng khi không sử dụng để giữ dáng cho sản phẩm.',
+      '- Tránh tiếp xúc với chất lỏng, hoá chất (nước hoa, kem dưỡng da, keo xịt tóc, v.v.) và các sản phẩm có màu đậm (denim, jeans, v.v.), giấy báo, chứng từ,… để tránh lem màu, đặc biệt đối với sản phẩm da bóng.',
+      '- Không để sản phẩm da gần các vật dụng sắt nhọn vì có thể làm hư hại sản phẩm. Không để son phấn, bút viết trực tiếp vào túi da, nên để vào túi nhỏ để tránh lem màu.',
+      '- Thường xuyên lau chùi sản phẩm bằng khăn vải cotton mềm để tránh bụi bẩn. Nên sử dụng sản phẩm thường xuyên (ít nhất 1 lần mỗi tháng) để giữ độ bóng đẹp cho sản phẩm.',
+      '- Xem thêm trên tag sản phẩm',
+    ],
+    care: [],
+  },
+  { // SP#35 (idx 34) — Ví đựng thẻ da bê · 8.900.000 ₫
+    src: 'calfskin-card-holder-bi0330a9s2581166',
+    sku: 'BI0330A9S2581166',
+    desc: 'Thanh lịch và tiện dụng, chiếc ví đựng thẻ này được chế tác từ chất liệu cao cấp, lý tưởng cho những ai tìm kiếm sự kết hợp giữa phong cách và tính thực tế.',
+    meta: [
+      ['Thương hiệu','Dolce&Gabbana'],
+      ['Mã sản phẩm','BI0330A9S2581166 - ID: 1227444'],
+      ['Xuất xứ thương hiệu','Ý'],
+      ['Màu sắc','Cam'],
+      ['Kích thước','C7.5 x D10 x R0.5 (cm)'],
+    ],
+    features: ['Chi tiết mạ vàng', 'Mặt ngoài phối chi tiết kim loại', 'Mặt trong phối nhãn cờ in logo thương hiệu'],
+    careLead: [
+      '- Tránh cho sản phẩm tiếp xúc với nhiệt độ cao và độ ẩm cao vì sẽ làm biến dạng da. Không dùng máy sấy khi sản phẩm bị ẩm ướt.',
+      '- Khi sản phẩm bị ẩm, dùng khăn mềm thấm khô sản phẩm, không chùi để tránh tạo vệt. Độn giấy và thêm hạt hút ẩm vào sản phẩm khi không sử dụng. Không cất sản phẩm da trong túi nilon, không thắt túi chống bụi quá chặt vì có thể gây ẩm mốc sản phẩm. Giữ sản phẩm trên mặt phẳng khi không sử dụng để giữ dáng cho sản phẩm.',
+      '- Tránh tiếp xúc với chất lỏng, hoá chất (nước hoa, kem dưỡng da, keo xịt tóc, v.v.) và các sản phẩm có màu đậm (denim, jeans, v.v.), giấy báo, chứng từ,… để tránh lem màu, đặc biệt đối với sản phẩm da bóng.',
+      '- Không để sản phẩm da gần các vật dụng sắt nhọn vì có thể làm hư hại sản phẩm. Không để son phấn, bút viết trực tiếp vào túi da, nên để vào túi nhỏ để tránh lem màu.',
+      '- Thường xuyên lau chùi sản phẩm bằng khăn vải cotton mềm để tránh bụi bẩn. Nên sử dụng sản phẩm thường xuyên (ít nhất 1 lần mỗi tháng) để giữ độ bóng đẹp cho sản phẩm.',
+      '- Xem thêm trên tag sản phẩm',
+    ],
+    care: [],
+  },
+  { // SP#36 (idx 35) — Nón lưỡi trai phối patch logo · 23.900.000 ₫
+    src: 'corduroy-baseball-hat-gh954zfuwfmn0000',
+    sku: 'GH954ZFUWFMN0000',
+    desc: 'Phụ kiện thể thao đa năng, hoàn hảo để hoàn thiện mọi phong cách với nét cá tính và thời thượng.',
+    meta: [
+      ['Thương hiệu','Dolce&Gabbana'],
+      ['Mã sản phẩm','GH954ZFUWFMN0000 - ID: 1227603'],
+      ['Xuất xứ thương hiệu','Ý'],
+      ['Màu sắc','Đen'],
+    ],
+    features: ['Phối patch logo', 'Dây nón có thể điều chỉnh độ vừa vặn'],
+    careLead: [
+      'Đối với phụ kiện thông thường và sản phẩm da:',
+      '- Sử dụng vải mềm để làm sạch nhẹ nhàng.',
+      '- Bảo quản phụ kiện ở nơi thoáng mát, tránh ánh nắng trực tiếp vào sản phẩm.',
+      '- Tránh tiếp xúc với nước, nước hoa, và hóa chất.',
+      '- Xem thêm trên tag sản phẩm.',
+    ],
+    care: [],
+  },
+  { // SP#37 (idx 36) — Đầm len merino phối ren Valiant · 40.157.000 ₫
+    src: 'valiant-merino-lace-dress-9421df261bkcre',
+    sku: '9421DF261BKCRE',
+    desc: 'Đầm len merino phối ren Valiant màu đen/cream thuộc bộ sưu tập Thu Đông 2026 Trailblazer của Zimmermann. Thiết kế đầm midi từ len merino với cổ bẻ, tay dài, hàng nút dọc giữa thân trước, hoàn thiện bằng chân váy dáng xòe và chi tiết viền ren thêu tương phản xuyên suốt.',
+    meta: [
+      ['Thương hiệu','Zimmermann'],
+      ['Mã sản phẩm','9421DF261BKCRE - ID: 1226185'],
+      ['Xuất xứ thương hiệu','Úc'],
+    ],
+    features: ['Cổ bẻ', 'Hàng nút giữa thân trước', 'Tay dài raglan', 'Lai xòe mềm mại', 'Lai ren thêu tại cổ tay áo và chân váy', 'Thân trên và tay áo được thiết kế ôm vừa vặn', 'Size mẫu mặc: 0 - Chiều cao người mẫu: 178 cm'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#38 (idx 37) — Đầm midi cổ chữ V Roselight · 30.339.000 ₫
+    src: 'roselight-plunge-midi-dress-3501dss264btpf',
+    sku: '3501DSS264BTPF',
+    desc: 'Đầm midi cổ chữ V Roselight họa tiết Blue Tapestry Floral thuộc bộ sưu tập Hè 2026 Summer Swim của Zimmermann. Thiết kế từ linen với cổ chữ V sâu, tay phồng phối cổ tay áo chun, hoàn thiện bằng cạp ôm vừa vặn và chân váy xòe.',
+    meta: [
+      ['Thương hiệu','Zimmermann'],
+      ['Mã sản phẩm','3501DSS264BTPF - ID: 1226150'],
+      ['Xuất xứ thương hiệu','Úc'],
+    ],
+    features: ['Cổ V xẻ sâu', 'Cổ đứng một phần phối chi tiết ren', 'Nút đá dọc giữa thân trước', 'Khóa kéo ẩn giữa thân sau', 'Họa tiết in cố định', 'Có lớp lót bên trong', 'Thiết kế ôm ở ngực và eo, rộng dần từ phần chân váy', 'Size mẫu mặc: 0 - Chiều cao người mẫu: 178 cm'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#39 (idx 38) — Đầm ngắn dáng xòe Valiant · 53.902.000 ₫
+    src: 'valiant-panelled-mini-dress-0262df261blhyd',
+    sku: '0262DF261BLHYD',
+    desc: 'Đầm ngắn dáng xòe Valiant họa tiết Blue Hydrangea thuộc bộ sưu tập Thu Đông 2026 Trailblazer của Zimmermann. Thiết kế từ chất liệu lụa pha linen với cổ đứng, tay dài ôm vừa vặn và khóa kéo ẩn, hoàn thiện bằng chân váy xòe rộng cùng chi tiết phối viền ren.',
+    meta: [
+      ['Thương hiệu','Zimmermann'],
+      ['Mã sản phẩm','0262DF261BLHYD - ID: 1226132'],
+      ['Xuất xứ thương hiệu','Úc'],
+    ],
+    features: ['Cổ đứng', 'Chi tiết nhún tại đầu tay áo', 'Khóa kéo ẩn giữa thân sau và cổ tay áo', 'Chân váy tulle dáng xòe', 'Viền ren tại cổ tay áo và lai váy', 'Thắt lưng mảnh tháo rời', 'Thân trên ôm vừa vặn, phần chân váy phom rộng', 'Size mẫu mặc: 0 - Chiều cao người mẫu: 178 cm'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#40 (idx 39) — Chân váy midi dáng chữ A Valiant · 48.011.000 ₫
+    src: 'valiant-circle-skirt-9857sf261crtoi',
+    sku: '9857SF261CRTOI',
+    desc: 'Chân váy midi dáng chữ A Valiant họa tiết Cream Toile thuộc bộ sưu tập Thu Đông 2026 Trailblazer của Zimmermann. Thiết kế từ lụa pha linen với cạp cao cố định, khóa kéo ẩn giữa thân sau và họa tiết in nổi bật.',
+    meta: [
+      ['Thương hiệu','Zimmermann'],
+      ['Mã sản phẩm','9857SF261CRTOI - ID: 1226197'],
+      ['Xuất xứ thương hiệu','Úc'],
+    ],
+    features: ['Cạp cố định', 'Khóa kéo ẩn giữa thân sau', 'Lai xòe mềm mại', 'Họa tiết in cố định', 'Có lớp lót bên trong', 'Thiết kế ôm tại cạp cao, rộng dần về dưới', 'Size mẫu mặc: 0 - Chiều cao người mẫu: 178 cm'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#41 (idx 40) — Áo kiểu ren phối nơ Valiant · 24.448.000 ₫
+    src: 'valiant-lace-pussybow-blouse-5437tf261san',
+    sku: '5437TF261SAN',
+    desc: 'Áo kiểu ren phối nơ Valiant màu cát thuộc bộ sưu tập Thu Đông 2026 Trailblazer của Zimmermann. Thiết kế tay dài với cổ đứng, hàng nút dọc giữa thân trước, hoàn thiện bằng nơ tháo rời ở cổ và chi tiết ren phủ toàn bộ.',
+    meta: [
+      ['Thương hiệu','Zimmermann'],
+      ['Mã sản phẩm','5437TF261SAN - ID: 1226158'],
+      ['Xuất xứ thương hiệu','Úc'],
+    ],
+    features: ['Cổ đứng', 'Nơ pussybow bản lớn', 'Tay áo nhún phối cổ tay áo ôm vừa vặn', 'Nút hạt mạ vàng dọc giữa thân trước', 'Viền dây rouleau tại lai áo', 'Đi kèm áo lót rời phối viền ren', 'Phom suông (Relaxed fit)', 'Size mẫu mặc: 0 - Chiều cao người mẫu: 178 cm'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#42 (idx 41) — Quần culotte len phối khóa Valiant · 36.230.000 ₫
+    src: 'valiant-wool-buckled-culotte-pants-9304pf261crm',
+    sku: '9304PF261CRM',
+    desc: 'Quần culotte len phối khóa Valiant màu kem thuộc bộ sưu tập Thu Đông 2026 Trailblazer của Zimmermann. Thiết kế quần culotte từ chất liệu len, nổi bật với phần cạp cao phối khóa bên hông, túi viền phía sau và ống quần rộng với lai xòe.',
+    meta: [
+      ['Thương hiệu','Zimmermann'],
+      ['Mã sản phẩm','9304PF261CRM - ID: 1226181'],
+      ['Xuất xứ thương hiệu','Úc'],
+    ],
+    features: ['Cạp cao', 'Khóa trang trí bên hông trái', 'Khóa kéo ẩn giữa thân trước', 'Túi hai bên có thể sử dụng', 'Túi viền phía sau', 'Chi tiết huy hiệu bên dưới túi sau', 'Dải satin chạy dọc hai bên', 'Ống quần lửng, lai rộng xòe', 'Phom rộng, dáng lửng', 'Size mẫu mặc: 0 - Chiều cao người mẫu: 178 cm'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#43 (idx 42) — Đầm midi trễ vai phối ren · 59.793.000 ₫
+    src: 'off-shoulder-lace-midi-dress-7047dc261crm',
+    sku: '7047DC261CRM',
+    desc: 'Thương hiệu: Zimmermann',
+    meta: [
+      ['Thương hiệu','Zimmermann'],
+      ['Mã sản phẩm','7047DC261CRM - ID: 1215957'],
+      ['Thành phần vải','88% Viscose, 12% Spandex'],
+      ['Xuất xứ thương hiệu','Úc'],
+      ['Sản xuất tại','Trung Quốc'],
+    ],
+    features: ['Đầm thun co giãn', 'Thiết kế trễ vai', 'Phối ren trang trí', 'Khóa kéo may ẩn ở giữa thân sau', 'Size mẫu mặc: 1 - Chiều cao người mẫu: 175 cm'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#44 (idx 43) — Đầm maxi tay phồng Indra · 36.230.000 ₫
+    src: 'indra-swing-maxi-dress-1025dss262pitd',
+    sku: '1025DSS262PITD',
+    desc: 'Đầm maxi tay phồng Indra họa tiết Pink Tie Dye nằm trong Bộ sưu tập Summer Swim 2026 của Zimmermann. Đầm maxi vải ramie với cổ đứng, tay bồng ngắn, hoàn thiện bằng túi hai bên hông và viền bèo nữ tính.',
+    meta: [
+      ['Thương hiệu','Zimmermann'],
+      ['Mã sản phẩm','1025DSS262PITD - ID: 1226143'],
+      ['Xuất xứ thương hiệu','Úc'],
+    ],
+    features: ['Phần cổ và tay áo bo chun', 'Tay phồng ngắn', 'Cài khuy dọc thân trước', 'Đi kèm dây thắt eo rời', 'Thiết kế in họa tiết', 'Có đầm lót bên trong', 'Size mẫu mặc: 0 - Chiều cao người mẫu: 178 cm'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#45 (idx 44) — Playsuit cổ yếm Awaken · 20.520.000 ₫
+    src: 'awaken-halter-playsuit-3117yrs261crm',
+    sku: '3117YRS261CRM',
+    desc: 'Thương hiệu: Zimmermann',
+    meta: [
+      ['Thương hiệu','Zimmermann'],
+      ['Mã sản phẩm','3117YRS261CRM - ID: 1215901'],
+      ['Thành phần vải','100% Linen'],
+      ['Xuất xứ thương hiệu','Úc'],
+      ['Sản xuất tại','Trung Quốc'],
+    ],
+    features: ['Cổ yếm', 'Kiểu dáng sát nách', 'Ống rộng', 'Phối thắt lưng cùng tông'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#46 (idx 45) — Quần jeans ống loe Roselight · 20.520.000 ₫
+    src: 'roselight-cropped-flare-jeans-7168pss264vicr',
+    sku: '7168PSS264VICR',
+    desc: 'Quần jeans ống loe Roselight màu Vintage Cream thuộc bộ sưu tập Hè 2026 Summer Swim của Zimmermann. Thiết kế jeans dáng lửng ống loe với khóa hai nút, túi sau có thể sử dụng và chi tiết dây thừng tại các túi phía trước.',
+    meta: [
+      ['Thương hiệu','Zimmermann'],
+      ['Mã sản phẩm','7168PSS264VICR - ID: 1226161'],
+      ['Xuất xứ thương hiệu','Úc'],
+    ],
+    features: ['Quần cạp cao dáng lửng', 'Khóa hai nút giữa thân trước', 'Chi tiết bện dây ở túi trước', 'Túi phía sau', 'Thiết kế ôm nhẹ ở eo, rộng dần theo ống quần', 'Size mẫu mặc: 26 - Chiều cao người mẫu: 178 cm'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#47 (idx 46) — Áo khoác Rebellion túi hộp · 48.011.000 ₫
+    src: 'rebellion-crop-utility-jacket-6868jc261ppalm',
+    sku: '6868JC261PPALM',
+    desc: 'Áo khoác Rebellion thuộc Cruise 2026 Collection – Twisted Romance.',
+    meta: [
+      ['Thương hiệu','Zimmermann'],
+      ['Mã sản phẩm','6868JC261PPALM - ID: 1215942'],
+      ['Thành phần vải','92% Wool, 8% Silk'],
+      ['Xuất xứ thương hiệu','Úc'],
+      ['Sản xuất tại','Trung Quốc'],
+    ],
+    features: ['Áo khoác dáng crop', 'Hàng khuy vàng dọc giữa thân trước', 'Túi nắp phía trước', 'Đường chỉ cố định ở vai và gấu áo', 'Bên trong có lót'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
+  { // SP#48 (idx 47) — Chân váy midi vải tulle chấm bi · 24.448.000 ₫
+    src: 'tulle-dot-midi-skirt-7203sc26rcrm',
+    sku: '7203SC26RCRM',
+    desc: 'Chân váy midi chấm bi màu kem thuộc Bộ sưu tập Cruise 2026 – Twisted Romance.',
+    meta: [
+      ['Thương hiệu','Zimmermann'],
+      ['Mã sản phẩm','7203SC26RCRM - ID: 1215968'],
+      ['Thành phần vải','100% Polyester'],
+      ['Xuất xứ thương hiệu','Úc'],
+      ['Sản xuất tại','Trung Quốc'],
+    ],
+    features: ['Chân váy midi hai lớp', 'Cạp cao', 'Khóa kéo ẩn ở giữa lưng', 'Xếp ly dày tạo độ phồng', 'Túi may ẩn hai bên sườn'],
+    careLead: [
+      'Để đảm bảo sản phẩm có độ bền và luôn giữ được chất lượng tốt nhất, vui lòng xem và làm theo hướng dẫn chăm sóc sản phẩm trên tag quần áo.',
+      'Lời khuyên chung để duy trì phom dáng, màu sắc và độ bền của sản phẩm:',
+    ],
+    care: [
+      'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.',
+      'Giặt: Sử dụng chu trình giặt và nhiệt độ nước được khuyến nghị.',
+      'Sấy: Sử dụng phương pháp sấy phù hợp (nếu có).',
+      'Ủi (là): Sử dụng nhiệt độ phù hợp khi ủi (là) quần áo.',
+      'Giặt khô: Kiểm tra nếu sản phẩm cần được giặt khô chuyên nghiệp.',
+    ],
+  },
 ];
 
 /* Card sản phẩm — Card-item của Figma (2541:175787)
    giá bán #d62845 Medium 14/20 + badge -%% nền #fef2f2 · giá gốc gạch ngang #737373
    Dùng chung cho: grid PLP, hàng gợi ý PDP, "Show more". */
-function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null } = {}) {
+/* ── Nguồn thẻ cho dải "Gợi ý mua kèm" (02/09/2026, lệnh user: dải này phải
+   demo bằng ẢNH NGƯỜI MẪU thay vì ảnh sản phẩm tĩnh) ─────────────────────
+   Chỉ nhận SP CÓ ảnh on-model thật (`p.model`) — SP không có thì loại khỏi dải
+   luôn, chứ không để nó lọt vào rồi rơi về ảnh tĩnh: một dải nửa model nửa
+   packshot đọc ra là lỗi chứ không phải chủ ý.
+   Loại luôn chính SP đang xem: "Gợi ý mua kèm" mà thẻ đầu là món đang mở thì vô
+   nghĩa (dải cũ mắc lỗi này vì luôn lấy PRODUCTS.slice(0, n)).
+   XOAY theo selfIdx để 6 PDP không ra cùng một bộ 5 thẻ; xoay chứ không random
+   để mỗi lần dựng lại màn vẫn ra đúng bộ cũ. */
+function lookProducts(selfIdx, n) {
+  const pool = PRODUCTS.map((p, i) => ({ p, i })).filter(({ p, i }) => p.model && i !== selfIdx);
+  if (!pool.length) return [];
+  const take = Math.min(n, pool.length);
+  const start = (Math.max(0, selfIdx | 0) * 3) % pool.length;
+  return Array.from({ length: take }, (_, k) => pool[(start + k) % pool.length]);
+}
+
+/* Thẻ của 2 dải gợi ý dưới PDP. Tách thành hàm chung vì 6 màn PDP lặp y hệt
+   đoạn này, và từ 02/09 hai dải KHÔNG còn chung một nguồn thẻ nữa:
+   "Gợi ý mua kèm" đi ảnh model, "Sản phẩm tương tự" giữ ảnh tĩnh như cũ. */
+function lookRailCards(title, n, selfIdx, w, badgeAt = -1) {
+  const badge = k => (k === badgeAt ? 'New arrival' : '');
+  if (title !== 'Gợi ý mua kèm')
+    return PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { w, noColors: true, badge: badge(i) })).join('');
+  return lookProducts(selfIdx, n)
+    .map(({ p, i }, k) => productCard(p, i, { w, noColors: true, model: true, badge: badge(k) })).join('');
+}
+
+function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false } = {}) {
   /* 27/08: 'Pre-order' THÔI làm nhãn đè ảnh — nó xuống đứng trước TÊN (xem dưới).
      Chặn ngay tại đây, một chỗ, nên 6 nơi gọi vẫn truyền `badge: 'Pre-order'` như
      cũ mà không phải sửa nơi nào. Nhãn khác (New Season…) vẫn đè ảnh bình thường. */
@@ -3578,7 +4253,13 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
   return `
   <div class="bg-card flex flex-col cursor-pointer group ${w}" data-product="${i}">
     <div class="relative w-full overflow-hidden bg-secondary" style="aspect-ratio:189/252">
-      <img src="${A}${p.img}" alt="${p.name}" class="absolute inset-0 w-full h-full object-cover lazy">
+      <!-- option "model" = dùng ảnh NGƯỜI MẪU MẶC thay ảnh tĩnh (dải "Gợi ý mua
+           kèm", 02/09/2026). Rơi về p.img khi SP không có ảnh on-model, nên chỗ
+           gọi không phải tự kiểm tra. Ảnh model cùng khổ 1200x1484 với ảnh tĩnh
+           nên khung 189/252 không phải đổi.
+           (KHÔNG dấu backtick trong comment này — markup nằm trong template
+           literal, một dấu backtick là cắt đôi cả chuỗi. Xem README.) -->
+      <img src="${A}${(model && p.model) || p.img}" alt="${p.name}" class="absolute inset-0 w-full h-full object-cover lazy">
       ${(() => {
         // Frame 427319869: chồng dọc gap 4, cách mép trên 8 / sát trái;
         // mỗi nhãn px 4, chữ Medium 12/16 #0a0a0a, nền trắng 90%
@@ -3691,6 +4372,81 @@ const CATEGORIES = [
   { img:'p4-0.jpg',    label:'Trang sức' },
   { img:'b1.jpg',      label:'Làm đẹp'   },
 ];
+
+/* ── Trang thương hiệu (02/09/2026) ─────────────────────────────────────────
+   Trước lượt này màn `brand` IN CỨNG Versace: breadcrumb, ảnh hero, logo, đoạn
+   giới thiệu và cả dải danh mục đều là hằng nằm thẳng trong markup — nên 25
+   thương hiệu trong menu bấm cái nào cũng ra đúng trang Versace.
+   Nay tách thành data, khoá là TÊN THƯƠNG HIỆU viết y hệt `PRODUCTS[].brand`
+   (lưới lọc bằng cách so đúng chuỗi này, xem plpProducts()).
+   · logo  — wordmark tải từ chính cdn.dafc.com.vn, đã tách nền trong suốt
+   · hero  — MỘT ảnh người mẫu trong bộ ảnh sản phẩm của hãng. Ảnh gốc là khổ
+             DỌC 1200x1484 (kể cả brand-hero.png của Versace) còn khung hero là
+             dải NGANG, nên phải kèm `pos` (object-position) để vết cắt rơi đúng
+             tầm người chứ không cắt ngang mặt.
+   · desc  — copy THẬT của trang thương hiệu trên site: D&G lấy 3 đoạn ở thân
+             trang, Zimmermann lấy đoạn meta description (trang họ không có khối
+             giới thiệu dài nào khác).
+   · cats  — dải danh mục dùng ảnh của CHÍNH hãng đó. Nhãn chọn trong số khoá đã
+             có ở I18N để bản tiếng Anh không rơi lại tiếng Việt. */
+const BRAND_PAGES = {
+  'Versace': {
+    logo:'brand-logo.png', hero:'p1-1.jpg', heroDk:'brand-hero.png', pos:'50% 18%',
+    desc:'Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo, phong cách quyến rũ và logo Medusa đặc trưng. Được thành lập vào năm 1978 bởi Gianni Versace, thương hiệu này đại diện cho sự sang trọng, tự tin và vẻ đẹp hiện đại. Từ những họa tiết ấn tượng đến kỹ thuật cắt may tinh xảo, Versace kết hợp tay nghề thủ công Ý với tinh thần táo bạo, trở thành biểu tượng của thời trang cao cấp và đẳng cấp thời đại.',
+    cats: CATEGORIES,
+  },
+  'Dolce&Gabbana': {
+    logo:'brand-logo-dg.png', hero:'d1-1.jpg', pos:'50% 12%',
+    desc:'Vào năm 1984, Milan chứng kiến sự ra đời của một văn phòng nhỏ bé, nơi sau này sẽ tự hào mang tên Dolce&Gabbana. Theo thời gian, thương hiệu không ngừng mở rộng, được nuôi dưỡng bởi sự tận tâm, nghiên cứu chuyên sâu và những khám phá không ngừng nghỉ. Đằng sau mỗi thiết kế là những bí quyết thủ công được gìn giữ cẩn thận, lòng tận tụy với nghệ thuật chế tác và một tình yêu sâu sắc dành cho cái Đẹp. Ngày nay, sau hơn ba thập kỷ, Dolce&Gabbana vẫn tiếp tục tìm cảm hứng từ nghệ thuật, truyền thống và văn hóa Ý.',
+    cats: [
+      { img:'d1-0.jpg',  label:'Quần áo'  },
+      { img:'d2-0.jpg',  label:'Giày dép' },
+      { img:'d9-0.jpg',  label:'Túi xách' },
+      { img:'d5-0.jpg',  label:'Phụ kiện' },
+      { img:'b4.jpg',    label:'Làm đẹp'  },
+    ],
+  },
+  'Zimmermann': {
+    /* Hero Versace / D&G có mặt người mẫu, hero này thì KHÔNG — và đó là giới hạn
+       của NGUỒN chứ không phải chọn sai: toàn bộ ảnh e-comm Zimmermann trên DAFC
+       đều cắt ngang cằm ngay từ file gốc (đã soi cả 12 bộ ảnh). Không tấm nào
+       cho ra dải ngang 390x217 / 575x320 còn thấy mặt, nên hero lấy tấm có phom
+       đồ mạnh nhất thay vì cố ép một tấm không thể. */
+    logo:'brand-logo-zm.png', hero:'z2-1.jpg', pos:'50% 12%',
+    desc:'Zimmermann mang đến cho bạn những chiếc váy áo độc đáo, chất liệu cao cấp cùng những thiết kế đầy màu sắc lãng mạn tại DAFC Online. Sở hữu những thiết kế mới nhất của Zimmermann, nơi thời trang và nghệ thuật hòa quyện.',
+    /* Zimmermann trên DAFC chỉ bán quần áo — không có dải giày / túi / làm đẹp
+       như 2 hãng kia, nên dải danh mục ở đây cắt theo NHÓM ĐỒ chứ không theo
+       ngành hàng. Bịa thêm ô "Túi xách" cho đủ 5 ô là nói sai về hãng. */
+    cats: [
+      { img:'z8-0.jpg',  label:'Đầm & áo liền quần'   },
+      { img:'z4-0.jpg',  label:'Chân váy'             },
+      { img:'z5-0.jpg',  label:'Áo sơ mi & áo kiểu'   },
+      { img:'z6-0.jpg',  label:'Quần dài & quần shorts' },
+      { img:'z11-0.jpg', label:'Áo khoác ngoài'       },
+    ],
+  },
+};
+
+/* MENU_BRANDS viết tên kiểu wordmark (ZIMMERMANN, FERRAGAMO) còn PRODUCTS.brand
+   viết thường (Zimmermann) — quy về một mối trước khi tra bảng trên. */
+function brandKey(name) {
+  const n = String(name || '').trim().toLowerCase();
+  return Object.keys(BRAND_PAGES).find(b => b.toLowerCase() === n) || null;
+}
+
+/* Thương hiệu của PLP đang đứng. Mặc định Versace để mọi lối vào cũ (logo
+   header, link chung, `{type:'brand'}` không kèm tên) giữ nguyên hành vi. */
+const plpBrandName = () => (plpMode.type === 'brand' && plpMode.brand) || 'Versace';
+
+/* 22 hãng còn lại trong menu CHƯA có data (không logo, không ảnh, không copy) —
+   trả khuôn rỗng để trang vẫn dựng được: tên hãng chạy chữ thay logo, không hero,
+   không dải danh mục, lưới rơi về trạng thái 0 kết quả của chính PLP. Thà vậy
+   còn hơn đưa người dùng vào trang Versace mang tên hãng khác. */
+function brandPage(name) {
+  const key = brandKey(name);
+  return Object.assign({ name: key || name, logo:'', hero:'', desc:'', cats:[] },
+                       key ? BRAND_PAGES[key] : null, { name: key || name });
+}
 
 /* CART_BASE = bản gốc để dựng lại giỏ khi bấm "Tiếp tục mua sắm" (đặt hàng
    xong thì CART bị dọn rỗng). CART vẫn là mảng được sửa tại chỗ như cũ. */
@@ -4069,9 +4825,10 @@ function dkMegaPanel(item, id) {
        hàng với dòng chữ đầu của cột 1. */
     const n = 3, split = [[], [], []];
     MENU_BRANDS.forEach((b, i) => split[i % n].push(b));
+    const brandAttrs = b => `data-nav="plp" data-plp-brand="${b}"`;   // 02/09: mỗi hãng dẫn về trang của chính nó
     cols = `
-      ${dkMegaCol('Thương hiệu', 'Tất cả thương hiệu', 'data-nav="plp"', split[0], () => 'data-nav="plp"')}
-      ${split.slice(1).map(col => dkMegaCol('', '', '', col, () => 'data-nav="plp"')).join('')}`;
+      ${dkMegaCol('Thương hiệu', 'Tất cả thương hiệu', 'data-nav="plp"', split[0], brandAttrs)}
+      ${split.slice(1).map(col => dkMegaCol('', '', '', col, brandAttrs)).join('')}`;
   } else if (item.beauty) {
     /* Nhánh này hiện KHÔNG mục nào trong DK_NAV_CATS dùng — "Làm đẹp" đã lên
        hàng dept dạng link phẳng. Giữ lại để bật lại panel beauty ở subheader
@@ -4377,6 +5134,23 @@ function footer() {
 ════════════════════════════════════════════════════════════════ */
 let plpMode = { type: 'brand' };
 
+/* Sản phẩm mà màn `pdp` đang mở. SP#1-6 có màn dựng riêng (pdp..pdp6); mọi SP
+   còn lại dùng `pdp` làm KHUÔN CHUNG và đọc sản phẩm qua biến này.
+   Trước 02/09 màn `pdp` in cứng PRODUCTS[0] nên bấm SP#7 trở đi đều ra SP#1. */
+let pdpIdx = 0;
+
+/* Mở PDP của sản phẩm thứ i — dùng ở MỌI chỗ điều hướng sang PDP để pdpIdx và
+   màn đang hiện không bao giờ lệch nhau. */
+const PDP_SCREENS = ['pdp', 'pdp2', 'pdp3', 'pdp4', 'pdp5', 'pdp6'];
+function goPdp(i) {
+  pdpIdx = Number(i) || 0;
+  const name = PDP_SCREENS[pdpIdx] || 'pdp';
+  /* Đang đứng sẵn ở `pdp` mà bấm sang SP khác: go() thấy trùng tên màn là return
+     luôn, phải ép dựng lại — cùng cách goPlp() xử. */
+  if (current === name) { history.push(name); current = null; }
+  go(name);
+}
+
 /* Bộ lọc đang áp dụng — nguồn cho "Bộ lọc (n)" + hàng chip active filters
    (Figma Frame 427319845 trong PLP-Desktop-04-ByCategory-Grid3) */
 let plpFilters = [];
@@ -4418,6 +5192,13 @@ function plpProducts() {
   if (plpMode.type === 'search') {   // tìm kiếm quét cả 2 ngành hàng
     const q = (plpMode.query || '').trim().toLowerCase();
     return q ? all.filter(({ p }) => `${p.brand} ${p.name}`.toLowerCase().includes(q)) : all;
+  }
+  /* PLP thương hiệu chỉ hiện hàng CỦA hãng đó (02/09/2026). Trước đây màn brand
+     đổ nguyên danh sách nên trang "Versace" liệt kê cả nước hoa Montblanc.
+     So bằng chuỗi brand — cùng nguồn với facet Thương hiệu của bộ lọc. */
+  if (plpMode.type === 'brand') {
+    const b = plpBrandName();
+    return all.filter(({ p }) => p.brand === b);
   }
   const beauty = isBeautyPlp();
   return all.filter(({ p }) => (p.dept === 'beauty') === beauty);
@@ -4597,47 +5378,16 @@ function screenPLPList() {
   </div>`;
 }
 
-function screenPLP() {
-  if (plpMode.type !== 'brand') return screenPLPList();
-  /* Badge thẻ đầu: đọc từ DATA (`p.preorder`) chứ không phải "thẻ số 0 thì New"
-     — SP#1 là hàng pre-order, để "New" ở PLP thì bấm vào PDP lại thấy
-     "Pre-order", 2 nơi nói 2 chuyện (yêu cầu user 17/08/2026). */
-  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
-
+/* Dải danh mục 150×150 của trang thương hiệu. Tách khỏi template của screenPLP
+   vì từ 02/09 nó có thể RỖNG: hãng chưa có data thì KHÔNG dựng dải (kể cả nút
+   cuộn phải), thay vì để lại một băng trống. */
+function brandCatStrip(cats) {
+  if (!cats || !cats.length) return '';
   return `
-  <div class="w-full" data-scroller>
-    ${navBar()}
-
-    <div class="max-w-[1440px] mx-auto w-full">
-      ${dkCrumbs(['Trang chủ', 'Thương hiệu'])}
-
-      <!-- ── Brand hero (PLP-Desktop-02-ByBrand 2474:107068): ảnh 575×320 + cột chữ 801 ──
-           Đảo so với Figma: ẢNH ĐỨNG TRƯỚC (trái), khối tên brand + mô tả +
-           strip danh mục nằm sau (phải). Chỉ đổi thứ tự DOM, bề rộng 2 cột giữ
-           nguyên nên bố cục là bản soi gương của thiết kế gốc. -->
-      <div class="px-6">
-        <div class="flex gap-4 py-4 items-start">
-          <div class="dk-brand-hero w-[575px] shrink-0 overflow-hidden bg-secondary">
-            <img src="${A}brand-hero.png" alt="Versace campaign" class="w-full h-[320px] object-cover lazy">
-          </div>
-          <div class="flex-1 min-w-0 flex flex-col gap-4 reveal">
-            <div class="flex flex-col gap-2">
-              <div class="flex items-center justify-between py-2">
-                <img src="${A}brand-logo.png" alt="Versace" class="h-7 w-[149px] object-contain object-left lazy">
-              </div>
-              <div id="brandDesc">
-                <p class="text-[14px] leading-5 text-foreground">
-                  Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo, phong cách quyến rũ và logo Medusa đặc trưng. Được thành lập vào năm 1978 bởi Gianni Versace, thương hiệu này đại diện cho sự sang trọng, tự tin và vẻ đẹp hiện đại. Từ những họa tiết ấn tượng đến kỹ thuật cắt may tinh xảo, Versace kết hợp tay nghề thủ công Ý với tinh thần táo bạo, trở thành biểu tượng của thời trang cao cấp và đẳng cấp thời đại.
-                </p>
-                <div class="flex justify-start pt-1">
-                  <button id="brandToggle" class="text-[14px] leading-5 text-foreground underline press">Xem thêm</button>
-                </div>
-              </div>
-            </div>
             <!-- category strip 150×150 + nút cuộn phải -->
             <div class="flex items-center gap-4 pr-2">
               <div class="drag-x flex-1 min-w-0 flex gap-2 overflow-x-auto no-scrollbar">
-                ${CATEGORIES.map(c => `
+                ${cats.map(c => `
                   <button class="shrink-0 w-[150px] flex flex-col press group text-left" data-cate="${c.label}">
                     <div class="w-full aspect-square overflow-hidden bg-secondary">
                       <img src="${A}${c.img}" alt="${c.label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
@@ -4648,7 +5398,52 @@ function screenPLP() {
                   </button>`).join('')}
               </div>
               <button data-strip-next class="w-11 h-11 shrink-0 rounded-xs border border-border bg-background flex items-center justify-center btn-o press [&_svg]:w-3.5 [&_svg]:h-3.5" aria-label="Cuộn danh mục">${I.chevR().replace('class="acc-chev" ', '')}</button>
+            </div>`;
+}
+
+function screenPLP() {
+  if (plpMode.type !== 'brand') return screenPLPList();
+  const B = brandPage(plpBrandName());   // logo / hero / mô tả / dải danh mục của hãng
+  /* Badge thẻ đầu: đọc từ DATA (`p.preorder`) chứ không phải "thẻ số 0 thì New"
+     — SP#1 là hàng pre-order, để "New" ở PLP thì bấm vào PDP lại thấy
+     "Pre-order", 2 nơi nói 2 chuyện (yêu cầu user 17/08/2026). */
+  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
+
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+
+    <div class="max-w-[1440px] mx-auto w-full">
+      ${dkCrumbs(['Trang chủ', 'Thương hiệu', B.name])}
+
+      <!-- ── Brand hero (PLP-Desktop-02-ByBrand 2474:107068): ảnh 575×320 + cột chữ 801 ──
+           Đảo so với Figma: ẢNH ĐỨNG TRƯỚC (trái), khối tên brand + mô tả +
+           strip danh mục nằm sau (phải). Chỉ đổi thứ tự DOM, bề rộng 2 cột giữ
+           nguyên nên bố cục là bản soi gương của thiết kế gốc. -->
+      <div class="px-6">
+        <div class="flex gap-4 py-4 items-start">
+          ${(B.heroDk || B.hero) ? `
+          <div class="dk-brand-hero w-[575px] shrink-0 overflow-hidden bg-secondary">
+            <img src="${A}${B.heroDk || B.hero}" alt="${B.name}" class="w-full h-[320px] object-cover lazy" style="object-position:${B.pos || '50% 50%'}">
+          </div>` : ''}
+          <div class="flex-1 min-w-0 flex flex-col gap-4 reveal">
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center justify-between py-2">
+                ${B.logo
+                  ? `<img src="${A}${B.logo}" alt="${B.name}" class="h-7 w-[149px] object-contain object-left lazy">`
+                  : `<p class="text-[24px] font-medium leading-8 text-foreground">${B.name}</p>`}
+              </div>
+              ${B.desc ? `
+              <div id="brandDesc">
+                <p class="text-[14px] leading-5 text-foreground">
+                  ${B.desc}
+                </p>
+                <div class="flex justify-start pt-1">
+                  <button id="brandToggle" class="text-[14px] leading-5 text-foreground underline press">Xem thêm</button>
+                </div>
+              </div>` : ''}
             </div>
+            ${brandCatStrip(B.cats)}
           </div>
         </div>
       </div>
@@ -4943,10 +5738,19 @@ const accMetaRow = ([k, v]) => `
     <span class="text-foreground text-right">${v}</span>
   </div>`;
 
+/* 02/09/2026 — 2 thay đổi, cùng lý do "PDP nay mở được MỌI sản phẩm":
+   · info có thể null (SP chưa kéo được panel mô tả) -> bỏ hẳn 2 tab Mô tả /
+     Bảo quản thay vì dựng tab rỗng;
+   · tab cuối trước đây in cứng "Về thương hiệu Versace" -> nay đọc thương hiệu
+     của chính SP, và lấy đoạn giới thiệu trong BRAND_PAGES (hãng chưa có data
+     thì bỏ luôn tab đó). */
 function pdpTabs(idx) {
   const info = PRODUCT_INFO[idx];
   const R = RETURN_POLICY;
+  const brand = (PRODUCTS[idx] || {}).brand || '';
+  const bp = BRAND_PAGES[brandKey(brand)];
   return [
+    ...(info ? [
     ['Mô tả sản phẩm', `
       <div class="flex flex-col gap-2">
         <p>${info.desc}</p>
@@ -4958,6 +5762,7 @@ function pdpTabs(idx) {
         ${(info.careLead || []).map(l => `<p>${l}</p>`).join('')}
         <div class="flex flex-col gap-1">${info.care.map(accBullet).join('')}</div>
       </div>`],
+    ] : []),
     ['Chính sách đổi trả', `
       <div class="flex flex-col gap-2">
         <p>${R.lead}</p>
@@ -4967,7 +5772,7 @@ function pdpTabs(idx) {
             ${items.map(accBullet).join('')}
           </div>`).join('')}
       </div>`],
-    ['Về thương hiệu Versace', '<p>Versace là thương hiệu thời trang xa xỉ mang tính biểu tượng của Ý, nổi tiếng với thiết kế táo bạo và logo Medusa đặc trưng.</p>'],
+    ...(bp && bp.desc ? [['Về thương hiệu ' + brand, '<p>' + bp.desc + '</p>']] : []),
   ];
 }
 
@@ -5048,21 +5853,29 @@ const payOfferRow = amount => amount ? `
         <button data-toast="Xem chính sách trả góp" class="text-foreground underline press">Xem chi tiết</button>
       </div>` : '';
 
-/* Dải gợi ý khuôn CŨ: tiêu đề trên, 5 thẻ dưới. Dùng cho "Sản phẩm tương tự"
-   ở mọi PDP, và cho "Gợi ý mua kèm" của 5 PDP không phải PDP#1.
-   `rule` = kẻ mảnh ngăn section ở trên đầu, LẤY ĐÚNG khuôn kẻ của dải "Gợi ý
-   mua kèm" mới (border-t 1px + đệm 32) để 2 dải cùng một nhịp. Chỉ PDP#1 bật —
-   5 PDP kia chưa có kẻ nào nên bật riêng chỗ này sẽ thành một vạch lạc.
-   NHỊP DỌC khi có kẻ (đo 28/08, lệnh user *"canh spacing top và bottom cho đều
-   lại"*): đệm trên kẻ 32 (py-8 của khối ngoài) và dưới kẻ 32 (pt-8 của khối
-   trong) — trước đây dưới kẻ chỉ 24 nên vạch không nằm giữa hai khoảng. */
-function dkRailSection(title, n, rule = false) {
+/* Dải gợi ý khuôn CŨ: tiêu đề trên, 5 thẻ dưới. Từ 02/09 chỉ còn "Sản phẩm
+   tương tự" dùng khuôn này — "Gợi ý mua kèm" đã chuyển sang băng xám bản A ở
+   CẢ 6 PDP.
+
+   KHÔNG CÒN KẺ ngăn với dải phía trên (lệnh user 02/09). Lý do đúng bằng lý do
+   đã gỡ kẻ mép TRÊN của chính băng xám hôm 31/08: mảng nền xám đã tự ngăn hai
+   dải rồi, thêm một vạch nữa là NGĂN HAI LẦN ở cùng một mép.
+   Tham số `rule` bỏ luôn — bỏ kẻ thì không còn ai truyền, để lại là tham số
+   chết. ĐỆM TRÊN GIỮ NGUYÊN 64 (32 của py-8 ngoài + 32 của pt-8 trong): bỏ kẻ
+   mà bỏ luôn pt-8 thì tiêu đề dính lên đáy băng, nhịp vừa căn hôm nay đổ.
+
+   selfIdx chỉ dải "Gợi ý mua kèm" cần (đi ẢNH NGƯỜI MẪU + loại chính SP đang
+   xem — xem lookProducts). Giữ nhánh đó để khuôn này vẫn dựng đúng nếu có lúc
+   cần bật lại dải gợi ý dạng 5 thẻ. */
+function dkRailSection(title, n, selfIdx = -1) {
   return `
       <div class="px-6 py-8 reveal">
-        <div class="${rule ? 'border-t border-border pt-8 ' : ''}flex flex-col gap-6">
+        <div class="pt-8 flex flex-col gap-6">
           <p class="text-[18px] font-medium leading-7 text-foreground">${title}</p>
           <div class="grid grid-cols-5 gap-2">
-            ${PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { noColors: true })).join('')}
+            ${title === 'Gợi ý mua kèm'
+              ? lookProducts(selfIdx, n).map(({ p, i }) => productCard(p, i, { noColors: true, model: true })).join('')
+              : PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { noColors: true })).join('')}
           </div>
         </div>
       </div>`;
@@ -5081,7 +5894,9 @@ function dkRailSection(title, n, rule = false) {
    là chính cái đầm đang mở thì đọc ra vô nghĩa (dải 5 thẻ cũ cũng mắc, nhưng ở
    đây 1/4 thẻ nên lộ hẳn). Giữ index GỐC của mỗi SP để thẻ vẫn dẫn đúng PDP. */
 function dkLookSection(selfIdx, n = 3) {
-  const list = PRODUCTS.map((p, i) => ({ p, i })).filter(({ i }) => i !== selfIdx).slice(0, n);
+  /* 02/09/2026: nguồn danh sách chuyển sang lookProducts() — chỉ SP CÓ ảnh
+     người mẫu mới vào dải này. Việc loại chính SP đang xem nay nằm trong đó. */
+  const list = lookProducts(selfIdx, n);
   return `
       <!-- BẢN A — adapt từ Figma user sửa 28/08 (node 108:3746).
            Băng xám accent-0 cao 352 (đệm 32 dọc / 24 ngang, KHÔNG kẻ), tiêu đề
@@ -5093,10 +5908,10 @@ function dkLookSection(selfIdx, n = 3) {
       <div class="px-6 reveal">
         <div class="dk-look-band">
           <div class="dk-look-aside">
-            <p class="dk-look-title text-foreground">${'Gợi ý\nmua kèm'}</p>
+            <p class="dk-look-title text-foreground">${'Gợi ý\nMua kèm'}</p>
           </div>
           <div class="dk-look-grid">
-            ${list.map(({ p, i }) => productCard(p, i, { noColors: true })).join('')}
+            ${list.map(({ p, i }) => productCard(p, i, { noColors: true, model: true })).join('')}
           </div>
         </div>
       </div>`;
@@ -5110,14 +5925,16 @@ function dkLookSection(selfIdx, n = 3) {
    thấp dần từ trái sang phải, nên mép trên răng cưa còn mép dưới thẳng hàng.
    Xem 3 rule .dk-lookb* để biết chỗ khai tỉ lệ. */
 function dkLookSectionB(selfIdx, n = 3) {
-  const list = PRODUCTS.map((p, i) => ({ p, i })).filter(({ i }) => i !== selfIdx).slice(0, n);
+  /* 02/09/2026: nguồn danh sách chuyển sang lookProducts() — chỉ SP CÓ ảnh
+     người mẫu mới vào dải này. Việc loại chính SP đang xem nay nằm trong đó. */
+  const list = lookProducts(selfIdx, n);
   const cls = ['lookb-short', 'lookb-mid', ''];
-  const card = (k) => list[k] ? productCard(list[k].p, list[k].i, { noColors: true, w: cls[k] }) : '';
+  const card = (k) => list[k] ? productCard(list[k].p, list[k].i, { noColors: true, w: cls[k], model: true }) : '';
   return `
       <div class="px-6 pt-8 reveal">
         <div class="dk-lookb">
           <div class="dk-lookb-col">
-            <p class="dk-look-title text-foreground">${'Gợi ý\nmua kèm'}</p>
+            <p class="dk-look-title text-foreground">${'Gợi ý\nMua kèm'}</p>
             ${card(0)}
           </div>
           ${card(1)}
@@ -5149,14 +5966,16 @@ function dkLookName(p) {
             </div>`;
 }
 function dkLookSectionC(selfIdx, n = 3) {
-  const list = PRODUCTS.map((p, i) => ({ p, i })).filter(({ i }) => i !== selfIdx).slice(0, n);
+  /* 02/09/2026: nguồn danh sách chuyển sang lookProducts() — chỉ SP CÓ ảnh
+     người mẫu mới vào dải này. Việc loại chính SP đang xem nay nằm trong đó. */
+  const list = lookProducts(selfIdx, n);
   const feat = list[0], rest = list.slice(1);
   if (!feat) return '';
   return `
       <div class="px-6 pt-8 reveal">
         <div class="border-t border-border pt-8 dk-lookc">
           <div class="dk-look-aside-c">
-            <p class="dk-look-title text-foreground">${'Gợi ý\nmua kèm'}</p>
+            <p class="dk-look-title text-foreground">${'Gợi ý\nMua kèm'}</p>
           </div>
 
           <!-- ẢNH CHỦ ĐỀ: cắt NGANG 3:2 từ ảnh dọc 3:4 của sản phẩm (object-fit
@@ -5164,7 +5983,7 @@ function dkLookSectionC(selfIdx, n = 3) {
                dải xuống còn ~600 thay vì ~900 nếu giữ ảnh dọc. -->
           <div class="dk-lookc-feature cursor-pointer group" data-product="${feat.i}">
             <div class="dk-lookc-photo">
-              <img src="${A}${feat.p.img}" alt="${feat.p.name}" class="lazy">
+              <img src="${A}${feat.p.model || feat.p.img}" alt="${feat.p.name}" class="lazy">
             </div>
             <div class="dk-lookc-cap">
               <div class="min-w-0 flex gap-3">
@@ -5186,7 +6005,7 @@ function dkLookSectionC(selfIdx, n = 3) {
             ${rest.map((x, k) => `
             <div class="dk-lookc-item cursor-pointer group" data-product="${x.i}">
               <span class="text-[12px] leading-4 text-muted-foreground" data-i18n-skip>0${k + 2}</span>
-              <div class="dk-lookc-thumb"><img src="${A}${x.p.img}" alt="${x.p.name}" class="lazy"></div>
+              <div class="dk-lookc-thumb"><img src="${A}${x.p.model || x.p.img}" alt="${x.p.name}" class="lazy"></div>
               <div class="min-w-0 flex flex-col gap-1">
                 <p class="pc-brand text-[14px] font-medium leading-5 text-foreground">${x.p.brand}</p>
                 ${dkLookName(x.p)}
@@ -5198,16 +6017,34 @@ function dkLookSectionC(selfIdx, n = 3) {
       </div>`;
 }
 
-/* Chọn bản dải gợi ý bằng tham số URL: mặc định A (bản Figma user chốt),
-   `?look=b` xem bản so le. Để ở tham số chứ không phải bộ da vì đây là 2
-   PHƯƠNG ÁN BỐ CỤC đang so, không phải style thử — link khách nhận vẫn sạch. */
+/* Chọn bản dải gợi ý bằng tham số URL. Từ 02/09/2026 tham số này áp cho CẢ 6
+   PDP chứ không riêng PDP#1, và MẶC ĐỊNH LÀ A ở mọi màn (user chốt bản A).
+   B và C giữ lại làm công cụ SO SÁNH (`?look=b` · `?look=c`) chứ không còn là
+   khuôn mặc định của màn nào — để ở tham số chứ không phải bộ da vì đây là
+   phương án bố cục đang so, không phải style thử; link khách nhận vẫn sạch. */
 const LOOK_VARIANT = (() => {
   try { return (new URLSearchParams(location.search).get('look') || 'a').toLowerCase(); }
   catch (e) { return 'a'; }
 })();
 
+/* Tra khuôn theo tham số. Khai bằng bảng thay vì chuỗi ternary ở chỗ gọi để
+   thêm/bớt phương án chỉ sửa MỘT chỗ. Tham số lạ thì rơi về bản A. */
+const LOOK_SECTIONS = { a: dkLookSection, b: dkLookSectionB, c: dkLookSectionC };
+
+/* Khuôn PDP của SP chưa có màn riêng (idx 6 trở đi) — dựng tại chỗ từ chính
+   data sản phẩm, thay vì mượn nguyên PDP_DATA.pdp của SP#1 như trước 02/09. */
+function pdpDataFor(i) {
+  if (i === 0) return PDP_DATA.pdp;
+  const p = PRODUCTS[i] || PRODUCTS[0];
+  /* noColors đi theo ĐÚNG hợp đồng sẵn có của PDP_DATA: khối chọn màu chỉ dựng
+     khi SP thật sự khai colors. Hàng beauty và 6 SP Versace bổ sung không khai,
+     thiếu cờ này là markup đọc P.colors[0].name rồi ném lỗi cả màn. */
+  return { idx: i, installment: '', noColors: !(p.colors && p.colors.length),
+           sizes: pcSizesOf(p, i), tabs: pdpTabs(i) };
+}
+
 function dkScreenPDP(kind) {
-  const D = PDP_DATA[kind];
+  const D = kind === 'pdp' ? pdpDataFor(pdpIdx) : PDP_DATA[kind];
   const P = PRODUCTS[D.idx];
   // slide = TOÀN BỘ ảnh thật của sản phẩm (tối đa 6 ô cho lưới 2 cột của Figma),
   // swatch = các ảnh bản màu đứng đầu mảng, cắt theo số màu đang bán
@@ -5356,12 +6193,14 @@ function dkScreenPDP(kind) {
       </div>
 
       <!-- 2 dải gợi ý (28/08 bỏ hẳn section "Đã xem gần đây" — lệnh user).
-           PDP#1 dùng khuôn CHỮ-MỘT-BÊN cho dải đầu; 5 PDP còn lại vẫn khuôn
-           tiêu-đề-trên + 5 thẻ. "Sản phẩm tương tự" giữ khuôn cũ ở MỌI bản. -->
-      ${kind === 'pdp' ? (LOOK_VARIANT === 'b' ? dkLookSectionB(D.idx, 3) : dkLookSection(D.idx, 3))
-        : kind === 'pdp2' ? dkLookSectionC(D.idx, 3)
-        : dkRailSection('Gợi ý mua kèm', 5)}
-      ${dkRailSection('Sản phẩm tương tự', 5, kind === 'pdp' || kind === 'pdp2')}
+           02/09/2026 (lệnh user): dải "Gợi ý mua kèm" dùng CHUNG MỘT KHUÔN —
+           bản A (tiêu đề lớn một bên + 3 ảnh model) — ở CẢ 6 PDP. Trước đó mỗi
+           PDP một kiểu (A ở pdp, C ở pdp2, dải 5 thẻ ở 4 bản còn lại), 6 màn
+           cùng một vai mà nói ba giọng.
+           "Sản phẩm tương tự" giữ khuôn 5 thẻ ở MỌI bản, và nay BẬT KẺ ở cả 6
+           (trước chỉ pdp/pdp2) để nhịp dưới băng xám giống nhau khắp nơi. -->
+      ${LOOK_SECTIONS[LOOK_VARIANT] ? LOOK_SECTIONS[LOOK_VARIANT](D.idx, 3) : dkLookSection(D.idx, 3)}
+      ${dkRailSection('Sản phẩm tương tự', 5)}
 
       ${camKetSection()}
     </div>
@@ -8867,7 +9706,7 @@ function wireProductCards(root) {
       /* Truyền màu đang chọn trên card (openQA vốn nhận ci nhưng chưa ai truyền)
          — không thì dialog quick add luôn mở màu đầu dù card đang chọn màu khác. */
       if (qa) { if (window.__openQuickAdd) window.__openQuickAdd(+qa.dataset.quick, +(el.dataset.color || 0)); return; }
-      go(el.dataset.product === '1' ? 'pdp2' : el.dataset.product === '2' ? 'pdp3' : el.dataset.product === '3' ? 'pdp4' : el.dataset.product === '4' ? 'pdp5' : el.dataset.product === '5' ? 'pdp6' : 'pdp');  // SP#2..6 -> bản riêng
+      goPdp(+el.dataset.product);   // SP#1-6 có màn riêng, còn lại dùng khuôn chung
     });
   });
 
@@ -9143,6 +9982,8 @@ const I18N = {
   'Thử bỏ một vài điều kiện để xem thêm sản phẩm.':'Try removing a few filters to see more products.',
   'Xóa tất cả bộ lọc':'Clear all filters',
   'Từ':'From', 'Đến':'To', 'Còn':'Only', 'và':'and', 'Khác':'Other', 'Miễn phí':'Free',
+  'Vào năm 1984, Milan chứng kiến sự ra đời của một văn phòng nhỏ bé, nơi sau này sẽ tự hào mang tên Dolce&Gabbana. Theo thời gian, thương hiệu không ngừng mở rộng, được nuôi dưỡng bởi sự tận tâm, nghiên cứu chuyên sâu và những khám phá không ngừng nghỉ. Đằng sau mỗi thiết kế là những bí quyết thủ công được gìn giữ cẩn thận, lòng tận tụy với nghệ thuật chế tác và một tình yêu sâu sắc dành cho cái Đẹp. Ngày nay, sau hơn ba thập kỷ, Dolce&Gabbana vẫn tiếp tục tìm cảm hứng từ nghệ thuật, truyền thống và văn hóa Ý.':'In 1984 Milan saw the birth of a small office that would go on to proudly carry the name Dolce&Gabbana. Over time the house kept growing, nourished by dedication, deep research and restless discovery. Behind every design lie carefully guarded craft secrets, a devotion to the art of making and a profound love of Beauty. Today, more than three decades on, Dolce&Gabbana still draws inspiration from Italian art, tradition and culture.',
+  'Zimmermann mang đến cho bạn những chiếc váy áo độc đáo, chất liệu cao cấp cùng những thiết kế đầy màu sắc lãng mạn tại DAFC Online. Sở hữu những thiết kế mới nhất của Zimmermann, nơi thời trang và nghệ thuật hòa quyện.':'Zimmermann brings you singular dresses and blouses, elevated fabrics and romantic, colour-filled design at DAFC Online. Discover the newest Zimmermann pieces, where fashion and art meet.',
   'Hiển thị 1 cột':'Show 1 column', 'Hiển thị 2 cột':'Show 2 columns',
   'Mở tìm kiếm':'Open search', 'Mở bảng size':'Open size guide', 'Bảng size →':'Size guide →',
 
@@ -9200,11 +10041,16 @@ const I18N = {
   'Mô tả sản phẩm':'Product details', 'Bảo quản sản phẩm':'Care instructions',
   'Chính sách đổi trả':'Returns policy', 'Về thương hiệu Versace':'About Versace', 
   'Gợi ý mua kèm':'Complete the look', 'Sản phẩm tương tự':'You may also like', 'Đã xem gần đây':'Recently viewed',
-  /* Bản NGẮT DÒNG của tiêu đề dải PDP#1 — khoá riêng vì text node của nó mang
-     sẵn ký tự xuống dòng (xem .dk-look-title). Khoá không-ngắt ở trên VẪN DÙNG:
-     5 PDP kia còn dải "Gợi ý mua kèm" một dòng. Hai chuỗi khác nhau nên I18N_REV
-     đảo ngược cũng không đụng nhau. */
-  'Gợi ý\nmua kèm':'Complete\nthe look',
+  /* Bản NGẮT DÒNG của tiêu đề băng xám — khoá riêng vì text node của nó mang
+     sẵn ký tự xuống dòng (xem .dk-look-title).
+     02/09: cả 6 PDP nay dùng băng xám nên khoá KHÔNG-ngắt ở trên không còn màn
+     nào dùng tới; vẫn giữ vì nhánh `title === 'Gợi ý mua kèm'` trong
+     dkRailSection còn đó (phòng khi bật lại dải 5 thẻ), và vì 2 chuỗi khác nhau
+     nên I18N_REV đảo ngược cũng không đụng nhau. */
+  /* 02/09: hoa chữ đầu dòng 2 ('Mua kèm') theo lệnh user. Bản EN GIỮ chữ
+     thường — 'Complete the look' là MỘT câu bị ngắt làm 2 dòng, hoa chữ 'The'
+     giữa câu là sai tiếng Anh. */
+  'Gợi ý\nMua kèm':'Complete\nthe look',
   'Chất liệu':'Material', 'Xuất xứ':'Origin', 
   'Trả trước từ':'From', '/tháng':'/month', 'Xem chính sách trả góp':'View instalment policy',
   // Pre-order: chuỗi có NGÀY nguyên 1 text node dịch bằng luật regex trong
@@ -10489,8 +11335,10 @@ function wire(root) {
       if (t === 'plp') {
         // link header/mega menu có data-plp-title -> PLP chế độ danh mục (breadcrumb đầy đủ);
         // logo/link chung -> PLP brand mặc định
+        /* 02/09: thêm nhánh THƯƠNG HIỆU — xem ghi chú cùng tên ở bản mobile. */
         goPlp(el.dataset.plpTitle
           ? { type: 'category', title: el.dataset.plpTitle, crumbs: (el.dataset.plpCrumbs || '').split('|').filter(Boolean) }
+          : el.dataset.plpBrand ? { type: 'brand', brand: brandPage(el.dataset.plpBrand).name }
           : { type: 'brand' });
         return;
       }
@@ -10673,7 +11521,7 @@ function wire(root) {
       if (btn.dataset.oosState) return;   // đang ở trạng thái hết hàng -> không thêm giỏ
       const img = root.querySelector('#pdpGallery img');
       if (img) flyToCart(img);
-      const p = PRODUCTS[SCREEN_PRODUCT[current] || 0];
+      const p = PRODUCTS[screenProductIdx()];
       const colorEl = root.querySelector('#colorName');
       // mọi PDP chọn size bằng chip (28/08 — nhánh đọc .size-trigger-label của dropdown đã bỏ)
       const sizeChip = root.querySelector('.chip.on');
@@ -12540,8 +13388,13 @@ function quickAddBody(p, idx, sel = 0) {
              (KHÔNG gõ dấu backtick trong comment này — cả khối nằm trong template
              literal, dính vào là đứt chuỗi. Đã dính đúng lỗi này lúc viết.) -->
         <div class="flex items-center justify-between">
-          <p class="text-[12px] font-medium leading-4 text-foreground">${p.sizes ? 'Dung tích' : 'Kích thước'}</p>
-          ${p.sizes ? '' : '<button data-size-chart aria-label="Mở bảng kích thước" class="text-[12px] leading-4 text-foreground press">Bảng kích thước →</button>'}
+          <!-- 02/09/2026: nhãn đọc theo NGÀNH HÀNG chứ không theo "có field sizes hay
+             không". Trước lượt này CHỈ hàng beauty mới khai sizes nên hai điều kiện
+             trùng nhau; nay hàng thời trang D&G / Zimmermann cũng mang bộ size thật,
+             nên điều kiện cũ gọi đầm Zimmermann là "Dung tích".
+             (Không dấu backtick trong comment — khối này nằm trong template literal.) -->
+        <p class="text-[12px] font-medium leading-4 text-foreground">${p.dept === 'beauty' ? 'Dung tích' : 'Kích thước'}</p>
+          ${p.dept === 'beauty' ? '' : '<button data-size-chart aria-label="Mở bảng kích thước" class="text-[12px] leading-4 text-foreground press">Bảng kích thước →</button>'}
         </div>
         <!-- Lưới size theo LUẬT CHUNG (chốt 28/08, lệnh user): SIZE_PER_ROW ô
              mỗi dòng, tối đa SIZE_MAX_SHOWN ô — cùng một luật với 6 bản PDP và
@@ -12946,6 +13799,12 @@ document.body.insertAdjacentHTML('beforeend', `
 
 /* Sản phẩm đang xem theo màn PDP — dùng cho sheet xác nhận thêm giỏ */
 const SCREEN_PRODUCT = { pdp: 0, pdp2: 1, pdp3: 2, pdp4: 3, pdp5: 4, pdp6: 5 };
+/* Chỉ số SP mà màn ĐANG MỞ. 5 màn PDP riêng tra thẳng bảng trên; riêng màn `pdp`
+   từ 02/09 là KHUÔN CHUNG mở được mọi sản phẩm nên phải đọc pdpIdx — nếu vẫn tra
+   bảng thì bấm "Thêm vào giỏ" ở PDP đầm Zimmermann lại bỏ đầm Versace vào giỏ. */
+function screenProductIdx() {
+  return current === 'pdp' ? pdpIdx : (SCREEN_PRODUCT[current] || 0);
+}
 /* ── Size sheet (Drawer 3281:53948) — HIỆN KHÔNG DÙNG Ở BẢN DESKTOP ──
    28/08: PDP đã về CHIP GRID cho cả 6 kind (dropdown inline [data-size-dd]
    trong wire() gỡ hẳn). Giữ nguyên khối này + `__openSizeSheet` để bật lại
@@ -13055,7 +13914,7 @@ document.body.insertAdjacentHTML('beforeend', `
       if (img) flyToCart(img);
       if (onPick) onPick(selected);
       closeSZ();
-      const p = PRODUCTS[SCREEN_PRODUCT[current] || 0];
+      const p = PRODUCTS[screenProductIdx()];
       const colorEl = document.querySelector('.screen #colorName');
       const variant = [colorEl ? colorEl.textContent.trim() : '', selected].filter(Boolean).join(' , ');
       addToCart({
