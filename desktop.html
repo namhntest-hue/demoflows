@@ -217,19 +217,23 @@ window.RESP = (function () {
 
 
   /* ── Press feedback ── */
+  /* Phản hồi khi nhấn: KHÔNG scale. Bản cũ có scale(.97) — nó co cả khối nên chữ
+     bên trong bị xê dịch, thấy rõ nhất ở nút full-width và hàng danh mục dài;
+     .press lại gắn khắp nơi kể cả hàng list nên chữ nhảy vặt mỗi lần bấm. Phản
+     hồi giữ nguyên bằng MÀU (.btn-*:active) — đủ tín hiệu, không đụng layout.
+     Bản mobile (index.html) đã bỏ từ trước, khối này đồng bộ theo. */
   /* transition LONGHAND, không dùng dạng gộp: khối <style> nằm SAU tailwind.css
      và cùng specificity nên `transition:` gộp sẽ RESET transition-property, ăn
      mất transition-colors của Tailwind -> hover đổi màu bị giật. */
-  .press { transition-property: transform, opacity, background-color, border-color, color, box-shadow;
+  .press { transition-property: opacity, background-color, border-color, color, box-shadow;
            transition-duration: .12s; transition-timing-function: ease; }
-  .press:active { transform: scale(.97); }
 
   /* ══ STATE CỦA BUTTON — theo component Figma "Button" (set 10:11763, 240 variant) ══
      Trục: Roundness · Variant · Size · State(Default/Hover/Focus/Active/Disabled).
      Bảng dưới lấy trực tiếp từ Roundness=Default, Size=Regular:
        Primary      hover #262626 · active #171717
        Secondary    hover #fafafa · active #e5e5e5
-       Outline      hover: BỎ nền, viền -> #737373 · active: viền #0a0a0a 2px
+       Outline      hover: BỎ nền, viền -> #737373 · active: viền #0a0a0a (1px — xem ghi chú)
        Ghost        hover: nền đen 5% + chữ đậm lên #0a0a0a
        Ghost Muted  hover: CHỈ chữ đậm lên (nền vẫn trong suốt)
        Destructive  hover: KHÔNG đổi (đúng bản vẽ) · active #b91c3a
@@ -244,9 +248,13 @@ window.RESP = (function () {
   .btn-s:active { background: var(--unofficial-secondary-active); }
   /* Outline: Default nền TRẮNG ĐỤC (component ghi #ffffff, không phải trong suốt)
      -> nút tự khai bg-background. Hover BỎ nền để lộ nền phía sau + viền #737373.
-     Active viền #0a0a0a DÀY 2px. Focus viền #a3a3a3. Disabled nền #f5f5f5. */
+     Active CHỈ đổi màu viền -> #0a0a0a, GIỮ 1px. Focus viền #a3a3a3. Disabled nền #f5f5f5.
+     Bản vẽ Figma ghi active viền DÀY 2px — KHÔNG thi hành, vì STYLE-RULES.md §3.1
+     là trọng tài: "Độ dày luôn là 1px … Không dùng 2px để bao bất cứ thứ gì".
+     Đo trên trang chạy: 1px -> 2px làm thẻ radio checkout cao thêm 2px và đẩy ruột
+     lệch 1px chéo mỗi lần bấm — đúng cái "nhún" user bắt được 02/09. */
   .btn-o:hover  { background: transparent; border-color: var(--unofficial-border-5); }
-  .btn-o:active { border-color: var(--general-primary); border-width: 2px; }
+  .btn-o:active { border-color: var(--general-primary); }
   .btn-o:focus-visible { border-color: var(--unofficial-border-4); }
   .btn-o[disabled] { background: var(--general-secondary); }
   .btn-d:active { background: var(--unofficial-destructive-active); }
@@ -326,9 +334,8 @@ window.RESP = (function () {
     background: var(--general-background);
     border: 1px solid var(--general-border);
     box-shadow: 0 2px 12px rgba(0,0,0,.10);
-    transition: transform .2s ease, box-shadow .2s ease;
+    transition: box-shadow .2s ease;
   }
-  #settingsFab:active { transform: scale(.92); }
   #settingsFab svg { width: 24px; height: 24px; }
 
   #settingsPanel { position: fixed; inset: 0; z-index: 71; pointer-events: none; }
@@ -368,7 +375,6 @@ window.RESP = (function () {
   }
   #topFab.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
   #topFab:hover { box-shadow: 0 4px 18px rgba(0,0,0,.14); }
-  #topFab:active { transform: scale(.92); }
   #topFab svg { width: 20px; height: 20px; }
   html.sp-open #topFab { opacity: 0; pointer-events: none; }
   /* ── Shimmer lazy-load (versace images-shimmer) ── */
@@ -586,9 +592,8 @@ window.RESP = (function () {
   .chip { transition: border-color .18s ease, background .18s ease, color .18s ease; }
   .chip.on { border-color: var(--general-primary); border-width: 1.5px; }
   .chip.off { background: rgba(0,0,0,.04); color: #a3a3a3; }
-  .sw { transition: border-color .18s ease, transform .18s ease; }
+  .sw { transition: border-color .18s ease; }
   .sw.on { border-color: var(--general-primary); }
-  .sw:active { transform: scale(.94); }
   /* ── Marquee ── */
   @keyframes slide { from { transform: translateX(0) } to { transform: translateX(-50%) } }
   .marquee { animation: slide 18s linear infinite; }
