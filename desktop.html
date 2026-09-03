@@ -2715,46 +2715,19 @@ window.RESP = (function () {
      nguyên bộ đã chốt 19/08 (4 cột cố định, gap 4). */
   html.skin-mt .pc-sizes {
     display: grid;
-    /* SỐ CỘT = SỐ SIZE, trần 4 (đổi 03/09/2026, lệnh user *"các size sẽ trải đều
-       và chia grid"* + ảnh tham chiếu: thẻ 2 size ra 2 ô chia đôi bề ngang tấm).
-       Biến `--pc-cols` do markup đặt theo `Math.min(list.length, 4)` — CSS không
-       đếm được số con nên phải truyền vào. Trần 4 giữ đúng chốt 19/08
-       (*"1 line sẽ có 4 ô size"*): bộ 6 size vẫn ra 4 + 2.
-       Nhờ luật này, lý do tồn tại của `.is-few` biến mất — xem ghi chú dưới. */
-    grid-template-columns: repeat(var(--pc-cols, 4), minmax(0, 1fr));
-    /* KHE = 0 (03/09/2026, lệnh user *"không có khoảng cách giữa các button"*):
-       các ô DÍNH nhau thành một dải liền. Đường kẻ giữa các ô nay do chính ô vẽ
-       (`border-top` + `border-left` ở `.pc-size`) chứ không phải khe hở.
-       `margin-left: -1px` kéo lưới lệch ra 1px để `border-left` của Ô ĐẦU MỖI
-       HÀNG rơi ra ngoài và bị ô ảnh (`overflow-hidden`) cắt — nhờ vậy mép trái
-       dải không có đường kẻ dọc lạc, mà vẫn không phải viết selector đếm cột
-       (số cột là biến `--pc-cols`, `nth-child` không đọc được biến CSS). */
-    gap: 0;
-    /* ── VIỀN KIỂU BẢNG THU ĐƯỜNG KẺ (dựng lại 03/09/2026 sau khi user bắt lỗi
-       lần 2: *"vẫn bị lỗi, hãy set border cho các button đó lại đầy đủ và kĩ
-       hơn"*). Chia việc rõ ràng, KHÔNG ô nào hở mặt nào:
-         · LƯỚI vẽ đường TRÊN + đường TRÁI  → khép mép trên và mép trái của dải
-         · Ô   vẽ đường PHẢI + đường DƯỚI   → mỗi ô tự khép 2 mặt còn lại, và
-           chính 2 đường đó làm kẻ ngăn cho ô kế bên / hàng dưới
-       Nhờ chia như vậy mọi đường trong dải đều là hairline 1px (không có chỗ nào
-       hai viền cộng lại thành 2px), và ô CUỐI HÀNG LẺ tự có viền phải — không
-       cần selector đặc biệt nào.
-       `margin-left/-right: -1px` đẩy đường TRÁI của lưới và đường PHẢI của cột
-       cuối ra ngoài để ô ảnh (`overflow-hidden`) cắt: hai mép dải trùng mép thẻ,
-       không sinh kẻ dọc lạc. Cách này không phụ thuộc số cột — mà số cột là biến
-       `--pc-cols`, `nth-child` thì không đọc được biến CSS. */
-    margin-left: -1px;
-    margin-right: -1px;
-    border-top: 1px solid var(--general-border);
-    border-left: 1px solid var(--general-border);
+    /* SỐ CỘT CÂN HÀNG, trần 5 ô/hàng (chốt 03/09/2026, lệnh user *"trải đều tối
+       đa 5 ô size 1 hàng, trường hợp dài nhất sẽ là 9 ô size 2 hàng, khuyết 1 ô"*).
+       Markup tính `cols = ceil(n / ceil(n / 5))` rồi truyền vào `--pc-cols` —
+       CSS không đếm được số con. Công thức này chia HÀNG TRƯỚC rồi mới chia cột
+       nên các hàng CÂN nhau, không dồn hết vào hàng đầu:
+         2 -> 2 · 4 -> 4 · 5 -> 5 · 6 -> 3+3 · 8 -> 4+4 · 9 -> 5+4 · 10 -> 5+5
+       (Trần cứng 5 sẽ ra 6 -> 5+1 và 9 -> 5+4: đúng ca 9 mà lệch ca 6.)
+       Trước 03/09 là 4 cột CỨNG (chốt 19/08 "1 line sẽ có 4 ô size"). */
+    grid-template-columns: repeat(var(--pc-cols, 5), minmax(0, 1fr));
+    /* KHE 2px (lệnh user *"gap spacing giữa các nút mỏng thôi khoảng 2px"*).
+       Trước đó: 4px (19/08) -> 0 khi còn làm dải liền có viền. */
+    gap: 2px;
   }
-  /* ĐẦU TẤM HOVER — ĐÃ GỠ 27/08/2026 (hai lệnh liên tiếp: bỏ title, rồi bỏ luôn
-     dòng ngày nhận dự kiến). Cả 3 rule `.pc-quick-head` · `.pc-quick-eta` ·
-     `.pc-quick-date` xoá theo markup, không để mồ côi.
-     Tấm nay CHỈ còn lưới size — đúng bản 19/08 trước khi thêm đầu tấm.
-     Ghi lại một quyết định VẪN CÒN hiệu lực, kẻo mất theo: NHÃN TRONG Ô SIZE căn
-     GIỮA ô (`.pc-size` bên dưới) — đó là chốt riêng của cụm size, không phải hệ
-     quả của việc từng có title căn trái ở trên. */
   /* `.is-few` ĐÃ GỠ (03/09/2026). Nó sinh ra 19/08 để chữa đúng một triệu chứng
      của LƯỚI 4 CỘT CỨNG: dưới 4 size thì ô bị bóp về 76px, nhãn dài như
      "90 × 90 cm" bị cắt — nên nó bỏ lưới, xếp một hàng ô tự co rồi CĂN GIỮA.
@@ -2788,18 +2761,16 @@ window.RESP = (function () {
        Đúng bộ số của `.chip` ở PDP như ghi chú đầu khối đã dặn: 1px
        `--general-border`, góc vuông. Nền vẫn TRONG SUỐT để còn thấy ảnh qua tấm
        blur; hover vẫn nổi nền ghost như cũ. */
-    /* Ô vẽ PHẢI + DƯỚI (lưới vẽ TRÊN + TRÁI — xem `.pc-sizes`). Không để viền 4
-       phía vì khe đã về 0: hai viền kề nhau sẽ cộng thành đường kẻ dày 2px. */
+    /* KHÔNG VIỀN, KHÔNG NỀN (chốt 03/09/2026, lệnh user *"giờ bỏ cái border ra,
+       dùng lại nút không nền như cũ"*) — trở lại đúng bản 19/08. Viền outline chỉ
+       sống được vài giờ trong ngày: bật lên lúc user gửi ảnh tham chiếu có kẻ,
+       rồi tắt lại khi chốt dải khe 2px. Hover vẫn nổi nền ghost (rule dưới). */
     border: 0;
-    border-right: 1px solid var(--general-border);
-    border-bottom: 1px solid var(--general-border);
     background: transparent; white-space: nowrap;
     font-size: 12px; line-height: 16px; font-weight: 400; letter-spacing: .5px;
     color: var(--general-foreground);
     transition: background-color .15s ease, color .15s ease;
   }
-  /* (Rule `.pc-size:last-child { border-right }` của lượt vá đầu đã GỠ: nay mọi ô
-     đều tự vẽ viền phải nên ô cuối hàng lẻ không còn là ca đặc biệt.) */
   html.skin-mt .pc-size:hover {
     background: var(--unofficial-ghost-hover);
     color: var(--general-primary);
@@ -4331,12 +4302,13 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
       ${(() => {
         /* Size lấy ĐÚNG bộ của PDP sản phẩm này — xem pcSizesOf(). */
         const list = pcSizesOf(p, i);
-        /* SỐ CỘT truyền qua biến `--pc-cols` = min(số size, 4) — CSS không đếm
-           được số con nên phải đưa từ đây (đổi 03/09/2026: *"các size sẽ trải đều
-           và chia grid"*). 2 size ra 2 ô chia đôi tấm, 1 size ra 1 ô full, 6 size
-           vẫn 4 + 2 theo trần 4 của chốt 19/08.
+        /* SỐ CỘT truyền qua biến `--pc-cols` — CSS không đếm được số con nên phải
+           tính ở đây. Công thức `ceil(n / ceil(n / 5))`: chia HÀNG trước (trần 5
+           ô/hàng) rồi mới chia cột, nên các hàng CÂN nhau thay vì dồn hết vào
+           hàng đầu. Ra đúng 2 ca user nêu 03/09/2026: **9 ô -> 5 + 4** (khuyết 1)
+           và mọi ca <= 5 ô thì một hàng trải đều. Kèm theo: 6 -> 3+3 · 8 -> 4+4.
            Class `is-few` cũ đã gỡ: nó bỏ lưới để xếp một hàng ô tự co CĂN GIỮA,
-           đúng thứ mà lệnh 03/09 muốn thay bằng lưới trải đều. */
+           đúng thứ mà lưới trải đều thay thế. */
         /* (Comment tả TITLE đầu tấm đã XOÁ 28/08 — title lẫn dòng ngày đều gỡ
            hẳn theo hai lệnh 27/08, để nguyên mô tả cũ thì người sau tưởng tấm
            còn đầu và "khôi phục giúp". Chi tiết đảo chốt: xem comment HTML ngay
@@ -4353,7 +4325,7 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
              lưới size, không nhan đề, không dòng ngày.
              Ngày nhận dự kiến vẫn còn ở PDP và ở giỏ hàng, nên thông tin không
              mất — chỉ là không nói ở lớp hover của thẻ nữa. -->
-        <div class="pc-sizes" style="--pc-cols:${Math.min(list.length, 4)}">
+        <div class="pc-sizes" style="--pc-cols:${Math.ceil(list.length / Math.ceil(list.length / 5))}">
           ${list.map(s => `<button class="pc-size press${s.oos ? ' is-oos' : ''}" data-pc-size="${s.label}"${s.oos ? ' data-oos="1"' : ''}>${s.label}</button>`).join('')}
         </div>
       </div>`;

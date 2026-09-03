@@ -587,3 +587,51 @@ cả `IT 40…IT 43` (hàng 2, cột 2-4 của thẻ đó) vì dưới chúng l�
 lấy mẫu). Mỗi mặt tính là "có kẻ" nếu do chính ô vẽ, HOẶC do ô liền kề (trái/trên) vẽ, HOẶC do viền
 lưới vẽ. Kết quả: **0 ô thiếu mặt nào**. Lưới lệch trái −1,00 · lệch phải +1,00 ở mọi thẻ.
 `node --check` 2/2 OK.
+
+### 10.7 Chốt cuối: trần 5 ô/hàng, hàng CÂN nhau, bỏ viền, khe 2px
+
+> *"quick add listing sẽ cho trải đều tối đa 5 ô size 1 hàng, trường hợp dài nhất sẽ là 9 ô size
+> 2 hàng, khuyết 1 ô … giờ bỏ cái border ra, dùng lại nút không nền như cũ, gap spacing giữa các
+> nút mỏng thôi khoảng 2px"* (kèm 2 ảnh minh hoạ: ca 9 ô và ca 4 ô)
+
+| | Trước | Sau |
+|---|---|---|
+| Trần cột | 4 | **5** |
+| Cách chia | `min(n, 4)` — dồn hết vào hàng đầu | **`ceil(n / ceil(n / 5))`** — chia HÀNG trước, hàng CÂN nhau |
+| Viền ô | `border-right` + `border-bottom` 1px | **0** — nút không viền, không nền (như bản 19/08) |
+| Viền lưới | `border-top` + `border-left` 1px | **0** |
+| Khe | 0 (dải liền) | **2px** |
+| `margin-left/-right: -1px` | có (để cắt viền mép) | **gỡ** — không còn viền thì không cần |
+
+**Vì sao chia hàng trước rồi mới chia cột:** trần cứng 5 sẽ ra `6 → 5 + 1` (hàng 2 trơ một ô).
+Công thức `ceil(n / ceil(n/5))` cho hàng cân nhau mà vẫn đúng cả 2 mốc user nêu — **9 → 5 + 4
+(khuyết 1 ô)** và mọi ca ≤ 5 ô thì một hàng trải đều.
+
+**Đo đủ các ca có trong data** (tấm rộng 341,3):
+
+| Số size | Cột | Hàng | Hàng cuối | Bề rộng ô |
+|---|---|---|---|---|
+| 1 | 1 | 1 | 1 | **341,3** (full) |
+| 2 | 2 | 1 | 2 | 169,6 |
+| 3 | 3 | 1 | 3 | 112,4 |
+| 4 | 4 | 1 | 4 | 83,8 |
+| 5 | 5 | 1 | 5 | 66,6 |
+| 6 | 3 | 2 | 3 | 112,4 → **3 + 3** |
+| **9** | **5** | **2** | **4** | 66,6 → **5 + 4, khuyết 1 ô** ✔ |
+
+Khe **2px** ở mọi thẻ · viền ô **0px** · nền ô **transparent** · viền lưới **0px** · lưới trùng
+mép ảnh (lệch 0/0) · **0 nhãn bị cắt** · `node --check` 2/2 OK.
+
+### 10.8 Một chỗ lệch giữa ảnh minh hoạ và câu lệnh — cần user xác nhận
+
+Ảnh **ca "4 ô"** vẽ **2 cột × 2 hàng**, còn câu lệnh (*"trải đều tối đa 5 ô 1 hàng"*) thì 4 ô
+**vừa một hàng** — nên code đang cho **4 ô = 1 hàng 4 cột** (mỗi ô 83,8).
+
+Nhìn kỹ thì ảnh ca 4 ô có vẻ là **bản mock cắt tay từ ảnh ca 9 ô**: 4 nhãn còn lại là
+`IT 39 · IT 40 · IT 42 · IT 43` — đúng chuỗi IT 39–44 sau khi bỏ `IT 41` và `IT 44` trên một lưới
+**2 cột**, tức là layout của một trạng thái CŨ, không phải layout muốn có. Cộng thêm: ảnh tham
+chiếu đầu tiên (thẻ mũ `T1 · T2`) cho 2 ô nằm **cùng một hàng** — nếu luật là "luôn 2 hàng cân
+nhau" thì 2 ô phải ra 1+1, chọi với ảnh đó.
+
+Nên tôi làm theo **câu lệnh**. Nếu thật sự muốn 4 ô ra 2×2 thì luật là *"luôn 2 hàng"*
+(`cols = ceil(n/2)`, trần 5) — một dòng sửa, nhưng lúc đó 2 ô sẽ thành 1+1 và 3 ô thành 2+1.
