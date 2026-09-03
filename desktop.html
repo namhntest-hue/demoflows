@@ -2685,7 +2685,11 @@ window.RESP = (function () {
   html.skin-mt .pc-quick {
     display: flex; flex-direction: column; gap: 8px;
     position: absolute; left: 0; right: 0; bottom: 0;
-    padding: 12px;
+    /* ĐỆM = 0 (03/09/2026, lệnh user *"cho nó tràn hết ô"*): dải size chạy SÁT
+       3 mép của thẻ, không còn viền đệm 12px quanh tấm. Tấm nay CHỈ to bằng dải
+       size, nên phần ảnh phía trên không bị nền mờ che nữa — đúng ảnh tham chiếu.
+       (Đệm 12 là bộ số của bản 19/08 khi tấm còn là một khối nền mờ có lề.) */
+    padding: 0;
     /* NỀN LẤY ĐÚNG BỘ MÀU CỦA HEADER (chốt 19/08/2026, yêu cầu user).
        Dùng thẳng token `--general-background-blur` — token dành riêng cho MẶT
        PHẲNG CÓ BLUR trong hệ token của dự án (tailwind map thành `bg-blur`),
@@ -2711,8 +2715,38 @@ window.RESP = (function () {
      nguyên bộ đã chốt 19/08 (4 cột cố định, gap 4). */
   html.skin-mt .pc-sizes {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 4px;
+    /* SỐ CỘT = SỐ SIZE, trần 4 (đổi 03/09/2026, lệnh user *"các size sẽ trải đều
+       và chia grid"* + ảnh tham chiếu: thẻ 2 size ra 2 ô chia đôi bề ngang tấm).
+       Biến `--pc-cols` do markup đặt theo `Math.min(list.length, 4)` — CSS không
+       đếm được số con nên phải truyền vào. Trần 4 giữ đúng chốt 19/08
+       (*"1 line sẽ có 4 ô size"*): bộ 6 size vẫn ra 4 + 2.
+       Nhờ luật này, lý do tồn tại của `.is-few` biến mất — xem ghi chú dưới. */
+    grid-template-columns: repeat(var(--pc-cols, 4), minmax(0, 1fr));
+    /* KHE = 0 (03/09/2026, lệnh user *"không có khoảng cách giữa các button"*):
+       các ô DÍNH nhau thành một dải liền. Đường kẻ giữa các ô nay do chính ô vẽ
+       (`border-top` + `border-left` ở `.pc-size`) chứ không phải khe hở.
+       `margin-left: -1px` kéo lưới lệch ra 1px để `border-left` của Ô ĐẦU MỖI
+       HÀNG rơi ra ngoài và bị ô ảnh (`overflow-hidden`) cắt — nhờ vậy mép trái
+       dải không có đường kẻ dọc lạc, mà vẫn không phải viết selector đếm cột
+       (số cột là biến `--pc-cols`, `nth-child` không đọc được biến CSS). */
+    gap: 0;
+    /* ── VIỀN KIỂU BẢNG THU ĐƯỜNG KẺ (dựng lại 03/09/2026 sau khi user bắt lỗi
+       lần 2: *"vẫn bị lỗi, hãy set border cho các button đó lại đầy đủ và kĩ
+       hơn"*). Chia việc rõ ràng, KHÔNG ô nào hở mặt nào:
+         · LƯỚI vẽ đường TRÊN + đường TRÁI  → khép mép trên và mép trái của dải
+         · Ô   vẽ đường PHẢI + đường DƯỚI   → mỗi ô tự khép 2 mặt còn lại, và
+           chính 2 đường đó làm kẻ ngăn cho ô kế bên / hàng dưới
+       Nhờ chia như vậy mọi đường trong dải đều là hairline 1px (không có chỗ nào
+       hai viền cộng lại thành 2px), và ô CUỐI HÀNG LẺ tự có viền phải — không
+       cần selector đặc biệt nào.
+       `margin-left/-right: -1px` đẩy đường TRÁI của lưới và đường PHẢI của cột
+       cuối ra ngoài để ô ảnh (`overflow-hidden`) cắt: hai mép dải trùng mép thẻ,
+       không sinh kẻ dọc lạc. Cách này không phụ thuộc số cột — mà số cột là biến
+       `--pc-cols`, `nth-child` thì không đọc được biến CSS. */
+    margin-left: -1px;
+    margin-right: -1px;
+    border-top: 1px solid var(--general-border);
+    border-left: 1px solid var(--general-border);
   }
   /* ĐẦU TẤM HOVER — ĐÃ GỠ 27/08/2026 (hai lệnh liên tiếp: bỏ title, rồi bỏ luôn
      dòng ngày nhận dự kiến). Cả 3 rule `.pc-quick-head` · `.pc-quick-eta` ·
@@ -2721,27 +2755,14 @@ window.RESP = (function () {
      Ghi lại một quyết định VẪN CÒN hiệu lực, kẻo mất theo: NHÃN TRONG Ô SIZE căn
      GIỮA ô (`.pc-size` bên dưới) — đó là chốt riêng của cụm size, không phải hệ
      quả của việc từng có title căn trái ở trên. */
-  /* ÍT SIZE (dưới 4 — Onesize, 1 dung tích, hay 2 khổ khăn lụa): bỏ lưới 4 cột,
-     xếp thành MỘT HÀNG ô tự co theo nội dung rồi CĂN GIỮA.
-     `grid-auto-flow: column` + `grid-auto-columns: minmax(96px, auto)`:
-       · `auto` = ô nở ra vừa đủ chữ -> nhãn dài "90 × 90 cm" KHÔNG bị cắt
-         (lưới 4 cột cứng bóp ô về 76px, thiếu chỗ — user báo 19/08/2026);
-       · `96px` là sàn để 1 ô lẻ như "Onesize" không co lại thành mẩu bé tí.
-     `grid-template-columns: none` bắt buộc: không huỷ thì 4 cột của rule trên
-     vẫn còn, ô sẽ xếp vào đó thay vì theo auto-columns. */
-  html.skin-mt .pc-sizes.is-few {
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(96px, auto);
-    /* `center` = CẢ HÀNG ô đứng giữa tấm, đúng bản 19/08. Giữa 26-27/08 từng đổi
-       sang `start` để ăn cùng mốc căn trái với TITLE đầu tấm — nhưng 27/08 user
-       đảo chốt, title đã gỡ hẳn, lý do của `start` biến mất theo mà giá trị thì
-       sót lại (lưới 1-3 ô lệch hẳn về trái trong tấm không còn gì để so mốc).
-       Trả về center 28/08 — khớp cả câu đo trong PLP-FEEDBACK ("3 ô xếp một hàng
-       căn giữa").
-       (Nhãn TRONG ô vẫn căn giữa — đó là chuyện của `.pc-size`, không phải chỗ này.) */
-    justify-content: center;
-  }
+  /* `.is-few` ĐÃ GỠ (03/09/2026). Nó sinh ra 19/08 để chữa đúng một triệu chứng
+     của LƯỚI 4 CỘT CỨNG: dưới 4 size thì ô bị bóp về 76px, nhãn dài như
+     "90 × 90 cm" bị cắt — nên nó bỏ lưới, xếp một hàng ô tự co rồi CĂN GIỮA.
+     Nay số cột đã bằng số size (xem `--pc-cols` ở trên) nên 2 size ra 2 ô chia
+     đôi tấm, 1 size ra 1 ô full — vừa hết chỗ cho nhãn dài, vừa TRẢI ĐỀU đúng
+     yêu cầu 03/09. Giữ `.is-few` lại là để hai luật chọi nhau (nó khai
+     `grid-template-columns: none` nên sẽ huỷ luôn `--pc-cols`).
+     Class `is-few` cũng đã gỡ khỏi markup — không để hook mồ côi. */
   /* `.group` = thẻ bọc card, đã có sẵn trong markup */
   html.skin-mt .group:hover .pc-quick,
   html.skin-mt .pc-quick:focus-within { opacity: 1; transform: none; pointer-events: auto; }
@@ -2762,11 +2783,23 @@ window.RESP = (function () {
     /* Nhãn CĂN GIỮA ô — bộ số gốc của chốt 19/08, giữ nguyên. (26/08 có thử đổi
        sang `flex-end` theo lượt căn phải, user chốt lại "như lúc đầu".) */
     display: flex; align-items: center; justify-content: center;
-    border: 0; background: transparent; white-space: nowrap;
+    /* VIỀN TRẢ LẠI (03/09/2026, lệnh user *"dùng button dạng outline"* + ảnh
+       tham chiếu) — ĐẢO chốt 19/08 *"thử bỏ outline ra khỏi các buttons size"*.
+       Đúng bộ số của `.chip` ở PDP như ghi chú đầu khối đã dặn: 1px
+       `--general-border`, góc vuông. Nền vẫn TRONG SUỐT để còn thấy ảnh qua tấm
+       blur; hover vẫn nổi nền ghost như cũ. */
+    /* Ô vẽ PHẢI + DƯỚI (lưới vẽ TRÊN + TRÁI — xem `.pc-sizes`). Không để viền 4
+       phía vì khe đã về 0: hai viền kề nhau sẽ cộng thành đường kẻ dày 2px. */
+    border: 0;
+    border-right: 1px solid var(--general-border);
+    border-bottom: 1px solid var(--general-border);
+    background: transparent; white-space: nowrap;
     font-size: 12px; line-height: 16px; font-weight: 400; letter-spacing: .5px;
     color: var(--general-foreground);
     transition: background-color .15s ease, color .15s ease;
   }
+  /* (Rule `.pc-size:last-child { border-right }` của lượt vá đầu đã GỠ: nay mọi ô
+     đều tự vẽ viền phải nên ô cuối hàng lẻ không còn là ca đặc biệt.) */
   html.skin-mt .pc-size:hover {
     background: var(--unofficial-ghost-hover);
     color: var(--general-primary);
@@ -4298,13 +4331,12 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
       ${(() => {
         /* Size lấy ĐÚNG bộ của PDP sản phẩm này — xem pcSizesOf(). */
         const list = pcSizesOf(p, i);
-        /* ÍT SIZE (dưới 4, tức không lấp đầy một hàng): thêm `is-few` để CSS
-           đổi lưới thành hàng ô TỰ CO THEO NỘI DUNG và CĂN GIỮA.
-           Gồm cả 1 size (Onesize của pdp3, 1 dung tích của hàng làm đẹp) lẫn 2
-           size (khăn lụa pdp2). Lưới 4 cột cứng bóp ô về 76px, mà nhãn
-           "90 × 90 cm" cần rộng hơn -> chữ bị cắt (user báo 19/08/2026).
-           27/08: khăn lụa đã đổi sang S/M/L nên nhãn dài nhất còn lại là "Onesize"
-           và "90 ml" — luật vẫn đứng, ví dụ trong ghi chú này thành lịch sử. */
+        /* SỐ CỘT truyền qua biến `--pc-cols` = min(số size, 4) — CSS không đếm
+           được số con nên phải đưa từ đây (đổi 03/09/2026: *"các size sẽ trải đều
+           và chia grid"*). 2 size ra 2 ô chia đôi tấm, 1 size ra 1 ô full, 6 size
+           vẫn 4 + 2 theo trần 4 của chốt 19/08.
+           Class `is-few` cũ đã gỡ: nó bỏ lưới để xếp một hàng ô tự co CĂN GIỮA,
+           đúng thứ mà lệnh 03/09 muốn thay bằng lưới trải đều. */
         /* (Comment tả TITLE đầu tấm đã XOÁ 28/08 — title lẫn dòng ngày đều gỡ
            hẳn theo hai lệnh 27/08, để nguyên mô tả cũ thì người sau tưởng tấm
            còn đầu và "khôi phục giúp". Chi tiết đảo chốt: xem comment HTML ngay
@@ -4321,7 +4353,7 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
              lưới size, không nhan đề, không dòng ngày.
              Ngày nhận dự kiến vẫn còn ở PDP và ở giỏ hàng, nên thông tin không
              mất — chỉ là không nói ở lớp hover của thẻ nữa. -->
-        <div class="pc-sizes${list.length < 4 ? ' is-few' : ''}">
+        <div class="pc-sizes" style="--pc-cols:${Math.min(list.length, 4)}">
           ${list.map(s => `<button class="pc-size press${s.oos ? ' is-oos' : ''}" data-pc-size="${s.label}"${s.oos ? ' data-oos="1"' : ''}>${s.label}</button>`).join('')}
         </div>
       </div>`;
@@ -6156,7 +6188,7 @@ function dkScreenPDP(kind) {
             <div class="flex flex-col gap-2">
               <div class="flex items-center justify-between">
                 <p class="text-[12px] font-medium leading-4 text-foreground">Kích thước</p>
-                <button data-size-chart aria-label="Mở bảng kích thước" class="text-[12px] leading-4 text-foreground press">Bảng kích thước →</button>
+                <button data-size-chart aria-label="Mở bảng kích thước" class="text-[12px] leading-4 text-foreground underline press">Bảng kích thước</button>
               </div>
               <!-- CHIP GRID cho CẢ 6 kind — 28/08 bỏ dropdown (lệnh user); nhánh
                    [data-size-dd] cũ trong wire() đã gỡ. Nguồn size vẫn là
@@ -11237,7 +11269,8 @@ function wireAddressPickers(root) {
 function wire(root) {
   wirePasswordToggles(root);
   wireAddressPickers(root);
-  // "Bảng kích thước →" ở PDP / quick add -> mở bảng size thật trong info dialog
+  // "Bảng kích thước" ở PDP / quick add -> mở bảng size thật trong info dialog
+  // (03/09/2026 bỏ mũi tên "→" khỏi nhãn theo lệnh user; nút nay có underline)
   root.querySelectorAll('[data-size-chart]').forEach(b =>
     b.addEventListener('click', e => { e.stopPropagation(); openSizeChart(); }));
 
@@ -13437,7 +13470,7 @@ function quickAddBody(p, idx, sel = 0) {
              nên điều kiện cũ gọi đầm Zimmermann là "Dung tích".
              (Không dấu backtick trong comment — khối này nằm trong template literal.) -->
         <p class="text-[12px] font-medium leading-4 text-foreground">${p.dept === 'beauty' ? 'Dung tích' : 'Kích thước'}</p>
-          ${p.dept === 'beauty' ? '' : '<button data-size-chart aria-label="Mở bảng kích thước" class="text-[12px] leading-4 text-foreground press">Bảng kích thước →</button>'}
+          ${p.dept === 'beauty' ? '' : '<button data-size-chart aria-label="Mở bảng kích thước" class="text-[12px] leading-4 text-foreground underline press">Bảng kích thước</button>'}
         </div>
         <!-- Lưới size theo LUẬT CHUNG (chốt 28/08, lệnh user): SIZE_PER_ROW ô
              mỗi dòng, tối đa SIZE_MAX_SHOWN ô — cùng một luật với 6 bản PDP và
@@ -13523,7 +13556,7 @@ function quickAddBody(p, idx, sel = 0) {
       closeQA();
       go(idx === 1 ? 'pdp2' : idx === 2 ? 'pdp3' : idx === 3 ? 'pdp4' : idx === 4 ? 'pdp5' : idx === 5 ? 'pdp6' : 'pdp');
     });
-    // Link "Bảng kích thước →" dùng hook [data-size-chart] -> nhờ wire() nối
+    // Link "Bảng kích thước" dùng hook [data-size-chart] -> nhờ wire() nối
     wire(body);
     localizeNew(body); localizeNew(ctaBox);
 

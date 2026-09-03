@@ -390,3 +390,200 @@ Chiều cao khung lệch **0px** ở mọi màn. Ba thứ mở thêm được tr
   run được nhóm theo dòng — chưa làm.
 - **Khối có con tràn cả trên lẫn dưới cha** (`dk-look-band`: lưới ảnh trồi lên 228px và thò xuống
   quá đáy) — đúng là phải tuyệt đối.
+
+---
+
+## 9 · Bottom sheet "Đã thêm vào giỏ hàng" — user sửa trong Figma, port về code
+
+> Lệnh user: *"ở đây tôi vừa tăng spacing cho bottomsheet đã thêm vào giỏ hàng cho rộng rãi,
+> và vị trí đặt giá. bạn hãy update vào file thực tế nhé"*
+
+### 9.1 Cách tách ĐÚNG phần user sửa
+
+Khung Figma do bộ chuyển dựng ra nên **không phải mọi số lệch đều là ý user** — lượt auto layout
+đẩy đệm/khe đi lung tung mà tổng chiều cao vẫn giữ. Nên không so Figma với code, mà so **Figma
+hiện tại với chính file JSON đã bóc từ code lúc dựng** (`m_cc_default_0309.json` ·
+`m_cc_preorder_0309.json`). Chênh giữa hai bản đó = đúng phần user chạm tay.
+
+Ví dụ hai chỗ **KHÔNG** phải user sửa, nếu so thô sẽ tưởng là sửa:
+
+- Hàng tiêu đề: JSON `pad[0,16,0,16]` + `ai=center` → Figma `pad[16,18,12,16]`. Cùng cao 52 — đó
+  là cách lượt auto layout diễn dịch `items-center`.
+- Khối 2 nút đáy: JSON `gap 10 · pad[8,16,16,16]` → Figma `gap 20 · pad[8,16,24,16]`. Cùng cao
+  118: nút *Tiếp tục mua sắm* cao 36 bị bộ bóc thu về đúng chữ 18, phần dôi 18px chia vào khe và
+  đệm. **Sửa theo Figma ở đây là làm sai code.**
+
+### 9.2 Hai thay đổi THẬT — đã port
+
+| | Trước (code) | Sau | Đo lại |
+|---|---|---|---|
+| **Đệm dọc vùng nội dung** | `py-2` = **8** | `py-4` = **16** | body 122,5 → **138,5** (Figma 138) |
+| **Vị trí cụm giá** | nằm ngay dưới dòng phân loại, **canh trái** | **ghim ĐÁY ô thông tin + canh PHẢI** | cách đáy cột **0px**, cách mép phải **0px** |
+
+Cách làm cụm giá: `justify-end` + **`mt-auto`**. Ô chữ vốn đã bị kéo cao bằng ảnh (106,5) nhờ
+`align-items: stretch` của hàng flex, nên `mt-auto` đủ để đẩy cụm giá xuống đúng mép đáy ảnh —
+không phải đặt chiều cao cứng. Cả 3 utility (`py-4` · `justify-end` · `mt-auto`) **đã có trong
+`tailwind.css` bản build sẵn** (kiểm trước khi dùng — utility chưa từng dùng là class chết).
+
+**Áp 4 file**: `index.html` + 3 fork skin (3 fork cũng có đúng tấm sheet này). `desktop.html`
+**không** đụng — bản desktop dùng mini cart dropdown, không có sheet này.
+
+**Kiểm trên trang chạy**, cả 2 trạng thái (SP#2 thường · SP#1 đặt trước): đệm 16 · ô chữ 106,5 =
+ảnh 106,5 · cụm giá `justify-content: flex-end` · `margin-top: auto` ra 30,5px (thường) / 10,5px
+(đặt trước) · cách đáy 0 · cách mép phải 0.
+
+### 9.3 HAI thứ biến mất trong Figma mà user KHÔNG nói — chưa xoá ở code
+
+Khung Figma bản *hàng đặt trước* nay **không còn**:
+
+1. **Dòng "Nhận hàng dự kiến 30/09/2026"** (`#ccPre`) — dòng này là **bản vá của AUDIT
+   14/08/2026**: *"bấm Đặt trước xong sheet nói y hệt hàng thường, mất dấu vết pre-order"*. Xoá
+   nó là đảo lại đúng cái đã vá (badge "Đặt trước" cạnh tên vẫn còn, nhưng **mất NGÀY nhận**).
+2. **Giá gốc gạch ngang `90.696.000 ₫`** (`#ccWas`) — mất thì tấm chỉ còn giá sau giảm + chip
+   −20%, không còn mốc để so.
+
+Cả hai đều **không nằm trong hai việc user nói** ("spacing" và "vị trí đặt giá"), và rất giống
+va quệt khi kéo cụm giá xuống. Nên **giữ nguyên trong code** và hỏi lại. Muốn xoá thật thì mỗi
+cái là một dòng.
+
+---
+
+## 10 · Quick add desktop (dải hover trên thẻ): size trải đều + nút outline
+
+> Lệnh user: *"ở quick add desktop, các size sẽ trải đều và chia grid và dùng button dạng
+> outline nhé tương tự hình đính kèm"* (kèm ảnh tham chiếu: thẻ 2 size → 2 ô chia đôi bề ngang,
+> có viền)
+
+Chỉ **`desktop.html`** — 3 fork skin **không có** dải hover này (`.pc-quick` = 0 kết quả).
+
+### 10.1 Ba thay đổi
+
+| | Trước | Sau |
+|---|---|---|
+| Số cột | **4 cột CỨNG** ở mọi thẻ | **`repeat(var(--pc-cols), 1fr)`** với `--pc-cols = min(số size, 4)` |
+| Dưới 4 size | class `.is-few`: bỏ lưới, xếp một hàng ô **tự co** rồi **căn giữa** | **gỡ hẳn `.is-few`** — lưới trải đều lo cả trường hợp này |
+| Ô size | `border: 0` (chốt 19/08 *"thử bỏ outline ra khỏi các buttons size"*) | **`border: 1px solid var(--general-border)`** — nền vẫn trong suốt để thấy ảnh qua tấm blur |
+
+CSS không đếm được số con nên số cột truyền từ markup qua biến `--pc-cols`.
+Trần **4** giữ đúng chốt 19/08 (*"1 line sẽ có 4 ô size"*).
+
+**Vì sao gỡ được `.is-few`:** nó sinh ra 19/08 chỉ để chữa một triệu chứng của lưới 4 cột cứng —
+dưới 4 size thì ô bị bóp về 76px, nhãn dài như *"90 × 90 cm"* bị cắt. Nay số cột bằng số size nên
+1 size ra 1 ô full, 2 size ra 2 ô chia đôi: vừa hết chỗ cho nhãn dài, vừa **trải đều** đúng yêu
+cầu. Để `.is-few` lại là hai luật chọi nhau (nó khai `grid-template-columns: none`, huỷ luôn
+`--pc-cols`). Class trong markup cũng gỡ theo, không để hook mồ côi.
+
+### 10.2 Đo lại trên trang chạy (tấm rộng 317,3)
+
+| Số size | Số cột | Bề rộng ô | Ghi chú |
+|---|---|---|---|
+| 1 (`Onesize`) | 1 | **317,3** | full bề ngang tấm |
+| 3 (`S · M · L`) | 3 | **103,1** | trải kín một hàng |
+| 6 (`IT 39–44`) | 4 | 76,3 | 4 + 2 |
+| 9 (`IT 36–44`) | 4 | 76,3 | 4 + 4 + 1 |
+
+Viền: `1px solid rgb(223,223,223)` ở **mọi** ô · gap giữ **4** (số đã chốt 19/08) ·
+**0 nhãn bị cắt** (`scrollWidth` = `clientWidth` ở tất cả các ô đo được) ·
+`node --check` 2/2 khối script OK · console sạch.
+
+### 10.3 Một chỗ còn ngỏ
+
+Với thẻ **nhiều hơn 4 size**, hàng CUỐI không trải kín (6 size → hàng 2 chỉ có 2 ô ở cột 1–2,
+căn trái). Đó là hệ quả của trần 4 cột, và cũng đúng cái đã chốt 19/08. Nếu muốn **mọi hàng đều
+kín** thì luật số cột phải khác — ví dụ 6 size → 3 cột × 2 hàng — nhưng lúc đó bề rộng ô đổi theo
+từng sản phẩm và bỏ luật "4 ô một dòng". Chưa làm; ảnh tham chiếu chỉ có 2 size nên không suy ra
+được ý cho trường hợp này.
+
+~~Gap 4 giữ nguyên nên các ô là những nút outline rời nhau.~~ → **đã chốt ngay sau đó, xem 10.4.**
+
+### 10.4 Chốt tiếp: dải LIỀN, tràn hết bề ngang thẻ
+
+> Lệnh user: *"cho nó tràn hết ô và không có khoảng cách giữa các button luôn nhé"*
+
+| | Trước | Sau |
+|---|---|---|
+| Đệm của tấm `.pc-quick` | **12px** quanh tấm | **0** — dải chạy sát 3 mép thẻ |
+| Khe giữa các ô | `gap: 4px` | **`gap: 0`** |
+| Viền ô | `border: 1px` 4 phía | **`border-top` + `border-left`** 1px |
+
+Ba chỗ đi liền nhau, không tách được:
+
+- **Đệm 0** làm tấm nay CHỈ to bằng dải size, nên phần ảnh phía trên **không còn bị nền mờ che** —
+  đúng ảnh tham chiếu (trước đó tấm là một khối nền mờ có lề 12px).
+- **Khe 0** thì viền 4 phía sẽ làm đường kẻ giữa 2 ô **dày 2px**. Nên ô chỉ vẽ `border-top` +
+  `border-left`; mép phải/dưới không cần viền vì đã là mép thẻ. Mọi đường trong dải là **hairline
+  1px**.
+- `border-left` của **ô ĐẦU mỗi hàng** sẽ thành một đường kẻ dọc lạc ở mép trái. Xử bằng
+  `margin-left: -1px` trên lưới: đường đó rơi ra ngoài và bị ô ảnh (`overflow-hidden`) cắt. Chọn
+  cách này thay vì `nth-child` vì **số cột là biến `--pc-cols`, `nth-child` không đọc được biến CSS**.
+
+**Đo lại**: tấm rộng **341,3 = đúng bề ngang ảnh thẻ** · đệm 0 · khe 0 (mép phải ô 1 trùng mép trái
+ô 2) · ô cuối hàng 1 kết thúc **đúng mép phải ảnh** · viền `top 1px · left 1px · right 0 · bottom 0`
+· ô đầu lệch **−1px** (bị cắt như tính) · chiều cao tấm = **số hàng × 36** (36 / 72 / 108) ·
+**0 nhãn bị cắt** · `node --check` 2/2 OK.
+
+### 10.5 Vá: ô cuối HÀNG LẺ bị hở viền phải
+
+> User bắt lỗi: *"hãy kiểm tra lại có vài button đang không có viền, ví dụ như sản phẩm t4"*
+
+**Lỗi:** ô chỉ vẽ `border-top` + `border-left` — đúng cho ô ở **cột cuối** (mép phải của nó là mép
+thẻ nên không cần kẻ). Nhưng khi **hàng cuối LẺ Ô** thì ô cuối hàng dừng **giữa dải**, mép phải
+không còn là mép thẻ nữa → nút hở hẳn một bên. Thấy rõ nhất ở **thẻ 9 size** (`t4` — giày cao gót,
+`IT 36–44` ra 4 + 4 + 1): hàng 3 chỉ có một ô, chỉ có 2 đường kẻ nên không đọc ra là một nút.
+Thẻ 6 size cũng vậy ở ô `IT 44`.
+
+**Vá:**
+
+```css
+.pc-sizes  { margin-left: -1px; margin-right: -1px; }   /* thêm margin-right */
+.pc-size:last-child { border-right: 1px solid var(--general-border); }
+```
+
+Dùng `:last-child` chứ **không** thêm `border-right` cho mọi ô: khe đã về 0 nên viền phải của ô này
+cộng viền trái của ô kế bên sẽ ra đường kẻ **dày 2px**. Còn `margin-right: -1px` lo trường hợp
+**hàng cuối ĐẦY**: lúc đó `:last-child` nằm ở cột cuối, viền phải của nó rơi vào 1px lệch ngoài và
+bị `overflow-hidden` cắt → không sinh đường kẻ lạc ở mép phải dải.
+
+**Đo lại từng ô** (thay vì chỉ đo ô đầu như lượt trước — đó là lý do lỗi lọt):
+
+| Thẻ | Số size | Hàng cuối | Mép phải ô cuối so với mép ảnh | Viền phải |
+|---|---|---|---|---|
+| Đầm lụa | 6 | LẺ (4+2) | **−170,6px** (giữa dải) | **hiện** ✔ |
+| Khăn lụa | 3 | ĐẦY | **+0,98px** (ngoài mép) | bị cắt ✔ |
+| Túi Lou | 1 | ĐẦY | **+1,0px** (ngoài mép) | bị cắt ✔ |
+| Giày `t4` | 9 | LẺ (4+4+1) | **−256,4px** (giữa dải) | **hiện** ✔ |
+
+`node --check` 2/2 OK.
+
+### 10.6 Dựng lại viền cho ĐỦ 4 MẶT (user bắt lỗi lần 2)
+
+> *"hiện tại vẫn bị lỗi, hãy set border cho các button đó lại đầy đủ và kĩ hơn"*
+
+**Lượt vá 10.5 chỉ chữa được mặt PHẢI.** Vẫn còn hở **mặt DƯỚI**: ô chỉ vẽ `border-top` +
+`border-left` nên mọi ô nằm ở **đáy dải** đều không có đường kẻ dưới — ô `IT 44` của thẻ 9 size, và
+cả `IT 40…IT 43` (hàng 2, cột 2-4 của thẻ đó) vì dưới chúng là vùng trống. Đó là chỗ user chỉ.
+
+**Cách làm lại — kiểu bảng thu đường kẻ, chia việc rõ ràng:**
+
+```css
+.pc-sizes { gap: 0; margin-left: -1px; margin-right: -1px;
+            border-top: 1px solid var(--general-border);     /* mép TRÊN dải */
+            border-left: 1px solid var(--general-border); }  /* mép TRÁI dải */
+.pc-size  { border: 0;
+            border-right: 1px solid var(--general-border);    /* + kẻ ngăn ô kế bên */
+            border-bottom: 1px solid var(--general-border); } /* + kẻ ngăn hàng dưới */
+```
+
+- **LƯỚI** vẽ mép trên + mép trái · **Ô** vẽ mép phải + mép dưới. Mỗi ô đủ 4 mặt: 2 mặt của chính
+  nó, 2 mặt còn lại do lưới hoặc ô liền kề vẽ.
+- Không chỗ nào hai viền cộng lại → **mọi đường là hairline 1px**.
+- Ô **cuối hàng lẻ tự có viền phải** → rule `:last-child` của lượt trước **gỡ bỏ**, không còn ca
+  đặc biệt nào.
+- `margin-left/-right: -1px` đẩy mép trái của lưới và mép phải của cột cuối ra ngoài để
+  `overflow-hidden` của ô ảnh cắt → hai mép dải trùng mép thẻ, không sinh kẻ dọc lạc. Cách này
+  **không phụ thuộc số cột** — mà số cột là biến `--pc-cols`, `nth-child` không đọc được biến CSS.
+
+**Kiểm lần này khác hẳn 2 lượt trước: quét ĐỦ 4 MẶT của TỪNG Ô trên TOÀN BỘ thẻ của trang** (không
+lấy mẫu). Mỗi mặt tính là "có kẻ" nếu do chính ô vẽ, HOẶC do ô liền kề (trái/trên) vẽ, HOẶC do viền
+lưới vẽ. Kết quả: **0 ô thiếu mặt nào**. Lưới lệch trái −1,00 · lệch phải +1,00 ở mọi thẻ.
+`node --check` 2/2 OK.
