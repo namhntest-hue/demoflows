@@ -635,3 +635,66 @@ nhau" thì 2 ô phải ra 1+1, chọi với ảnh đó.
 
 Nên tôi làm theo **câu lệnh**. Nếu thật sự muốn 4 ô ra 2×2 thì luật là *"luôn 2 hàng"*
 (`cols = ceil(n/2)`, trần 5) — một dòng sửa, nhưng lúc đó 2 ô sẽ thành 1+1 và 3 ô thành 2+1.
+
+---
+
+## 11 · PDP: dải "Sản phẩm tương tự" thành carousel 4 thẻ
+
+> Lệnh user: *"ở pdp, sản phẩm tương tự sẽ hiện 1 list 4 cái có gap tương tự ở listing, có thể
+> swipe và khi hover vào sẽ có button mũi tên nhé"*
+
+Chỉ **`desktop.html`** — `dkRailSection` chỉ có ở file này. **Bản mobile KHÔNG đụng**: dải ở
+`index.html` vốn đã đúng yêu cầu (`drag-x flex gap-1 overflow-x-auto no-scrollbar`, thẻ 170
+`shrink-0`, 4 thẻ, kéo cuộn được) — chỉ thiếu mũi tên, mà hover thì không có trên cảm ứng.
+
+### 11.1 Thay đổi
+
+| | Trước | Sau |
+|---|---|---|
+| Bố cục | `grid grid-cols-5 gap-2` — **đứng yên**, không cuộn | `flex` + `overflow-x-auto` + `.drag-x` — **kéo/cuộn ngang** |
+| Thẻ một lượt | 5 (cả dải) | **4** |
+| Bề rộng thẻ | 1/5 dải | **`calc((100% - 12px) / 4)`** — 4 thẻ + 3 khe |
+| Khe | `gap-2` = 8px | **4px** = đúng `gap-x-1` của `#plpGrid` desktop |
+| Số thẻ trong list | 5 | **8** = 2 lượt xem |
+| Mũi tên | không có | **2 nút overlay 40×40, hiện khi rê chuột** |
+
+**Bề rộng thẻ tính bằng %, KHÔNG in cứng 345px**: ở khổ 1440 công thức ra đúng **345** — chính
+bằng thẻ của lưới listing. Vậy là dải và listing cùng cỡ thẻ mà không phải chép số, và khổ hẹp hơn
+thì thẻ tự co.
+
+**Vì sao nâng 5 → 8 thẻ**: 4 thẻ một lượt mà list chỉ có 5 thì swipe được đúng một mẩu 4px, nút
+mũi tên gần như không có việc. 8 thẻ = 2 lượt tròn.
+
+### 11.2 Mũi tên
+
+Overlay `absolute` ở 2 mép (cùng lối `.dk-nav-arrow` của subheader) nên ẩn/hiện **không đổi bề
+rộng track** → thẻ không nhảy. Nền **đục 88% + blur 7,5px + kẻ 1px, KHÔNG bóng** (theo khuôn lớp
+nổi của dự án) vì nút nằm **đè lên ảnh sản phẩm** — nút ghost trần sẽ không đọc ra. Cỡ **40×40** =
+bậc `size=icon` của DS.
+
+Hiện khi `:hover` **hoặc `:focus-within`** (đi bàn phím vẫn thấy nút). Mỗi bên **tự ẩn khi hướng
+đó đã hết nội dung** — cùng luật với subheader, không bày nút bấm vào chẳng làm gì. Bước cuộn =
+**trọn một lượt xem** (`clientWidth`) để 4 thẻ sang 4 thẻ, không để thẻ đứng nửa vời giữa mép.
+
+### 11.3 Kiểm
+
+| Kiểm | Kết quả |
+|---|---|
+| Số thẻ trong dải | **8** |
+| Bề rộng thẻ · khe | **341,3** (có scrollbar) / **345** ở 1440 thật · khe **4px** |
+| Cuộn ngang | `scrollWidth` 2758 > `clientWidth` 1377 ✔ · `.drag-x` có ✔ |
+| Nút | 40×40 · viền 1px · `opacity 0` khi không rê · rule `:hover → opacity 1` có trong CSS ✔ |
+| Trạng thái mũi tên | đầu dải: prev **ẩn** / next hiện → bấm next: **cả 2 hiện** → cuối dải: next **ẩn** → về đầu: prev **ẩn** ✔ |
+| `node --check` | 2/2 OK, và 10/10 trên cả 5 file |
+
+**Không chụp được ảnh kiểm lượt này**: pane trình duyệt đang ẩn nên bề mặt chụp trả về trắng
+(cùng họ với bẫy rAF bị hãm đã gặp — xem dưới). Bằng chứng ở đây là số đo, không phải ảnh.
+
+**Bẫy đo (lần thứ ba trong ngày, cùng một gốc)**: pane ẩn thì **rAF bị hãm** → gán `scrollLeft`
+KHÔNG bắn `scroll` event, nên mũi tên "không cập nhật" dù logic đúng. Phải `dispatchEvent(new
+Event('scroll'))` sau mỗi lần cuộn mới đo được trạng thái thật. Trước đó cùng gốc này đã làm CSS
+transition không chạy (lượt dựng tấm thêm giỏ).
+
+**Bẫy backtick lần 3**: tôi lại gõ `` `.drag-x` `` vào comment HTML mới thêm — khối nằm trong
+template literal nên đứt chuỗi, `node --check` bắt ngay. Đã bỏ backtick và ghi thêm cảnh báo tại
+chỗ.

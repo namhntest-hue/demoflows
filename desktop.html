@@ -1105,6 +1105,42 @@ window.RESP = (function () {
      2 mũi tên vẫn chiếm chỗ dù JS đã gắn class hidden. */
   .dk-nav-arrow { transition: background-color .15s ease; }
   .dk-nav-arrow:hover { background: var(--unofficial-ghost-hover); }
+
+  /* ── DẢI "SẢN PHẨM TƯƠNG TỰ" Ở PDP — 4 thẻ một lượt, cuộn ngang, mũi tên hiện
+     khi RÊ CHUỘT (chốt user 03/09/2026: *"sản phẩm tương tự sẽ hiện 1 list 4 cái
+     có gap tương tự ở listing, có thể swipe và khi hover vào sẽ có button mũi
+     tên"*). Trước đó là `grid grid-cols-5 gap-2` ĐỨNG YÊN, không cuộn được.
+     BỀ RỘNG THẺ tính bằng %, KHÔNG đặt 345px cứng: 4 thẻ + 3 khe 4px = 100% bề
+     ngang dải. Ở khổ 1440 ra đúng 345 — chính bằng thẻ của lưới listing, nên
+     dải và listing cùng một cỡ thẻ mà không phải in cứng số nào.
+     `gap: 4px` = đúng `gap-x-1` của `#plpGrid` desktop (yêu cầu "gap tương tự ở
+     listing"). Kéo-để-cuộn dùng lại class `.drag-x` + `dragScroll()` có sẵn. */
+  .dk-rail { position: relative; }
+  .dk-rail-track { scroll-behavior: smooth; }
+  .dk-rail-item { flex: 0 0 calc((100% - 12px) / 4); }
+  /* Mũi tên là OVERLAY (cùng lối .dk-nav-arrow ở subheader): ẩn/hiện không đổi
+     bề rộng track nên thẻ không nhảy. Nền ĐỤC + kẻ 1px vì nút nằm ĐÈ LÊN ẢNH
+     sản phẩm — nút ghost trần sẽ không đọc ra. KHÔNG bóng, theo khuôn lớp nổi
+     của dự án. Cỡ 40 = bậc `size=icon` của DS. */
+  .dk-rail-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 40px; height: 40px; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--general-background) 88%, transparent);
+    -webkit-backdrop-filter: blur(7.5px);
+            backdrop-filter: blur(7.5px);
+    border: 1px solid var(--general-border);
+    opacity: 0; pointer-events: none;
+    transition: opacity .18s ease, background-color .15s ease;
+  }
+  /* `:focus-within` để đi bàn phím vẫn thấy nút; `[hidden]` là hướng ĐÃ HẾT
+     nội dung — không bày nút bấm vào chẳng làm gì (cùng luật với subheader). */
+  .dk-rail:hover .dk-rail-arrow,
+  .dk-rail:focus-within .dk-rail-arrow { opacity: 1; pointer-events: auto; }
+  .dk-rail-arrow[hidden] { display: none; }
+  .dk-rail-arrow:hover { background: var(--general-background); }
+  .dk-rail-prev { left: 8px; }
+  .dk-rail-next { right: 8px; }
   /* Nền hover của 2 biến thể Button trong nav:
      · Ghost (hàng giới tính + nút tiện ích) → "nhún" nền đen 5%
        (Button/Ghost/Hover: fill #000 5%, label #0a0a0a)
@@ -3403,7 +3439,7 @@ const PRODUCTS = [
   /* `multi` = hàng IN HỌA TIẾT nhiều màu → khớp ô "Nhiều màu" (Multi-colour) trong bộ
      lọc. Khác hẳn "SP có nhiều swatch": túi Emblème bán 2 phiên bản Verde Menta /
      Rosa nhưng mỗi phiên bản là MỘT màu, nên không mang cờ này. */
-  { img:'p1-0.jpg',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', off:'-20%', was:'90.696.000 ₫', tag:'Best seller', preorder:'30/09/2026', multi:true, model:'p1-1.jpg', colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
+  { img:'p1-0.jpg',  brand:'Versace', name:'Đầm lụa mini Broken Jewels',                 price:'72.557.000 ₫', tag:'Best seller', preorder:'30/09/2026', multi:true, model:'p1-1.jpg', colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
   { img:'p2-0.jpg',  brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', price:'15.611.000 ₫', multi:true, colors:[{name:'Broken Jewels',hex:'#a5d48c'}] },
   { img:'p3-0.jpg',  brand:'Versace', name:'Túi đeo vai da Emblème',                     price:'50.957.000 ₫', off:'-15%', was:'59.949.000 ₫', model:'p3-1.jpg', colors:[{name:'Verde Menta',hex:'#b9dfc6'},{name:'Rosa',hex:'#f5d6e0'}] },
   /* `heel` = chiều cao gót (cm) — nguồn là chính bảng thông số ở PDP_DATA của 2 đôi
@@ -4485,13 +4521,25 @@ const CART_BASE = [
   /* `giftStyle: 'plain'` = dùng OPTION B (khuôn dòng sản phẩm, không nền nhấn) cho
      khối quà của dòng này — bản thử 31/08, đặt ở SP#1 theo lệnh user để so trực
      tiếp với OPTION A đang chạy ở dòng túi Lou mini bên dưới. Bỏ cờ này là về A. */
-  { img:'p1-0.jpg', brand:'Versace', name:'Đầm lụa mini Broken Jewels', variant:'Broken Jewels , 39', off:'-20%', was:'90.696.000 ₫', now:'72.557.000 ₫', qty:1, sel:true, preorder: PRODUCTS[0].preorder, gift:'dressBundle', giftStyle:'plain' },
+  { img:'p1-0.jpg', brand:'Versace', name:'Đầm lụa mini Broken Jewels', variant:'Broken Jewels , 39', off:'', was:'', now:'72.557.000 ₫', qty:1, sel:true, preorder: PRODUCTS[0].preorder, gift:'dressBundle', giftStyle:'plain' },
   { img:'p8-0.jpg', brand:'Versace', name:'Túi da Lou mini',            variant:'Onesize , Black', off:'', was:'', now:'45.066.000 ₫', qty:1, sel:true, gift:'bagBundle' },
   { img:'p5-0.jpg', brand:'Versace', name:'Giày loafer da Manu',        variant:'40 , Black',      off:'-30%', was:'50.354.000 ₫', now:'35.248.000 ₫', qty:1, sel:true },
   { img:'p10-0.jpg',brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm', variant:'95 , Black', off:'-15%', was:'20.676.000 ₫', now:'17.575.000 ₫', qty:1, sel:true },
   { img:'p2-0.jpg', brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant:'Onesize', off:'', was:'', now:'15.611.000 ₫', qty:1, sel:true },
 ];
 const CART = CART_BASE.map(c => ({ ...c }));
+
+/* ── LUẬT DEMO: HÀNG ĐẶT TRƯỚC KHÔNG BÁN GIẢM GIÁ (chốt user 03/09/2026) ──────
+   Dọn cờ sale ngay tại NGUỒN chứ không chặn ở từng chỗ render: cùng 2 mảng này
+   được đọc ở 6 nơi có bày giá (thẻ PLP · PDP · hàng giỏ · tóm tắt checkout ·
+   chi tiết đơn · tấm "Đã thêm vào giỏ hàng"), chặn từng chỗ là 6 lần quên.
+   Nhờ vậy sau này thêm data mới mà lỡ gán cả `preorder` lẫn `off` thì UI vẫn
+   KHÔNG bày chip -% / giá gạch cạnh badge "Đặt trước".
+   Dữ liệu dựng sẵn đã sửa đúng luật rồi — đoạn này là cái chốt an toàn, không
+   phải chỗ sửa data. */
+[PRODUCTS, CART_BASE, CART].forEach(arr => arr.forEach(x => {
+  if (x.preorder) { x.off = ''; x.was = ''; }
+}));
 
 /* ── Tiền: 2 định dạng CÓ SẴN trong project, giữ nguyên cả 2 ──
    · dòng sản phẩm dùng kiểu Việt "45.066.000 ₫" (dấu chấm, có khoảng trắng + ₫)
@@ -5893,14 +5941,24 @@ const payOfferRow = amount => amount ? `
    xem — xem lookProducts). Giữ nhánh đó để khuôn này vẫn dựng đúng nếu có lúc
    cần bật lại dải gợi ý dạng 5 thẻ. */
 function dkRailSection(title, n, selfIdx = -1) {
+  /* Thẻ mang thêm class `.dk-rail-item` (qua option `w` của productCard) để lấy
+     bề rộng 1/4 dải, và `shrink-0` để flex không bóp chúng lại khi track tràn. */
+  const cards = title === 'Gợi ý mua kèm'
+    ? lookProducts(selfIdx, n).map(({ p, i }) => productCard(p, i, { noColors: true, model: true, w: 'dk-rail-item shrink-0' })).join('')
+    : PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { noColors: true, w: 'dk-rail-item shrink-0' })).join('');
   return `
       <div class="px-6 py-8 reveal">
         <div class="pt-8 flex flex-col gap-6">
           <p class="text-[18px] font-medium leading-7 text-foreground">${title}</p>
-          <div class="grid grid-cols-5 gap-2">
-            ${title === 'Gợi ý mua kèm'
-              ? lookProducts(selfIdx, n).map(({ p, i }) => productCard(p, i, { noColors: true, model: true })).join('')
-              : PRODUCTS.slice(0, n).map((p, i) => productCard(p, i, { noColors: true })).join('')}
+          <!-- 4 thẻ một lượt + cuộn ngang + mũi tên hiện khi rê (chốt 03/09/2026).
+               Class drag-x cho kéo-để-cuộn, no-scrollbar giấu thanh cuộn, mũi tên
+               do wireRail() bật/tắt theo hướng CÒN nội dung. Số đo: xem .dk-rail.
+               (KHÔNG dấu backtick trong comment này — cả khối nằm trong template
+               literal, một dấu backtick là cắt đôi chuỗi. Đã dính 2 lần hôm nay.) -->
+          <div class="dk-rail">
+            <div class="dk-rail-track drag-x flex gap-1 overflow-x-auto no-scrollbar">${cards}</div>
+            <button class="dk-rail-arrow dk-rail-prev press" data-rail-prev hidden aria-label="Xem sản phẩm trước">${I.chevL}</button>
+            <button class="dk-rail-arrow dk-rail-next press" data-rail-next hidden aria-label="Xem sản phẩm tiếp">${I.chevR()}</button>
           </div>
         </div>
       </div>`;
@@ -6225,7 +6283,10 @@ function dkScreenPDP(kind) {
            "Sản phẩm tương tự" giữ khuôn 5 thẻ ở MỌI bản, và nay BẬT KẺ ở cả 6
            (trước chỉ pdp/pdp2) để nhịp dưới băng xám giống nhau khắp nơi. -->
       ${LOOK_SECTIONS[LOOK_VARIANT] ? LOOK_SECTIONS[LOOK_VARIANT](D.idx, 3) : dkLookSection(D.idx, 3)}
-      ${dkRailSection('Sản phẩm tương tự', 5)}
+      <!-- 8 thẻ = 2 lượt xem, mỗi lượt 4 thẻ (chốt 03/09/2026). Trước là 5 thẻ
+           xếp cứng 5 cột: 4 thẻ một lượt mà chỉ có 5 thẻ thì swipe được đúng
+           một mẩu, nút mũi tên gần như không có việc. -->
+      ${dkRailSection('Sản phẩm tương tự', 8)}
 
       ${camKetSection()}
     </div>
@@ -9970,6 +10031,33 @@ function wireSubheader(root) {
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(sync);
 }
 
+/* ── Dải "Sản phẩm tương tự" ở PDP: mũi tên trượt + tự ẩn theo hướng còn nội dung
+   (03/09/2026). Cùng thuật toán với mũi tên của subheader (xem wireDkNav): mỗi
+   bên chỉ hiện khi hướng đó CÒN chỗ cuộn, không bày nút bấm vào chẳng làm gì.
+   Mũi tên là overlay absolute nên ẩn/hiện KHÔNG đổi bề rộng track — đo một lần
+   là đủ. Bước cuộn = trọn một lượt xem (clientWidth) để 4 thẻ sang 4 thẻ, không
+   để thẻ đứng nửa vời giữa mép.
+   Kéo-để-cuộn đã do dragScroll() lo qua class `.drag-x` (wire gọi ở trên). ── */
+function wireRail(root) {
+  root.querySelectorAll('.dk-rail').forEach(rail => {
+    const track = rail.querySelector('.dk-rail-track');
+    const prev = rail.querySelector('[data-rail-prev]');
+    const next = rail.querySelector('[data-rail-next]');
+    if (!track || !prev || !next) return;
+    const sync = () => {
+      const over = track.scrollWidth > track.clientWidth + 1;
+      prev.hidden = !over || track.scrollLeft <= 1;
+      next.hidden = !over || track.scrollLeft >= track.scrollWidth - track.clientWidth - 1;
+    };
+    prev.addEventListener('click', () => { track.scrollLeft -= track.clientWidth; });
+    next.addEventListener('click', () => { track.scrollLeft += track.clientWidth; });
+    track.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync, { passive: true });
+    scrollCleanups.push(() => window.removeEventListener('resize', sync));
+    sync();
+  });
+}
+
 /* Vẽ lại hàng chip bộ lọc + số trên nút "Bộ lọc (n)" */
 function refreshActiveFilters(root) {
   const scope = root.querySelector('#plpFilterAnchor') ? root : document;
@@ -12276,6 +12364,8 @@ function wire(root) {
         ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
+
+  wireRail(root);
 
   // Nút mũi tên cuộn category strip (PLP brand hero)
   root.querySelectorAll('[data-strip-next]').forEach(b => b.addEventListener('click', () => {
