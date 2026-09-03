@@ -631,4 +631,136 @@ ngang · bảng đề xuất còn đúng 1 công tắc.
 * **Logo 4 nhà mốt** (Montblanc · Dolce&Gabbana · Burberry · Ferragamo) — đang là
   chữ.
 * **Ảnh hàng nam** — vẫn 8 SKU trên 8 ảnh (mục 8.4), `brand-hero.png` gánh 2 vai.
-* **Screen `nu` · `beauty`** — user chốt tạm thời chưa áp khuôn này sang.
+* **Screen `nu` · `beauty`** — ~~chưa áp khuôn này sang~~ → **luật banner đã áp
+  03/09 (mục 8.12)**; phần còn lại của khuôn `nam` (slider 3 tấm + lưới an toàn
+  rớt tấm thiếu tệp) vẫn chỉ có ở `nam`, hai screen kia là banner tĩnh 1 tấm.
+* **Hero `nu` vẫn là lưới 2 cột chữ|ảnh** — lệnh 03/09 chỉ cấm chữ ĐÈ LÊN ảnh nên
+  cột chữ bên cạnh được giữ. Muốn `nu` cũng thành dải ảnh full-bleed như `nam` thì
+  đó là lượt đổi bố cục riêng, phải chốt chỗ ở mới cho 5 đường dẫn danh mục.
+* **Đích đến thật của 5 banner** — chúng đang trỏ vào MỎ NEO trong trang (mục
+  8.13). Nối route thật thì thay đúng 5 chuỗi: 3 dòng `href` của `HERO_SLIDES`,
+  1 ở `.nu-hero__media > a`, 1 ở `.bt-banner > a`.
+
+### 8.12 Luật banner áp cho CẢ 3 screen (lệnh user 03/09: *"ở homepage các phiên bản, hero banner chỉ để hình không cần ghi đè text hay button lên"*)
+
+Lượt 28/08 mới chỉ dọn hero của screen `nam`, mục 8.11 còn ghi *"screen `nu` ·
+`beauty` — chưa áp khuôn này sang"*. Lệnh 03/09 đóng nốt chỗ đó: **không screen
+nào còn chữ hay nút do code vẽ ĐÈ lên ảnh hero.**
+
+| Screen | Trước 03/09 | Gỡ những gì | Sau |
+|---|---|---|---|
+| `nam` | đã thuần ảnh từ 28/08 | — | không đổi |
+| `nu` | ô **"42 mẫu"** ghim góc dưới ảnh | `.nu-hero__cap` — markup + 2 rule CSS + 1 rule khổ nhỏ | ảnh trống chữ |
+| `beauty` | tấm trắng 336×198 góc dưới trái: nhãn ngành + `<h1>` + dòng đếm + nút "Xem tất cả" | `.bt-banner__x` — markup + 2 rule CSS + 1 rule khổ nhỏ + khối JS `#btHeroCount` | `<section>` chỉ còn `<img>` |
+
+**Bốn lượt siết cùng một hướng** — bảng này nay là đường đi đầy đủ của luật banner:
+
+| Ngày | Lệnh | Gỡ khỏi ảnh hero |
+|---|---|---|
+| 24/08 | *"hình ảnh banner không cần đính kèm tên và giá sản phẩm"* | thẻ hàng `.hp-shoptag` của `nam` · dòng "tên · giá" của `nu` · tên + giá SKU của `beauty` |
+| 27/08 | *"ở hero banner sẽ không để CTA gì trên đó"* | 2 nút CTA của `nam` |
+| 28/08 | *"banner sẽ thuần image thôi"* | toàn bộ lớp chữ của `nam` |
+| **03/09** | *"hero banner chỉ để hình, không ghi đè text hay button"* | **chip của `nu` · tấm chữ + nút của `beauty`** |
+
+Lý do lần này giống hệt lý do 28/08, và **đo được ngay trên tấm ảnh**: tranh khách
+gửi đã tự mang chữ. Tấm `b5.jpg` của `beauty` in sẵn *"DOLCE & GABBANA — DEVOTION —
+EAU DE PARFUM INTENSE"* ngay trong pixel; chồng thêm tấm chữ của code lên là **hai
+giọng nói cùng lúc**, và tấm trắng còn che đúng phần chân hộp có dòng chữ đó.
+
+**Chỗ ranh giới, ghi rõ để không hiểu nhầm:** lệnh nói *"ghi đè LÊN"* — nên chữ
+nằm **cạnh** ảnh không bị đụng tới. Cột chữ bên trái hero `nu` (nhãn mùa + tiêu đề
+ngành + đoạn dẫn + 5 đường dẫn danh mục cấp 1) **giữ nguyên**, vì nó là một nửa
+của lưới 2 cột chứ không đè lên ảnh. Đây là chỗ còn mở ở 8.11 nếu muốn siết thêm.
+
+**Kéo theo ở tầng JS — bẫy đáng ghi.** `#btHeroCount` là dòng *"8 dòng từ 4 nhà
+mốt"* đếm từ data. Gỡ ô chữ thì phải gỡ **cả 3 dòng sinh ra nó**, không được để
+`getElementById(...)` trả `null`: khối đó nằm ở **đầu IIFE** của screen `beauty`
+nên ném lỗi là chết cả screen (mất luôn 4 card "vừa về", 6 ô chủ đề, câu tạp chí).
+Số "đếm từ data" vẫn sống ở U2 ngay dưới banner — `#btBigNum` = 33 loại / 8 nhóm.
+
+**Screen `beauty` nay không còn `<h1>`** (tiêu đề "Nước hoa & hương thơm" nằm
+trong tấm chữ đã gỡ). Đúng cách screen `nam` đang chạy từ 28/08 — nó cũng không có
+`<h1>` nào. Ghi lại để lượt sau đừng "sửa nhầm" bằng cách nhét tiêu đề lại lên
+banner: cần `<h1>` thì nâng tiêu đề mục U2 lên, **không** đặt chữ lên ảnh.
+
+**Khổ nhỏ.** `.bt-banner` giữ `aspect-ratio: 4/5` — ảnh kho là 1200×1484 (tỉ lệ
+0.809 ≈ 4/5) nên gần như không cắt gì; trước đây phần đáy bị tấm chữ che, nay lộ
+nguyên chai + hộp. Hero `nu` ở <768 vẫn là ảnh 4/5 trên, chữ xuống dưới.
+
+**Kiểm chạy 03/09** (localhost:8123, có bust cache — không bust là đo lại bản cũ):
+`.bt-banner` còn đúng **1 con `IMG`** · `.nu-hero__cap` = `null` · JS screen
+`beauty` chạy hết (`#btBigNum` 33 · 6 ô chủ đề · 4 card · câu tạp chí sinh đủ) ·
+console **không lỗi mới** — chỉ còn 404 `assets/hero-holiday.jpg` có sẵn từ trước,
+đúng như lưới an toàn ở 8.10 mô tả · đo ở 1440 và 375, không tràn ngang.
+
+### 8.13 Banner thành CHỖ BẤM + mũi tên chỉ hiện khi rê (lệnh user 03/09, lượt 2: *"gỡ nút bấm ra thì khi bấm vào banner sẽ chuyển đến trang mong muốn, liên quan"* · *"mũi tên slider khi nào hover vào mới hiện"*)
+
+Đây là hệ quả trực tiếp của 8.12: gỡ nút thì banner mất chỗ bấm, nên **cả tấm ảnh
+thành một đường dẫn** — đúng cách screen `nam` đã chốt từ 27/08, nay áp cho cả 3.
+
+**Đích đến — 5 chuỗi, khai ở đúng 5 chỗ:**
+
+| Banner | Đích | Vì sao là mục đó |
+|---|---|---|
+| `nam` tấm 1 — Holiday Exclusive | `#hang-moi-nam` | tranh là khuyến mãi mua sắm → dải hàng mới |
+| `nam` tấm 2 — Versace FW26 | `#nha-mot-nam` | mục "Thương hiệu trong ngày" đang là Versace |
+| `nam` tấm 3 — Greca Court | `#danh-muc-nam` | lưới danh mục, chỗ có nhánh Giày dép |
+| `nu` | `#danh-muc` | đúng đích của 5 đường dẫn danh mục ngay cạnh banner |
+| `beauty` | `#vua-ve` | 8 SKU của mục đó đều là nước hoa — thứ tấm banner quảng bá |
+
+**Vì sao là mỏ neo chứ không phải trang khác.** `home.html` không có PLP; PLP nằm
+ở `index.html` / `desktop.html`. Hai file đó CÓ cửa deep-link thật
+(`#screen=<tên>&lang=&font=&theme=`, tự đổi bản mobile/desktop và giữ hash), nhưng
+hash chỉ chở được TÊN MÀN — không chở được danh mục. Trỏ banner nước hoa D&G sang
+đó là rơi vào PLP mặc định của **Versace**, sai còn nặng hơn `#` chết. Nên đích
+hiện tại là mục liên quan **trong cùng trang**: cú bấm có việc thật để xem, mà
+không hứa một trang không tồn tại. Có route thật thì thay 5 chuỗi trên.
+
+**Bẫy 1 — lỗi CÓ SẴN lộ ra khi làm việc này: hash mang HAI vai.** Router của
+trang đọc hash làm tên screen; `setScreen` lại có nhánh `|| screens[0]`, nên MỌI
+hash lạ đều ném về screen `nam`. Đo được 03/09: đang ở screen Nữ, bấm "Quần áo"
+trong hero (`href="#danh-muc"`, có từ 24/08) → **nhảy về trang Nam và cuộn lên
+đỉnh**. Tức 5 đường dẫn danh mục của hero Nữ hỏng từ lượt gộp file tới giờ. Vá:
+`hashchange` chỉ đổi màn khi hash **trùng tên một screen**, hash khác để trình
+duyệt tự cuộn tới mỏ neo; danh sách tên đọc từ DOM (`SCREEN_IDS`) để thêm screen
+là tự có. Đây là điều kiện tiên quyết — không vá thì mọi banner-mỏ-neo đều nhảy màn.
+
+**Bẫy 2 — `.rv-img > img` dùng dấu `>`.** Bọc ảnh vào `<a>` là **tắt hiệu ứng zoom
+mà không báo lỗi gì**. Đã thêm nhánh `.rv-img > a > img` (và bản `.in`, và bản
+`prefers-reduced-motion`) thay vì đổi sang chọn hậu duệ — chọn hậu duệ sẽ bật zoom
+cho cả khối Tạp chí (ảnh lồng trong `<span>`) vốn CỐ Ý không có zoom. Cùng lý do,
+`.nu-hero__media > img` và `.bt-banner > img` đổi sang chọn hậu duệ **được**, vì
+mỗi khung đó chỉ chứa đúng một ảnh.
+
+### Mũi tên slider: chỉ hiện khi rê vào hero
+
+Banner đã thuần ảnh thì hai nút 44×44 đứng thường trực cũng là chrome đè lên tranh.
+Ba điều kiện phải giữ, ghi để lượt sau đừng gỡ nhầm:
+
+* bọc trong **`@media (hover: hover)`** — máy chạm không có trạng thái hover, ẩn
+  theo hover ở đó là ẩn **vĩnh viễn**. Khổ <768 vốn đã `display:none`, nhưng máy
+  bảng chạm ≥768 thì không, và đó là chỗ sẽ mất nút nếu quên;
+* mốc hover là **cả mục `.hp-hero2`**, không phải từng nút — rê vào mép nào cũng
+  thấy đủ hai chiều;
+* **`:focus-visible`** để đường bàn phím không mất nút. Dùng `opacity` chứ không
+  `display/visibility` vì cần chuyển mượt; nút vẫn bấm được lúc mờ, mà muốn bấm
+  thì con trỏ đã nằm trong hero, tức nút đã hiện.
+
+Hàng chấm 8×8 **không** ẩn theo — nó nằm DƯỚI ảnh, không đè lên tranh, và là thứ
+duy nhất cho biết banner có mấy tấm. Mũi tên của **dải trượt sản phẩm**
+(`.hp-railbtn`) cũng không đụng: khác vai, và ở đó mũi tên là dấu hiệu "còn hàng
+bên phải".
+
+**Kiểm chạy 03/09 lượt 2** (1440, có bust cache): `opacity` mũi tên **0 lúc nghỉ →
+1 khi `.hp-hero2:hover`** (`matches(':hover')` = true) · 5 mỏ neo đều tồn tại ·
+bấm banner `nu` → hash `#danh-muc`, **screen vẫn `nu`**, đích lên đúng `top: 0` ·
+bấm banner `beauty` → `#vua-ve`, screen vẫn `beauty` · bấm tấm hero `nam` →
+`#nha-mot-nam`, screen vẫn `nam` · **đường dẫn "Quần áo" của hero Nữ nay ở lại
+screen Nữ** (trước là nhảy về Nam) · ảnh trong `<a>` vẫn khớp `.rv-img > a > img`
+và về `transform: none` sau khi hiện · console không lỗi mới.
+
+> **Bẫy đo của preview pane, cái thứ tư.** `scroll-behavior: smooth` **không chạy**
+> trong pane (cùng lý do `requestAnimationFrame` không bắn): bấm mỏ neo xong
+> `scrollY` đứng nguyên 0, rất giống "link chết". Ép
+> `document.documentElement.style.scrollBehavior='auto'` rồi bấm lại mới đo được —
+> lúc đó đích lên đúng `top: 0`. Trình duyệt thật thì cuộn mượt bình thường.

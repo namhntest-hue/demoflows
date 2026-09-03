@@ -240,14 +240,18 @@ html.props-eyebrow .hp-eyebrow { display: block; }
   transition-delay: calc(var(--d, 0s) + var(--i, 0) * var(--rv-stagger, 0ms));
 }
 .rv.in { opacity: 1; transform: none; }
-.rv-img > img { transform: scale(var(--rv-img-scale, 1.04)); transition: transform var(--rv-img-dur, 1.4s) var(--ease); }
-.rv-img.in > img { transform: none; }
+/* Bẫy 03/09: 2 rule này dùng dấu `>` nên bọc ảnh vào một <a> (banner = một
+   đường dẫn) là TẮT hiệu ứng zoom mà không báo lỗi. Thêm nhánh `> a > img`
+   thay vì đổi sang chọn hậu duệ — chọn hậu duệ sẽ bật zoom cho cả những khối
+   có ảnh lồng trong <span> (mục Tạp chí) vốn CỐ Ý không có zoom. */
+.rv-img > img, .rv-img > a > img { transform: scale(var(--rv-img-scale, 1.04)); transition: transform var(--rv-img-dur, 1.4s) var(--ease); }
+.rv-img.in > img, .rv-img.in > a > img { transform: none; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
   .rv { opacity: 1; transform: none; }
-  .rv-img > img { transform: none; }
+  .rv-img > img, .rv-img > a > img { transform: none; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -829,9 +833,25 @@ html.skin-min.no-grain body::after { display: none; }
   position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
   width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
   background: var(--background); border: 1px solid var(--border); color: var(--ink);
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  transition: opacity var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .hp-hero2__nav:hover { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+
+/* CHỈ HIỆN KHI RÊ VÀO HERO (lệnh user 03/09) — banner thuần ảnh thì hai nút
+   đứng thường trực cũng là chrome đè lên tranh. Ba điều kiện phải giữ:
+   · bọc trong `@media (hover: hover)` — máy chạm không có trạng thái hover,
+     ẩn theo hover ở đó là ẩn VĨNH VIỄN (khổ <768 đã `display:none` sẵn, nhưng
+     máy bảng chạm ≥768 thì không);
+   · mốc hover là CẢ mục `.hp-hero2`, không phải từng nút — rê tới mép nào
+     cũng thấy đủ hai chiều;
+   · `:focus-visible` để đường bàn phím không mất nút. Không dùng
+     `visibility/display` vì cần chuyển mượt, và nút vẫn bấm được trong lúc
+     mờ — muốn bấm thì con trỏ đã nằm trong hero, tức nút đã hiện. */
+@media (hover: hover) {
+  .hp-hero2__nav { opacity: 0; }
+  .hp-hero2:hover .hp-hero2__nav,
+  .hp-hero2__nav:focus-visible { opacity: 1; }
+}
 .hp-hero2__nav.is-prev { left: 16px; }
 .hp-hero2__nav.is-next { right: 16px; }
 
@@ -977,9 +997,11 @@ html.skin-min.no-grain body::after { display: none; }
 .nu-hero__links a::after { content: ''; position: absolute; left: 0; right: 0; bottom: 8px; height: 1px; background: var(--foreground); transform: scaleX(0); transform-origin: left; transition: transform var(--dur) var(--ease); }
 .nu-hero__links a:hover::after { transform: scaleX(1); }
 .nu-hero__media { position: relative; overflow: hidden; background: var(--secondary); }
-.nu-hero__media > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.nu-hero__cap { position: absolute; left: 24px; bottom: 24px; right: 24px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
-.nu-hero__cap > span { background: var(--background); border: 1px solid var(--border); padding: 8px 12px; }
+.nu-hero__media > a { position: absolute; inset: 0; display: block; }
+.nu-hero__media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* GỠ 03/09/2026 — `.nu-hero__cap` (ô "42 mẫu" đè góc dưới ảnh). Lệnh user:
+   không ghi đè chữ lên hero banner. Chữ của hero nữ vẫn còn nguyên ở CỘT TRÁI,
+   chỗ nó không nằm trên ảnh. */
 
 /* ══════════════════════════════════════════════════════════════════════════
    7 — BENTO DANH MỤC — lưới bất đối xứng 12 cột, vách là kẻ 1px
@@ -1125,7 +1147,6 @@ html.skin-min.no-grain body::after { display: none; }
   .nu-hero__media { order: -1; aspect-ratio: 4/5; }
   .nu-hero__copy { padding: 32px 0 40px; gap: 20px; }
   .nu-hero__h1 { max-width: none; }
-  .nu-hero__cap { left: var(--gut); right: var(--gut); bottom: 12px; }
 
   /* Bento về 1 cột: ô lớn hết span, mọi ô cùng tỉ lệ 4/5 */
   .nu-bento { grid-template-columns: minmax(0, 1fr); }
@@ -1214,11 +1235,12 @@ html.skin-min.no-grain body::after { display: none; }
    vẫn nằm giữa khung và nền #f1f1f1 nướng sẵn trải ra hai bên — đúng dáng một
    banner chiến dịch, khác hẳn việc cắt ảnh người mặc đồ (mất dáng sản phẩm). */
 .bt-banner { position: relative; overflow: hidden; background: var(--secondary); height: clamp(320px, 42vw, 460px); }
-.bt-banner > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
-.bt-banner__x { position: absolute; left: var(--gut); bottom: var(--gut); max-width: 420px;
-  background: var(--background); border: 1px solid var(--border); padding: 20px 24px 22px;
-  display: flex; flex-direction: column; gap: 10px; }
-.bt-banner__x .hp-btn { align-self: flex-start; margin-top: 6px; }
+.bt-banner > a { position: absolute; inset: 0; display: block; }
+.bt-banner img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+/* GỠ 03/09/2026 — `.bt-banner__x` (tấm chữ trắng ghim góc dưới trái: nhãn
+   ngành + tiêu đề + dòng đếm + nút "Xem tất cả"). Lệnh user: hero banner ở MỌI
+   screen chỉ để hình, không ghi đè chữ hay nút — cùng luật đã áp cho hero
+   screen `nam` ngày 28/08 (xem 19.1). Banner nay CHỈ còn <img>. */
 
 /* ── U2 · CHỮ TRÁI + DẢI HÀNG PHẢI ──────────────────────────────────────────
    Cột chữ hẹp (1 phần) · dải sản phẩm rộng (3 phần) — tỉ lệ của MR PORTER. */
@@ -1288,8 +1310,8 @@ html.skin-min.no-grain body::after { display: none; }
   .bt-band__in { gap: 32px; }
 }
 @media (max-width: 767px) {
+  /* 4/5 gần đúng tỉ lệ ảnh kho 1200x1484 nên gần như không cắt gì */
   .bt-banner { height: auto; aspect-ratio: 4/5; }
-  .bt-banner__x { left: var(--gut); right: var(--gut); bottom: 12px; max-width: none; padding: 16px 18px 18px; }
   .bt-duo { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .bt-duo__m { aspect-ratio: 4/3; }
   .bt-band__in { grid-template-columns: minmax(0, 1fr); min-height: 0; padding: 32px 0; gap: 24px; }
@@ -1492,8 +1514,9 @@ html.skin-min.no-grain body::after { display: none; }
      lookfantastic làm mục này bằng HÀNG CHIP CHỮ 46px; ở đây giữ ô ảnh 1:1 vì
      mock khách gửi kèm cũng là ô ảnh có nhãn, và ảnh mới là thứ phân biệt
      được "Giày dép" với "Phụ kiện" trong một liếc mắt.
+     `id` là ĐÍCH ĐẾN của banner hero (xem `HERO_SLIDES`), không phải để tạo kiểu.
      ══════════════════════════════════════════════════════════════════════════ -->
-<section class="hp-sec">
+<section class="hp-sec" id="danh-muc-nam">
   <div class="hp-rail">
     <div class="hp-sechead rv">
       <div class="hp-sechead__t">
@@ -1516,7 +1539,7 @@ html.skin-min.no-grain body::after { display: none; }
      danh mục nam và thêm một tab merchandising ("Bán chạy") đúng lối họ trộn
      tab danh mục với tab bán hàng (KOREAN BEAUTY · SALE · BESTSELLERS).
      ══════════════════════════════════════════════════════════════════════════ -->
-<section class="hp-sec hp-sec--gray">
+<section class="hp-sec hp-sec--gray" id="hang-moi-nam">
   <div class="hp-rail">
     <div class="hp-sechead rv">
       <div class="hp-sechead__t">
@@ -1548,7 +1571,7 @@ html.skin-min.no-grain body::after { display: none; }
      mốt đó. Tên nhà mốt là HỌ NỘI DUNG chữ thường (§1.5 mục 6), không phải
      nhãn hoa — chỗ này lookfantastic viết hoa 18/24 · 500 · ls 2px, ta không lấy.
      ══════════════════════════════════════════════════════════════════════════ -->
-<section class="hp-sec hp-sec--lg">
+<section class="hp-sec hp-sec--lg" id="nha-mot-nam">
   <div class="hp-rail">
     <div class="hp-sechead rv">
       <div class="hp-sechead__t">
@@ -1805,13 +1828,14 @@ html.skin-min.no-grain body::after { display: none; }
       </div>
 
       <div class="nu-hero__media rv rv-img">
-        <img src="assets/x2.jpg" alt="Đầm lụa midi Broken Jewels" fetchpriority="high">
-        <!-- Đã gỡ dòng "tên sản phẩm · giá" (lệnh user 24/08). Giữ lại số mẫu:
-             nó là quy mô bộ sưu tập, không phải tên cũng không phải giá — và là
-             thứ banner của mytheresa/mrporter vẫn mang. -->
-        <div class="nu-hero__cap">
-          <span class="t-label">42 mẫu</span>
-        </div>
+        <!-- Ảnh hero KHÔNG mang chữ: 24/08 gỡ "tên sản phẩm · giá", 03/09 gỡ nốt
+             ô "42 mẫu" — lệnh user: hero banner chỉ để hình. Cột chữ bên trái
+             vẫn giữ tiêu đề ngành + 5 danh mục, vì nó nằm CẠNH ảnh chứ không đè lên.
+             CẢ TẤM LÀ MỘT ĐƯỜNG DẪN (03/09) — chỗ bấm thay cho nút đã gỡ, cùng
+             đích với 5 đường dẫn danh mục ngay bên trái. -->
+        <a href="#danh-muc">
+          <img src="assets/x2.jpg" alt="Đầm lụa midi Broken Jewels" fetchpriority="high">
+        </a>
       </div>
 
     </div>
@@ -2098,28 +2122,30 @@ html.skin-min.no-grain body::after { display: none; }
      ══════════════════════════════════════════════════════════════════════════ -->
 <div class="screen" data-screen="beauty" hidden>
 
-  <!-- ══ U1 · HERO FULL-BLEED — chữ trong tấm trắng ghim góc dưới trái ══ -->
+  <!-- ══ U1 · HERO FULL-BLEED — BANNER THUẦN ẢNH ══
+       Đường đi của tấm chữ này, ghi đủ để không ai lật lại: đầu tiên nó ghi
+       "tên SKU · dung tích · giá" -> 24/08 user bỏ tên và giá, còn lại thông
+       điệp NGÀNH HÀNG + nút -> 03/09 user bỏ nốt: *"hero banner chỉ để hình,
+       không cần ghi đè text hay button lên"*, áp cho MỌI screen của trang chủ.
+       Lý do y hệt lần gỡ chữ khỏi hero screen `nam` (28/08, xem 19.1): tranh
+       chiến dịch khách gửi đã mang sẵn tên dòng và chữ ký nhà mốt ngay trong
+       tranh (tấm b5 có "DOLCE & GABBANA — DEVOTION"), chồng thêm chữ của code
+       lên là hai giọng nói cùng lúc.
+       Kéo theo: dòng đếm #btHeroCount hết chỗ đứng nên bỏ luôn ở tầng JS, và
+       CẢ TẤM THÀNH MỘT ĐƯỜNG DẪN (lệnh user 03/09: gỡ nút thì bấm vào banner
+       phải đi tới trang liên quan) — đúng cách hero screen `nam` đang làm. -->
   <section class="bt-banner rv rv-img">
-    <img src="assets/b5.jpg" alt="Nước hoa Devotion EDP Intense" fetchpriority="high">
-    <!-- Tấm chữ trên banner mang thông điệp NGÀNH HÀNG, không phải một SKU:
-         trước đây ghi "Devotion · Eau de Parfum Intense · 100 ml · 5.250.000 ₫"
-         tức tên + giá một sản phẩm. Lệnh user 24/08: banner không đính kèm tên
-         và giá. Hai con số ở dòng dưới ĐẾM TỪ DATA (xem #btHeroCount). -->
-    <div class="bt-banner__x">
-      <p class="t-label ink-mute">Làm đẹp</p>
-      <h1 class="t-title">Nước hoa &amp; hương thơm</h1>
-      <p class="t-copy ink-body" id="btHeroCount">—</p>
-      <button class="hp-btn hp-btn--solid">
-        <span class="hp-btn__l t-ui">Xem tất cả</span>
-        <span class="hp-btn__i" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12h15m0 0-6-6m6 6-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      </button>
-    </div>
+    <a href="#vua-ve">
+      <img src="assets/b5.jpg" alt="Nước hoa Devotion EDP Intense" fetchpriority="high">
+    </a>
   </section>
 
   <!-- ══ U2 · VỪA VỀ — cột chữ hẹp trái + dải sản phẩm phải ══
        Số 33 là ĐẾM TỪ CÂY danh mục, không gõ tay. Ở bản gốc số này to 64–80px;
-       §1.2 chốt cao nhất 24/32 nên đây là chỗ yếu hơn bản gốc thấy rõ. -->
-  <section class="hp-sec">
+       §1.2 chốt cao nhất 24/32 nên đây là chỗ yếu hơn bản gốc thấy rõ.
+       `id` là ĐÍCH ĐẾN của banner hero: 8 SKU của mục này đều là nước hoa, tức
+       đúng thứ tấm banner đang quảng bá. -->
+  <section class="hp-sec" id="vua-ve">
     <div class="hp-rail">
       <div class="bt-split rv">
         <div class="bt-split__x">
@@ -2473,7 +2499,19 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-dept]');
   if (b) setScreen(b.dataset.dept);
 });
-window.addEventListener('hashchange', () => setScreen((location.hash || '#nam').slice(1), { push: false }));
+/* Hash mang HAI vai: TÊN SCREEN (`#nu` · `#beauty`) và MỎ NEO trong trang
+   (`#danh-muc` · `#vua-ve` · `#hang-moi-nam`… — chỗ bấm của banner và của 5
+   đường dẫn danh mục ở hero Nữ). Trước lượt này mọi hash lạ đều rơi vào nhánh
+   `|| screens[0]` của setScreen, nên bấm "Quần áo" ở screen Nữ là bị NÉM VỀ
+   screen Nam rồi cuộn lên đỉnh — đo được 03/09, lỗi có sẵn từ lượt gộp file.
+   Nay chỉ hash TRÙNG TÊN MỘT SCREEN mới đổi màn; hash khác để trình duyệt tự
+   cuộn tới mỏ neo. Danh sách tên đọc từ DOM để thêm screen là tự có. */
+const SCREEN_IDS = [...document.querySelectorAll('.screen')].map(s => s.dataset.screen);
+window.addEventListener('hashchange', () => {
+  const id = (location.hash || '').slice(1);
+  if (id && !SCREEN_IDS.includes(id)) return;
+  setScreen(id || 'nam', { push: false });
+});
 
 /* Nút về đầu trang — DÙNG CHUNG, đúng 1 bản (bản gốc không cho header trượt
    theo scroll nên scroll chỉ lo việc này) */
@@ -2819,7 +2857,11 @@ const ARROW = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-
      `alt`  PHẢI mô tả đủ nội dung CHỮ IN TRONG TRANH: đây là lúc duy nhất
             người dùng trình đọc màn hình nghe được thông điệp, vì chữ nằm
             trong pixel chứ không phải trong DOM.
-     `href` cả tấm là một đường dẫn (chỗ bấm thay cho nút đã gỡ 27/08)
+     `href` cả tấm là một đường dẫn (chỗ bấm thay cho nút đã gỡ 27/08). 03/09
+            đổi từ `#` chết sang MỎ NEO của mục liên quan trong trang, để cú bấm
+            có việc thật: tấm khuyến mãi -> hàng mới · tấm Versace -> nhà mốt
+            trong ngày · tấm giày -> lưới danh mục. Nối route thật thì thay
+            ĐÚNG BA CHUỖI này, không phải sửa khuôn.
      `pos`  chỉ cần cho ảnh TẠM chưa đúng khổ banner — tranh đúng khổ thì bỏ.
 
    Tấm 1 là banner thật khách gửi 28/08. HAI TẤM SAU LÀ TẠM: chúng là ảnh sản
@@ -2827,11 +2869,11 @@ const ARROW = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-
    giữ để slider có đủ 3 slide mà xem nhịp. Có banner thật thì XOÁ 2 dòng đó,
    đừng sửa. */
 const HERO_SLIDES = [
-  { img: 'hero-holiday.jpg', href: '#',
+  { img: 'hero-holiday.jpg', href: '#hang-moi-nam',
     alt: 'Holiday Exclusive — nhân đôi điểm thưởng và voucher 1.200.000 ₫ khi đăng nhập và mua sắm, từ 26.08 đến 04.09' },
-  { img: 'brand-hero.png', pos: 'center 22%', href: '#', tam: true,
+  { img: 'brand-hero.png', pos: 'center 22%', href: '#nha-mot-nam', tam: true,
     alt: 'TẠM — bộ sưu tập nam Thu Đông 2026 của Versace' },
-  { img: 'p6-0.jpg', pos: 'center 56%', href: '#', tam: true,
+  { img: 'p6-0.jpg', pos: 'center 56%', href: '#danh-muc-nam', tam: true,
     alt: 'TẠM — giày thể thao da lộn Greca Court' },
 ];
 
@@ -3430,10 +3472,8 @@ props.addEventListener('click', e => {
       '</div>' +
     '</article>';
 
-  /* Banner: dòng dưới tiêu đề đếm từ data, không gõ tay */
-  const nHouses = new Set(BT_SKUS.map(p => p.brand)).size;
-  document.getElementById('btHeroCount').textContent =
-    BT_SKUS.length + ' dòng từ ' + nHouses + ' nhà mốt, đang có tại boutique.';
+  /* Banner nay thuần ảnh (03/09) — không còn dòng đếm nào để ghi lên nó.
+     Con số "đếm từ data" vẫn sống ở U2 ngay bên dưới (#btBigNum). */
 
   /* U2 · dải "Vừa về": 4 mã đầu. Số bên trái đếm từ cây danh mục. */
   const nTypes = BEAUTY_CATS.reduce((n, [, items]) => n + items.length, 0);

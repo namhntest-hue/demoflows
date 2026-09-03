@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ma trận 5 file — DAFC demo</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Bodoni:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   Ma trận 5 file — trang rà soát nội bộ, 03/09/2026
+   Token lấy theo tokens.css của dự án (neutral + red).
+   Thang chữ: chỉ 12/16 · 14/20 · 16/24 · 24/32 · 32/40 (STYLE-RULES §1).
+   Lớp nổi / khung: viền 1px, KHÔNG bóng (luật khuôn chung lớp nổi).
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --paper:  #ffffff;
+  --wash:   #fafafa;   /* neutral-50  */
+  --rule:   #e5e5e5;   /* neutral-200 */
+  --hair:   #f0f0f0;
+  --muted:  #737373;   /* neutral-500 */
+  --ink:    #171717;   /* neutral-900 */
+
+  /* Làn trạng thái — tách khỏi màu nhấn, không dùng riêng màu để mang nghĩa */
+  --gap:    #b91c3a;   /* red-700  — thiếu */
+  --gap-bg: #fef2f2;   /* red-50   */
+  --na:     #a3a3a3;   /* neutral-400 — không áp dụng */
+
+  --t-display: "Libre Bodoni", Georgia, "Times New Roman", serif;
+  --t-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--wash);
+  color: var(--ink);
+  font-family: var(--t-ui);
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1140px; margin: 0 auto; padding: 48px 24px 96px; }
+
+/* ── Đầu trang ────────────────────────────────────────────────── */
+.eyebrow {
+  font-size: 12px; line-height: 16px;
+  letter-spacing: .06em;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+h1 {
+  font-family: var(--t-display);
+  font-weight: 400;
+  font-size: 32px; line-height: 40px;
+  margin: 0 0 12px;
+  text-wrap: balance;
+}
+.lede {
+  max-width: 62ch;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+.lede strong { color: var(--ink); font-weight: 500; }
+
+/* ── Rollup ───────────────────────────────────────────────────── */
+/* Viền đặt lên TỪNG ô, không dùng mẹo nền-làm-đường-kẻ: khi lưới
+   xuống hàng, ô trống của mẹo đó để lộ một mảng xám. */
+.rollup {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 32px 0;
+}
+.tile { background: var(--paper); border: 1px solid var(--rule); padding: 16px; }
+.tile-name {
+  font-size: 12px; line-height: 16px;
+  color: var(--muted);
+  margin: 0 0 8px;
+  word-break: break-all;
+}
+.tile-num {
+  font-family: var(--t-display);
+  font-size: 32px; line-height: 40px;
+  font-variant-numeric: tabular-nums;
+  display: block;
+}
+.tile-num.is-gap { color: var(--gap); }
+.tile-note { font-size: 12px; line-height: 16px; color: var(--muted); margin: 4px 0 0; }
+
+/* ── Điều khiển ───────────────────────────────────────────────── */
+.controls {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+  padding: 12px 16px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  margin-bottom: -1px;
+}
+.ctl { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.ctl input { width: 16px; height: 16px; accent-color: var(--ink); margin: 0; cursor: pointer; }
+.legend { margin-left: auto; display: flex; gap: 16px; font-size: 12px; line-height: 16px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ── Bảng ─────────────────────────────────────────────────────── */
+.scroller { overflow-x: auto; border: 1px solid var(--rule); background: var(--paper); }
+table { border-collapse: collapse; width: 100%; min-width: 880px; }
+
+/* Dòng dẫn nằm NGOÀI vùng cuộn ngang, nếu không nó trôi mất khi kéo bảng. */
+.table-note {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 12px; line-height: 16px;
+  color: var(--muted);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-bottom: 0;
+}
+
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+
+thead th {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+  font-weight: 500;
+  font-size: 12px; line-height: 16px;
+  white-space: nowrap;
+}
+thead th.col-feat { z-index: 3; left: 0; }
+
+.col-feat {
+  position: sticky; left: 0; z-index: 1;
+  background: var(--paper);
+  min-width: 260px;
+  border-right: 1px solid var(--rule);
+}
+tbody tr:hover .col-feat, tbody tr:hover td { background: var(--wash); }
+
+.feat-name { display: block; }
+.feat-key {
+  display: block;
+  font-size: 12px; line-height: 16px;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+.group th {
+  background: var(--wash);
+  font-weight: 500;
+  font-size: 12px; line-height: 16px;
+  color: var(--muted);
+  letter-spacing: .04em;
+  border-bottom: 1px solid var(--rule);
+  border-top: 1px solid var(--rule);
+}
+/* Ô nhóm rộng bằng cả bảng nên sticky đặt lên ô là vô nghĩa —
+   phải ghim CHỮ bên trong, nếu không nhãn nhóm trôi mất khi cuộn ngang. */
+.group th span { position: sticky; left: 12px; display: inline-block; }
+
+/* Mức ưu tiên — chỉ gắn cho dòng CÓ lệch. Ba mức, luôn kèm chữ. */
+.sev {
+  display: inline-block;
+  font-size: 12px; line-height: 16px;
+  padding: 0 6px;
+  border: 1px solid var(--rule);
+  margin-top: 4px;
+}
+.sev-chan { border-color: #f8a9af; background: var(--gap-bg); color: var(--gap); font-weight: 500; }
+.sev-nen  { border-color: var(--rule); background: var(--wash); color: var(--muted); }
+.sev-vat  { border-color: var(--hair); background: var(--paper); color: var(--na); }
+
+td.cell { text-align: center; width: 116px; font-variant-numeric: tabular-nums; }
+.mark { font-size: 14px; line-height: 20px; }
+.mark.ok  { color: var(--ink); }
+.mark.no  { color: var(--gap); font-weight: 600; }
+.mark.na  { color: var(--na); }
+td.cell.is-no { background: var(--gap-bg); }
+tbody tr:hover td.cell.is-no { background: #fde8ea; }
+
+/* ── Ghi chú ──────────────────────────────────────────────────── */
+.notes { margin-top: 48px; display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.note { background: var(--paper); border: 1px solid var(--rule); padding: 20px; }
+.note h2 {
+  font-family: var(--t-display);
+  font-weight: 400;
+  font-size: 18px; line-height: 24px;
+  margin: 0 0 12px;
+}
+.note p { margin: 0 0 12px; }
+.note p:last-child { margin-bottom: 0; }
+.note ol, .note ul { margin: 0 0 12px; padding-left: 20px; }
+.note li { margin-bottom: 8px; }
+.note li:last-child { margin-bottom: 0; }
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  background: var(--wash);
+  border: 1px solid var(--hair);
+  padding: 1px 4px;
+}
+pre {
+  margin: 0;
+  overflow-x: auto;
+  background: var(--wash);
+  border: 1px solid var(--hair);
+  padding: 12px;
+  font-size: 12px; line-height: 16px;
+}
+pre code { background: none; border: 0; padding: 0; }
+
+.flag { border-left: 2px solid var(--gap); padding-left: 12px; }
+
+footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--rule); font-size: 12px; line-height: 16px; color: var(--muted); }
+
+:where(a, button, input, [tabindex]):focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+@media (max-width: 640px) {
+  .wrap { padding: 32px 16px 64px; }
+  h1 { font-size: 24px; line-height: 32px; }
+  .legend { margin-left: 0; width: 100%; }
+
+  /* Khổ hẹp: co cột tên lại, nếu không nó ăn hết bề rộng và
+     cuộn ngang bao nhiêu cũng không thấy được ô đánh dấu.
+     Ba số phải CỘNG ĐÚNG (172 + 5×76 = 552); để lệch thì phần dư
+     dồn hết vào cột tên và nó lại phình ra như cũ. */
+  table { min-width: 552px; }
+  .col-feat { min-width: 172px; width: 172px; }
+  th, td { padding: 10px 8px; }
+  td.cell { width: 76px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Rà soát nội bộ · 03/09/2026</p>
+  <h1>Ma trận 5 file</h1>
+  <p class="lede">Tính năng nào đã có ở bản nào. Dữ liệu quét trực tiếp từ mã nguồn ngày 03/09/2026, <strong>không chép từ README</strong>. Mỗi ô mơ hồ đều được mở ra đọc ngữ cảnh trước khi chấm.</p>
+</header>
+
+<!-- Số trong các ô này TÍNH TỪ BẢNG lúc chạy, không gõ tay —
+     bản đầu gõ tay và đếm thiếu (ghi 10 trong khi bảng có 12). -->
+<section class="rollup" aria-label="Tổng hợp theo file">
+  <div class="tile" data-col="1">
+    <p class="tile-name">index.html <span aria-hidden="true">·</span> mobile</p>
+    <span class="tile-num"></span>
+    <p class="tile-note"><span class="tile-mix"></span><br>13.685 dòng</p>
+  </div>
+  <div class="tile" data-col="2">
+    <p class="tile-name">desktop.html</p>
+    <span class="tile-num"></span>
+    <p class="tile-note"><span class="tile-mix"></span><br>14.649 dòng</p>
+  </div>
+  <div class="tile" data-col="3">
+    <p class="tile-name">desktop-neutral.html</p>
+    <span class="tile-num"></span>
+    <p class="tile-note"><span class="tile-mix"></span><br>fork 21/08 · 9.136 dòng</p>
+  </div>
+  <div class="tile" data-col="4">
+    <p class="tile-name">desktop-editorial.html</p>
+    <span class="tile-num"></span>
+    <p class="tile-note"><span class="tile-mix"></span><br>fork 21/08 · 9.824 dòng</p>
+  </div>
+  <div class="tile" data-col="5">
+    <p class="tile-name">desktop-atelier.html</p>
+    <span class="tile-num"></span>
+    <p class="tile-note"><span class="tile-mix"></span><br>fork 21/08 · 10.329 dòng</p>
+  </div>
+</section>
+
+<div class="controls">
+  <label class="ctl">
+    <input type="checkbox" id="onlyGaps">
+    <span>Chỉ hiện dòng có lệch</span>
+  </label>
+  <div class="legend">
+    <span><span class="mark ok" aria-hidden="true">✓</span> có</span>
+    <span><span class="mark no" aria-hidden="true">✗</span> thiếu</span>
+    <span><span class="mark na" aria-hidden="true">–</span> không áp dụng</span>
+    <span><span class="sev sev-chan">chặn</span> cản bàn giao</span>
+    <span><span class="sev sev-nen">nên</span> lệch thật</span>
+    <span><span class="sev sev-vat">vặt</span> nhánh đã bỏ</span>
+  </div>
+</div>
+
+<p class="table-note" id="matrixNote">25 hạng mục × 5 bản. Rê vào ô để xem căn cứ đã đo.</p>
+
+<div class="scroller">
+<table id="matrix" aria-label="Ma trận tính năng theo từng bản" aria-describedby="matrixNote">
+  <thead>
+    <tr>
+      <th scope="col" class="col-feat">Hạng mục</th>
+      <th scope="col">index</th>
+      <th scope="col">desktop</th>
+      <th scope="col">neutral</th>
+      <th scope="col">editorial</th>
+      <th scope="col">atelier</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <tr class="group"><th colspan="6" scope="colgroup"><span>Giỏ hàng</span></th></tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Thêm vào giỏ ghi thật một dòng</span><span class="feat-key">CART.unshift</span></th>
+      <td class="cell is-no"><span class="mark no" title="index.html chỉ có CART.push ở nhánh đặt lại giỏ (dòng 10486), không có điểm ghi khi thêm">✗</span></td>
+      <td class="cell"><span class="mark ok" title="desktop.html:6655 — CART.unshift trong addToCart()">✓</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 điểm ghi">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 điểm ghi">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 điểm ghi">✗</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Hàm thêm vào giỏ dùng chung</span><span class="feat-key">addToCart()</span></th>
+      <td class="cell is-no"><span class="mark no" title="0 khớp trong index.html">✗</span></td>
+      <td class="cell"><span class="mark ok" title="desktop.html:6647 — 6 khớp">✓</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Đồng bộ số trên icon giỏ</span><span class="feat-key">syncCartBadge()</span></th>
+      <td class="cell"><span class="mark na" title="mobile đi đường riêng: refreshCartCount() — khác khuôn, không phải thiếu">–</span></td>
+      <td class="cell"><span class="mark ok" title="desktop.html:6669">✓</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Tóm tắt giỏ khi rê icon (28/08)</span><span class="feat-key">mini cart desktop</span></th>
+      <td class="cell"><span class="mark na" title="mobile có miniCart() riêng ở index.html:4223 — khuôn khác">–</span></td>
+      <td class="cell"><span class="mark ok" title="desktop.html:948 — khối mini-cart">✓</span></td>
+      <td class="cell is-no"><span class="mark no" title="chỉ còn chú thích ghi đã xoá helper miniCart ngày 12/08">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="chỉ còn chú thích ghi đã xoá helper miniCart ngày 12/08">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="chỉ còn chú thích ghi đã xoá helper miniCart ngày 12/08">✗</span></td>
+    </tr>
+
+    <tr class="group"><th colspan="6" scope="colgroup"><span>Danh sách sản phẩm (PLP)</span></th></tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Vá ảnh mất sau khi lọc (29/08)</span><span class="feat-key">wireLazy</span></th>
+      <td class="cell"><span class="mark ok" title="10 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="12 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="10 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="10 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="12 khớp">✓</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Vẽ lại lưới khi lọc</span><span class="feat-key">renderPlpGrid</span></th>
+      <td class="cell"><span class="mark ok" title="11 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="16 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="16 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="16 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="15 khớp">✓</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Quick add lấy đúng size từng SKU</span><span class="feat-key">qaSizesOf()</span></th>
+      <td class="cell"><span class="mark ok" title="index.html — 7 khớp, hàm có thật">✓</span></td>
+      <td class="cell is-no"><span class="mark no" title="desktop.html:3439 CHỈ có chú thích nhắc tên hàm — hàm không tồn tại trong file">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Ô tìm thương hiệu (27/08)</span><span class="feat-key">brand search</span></th>
+      <td class="cell"><span class="mark ok" title="6 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="6 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="6 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="6 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="6 khớp">✓</span></td>
+    </tr>
+
+    <tr class="group"><th colspan="6" scope="colgroup"><span>Trang sản phẩm (PDP)</span></th></tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">PDP gộp một nguồn dữ liệu</span><span class="feat-key">PDP_DATA</span></th>
+      <td class="cell"><span class="mark ok" title="5 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="16 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="8 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="9 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="9 khớp">✓</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Cột nội dung 569 (28/08)</span><span class="feat-key">dk-info-wide</span></th>
+      <td class="cell"><span class="mark na" title="chốt riêng cho PDP#1 bản desktop">–</span></td>
+      <td class="cell"><span class="mark ok" title="6 khớp">✓</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Gợi ý mua kèm khuôn chữ một bên</span><span class="feat-key">dkLookSection</span></th>
+      <td class="cell"><span class="mark na" title="chốt riêng cho PDP#1 bản desktop">–</span></td>
+      <td class="cell"><span class="mark ok" title="5 khớp">✓</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Dải gợi ý cũ tách riêng</span><span class="feat-key">dkRailSection</span></th>
+      <td class="cell"><span class="mark na" title="chốt riêng cho PDP#1 bản desktop">–</span></td>
+      <td class="cell"><span class="mark ok" title="3 khớp">✓</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Size về chip, bỏ dropdown (28/08)</span><span class="feat-key">data-size=</span></th>
+      <td class="cell"><span class="mark ok" title="chip có; #sizeSheet chỉ còn phục vụ quick add ngoài PLP">✓</span></td>
+      <td class="cell"><span class="mark ok" title="chip có; các khớp #sizeSheet còn lại đều là chú thích">✓</span></td>
+      <td class="cell"><span class="mark ok" title="chip có; 2 khớp #sizeSheet đều là chú thích">✓</span></td>
+      <td class="cell"><span class="mark ok" title="chip có; 2 khớp #sizeSheet đều là chú thích">✓</span></td>
+      <td class="cell"><span class="mark ok" title="chip có; 2 khớp #sizeSheet đều là chú thích">✓</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Đã bỏ mục Đã xem gần đây (28/08)</span><span class="feat-key">recently viewed</span></th>
+      <td class="cell"><span class="mark ok" title="chỉ còn khoá i18n, không còn section">✓</span></td>
+      <td class="cell"><span class="mark ok" title="desktop.html:6195 — chú thích ghi đã bỏ hẳn">✓</span></td>
+      <td class="cell"><span class="mark ok" title="chú thích ghi đã bỏ hẳn">✓</span></td>
+      <td class="cell"><span class="mark ok" title="chú thích ghi đã bỏ hẳn">✓</span></td>
+      <td class="cell"><span class="mark ok" title="chú thích ghi đã bỏ hẳn">✓</span></td>
+    </tr>
+
+    <tr class="group"><th colspan="6" scope="colgroup"><span>Bộ lọc</span></th></tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Cây lọc 3 tầng từ Excel</span><span class="feat-key">FILTER_CATS</span></th>
+      <td class="cell"><span class="mark ok" title="4 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="4 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="5 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="5 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="5 khớp">✓</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Cây tách theo giới (26/08)</span><span class="feat-key">catTreeFor()</span></th>
+      <td class="cell"><span class="mark ok" title="5 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="5 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="4 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="4 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="4 khớp">✓</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Lọc thật theo độ cao giày</span><span class="feat-key">heel</span></th>
+      <td class="cell"><span class="mark ok" title="21 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="21 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="17 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="17 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="17 khớp">✓</span></td>
+    </tr>
+
+    <tr class="group"><th colspan="6" scope="colgroup"><span>Trang thương hiệu</span></th></tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Data D&amp;G + Zimmermann (02/09)</span><span class="feat-key">BRAND_PAGES</span></th>
+      <td class="cell"><span class="mark ok" title="5 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="5 khớp">✓</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp — còn bản in cứng Versace">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp — còn bản in cứng Versace">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp — còn bản in cứng Versace">✗</span></td>
+    </tr>
+
+    <tr class="group"><th colspan="6" scope="colgroup"><span>Bộ da và luật chung</span></th></tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Khối menu chung theo skin-mt (25/08)</span><span class="feat-key">thanh menu một khuôn</span></th>
+      <td class="cell"><span class="mark ok" title="index.html:751 — khối có thật">✓</span></td>
+      <td class="cell"><span class="mark ok" title="desktop.html:1182 — khối có thật">✓</span></td>
+      <td class="cell is-no"><span class="mark no" title="dòng 820 là chú thích ghi rõ file này CHƯA HỀ có khối đó; chỉ được vá uppercase riêng">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="dòng 1392 là chú thích ghi rõ file này CHƯA HỀ có khối đó; chỉ được vá uppercase riêng">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="dòng 1379 là chú thích ghi rõ file này CHƯA HỀ có khối đó; chỉ được vá uppercase riêng">✗</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Bộ da Libre + Inter</span><span class="feat-key">skin-li</span></th>
+      <td class="cell"><span class="mark ok" title="59 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="64 khớp">✓</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Bộ da Maika</span><span class="feat-key">skin-mk</span></th>
+      <td class="cell"><span class="mark ok" title="18 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="20 khớp">✓</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+      <td class="cell is-no"><span class="mark no" title="0 khớp">✗</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Đã gỡ hiệu ứng nhún khi nhấn (02/09)</span><span class="feat-key">:active { scale() }</span></th>
+      <td class="cell"><span class="mark ok" title="0 khớp — sạch">✓</span></td>
+      <td class="cell"><span class="mark ok" title="0 khớp — sạch">✓</span></td>
+      <td class="cell"><span class="mark ok" title="0 khớp — sạch">✓</span></td>
+      <td class="cell"><span class="mark ok" title="0 khớp — sạch">✓</span></td>
+      <td class="cell"><span class="mark ok" title="0 khớp — sạch">✓</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Sticky CTA ẩn ở footer (31/08)</span><span class="feat-key">[data-footer]</span></th>
+      <td class="cell"><span class="mark ok" title="3 khớp">✓</span></td>
+      <td class="cell"><span class="mark na" title="bản desktop không có thanh sticky mobile">–</span></td>
+      <td class="cell"><span class="mark na" title="bản desktop không có thanh sticky mobile">–</span></td>
+      <td class="cell"><span class="mark na" title="bản desktop không có thanh sticky mobile">–</span></td>
+      <td class="cell"><span class="mark na" title="bản desktop không có thanh sticky mobile">–</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Pre-order</span><span class="feat-key">pre-order</span></th>
+      <td class="cell"><span class="mark ok" title="91 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="81 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="59 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="65 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="70 khớp">✓</span></td>
+    </tr>
+
+    <tr>
+      <th scope="row" class="col-feat"><span class="feat-name">Từ điển song ngữ</span><span class="feat-key">I18N_REV</span></th>
+      <td class="cell"><span class="mark ok" title="10 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="12 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="6 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="7 khớp">✓</span></td>
+      <td class="cell"><span class="mark ok" title="7 khớp">✓</span></td>
+    </tr>
+
+  </tbody>
+</table>
+</div>
+
+<section class="notes">
+
+  <div class="note">
+    <h2>Ba điều bảng này cho thấy</h2>
+    <ol>
+      <li class="flag"><strong>Ở bản mobile, nút thêm vào giỏ không ghi gì vào giỏ.</strong> Cả file <code>index.html</code> chỉ có đúng một điểm chạm mảng <code>CART</code>, ở dòng 10486, và đó là nhánh <em>đặt lại</em> giỏ. Bản desktop có <code>CART.unshift</code> thật ở dòng 6655. Nếu khách bấm thử trên mobile rồi mở giỏ, số lượng sẽ không khớp.</li>
+      <li><strong>Ba bản fork skin là ảnh chụp ngày 21/08.</strong> Mười hai hạng mục thiếu ở cả ba là giống hệt nhau và đều rơi vào khoảng 25/08 trở đi. Đây không phải ba lỗi riêng lẻ mà là một mốc thời gian.</li>
+      <li><strong>Một chú thích lạc hậu ở desktop.</strong> Dòng 3439 của <code>desktop.html</code> viết rằng quick add đọc size qua <code>qaSizesOf()</code>, nhưng hàm đó không có trong file — nó chỉ tồn tại ở <code>index.html</code>. Chú thích không chạy nên không gây lỗi, nhưng nó chỉ sai đường cho lần sửa sau.</li>
+      <li class="flag"><strong>Ba bản fork không trình được giao diện khách đã chốt.</strong> Ngày 03/09 khách chốt <code>skin-li</code> — cặp Libre Bodoni &amp; Inter — làm phương án gần cuối cùng. Quét lại thì cả ba fork <strong>không có một dòng Libre Bodoni nào</strong>: <code>desktop-neutral</code> và <code>desktop-atelier</code> vào trang không mang bộ da nào, <code>desktop-editorial</code> mang <code>skin-mp</code> bản cũ, cả ba đều chạy Montserrat. Đây là lý do dòng <code>skin-li</code> xếp mức chặn còn <code>skin-mk</code> chỉ là vặt.</li>
+    </ol>
+  </div>
+
+  <div class="note">
+    <h2>Cách đọc, và giới hạn</h2>
+    <p>Dấu <span class="mark na" aria-hidden="true">–</span> nghĩa là <em>không áp dụng</em>, không phải thiếu. Thanh sticky mobile không thuộc bản desktop; mini cart của mobile là một khuôn khác chứ không phải bản kém hơn.</p>
+    <p>Bảng chấm theo <strong>sự có mặt của mã</strong>, không phải theo hành vi chạy thật. Một hạng mục dấu <span class="mark ok" aria-hidden="true">✓</span> nghĩa là mã có ở đó, chưa phải là đã bấm thử.</p>
+    <p class="flag">Đếm grep thô nói dối ở hai chỗ: cả năm file đều khớp chuỗi <em>khối menu chung</em> đúng một lần, nhưng ở ba bản fork lần khớp đó nằm trong câu chú thích nói rằng file <em>chưa hề có</em> khối ấy. Tương tự với <code>qaSizesOf</code> ở desktop. Hai ô đó đã mở ra đọc tay.</p>
+  </div>
+
+  <div class="note">
+    <h2>Kiểm lại</h2>
+    <p>Dựng lại bảng đếm bất cứ lúc nào:</p>
+<pre><code>cd /d/doc
+for f in index desktop desktop-neutral \
+         desktop-editorial desktop-atelier; do
+  printf "%-24s %s\n" "$f" \
+    "$(grep -c 'BRAND_PAGES' $f.html)"
+done</code></pre>
+    <p style="margin-top:12px">Đổi <code>BRAND_PAGES</code> thành khoá bất kỳ ở cột thứ hai của bảng. Với các khoá có khả năng dính chú thích, thêm <code>-n</code> rồi đọc dòng thay vì tin con số.</p>
+  </div>
+
+</section>
+
+<footer>
+  <p>Quét ngày 03/09/2026 · 25 hạng mục × 5 bản · dữ liệu từ mã nguồn, không lấy từ README. Tài liệu nội bộ, để mở bằng trình duyệt tại chỗ.</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var box = document.getElementById('onlyGaps');
+  var table = document.getElementById('matrix');
+  if (!box || !table) return;
+
+  var rows = Array.prototype.slice.call(table.tBodies[0].rows);
+
+  /* ── Mức ưu tiên, khoá theo tên kỹ thuật ở cột đầu ──────────────────
+     chặn = cản việc trình bản khách đã duyệt, hoặc khách bấm vào là thấy sai
+     nên  = lệch thật nhưng không cản bàn giao
+     vặt  = thuộc nhánh đã bỏ, hoặc chỉ là chú thích lạc hậu             */
+  var SEV = {
+    'CART.unshift':            'chan',  // khách bấm thêm giỏ trên mobile là số không khớp
+    'addToCart()':             'chan',  // cùng gốc với dòng trên
+    'thanh menu một khuôn':    'nen',
+    'syncCartBadge()':         'nen',
+    'mini cart desktop':       'nen',
+    'dk-info-wide':            'nen',
+    'dkLookSection':           'nen',
+    'dkRailSection':           'nen',
+    'BRAND_PAGES':             'nen',
+    'skin-li':                 'chan',  // 3 fork không trình được giao diện khách chốt 03/09
+    'skin-mk':                 'vat',   // Maika nay dư — skin-li làm cùng việc, đủ hơn
+    'qaSizesOf()':             'vat'    // ở desktop chỉ là chú thích, hàm không tồn tại
+  };
+  var NHAN = { chan: 'chặn', nen: 'nên', vat: 'vặt' };
+
+  rows.forEach(function (r) {
+    if (r.classList.contains('group')) return;
+    var keyEl = r.querySelector('.feat-key');
+    var sev = keyEl && SEV[keyEl.textContent.trim()];
+    if (!sev) return;
+    r.dataset.sev = sev;
+    var chip = document.createElement('span');
+    chip.className = 'sev sev-' + sev;
+    chip.textContent = NHAN[sev];
+    keyEl.parentNode.appendChild(chip);
+  });
+
+  /* ── Ô tổng hợp: đếm từ chính bảng, không gõ tay ────────────────── */
+  Array.prototype.forEach.call(document.querySelectorAll('.tile'), function (tile) {
+    var i = parseInt(tile.dataset.col, 10);
+    var tally = { chan: 0, nen: 0, vat: 0 }, tong = 0;
+    rows.forEach(function (r) {
+      if (r.classList.contains('group')) return;
+      if (!r.cells[i] || !r.cells[i].querySelector('.mark.no')) return;
+      tong++;
+      if (r.dataset.sev) tally[r.dataset.sev]++;
+    });
+    var num = tile.querySelector('.tile-num');
+    num.textContent = tong;
+    num.className = 'tile-num' + (tally.chan ? ' is-gap' : '');
+    tile.querySelector('.tile-mix').textContent = tong === 0
+      ? 'không thiếu gì'
+      : tally.chan + ' chặn · ' + tally.nen + ' nên · ' + tally.vat + ' vặt';
+  });
+
+  box.addEventListener('change', function () {
+    var on = box.checked;
+    var groupHasVisible = null;
+
+    // Duyệt ngược để biết mỗi nhóm còn dòng nào hiện hay không.
+    for (var i = rows.length - 1; i >= 0; i--) {
+      var r = rows[i];
+      if (r.classList.contains('group')) {
+        r.hidden = on && !groupHasVisible;
+        groupHasVisible = false;
+        continue;
+      }
+      var gap = !!r.querySelector('.mark.no');
+      r.hidden = on && !gap;
+      if (!r.hidden) groupHasVisible = true;
+    }
+  });
+})();
+</script>
+</body>
+</html>

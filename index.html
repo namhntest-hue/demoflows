@@ -4355,40 +4355,55 @@ function screenPLPList() {
   <div class="w-full" data-scroller>
     ${navBar()}
 
-    <!-- breadcrumb + tiêu đề trang -->
-    <div class="py-2">
-      <div class="flex gap-1 items-center px-4 h-9 text-[14px] leading-5 text-muted-foreground">
-        <span>${crumbs[0]}</span>
-        ${crumbs.slice(1).map(t => `
-        <span class="flex gap-1 items-center">
-          <span class="w-4 h-4 flex items-center justify-center"><span class="w-[3px] h-[3px] rounded-full bg-muted-foreground"></span></span>
-          <span>${t}</span>
-        </span>`).join('')}
-      </div>
+    <!-- breadcrumb + tiêu đề trang
+         03/09/2026 — ĐỒNG BỘ NGƯỢC TỪ FIGMA (section "PLP — trạng thái & biến thể",
+         component Breadcrumb 135:6239 — dùng chung PLP + PDP, cả 2 khổ). Ba việc:
+           · hàng 36 ĐỨNG MỘT MÌNH: bỏ hộp py-2 bọc ngoài, khối 52 -> 36
+           · chữ 12/16 (vai "chắc chắn một dòng" của 13.1) thay vì 14/20 rơi về 12/18
+           · ĐOẠN CUỐI = trang đang đứng -> mực chính, các đoạn trước để mờ.
+         Không dùng dấu backtick trong comment này: cả khối nằm trong template
+         literal, một dấu backtick là cắt đôi chuỗi (xem README). -->
+    <div class="flex gap-1 items-center px-4 h-9 text-[12px] leading-4 text-muted-foreground">
+      <span${crumbs.length === 1 ? ' class="text-foreground"' : ''}>${crumbs[0]}</span>
+      ${crumbs.slice(1).map((t, i) => `
+      <span class="flex gap-1 items-center">
+        <span class="w-4 h-4 flex items-center justify-center"><span class="w-[3px] h-[3px] rounded-full bg-muted-foreground"></span></span>
+        <span${i === crumbs.length - 2 ? ' class="text-foreground"' : ''}>${t}</span>
+      </span>`).join('')}
     </div>
     <div class="flex items-center px-4 py-2">
       <h1 class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground truncate">${m.title || ''}</h1>
     </div>
 
     ${list.length ? `
-    <div class="flex items-center justify-between pl-4 pr-2 h-12 bg-background">
-      <p data-plp-count class="text-[16px] font-light leading-6 text-foreground">${sortedProducts().length} sản phẩm</p>
-      <div class="flex items-center">
-        ${[['2', I.gridCols2], ['1', I.gridCols1]].map(([n, ico]) => `
-          <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press text-foreground transition-opacity ${n === plpGridCols ? '' : 'opacity-50'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
+    <!-- THANH LỌC MOBILE = component filter-bar/platform=mobile (375x97), đồng bộ
+         ngược từ Figma 03/09/2026. HAI hàng 36 nằm trong CÙNG một tấm dính
+         (đệm 8/8/8/16, khe 8 -> 8+36+8+36+8+kẻ = 97):
+           hàng trên = số sản phẩm + đổi mật độ lưới 1/2 cột
+           hàng dưới = Bộ lọc + Sắp xếp
+         Trước 03/09 hàng đếm là khối RỜI cao 48 nằm NGOÀI thanh dính (cuộn là
+         trôi mất nút đổi mật độ), còn thanh lọc chỉ cao 52 và đệm ngang 16/16.
+         Số đo nút theo bậc DS: Bộ lọc = action outline/small (h36, đệm ngang 12,
+         viền mực chính), Sắp xếp = ghost/small (h36, đệm 12, nhãn 12/16). -->
+    <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex flex-col gap-2 pl-4 pr-2 py-2 backdrop-blur-[7.5px]">
+      <div class="flex items-center justify-between h-9">
+        <p data-plp-count class="text-[12px] leading-4 text-foreground">${sortedProducts().length} sản phẩm</p>
+        <div class="flex items-center">
+          ${[['2', I.gridCols2], ['1', I.gridCols1]].map(([n, ico]) => `
+            <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press text-foreground transition-opacity ${n === plpGridCols ? '' : 'opacity-50'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
+        </div>
       </div>
-    </div>
-
-    <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex items-center justify-between px-4 h-[52px] backdrop-blur-[7.5px]">
-      <button data-sheet="filter" class="flex items-center gap-2 px-4 h-9 rounded-xs border border-border bg-background text-[14px] font-medium text-foreground btn-o press">${I.sliders} Bộ lọc</button>
-      <div class="relative">
-        <button id="sortBtn" class="flex items-center gap-1.5 px-4 h-9 text-[14px] font-medium text-foreground-alt press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
-        <div id="sortMenu" class="hidden absolute mt-1 bg-background z-50" style="right:0;top:100%;width:240px">
-          ${SORT_OPTIONS.map(([id, label]) => `
-            <button class="sort-opt w-full text-left px-4 h-11 flex items-center justify-between text-[14px] ${id === plpSort ? 'font-medium text-foreground' : 'text-foreground-alt'}" data-sort="${id}">
-              <span>${label}</span>
-              ${id === plpSort ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
-            </button>`).join('')}
+      <div class="flex items-center justify-between h-9">
+        <button data-sheet="filter" class="flex items-center gap-2 px-3 h-9 rounded-xs border border-primary bg-background text-[14px] leading-5 text-foreground btn-o press">${I.sliders} Bộ lọc</button>
+        <div class="relative">
+          <button id="sortBtn" class="flex items-center gap-2 px-3 h-9 text-[12px] leading-4 text-foreground press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
+          <div id="sortMenu" class="hidden absolute mt-1 bg-background z-50" style="right:0;top:100%;width:240px">
+            ${SORT_OPTIONS.map(([id, label]) => `
+              <button class="sort-opt w-full text-left px-4 h-11 flex items-center justify-between text-[14px] ${id === plpSort ? 'font-medium text-foreground' : 'text-foreground-alt'}" data-sort="${id}">
+                <span>${label}</span>
+                ${id === plpSort ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+              </button>`).join('')}
+          </div>
         </div>
       </div>
     </div>
@@ -4397,8 +4412,11 @@ function screenPLPList() {
       ${plpGridInner(sortedProducts(), card)}
     </div>
 
+    <!-- Xem thêm = action outline/large (120x48, đệm ngang 20, nhãn 14/20 thường,
+         viền mực chính). Trước 03/09 nút cao 44 - bậc KHÔNG có trong thang DS
+         (36/40/48) - và nhãn semibold rơi về 12/18 vì thiếu class btn-o. -->
     <div class="flex justify-center py-6">
-      <button id="showMore" class="h-11 px-8 border border-primary text-[14px] font-semibold text-foreground press flex items-center gap-2">Xem thêm</button>
+      <button id="showMore" class="h-12 px-5 border border-primary text-[14px] leading-5 text-foreground btn-o press flex items-center gap-2">Xem thêm</button>
     </div>
 
     ${camKetSection()}` : `
@@ -4500,26 +4518,28 @@ function screenPLP() {
 
     ${brandCatStrip(B.cats)}
 
-    <!-- filter bar (in-flow) -->
-    <!-- Frame 49: đếm SP + chuyển grid 1/2 cột — KHÔNG sticky, cuộn là trôi đi -->
-    <div class="flex items-center justify-between pl-4 pr-2 h-12 bg-background">
-      <p data-plp-count class="text-[16px] font-light leading-6 text-foreground">${sortedProducts().length} sản phẩm</p>
-      <div class="flex items-center">
-        ${[['2', I.gridCols2], ['1', I.gridCols1]].map(([n, ico]) => `
-          <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press text-foreground transition-opacity ${n === plpGridCols ? '' : 'opacity-50'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
+    <!-- THANH LỌC MOBILE — cùng khuôn filter-bar/platform=mobile với màn danh mục
+         (xem chú thích dài ở screenPLPList): hàng đếm + đổi mật độ nay nằm TRONG
+         thanh dính, không còn là khối rời cao 48 trôi mất khi cuộn. -->
+    <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex flex-col gap-2 pl-4 pr-2 py-2 backdrop-blur-[7.5px]">
+      <div class="flex items-center justify-between h-9">
+        <p data-plp-count class="text-[12px] leading-4 text-foreground">${sortedProducts().length} sản phẩm</p>
+        <div class="flex items-center">
+          ${[['2', I.gridCols2], ['1', I.gridCols1]].map(([n, ico]) => `
+            <button data-grid="${n}" class="gridbtn w-9 h-9 rounded-xs flex items-center justify-center press text-foreground transition-opacity ${n === plpGridCols ? '' : 'opacity-50'}" aria-label="Hiển thị ${n} cột">${ico}</button>`).join('')}
+        </div>
       </div>
-    </div>
-
-    <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex items-center justify-between px-4 h-[52px] backdrop-blur-[7.5px]">
-      <button data-sheet="filter" class="flex items-center gap-2 px-4 h-9 rounded-xs border border-border bg-background text-[14px] font-medium text-foreground btn-o press">${I.sliders} Bộ lọc</button>
-      <div class="relative">
-        <button id="sortBtn" class="flex items-center gap-1.5 px-4 h-9 text-[14px] font-medium text-foreground-alt press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
-        <div id="sortMenu" class="hidden absolute mt-1 bg-background z-50" style="right:0;top:100%;width:240px">
-          ${SORT_OPTIONS.map(([id, label]) => `
-            <button class="sort-opt w-full text-left px-4 h-11 flex items-center justify-between text-[14px] ${id === plpSort ? 'font-medium text-foreground' : 'text-foreground-alt'}" data-sort="${id}">
-              <span>${label}</span>
-              ${id === plpSort ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
-            </button>`).join('')}
+      <div class="flex items-center justify-between h-9">
+        <button data-sheet="filter" class="flex items-center gap-2 px-3 h-9 rounded-xs border border-primary bg-background text-[14px] leading-5 text-foreground btn-o press">${I.sliders} Bộ lọc</button>
+        <div class="relative">
+          <button id="sortBtn" class="flex items-center gap-2 px-3 h-9 text-[12px] leading-4 text-foreground press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
+          <div id="sortMenu" class="hidden absolute mt-1 bg-background z-50" style="right:0;top:100%;width:240px">
+            ${SORT_OPTIONS.map(([id, label]) => `
+              <button class="sort-opt w-full text-left px-4 h-11 flex items-center justify-between text-[14px] ${id === plpSort ? 'font-medium text-foreground' : 'text-foreground-alt'}" data-sort="${id}">
+                <span>${label}</span>
+                ${id === plpSort ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+              </button>`).join('')}
+          </div>
         </div>
       </div>
     </div>
@@ -4530,7 +4550,7 @@ function screenPLP() {
     </div>
 
     <div class="flex justify-center py-6">
-      <button id="showMore" class="h-11 px-8 border border-primary text-[14px] font-semibold text-foreground press flex items-center gap-2">Xem thêm</button>
+      <button id="showMore" class="h-12 px-5 border border-primary text-[14px] leading-5 text-foreground btn-o press flex items-center gap-2">Xem thêm</button>
     </div>
 
     ${footer()}
@@ -5728,9 +5748,17 @@ function screenORDER() {
           </div>
           <div class="flex-1 min-w-0 flex flex-col">
             <span class="text-[12px] leading-4 text-muted-foreground">Versace</span>
-            <span class="text-[14px] leading-5 text-foreground line-clamp-2">${it.name}</span>
+            <!-- 03/09/2026: badge "Đặt trước" ĐỨNG TRƯỚC TÊN như mọi thẻ khác,
+                 và dòng ngày THÔI mở đầu bằng "Pre-order" — vừa lặp với badge,
+                 vừa là chữ Anh trong câu Việt (nhãn VI đã chốt 27/08 là
+                 "Đặt trước"). Nay dòng đi đúng khoá i18n 'Nhận hàng dự kiến'
+                 sẵn có của hàng giỏ, không phải đẻ luật regex riêng. -->
+            <span class="flex items-start gap-1.5 min-w-0">
+              ${it.preorder ? `<span class="badge-inline px-1 text-[12px] font-medium leading-4 text-foreground shrink-0">Đặt trước</span>` : ''}
+              <span class="w-full min-w-0 text-[14px] leading-5 text-foreground line-clamp-2">${it.name}</span>
+            </span>
             <span class="text-[12px] leading-4 text-muted-foreground mt-1">${it.variant}</span>
-            ${it.preorder ? `<span class="text-[12px] leading-4 text-foreground-alt mt-0.5">Pre-order · Nhận hàng dự kiến ${it.preorder}</span>` : ''}
+            ${it.preorder ? `<span class="text-[12px] leading-4 text-foreground-alt mt-0.5">Nhận hàng dự kiến <span class="font-medium">${it.preorder}</span></span>` : ''}
             <div class="flex items-center justify-between mt-auto">
               <span class="text-[12px] leading-4 text-muted-foreground">SL: ${it.qty}</span>
               <span class="text-[14px] font-medium leading-5 text-foreground">${it.price}</span>
@@ -6722,9 +6750,14 @@ function screenCART() {
 
   /* item-cart — 358×165: [checkbox 16 canh giữa] [ảnh 100×133] [thông tin 226]
      Hàng pre-order (c.preorder) vẫn là ĐÚNG khuôn thẻ này, chỉ thêm 2 chỗ
-     (yêu cầu user 14/08/2026): badge "Pre-order" đè góc trên trái ảnh — cùng
-     style badge New Season ở PDP (bg-secondary, 12 medium) — và 1 dòng ngày
-     nhận dự kiến ngay dưới dòng phân loại. */
+     (yêu cầu user 14/08/2026): badge "Đặt trước" + 1 dòng ngày nhận dự kiến
+     ngay dưới dòng phân loại.
+
+     03/09/2026 — BADGE ĐỔI CHỖ (lệnh user: "đồng bộ cách đặt badge đặt trước
+     trước tên sản phẩm cho toàn bộ các thẻ"): từ nhãn ĐÈ góc trên trái ảnh
+     sang ĐỨNG TRƯỚC TÊN, cùng hàng với tên — đúng khuôn thẻ PLP đã chốt
+     27/08: mặt .badge-inline, nhãn 12 medium, shrink-0, tên co bằng truncate.
+     Ô ảnh giữ class "relative" vì còn là mốc cho lớp phủ khác nếu có. */
   const row = (c, i) => `
     <div class="cart-row flex gap-2 px-4 py-4" data-row="${i}">
       <div class="w-4 shrink-0 flex items-center">
@@ -6734,7 +6767,6 @@ function screenCART() {
         <!-- alt mang tên hàng, không để rỗng: ảnh này là ĐƯỜNG DẪN vào PDP
              (data-product) và là thứ phân biệt các dòng trong giỏ. -->
         <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="${c.brand} ${c.name}">
-        ${c.preorder ? '<span class="absolute top-0 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Đặt trước</span>' : ''}
       </div>
       <div class="flex-1 min-w-0 flex flex-col justify-between">
         <div class="flex flex-col">
@@ -6743,7 +6775,10 @@ function screenCART() {
               <p class="flex-1 min-w-0 text-[14px] font-medium leading-5 text-foreground truncate">${c.brand}</p>
               <button class="del w-3.5 h-3.5 shrink-0 flex items-center justify-center press">${I.trash}</button>
             </div>
-            <p class="text-[14px] leading-5 text-secondary-foreground truncate">${c.name}</p>
+            <div class="flex items-center gap-1.5 min-w-0">
+              ${c.preorder ? `<span class="badge-inline px-1 text-[12px] font-medium leading-4 text-foreground shrink-0">Đặt trước</span>` : ''}
+              <p class="w-full min-w-0 text-[14px] leading-5 text-secondary-foreground truncate">${c.name}</p>
+            </div>
           </div>
           <p class="text-[12px] leading-4 text-muted-foreground">${c.variant}</p>
           ${c.preorder ? `<p class="text-[12px] leading-4 text-foreground-alt pt-1">Nhận hàng dự kiến <span class="font-medium">${c.preorder}</span></p>` : ''}
@@ -7551,18 +7586,22 @@ function screenCHECKOUT() {
                  13/12 của tóm tắt. Quà đi cùng cỡ qua giftSummaryRow(..., true). -->
             <!-- Giá ghim ĐÁY cột thông tin như thẻ giỏ (yêu cầu user 14/08/2026):
                  cột chữ stretch theo ảnh 133px + justify-between. Dòng pre-order
-                 KHÔNG lặp chữ "Pre-order" nữa — badge trên ảnh lo phần nhận diện,
-                 chữ chỉ còn ngày (in đậm) để mắt bắt đúng thông tin mới. -->
+                 KHÔNG lặp chữ "Pre-order" nữa — badge lo phần nhận diện, chữ chỉ
+                 còn ngày (in đậm) để mắt bắt đúng thông tin mới.
+                 03/09/2026: badge THÔI đè ảnh, xuống đứng TRƯỚC TÊN như thẻ PLP
+                 (canh items-start vì tên ở đây xuống 2 dòng bằng line-clamp-2). -->
             ${cartSelected().map(c => `
               <div class="flex gap-3">
                 <span class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden">
                   <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="">
-                  ${c.preorder ? '<span class="absolute top-0 left-0 badge-label px-2 py-1 text-[12px] font-medium leading-4 text-foreground">Đặt trước</span>' : ''}
                 </span>
                 <div class="flex-1 min-w-0 flex flex-col justify-between">
                   <div>
                     <p class="text-[13px] font-medium text-foreground truncate">${c.brand}</p>
-                    <p class="text-[12px] text-secondary-foreground line-clamp-2">${c.name}</p>
+                    <div class="flex items-start gap-1.5 min-w-0">
+                      ${c.preorder ? `<span class="badge-inline px-1 text-[12px] font-medium leading-4 text-foreground shrink-0">Đặt trước</span>` : ''}
+                      <p class="w-full min-w-0 text-[12px] text-secondary-foreground line-clamp-2">${c.name}</p>
+                    </div>
                     <p class="text-[12px] text-muted-foreground mt-0.5">${c.variant} · SL ${c.qty}</p>
                     ${c.preorder ? `<p class="text-[12px] text-foreground-alt mt-0.5">Nhận hàng dự kiến <span class="font-medium">${c.preorder}</span></p>` : ''}
                   </div>
@@ -8002,7 +8041,7 @@ function plpFilterEmptyHTML() {
     <div class="col-span-full py-14 px-4 flex flex-col items-center gap-3 text-center">
       <p class="text-[16px] font-light leading-6 text-foreground">Không có sản phẩm nào khớp bộ lọc</p>
       <p class="text-[14px] leading-5 text-muted-foreground">Thử bỏ một vài điều kiện để xem thêm sản phẩm.</p>
-      <button data-clear-filters class="h-9 px-4 rounded-xs border border-border bg-background text-[14px] font-medium leading-5 text-foreground btn-o press">Xóa tất cả bộ lọc</button>
+      <button data-clear-filters class="h-12 px-5 rounded-xs border border-primary bg-background text-[14px] leading-5 text-foreground btn-o press">Xóa tất cả bộ lọc</button>
     </div>`;
 }
 /* Nội dung #plpGrid: thẻ sản phẩm, hoặc khối 0-kết-quả khi bộ lọc lọc sạch. */
@@ -12913,7 +12952,13 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>
         <div class="flex-1 min-w-0 flex flex-col">
           <p id="ccBrand" class="text-[14px] font-medium leading-5 text-foreground truncate"></p>
-          <p id="ccName" class="text-[14px] leading-5 text-secondary-foreground truncate"></p>
+          <!-- 03/09/2026: badge "Đặt trước" ĐỨNG TRƯỚC TÊN, cùng khuôn mọi thẻ
+               khác. Badge là phần tử TĨNH trong markup, openCC chỉ bật/tắt bằng
+               class hidden — không dựng lại chuỗi HTML nên không phải lo escape. -->
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span id="ccBadge" class="badge-inline px-1 text-[12px] font-medium leading-4 text-foreground shrink-0 hidden">Đặt trước</span>
+            <p id="ccName" class="w-full min-w-0 text-[14px] leading-5 text-secondary-foreground truncate"></p>
+          </div>
           <p id="ccVariant" class="text-[12px] leading-4 text-muted-foreground pt-0.5"></p>
           <p id="ccPre" class="text-[12px] leading-4 text-foreground-alt pt-0.5 hidden"></p>
           <div class="flex gap-1 items-center pt-1">
@@ -12946,9 +12991,14 @@ document.body.insertAdjacentHTML('beforeend', `
     va.classList.toggle('hidden', !d.variant);
     /* Hàng pre-order: nhắc lại ngày nhận ngay trong sheet — trước đây bấm
        "Đặt trước" xong sheet nói y hệt hàng thường, mất dấu vết pre-order
-       (finding trong AUDIT 14/08/2026). */
+       (finding trong AUDIT 14/08/2026).
+       03/09/2026: badge "Đặt trước" đứng trước tên (như mọi thẻ khác) nên dòng
+       này THÔI mở đầu bằng "Pre-order" — vừa lặp badge, vừa là chữ Anh trong
+       câu Việt. Ngày tách span riêng để đi đúng khoá i18n 'Nhận hàng dự kiến'
+       của hàng giỏ; ngày là DATA dd/mm/yyyy nên innerHTML ở đây là an toàn. */
+    cc.querySelector('#ccBadge').classList.toggle('hidden', !d.preorder);
     const pre = cc.querySelector('#ccPre');
-    pre.textContent = d.preorder ? `Pre-order · Nhận hàng dự kiến ${d.preorder}` : '';
+    pre.innerHTML = d.preorder ? `Nhận hàng dự kiến <span class="font-medium">${d.preorder}</span>` : '';
     pre.classList.toggle('hidden', !d.preorder);
     const price = cc.querySelector('#ccPrice');
     price.textContent = d.price || '';

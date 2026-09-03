@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cây danh mục bộ lọc — DAFC demo</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Bodoni:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   Cây danh mục bộ lọc — sơ đồ phân cấp, 03/09/2026
+   Dữ liệu sinh thẳng từ FILTER_CATS + catTreeFor() của index.html.
+   Token theo tokens.css. Thang chữ: 12/16 · 14/20 · 16/24 · 24/32 · 32/40.
+   Khung: viền 1px, KHÔNG bóng.
+   Vẽ bằng HTML/CSS chứ không phải SVG — đây là quan hệ CHỨA NHAU,
+   nhãn tiếng Việt cần tự xuống dòng, không phải đồ thị nút-và-cung.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --paper:  #ffffff;
+  --wash:   #fafafa;
+  --rule:   #e5e5e5;
+  --hair:   #f0f0f0;
+  --muted:  #737373;
+  --ink:    #171717;
+
+  /* Làn giới tính — chỉ đánh dấu ngoại lệ, phần chung để trơn.
+     Luôn đi kèm CHỮ, không để màu tự mang nghĩa. */
+  --nam:    #1d4ed8;
+  --nam-bg: #eff6ff;
+  --nu:     #b91c3a;
+  --nu-bg:  #fef2f2;
+
+  --t-display: "Libre Bodoni", Georgia, "Times New Roman", serif;
+  --t-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--wash);
+  color: var(--ink);
+  font-family: var(--t-ui);
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1000px; margin: 0 auto; padding: 48px 24px 96px; }
+
+/* ── Đầu trang ────────────────────────────────────────────────── */
+.eyebrow { font-size: 12px; line-height: 16px; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; }
+h1 {
+  font-family: var(--t-display);
+  font-weight: 400;
+  font-size: 32px; line-height: 40px;
+  margin: 0 0 12px;
+  text-wrap: balance;
+}
+.lede { max-width: 62ch; color: var(--muted); margin: 0 0 8px; }
+.lede strong { color: var(--ink); font-weight: 500; }
+
+/* ── Dải số ───────────────────────────────────────────────────── */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin: 32px 0 24px; }
+.stat { background: var(--paper); border: 1px solid var(--rule); padding: 16px; }
+.stat-num {
+  font-family: var(--t-display);
+  font-size: 32px; line-height: 40px;
+  font-variant-numeric: tabular-nums;
+  display: block;
+}
+.stat-lab { font-size: 12px; line-height: 16px; color: var(--muted); margin: 4px 0 0; }
+
+/* Thanh tỉ lệ — độ dài mang nghĩa, nên có nhãn số ngay cạnh */
+.split { background: var(--paper); border: 1px solid var(--rule); padding: 16px; margin-bottom: 24px; }
+.split h2 { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--muted); margin: 0 0 12px; letter-spacing: .04em; }
+.bar { display: flex; height: 24px; border: 1px solid var(--rule); }
+.bar > div { display: flex; align-items: center; justify-content: center; font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; overflow: hidden; }
+.bar .b-ca  { background: var(--wash); color: var(--muted); }
+.bar .b-nam { background: var(--nam-bg); color: var(--nam); border-left: 1px solid var(--rule); }
+.bar .b-nu  { background: var(--nu-bg);  color: var(--nu);  border-left: 1px solid var(--rule); }
+.split-key { display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0 0; font-size: 12px; line-height: 16px; color: var(--muted); }
+
+/* ── Điều khiển ───────────────────────────────────────────────── */
+.controls {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 20px;
+  background: var(--paper); border: 1px solid var(--rule);
+  padding: 12px 16px; margin-bottom: -1px;
+}
+fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+legend { float: left; font-size: 12px; line-height: 16px; color: var(--muted); margin-right: 12px; padding: 0; }
+.radio { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.radio input { width: 16px; height: 16px; accent-color: var(--ink); margin: 0; cursor: pointer; }
+.btn {
+  font: inherit; font-size: 12px; line-height: 16px;
+  background: var(--paper); color: var(--ink);
+  border: 1px solid var(--rule); padding: 6px 12px; cursor: pointer;
+}
+.btn:hover { background: var(--wash); }
+.spacer { margin-left: auto; display: flex; gap: 8px; }
+
+/* ── Cây ──────────────────────────────────────────────────────── */
+.tree { background: var(--paper); border: 1px solid var(--rule); }
+
+details.l1 { border-bottom: 1px solid var(--rule); }
+details.l1:last-child { border-bottom: 0; }
+details.l1[hidden] { display: none; }
+
+summary.l1-head {
+  list-style: none;
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+summary.l1-head::-webkit-details-marker { display: none; }
+summary.l1-head:hover { background: var(--wash); }
+.tw {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px; color: var(--muted); width: 12px; flex: none;
+}
+details[open] > summary .tw::after { content: "–"; }
+details:not([open]) > summary .tw::after { content: "+"; }
+.l1-name { font-size: 16px; line-height: 24px; font-weight: 500; }
+.l1-count { font-size: 12px; line-height: 16px; color: var(--muted); font-variant-numeric: tabular-nums; margin-left: auto; text-align: right; }
+
+.l1-body { padding: 0 16px 8px 40px; }
+
+.l2 { padding: 10px 0; border-top: 1px solid var(--hair); }
+.l2[hidden] { display: none; }
+.l2-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.l2-name { font-size: 14px; line-height: 20px; font-weight: 500; }
+.l2-count { font-size: 12px; line-height: 16px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.leaves { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.leaf {
+  font-size: 12px; line-height: 16px;
+  border: 1px solid var(--rule);
+  padding: 4px 8px;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.leaf[hidden] { display: none; }
+.leaf.g-nam { border-color: #bfdbfe; background: var(--nam-bg); }
+.leaf.g-nu  { border-color: #fbd0d3; background: var(--nu-bg); }
+.tagx { font-size: 12px; line-height: 16px; font-weight: 500; }
+.leaf.g-nam .tagx { color: var(--nam); }
+.leaf.g-nu  .tagx { color: var(--nu); }
+
+.beauty-note {
+  padding: 12px 16px 14px 40px;
+  font-size: 12px; line-height: 16px;
+  color: var(--muted);
+  border-top: 1px solid var(--hair);
+}
+
+/* ── Ghi chú ──────────────────────────────────────────────────── */
+.notes { margin-top: 48px; display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.note { background: var(--paper); border: 1px solid var(--rule); padding: 20px; }
+.note h2 { font-family: var(--t-display); font-weight: 400; font-size: 18px; line-height: 24px; margin: 0 0 12px; }
+.note p { margin: 0 0 12px; }
+.note p:last-child { margin-bottom: 0; }
+.note ul { margin: 0; padding-left: 20px; }
+.note li { margin-bottom: 8px; }
+.note li:last-child { margin-bottom: 0; }
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px; background: var(--wash);
+  border: 1px solid var(--hair); padding: 1px 4px;
+}
+
+footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--rule); font-size: 12px; line-height: 16px; color: var(--muted); }
+
+:where(a, button, input, summary, [tabindex]):focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+@media (max-width: 640px) {
+  .wrap { padding: 32px 16px 64px; }
+  h1 { font-size: 24px; line-height: 32px; }
+  .l1-body { padding-left: 20px; }
+  .beauty-note { padding-left: 20px; }
+  .spacer { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Sơ đồ phân cấp · 03/09/2026</p>
+  <h1>Cây danh mục bộ lọc</h1>
+  <p class="lede">Bộ lọc có những mục gì, xếp ba tầng ra sao, và <strong>nam khác nữ ở chỗ nào</strong>. Dữ liệu sinh thẳng từ <code>FILTER_CATS</code> và <code>catTreeFor()</code> trong <code>index.html</code> — không gõ tay.</p>
+</header>
+
+<section class="stats" aria-label="Quy mô cây danh mục">
+  <div class="stat"><span class="stat-num" id="nL1">8</span><p class="stat-lab">ngành hàng · tầng 1</p></div>
+  <div class="stat"><span class="stat-num" id="nL2">57</span><p class="stat-lab">nhóm · tầng 2</p></div>
+  <div class="stat"><span class="stat-num" id="nL3">172</span><p class="stat-lab">loại sản phẩm · tầng 3</p></div>
+</section>
+
+<section class="split">
+  <h2>139 loại hàng thời trang chia theo giới</h2>
+  <div class="bar" role="img" aria-label="99 loại dùng chung cho cả hai giới, 14 loại chỉ nam, 26 loại chỉ nữ">
+    <div class="b-ca"  style="flex: 99">99</div>
+    <div class="b-nam" style="flex: 14">14</div>
+    <div class="b-nu"  style="flex: 26">26</div>
+  </div>
+  <p class="split-key">
+    <span>Chung cả hai — 99</span>
+    <span style="color: var(--nam)">Chỉ nam — 14</span>
+    <span style="color: var(--nu)">Chỉ nữ — 26</span>
+    <span>Nam thấy 113 · nữ thấy 125</span>
+  </p>
+</section>
+
+<div class="controls">
+  <fieldset>
+    <legend>Xem theo</legend>
+    <label class="radio"><input type="radio" name="g" value="ca" checked> <span>Cả hai</span></label>
+    <label class="radio"><input type="radio" name="g" value="nam"> <span>Chỉ nam</span></label>
+    <label class="radio"><input type="radio" name="g" value="nu"> <span>Chỉ nữ</span></label>
+  </fieldset>
+  <div class="spacer">
+    <button type="button" class="btn" id="openAll">Mở hết</button>
+    <button type="button" class="btn" id="shutAll">Đóng hết</button>
+  </div>
+</div>
+
+<div class="tree" id="tree"></div>
+
+<section class="notes">
+
+  <div class="note">
+    <h2>Đọc sơ đồ này</h2>
+    <p>Ô trơn là loại hàng <strong>dùng chung</strong> cho cả hai giới — 99 trong 139, nên chúng để mộc. Chỉ ngoại lệ mới đeo nhãn: <span class="tagx" style="color:var(--nam)">nam</span> hoặc <span class="tagx" style="color:var(--nu)">nữ</span>. Nhãn là chữ, không phải chỉ màu.</p>
+    <p>Chọn <em>Chỉ nam</em> hoặc <em>Chỉ nữ</em> để xem đúng cây mà giới đó nhìn thấy trên PLP. Con số ở ba ô trên và ở từng nhánh đổi theo.</p>
+  </div>
+
+  <div class="note">
+    <h2>Nguồn và chỗ đã giản lược</h2>
+    <ul>
+      <li>Nguồn: <em>Filter - Beauty cate demo (1).xlsx</em>, sheet <em>Product categories</em> có cột Note ghi Both / Chỉ nam / Chỉ nữ. Khách gửi lại chiều 26/08/2026.</li>
+      <li>Sheet có 101 dòng Both, ở đây còn 99 — hai dòng trùng đã bị khử khi dựng <code>FILTER_CATS</code>. Tổng lá 113 và 125 vẫn khớp đúng hai sheet cây riêng của khách.</li>
+      <li>Nhánh <strong>Làm đẹp</strong> lấy từ sheet khác và <strong>không tham gia tách giới</strong> — trong code nó bị <code>catTreeFor()</code> loại ra từ đầu. Nên khi chọn một giới, nhánh này biến mất chứ không phải rỗng.</li>
+      <li>Sơ đồ vẽ <em>quan hệ chứa nhau</em>, không vẽ số lượng sản phẩm thật trong mỗi mục.</li>
+    </ul>
+  </div>
+
+</section>
+
+<footer>
+  <p>Sinh ngày 03/09/2026 từ mã nguồn <code>index.html</code> · 8 ngành · 57 nhóm · 172 loại · tài liệu nội bộ, mở bằng trình duyệt tại chỗ.</p>
+</footer>
+
+</div>
+
+<script id="treeData" type="application/json">[{"ten":"Quần áo","beauty":false,"nhom":[{"ten":"Đồ lót","loai":[{"ten":"Quần lót","gioi":"nu"},{"ten":"Quần lót nam boxer","gioi":"nam"},{"ten":"Áo lót","gioi":"nu"},{"ten":"Quần lót nam tam giác","gioi":"nam"},{"ten":"Áo lót thun","gioi":"ca"}]},{"ten":"Áo thun & áo polo","loai":[{"ten":"Áo thun tay ngắn","gioi":"ca"},{"ten":"Áo thun tay dài","gioi":"ca"},{"ten":"Áo polo","gioi":"ca"}]},{"ten":"Quần dài & quần shorts","loai":[{"ten":"Quần dài","gioi":"ca"},{"ten":"Quần leggings","gioi":"ca"},{"ten":"Quần jeans","gioi":"ca"},{"ten":"Quần joggers","gioi":"ca"},{"ten":"Quần shorts","gioi":"ca"}]},{"ten":"Đồ bơi & đồ thể thao","loai":[{"ten":"Áo ngực thể thao","gioi":"nu"},{"ten":"Đồ bơi","gioi":"ca"}]},{"ten":"Áo nỉ & quần áo dệt kim","loai":[{"ten":"Áo len","gioi":"ca"},{"ten":"Áo nỉ","gioi":"ca"},{"ten":"Áo hoodie","gioi":"ca"},{"ten":"Quần áo dệt kim","gioi":"ca"},{"ten":"Áo cardigan","gioi":"ca"}]},{"ten":"Chân váy","loai":[{"ten":"Váy ngắn","gioi":"nu"},{"ten":"Váy midi","gioi":"nu"}]},{"ten":"Áo sơ mi & áo kiểu","loai":[{"ten":"Sơ mi tay ngắn","gioi":"ca"},{"ten":"Sơ mi tay dài","gioi":"ca"},{"ten":"Áo kiểu","gioi":"nu"}]},{"ten":"Áo khoác ngoài","loai":[{"ten":"Áo khoác ngắn","gioi":"ca"},{"ten":"Áo khoác dáng dài","gioi":"ca"},{"ten":"Áo choàng không tay","gioi":"ca"},{"ten":"Áo blazer","gioi":"ca"},{"ten":"Áo gi lê","gioi":"ca"}]},{"ten":"Đầm & áo liền quần","loai":[{"ten":"Đầm ngắn","gioi":"nu"},{"ten":"Đầm dài","gioi":"nu"},{"ten":"Áo liền quần","gioi":"nu"}]},{"ten":"Bộ quần áo","loai":[{"ten":"Bộ âu phục","gioi":"ca"},{"ten":"Bộ quần áo","gioi":"ca"}]},{"ten":"Áo dây & croptops","loai":[{"ten":"Áo hai dây","gioi":"nu"},{"ten":"Áo croptop","gioi":"nu"},{"ten":"Áo corset","gioi":"nu"},{"ten":"Áo thun ba lỗ","gioi":"ca"},{"ten":"Bodysuit","gioi":"nu"}]}]},{"ten":"Túi xách","beauty":false,"nhom":[{"ten":"Ví cầm tay","loai":[{"ten":"Ví nhỏ","gioi":"ca"},{"ten":"Ví cầm tay","gioi":"ca"}]},{"ten":"Ví & ví đựng thẻ","loai":[{"ten":"Ví","gioi":"ca"},{"ten":"Ví đựng thẻ","gioi":"ca"},{"ten":"Ví đựng chìa khóa","gioi":"ca"},{"ten":"Kẹp tiền mặt","gioi":"ca"}]},{"ten":"Túi du lịch & vali","loai":[{"ten":"Vali xách tay","gioi":"ca"},{"ten":"Vali ký gửi","gioi":"ca"},{"ten":"Túi duffel","gioi":"ca"},{"ten":"Túi du lịch","gioi":"ca"}]},{"ten":"Túi thể thao","loai":[{"ten":"Túi golf","gioi":"ca"},{"ten":"Túi tennis","gioi":"ca"}]},{"ten":"Túi tote","loai":[{"ten":"Túi tote","gioi":"ca"},{"ten":"Túi shopper","gioi":"ca"}]},{"ten":"Túi xách tay","loai":[{"ten":"Túi xách tay","gioi":"nu"}]},{"ten":"Túi đeo vai","loai":[{"ten":"Túi đeo vai","gioi":"nu"}]},{"ten":"Túi đeo chéo","loai":[{"ten":"Túi đeo chéo","gioi":"ca"},{"ten":"Túi messenger","gioi":"ca"},{"ten":"Túi đeo ngực","gioi":"ca"},{"ten":"Túi bucket","gioi":"ca"}]},{"ten":"Túi đựng tài liệu","loai":[{"ten":"Túi đựng tài liệu","gioi":"nam"}]},{"ten":"Túi đeo hông","loai":[{"ten":"Túi đeo hông","gioi":"nam"}]},{"ten":"Phụ kiện túi","loai":[{"ten":"Charm túi xách","gioi":"ca"},{"ten":"Móc khoá","gioi":"ca"},{"ten":"Dây túi xách","gioi":"ca"}]},{"ten":"Balo","loai":[{"ten":"Balo","gioi":"ca"}]}]},{"ten":"Giày dép","beauty":false,"nhom":[{"ten":"Giày loafers & slip-ons","loai":[{"ten":"Giày slip-on","gioi":"ca"},{"ten":"Giày loafers","gioi":"ca"}]},{"ten":"Giày thể thao","loai":[{"ten":"Giày thể thao","gioi":"ca"}]},{"ten":"Dép","loai":[{"ten":"Dép","gioi":"ca"}]},{"ten":"Giày sandals","loai":[{"ten":"Giày sandals","gioi":"nu"},{"ten":"Giày đế xuồng","gioi":"nu"}]},{"ten":"Giày cao gót","loai":[{"ten":"Giày cao gót","gioi":"nu"},{"ten":"Giày hở gót","gioi":"nu"}]},{"ten":"Giày tây & monk straps","loai":[{"ten":"Giày oxfords","gioi":"nam"},{"ten":"Giày derby","gioi":"nam"},{"ten":"Giày monk straps","gioi":"nam"}]},{"ten":"Giày moccasins","loai":[{"ten":"Giày drivers","gioi":"nam"},{"ten":"Giày moccasins","gioi":"nam"}]},{"ten":"Giày boots","loai":[{"ten":"Giày boots","gioi":"nu"}]},{"ten":"Giày bệt","loai":[{"ten":"Giày bệt","gioi":"nu"}]}]},{"ten":"Phụ kiện","beauty":false,"nhom":[{"ten":"Phụ kiện du lịch","loai":[{"ten":"Bình nước","gioi":"ca"},{"ten":"Khóa du lịch","gioi":"ca"},{"ten":"Vỏ bọc hành lý","gioi":"ca"},{"ten":"Thẻ hành lý","gioi":"ca"},{"ten":"Bộ sản phẩm du lịch","gioi":"ca"},{"ten":"Dây đeo du lịch","gioi":"ca"},{"ten":"Dù","gioi":"ca"},{"ten":"Ví đựng hộ chiếu","gioi":"ca"}]},{"ten":"Phụ kiện công nghệ","loai":[{"ten":"Ốp điện thoại","gioi":"ca"},{"ten":"Túi đựng laptop & máy tính bảng","gioi":"ca"},{"ten":"Ví & ốp đựng tai nghe","gioi":"ca"},{"ten":"Tai nghe","gioi":"ca"}]},{"ten":"Khăn","loai":[{"ten":"Khăn","gioi":"nu"}]},{"ten":"Chăm sóc sản phẩm","loai":[{"ten":"Dụng cụ chăm sóc sản phẩm","gioi":"nam"}]},{"ten":"Phụ kiện thời trang","loai":[{"ten":"Dụng cụ đón gót giày","gioi":"nam"},{"ten":"Khuy măng sét","gioi":"nam"},{"ten":"Kẹp cà vạt","gioi":"nam"},{"ten":"Cà vạt","gioi":"nam"},{"ten":"Kẹp tóc","gioi":"nu"},{"ten":"Cài tóc","gioi":"nu"},{"ten":"Túi đựng quần áo","gioi":"ca"},{"ten":"Vớ","gioi":"ca"},{"ten":"Phụ kiện quần áo khác","gioi":"ca"},{"ten":"Găng tay","gioi":"ca"},{"ten":"Cài áo","gioi":"ca"}]},{"ten":"Nón","loai":[{"ten":"Nón","gioi":"ca"},{"ten":"Nón lưỡi trai","gioi":"ca"}]},{"ten":"Mắt kính","loai":[{"ten":"Gọng kính","gioi":"ca"},{"ten":"Mắt kính râm","gioi":"ca"},{"ten":"Kính chống ánh sáng xanh","gioi":"ca"},{"ten":"Kính mát thể thao","gioi":"ca"}]},{"ten":"Thắt lưng","loai":[{"ten":"Thắt lưng","gioi":"ca"}]},{"ten":"Phụ kiện khác","loai":[{"ten":"Dây đeo mắt kính","gioi":"ca"},{"ten":"Phụ kiện khác","gioi":"ca"}]},{"ten":"Phụ kiện văn phòng","loai":[{"ten":"Khác","gioi":"ca"},{"ten":"Sổ tay","gioi":"ca"},{"ten":"Bao da sổ tay","gioi":"ca"},{"ten":"Bút máy","gioi":"ca"},{"ten":"Bút bi nước","gioi":"ca"},{"ten":"Bút bi","gioi":"ca"},{"ten":"Bút tạo nét","gioi":"ca"},{"ten":"Bộ văn phòng phẩm","gioi":"ca"},{"ten":"Ruột bút","gioi":"ca"},{"ten":"Lọ mực","gioi":"ca"},{"ten":"Ống mực","gioi":"ca"},{"ten":"Ví đựng bút","gioi":"ca"}]}]},{"ten":"Trang sức","beauty":false,"nhom":[{"ten":"Nhẫn","loai":[{"ten":"Nhẫn","gioi":"ca"}]},{"ten":"Vòng cổ","loai":[{"ten":"Vòng cổ","gioi":"ca"},{"ten":"Vòng cổ choker","gioi":"nu"}]},{"ten":"Bông tai","loai":[{"ten":"Bông tai","gioi":"nu"}]},{"ten":"Vòng tay","loai":[{"ten":"Vòng tay","gioi":"ca"}]},{"ten":"Trang sức khác","loai":[{"ten":"Charm","gioi":"ca"},{"ten":"Trang sức khác","gioi":"ca"}]}]},{"ten":"Đồng hồ","beauty":false,"nhom":[{"ten":"Đồng hồ","loai":[{"ten":"Đồng hồ automatic","gioi":"ca"},{"ten":"Đồng hồ mechanical","gioi":"ca"},{"ten":"Đồng hồ quartz","gioi":"ca"},{"ten":"Đồng hồ thông minh","gioi":"ca"}]}]},{"ten":"Làm đẹp","beauty":true,"nhom":[{"ten":"Tắm & dưỡng thể","loai":[{"ten":"Sữa tắm","gioi":"?"},{"ten":"Sữa tắm dạng refill","gioi":"?"},{"ten":"Chai Infinite","gioi":"?"},{"ten":"Sữa dưỡng thể","gioi":"?"},{"ten":"Kem dưỡng thể (refill được)","gioi":"?"},{"ten":"Tẩy tế bào chết cơ thể","gioi":"?"},{"ten":"Dầu tắm & muối tắm","gioi":"?"}]},{"ten":"Chăm sóc tay","loai":[{"ten":"Nước rửa tay","gioi":"?"},{"ten":"Nước rửa tay dạng refill","gioi":"?"},{"ten":"Chai thuỷ tinh Infinite","gioi":"?"},{"ten":"Sữa dưỡng tay","gioi":"?"},{"ten":"Kem dưỡng tay","gioi":"?"}]},{"ten":"Nước hoa","loai":[{"ten":"Eau de Parfum","gioi":"?"},{"ten":"Eau de Toilette","gioi":"?"},{"ten":"Nước hoa du lịch","gioi":"?"},{"ten":"Set khám phá","gioi":"?"}]},{"ten":"Chăm sóc tóc","loai":[{"ten":"Dầu gội","gioi":"?"},{"ten":"Dầu xả","gioi":"?"},{"ten":"Set gội xả","gioi":"?"}]},{"ten":"Hương thơm không gian","loai":[{"ten":"Nến thơm Signature (190g)","gioi":"?"},{"ten":"Nến thơm Luxury (600g)","gioi":"?"},{"ten":"Que khuếch tán hương","gioi":"?"},{"ten":"Tinh dầu khuếch tán refill","gioi":"?"},{"ten":"Xịt thơm phòng","gioi":"?"}]},{"ten":"Quà tặng","loai":[{"ten":"Set quà tặng","gioi":"?"},{"ten":"Set quà khám phá","gioi":"?"},{"ten":"Quà theo mùa & lễ hội","gioi":"?"},{"ten":"Lịch Giáng sinh","gioi":"?"}]},{"ten":"Dành cho nam","loai":[{"ten":"Sữa tắm nam","gioi":"?"},{"ten":"Nước hoa nam","gioi":"?"},{"ten":"Cạo râu & chăm sóc nam","gioi":"?"}]},{"ten":"Du lịch","loai":[{"ten":"Sản phẩm size du lịch","gioi":"?"},{"ten":"Set mini du lịch","gioi":"?"}]}]},{"ten":"Khác","beauty":false,"nhom":[{"ten":"Phiếu quà tặng","loai":[{"ten":"Phiếu quà tặng","gioi":"ca"}]}]}]</script>
+<script>
+(function () {
+  var DATA = JSON.parse(document.getElementById('treeData').textContent);
+  var tree = document.getElementById('tree');
+
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  // ── Dựng cây một lần, sau đó chỉ bật/tắt bằng thuộc tính hidden.
+  //    Giữ nguyên vị trí nút để so sánh giữa hai giới được.
+  var html = '';
+  DATA.forEach(function (l1, i) {
+    html += '<details class="l1" data-beauty="' + (l1.beauty ? '1' : '0') + '"' + (i === 0 ? ' open' : '') + '>';
+    html +=   '<summary class="l1-head">';
+    html +=     '<span class="tw" aria-hidden="true"></span>';
+    html +=     '<span class="l1-name">' + esc(l1.ten) + '</span>';
+    html +=     '<span class="l1-count"></span>';
+    html +=   '</summary>';
+    html +=   '<div class="l1-body">';
+    l1.nhom.forEach(function (l2) {
+      html += '<div class="l2">';
+      html +=   '<div class="l2-head"><span class="l2-name">' + esc(l2.ten) + '</span><span class="l2-count"></span></div>';
+      html +=   '<ul class="leaves">';
+      l2.loai.forEach(function (leaf) {
+        var cls = leaf.gioi === 'nam' ? ' g-nam' : leaf.gioi === 'nu' ? ' g-nu' : '';
+        var tag = leaf.gioi === 'nam' ? '<span class="tagx">nam</span>'
+                : leaf.gioi === 'nu'  ? '<span class="tagx">nữ</span>' : '';
+        html += '<li class="leaf' + cls + '" data-g="' + leaf.gioi + '">' + esc(leaf.ten) + tag + '</li>';
+      });
+      html +=   '</ul>';
+      html += '</div>';
+    });
+    html +=   '</div>';
+    if (l1.beauty) {
+      html += '<p class="beauty-note">Nhánh này đến từ sheet riêng và không tách theo giới — chọn một giới thì nó không có mặt trong cây.</p>';
+    }
+    html += '</details>';
+  });
+  tree.innerHTML = html;
+
+  var l1s = Array.prototype.slice.call(tree.querySelectorAll('details.l1'));
+
+  function apply(g) {
+    var t1 = 0, t2 = 0, t3 = 0;
+
+    l1s.forEach(function (d) {
+      var isBeauty = d.dataset.beauty === '1';
+      // Làm đẹp nằm ngoài cây tách giới — ẩn hẳn, không phải hiện rỗng.
+      if (g !== 'ca' && isBeauty) { d.hidden = true; return; }
+      d.hidden = false;
+
+      var c1 = 0, g2 = 0;
+      Array.prototype.forEach.call(d.querySelectorAll('.l2'), function (grp) {
+        var shown = 0;
+        Array.prototype.forEach.call(grp.querySelectorAll('.leaf'), function (lf) {
+          var keep = g === 'ca' || lf.dataset.g === 'ca' || lf.dataset.g === g;
+          lf.hidden = !keep;
+          if (keep) shown++;
+        });
+        grp.hidden = shown === 0;
+        if (shown) { g2++; c1 += shown; }
+        grp.querySelector('.l2-count').textContent = shown;
+      });
+
+      d.hidden = c1 === 0;
+      if (!d.hidden) { t1++; t2 += g2; t3 += c1; }
+      d.querySelector('.l1-count').textContent = g2 + ' nhóm · ' + c1 + ' loại';
+    });
+
+    document.getElementById('nL1').textContent = t1;
+    document.getElementById('nL2').textContent = t2;
+    document.getElementById('nL3').textContent = t3;
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="g"]'), function (r) {
+    r.addEventListener('change', function () { if (r.checked) apply(r.value); });
+  });
+
+  document.getElementById('openAll').addEventListener('click', function () {
+    l1s.forEach(function (d) { if (!d.hidden) d.open = true; });
+  });
+  document.getElementById('shutAll').addEventListener('click', function () {
+    l1s.forEach(function (d) { d.open = false; });
+  });
+
+  apply('ca');
+})();
+</script>
+</body>
+</html>

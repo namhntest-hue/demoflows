@@ -96,7 +96,7 @@ nhánh mà không cần mở menu.
 
 | # | Mục | Vai chỉ có ở trang ngành hàng |
 |---|---|---|
-| 1 | Hero chia đôi | Khối chữ mang **5 đường dẫn danh mục cấp 1**, không phải 2 nút CTA. Trên ảnh chỉ còn chip **"42 mẫu"** — dòng "tên sản phẩm · giá" đã gỡ 24/08 theo lệnh user (banner không đính kèm tên và giá) |
+| 1 | Hero chia đôi | Khối chữ mang **5 đường dẫn danh mục cấp 1**, không phải 2 nút CTA. **Trên ảnh KHÔNG còn chữ nào** — dòng "tên sản phẩm · giá" gỡ 24/08, chip "42 mẫu" gỡ nốt 03/09 (lệnh user: *"hero banner chỉ để hình, không ghi đè text hay button lên"*, xem HOMEPAGE.md mục 8.12). Cột chữ bên trái giữ nguyên vì nó nằm **cạnh** ảnh, không đè lên. **Cả tấm ảnh là một đường dẫn** tới `#danh-muc` — cùng đích với 5 đường dẫn danh mục bên trái |
 | 2 | **Bento danh mục** | Lưới 12 cột bất đối xứng: ô Quần áo 6 cột × 2 hàng (688×688) + 4 ô 3 cột (343×343), vách là kẻ 1px |
 | 3 | Sản phẩm mới cho nữ | 8 SKU nữ, lưới 4 cột · mobile thành dải trượt |
 | 4 | Editorial 2/3 + 1/3 | Chữ **cạnh** ảnh, không đè lên ảnh |

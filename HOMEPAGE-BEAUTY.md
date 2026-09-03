@@ -33,7 +33,7 @@ thích luôn nằm dưới ảnh**. Bản này giữ đúng cả hai.
 
 | | MR PORTER | Ở đây |
 |---|---|---|
-| Hero | **dải ĐEN full-bleed** | §2.2 khoá mặt tối vào đúng 3 vai (nút chính · backdrop · promo bar); dải hero là vai thứ 4. → hero vẫn full-bleed nhưng nền là **ẢNH**, chữ nằm trong **tấm trắng góc dưới trái** (đòn nhấn 3 của §2.3). Giữ được thế "chữ ghim góc dưới trái" |
+| Hero | **dải ĐEN full-bleed** | §2.2 khoá mặt tối vào đúng 3 vai (nút chính · backdrop · promo bar); dải hero là vai thứ 4. → hero vẫn full-bleed nhưng nền là **ẢNH**, chữ nằm trong **tấm trắng góc dưới trái** (đòn nhấn 3 của §2.3). *Cập nhật 03/09: tấm trắng đó đã gỡ hẳn — banner thuần ảnh, xem mục "Sửa 03/09" bên dưới.* |
 | Chú thích dưới ảnh | **CHỮ HOA** | §1.5 khoá chữ hoa vào 5 vai, không có vai "chú thích ảnh". → họ nội dung T3 14/20 chữ thường; phân cấp do mực + kẻ mảnh lo |
 | Số "540" | **64–80px** | §1.2 chốt cao nhất 24/32 và bạn yêu cầu giữ typo. → khoảnh khắc "số lớn" chỉ tới **24/32**. **Đây là chỗ bản này yếu hơn bản gốc thấy rõ nhất** — muốn mạnh bằng thì phải sửa §1.2 trước |
 
@@ -51,7 +51,7 @@ thứ ba. Nút, link "xem thêm", kẻ 3 tầng, nhãn hoa: đều là linh ki�
 
 | Khối | Đo được ở 1440 |
 |---|---|
-| U1 hero | **1425×460 tại x=0** (tràn mép), tấm chữ 336×198 ở góc dưới trái |
+| U1 hero | **1425×460 tại x=0** (tràn mép) — *tấm chữ 336×198 góc dưới trái: đã gỡ 03/09* |
 | U2 | cột `334 / 1003` = 1fr/3fr, 4 card |
 | U3 | 2 cột 676 bằng nhau, ảnh 676×507 (4/3) |
 | U1b dải xám | 1425×594, nền `#f2f2f2`, 2 cột 664 |
@@ -150,7 +150,7 @@ Escape) mà render lại là cộng thêm một bản mỗi lần đổi dept. �
 
 | # | Khối | Nội dung |
 |---|---|---|
-| 1 | **U1 · Hero full-bleed** | Ảnh tràn mép + tấm trắng góc dưới trái mang thông điệp NGÀNH HÀNG: "Làm đẹp" · "Nước hoa & hương thơm" · *"8 dòng từ 4 nhà mốt"* (đếm từ data) · nút Xem tất cả |
+| 1 | **U1 · Hero full-bleed** | **Chỉ một tấm ảnh tràn mép, 0 chữ của code** (gỡ tấm trắng 03/09). Trước đó tấm trắng góc dưới trái mang: "Làm đẹp" · "Nước hoa & hương thơm" · *"8 dòng từ 4 nhà mốt"* (đếm từ data) · nút Xem tất cả |
 | 2 | **U2 · Vừa về** | Trái: số **33** + "loại trong 8 nhóm" + nút. Phải: 4 card |
 | 3 | **U3 · Đôi ảnh** | Hương thơm không gian · Tắm & dưỡng thể — chú thích dưới ảnh |
 | 4 | **U1b · Dải nhà mốt** | Nền `#f2f2f2` full-bleed: Montblanc + ảnh phải |
@@ -166,6 +166,26 @@ tên + giá một SKU. Lệnh user: banner không đính kèm tên và giá. Nay
 thông điệp ngành hàng, hai con số đếm từ data. Cùng đợt: screen `nam` gỡ hẳn thẻ
 hàng trên ảnh hero, screen `nu` gỡ dòng tên + giá (giữ chip "42 mẫu" — đó là quy
 mô bộ sưu tập, không phải tên cũng không phải giá).
+
+**Sửa 03/09 — banner về THUẦN ẢNH, tấm chữ gỡ hẳn.** Lệnh user: *"ở homepage các
+phiên bản, hero banner chỉ để hình không cần ghi đè text hay button lên"* — áp cho
+cả 3 screen, nên `.bt-banner__x` (nhãn ngành + `<h1>` + dòng đếm + nút "Xem tất
+cả") đi hết, cùng 3 rule CSS và khối JS sinh `#btHeroCount`. Lý do đo được ngay
+trên tấm ảnh: `b5.jpg` đã in sẵn *"DOLCE & GABBANA — DEVOTION"* trong pixel, và
+tấm trắng còn che đúng phần chân hộp có dòng chữ đó. Cùng đợt: `nu` gỡ nốt chip
+"42 mẫu". Đường đi đầy đủ của luật banner (4 lượt siết): **HOMEPAGE.md mục 8.12**.
+
+Hai hệ quả phải nhớ: (1) khối JS đếm nằm ở **đầu IIFE** của screen này nên bỏ ô
+chữ mà quên bỏ dòng `getElementById('btHeroCount')` là **chết cả screen**, không
+riêng banner; (2) screen `beauty` nay **không còn `<h1>`** — giống `nam` từ 28/08.
+Cần `<h1>` thì nâng tiêu đề mục U2, đừng nhét chữ lại lên ảnh.
+
+**Cùng ngày, lượt 2 — banner thành CHỖ BẤM.** Gỡ nút thì tấm ảnh mất phần tử bấm
+được, nên cả tấm bọc trong `<a href="#vua-ve">` (mục U2 — 8 SKU của nó đều là nước
+hoa, đúng thứ banner đang quảng bá; `id` đặt ngay trên `<section>` đó). Bẫy đi kèm:
+`.rv-img > img` dùng dấu `>` nên bọc ảnh vào `<a>` là tắt hiệu ứng zoom mà không
+báo lỗi — đã thêm nhánh `.rv-img > a > img`. Chi tiết + bảng 5 đích đến:
+**HOMEPAGE.md mục 8.13**.
 
 ### Ba chỗ cố ý KHÔNG bịa (luật "honest copy" của hallmark)
 
