@@ -1206,3 +1206,170 @@ chúng. Đã hoàn tác bằng `setRangeTextStyleIdAsync(0, 11, t-label-single)`
 
 **3 node `"[PRE-ORDER] Giày sandal…"`** giữ khuôn cũ: code đã **bỏ tiền tố "Pre-order ·" từ 03/09**,
 thay bằng badge đứng trước tên. Đây là việc đồng bộ demo, không phải việc của text style.
+
+---
+
+## 19 · Code đã adapt thang chữ chưa? — 04/09/2026
+
+| File | Thang chữ `.t-*` | Cách đặt cỡ chữ hiện tại |
+|---|---|---|
+| `index.html` | **0 lượt** | utility `text-[Npx]` + **61 rule `font-size`** trong khối `skin-li` |
+| `desktop.html` | **0 lượt** | như trên |
+| `home.html` | **204 lượt · 8 vai** | khai báo tại `home.html:142–147` + `shadcn-theme/theme.css:83,91` |
+
+`home.html` dùng: `t-ui` 55 · `t-copy` 46 · `t-label` 38 · `t-body` 28 · `t-micro` 25 · `t-title` 10 ·
+`t-section` 8 · `t-label-1` 2.
+
+**Nhưng `home.html` KHÔNG chạy `skin-li`** — nó dựng trên `shadcn-theme` với bộ da riêng
+(`skin-min`…). Trong phạm vi user chốt *("chỉ quan tâm skin-li và cặp Libre + Inter")*, thang chữ
+**chưa được adapt vào code lần nào**.
+
+### 19.1 Bảng ánh xạ — nếu adapt
+
+| Figma (chốt 04/09) | Class tương ứng | Trạng thái |
+|---|---|---|
+| `t-display-title` 24/32 Bodoni | `.t-title` | có ở home.html |
+| `t-label-overlay` 16/24 · 500 | — | **code chưa có vai này** |
+| `t-label-lead` 14/20 · 500 | `.t-label-1` | có ở theme.css |
+| `t-body-lead` 14/20 | `.t-body` | có ở home.html |
+| `t-label-multiline` 12/18 · 500 | — | **code chưa có** *(cây bộ lọc — home.html không có bộ lọc)* |
+| `t-body-multiline` 12/18 | `.t-copy` | có ở home.html |
+| `t-label-single` 12/16 · 500 | `.t-label` | ⚠ code ép `text-transform: uppercase`; Figma nay gánh CẢ vai chữ thường |
+| `t-body-single` 12/16 | `.t-ui` | có ở home.html |
+| `t-body-micro` 10/14 | `.t-micro` | có ở home.html |
+| *(đã xoá)* | `.t-section` 18/24 | code còn 8 lượt ở home.html — bộ da khác, không thuộc skin-li |
+
+### 19.2 Vì sao nên adapt vào `index.html` / `desktop.html`
+
+`index.html` hiện khai cỡ chữ bằng utility, trong đó **có cả bậc ngoài thang**: `text-[13px]` ×52 ·
+`text-[11px]` ×16 · `text-[15px]` ×3 · `text-[18px]` ×33 · `text-[32px]` ×5. Chúng chạy được là nhờ
+khối `skin-li` **quy đổi lúc chạy** (13→14 · 11→12…) — chính là 61 rule `font-size` kia.
+
+Đổi sang 9 class có tên thì bậc lệch biến mất ngay tại nguồn, và **phần lớn 61 rule quy đổi đó nghỉ
+hưu**. Đây cũng là việc mà NAMING-MAGENTO.md §3 đã đề xuất (*"đợt quét 114 tên"*) nhưng **chưa duyệt**.
+
+---
+
+## 20 · Adapt thang chữ vào code — 04/09/2026
+
+User chốt: đổi markup + **khai một lần theo `skin-li`** (3 bộ da còn lại dùng chung thang này).
+
+### 20.1 Phát hiện làm đổi lời giải: 9 style Figma KHÔNG map 1:1 sang 9 class
+
+Bằng chứng: cùng tổ hợp `text-[14px] leading-5` chỗ ra w500, chỗ ra w400. Vì **9 rule `:where()` của
+code chỉ đặt CỠ + DÒNG, không đặt độ đậm** — độ đậm đến từ `font-medium` và các rule vai, hoàn toàn
+trực giao.
+
+→ Lời giải đúng là **6 class cỡ/dòng × `font-medium`**, nhân ra đúng 9 vai của Figma mà không đụng
+độ đậm hiện có:
+
+| Figma | Class code | + |
+|---|---|---|
+| `t-display-title` 24/32 | `.t-display-title` | |
+| `t-label-overlay` 16/24·500 | `.t-overlay` | *(tự mang 500 — xem 20.4)* |
+| `t-label-lead` / `t-body-lead` 14/20 | `.t-lead` | `font-medium` / — |
+| `t-label-multiline` / `t-body-multiline` 12/18 | `.t-multiline` | `font-medium` / — |
+| `t-label-single` / `t-body-single` 12/16 | `.t-single` | `font-medium` / — |
+| `t-body-micro` 10/14 | `.t-micro` | |
+
+### 20.2 Đã đổi
+
+| | index.html | desktop.html |
+|---|---:|---:|
+| Chỗ markup đổi sang class ngữ nghĩa | **519** | **455** |
+| `.t-multiline` | 329 | 281 |
+| `.t-single` | 174 | 151 |
+| `.t-display-title` | 11 | 19 |
+| `.t-micro` | 8 | 7 |
+| `.t-overlay` | 4 | 4 |
+| `.t-lead` | 1 | 1 |
+
+**Giữ nguyên utility ở 2 nhóm:** bậc **18/24** (33 + 20 chỗ — bộ style Figma đã bỏ bậc này, chưa có
+class) và `text-[12px]` **không kèm `leading-`** (13 + 14 chỗ — dòng thừa kế từ cha, ghim vào là đổi hình).
+
+### 20.3 Kiểm chứng: 0 pixel lệch
+
+Cách đo: chép bản gốc thành `_baseline_*.html` cùng thư mục phục vụ, chụp `(font-size, line-height,
+font-weight)` của **mọi phần tử có chữ riêng** theo đúng thứ tự tài liệu, lưu qua `localStorage`
+(cùng origin), rồi so từng chỉ số với bản mới.
+
+| | Phần tử | Lệch |
+|---|---:|---:|
+| `index.html` | 510 | **0** |
+| `desktop.html` | 510 | **0** |
+
+Console: **0 lỗi**. Rule vai vẫn thắng đúng như thiết kế — 29 chỗ mang `.t-multiline` nhưng render
+14/20 vì `.btn-p` / `.pc-brand` đè, y như trước.
+
+### 20.4 Bốn lỗi lộ ra khi đối chiếu, và cách vá
+
+Lượt đầu lệch **18 chỗ**, gom hết ở chân trang pháp lý + banner cookie + sheet nhận-thông-báo:
+
+1. **Quên `text-[12px]`** — 12 không nằm trong nhóm `:where` nào nên tôi bỏ sót; 254 chỗ bị treo. Bổ
+   sung, nhưng **chỉ đổi khi có `leading-` tường minh**.
+2. **`leading-4` không phải lúc nào cũng 16** — đúng cho 66/74 chỗ, 8 chỗ bị rule riêng đè thành 18.
+   Vá tay 4 chuỗi class ở khối cookie + chân trang.
+3. **Thứ tự class trong chuỗi vá sai** — script chèn class mới ở **đầu** chuỗi, nên chuỗi vá
+   `flex gap-2 t-single …` không khớp; thực tế là `t-single flex gap-2 …`.
+4. **`html.skin-mt .font-medium { font-weight: 400 }`** (0,2,1) đè `.font-medium` (0,1,0). Trước đây
+   title lớp nổi giữ được 500 nhờ một rule móc vào `.text-[16px]`; gỡ utility là mất móc. Vá bằng
+   `html.skin-mt .t-overlay.t-overlay { font-weight: 500 }` — nhân đôi class để lên (0,3,1), đúng vai
+   *"title lớp nổi luôn 500"* của bảng chuẩn 13.1.
+
+### 20.5 Được gì
+
+- Markup đọc ra **VAI** thay vì đọc ra pixel: `class="t-multiline text-foreground-alt truncate"`.
+- Bậc chữ lệch biến mất tại nguồn: 52 chỗ `text-[13px]`, 16 chỗ `text-[11px]`, 3 chỗ `text-[15px]`
+  trong `index.html` **không còn** — trước đây chúng chỉ đúng nhờ được quy đổi lúc chạy.
+- Tên class khớp 1:1 với text style trong Figma → `figma → code` và `code → figma` cùng một từ vựng.
+
+---
+
+## 21 · Nút "Bảng kích thước" — bỏ underline + thêm mũi tên · 04/09/2026
+
+Lệnh user (kèm link node `191:14964`). **Đây là đảo lại quyết định 03/09** — hôm đó user chốt bỏ mũi
+tên khỏi cả 5 file; nay mũi tên quay về. Underline thì cả hai đợt đều bỏ.
+
+### 21.1 Figma — 23/23 nút
+
+| | |
+|---|---:|
+| Tự động (bỏ underline + thêm mũi tên) | **22** |
+| Khung user tự dựng làm mẫu | 1 |
+
+Khuôn nhân theo mẫu: `box` → [`TEXT "Kích thước"`, `FRAME "Frame 1"` FILL canh MAX →
+[`TEXT "Bảng kích thước"` HUG, `INSTANCE icon 16×16`]]. Đo lại: box giữ nguyên `343×16`, cụm
+chữ + mũi tên canh sát mép phải.
+
+**Icon user kéo vào đã chuẩn hoá:** tên `fi-tr-arrow-small-right 1` → **`icon/tr/arrow-small-right`**
+(NAMING-MAGENTO §9), fill `#000000` raw → bind biến **`foreground`**, thêm mô tả.
+
+**Ba chỗ CỐ Ý bỏ qua:** 2 tiêu đề lớp nổi *"Bảng kích thước"* (`PDP / lớp nổi · mobile|desktop` — đó
+là tên sheet kèm nút đóng, không phải link) và 1 chữ trong khối `[doc]`.
+
+### 21.2 Code — 8 nút, 2 file
+
+`index.html` 6 nút · `desktop.html` 2 nút. Bỏ `underline`, chèn SVG lấy **đúng đường vẽ vector từ
+Figma** (làm tròn 2 chữ số, 436 ký tự), `fill="currentColor"` nên tự ăn theo mực chữ.
+
+**Ba lần sửa mới ra:**
+1. `inline-flex` bị rule khác đổi thành `display:flex` → nút thành flex container co được, chữ xuống
+   dòng, nút còn `51×48`.
+2. Bỏ flex, dùng `whitespace-nowrap` → vẫn `99×32`: **Tailwind preflight đặt `svg { display: block }`**
+   nên icon bị đẩy xuống dòng riêng.
+3. Ghi đè bằng `style="display:inline-block;vertical-align:middle"` ngay trên thẻ → xong.
+
+### 21.3 Kiểm chứng
+
+| | Figma | Code |
+|---|---|---|
+| Bề ngang nút | 99 + 16 = **115** | **115,2** |
+| Chữ | 12/16 · 400 | 12/16 · 400 ✓ |
+| Gạch chân | không | `none` ✓ |
+| Icon | 16×16 | 16×16, sát mép phải 0.0 ✓ |
+
+Console **0 lỗi**. **i18n vẫn chạy**: `applyLang` duyệt bằng TreeWalker trên text node, mà node chữ
+còn nguyên (SVG là phần tử anh em, không chứa text node) — thử sống: VI `Bảng kích thước` 115,2 →
+EN `Size guide` 80,1 → về VI 115,2, mũi tên còn qua cả ba lượt.
+
+**Chỉ áp `index.html` + `desktop.html`** theo phạm vi skin-li user chốt; 3 fork skin không đụng.
