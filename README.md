@@ -2698,6 +2698,36 @@ Nhân lượt port, vá 2 lỗi của nền cũ trong 3 file thử skin (cả 2 
 
 **Đo lại sau port** (1440px): `desktop` → 15 ô màu `4/4/4/3` ô 91px · 3 nhóm size · mục Độ cao giày hiện ở `Nữ › Giày dép`, không dựng ở PLP nam/beauty, tự hiện khi tick cate *Giày dép* ở PLP `Nữ › Túi xách` · cây nữ 168 / nam 147 · `Cao (trên 9 cm)` → 1 SP, lưới 1 thẻ, header "1 sản phẩm", chip "đang áp dụng" đúng nhãn · EN ra `Heel height` / `Multi-colour`. 3 bản thử skin: 15 ô màu `4/4/4/3` (ô 87px), heel hiện/ẩn đúng, `Nhiều màu` → 2 SP, `#a06a3f` → Nâu, nhãn `Size M` sống qua điều hướng. Console sạch ở cả 4 file.
 
+## PLP: một lượt hiển thị 24 sản phẩm — chốt 04/09/2026
+
+Lệnh user: *"ở PLP sẽ set cho 1 lượt hiển thị sẽ là 24 sản phẩm nhé"*. Áp **CẢ 5 FILE**. Báo cáo đầy đủ: `PLP-PHANTRANG-2026-09-04.md`.
+
+**Trước lượt này PLP không có phân trang** — lưới đổ nguyên danh sách, rồi nút "Xem thêm" nối thêm **4 thẻ TRÙNG** lấy từ đầu danh sách (`sortedProducts().slice(0, 4)`): một cử chỉ trang trí, không phải phân trang. Nên yêu cầu này không phải "đổi 4 thành 24" mà là dựng phân trang thật.
+
+| | Trước | Sau |
+|---|---|---|
+| Lượt đầu | cả danh sách (40 thẻ ở PLP thời trang) | **24** |
+| Bấm "Xem thêm" | +4 thẻ **trùng** | +24 thẻ **tiếp theo** |
+| Nút khi hết hàng | không bao giờ hết | **tự ẩn** |
+| Ô xám lúc tải | cứng 4 | đúng số thẻ sắp nối |
+| Mẫu số tiến độ | `PLP_TOTAL = 152` (giả lập) | số sản phẩm **thật** |
+
+Thi hành bằng **một hằng + một chỗ cắt + một hàm đồng bộ nút**, khai cạnh `plpGridInner` ở cả 5 file: `PLP_PER_PAGE = 24` · `plpGridInner` slice `(0, PLP_PER_PAGE)` · `plpShownCount(root)` · `syncShowMore(root)`.
+
+Ba điều phải nhớ khi sửa chỗ này:
+
+1. **Cắt trong `plpGridInner`, đừng rải `slice` ở từng đường.** Mọi đường vẽ lại lưới đều qua hàm này (template màn, `renderPlpGrid` khi lọc/sắp xếp); nút "Xem thêm" thì `insertAdjacentHTML` trực tiếp vào lưới nên không chạm hàm — nhờ vậy lượt đã nối không bị lượt render sau xoá mất.
+2. **Mốc "đang hiện tới đâu" đếm `[data-product]` trong `#plpGrid`, KHÔNG dùng biến đếm riêng.** Biến riêng thì phải reset ở từng đường vẽ lại (lọc · sắp xếp · đổi PLP · đổi mật độ cột) — thiếu một chỗ là hoặc nút chết, hoặc lượt sau nối trùng thẻ.
+3. **`syncShowMore` gộp luôn việc ẩn-khi-lọc-sạch** (0 kết quả tự vào nhánh ẩn vì `0 >= 0`) — 3 dòng `toggle('hidden', !list.length)` rải ở `wire()`/`renderPlpGrid`/template đã gom về một hàm.
+
+**Vá kèm ở mobile**: handler cũ lấy lưới bằng `sm.closest('[data-scroller]').querySelector('.grid')` — `.grid` đầu tiên trong màn. Hồi chưa phân trang thì trúng/trượt cũng chỉ là 4 thẻ trang trí; nay mốc đọc từ `#plpGrid` nên nối sai chỗ là **bấm mãi không tiến**. Đã đổi sang `root.querySelector('#plpGrid') || …` như desktop.
+
+**`PLP_TOTAL = 152` nghỉ hưu** (tôi tự quyết): giữ catalog giả lập cạnh phân trang thật là hai thứ chọi nhau — *"Bạn đã xem 40 trong 152"* trong khi cái nút vừa tự ẩn vì đã vẽ hết hàng. Muốn con số lớn trở lại thì **thêm sản phẩm vào `PRODUCTS`, đừng nâng mẫu số**. Đảo chốt = 1 dòng trong `plpProgressTotal` (3 bản desktop); `desktop-editorial.html` không có hàm này nên phải sửa **2 chỗ** (`dkProductGrid` + `updatePlpProgress`).
+
+**Hệ quả cần biết trước khi trình khách**: catalog demo nhỏ hơn 152 rất nhiều nên 24/lượt làm nút hết việc ở phần lớn màn. `index`/`desktop` (48 SP): PLP thời trang 24 → +16, tìm kiếm rỗng 24 → +24, còn PLP Làm đẹp (8) và mọi trang thương hiệu (19/14/12/2/1) vào một lượt là hết. **3 bản fork chỉ có 24 SP** (đóng băng 21/08, thiếu data D&G + Zimmermann của 02/09) nên **nút không bao giờ hiện ở đó**.
+
+Đo: `desktop.html` 3 kịch bản × 2 mốc + vòng 6 bước (vào PLP → bấm → đổi sắp xếp → bấm → áp lọc → xoá lọc) đều đúng số; `index.html` 24 → 40 với **0 thẻ trùng**; ô xám lượt cuối đếm được **16** ứng 16 thẻ sắp nối. Đổi mật độ cột chỉ toggle class, không vẽ lại lưới nên mốc vẫn đúng. `node --check` 2 khối × 5 file sạch, console 2 bản sạch, không tràn ngang.
+
 ## Cầu nối responsive (mốc 768px)
 
 Hai file vẫn là 2 build riêng, nhưng với người dùng thì chúng là **một trang responsive**: mở file nào cũng tự nhảy sang bản khớp bề ngang cửa sổ, kéo giãn cửa sổ qua mốc cũng nhảy theo.
@@ -2967,7 +2997,7 @@ Fork từ `index.html`, **giữ nguyên toàn bộ** data / router SPA / i18n VI
       - ⚠️ Khi verify: nút có `transition-opacity` nên `getComputedStyle(...).opacity` bị đóng băng lúc pane không composite — kiểm bằng `classList.contains('opacity-50')`, đừng kết luận "state không đổi".
   - **Hàng chip bộ lọc đang áp dụng** (`2910:111376`): chip Secondary 48/24 nền `#f5f5f5` + ✕, cuối hàng "Xóa tất cả" (Figma ghi sai chính tả "Xoát"). State thật ở `plpFilters`, sinh từ nút Áp dụng của drawer Bộ lọc; bỏ chip / xóa tất cả đều re-render lưới.
   - **Grid**: `gap-x-1` row 16px, 4 cột (card 345×590, có swatch) hoặc 3 cột (card 461×695). Figma dùng 2 variant Card-item khác nhau (3 cột là bản `Default` không có swatch) — code **giữ swatch ở cả hai** vì `v2` là bản mới hơn.
-  - **Tiến độ + Xem thêm** (`2237:18725` + Frame 46): "Bạn đã xem X trong Y sản phẩm" 14/20 `#737373` + track 240×2, rồi nút Xem thêm outline canh giữa. `PLP_TOTAL = 152` là tổng catalog demo.
+  - **Tiến độ + Xem thêm** (`2237:18725` + Frame 46): "Bạn đã xem X trong Y sản phẩm" 14/20 `#737373` + track 240×2, rồi nút Xem thêm outline canh giữa. (`PLP_TOTAL = 152` — tổng catalog demo hồi đó — **đã nghỉ hưu 04/09/2026**, mẫu số nay là số sản phẩm thật; xem mục "PLP: một lượt hiển thị 24 sản phẩm".)
   - Bỏ `camKetSection()` khỏi PLP — không frame nào trong nhóm có khối cam kết.
 - **PDP** (`PDP-Desktop-01-Default` 2190:14530): 1 layout dùng chung cho cả 6 route `pdp..pdp6` (data từng SP gom vào `PDP_DATA`) — gallery 2 cột (cell 469:579, zoom lightbox) + info panel 451px sticky (giá/swatch 44px/chọn size/CTA/box ưu đãi/accordion ±) + 3 carousel 5 card.
   - Chọn size giữ đúng 2 biến thể như bản mobile, bật/tắt bằng cờ `dropdown` trong `PDP_DATA`: **chip grid** cho `pdp`/`pdp4`, **dropdown** (Select & Combobox `3111:33591`) cho `pdp2`/`pdp3`/`pdp5`/`pdp6`.

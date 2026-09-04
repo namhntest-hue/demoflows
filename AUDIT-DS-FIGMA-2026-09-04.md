@@ -833,3 +833,376 @@ báo cáo đề ngày 26/08, tức ghi chép lịch sử; sửa đi là làm sai
 
 **`NAMING-MAGENTO.md` · `STYLE-RULES.md` — không cần sửa.** Chúng dùng `_active` làm ví dụ cho quy
 tắc tiền tố `_`, mà `_active` vẫn còn (ở `action`, nghĩa *đang nhấn*).
+
+---
+
+## 15 · Rà bộ text style — 04/09/2026
+
+Đối chiếu 9 text style trong Figma với bảng chuẩn **FONT-LIBRE-INTER.md §13.1** (3 tầng · 9 vai ·
+1 ngoại lệ ghi danh), có đo lại trên demo đang chạy (`skin-mt skin-li`).
+
+### 15.1 Phần ĐÚNG
+
+| Phép kiểm | Kết quả |
+|---|---|
+| Phủ vai | **9 style ↔ 9 vai**, không thiếu vai nào *(`t-body` cố ý gánh 2 vai 14/20·400: brand ở card + nút hành động)* |
+| Tracking 0,5px | **9/9 style** — khớp luật *"0,5px mọi vai"* |
+| Mặt chữ | 24 = Libre Bodoni · mọi bậc dưới = Inter — đúng luật *"từ 18 trở lên Bodoni, dưới 18 Inter"* |
+| Mô tả style | **9/9 có** |
+| Độ phủ | **6.375 / 6.689 node = 95,3%** |
+| Cỡ tự chế 11·13·15·22 | **0** — thang sạch |
+
+### 15.2 Năm chỗ hở
+
+**1 · `t-section` 18/24 là style CHẾT — 0 node dùng.**
+Mô tả của chính nó ghi *"⚠ NGƯNG DÙNG"*, bảng chuẩn ghi *"bộ da này không còn phần tử nào ở 18"*, và
+thang thật của skin-li là `10 · 12 · 14 · 16 · 24` — không có 18. Giữ lại thì ai mở panel style cũng
+có thể lỡ dùng. → **Xoá**, hoặc chuyển sang một page lưu trữ.
+
+**2 · Ba style 500 KHÔNG khoá chữ hoa — 34 node đang dùng sai.**
+Bảng chuẩn: cả 3 vai 500 đều **Hoa = CÓ**. Đo demo xác nhận: `12px/16px · w500 · uppercase · ls 0,5`.
+Nhưng `t-overlay-title` · `t-label-1` · `t-label` đều để `textCase = ORIGINAL` — không có gì chặn.
+
+`t-label`: **596 hoa / 34 thường**. Trong 34:
+- **4 hợp lệ** — "Từ" · "Đến" ở khối Khoảng giá (ngoại lệ đã ghi danh)
+- **6 SAI THẬT** — nhãn accordion: `collapsible` ("Chi tiết mua hàng", "Gioa hàng & đổi trả") và 4
+  nhãn PDP ("Mô tả sản phẩm", "Bảo quản sản phẩm", "Chính sách đổi trả", "Về thương hiệu Versace").
+  Demo hiện chữ HOA, Figma đang chữ thường.
+- **~24 là nhãn CHÚ THÍCH** trong các section trạng thái ("Sản phẩm", "Bộ size", "Mobile", "Desktop"…)
+  — dùng style sản phẩm cho việc tài liệu.
+
+`t-label-1`: **23 hoa / 12 thường** — phần lớn cũng là nhãn chú thích.
+`t-overlay-title`: **15 hoa / 0 thường** ✓ sạch.
+
+→ Đề xuất: đặt `textCase = UPPER` cho 3 style (khoá luật ngay trong style thay vì trông vào việc gõ
+tay), và tách một style riêng cho nhãn chú thích tài liệu.
+
+**3 · Thiếu style cho 2 vai ĐÃ GHI DANH.**
+Bảng chuẩn có dòng ngoại lệ: `12/18` và `12/16` · Inter · **500 chữ thường** (cây danh mục
+`#filterSheet`). Không style nào phủ. Đây chính là lý do **39 node** trong section `filter` + **8**
+trong `collapsible` không gắn style. FIGMA-FILTER.md §2 treo việc này từ **27/08** với ghi chú
+*"set tay + chờ chốt tên"* — vẫn chưa chốt.
+
+**4 · `t-label-1` sai khuôn đặt tên.**
+8 style kia đặt theo VAI (`t-title` · `t-copy` · `t-ui` · `t-body` · `t-micro` · `t-overlay-title` ·
+`t-label`). Riêng cái này dùng hậu tố số thứ tự — không nói lên vai, lại làm `t-label` trông như cấp
+thấp hơn. Trái NAMING-MAGENTO (thang chữ đặt tên theo vai).
+→ Đề xuất `t-label-nav` (vai thật: nav ngành hàng + tiêu đề panel), hoặc đổi cặp thành
+`t-label-lg` / `t-label`.
+
+**5 · Bậc 40/50 chưa vào bảng — 8 node không style.**
+Tiêu đề dải *"Gợi ý mua kèm"* ở PDP desktop là **40/50**, có ghi chú hẳn trong code
+(`desktop.html:737` — *"Tiêu đề dải Gợi ý mua kèm (PDP#1): 40/50"*, adapt từ Figma node `108:3746`
+hôm 28/08). Nhưng §13.1 khai thang skin-li là `10 · 12 · 14 · 16 · 24` — **không có 40**.
+→ Hoặc ghi 40/50 vào bảng thành bậc trưng bày thứ 2 (tạo `t-display`), hoặc kéo tiêu đề về 24 cho
+đúng luật *"một bậc trưng bày duy nhất"* (13.8).
+
+### 15.3 314 node chưa gắn style — chia 2 nguyên nhân
+
+| Nơi | Số | Nguyên nhân |
+|---|---:|---|
+| `PDP — trạng thái` 121 · `Menu` 67 · `PLP — trạng thái` 30 · `PDP` 24 · `screens` 8 · `Thêm vào giỏ` 5 · `PLP` 6 · `Cart` 1 | **262** | **Lỗ hổng pipeline** — bộ chuyển DOM→Figma không gắn text style khi dựng |
+| `filter` 39 · `collapsible` 8 · `menu` 3 · `badge` 1 · `page-footer` 1 | **52** | Thuộc 2 vai ngoại lệ **chưa có style** (mục 3) |
+
+Nghĩa là bộ style không phải thủ phạm chính: sửa mục 3 gỡ được 52 node, còn 262 node là việc của
+bộ chuyển.
+
+### 15.4 Lỗi lặt vặt tìm thấy khi rà
+
+- **Typo trong component `collapsible`**: "**Gioa** hàng & đổi trả" → "Giao hàng & đổi trả"
+- **2 node cỡ chữ trộn lẫn** (mixed font size) — đều ở tiêu đề "Gợi ý / Mua kèm"
+
+---
+
+## 16 · Đề xuất bộ text style đầy đủ — 04/09/2026
+
+Đánh giá theo tiêu chuẩn **một bộ text style của design system** (không phải theo demo). Phạm vi
+code: chỉ `skin-li` + cặp Libre Bodoni / Inter.
+
+### 16.1 Chẩn: bộ hiện tại CHƯA đủ — thiếu 3 loại vai
+
+| Loại vai | Hiện có | Bằng chứng |
+|---|---|---|
+| **Trang trí chữ** (gạch chân · gạch ngang) | **KHÔNG có style nào** — `textDecoration` của cả 9 style đều `NONE` | **371 node** đang override tay: 236 gạch ngang · 132 gạch chân · 3 trộn |
+| **Chữ hoa** | **KHÔNG khoá** — `textCase` của cả 9 đều `ORIGINAL` | 34 node dùng style 500 với chữ thường |
+| **Vai 500 chữ thường** (ngoại lệ §13.1) | Không có | 52 node không style |
+
+Ngược lại, phần **rất tốt**: **0 node ghi đè cỡ / dòng / đậm** của style — thang chữ được tôn trọng
+tuyệt đối. Và tracking 0,5px đủ 9/9.
+
+**Chi tiết 371 node trang trí tay:**
+
+| Trang trí | Đang mượn style | Số | Vai thật |
+|---|---|---:|---|
+| Gạch ngang | `t-ui` (12/16) | **209** | giá gốc |
+| Gạch ngang | `t-copy` (12/18) | 27 | giá gốc — **lệch bậc** |
+| Gạch chân | `t-copy` (12/18) | **90** | link |
+| Gạch chân | `t-ui` (12/16) | 40 | link — **lệch bậc** |
+| Gạch chân | không style | 2 | |
+
+→ Hai vai (giá gốc · link) đang mỗi vai nằm ở **hai bậc chữ khác nhau**. Đó là bất nhất cần dọn,
+không phải lý do để đẻ 4 style.
+
+### 16.2 Bộ đề xuất — 15 style, 6 nhóm
+
+Đặt tên **phẳng kebab, tiền tố nhóm** — giữ 1:1 với tên class CSS (đúng NAMING-MAGENTO), mà tiền tố
+vẫn tự gom nhóm khi Figma xếp theo abc.
+
+| Tên mới | Cỡ / dòng | Mặt | Đậm | Hoa | Trang trí | Từ đâu |
+|---|---|---|---|---|---|---|
+| `t-display-hero` | **40 / 50** | Libre Bodoni | 400 | không | – | **MỚI** — 8 node |
+| `t-display-title` | 24 / 32 | Libre Bodoni | 400 | không | – | ← `t-title` |
+| `t-label-overlay` | 16 / 24 | Inter | 500 | **KHOÁ HOA** | – | ← `t-overlay-title` |
+| `t-label-nav` | 14 / 20 | Inter | 500 | **KHOÁ HOA** | – | ← `t-label-1` |
+| `t-label-group` | 12 / 16 | Inter | 500 | **KHOÁ HOA** | – | ← `t-label` |
+| `t-body-lead` | 14 / 20 | Inter | 400 | không | – | ← `t-body` |
+| `t-body-multiline` | 12 / 18 | Inter | 400 | không | – | ← `t-copy` |
+| `t-body-single` | 12 / 16 | Inter | 400 | không | – | ← `t-ui` |
+| `t-body-micro` | 10 / 14 | Inter | 400 | không | – | ← `t-micro` |
+| `t-filter-tree` | 12 / 18 | Inter | **500** | không | – | **MỚI** — ngoại lệ §13.1 |
+| `t-filter-label` | 12 / 16 | Inter | **500** | không | – | **MỚI** — ngoại lệ §13.1 |
+| `t-link` | 12 / 18 | Inter | 400 | không | **gạch chân** | **MỚI** — 90 node |
+| `t-price-strike` | 12 / 16 | Inter | 400 | không | **gạch ngang** | **MỚI** — 209 node |
+| `t-doc-label` | 12 / 16 | Inter | 500 | không | – | **MỚI** — nhãn chú thích trong file |
+| `t-doc-note` | 12 / 18 | Inter | 400 | không | – | **MỚI** — ghi chú trong file |
+
+Tracking **0,5px** cho cả 15 — giữ nguyên luật.
+
+**Xoá `t-section` (18/24)** — 0 node dùng, mô tả tự ghi *"NGƯNG DÙNG"*, thang skin-li không có 18.
+
+**Vì sao có nhóm `t-doc-*`:** hiện ~36 nhãn chú thích trong file (tên cụm ở các section trạng thái:
+"Sản phẩm", "Bộ size", "Mobile", "Desktop"…) đang mượn `t-label` — style SẢN PHẨM. Tách ra thì khoá
+được chữ hoa cho `t-label-group` mà không phá phần tài liệu, và người đọc phân biệt được ngay đâu là
+UI đâu là chú thích.
+
+**Vì sao chỉ 1 style cho mỗi vai trang trí:** `t-link` lấy bậc 12/18 (90 node, đa số) và
+`t-price-strike` lấy 12/16 (209 node, đa số). 67 node còn lại đang ở bậc kia là **bất nhất cần dọn**
+— kéo về bậc chuẩn, không đẻ thêm style.
+
+### 16.3 Việc migrate
+
+| Bước | Số node | Máy làm được? |
+|---|---:|---|
+| Đổi tên 8 style *(đổi tên KHÔNG làm mất liên kết)* | 6.375 giữ nguyên | ✅ |
+| Xoá `t-section` | 0 | ✅ |
+| Tạo 7 style mới | – | ✅ |
+| Gắn `t-price-strike` · `t-link` cho node đang override tay | **299** | ✅ khớp theo cỡ + trang trí |
+| Gắn `t-filter-*` cho 52 node ngoại lệ | 52 | ✅ |
+| Gắn `t-display-hero` cho tiêu đề "Gợi ý mua kèm" | 8 | ✅ |
+| Chuyển ~36 nhãn chú thích sang `t-doc-*` | 36 | ✅ |
+| Khoá `textCase=UPPER` cho 3 style label | – | ✅ |
+| Sửa 6 nhãn accordion về chữ HOA | 6 | ✅ |
+| **Tự gắn style cho 262 node của pipeline** | 262 | ✅ khớp cỡ/dòng/đậm — an toàn vì **0 node ghi đè thang** |
+| Dọn 67 node trang trí lệch bậc | 67 | ⚠ cần chốt bậc đúng |
+
+Sau migrate: độ phủ style **95,3% → ~100%**, và 371 override tay về **0**.
+
+### 16.4 Hai chỗ cần chốt trước khi gen
+
+1. **`t-display-hero` 40/50** — §13.8 chốt *"một bậc trưng bày duy nhất 24/32, KHÔNG gác"* (phương án
+   C). Bậc 40/50 hiện là **lệch có ghi danh**. Tạo style cho nó = chính thức hoá bậc thứ 2; không tạo
+   = phải kéo tiêu đề "Gợi ý mua kèm" về 24/32. **Khuyến nghị tạo** — DS nên kiểm soát mọi thứ nó vẽ
+   ra, còn hơn để 8 node trôi nổi không style.
+2. **Tên nhóm** — phẳng `t-nhóm-vai` (khuyến nghị, 1:1 với class CSS) hay dùng `/` để Figma xếp thành
+   thư mục (`Body/lead`). Đổi qua lại về sau không mất liên kết nên không phải quyết định một chiều.
+
+---
+
+## 17 · Đã gen bộ text style — 04/09/2026
+
+Đề xuất §16 là **15 style**. Khi migrate thì đo ra thêm **3 vai thật** nữa → chốt **18 style**.
+
+### 17.1 Bộ hoàn chỉnh — 18 style
+
+| Tên | Cỡ/dòng | Mặt | Case | Trang trí | Node |
+|---|---|---|---|---|---:|
+| `t-display-hero` | 40/50 | Bodoni Regular | | | 8 |
+| `t-display-title` | 24/32 | Bodoni Regular | | | 175 |
+| `t-label-overlay` | 16/24 | Inter Medium | **UPPER** | | 18 |
+| `t-label-nav` | 14/20 | Inter Medium | **UPPER** | | 31 |
+| `t-label-group` | 12/16 | Inter Medium | **UPPER** | | 612 |
+| `t-body-lead` | 14/20 | Inter Regular | | | 555 |
+| `t-body-multiline` | 12/18 | Inter Regular | | | 2.461 |
+| `t-body-single` | 12/16 | Inter Regular | | | 1.778 |
+| `t-body-micro` | 10/14 | Inter Regular | | | 469 |
+| `t-accordion-label` | 14/20 | Inter **Medium** | thường | | **58** |
+| `t-filter-tree` | 12/18 | Inter **Medium** | thường | | 40 |
+| `t-filter-label` | 12/16 | Inter **Medium** | thường | | 11 |
+| `t-link` | 12/18 | Inter Regular | | **gạch chân** | 91 |
+| `t-link-compact` | 12/16 | Inter Regular | | **gạch chân** | **40** |
+| `t-price-strike` | 12/16 | Inter Regular | | **gạch ngang** | 218 |
+| `t-size-oos` | 12/18 | Inter Regular | | **gạch ngang** | **18** |
+| `t-doc-label` | 12/16 | Inter Medium | thường | | 78 |
+| `t-doc-note` | 12/18 | Inter Regular | | | 21 |
+
+Tracking **0,5px** cả 18. **`t-section` 18/24 đã xoá** (0 node dùng).
+
+### 17.2 Ba vai phát hiện thêm khi migrate
+
+**`t-accordion-label` 14/20 · 500 · chữ thường — 58 node.**
+Đo demo (`skin-mt skin-li`, desktop, PDP mở): `[data-pdp-acc] .acc-trigger > span` ra
+**`14px/20px · w500 · text-transform: none`**. Đây là **vai ngoại lệ thứ 3** mà FIGMA-FILTER.md §2
+đã nhắc từ 27/08 (*"cùng loại việc với 14/20 · 500 của accordion PDP"*) nhưng chưa ai tạo style.
+
+⚠ **Hai loại accordion khác nhau, đã đo cả hai:** accordion **chân trang / giỏ hàng** là
+`12/16 · 500 · CHỮ HOA` (`t-label-group`); accordion **PDP** là `14/20 · 500 · chữ thường`
+(`t-accordion-label`).
+
+**`t-size-oos` 12/18 · gạch ngang — 18 node.** Nhãn size hết hàng ("XXL", "IT 43"). Ban đầu tôi gộp
+nhầm với giá gốc; nhưng đây là **vai khác**: nhãn size theo số đo chip size (12/18 · 400), còn giá gốc
+là 12/16. 9 node giá bị gán nhầm đã tách lại sang `t-price-strike`.
+
+**`t-link-compact` 12/16 · gạch chân — 40 node.** Link một dòng ("Đổi quà" ở giỏ). Đúng cách bảng
+chuẩn §13.1 phân đôi hai bậc 12: 12/18 cho chữ **có thể xuống dòng**, 12/16 cho chữ **chắc chắn một dòng**.
+
+### 17.3 Ba thứ style giờ tự ép, không còn trông vào gõ tay
+
+| | Trước | Sau |
+|---|---|---|
+| Chữ hoa | 0 style khoá · **100 node lọt lưới chữ thường** | 3 style khoá `textCase=UPPER` |
+| Gạch chân / gạch ngang | 0 style mang · **371 node override tay** | 4 style mang sẵn · **0 override** |
+| Vai 500 chữ thường | không có style · 52+58 node trôi nổi | 3 style riêng (`t-accordion-label` · `t-filter-tree` · `t-filter-label`) |
+
+### 17.4 Kết quả migrate
+
+| | Trước | Sau |
+|---|---:|---:|
+| Số style | 9 *(1 chết)* | **18** *(0 chết)* |
+| Node có style | 6.375 | **6.682** |
+| Độ phủ | 95,3% | **99,9%** |
+| Node override thuộc tính style | 371 | **0** |
+| Style không ai dùng | 1 | **0** |
+
+Kèm: sửa typo **"Gioa hàng & đổi trả" → "Giao hàng & đổi trả"**, và 2 nhãn ví dụ trong khung minh hoạ
+`collapsible` đổi sang chữ hoa cho khớp cả demo lẫn component (16/16 variant của nó vốn đã đúng
+chữ hoa và đúng bậc: `size=sm` 12/16 · `size=md` 14/20).
+
+### 17.5 Bảy node còn lại — đều là ca lẻ, cần bạn quyết
+
+| Node | Vấn đề | Gợi ý |
+|---|---|---|
+| 3 × "[PRE-ORDER] Giày sandal…" | line-height **trộn** trong một node | tách tiền tố `[PRE-ORDER]` thành node riêng |
+| 2 × "Gợi ý / Mua kèm" | cỡ chữ **trộn** trong một node | tách 2 dòng thành 2 node → gán `t-display-hero` |
+| 1 × "Không có sản phẩm nào…" | **16/24 Regular** — không vai nào có | hạ về `t-body-lead` 14/20 hoặc `t-body-multiline` 12/18 |
+| 1 × "Xóa tất cả bộ lọc" | **14/20 gạch chân** — link ở bậc nút | tạo `t-link-action` 14/20, hoặc hạ về `t-link` |
+
+---
+
+## 18 · Gộp lại theo lệnh user — 9 style · 04/09/2026
+
+Lệnh: *"upper case cho nhập tay là được, không cần tạo text style cho nhiều đâu — cùng font size
+font weight là được"*. Áp nguyên tắc **một style cho mỗi cặp (cỡ, đậm)**; chữ hoa và gạch chân /
+gạch ngang để NODE tự mang.
+
+### 18.1 Bộ cuối — 9 style, đối xứng label ↔ body
+
+| | **Inter 500 — `label`** | **Inter 400 — `body`** |
+|---|---|---|
+| 16/24 | `t-label-overlay` · 18 | — |
+| 14/20 | `t-label-lead` · 89 | `t-body-lead` · 555 |
+| 12/18 | `t-label-multiline` · 39 | `t-body-multiline` · 2.592 |
+| 12/16 | `t-label-single` · 701 | `t-body-single` · 2.036 |
+| 10/14 | — | `t-body-micro` · 469 |
+
+Cộng `t-display-title` **24/32 · Libre Bodoni 400** · 185 node.
+Tracking **0,5px** cả 9. Quy tắc tên: **`label` = Medium 500 · `body` = Regular 400**, hậu tố nói vai
+theo bậc dòng.
+
+### 18.2 Ba style đổi tên, chín style xoá
+
+| Xoá | Gộp vào |
+|---|---|
+| `t-accordion-label` 14/20 · 500 · thường | `t-label-lead` *(hoa/thường do node)* |
+| `t-filter-label` · `t-doc-label` 12/16 · 500 | `t-label-single` |
+| `t-link` 12/18 · gạch chân · `t-size-oos` 12/18 · gạch ngang · `t-doc-note` | `t-body-multiline` *(trang trí do node)* |
+| `t-link-compact` 12/16 · gạch chân · `t-price-strike` 12/16 · gạch ngang | `t-body-single` |
+| `t-display-hero` 40/50 | `t-display-title` — **xem 18.3** |
+| `t-section` 18/24 | — *(đã xoá ở §17, 0 node dùng)* |
+
+Đổi tên cho đối xứng: `t-label-nav` → **`t-label-lead`** · `t-filter-tree` → **`t-label-multiline`** ·
+`t-label-group` → **`t-label-single`**. Ba style label đã **mở khoá `textCase` về ORIGINAL** — bắt
+buộc, vì các node 500-chữ-thường vừa gộp vào đang bị ép hoa sai.
+
+### 18.3 "Gợi ý mua kèm": không cần tách — 40/50 vốn KHÔNG tồn tại
+
+User bảo tách node ra rồi gắn style. Đo lại demo trước khi tách thì ra kết quả khác hẳn:
+
+> `skin-mt skin-li`, desktop, PDP mở → phần tử "Gợi ý mua kèm" render **`24px/32px · w400 · Libre Bodoni`**.
+
+Nghĩa là **bậc 40/50 không tồn tại trong bộ da này**. Ghi chú *"Tiêu đề dải Gợi ý mua kèm (PDP#1):
+40/50"* ở `desktop.html:737` là số **trước khi skin-li chuẩn hoá**. Và 2 node "trộn cỡ" hoá ra là
+`Gợi ý` 32/50 + `Mua kèm` 48/50 — cũng đều là số cũ.
+
+→ Đã đưa **cả 10 node** (8 cái 40/50 + 2 cái 32+48) về `t-display-title` 24/32. **Không phải tách
+node**, và `t-display-hero` vừa tạo ở §17 đã xoá.
+
+Kết quả phụ: điều này **xác nhận luật §13.8** — bộ da đúng là chỉ có MỘT bậc trưng bày.
+
+### 18.4 Một sự cố và cách vá
+
+Lượt gộp đầu **timeout ở giây thứ 30 khi đang chạy dở**: nó đã gán style xong (thao tác này xoá
+trang trí của node) nhưng **chưa kịp trả lại gạch chân cho 52 node**.
+
+Cách vá: gom tập chuỗi ký tự của các node CÒN gạch chân, rồi trả gạch chân cho node cùng chuỗi.
+Bốn chuỗi đều là nhãn link không nhập nhằng — *"Chính sách đổi trả"* · *"Chính sách bảo mật"* ·
+*"Điều khoản và điều kiện"* · *"Xem thêm"*. Khôi phục **55 node**; tổng gạch chân 12/18 nay là **94**
+so với **91** ban đầu — dư 3, đều rơi đúng 4 chuỗi trên nên coi như đủ.
+
+*Bài học: `setTextStyleIdAsync` GHI ĐÈ `textDecoration` của node. Muốn giữ thì phải đọc trước, gán
+lại sau — và đừng chạy vòng lặp hàng trăm node trong một lệnh 30 giây.*
+
+### 18.5 Kết quả
+
+| | §17 (18 style) | §18 (9 style) |
+|---|---:|---:|
+| Số style | 18 | **9** |
+| Style chết | 0 | **0** |
+| Node có style | 6.682 | **6.688** |
+| Độ phủ | 99,9% | **99,98%** |
+| Node ghi đè cỡ/dòng | 0 | **0** |
+
+Trang trí nay nằm ở node: gạch ngang **236** (218 giá gốc + 18 size hết hàng) · gạch chân **134**
+(94 + 40).
+
+### 18.6 Đã đóng nốt — độ phủ 100%
+
+**Node 16/24 kéo về 12/18** (`t-body-multiline`) theo lệnh user. Kéo thì lộ ra **2 node cùng câu chữ
+đó đang ở 12/16** — cùng một thông điệp "Không có sản phẩm nào khớp bộ lọc" mà nằm hai bậc. Component
+`empty-state` của chính dự án dùng 12/18, và câu này có thể xuống dòng ở khổ 375 nên 12/18 mới đúng
+vai *("chữ có thể xuống dòng")*. Đã kéo cả 3 về một bậc.
+
+**Một sự cố nữa và cách vá.** Điều kiện bỏ qua trong lệnh gán (`typeof textStyleId === 'string'`)
+KHÔNG loại được node có style **TRỘN** — `figma.mixed` là một `symbol`, truthy nhưng không phải
+string. Hậu quả: lệnh cán luôn 3 node `"[PRE-ORDER] Giày sandal…"`, làm phẳng cấu trúc 2-style của
+chúng. Đã hoàn tác bằng `setRangeTextStyleIdAsync(0, 11, t-label-single)` — cả 3 về đúng
+`["[PRE-ORDER]"] 12/16 Medium` + `[" Giày sandal…"] 12/18 Regular`.
+
+*Bài học: muốn bỏ qua node style trộn thì phải kiểm `typeof sid !== 'string'`, đừng chỉ kiểm truthy.*
+
+### 18.7 Trạng thái cuối
+
+| | |
+|---|---:|
+| Text style | **9**, 0 style chết |
+| Text node | **6.706** |
+| Có style | 6.703 một style + 3 **trộn có chủ đích** *(`[PRE-ORDER]` = nhãn 12/16 + tên 12/18)* |
+| Chưa có style | **0** |
+| **Độ phủ** | **100,00%** |
+| Node ghi đè cỡ/dòng của style | **0** |
+
+| Style | Cỡ/dòng | Mặt | Node |
+|---|---|---|---:|
+| `t-display-title` | 24/32 | Libre Bodoni 400 | 185 |
+| `t-label-overlay` | 16/24 | Inter 500 | 18 |
+| `t-label-lead` | 14/20 | Inter 500 | 89 |
+| `t-body-lead` | 14/20 | Inter 400 | 556 |
+| `t-label-multiline` | 12/18 | Inter 500 | 39 |
+| `t-body-multiline` | 12/18 | Inter 400 | 2.610 |
+| `t-label-single` | 12/16 | Inter 500 | 701 |
+| `t-body-single` | 12/16 | Inter 400 | 2.036 |
+| `t-body-micro` | 10/14 | Inter 400 | 469 |
+
+### 18.8 Việc parity còn lại (không thuộc bộ style)
+
+**3 node `"[PRE-ORDER] Giày sandal…"`** giữ khuôn cũ: code đã **bỏ tiền tố "Pre-order ·" từ 03/09**,
+thay bằng badge đứng trước tên. Đây là việc đồng bộ demo, không phải việc của text style.

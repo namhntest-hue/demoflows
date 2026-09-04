@@ -2450,24 +2450,28 @@ function dkActiveFilters() {
   </div>`;
 }
 
-/* Tổng sản phẩm của catalog (demo) — dùng cho thanh tiến độ "Bạn đã xem … trong …" */
-const PLP_TOTAL = 152;
+/* `PLP_TOTAL = 152` (tổng catalog GIẢ LẬP) NGHỈ HƯU 04/09/2026, cùng lượt PLP
+   có phân trang thật 24/lượt — xem plpProgressTotal ngay dưới. */
 
 /* Grid sản phẩm + tiến độ + nút Xem thêm
    Figma: Frame 26 wrap gap-x 4px / row-gap 16px (4 cột card 345×590 · 3 cột card 461×695),
    _Component-SortBar (2237:18725): "Bạn đã xem X trong Y sản phẩm" + track 240×2,
    Frame 46: nút Xem thêm Outline Large canh giữa, py 16. */
-/* Mẫu số của thanh tiến độ (port 28/08 từ bản chuẩn): KHÔNG lọc thì là catalog
-   giả lập 152 (minh hoạ "Xem thêm" còn nhiều hàng), ĐANG LỌC thì là chính số
-   kết quả khớp — nói "đã xem 1 trong 152" khi bộ lọc chỉ có thể ra 1 là tự mâu
-   thuẫn với con số "N sản phẩm" ở heading ngay trên. Tử số kẹp về mẫu số vì
-   Xem thêm append thẻ TRÙNG — đủ lượt bấm là chuỗi chữ vượt tổng. */
+/* Mẫu số thanh tiến độ = SỐ SẢN PHẨM THẬT của danh sách đang xem (04/09/2026).
+   Trước đó khi không lọc thì là catalog giả lập `PLP_TOTAL = 152` — dựng hồi
+   PLP chưa phân trang, để minh hoạ "Xem thêm còn nhiều hàng". Nay phân trang
+   thật 24/lượt: nút tự ẩn khi vẽ hết hàng, nên giữ mẫu số 152 là hai thứ đứng
+   cạnh nhau mà chọi — "đã xem 40 trong 152" trong khi nút đã biến mất.
+   Muốn lấy lại cảm giác catalog lớn thì THÊM SẢN PHẨM vào PRODUCTS, đừng nâng
+   mẫu số: đây là chỗ duy nhất cần sửa nếu đảo chốt. */
 function plpProgressTotal(listLen) {
-  return plpFilters.length ? listLen : PLP_TOTAL;
+  return listLen;
 }
 function dkProductGrid(list, card) {
   const total = plpProgressTotal(list.length);
-  const seen = Math.min(list.length, total);
+  /* Tử số lượt ĐẦU = đúng một lượt hiển thị (PLP_PER_PAGE), không phải cả danh
+     sách — lưới nay chỉ vẽ 24 thẻ. updatePlpProgress sau đó đếm thẻ thật. */
+  const seen = Math.min(list.length, PLP_PER_PAGE);
   return `
   <div class="px-6">
     <div id="plpGrid" class="grid ${plpCols === '3' ? 'grid-cols-3' : 'grid-cols-4'} gap-x-1 py-2" style="row-gap:16px">
@@ -5170,9 +5174,37 @@ function plpFilterEmptyHTML() {
     </div>`;
 }
 /* Nội dung #plpGrid: thẻ sản phẩm, hoặc khối 0-kết-quả khi bộ lọc lọc sạch. */
+/* ══ MỘT LƯỢT HIỂN THỊ CỦA PLP = 24 SẢN PHẨM (chốt 04/09/2026, lệnh user) ═════
+   Trước lượt này PLP **không phân trang**: lưới đổ nguyên danh sách rồi nút
+   "Xem thêm" nối thêm 4 thẻ TRÙNG lấy từ đầu danh sách — một cử chỉ trang trí,
+   không phải phân trang. Nay cắt thật: lượt đầu 24, mỗi lần bấm nối 24 tiếp.
+
+   Cắt ở ĐÂY vì MỌI đường vẽ lại lưới đều đi qua plpGridInner (template màn,
+   renderPlpGrid khi áp/xoá bộ lọc, đổi sắp xếp, đổi mật độ 3/4 cột) — một chỗ
+   cắt là phủ hết, không phải rải slice ở từng đường. Nút "Xem thêm" thì append
+   TRỰC TIẾP vào lưới nên không chạm hàm này, vì vậy lượt đã nối không bị lượt
+   render sau xoá mất. */
+const PLP_PER_PAGE = 24;
+
 function plpGridInner(list, card) {
   if (!list.length && plpFilters.length) return plpFilterEmptyHTML();
-  return list.map(({ p, i }) => card(p, i)).join('');
+  return list.slice(0, PLP_PER_PAGE).map(({ p, i }) => card(p, i)).join('');
+}
+
+/* Mốc "đang hiện tới đâu" đọc từ SỐ THẺ TRONG LƯỚI, KHÔNG từ biến đếm riêng:
+   mọi đường vẽ lại lưới đều đổi số thẻ, mà biến riêng thì phải reset ở từng
+   đường — thiếu một chỗ là hoặc nút chết, hoặc lượt sau nối trùng thẻ. Khối
+   "không khớp bộ lọc" không mang [data-product] nên tự đếm ra 0. */
+function plpShownCount(root) {
+  const grid = (root || document).querySelector('#plpGrid');
+  return grid ? grid.querySelectorAll('[data-product]').length : 0;
+}
+/* Nút "Xem thêm" chỉ có việc khi còn sản phẩm CHƯA vẽ. Trường hợp bộ lọc ra 0
+   kết quả tự vào nhánh ẩn (0 >= 0), nên dòng "ẩn khi lọc sạch" cũ gộp vào đây. */
+function syncShowMore(root) {
+  const sm = (root || document).querySelector('#showMore');
+  if (!sm) return;
+  sm.parentElement.classList.toggle('hidden', plpShownCount(root) >= sortedProducts().length);
 }
 function matchProducts(list, labels) {
   const brands = labels.filter(l => FILTER_BRANDS.includes(l));
@@ -6162,8 +6194,7 @@ function renderPlpGrid(root, { skeleton = false } = {}) {
     /* 0 kết quả -> ẩn thanh tiến độ + cụm nút "Xem thêm": cả hai nằm NGOÀI
        #plpGrid nên innerHTML ở trên không đụng tới được — không ẩn thì dưới
        khối "không khớp bộ lọc" trơ dòng "Bạn đã xem 0 trong …" + nút chết. */
-    const sm = root.querySelector('#showMore');
-    if (sm) sm.parentElement.classList.toggle('hidden', !list.length);
+    syncShowMore(root);   // gộp cả 2 việc: ẩn khi lọc sạch, và ẩn khi đã vẽ hết hàng
     const prog = root.querySelector('#plpProgress');
     if (prog) prog.classList.toggle('hidden', !list.length);
   };
@@ -8235,20 +8266,25 @@ function wire(root) {
        độ): không còn gì để nối thêm, nút đứng dưới khối "không khớp bộ lọc" là
        một ngõ cụt. renderPlpGrid toggle lại mỗi lần áp/xoá bộ lọc; dòng này lo
        cho lượt render màn đầu tiên khi bộ lọc cũ vẫn đang ra 0. */
-    sm.parentElement.classList.toggle('hidden', !sortedProducts().length);
+    syncShowMore(root);
     sm.addEventListener('click', () => {
-    if (!sortedProducts().length) return;   // chốt chặn: nút đáng lẽ đã ẩn
+    /* Lượt kế tiếp = PLP_PER_PAGE sản phẩm NGAY SAU chỗ đang dừng. Đọc từ
+       sortedProducts() (đã lọc + đúng ngành), KHÔNG phải PRODUCTS thô: bản
+       trước nhồi 4 sản phẩm Versace thời trang vào mọi lưới, kể cả khi bộ lọc
+       đang ra 0 kết quả -> 4 thẻ nằm ngay dưới câu "không khớp bộ lọc".
+       Hết hàng thì thoát — nút đáng lẽ đã ẩn qua syncShowMore, đây là chốt chặn. */
+    const from = plpShownCount(root);
+    const more = sortedProducts().slice(from, from + PLP_PER_PAGE);
+    if (!more.length) return;
     const grid = root.querySelector('#plpGrid') || sm.closest('[data-scroller]').querySelector('.grid');
     sm.innerHTML = `<svg class="spin" width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="var(--general-primary)" stroke-opacity=".2" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="var(--general-primary)" stroke-width="2" stroke-linecap="round"/></svg> Đang tải`;
     localizeNew(sm);
-    const skels = Array(4).fill(`<div class="flex flex-col"><div class="skel w-full" style="aspect-ratio:189/252"></div><div class="px-1 py-2 flex flex-col gap-1"><div class="skel h-3 w-2/3 rounded"></div><div class="skel h-3 w-full rounded"></div><div class="skel h-3 w-1/2 rounded"></div></div></div>`).join('');
+    /* Số ô xám = ĐÚNG số thẻ sắp nối. Đổ cứng 24 ô rồi chỉ trả về 16 thẻ là
+       lưới tụt một nhịp ngay trước mắt người xem. */
+    const skels = Array(more.length).fill(`<div class="flex flex-col"><div class="skel w-full" style="aspect-ratio:189/252"></div><div class="px-1 py-2 flex flex-col gap-1"><div class="skel h-3 w-2/3 rounded"></div><div class="skel h-3 w-full rounded"></div><div class="skel h-3 w-1/2 rounded"></div></div></div>`).join('');
     grid.insertAdjacentHTML('beforeend', skels);
     setTimeout(() => {
       grid.querySelectorAll('.skel').forEach(s => s.closest('.flex-col').remove());
-      /* Phải lấy từ sortedProducts() (đã lọc + đúng ngành), KHÔNG phải PRODUCTS thô:
-         bản trước nhồi 4 sản phẩm Versace thời trang vào mọi lưới, kể cả khi bộ
-         lọc đang ra 0 kết quả -> 4 thẻ nằm ngay dưới câu "không khớp bộ lọc". */
-      const more = sortedProducts().slice(0, 4);
       /* Thẻ append dựng CÙNG options với renderPlpGrid (badge + pillBadges):
          bản trước chỉ truyền {w:'reveal'} nên SP#4 xuất hiện lần 2 mất nhãn
          New Season/La Vacanza — cùng một SP hai kiểu thẻ trên một lưới. */
@@ -8264,6 +8300,7 @@ function wire(root) {
       wireProductCards(grid);
       localizeNew(grid);   // EN mode: badge "Đặt trước" trên thẻ mới phải ra "Pre-order"
       observeReveal(root);
+      syncShowMore(root);   // nối tới thẻ cuối thì nút tự ẩn — không còn ngõ cụt
       updatePlpProgress(root);
     }, 900);
     });
