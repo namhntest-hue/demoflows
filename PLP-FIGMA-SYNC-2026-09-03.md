@@ -698,3 +698,33 @@ transition không chạy (lượt dựng tấm thêm giỏ).
 **Bẫy backtick lần 3**: tôi lại gõ `` `.drag-x` `` vào comment HTML mới thêm — khối nằm trong
 template literal nên đứt chuỗi, `node --check` bắt ngay. Đã bỏ backtick và ghi thêm cảnh báo tại
 chỗ.
+
+### 11.4 Mũi tên canh giữa Ô ẢNH, không phải giữa cả thẻ
+
+> *"mũi tên qua lại ở carousel đó sẽ canh theo hình sản phẩm, nằm giữa hình thay vì nằm giữa cả
+> block nhé"*
+
+Thẻ = **ảnh + khối chữ** (ở 1440: 455 + 108 = 563), nên `top: 50%` cho giữa **thẻ** = 282 —
+**lệch 53px xuống dưới** so với giữa **ảnh** = 228. Mắt đọc mũi tên theo ảnh, không theo cả block.
+
+**Không tính được bằng CSS thuần**: `top: %` của phần tử `absolute` quy theo **chiều cao** khối
+chứa, còn chiều cao ảnh lại suy từ **bề rộng thẻ** (`aspect-ratio: 189/252`) — hai trục khác nhau,
+`calc()` không nối được. Cũng không dùng được "% của chiều cao thẻ" (455/563 ≈ 80,8%): thẻ hàng
+làm đẹp không có hàng ô màu nên thấp hơn, mà chiều cao dải lấy theo thẻ CAO NHẤT → tỉ lệ đó sai
+ngay khi trộn loại thẻ.
+
+**Cách làm**: `wireRail()` **đo ô ảnh** rồi ghi vào biến `--rail-arrow-y`, CSS dùng
+`top: var(--rail-arrow-y, 50%)` (50% là dự phòng cho lúc JS chưa chạy). Đo lại khi **resize** —
+chiều cao ảnh suy từ bề rộng thẻ nên khổ đổi là phải đo lại — và một lượt nữa khi `document.fonts`
+xong.
+
+**Đo lại**:
+
+| Khổ | Thẻ | Ảnh | `--rail-arrow-y` | Tâm nút ↔ tâm ảnh | Tâm nút ↔ tâm thẻ |
+|---|---|---|---|---|---|
+| 1440 | 341×563 | 455 | **228px** | **1px** | −53px (đã nhấc lên) |
+| 1200 | 281×… | 375 | **188px** | **1px** | — |
+
+Nút nằm **hoàn toàn trong vùng ảnh** ở cả 2 khổ. `node --check` 2/2 OK.
+
+Vẫn **không chụp được ảnh kiểm** (pane ẩn → bề mặt chụp trả về trắng, cùng bẫy đã ghi ở 11.3).

@@ -1123,7 +1123,15 @@ window.RESP = (function () {
      sản phẩm — nút ghost trần sẽ không đọc ra. KHÔNG bóng, theo khuôn lớp nổi
      của dự án. Cỡ 40 = bậc `size=icon` của DS. */
   .dk-rail-arrow {
-    position: absolute; top: 50%; transform: translateY(-50%);
+    /* CANH GIỮA THEO Ô ẢNH, KHÔNG phải giữa cả thẻ (chốt user 03/09/2026).
+       Thẻ = ảnh 460 + khối chữ 130 = 590, nên giữa THẺ là 295 — lệch 65px xuống
+       dưới so với giữa ẢNH (230). Mắt đọc mũi tên theo ảnh, không theo cả block.
+       Không tính được bằng CSS thuần: `top: %` của phần tử absolute quy theo
+       CHIỀU CAO khối chứa, còn chiều cao ảnh lại suy từ BỀ RỘNG thẻ
+       (aspect-ratio 189/252) — hai trục khác nhau, `calc` không nối được. Nên
+       wireRail() ĐO ô ảnh rồi ghi vào biến `--rail-arrow-y` (đo lại khi resize).
+       50% là giá trị dự phòng cho lúc JS chưa chạy. */
+    position: absolute; top: var(--rail-arrow-y, 50%); transform: translateY(-50%);
     width: 40px; height: 40px; z-index: 2;
     display: flex; align-items: center; justify-content: center;
     background: color-mix(in srgb, var(--general-background) 88%, transparent);
@@ -10049,12 +10057,26 @@ function wireRail(root) {
       prev.hidden = !over || track.scrollLeft <= 1;
       next.hidden = !over || track.scrollLeft >= track.scrollWidth - track.clientWidth - 1;
     };
+    /* Mũi tên canh giữa Ô ẢNH của thẻ, không phải giữa cả thẻ — xem chú thích ở
+       rule .dk-rail-arrow. Ô ảnh là con ĐẦU của thẻ (productCard dựng thứ tự
+       ảnh -> khối chữ). Đo lại khi resize vì chiều cao ảnh suy từ bề rộng thẻ. */
+    const photo = track.querySelector('[data-product] > div');
+    const place = () => {
+      if (!photo) return;
+      const h = photo.getBoundingClientRect().height;
+      if (h > 0) rail.style.setProperty('--rail-arrow-y', Math.round(h / 2) + 'px');
+    };
     prev.addEventListener('click', () => { track.scrollLeft -= track.clientWidth; });
     next.addEventListener('click', () => { track.scrollLeft += track.clientWidth; });
     track.addEventListener('scroll', sync, { passive: true });
-    window.addEventListener('resize', sync, { passive: true });
-    scrollCleanups.push(() => window.removeEventListener('resize', sync));
-    sync();
+    const onResize = () => { sync(); place(); };
+    window.addEventListener('resize', onResize, { passive: true });
+    scrollCleanups.push(() => window.removeEventListener('resize', onResize));
+    sync(); place();
+    /* Ảnh lazy: chiều cao ô ảnh do aspect-ratio quyết nên KHÔNG phụ thuộc ảnh đã
+       tải hay chưa — nhưng font/khổ chữ về muộn có thể đổi bề rộng thẻ, đo lại
+       một lượt cho chắc. */
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
   });
 }
 

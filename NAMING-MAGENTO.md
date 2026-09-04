@@ -211,3 +211,108 @@ và phải phân xử bằng tay chứ máy không đoán được.
 
 **Cần duyệt trước khi chạy:** bảng 114 tên cũ → tên mới. Duyệt xong là một lượt thay + đo lại,
 không đổi pixel nào — y như đợt thang chữ ở Phần 3.
+
+---
+
+## Phần 9 — Từ vựng tên LỚP trong Figma *(chốt 04/09/2026)*
+
+> Lệnh user: *"các cách đặt tên element của bạn có đồng bộ với figma không… hãy rà soát lại toàn bộ
+> component và thống nhất một tên chung chuẩn chỉnh nhất"*.
+
+**Vấn đề**: bộ chuyển DOM→Figma đặt tên lớp theo **class CSS của demo** (`navbar glass-95`,
+`div[product=3]`, `acc-trigger press`, `#pdpCta`…), còn component trong Figma đặt theo **Phần 4**
+(`page-header-desktop`, `product-item-info`…). Hai hệ tên không gặp nhau nên nhìn vào bản dựng
+không biết khối nào ứng với component nào.
+
+**Cách chốt**: một từ vựng duy nhất, áp cho **cả hai chiều** — bộ chuyển đổi tên **ngay lúc bóc**
+(bảng `CANON` trong `extractor.js`), và các bản dựng cũ đã đổi tên tại chỗ.
+
+### 9.1 Luật đặt tên lớp
+
+1. **Có tên block Magento thì dùng thẳng** (Phần 4) — `product-item-info` · `price-box` ·
+   `swatch-option` · `breadcrumbs` · `toolbar` · `minicart-items` · `control` · `label` · `messages`.
+2. Không có thì **kebab-case phẳng**, không `__`, không `--`, không camelCase.
+3. **Biến thể = từ thứ hai** (Q3): `action primary` · `action secondary` · `action more`.
+4. **Trạng thái = tiền tố `_`** (Q4): `swatch-option _selected` · `checkbox _checked` ·
+   `box-tocart _sticky` · `badge _hidden`.
+5. **Icon = một namespace `icon/`**, chia theo bộ nguồn: `icon/tr/<tên>` (uicons thin-rounded — bộ
+   thật của demo) · `icon/ts/<tên>` (thin-straight) · `icon/<tên>` (bộ 16px có sẵn từ thời shadcn).
+   **Cấm** giữ tên xuất thô kiểu `fi-tr-angle-down 1`.
+6. **Không nhét số đo vào tên**: `icon/plus` chứ không `icon/plus12`; `btn/subscribe` chứ không
+   `btn/subscribe (36)`; `space/16` là ngoại lệ CÓ CHỦ Ý vì con số chính là vai của ô đệm.
+7. **Không để tên mặc định của Figma**: `Frame` · `Frame 12` · `Rectangle 3` · `Group`. Frame bọc
+   một path SVG thì đặt `glyph`; hình nền trong icon đặt `bar` / `body` / `circle`.
+8. **Ghi chú không nằm trong tên**. `badge-label (ẩn 03/09 — …)` → `badge-label _hidden`.
+9. `Vector` **được giữ** — đó là tên Figma tự đặt cho path trong SVG, đổi cũng không thêm nghĩa.
+
+### 9.2 Bảng đổi tên (trích) — nguồn: `CANON` trong `extractor.js`
+
+| Khung trang | | Thẻ sản phẩm | | PDP | |
+|---|---|---|---|---|---|
+| `#viewport` | `page-wrapper` | `div[product=N]` | `product-item-info` | `#pdpGallery` | `product-media` |
+| `div[scroller]` · `screen active` | `page-main` | `dk-rail-item` | `product-item-info` | `zoomable shimmer` | `product-media-item` |
+| `navbar glass-95` | `page-header-mobile` | `pc-brand` | `product-item-brand` | `#pdpDots` | `product-media-dots` |
+| `navbar` | `page-header-desktop` | `photo` | `product-item-photo` | `dk-sticky-info` | `product-info-main` |
+| `#dkNavBand` | `nav-band` | `details` | `product-item-details` | `#pdpCta` · `#qaCta` | `box-tocart` |
+| `#dkNavRow` | `nav-row` | `product-name` | `product-item-name` | `#pdpStickyCta` | `box-tocart _sticky` |
+| `#dkNavLeft` | `dept-group` | `quick-add press` | `quick-add` | `acc` | `collapsible` |
+| `dk-sub glass-95` | `nav-sub` | `qty stepper` | `quantity-stepper` | `acc-trigger press` | `collapsible-title` |
+| `dk-nav-strip…` | `nav-strip` | `variant` | `item-options` | `acc-inner` | `collapsible-content` |
+| `div[footer]` | `page-footer-mobile` | `sw` · `sw on` | `swatch-option` · `_selected` | `div[pdpAcc]` | `collapsible-group` |
+| `dk-commit-grid` | `service-promises-desktop` | `chip` · `chip on` · `chip off` | `swatch-option` · `_selected` · `_disabled` | `szc` · `szc-wrap` | `size-chart` · `size-chart-wrap` |
+
+| PLP | | Lớp nổi | | Nút | |
+|---|---|---|---|---|---|
+| `#plpGrid` | `products-grid` | `is-backdrop` · `ns-` · `qa-` · `cc-backdrop` | `modal-overlay` | `btn-p press` | `action primary` |
+| `div[plpBar]` | `toolbar` | `is-panel` · `ns-` · `qa-` · `cc-panel` | `modal-content` | `btn-o` | `action secondary` |
+| `#sortBtn` | `toolbar-sorter` | `#qaBody` | `modal-body` | `#showMore` | `action more` |
+| `#plpProgress` | `toolbar-progress` | `#qaClose` · `zclose…` | `action-close` | `gridbtn press` | `gridbtn` |
+| `#plpActiveFilters` | `filter-current` | `#cartConfirm` | `minicart-wrapper` | `#nsEmail` · `#nsPhone` | `control` |
+| `af-chip btn-s` | `filter-chip` | `cc-row` | `minicart-item` | `#ccGoCart` · `#nsSubmit` | `action primary` |
+
+Class thuần tiện ích lọt lưới (`transition-all` · `press` · `cw transition-colors` · `wrap` ·
+`no-scrollbar` · `overscroll-contain`) → `box`. `animate-pulse` → `skeleton`.
+
+### 9.3 Đã áp 04/09/2026
+
+| Việc | Số |
+|---|---|
+| Đổi tên **component** (icon xuất thô, `Breadcrumb`, `modals-overlay`) | **30** |
+| Đổi tên **thuộc tính variant** (`Filled`→`filled`, `Property 1`→`columns`) | 3 |
+| Đổi tên **lớp bên trong component** | 84 |
+| Trả tên override cũ của **instance** về tên component | 17 |
+| Đổi tên **lớp trong bản dựng** (page `screens`, 5 section) | **1.573** |
+| **Tổng** | **≈ 1.707** |
+
+Không đụng một pixel nào — đổi tên không làm dịch chuyển node.
+
+**Còn để nguyên có chủ ý**: 56 khung import thô `fi-ts-*` nằm rời trên page `icons` — chúng **chưa
+phải component**, giữ tên xuất để phân biệt với bộ icon thật; muốn dùng thì tạo component rồi đặt
+theo 9.1 điều 5. Và `Vector` (điều 9).
+
+### 9.4 Đặt tên xong thì RÁP được — đợt 04/09 (bộ PDP)
+
+Tên khớp mới là điều kiện cần; điều kiện đủ là **đo trùng**. Sau khi thống nhất tên, bộ PDP nối thêm
+**208 instance** (55 → **263**), mọi lượt vẫn đo `w×h` với node raw, lệch > 1,5px là tự bỏ:
+
+| Component | Số | Ghi chú |
+|---|---|---|
+| `swatch-option` | 134 | mọi chip size; **bậc MỚI `state=_selected-oos`** cho size vừa hết hàng vừa đang chọn |
+| `collapsible` | 53 | **trục MỚI `size`** — `sm` (12/16, cao 45, bản cũ cho Cart) và `md` (14/20, cao 57, cho PDP) |
+| `badge` | 28 | **kiểu MỚI `kind=inline`** cao 16 nền `#dfdfdf` cho nhãn "Đặt trước" đứng trước tên |
+| `action` · 4 component chrome | 48 | như đợt trước |
+
+Ba thay đổi component đều là **phép cộng** (thêm variant / thêm trục), instance cũ không đổi.
+**32/32 khung giữ nguyên khổ**, không dịch 1 pixel.
+
+### 9.5 Ba bẫy khi nối tên với component
+
+1. **`clone()` một variant làm MẤT `componentPropertyReferences`** → `setProperties` im lặng không
+   làm gì (instance giữ nguyên chữ mặc định). Sau mỗi `clone()` phải nối lại:
+   `textNode.componentPropertyReferences = { characters: '<key>' }`.
+2. **`nameOf` chỉ lấy 2 class đầu** nên trạng thái thứ ba bị rụng: chip `chip off on` (hết hàng MÀ
+   đang chọn) ra tên `chip off` → ráp nhầm sang `_disabled`, mất viền đen. Đã vá: đọc thẳng
+   `classList` cho `chip`/`sw` thay vì cắt chuỗi.
+3. **Đừng tin số đo lấy giữa lúc transition đang chạy.** Đo viền chip sau 300ms cho ra `#dfdfdf`
+   (đang chuyển màu), trong khi số thật là `#0a0a0a` — bộ trích đúng vì nó tiêm `transition:none`.
+   Muốn kiểm thì đối chiếu **JSON đã bóc**, không đo tay trên trang.
