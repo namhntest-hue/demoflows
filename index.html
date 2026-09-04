@@ -1134,7 +1134,10 @@ window.RESP = (function () {
      Rule chữ hoa ở mục 4 bám `.ms-view button > span` nên phủ cả 2 màn — tách bằng
      :has() thay vì thêm class vào markup:
        màn GỐC  -> .ms-panel có `.ms-tab` (deptTabs)   -> giữ hoa
-       màn CON  -> .ms-panel có `.glass-95 > p` (navSub) -> gỡ hoa
+       màn CON  -> .ms-panel có `.glass-95 > p` (subBar) -> gỡ hoa
+       ⚠ Từ 04/09/2026 màn CON cũng có `.ms-tab` (hàng tab được giữ lại), nên
+       đừng đổi phép phân biệt sang `:has(.ms-tab)` — chỉ `.glass-95 > p` mới còn
+       tách được 2 màn.
      CHỈ đè `text-transform`, KHÔNG đụng size/lh/weight/ls: bỏ cả rule kia thì
      line-height rơi về leading-5 (20px) làm hàng cao thêm 4px, lệch màn gốc. */
   html.skin-mt #menuSheet .ms-panel:has(.glass-95 > p) .ms-view button > span:first-child {
@@ -12320,12 +12323,37 @@ document.body.insertAdjacentHTML('beforeend', `
       <img src="${A}logo.png" alt="DAFC" class="h-[20px] w-[93px] object-contain cursor-pointer press" data-nav="plp">
       <button class="w-6 h-6 flex items-center justify-center shrink-0 press [&_svg]:w-3.5 [&_svg]:h-3.5" data-ms-close aria-label="Đóng menu">${I.close}</button>
     </div>`;
-  /* Nav cấp 2: [back] · tiêu đề 16 medium · [close] */
-  const navSub = (title) => `
-    <div class="glass-95 h-[48px] shrink-0 backdrop-blur-[7.5px] flex items-center justify-between px-4">
-      <button class="w-6 h-6 flex items-center justify-center shrink-0 press [&_svg]:w-3.5 [&_svg]:h-3.5" data-ms-back aria-label="Quay lại">${I.chevL}</button>
-      <p class="flex-1 min-w-0 text-center text-[16px] leading-6 font-medium text-foreground truncate">${title}</p>
-      <button class="w-6 h-6 flex items-center justify-center shrink-0 press [&_svg]:w-3.5 [&_svg]:h-3.5" data-ms-close aria-label="Đóng menu">${I.close}</button>
+  /* Nav cấp 2 — ĐỔI 04/09/2026 (user chốt thẳng trên Figma node 204:9421).
+     Trước: cấp 2 THAY cả thanh trên bằng [back] · tiêu đề canh giữa · [close], và
+     bỏ hàng tab ngành hàng — tức vào hạng mục là mất ngữ cảnh ngành đang xem.
+     Nay: thanh logo + nút đóng GIỮ NGUYÊN, hàng tab Nam/Nữ/Làm đẹp GIỮ NGUYÊN,
+     chỉ vùng dưới swap theo hạng mục. Thanh này vì thế chỉ còn [back] + tên hạng
+     mục, canh TRÁI (nút đóng đã nằm ở thanh logo bên trên nên không lặp lại).
+     GHIM shrink-0 chứ không thả cho cuộn cùng danh sách: hạng mục dài (Thương
+     hiệu 15 hàng) mà cuộn mất nút back là cụt đường lùi.
+     Viết 14px và khe 5px bằng style= vì w-3.5 / h-3.5 / gap-[5px] KHÔNG có trong
+     tailwind.css dựng sẵn — gõ vào class là class chết.
+
+     ── CANH Ô (04/09/2026, user gửi 2 ảnh tham chiếu) ─────────────────────────
+     Yêu cầu: "điều chỉnh lại kích thước, vị trí của các items … để tạo cảm giác
+     mượt mà khi chuyển qua từng level, chỉ THAM KHẢO cách họ làm chứ đừng đổi
+     style của chúng ta". Cái làm cho bản tham chiếu mượt KHÔNG phải hiệu ứng —
+     là chỗ hàng tiêu đề cấp 2 rơi ĐÚNG VÀO Ô của hàng đầu tiên cấp 1: đổi level
+     thì tabs đứng yên, ô 1 đổi chữ, các ô dưới chỉ trượt nội dung, không nhảy.
+     Nên thanh này lấy ĐÚNG nhịp của row(): bọc ngoài pt-* (thay phần đệm trên mà
+     .ms-view cấp 1 đang giữ) + thân px-4 py-4 + kẻ đáy như hàng
+     -> đệm + 48 + 1 = cùng mốc, cùng chiều cao với hàng đầu của cấp 1.
+     .ms-view cấp 2 vì thế bỏ đệm TRÊN, chỉ còn đệm dưới — không thì cộng 2 lần.
+     ⚠ ĐỆM NÀY PHẢI ĐỔI THEO BA CHỖ MỘT LÚC, không thì gãy canh ô:
+       pt-* ở đây · py-* của .ms-view cấp 1 · pb-* của .ms-view cấp 2.
+     04/09/2026 user hạ một nấc: 16 -> 8 (py-4 -> py-2), nên đây là pt-2.
+     KHÔNG đổi giá trị style nào: chữ, mực, kẻ, đệm đều là bộ sẵn có của mình. */
+  const subBar = (title) => `
+    <div class="shrink-0 pt-2">
+      <div class="glass-95 backdrop-blur-[7.5px] flex items-center px-4 py-4" style="gap:5px;border-bottom:1px solid var(--unofficial-border-1)">
+        <button class="flex items-center justify-center shrink-0 press [&_svg]:w-3.5 [&_svg]:h-3.5" style="width:14px;height:14px" data-ms-back aria-label="Quay lại">${I.chevL}</button>
+        <p class="min-w-0 text-[16px] leading-6 font-medium text-foreground truncate">${title}</p>
+      </div>
     </div>`;
   /* Tab Nam/Nữ/Làm đẹp — 16/24 cho cả hai trạng thái, chỉ khác weight:
      active = medium + foreground + gạch primary, inactive = regular + muted.
@@ -12349,8 +12377,8 @@ document.body.insertAdjacentHTML('beforeend', `
   const render = () => {
     const d = MENU_DATA[menuTab];
     panel.innerHTML = menuSub
-      ? navSub(menuSub.title) + `
-        <div class="ms-view flex-1 overflow-y-auto overscroll-contain py-4">
+      ? navRoot() + deptTabs() + subBar(menuSub.title) + `
+        <div class="ms-view flex-1 overflow-y-auto overscroll-contain pb-2">
           <!-- DÒNG "Tất cả …" ĐÃ BỎ KHỎI MÀN CON (19/08/2026, yêu cầu user) — màn
                con vào thẳng danh mục cấp dưới, không còn dòng dẫn cấp trên nào.
                Bằng đúng cách 2 bản desktop đã làm với mega panel (chốt 18/08/2026):
@@ -12374,7 +12402,7 @@ document.body.insertAdjacentHTML('beforeend', `
             : row(it, menuSub.login ? `data-nav="plp" data-plp-brand="${it}"` : catAttrs(it, [menuTab, menuSub.title]))).join('')}
         </div>`
       : navRoot() + deptTabs() + `
-        <div class="ms-view flex-1 overflow-y-auto overscroll-contain py-4">
+        <div class="ms-view flex-1 overflow-y-auto overscroll-contain py-2">
           <!-- Hàng "Trang chủ <ngành>" đẩy crumbs=[dept] cho MỌI ngành (26/08 chiều).
                Trước đây chỉ Làm đẹp có, nên bấm "Trang chủ nữ" ra PLP chế độ 'brand'
                — PLP đó không mang giới tính nào, nên bộ lọc hiện cây ĐỦ và không có
@@ -12438,6 +12466,10 @@ document.body.insertAdjacentHTML('beforeend', `
     panel.querySelectorAll('[data-mtab]').forEach(b => b.addEventListener('click', () => {
       if (menuTab === b.dataset.mtab) return;
       menuTab = b.dataset.mtab;
+      /* Từ 04/09/2026 hàng tab CÒN hiện ở cấp 2, nên đổi ngành phải trả về cấp 1
+         của ngành mới. Không trả thì màn con của ngành CŨ đứng nguyên dưới tab
+         ngành MỚI — nội dung không thuộc ngành đang chọn. */
+      menuSub = null;
       render();
     }));
     // đổi ngôn ngữ: tái dùng flow của settings panel (applyLang + LANG + toast)
