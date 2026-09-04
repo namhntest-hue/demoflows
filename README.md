@@ -2523,11 +2523,32 @@ Tỉ lệ chuẩn của ảnh sản phẩm: **ngang 160 ⇒ cao 213** (`160/213`
 | Trả góp / trả trước | Dòng "Trả trước từ …/tháng · Xem chi tiết" nằm **ngay dưới nút Thêm vào giỏ hàng, căn giữa** — giống nhau ở mọi PDP có bán trả góp. Sản phẩm **pre-order không hiện** (đặt trước không áp dụng trả góp). |
 | Nhãn bảng size | **"Bảng kích thước"** — không dùng "Size guide", "Bảng size →" hay "Hướng dẫn chọn size". |
 
-Chọn size dạng chip hiện có ở `pdp` (5 cột) và `pdp4` (**còn 4 cột**); `pdp2`/`pdp3`/`pdp5`/`pdp6` dùng dropdown nên không có grid.
+Chọn size là **chip grid 5 cột ở cả 6 bản** (28/08/2026 bỏ hẳn dropdown). Câu cũ ở đây còn ghi `pdp4` 4 cột và 4 bản dùng dropdown — lỗi thời, sửa 04/09/2026.
 
 > Đã sửa để đạt quy ước: `pdp4` trước đây info tab bấm ra **bottom sheet** (`.sheet-trigger` + `window.__pdp4Tabs`) → đổi sang accordion, bỏ luôn handler và cầu nối `window.__pdp4Tabs` vì không còn ai đọc. Thống nhất **8** nhãn size guide, `data-toast`, và tiêu đề sheet trong size picker. `pdp5`/`pdp6` dùng vách accordion `border-border` đậm hơn 4 bản kia → về `border-border-1`.
 >
 > **Vẫn giữ** trả góp ở 3 chỗ KHÔNG thuộc cấp sản phẩm: mục "Thanh toán linh hoạt" trong `camKetSection`, link "Chính sách trả góp" ở footer (data thật của site), và phương thức "Thanh toán trả góp 0% qua thẻ tín dụng" ở checkout.
+
+### Cột thông tin 569 cho cả 6 bản — chốt 04/09/2026
+
+Lệnh user: *"áp dụng layout pdp1 desktop cho các ver pdp còn lại với thay đổi về độ rộng của phần thông tin"*. Chỉ **bản desktop**.
+
+Đến trước lệnh này, thứ duy nhất còn phân biệt bố cục PDP#1 với 5 bản kia đúng là **bề ngang cột info**: dải "Gợi ý mua kèm" khuôn A và kẻ ngăn "Sản phẩm tương tự" đã gom về một khuôn cho cả 6 từ 02/09. Nên "áp layout PDP#1" ở đây quy về đúng con số đó.
+
+| | Trước | Sau |
+|---|---|---|
+| Class trên `.dk-sticky-info` | `dk-info-wide` (chỉ `pdp`) / `w-[451px]` (5 bản kia) | **`dk-info-wide` cho cả 6** |
+| Cột info @1440 | 569 / 451 | **569** |
+| Gallery @1440 | 808 / 926 | **808** |
+| Ô ảnh @1440 | 402×496 / 461×569 | **402×496** |
+| Chip size | 102,6 / 79 | **102,6** |
+| Dải ≤1279 | `clamp(292, 44vw, 569)` / `clamp(292, 34vw, 451)` | **`clamp(292, 44vw, 569)`** |
+
+Nhánh 3 ngôi `kind === 'pdp' ? 'dk-info-wide' : 'w-[451px]'` trong `dkScreenPDP` đã gỡ, và rule dải hẹp `.dk-sticky-info.w-\[451px\]` xoá theo — **grep `451px` trong `desktop.html` phải ra 0**.
+
+Đo lại 6 kind × 4 mốc: @1440 và @1279 cả 6 ra cùng số (569 / 562,8 — **không nhảy bậc khi kéo qua mốc 1280**, đúng lý do chọn 44vw hồi 28/08); @1024 info 450,5 · gallery 2 cột ô 253; @768 gallery về 1 cột ô 367. **Không màn nào tràn ngang**, và quét mọi phần tử con trong cột info ở cả 6 kind: **0 chỗ vượt mép, 0 chỗ `scrollWidth` tràn**. Console sạch, `node --check` 2 khối script sạch.
+
+Chưa áp: **3 bản fork skin** (`desktop-neutral` · `desktop-editorial` · `desktop-atelier`) vẫn `w-[451px]` in cứng — chúng đóng băng từ 21/08 và đang thiếu 10 hạng mục cùng một mốc, gỡ riêng một mục không làm chúng khớp lại. **33 khung PDP trong Figma** cũng dựng theo cột 451, muốn khớp thì phải dựng lại.
 
 ### Trả góp cấp sản phẩm — chốt 18/08/2026
 
@@ -2702,11 +2723,11 @@ Bản desktop dựng theo khung Figma 1440 với nhiều cột px cứng, nên c
 | Dải | Thay đổi |
 |---|---|
 | ≥ 1280 | **giữ nguyên** thiết kế 1440, không rule nào chạm vào |
-| ≤ 1279 | cột cứng co theo `clamp(sàn, vw, trần)` — trần đúng bằng số px thiết kế: PDP info 451 · tóm tắt giỏ/thanh toán 427 · aside chính sách 280 · ảnh campaign 575 |
+| ≤ 1279 | cột cứng co theo `clamp(sàn, vw, trần)` — trần đúng bằng số px thiết kế: **PDP info 569** (44vw; cả 6 bản từ 04/09/2026 — trước là 451/34vw) · tóm tắt giỏ/thanh toán 427 · aside chính sách 280 · ảnh campaign 575 |
 | ≤ 1023 | lưới PLP về 3 cột (`!important` vì nút đổi 3/4 cột set class trực tiếp), carousel 5 → 3 card, 4 cam kết → 2 cột |
 | ≤ 899 | gallery PDP về 1 cột (2 cột ở dải này chỉ còn ~180px/ảnh) |
 
-Bộ chọn cố tình kèm luôn class `w-[…]` gốc (`.dk-sticky-info.w-\[451px\]`) để đọc là thấy ngay trần của từng cột. Đã đo lại: không màn nào tràn ngang ở 768 / 1024 / 1280, và ở 1280/1440/1600 mọi số đo trùng khớp bản gốc.
+Bộ chọn cố tình kèm luôn class `w-[…]` gốc (ví dụ `.dk-sticky-side.w-\[427px\]`) để đọc là thấy ngay trần của từng cột — riêng cột info PDP nay dùng class ngữ nghĩa `.dk-info-wide` nên trần 569 đọc thẳng ở tên rule. Đã đo lại: không màn nào tràn ngang ở 768 / 1024 / 1280, và ở 1280/1440/1600 mọi số đo trùng khớp bản gốc.
 
 ## Đối chiếu checkout với Figma (11/08/2026)
 

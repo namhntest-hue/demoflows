@@ -1,6 +1,10 @@
 # Bộ component Bộ lọc dựng vào Figma — 27/08/2026
 
-> **TRẠNG THÁI: XONG** — đã dựng đủ vào Figma (page `filter`), xem Phần 5.
+> **TRẠNG THÁI: XONG** — đã dựng đủ vào Figma, xem Phần 5.
+>
+> ⚠️ **04/09/2026 ĐỔI CHỖ:** toàn bộ component của file đã gom về MỘT page `components`, chia
+> section theo họ. Bộ này nay nằm ở **section `filter`** trên page đó, không còn là page riêng
+> (29 page → 7). Xem AUDIT-DS-FIGMA-2026-09-04.md §8.
 
 Đích: file **Test agent** (`XFfjTNMuPfaTeZvdbVIO2F`) → **MỘT page mới `filter`** chứa toàn bộ
 (theo lệnh user: *"các component mà tạo riêng tạo dựa trên các component cơ bản thì dồn vô chung 1
@@ -52,23 +56,41 @@ FONT-LIBRE-INTER §13.1 (*"Cây danh mục panel bộ lọc `#filterSheet` · 12
 chữ thường"*), nhưng bộ style trong Figma chưa có 2 vai này → **set tay + chờ chốt tên**, cùng loại
 việc với `14/20 · 500` của accordion PDP.
 
-## 3. Bộ component thiết kế — 13 khối + 2 bản ráp, gom trong page `filter`
+## 3. Bộ component thiết kế — 13 khối + 2 bản ráp, gom trong section `filter`
 
-| # | Component | Biến thể |
-|---|---|---|
-| 1 | `filter-toggle` (± 14px) | `state=_closed|_open` |
-| 2 | `filter-check-row` | `state=default|_checked` |
-| 3 | `filter-tree-row` | `level=cat|sub-1|sub-2` × `state=default|_checked` (6) |
-| 4 | `filter-section-header` | `size=lg|sm` × `state=_closed|_open` (4) |
-| 5 | `filter-group-header` | `state=_closed|_open` |
-| 6 | `filter-size-chip` | `state=default|_selected` |
-| 7 | `filter-color-swatch` | `state=default|_selected` |
-| 8 | `filter-unit-tab` | `state=default|_active` |
-| 9 | `filter-cat-chip` | `state=default|_active` |
-| 10 | `filter-price-range` | (đơn) |
-| 11 | `filter-panel-header` | `platform=mobile|desktop` |
-| 12 | `filter-panel-footer` | `state=default|_has-reset` |
-| 13 | `filter-bar` | `platform=mobile|desktop` |
+> ⚠️ **Bảng biến thể dưới đây đã CẬP NHẬT 04/09/2026** sau đợt chuẩn hoá design system
+> (AUDIT-DS-FIGMA-2026-09-04.md §10–§11). Ba thay đổi: `_active` → **`_selected`** · trục
+> `state` mang nghĩa đóng/mở đổi tên thành **`open`** để nhường `state` cho tương tác ·
+> thêm **`_focus`** cho mọi khối bấm được.
+
+| # | Component | Biến thể | v |
+|---|---|---|---:|
+| 1 | `filter-toggle` (± 14px) | `state=_closed|_open` | 2 |
+| 2 | `filter-check-row` | `state=default|_checked|_focus` | 3 |
+| 3 | `filter-tree-row` | `level=cat|sub-1|sub-2` × `state=default|_checked|_focus` | 9 |
+| 4 | `filter-section-header` | `size=lg|sm` × `open=_closed|_open` × `state=default|_focus` | 8 |
+| 5 | `filter-group-header` | `open=_closed|_open` × `state=default|_focus` | 4 |
+| 6 | `filter-size-chip` | `state=default|_selected|_oos|_selected-oos|_focus` | 5 |
+| 7 | `filter-color-swatch` | `state=default|_selected|_focus` | 3 |
+| 8 | `filter-unit-tab` | `state=default|_selected|_focus` | 3 |
+| 9 | `filter-cat-chip` | `state=default|_selected|_focus` | 3 |
+| 10 | `filter-price-range` | (đơn) | 1 |
+| 11 | `filter-panel-header` | `platform=mobile|desktop` | 2 |
+| 12 | `filter-panel-footer` | `state=default|_has-reset` | 2 |
+| 13 | `filter-bar` | `platform=mobile|desktop` | 2 |
+
+**`filter-toggle` KHÔNG có `_focus` — cố ý.** Nó là phần trang trí bên trong hàng, không nhận bàn
+phím; nút thật trong demo là cả hàng trigger `.facc`. Vòng focus vì vậy thuộc về `filter-section-header`
+· `filter-group-header` · `filter-tree-row`.
+
+**Khuôn vòng focus:** lớp `focus-ring` — nét 1px bind biến `ring` (**#666666** từ 04/09, trước đó
+#0A0A0A), `strokeAlign=INSIDE`, bo 0, đặt tại −3,−3, to hơn khung 6px. Vẽ bằng NÉT chứ không bằng
+bóng vì luật lớp nổi của dự án cấm bóng — demo dùng `box-shadow: 0 0 0 3px`, lệch về HÌNH vẫn còn
+để ngỏ.
+
+**Ô tìm thương hiệu dùng `control` `kind=search`** (dựng 04/09): khuôn GẠCH CHÂN — nền trong suốt,
+chỉ viền đáy 1px mực `primary`, bo 0, đệm trái/phải 0, không icon dẫn đầu. Theo đúng rule cố ý
+`html.skin-mt .search-field, html.skin-mt #fBrandSearch`.
 | A | `filter-panel-mobile` 375×812 · `filter-panel-desktop` 420×900 | bản ráp, dựng đúng trạng thái thật lúc mở (mọi mục ĐÓNG, nút Đặt lại ẩn) |
 | B | `example — filter · các mục mở` | khung ví dụ: 4 mục mở, dùng instance của 8 khối trên |
 
@@ -114,9 +136,9 @@ Hai ô nhập là thẻ `<input>` nên có **bề rộng nội tại ~178px**, m
 
 15 ô màu sản phẩm giữ hex thật (màu **nội dung**, như swatch trên thẻ sản phẩm).
 
-## 5. Đã dựng — page `filter`
+## 5. Đã dựng — section `filter` *(trước 04/09 là page riêng)*
 
-**17 khối trên page**: 13 component set/component + 2 bản ráp + 1 khung ví dụ + 1 khối `[doc]`.
+**17 khối trong section**: 13 component set/component + 2 bản ráp + 1 khung ví dụ + 1 khối `[doc]`.
 Xếp 4 cột: linh kiện · bộ phận panel + thanh lọc · 2 bản ráp · ví dụ + tài liệu.
 
 **Đo lại sau khi dựng — khớp demo từng px:**
@@ -163,7 +185,8 @@ Xếp 4 cột: linh kiện · bộ phận panel + thanh lọc · 2 bản ráp ·
 ## 8. Đồng bộ ngược Figma → code: spacing cây bộ lọc (27/08/2026, chiều)
 
 Lệnh user: *"ở các spacing filter tôi vừa update lại, bạn hãy đối chiếu figma với thực tế và
-điều chỉnh lại các spacing của cây filter"* — kèm link node `85-1913` (chính là **page `filter`**).
+điều chỉnh lại các spacing của cây filter"* — kèm link node `85-1913` (khi đó còn là **page `filter`**;
+từ 04/09 là section `filter` trên page `components`).
 
 Đây là chiều **ngược** với Phần 1–5: trước là *đo code → dựng Figma*, nay là *đọc Figma → sửa code*.
 Nguồn sự thật của lượt này là Figma.
