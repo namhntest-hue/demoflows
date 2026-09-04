@@ -913,3 +913,35 @@ size — nới ra thì đầm lụa và cả nhóm túi/thắt lưng ăn theo, n
 **IT 44** nhận thông báo — nên mọi kịch bản cũ vẫn diễn được, và **IT 39** vẫn nằm trong bộ nên
 ô chọn sẵn của markup không phải sửa. Đo lại sau khi áp: 3 màn giày + quick add giày (cả 2 khổ)
 ra **9 ô xếp 5 + 4**, không tràn chữ; đầm 6 ô (5 + 1) · khăn 3 · túi 1 — **không đổi**.
+
+---
+
+## Phần 10 — Luật ô nhập: search gạch chân, nhập thường đóng khung (chốt 04/09/2026)
+
+> Lệnh user: *"các ô inputfield dạng search sẽ dùng underline cho field đó thay vì đóng khung, còn
+> các inputfield nhập thông thường vẫn giữ nguyên style đóng khung border"*.
+
+Đây không phải luật mới mà là **thi hành cho hết** luật §3.1 đã có: bảng viền xếp
+*"gạch dưới ô tìm kiếm"* vào **tầng V1 `#0a0a0a` 1px** (phần tử tương tác chính), còn
+*"ô nhập form"* vào **tầng V2 `#dfdfdf` 1px** (kết cấu). Hai vai, hai tầng.
+
+| Loại ô | Hình thức | Tầng |
+|---|---|---|
+| **Tìm kiếm** (`type="search"`) | nền trong suốt · **chỉ `border-bottom`** `#0a0a0a` 1px · `radius 0` · đệm ngang **0** | V1 |
+| **Nhập thường** (email · SĐT · mật khẩu · mã ưu đãi · khoảng giá · OTP · form thanh toán) | nền trắng · **viền 4 cạnh** `#dfdfdf` 1px · `radius 0` · đệm ngang 8–12 | V2 |
+
+Đệm ngang của ô search về **0** là có chủ ý: hộp nền đã bỏ thì 8px thụt vào đọc ra là *lệch lề*
+chứ không phải padding — icon kính lúp phải thẳng lề nội dung.
+
+**Thi hành 04/09/2026 (cả `index.html` + `desktop.html`):** 4 ô search của bộ demo, 3 ô đã đúng từ
+18/08 (`#searchInput` · `#pkSearch` / `[data-pk-search]` · `#dkSearchInput`), còn **`#fBrandSearch`**
+(ô "Tìm thương hiệu" trong bộ lọc) vẫn đóng khung 4 cạnh → gộp vào chung selector với
+`.search-field`. Kèm một chỗ đồng bộ màu: ô tìm trong sheet chọn tỉnh/phường đang gạch `#dfdfdf`
+(tầng V2) → kéo về `#0a0a0a` cho 4 ô search cùng một sắc.
+
+**Bẫy:** `#fBrandSearch` mang sẵn `border border-border` 4 cạnh từ utility nên phải khai
+`border: 0` **TRƯỚC** `border-bottom`, không thì 3 cạnh kia vẫn còn.
+
+Đo lại sau khi áp — đúng hai nhóm, không lẫn:
+`#fBrandSearch` `0/0/1/0 · #0a0a0a · nền trong suốt · pad 0 · cao 36 (không đổi)` ·
+`#nsEmail`/`#nsPhone` `1/1/1/1 · #dfdfdf · nền trắng · pad 12` · ô khoảng giá `1/1/1/1 · #dfdfdf · pad 8`.
