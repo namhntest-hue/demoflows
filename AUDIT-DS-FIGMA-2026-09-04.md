@@ -1373,3 +1373,51 @@ còn nguyên (SVG là phần tử anh em, không chứa text node) — thử s�
 EN `Size guide` 80,1 → về VI 115,2, mũi tên còn qua cả ba lượt.
 
 **Chỉ áp `index.html` + `desktop.html`** theo phạm vi skin-li user chốt; 3 fork skin không đụng.
+
+---
+
+## 22 · Ráp "Mô tả sản phẩm" vào component `collapsible` · 04/09/2026
+
+User báo: hàng `collapsible-title` "Mô tả sản phẩm" ở PDP còn nằm ngoài component, trong khi "Bảo
+quản" / "Đổi trả" đã là instance.
+
+### 22.1 Vì sao nó bị bỏ raw — và cách gỡ
+
+Component `collapsible` có **nét TRÊN 1px `#DFDFDF`** (`strokeTopWeight=1`) làm vách ngăn giữa các
+mục, nên instance cao **57**. Hàng ĐẦU của cụm không có vách nên chỉ cao **56** — không khớp
+component, và đó là lý do nó bị để raw ngay từ đầu.
+
+Cách gỡ: dùng instance **và ghi đè `strokeTopWeight = 0`** ngay trên instance → cao đúng 56, giữ
+được liên kết component. Không phải đẻ variant mới.
+
+### 22.2 Đã ráp 15 khung
+
+| Khổ | Số |
+|---|---:|
+| 427×56 | 7 |
+| 359×56 | 5 |
+| 545×56 | 3 |
+
+Nằm ở: `PDP / desktop 1440` · `· 28-08` · `· 28-08 · look B` · `Thêm vào giỏ / desktop` ·
+`PDP / mobile · SP1…SP5`.
+
+**Chiều cao khung KHÔNG đổi** — raw 56, instance sau khi bỏ nét trên cũng 56.
+
+**Kèm một sửa đúng:** hàng raw dùng `t-label-single` **12/16**, còn component dùng `t-label-lead`
+**14/20** — mà demo render `14px/20px · w500` (đã đo). Nên lượt ráp này đồng thời **kéo cỡ chữ về
+đúng số của demo**.
+
+### 22.3 Một chỗ CỐ Ý bỏ qua
+
+`PDP / mobile · SP6 sneaker` — hàng đó cao **52**, không phải 56. Đây là **lỗi demo đã ghi nhận**
+(khối `[doc]` mục 6: *"3 hàng accordion của SP6 mobile — 52 so 56"*). Ráp vào sẽ đội lên 56, lệch
+4px so với trang chạy, vượt ngưỡng 1,5px của dự án. Để nguyên tới khi sửa demo.
+
+### 22.4 Còn 18 hàng raw khác — chưa đụng
+
+Ở 4 khung PDP dựng đợt 26/08 (`PDP / desktop 1440`, `· 28-08`, `· 28-08 · look B`,
+`Thêm vào giỏ / desktop`), **cả ba mục còn lại** (Bảo quản · Đổi trả · Về thương hiệu) cũng vẫn raw,
+nằm trong khung bọc tên `collapsible` **nhưng chỉ là FRAME thường**. Cấu trúc khác hẳn các màn SP
+(ở đó `collapsible-title` nằm thẳng trong `collapsible-group`).
+
+Gỡ nốt được, nhưng là một lượt riêng vì phải bỏ cả lớp bọc giả. Chờ user chốt.

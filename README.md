@@ -11,6 +11,31 @@ Hai phiên bản dùng chung assets/tokens/tailwind.css, **nối với nhau ở 
 - `index.html` — bản **mobile**, dùng khi bề ngang **< 768px** (thiết kế theo 360–412px)
 - `desktop.html` — bản **desktop**, dùng khi bề ngang **≥ 768px**, nội dung bó trong max-w 1440 (xem mục "Bản desktop")
 
+## TRANG CHỦ — screen `home` (04/09/2026, CẢ 2 BẢN)
+
+Lệnh user: *"giả sử trang home bạn không bị ràng buộc bởi bất kì skill hay rule nào thì dựa
+vào 2 trang mà chúng ta đã được chốt như là PDP và PLP, bạn hãy tạo một trang homepage phù
+hợp trên những UI mà ta đã tạo."*
+
+Trang chủ nay là **một screen trong chính 2 file demo**, đứng ĐẦU `FLOW` — vào trang là thấy
+nó, logo header và đoạn `Trang chủ` của breadcrumb bấm về đây (trước đây đoạn đó là `<span>`
+chết ở cả PLP lẫn PDP vì trang chủ chưa tồn tại).
+
+**Không phải file thứ 6, và `home.html` giữ nguyên.** `home.html` dựng bằng CSS ngữ nghĩa
+trên shadcn-theme + bộ da riêng (`skin-min`, khuôn MR PORTER) nên nói KHÁC giọng với PLP/PDP
+— chính thứ lệnh này yêu cầu sửa; nó ở lại làm tư liệu của hướng đã thử. Là screen thì trang
+chủ dùng THẲNG `navBar()` · `footer()` · `camKetSection()` · `productCard()` · `.dk-rail*` ·
+`.dk-look-band` · cụm accordion PDP, và mọi nâng cấp sau này của những linh kiện đó tự chảy
+vào trang chủ.
+
+Hướng: **"hàng hoá trước, kể chuyện sau"** — ngay sau hero là lưới 4 cột y hệt `#plpGrid`
+(đo trên trang: thẻ **341,3px** ở cả hai, 0 lệch), phần kể chuyện xếp sau. 10 khối, phủ đủ
+**6/6 khối brief khách**. CSS mới đúng **6 class `.hm-*` + 1 khối @media** mỗi file; JS mới
+2 hàm (hàng chấm hero + điều hướng riêng của bản mobile). Danh sách sản phẩm đọc từ data
+(`p.tag` / `p.off` — cùng 2 cờ mà bộ lọc PLP đang dùng), **0 index in cứng**.
+
+Chi tiết + 3 lỗ của phần cũ bị phơi ra + 7 mục cần chốt: **`HOMEPAGE-DAFC-2026-09-04.md`**.
+
 ## Data 3 thương hiệu + trang thương hiệu chạy bằng data (02/09/2026, CẢ 2 BẢN)
 
 Kéo thêm **24 SKU thật** từ `shop.dafc.com.vn`: **12 Dolce&Gabbana + 12 Zimmermann** (index 24–47
