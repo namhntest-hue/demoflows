@@ -1994,6 +1994,38 @@ window.RESP = (function () {
     font-family: var(--font-head); text-transform: none;
   }
 
+  /* 2b — VÁ LỖ MẶT CHỮ DO LƯỢT ADAPT THANG CHỮ 04/09 ĐỂ LẠI.
+     Lượt đó đổi các tiêu đề sang class ngữ nghĩa `.t-display-title`, nhưng rule Bodoni
+     ngay trên chỉ bám UTILITY CŨ (`text-[18px]` · `[22px]` · `[24px]` · `[32px]`), nên
+     mọi tiêu đề đã đổi rơi ra ngoài và vẽ bằng Inter. Đo trên trang mới thấy: cỡ và
+     dòng vẫn đúng 24/32, lệch đúng MẶT CHỮ — 13 chỗ ở bản desktop (Thanh toán · Giỏ
+     hàng · Tóm tắt đơn hàng · brand PDP · Đặt hàng thành công · trang chính sách · 6
+     view xác thực) và 8 chỗ ở bản mobile.
+     `font-weight: 400` phải khai kèm: markup các tiêu đề này mang `font-light` /
+     `font-medium` / `font-semibold`, mà bậc trưng bày của bộ da là 400 (13.1) — nhánh
+     utility cũ ở trên cũng đang ép đúng con số đó.
+     KHÔNG gộp vào rule trên: rule đó cố tình bám `:is(h1,h2,p)` để `span` số điểm
+     thưởng rơi ra ngoài (13.2 mục 1 — số là nội dung, phải là Inter). Số điểm thưởng
+     dùng `.text-[32px]`, không mang class này, nên hook thẳng vào class là an toàn —
+     đã rà cả 28 chỗ dùng `.t-display-title` ở 2 file, tất cả đều là tiêu đề thật.
+     KHAI GIỐNG HỆT ở index.html và desktop.html. */
+  html.skin-mt.skin-li .t-display-title {
+    font-family: var(--font-head); text-transform: none; font-weight: 400;
+  }
+
+  /* 2c — TIÊU ĐỀ BƯỚC Ở CHECKOUT VÀO ĐÚNG TẦNG NHÃN (13.1: "nhãn nhóm menu/footer/
+     accordion" = 12/16 · 500 · HOA). Trước lượt này chúng ra 12/16 · 400 · chữ thường,
+     tức trông y hệt dòng địa chỉ ngay dưới nó, trong khi cùng một vai ở chỗ khác của
+     app đã là nhãn thật: `ƯU ĐÃI & KHUYẾN MÃI` ở giỏ, `DANH MỤC`/`THƯƠNG HIỆU` ở panel
+     bộ lọc, 4 cột chân trang. Markup vốn đã ghi `font-medium` nhưng skin-mt kéo mọi
+     `font-medium` về 400 (đúng luật cặp 500⇔HOA), nên phải khai LẠI cả hai vế ở đây.
+     Cỡ và dòng không khai: `.t-single` trong markup đã là 12/16.
+     Bám thêm `[data-screen="checkout"]` cho đủ nặng hơn rule chuẩn hoá đậm của skin-mt,
+     không phụ thuộc thứ tự khai — đúng cách `skin-mp` đang làm cho chính class này. */
+  html.skin-mt.skin-li [data-screen="checkout"] .ck-title {
+    font-weight: 500; text-transform: uppercase;
+  }
+
   /* 3 — BRAND Ở PDP: CÙNG BẬC TRƯNG BÀY **24/32**, LIBRE BODONI.
      Đường đi của con số này, ghi đủ để không ai hỏi lại: bản đầu 32/40 → user bác
      *"tên brand trong pdp chỉ khoảng font 18 đến 20 thôi. đừng set 32 quá to"* → hạ
@@ -3559,13 +3591,13 @@ window.RESP = (function () {
      nay là dải MỘT HÀNG cuộn ngang (lệnh user), nên `.hm-cats` và `.hm-brands` không còn
      nhánh hạ cột — hết nội dung thì chúng cuộn, không xuống hàng. `.hm-newgrid` gỡ hẳn:
      lưới 4 cột 2 hàng đã đổi thành dải dùng chung `.dk-rail`.
-     `.hm-faq-cols` và `.hm-signup` chỉ tồn tại như MÓC override: base của chúng là
-     utility `grid grid-cols-2 gap-6` vốn đã có trong bản build. Cả hai KHÔNG phải
-     carousel — chúng là khối nội dung, nên vẫn hạ cột như cũ.
+     `.hm-signup` chỉ tồn tại như MÓC override: base của nó là utility
+     `grid grid-cols-2 gap-6` vốn đã có trong bản build. Nó KHÔNG phải carousel (là khối
+     nội dung) nên vẫn hạ cột như cũ.
+     `.hm-faq-cols` đã gỡ 06/09 cùng khối Câu hỏi thường gặp.
      `.dk-look-band` tự có nhánh <1024 nên khối nhà mốt không cần thêm gì. */
   @media (max-width: 1023px) {
-    .hm-faq-cols { grid-template-columns: minmax(0, 1fr); }
-    .hm-signup   { grid-template-columns: minmax(0, 1fr); }
+    .hm-signup { grid-template-columns: minmax(0, 1fr); }
   }
 </style>
 </head>
@@ -6705,59 +6737,6 @@ function hmBrandCards() {
           </div>`;
 }
 
-/* ── FAQ — cụm accordion CỦA PDP, 2 cột × 3 mục ────────────────────────────────
-   Cụm bọc PHẢI mang `data-pdp-acc`: rule bộ da bám móc đó để nhãn ra 14/20 · 500 · chữ
-   thường — một trong 4 chỗ 500 ĐÃ ghi danh, không phải xin ngoại lệ mới. Bỏ móc là nhãn
-   rơi về 12/18 và 2 accordion trong cùng app nói khác nhau.
-   Chia 2 cột vì một cột 1026px ở cỡ 12/18 ra khoảng 140 ký tự mỗi dòng, không đọc được;
-   501px ra khoảng 68 ký tự.
-   CÂU TRẢ LỜI bám dữ liệu ĐANG CÓ: 4 mô tả của `CAM_KET` dùng nguyên văn (nhờ vậy bản
-   tiếng Anh có sẵn), 2 câu còn lại nói về thứ demo thật sự có (ngày giao dự kiến ở PDP
-   hàng đặt trước, và nút Bảng kích thước). KHÔNG bịa cam kết mới. */
-const HM_FAQ = [
-  ['DAFC Online có giao hàng miễn phí không?', CAM_KET[3][2]],
-  ['Tôi có thể mua trả góp không?',            CAM_KET[1][2]],
-  ['Chính sách đổi hàng như thế nào?',         CAM_KET[2][2]],
-  ['Thành viên DAFC có những đặc quyền gì?',   CAM_KET[0][2]],
-  ['Hàng đặt trước bao giờ nhận được?',        'Mỗi sản phẩm đặt trước đều hiển thị ngày giao dự kiến ngay tại trang chi tiết sản phẩm.'],
-  ['Làm sao để chọn đúng kích thước?',         'Mỗi trang sản phẩm đều có nút Bảng kích thước với số đo của chính sản phẩm đó.'],
-];
-
-function hmFaqCol(items) {
-  return `
-              <div>
-                ${items.map(([q, a]) => `
-                <div class="acc border-b border-border">
-                  <button class="acc-trigger w-full h-14 flex items-center justify-between gap-2 px-2 press">
-                    <span class="t-multiline flex-1 min-w-0 text-left text-foreground">${q}</span>
-                    <span class="acc-ico-plus [&_svg]:w-3.5 [&_svg]:h-3.5">${IcoPlus}</span>
-                    <span class="acc-ico-minus [&_svg]:w-3.5 [&_svg]:h-3.5">${IcoMinus}</span>
-                  </button>
-                  <div class="acc-body"><div class="acc-inner">
-                    <div class="t-single pb-4 px-2 text-foreground-alt">${a}</div>
-                  </div></div>
-                </div>`).join('')}
-              </div>`;
-}
-
-function hmFaq() {
-  const half = Math.ceil(HM_FAQ.length / 2);
-  return `
-      <div class="px-6 py-8 reveal">
-        <div class="pt-8 flex gap-6 items-start">
-          <div class="w-[342px] shrink-0 flex flex-col gap-4">
-            <h2 class="text-[18px] font-medium leading-7 text-foreground">Câu hỏi thường gặp</h2>
-            <p class="t-multiline text-secondary-foreground">Những thắc mắc thường gặp nhất khi mua sắm tại DAFC Online.</p>
-            <button data-toast="Câu hỏi thường gặp" class="t-multiline w-fit text-foreground underline underline-offset-2 press">Xem tất cả</button>
-          </div>
-          <div class="hm-faq-cols flex-1 min-w-0 grid grid-cols-2 gap-6" data-pdp-acc>
-            ${hmFaqCol(HM_FAQ.slice(0, half))}
-            ${hmFaqCol(HM_FAQ.slice(half))}
-          </div>
-        </div>
-      </div>`;
-}
-
 /* ── ĐĂNG KÝ NHẬN TIN ──────────────────────────────────────────────────────────
    Brief khách ghi khối 6 là "Sign up (loop in footer)", nhưng `footer()` đã BỎ HẲN dải
    newsletter ngày 26/08 theo lệnh trực tiếp của user (gỡ kèm cả vạch h-px), và lượt này
@@ -6832,10 +6811,12 @@ function screenHOME() {
         hmLink('Tất cả thương hiệu', 'data-nav="plp"'),
         hmBrandCards())}
 
-      ${camKetSection()}
-
-      ${hmFaq()}
-
+      <!-- 06/09/2026 (lệnh user): GỠ 2 khối khỏi trang chủ — "Cam kết DAFC" (USP) và
+           "Câu hỏi thường gặp" (Q&A). camKetSection() KHÔNG xoá: nó vẫn phục vụ 6 màn
+           PDP và màn Hoàn tất; ở đây chỉ thôi gọi. hmFaq/hmFaqCol/HM_FAQ thì chỉ trang
+           chủ dùng nên xoá hẳn, không nuôi code chết.
+           Hệ quả với brief khách: khối 5 (USP / QA block) nay KHÔNG còn trên trang chủ,
+           tức phủ 5/6 khối thay vì 6/6 — đã ghi vào báo cáo. -->
       ${hmSignup()}
     </div>
     ${footer()}
@@ -6897,6 +6878,57 @@ const ACCOUNT_TABS = [
 ];
 let accountTab = 'info';
 
+/* ── HỒ SƠ KHÁCH + TRẠNG THÁI FORM (05/09/2026 — lượt hoàn thiện tính năng) ──
+   Trước lượt này màn Tài khoản CHỈ ĐỌC: "Chỉnh sửa thông tin" và "+ Thêm địa chỉ
+   mới" đều chỉ bắn `data-toast` (hiện một dòng chữ rồi thôi), và mỗi địa chỉ trong
+   sổ không có lấy một hành động nào — không sửa, không xoá, không đổi mặc định.
+   Nay 5 tab chạy thật trên dữ liệu trong RAM.
+
+   `PROFILE` là MỘT nguồn cho: cụm tóm tắt đầu màn · tab Thông tin · băng Thành viên.
+   Trước đây 3 chỗ đó in cứng HAI bản chữ khác nhau ("UserOne" ở tóm tắt và ở băng,
+   "Nguyễn Văn A" ở bảng thông tin) nên dù có sửa được thì màn hình vẫn nói tên cũ.
+   `user` giữ riêng TÊN ĐĂNG NHẬP: nó là thứ khác với họ tên và vẫn được luồng đăng
+   nhập / checkout dùng, không gộp vào `name` được. */
+const PROFILE = {
+  user: 'UserOne',
+  name: 'Nguyễn Văn A', phone: '0909 123 456', email: 'userone@email.com',
+  gender: 'Nam', dob: '01/01/1990', news: true,
+};
+const GENDERS = ['Nam', 'Nữ', 'Khác'];
+
+/* Che giữa số điện thoại (0909 *** 123). Cụm tóm tắt và băng thành viên cùng in số
+   này, nên tính MỘT chỗ thay vì in cứng 2 lần rồi lệch nhau khi khách đổi số. */
+const maskPhone = p => {
+  const d = String(p).replace(/\D/g, '');
+  return d.length < 7 ? p : `${d.slice(0, 4)} *** ${d.slice(-3)}`;
+};
+/* Chữ trong avatar = chữ đầu của TÊN (từ cuối cùng): tiếng Việt gọi nhau bằng tên
+   chứ không phải bằng họ, "Nguyễn Văn A" phải ra A. */
+const initialOf = n => (String(n).trim().split(/\s+/).pop() || '?').charAt(0).toUpperCase();
+
+/* Avatar + tên + số che — phần DÙNG CHUNG của cụm tóm tắt ở 2 khổ (mobile xếp thêm
+   nút Đăng xuất cùng hàng, desktop để nút đó ở cuối cột điều hướng). Tách hàm vì
+   cụm này nằm NGOÀI `#accBody` nên không được vẽ lại theo tab — lưu thông tin xong
+   phải sơn lại nó tại chỗ (`paintAccUser`). */
+const accUserHTML = () => `
+    <span class="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center t-lead shrink-0">${initialOf(PROFILE.name)}</span>
+    <div class="flex-1 min-w-0">
+      <p class="t-lead text-foreground truncate">${PROFILE.name}</p>
+      <p class="t-single text-muted-foreground">${maskPhone(PROFILE.phone)} · Hạng Vàng</p>
+    </div>`;
+
+/* Form đang mở trong tab Thông tin: '' | 'info' | 'pass'.
+   Sổ địa chỉ: `addrEdit` = null | 'new' | chỉ số đang sửa; `addrDel` = chỉ số đang
+   hỏi xác nhận xoá (câu hỏi nằm NGAY trong hàng, không đẻ thêm một lớp nổi).
+   `accDraft` chỉ giữ giá trị của các Ô CHỌN (giới tính · tỉnh · phường) — ô nhập chữ
+   thì đọc thẳng từ DOM lúc lưu, vì form không bị dựng lại giữa chừng. */
+let accEdit = '', addrEdit = null, addrDel = null, accDraft = {};
+
+/* Rời tab (hoặc lưu xong) là bỏ form đang mở. Quay lại tab cũ mà thấy một form dở
+   dang nhưng chữ đã mất — vì `#accBody.innerHTML` bị thay khi đổi tab — còn tệ hơn
+   là thấy lại bảng thông tin. */
+function accResetForms() { accEdit = ''; addrEdit = null; addrDel = null; accDraft = {}; }
+
 function screenACCOUNT() {
   return `
   <div class="w-full" data-scroller>
@@ -6915,16 +6947,12 @@ function screenACCOUNT() {
       <div class="flex items-start px-6 py-6 min-h-[60vh]">
         <!-- cột điều hướng -->
         <div class="dk-sticky-side w-[280px] shrink-0 pr-4 border-r border-border">
-          <div class="pb-4 mb-4 flex items-center gap-3 border-b border-border">
+          <div id="accUser" class="pb-4 mb-4 flex items-center gap-3 border-b border-border">
             <!-- Avatar 36 = đúng bậc control của hệ; ký tự về .t-lead 14/20. Bản cũ là
                  tròn 48 + text-[18px] — bậc tự chế NGOÀI thang, và text-[18px] chính
                  là hook tiêu đề mục, nó thoát Libre Bodoni chỉ vì đây là <span> chứ
                  không phải h1/h2/p. Cột chữ nay cao đúng 20+16 = 36 = đường kính avatar. -->
-            <span class="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center t-lead shrink-0">U</span>
-            <div class="flex-1 min-w-0">
-              <p class="t-lead text-foreground truncate">UserOne</p>
-              <p class="t-single text-muted-foreground">0909 *** 123 · Hạng Vàng</p>
-            </div>
+            ${accUserHTML()}
           </div>
           <div id="accTabs" class="flex flex-col">
             ${ACCOUNT_TABS.map(([id, label]) => `
@@ -6971,27 +6999,133 @@ function accountBody() {
     ${body}`;
 }
 /* ── Thông tin ── */
-function accInfo() {
-  /* 05/09/2026 — hàng 2 CỘT, MỘT chuỗi cho cả 2 file (bản cũ desktop có kẻ còn mobile
-     không, tức cùng một tab mà hai bản vẽ khác nhau). Nhãn cột cứng 130 nên 5 giá trị
-     thẳng một cột dọc; `items-baseline` khớp chân chữ 12 với chữ 14.
-     Giá trị lên `.t-lead` 14/20: đo được `.t-lead` dùng ĐÚNG 0 lần trên cả màn này —
-     trang nhảy thẳng 24 xuống 12 nên mọi dòng phẳng như nhau. Cao hàng = 20+32 = 52. */
-  const row = (label, value) => `
+/* Hàng nhãn–giá trị. 05/09/2026 — hàng 2 CỘT, MỘT chuỗi cho cả 2 file (bản cũ desktop
+   có kẻ còn mobile không, tức cùng một tab mà hai bản vẽ khác nhau). Nhãn cột cứng 130
+   nên các giá trị thẳng một cột dọc; `items-baseline` khớp chân chữ 12 với chữ 14.
+   Giá trị ở `.t-lead` 14/20; cao hàng = 20+32 = 52.
+   Hoist ra khỏi `accInfo()` vì khối Bảo mật cũng dùng đúng hàng này. */
+const accRow = (label, value) => `
     <div class="flex items-baseline gap-4 py-4 border-b border-border">
       <span class="t-single w-[130px] shrink-0 text-muted-foreground">${label}</span>
       <span class="t-lead text-foreground">${value}</span>
     </div>`;
+
+/* ── Linh kiện form của trang Tài khoản ──
+   KHÔNG dùng lại `field()` / `pickField()` của checkout, vì 2 hàm đó gánh sẵn `px-4`
+   (lề màn checkout) nên nhét vào cột nội dung Tài khoản là lề chồng lề, và `field()`
+   còn ghi thẳng vào state checkout qua `data-ckf`. SỐ ĐO thì giữ nguyên component:
+   cao 40 · đệm 8 · viền 1px · r2 · nhãn 12/18 Medium · khe nhãn→ô 8. */
+const accField = (key, label, val, ph, opts = {}) => {
+  const { type = '', mode = '', auto = '', hint = '' } = opts;
+  const id = 'acc-' + key;
+  const pass = type === 'password';
   return `
-    <div>
-      ${row('Họ và tên', 'Nguyễn Văn A')}
-      ${row('Số điện thoại', '0909 123 456')}
-      ${row('Email', 'userone@email.com')}
-      ${row('Giới tính', 'Nam')}
-      ${row('Ngày sinh', '01/01/1990')}
-      <button data-toast="Chỉnh sửa thông tin" class="t-lead h-12 px-8 mt-4 w-fit border border-border bg-background text-foreground btn-o press">Chỉnh sửa thông tin</button>
+    <div class="pb-4 flex flex-col gap-2">
+      <label for="${id}" class="t-multiline font-medium text-foreground">${label}</label>
+      <div class="relative flex flex-col">
+        <input id="${id}" data-af="${key}" value="${val}" placeholder="${ph}"${type ? ` type="${type}"` : ''}${mode ? ` inputmode="${mode}"` : ''}${auto ? ` autocomplete="${auto}"` : ''}
+               class="t-multiline h-10 bg-background border border-border rounded-xs px-2 ${pass ? 'pr-9 ' : ''}text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+        ${pass ? eyeBtn() : ''}
+      </div>
+      ${hint ? `<p class="t-single text-muted-foreground">${hint}</p>` : ''}
+    </div>`;
+};
+
+/* Ô CHỌN (giới tính · tỉnh/thành · phường/xã) — nhìn y hệt ô nhập ở trên nhưng là nút
+   mở danh sách. Markup sao y component `pickField` của checkout, đổi ĐÚNG một hook:
+   `data-pick` -> `data-apick`. Phải đổi, vì `wireAddressPickers()` bắt mọi `[data-pick]`
+   rồi switch theo khoá city/home/province/ward và MẶC ĐỊNH coi phần còn lại là ô phường
+   của checkout — để nguyên tên là ô giới tính xổ ra danh sách phường.
+   `data-pick-dd` + `data-pick-caret` là hook của dropdown desktop; bản mobile mở bottom
+   sheet nên không đọc tới, giữ lại để MỘT chuỗi chạy được cả 2 file. */
+const accPick = (key, label, val, ph) => `
+    <div class="pb-4 flex flex-col gap-2">
+      <label for="ap-${key}" class="t-multiline font-medium text-foreground">${label}</label>
+      <div class="relative" data-pick-dd>
+        <button type="button" id="ap-${key}" data-apick="${key}" aria-haspopup="listbox" aria-expanded="false"
+                class="t-multiline w-full h-10 bg-background border border-border rounded-xs pl-2 pr-9 text-left flex items-center btn-o press transition-colors focus:border-primary">
+          <span class="pick-label truncate ${val ? 'text-foreground' : 'text-muted-foreground'}">${val || ph}</span>
+        </button>
+        <span data-pick-caret class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200">${I.chevD('var(--general-primary)')}</span>
+      </div>
+    </div>`;
+
+/* Ô tích — dùng lại đúng `.chk` của giỏ/checkout. Cả cụm là MỘT <button> chứ không phải
+   <label> bọc <span>: handler của màn chạy theo UỶ QUYỀN qua `[data-acc]`, mà chạm vào
+   phần CHỮ của một <label> thì `closest('[data-acc]')` trả null. */
+const accCheck = (act, on, text) => `
+    <button type="button" data-acc="${act}" role="checkbox" aria-checked="${on}" class="flex items-start gap-2 text-left press">
+      <span class="chk ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-xs border border-border-3 flex items-center justify-center shrink-0">${I.tick}</span>
+      <span class="t-multiline text-foreground-alt">${text}</span>
+    </button>`;
+
+/* Cặp nút kết form: Lưu (nền đặc) + Huỷ (viền), cao 48 như mọi nút hành động của màn. */
+const accFormBtns = (saveAct, saveLabel) => `
+    <div class="flex flex-wrap gap-2 pt-2">
+      <button type="button" data-acc="${saveAct}" class="t-lead h-12 px-8 bg-primary text-primary-foreground btn-p press">${saveLabel}</button>
+      <button type="button" data-acc="cancel" class="t-lead h-12 px-8 border border-border bg-background text-foreground btn-o press">Huỷ</button>
+    </div>`;
+
+/* Tab Thông tin có 3 khối, ngăn nhau bằng khoảng trắng 32 chứ không phải kẻ: trong màn
+   này kẻ đang mang nghĩa "ranh giới giữa hai HÀNG dữ liệu", dùng nó cho ranh giới giữa
+   hai KHỐI là một vạch hai nghĩa. Tiêu đề khối đi `.t-lead` — đúng bậc mà `accLoyalty()`
+   và `accPoints()` đã dùng cho tiêu đề khối con ("Đặc quyền hạng Vàng", "Lịch sử điểm"),
+   không đẻ bậc mới. */
+function accInfo() {
+  if (accEdit === 'info') return accInfoForm();
+  if (accEdit === 'pass') return accPassForm();
+  return `
+    <div class="">
+      ${accRow('Họ và tên', PROFILE.name)}
+      ${accRow('Số điện thoại', PROFILE.phone)}
+      ${accRow('Email', PROFILE.email)}
+      ${accRow('Giới tính', PROFILE.gender)}
+      ${accRow('Ngày sinh', PROFILE.dob)}
+      <button type="button" data-acc="edit-info" class="t-lead h-12 px-8 mt-4 w-fit border border-border bg-background text-foreground btn-o press">Chỉnh sửa thông tin</button>
+
+      <div class="pt-8">
+        <p class="t-lead text-foreground pb-2">Bảo mật</p>
+        ${accRow('Mật khẩu', '••••••••')}
+        <button type="button" data-acc="edit-pass" class="t-lead h-12 px-8 mt-4 w-fit border border-border bg-background text-foreground btn-o press">Đổi mật khẩu</button>
+      </div>
+
+      <div class="pt-8">
+        <p class="t-lead text-foreground pb-2">Nhận tin</p>
+        ${accCheck('news', PROFILE.news, 'Nhận email về bộ sưu tập mới và ưu đãi dành riêng cho thành viên')}
+      </div>
     </div>`;
 }
+
+/* Form sửa thông tin. Ô nhập mở ra đã CÓ SẴN giá trị đang dùng (không phải ô rỗng có
+   placeholder): sửa 1 trong 5 dòng thì 4 dòng kia không phải gõ lại.
+   Ngày sinh đi ô nhập dd/mm/yyyy chứ không phải `input[type=date]`: control ngày của
+   trình duyệt tự vẽ theo hệ điều hành nên không nhận thang chữ / viền / bo của hệ, và
+   nó sẽ là control DUY NHẤT trong cả app còn để trình duyệt vẽ. */
+function accInfoForm() {
+  return `
+    <div class="">
+      ${accField('name',  'Họ và tên',     PROFILE.name,  'Nhập họ và tên', { auto: 'name' })}
+      ${accField('phone', 'Số điện thoại', PROFILE.phone, '0 1234 5678',    { mode: 'tel', auto: 'tel' })}
+      ${accField('email', 'Email',         PROFILE.email, 'Nhập email',     { mode: 'email', auto: 'email' })}
+      ${accPick('gender', 'Giới tính',     accDraft.gender || '', 'Chọn giới tính')}
+      ${accField('dob',   'Ngày sinh',     PROFILE.dob,   'dd/mm/yyyy',     { mode: 'numeric', hint: 'Định dạng ngày/tháng/năm, ví dụ 01/01/1990' })}
+      ${accFormBtns('save-info', 'Lưu thay đổi')}
+    </div>`;
+}
+
+/* Đổi mật khẩu. Demo không có backend nên "mật khẩu hiện tại" chỉ cần khác rỗng; 3 luật
+   còn lại thì kiểm THẬT (đủ 8 ký tự · có cả chữ và số · 2 lần nhập khớp · khác mật khẩu
+   cũ) — đó là phần khách nhìn thấy, và cũng đúng phần mà bản dựng thật phải làm. */
+function accPassForm() {
+  return `
+    <div class="">
+      ${accField('cur',  'Mật khẩu hiện tại',     '', 'Nhập mật khẩu hiện tại', { type: 'password', auto: 'current-password' })}
+      ${accField('new',  'Mật khẩu mới',          '', 'Nhập mật khẩu mới',      { type: 'password', auto: 'new-password', hint: 'Tối thiểu 8 ký tự, gồm cả chữ và số' })}
+      ${accField('new2', 'Nhập lại mật khẩu mới', '', 'Nhập lại mật khẩu mới',  { type: 'password', auto: 'new-password' })}
+      ${accFormBtns('save-pass', 'Cập nhật mật khẩu')}
+    </div>`;
+}
+
 /* Khuôn TRẠNG THÁI ĐƠN dùng chung cho list + màn chi tiết (AUDIT B2, chốt
    20/08/2026; PORT SANG KHỔ NÀY 24/08/2026 — trước đó chỉ index.html có, nên khổ
    desktop còn pill nền `bg-warning-subtle` + mực `#8a6100` + bo 9999 dẹt = 3 vi phạm
@@ -7003,7 +7137,60 @@ const STATUS_DOT = { warning: 'bg-warning', info: 'bg-info', success: 'bg-succes
 const statusTag = o => `<span class="t-single flex items-center gap-1.5 text-foreground shrink-0"><span class="w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[o.tone] || 'bg-muted-foreground'}"></span>${o.status}</span>`;
 
 /* ── Dữ liệu đơn hàng (dùng chung cho list + chi tiết) ── */
+/* 06/09/2026 — HAI CASE ĐẶT TRƯỚC trong lịch sử đơn hàng. Luồng mua có hàng đặt
+   trước từ 14/08, nhưng cả 3 đơn seed đều là hàng có sẵn nên tab Đơn hàng và màn
+   Chi tiết đơn chưa bao giờ hiện được case này (SITEMAP-KIEMTRA-2026-09-05 ghi ô
+   đó là "chỉ đúng khi tự đặt đơn"). Hai đơn mới phủ đủ hai dáng:
+     - DAFC103015: TOÀN BỘ là hàng đặt trước, đang ở chặng Chờ hàng về;
+     - DAFC102990: HỖN HỢP, hàng sẵn giao đợt 1 và hàng đặt trước giao đợt 2.
+   Ngày nhận dự kiến đọc từ PRODUCTS[0].preorder — một nguồn duy nhất, đổi ngày ở
+   data là mọi màn đổi theo. Theo luật 03/09 (đặt trước KHÔNG có sale) nên hai đơn
+   này không có dòng giảm giá. Giữ y hệt bản mobile: cùng mã đơn, cùng số tiền. */
 const ORDERS = [
+  {
+    id: 'DAFC103015', status: 'Chờ hàng về', tone: 'info', date: '05/09/2026',
+    items: [
+      { img: 'p1-0.jpg', name: 'Đầm lụa mini Broken Jewels', variant: '38 · Broken Jewels', qty: 1, price: '72.557.000 ₫', preorder: PRODUCTS[0].preorder },
+    ],
+    sub: '72.557.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '72.557.000 ₫',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng thông thường',
+    address: { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
+    steps: 3,
+  },
+  {
+    id: 'DAFC102990', status: 'Đang giao', tone: 'warning', date: '28/08/2026',
+    items: [
+      { img: 'p2-0.jpg', name: 'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant: 'Onesize', qty: 1, price: '15.611.000 ₫' },
+      { img: 'p1-0.jpg', name: 'Đầm lụa mini Broken Jewels', variant: '38 · Broken Jewels', qty: 1, price: '72.557.000 ₫', preorder: PRODUCTS[0].preorder },
+    ],
+    sub: '88.168.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '88.168.000 ₫',
+    payment: 'Chuyển khoản / QR code', method: 'Giao 2 đợt',
+    address: { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
+    steps: 4,
+  },
+  /* Case NẶNG NHẤT của luồng hiện tại, gộp cả 3 thứ vào một đơn: hàng giao nhanh
+     (it.ship = 'fast'), hàng có sẵn giao thường, hàng đặt trước, cộng 3 quà tặng
+     từ 2 nguồn khác nhau (quà kèm sản phẩm và quà theo mốc đơn 150 triệu — tạm
+     tính 168.482.000 nên mốc này đạt thật, không phải quà bịa).
+     Ba dòng hàng rơi vào 3 đợt giao khác nhau nên màn chi tiết chia 3 khối. */
+  {
+    id: 'DAFC103042', status: 'Đang giao', tone: 'warning', date: '06/09/2026',
+    items: [
+      { img: 'p5-0.jpg', name: 'Giày loafer da Manu', variant: '40 · Black', qty: 1, price: '35.248.000 ₫', ship: 'fast' },
+      { img: 'p2-0.jpg', name: 'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant: 'Onesize', qty: 1, price: '15.611.000 ₫' },
+      { img: 'p8-0.jpg', name: 'Túi da Lou mini', variant: 'Onesize · Black', qty: 1, price: '45.066.000 ₫' },
+      { img: 'p1-0.jpg', name: 'Đầm lụa mini Broken Jewels', variant: '38 · Broken Jewels', qty: 1, price: '72.557.000 ₫', preorder: PRODUCTS[0].preorder },
+    ],
+    gifts: [
+      { pk: 'dressBundle', key: 'edt' },
+      { pk: 'bagBundle', key: 'mini' },
+      { pk: 'tier150', key: 'scarf' },
+    ],
+    sub: '168.482.000 ₫', ship: '25.000 ₫', discount: '0 ₫', total: '168.507.000 ₫',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao 3 đợt',
+    address: { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
+    steps: 4,
+  },
   {
     id: 'DAFC102938', status: 'Đang giao', tone: 'warning', date: '02/08/2026',
     items: [
@@ -7033,6 +7220,38 @@ const ORDERS = [
   },
 ];
 let currentOrder = 'DAFC102938';
+
+/* Hàng đặt trước trong đơn — ba câu hỏi mà CẢ list lẫn màn chi tiết đều phải trả
+   lời: đơn có hàng đặt trước không, toàn bộ hay chỉ một phần, và ngày nhận muộn
+   nhất là ngày nào. Suy từ chính các dòng hàng (it.preorder) chứ không thêm cờ
+   riêng ở cấp đơn: đơn do checkout sinh ra cũng chép sẵn trường này cho từng dòng
+   nên không phải sửa placeOrder. Ngày dạng dd/mm/yyyy nên đảo về yyyymmdd rồi mới
+   so sánh, kẻo tháng 30/09 lại thua 05/12. */
+const orderPreItems = o => o.items.filter(it => it.preorder);
+const orderHasPre = o => orderPreItems(o).length > 0;
+const orderAllPre = o => o.items.length > 0 && orderPreItems(o).length === o.items.length;
+const dmyKey = d => String(d).split('/').reverse().join('');
+const orderEta = o => orderPreItems(o).map(it => it.preorder).sort((a, b) => dmyKey(a) < dmyKey(b) ? -1 : 1).pop() || '';
+
+/* ĐỢT GIAO — một đơn có thể vỡ làm nhiều đợt vì hai lý do khác nhau: hàng đặt
+   trước phải chờ về, và hàng giao nhanh đi trước hàng giao thường. Thứ tự 3 nhóm
+   dưới đây LÀ thứ tự đợt hiển thị, nhanh nhất lên trước; nhóm nào rỗng thì biến
+   mất chứ không để lại tiêu đề trống. Đơn chỉ có một nhóm thì không đánh số đợt. */
+const SHIP_GROUPS = [
+  { key: 'fast', label: 'Giao nhanh' },
+  { key: 'std',  label: 'Hàng có sẵn' },
+  { key: 'pre',  label: 'Hàng đặt trước' },
+];
+const itemGroup = it => it.preorder ? 'pre' : (it.ship === 'fast' ? 'fast' : 'std');
+const orderGroups = o => SHIP_GROUPS
+  .map(g => ({ ...g, items: o.items.filter(it => itemGroup(it) === g.key) }))
+  .filter(g => g.items.length);
+
+/* Quà của đơn lưu dạng {chương trình, key quà} chứ không chép cả món: đổi bảng
+   GIFT_CATALOG là đơn cũ đổi theo, và giữ được tên chương trình để nói "quà này
+   từ đâu ra" — đúng khuôn thẻ quà ở giỏ và ở màn Hoàn tất. */
+const orderGifts = o => (o.gifts || []).map(x => ({ pk: x.pk, g: GIFT_CATALOG[x.key] })).filter(x => x.g);
+
 /* ── Đơn hàng (list) ── */
 function accOrders() {
   return `
@@ -7052,8 +7271,17 @@ function accOrders() {
         <button data-order="${o.id}" class="w-full text-left flex items-start gap-4 py-4 border-b border-border hover:bg-accent-0 press">
           <span class="flex-1 min-w-0 flex flex-col gap-1">
             <span class="t-lead block text-foreground">#${o.id}</span>
-            <span class="t-multiline block text-foreground-alt line-clamp-1">${itemNames}</span>
+            <!-- 06/09/2026 — badge "Đặt trước" ĐỨNG TRƯỚC TÊN, đúng khuôn mọi thẻ khác
+                 trong app (badge shrink-0, tên w-full min-w-0 rồi mới cắt dòng). Dòng
+                 ngày nhận là MỘT dòng riêng chứ không nối vào chuỗi "N sản phẩm · tổng":
+                 chuỗi đó là một text node mà luật i18n bám đúng, nối thêm là dịch trượt. -->
+            <span class="flex items-start gap-1.5 min-w-0">
+              ${orderHasPre(o) ? `<span class="t-single badge-inline px-1 font-medium text-foreground shrink-0">Đặt trước</span>` : ''}
+              <span class="t-multiline w-full min-w-0 block text-foreground-alt line-clamp-1">${itemNames}</span>
+            </span>
             <span class="t-single block text-muted-foreground">${totalQty} sản phẩm · ${o.total}</span>
+            ${orderHasPre(o) ? `<span class="t-single block text-foreground-alt">${orderAllPre(o) ? 'Nhận hàng dự kiến' : `Giao ${orderGroups(o).length} đợt · đợt sau nhận dự kiến`} <span class="font-medium">${orderEta(o)}</span></span>` : ''}
+            ${(o.gifts || []).length ? `<span class="t-single block text-muted-foreground">Đơn có quà tặng kèm</span>` : ''}
           </span>
           <span class="shrink-0 flex flex-col items-end gap-1">
             ${statusTag(o)}
@@ -7066,29 +7294,83 @@ function accOrders() {
 /* ── Địa chỉ ── */
 /* Sổ địa chỉ — MỘT nguồn dùng chung cho tab Địa chỉ của trang Tài khoản và
    bước giao hàng ở checkout. Trước đây 2 chỗ này viết tay 2 bản riêng nên
-   checkout bắt khách đã đăng nhập gõ lại từ đầu. */
+   checkout bắt khách đã đăng nhập gõ lại từ đầu.
+   05/09/2026 — TÁCH `line` thành street/ward/province. Lý do rất cụ thể: form sửa
+   địa chỉ phải trả từng phần về đúng ô của nó, mà 2 ô địa giới lấy dữ liệu từ
+   `VN_LOCATIONS` (mô hình 2 cấp tỉnh → phường, đúng bản đồ hành chính đang chạy ở
+   checkout). Giữ chuỗi cũ "P. Bến Nghé, Quận 1, TP. Hồ Chí Minh" thì mỗi lần khách
+   bấm Sửa rồi Lưu là mất một thành phần địa chỉ — sửa xong địa chỉ ngắn đi.
+   `addrLine()` ghép lại cho mọi chỗ trước đây đọc `a.line` (sổ chọn ở checkout, tóm
+   tắt bước giao hàng, và đơn vừa đặt). */
 const ADDRESSES = [
-  { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh', def: true },
-  { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh',    def: false },
+  { name: 'Nguyễn Văn A', phone: '0909 123 456', street: '123 Đồng Khởi', ward: 'Phường Sài Gòn',   province: 'TP. Hồ Chí Minh', def: true },
+  { name: 'Nguyễn Văn A', phone: '0909 123 456', street: '45 Lê Lợi',     ward: 'Phường Bến Thành', province: 'TP. Hồ Chí Minh', def: false },
 ];
+const addrLine = a => a ? [a.street, a.ward, a.province].filter(Boolean).join(', ') : '';
 
 function accAddress() {
+  if (addrEdit !== null) return accAddressForm();
   return `
     <!-- 05/09/2026 — BỎ HỘP và BỎ PILL. Cờ mặc định đi bằng CHỮ "(Mặc định)", sao y
          checkout: một sổ ADDRESSES dùng chung 2 màn thì phải một cách nói.
          Không mượn vạch 2px: trong hệ này vạch 2px chỉ có nghĩa "mục điều hướng đang
          chọn"; địa chỉ mặc định là cờ DỮ LIỆU, không phải state điều hướng.
          Bỏ pill xoá luôn một lỗi có sẵn: pill đặt tuyệt đối mà tên không có pr-* nào,
-         nên tên hoặc số dài hơn sẽ chui xuống dưới pill. -->
-    <div>
-      ${ADDRESSES.map(a => `
+         nên tên hoặc số dài hơn sẽ chui xuống dưới pill.
+         HÀNG HÀNH ĐỘNG (05/09, lượt hoàn thiện): 3 nút chữ gạch chân mực phụ — đúng
+         khuôn nút "Chi tiết" của tab Đơn hàng, là kiểu nút phụ DUY NHẤT màn này có.
+         Câu hỏi xác nhận xoá nằm NGAY TRONG HÀNG, không mở thêm một lớp nổi: xoá một
+         địa chỉ trong sổ không đáng để chặn cả màn hình, và app chưa có khuôn hộp
+         thoại xác nhận nào — đẻ ra ở đây là đẻ một kiểu UI mới cho đúng một việc. -->
+    <div class="">
+      ${ADDRESSES.length ? ADDRESSES.map((a, i) => `
       <div class="flex flex-col gap-1 py-4 border-b border-border">
         <p class="t-lead text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="t-single text-muted-foreground">(Mặc định)</span>' : ''}</p>
-        <p class="t-multiline text-foreground-alt">${a.line}</p>
-      </div>`).join('')}
-      <button data-toast="Thêm địa chỉ mới" class="t-lead h-12 px-8 mt-4 w-fit border border-border bg-background text-foreground btn-o press">+ Thêm địa chỉ mới</button>
+        <p class="t-multiline text-foreground-alt">${addrLine(a)}</p>
+        ${addrDel === i ? `
+        <div class="flex items-center gap-4 pt-1">
+          <span class="t-single text-foreground-alt">Xoá địa chỉ này?</span>
+          <button type="button" data-acc="addr-del-yes" data-i="${i}" class="t-single text-destructive underline press">Xoá</button>
+          <button type="button" data-acc="addr-del-no" class="t-single text-muted-foreground hover:text-foreground underline press">Giữ lại</button>
+        </div>` : `
+        <div class="flex items-center gap-4 pt-1">
+          <button type="button" data-acc="addr-edit" data-i="${i}" class="t-single text-muted-foreground hover:text-foreground underline press">Sửa</button>
+          ${a.def ? '' : `<button type="button" data-acc="addr-def" data-i="${i}" class="t-single text-muted-foreground hover:text-foreground underline press">Đặt mặc định</button>`}
+          <button type="button" data-acc="addr-del" data-i="${i}" class="t-single text-muted-foreground hover:text-foreground underline press">Xoá</button>
+        </div>`}
+      </div>`).join('') : `
+      <p class="t-multiline text-foreground-alt py-4 border-b border-border">Sổ địa chỉ đang trống. Thêm một địa chỉ để lần đặt hàng sau không phải nhập lại.</p>`}
+      <button type="button" data-acc="addr-new" class="t-lead h-12 px-8 mt-4 w-fit border border-border bg-background text-foreground btn-o press">+ Thêm địa chỉ mới</button>
     </div>`;
 }
+
+/* Form thêm / sửa địa chỉ. Thứ tự ô sao y bước giao hàng ở checkout (tên → số →
+   tỉnh → phường → số nhà) để hai màn cùng một trình tự khai địa chỉ.
+   Địa chỉ ĐANG mặc định thì không cho bỏ cờ ngay tại đây: bỏ đi là sổ không còn địa
+   chỉ mặc định nào, và checkout mở ra sẽ không chọn sẵn gì. Muốn đổi thì đặt mặc định
+   cho địa chỉ khác — hành động đó tự gỡ cờ ở đây. Nên chỗ này là một DÒNG CHỮ chứ
+   không phải ô tích bị khoá: ô tích bấm không ăn đọc thành lỗi giao diện. */
+function accAddressForm() {
+  const isNew = addrEdit === 'new';
+  const a = isNew ? {} : (ADDRESSES[addrEdit] || {});
+  const first = ADDRESSES.length === 0;   // địa chỉ đầu tiên của sổ: mặc định là hiển nhiên
+  return `
+    <div class="">
+      <p class="t-lead text-foreground pb-4">${isNew ? 'Thêm địa chỉ mới' : 'Sửa địa chỉ'}</p>
+      ${accField('aname',   'Họ và tên',       a.name || '',  'Nhập họ và tên',    { auto: 'name' })}
+      ${accField('aphone',  'Số điện thoại',   a.phone || '', '0 1234 5678',       { mode: 'tel', auto: 'tel' })}
+      ${accPick('aprovince','Tỉnh / thành phố', accDraft.province || '', 'Chọn tỉnh / thành phố')}
+      ${accPick('award',    'Phường / xã',      accDraft.ward || '',     'Chọn phường / xã')}
+      ${accField('astreet', 'Số nhà, tên đường', a.street || '', 'Ví dụ: 123 Đồng Khởi', { auto: 'street-address' })}
+      <div class="pb-4">
+        ${a.def || first
+          ? `<p class="t-multiline text-muted-foreground">Đây là địa chỉ mặc định của sổ.</p>`
+          : accCheck('addr-def-toggle', !!accDraft.def, 'Đặt làm địa chỉ mặc định')}
+      </div>
+      ${accFormBtns('save-addr', 'Lưu địa chỉ')}
+    </div>`;
+}
+
 /* ── Thành viên ── */
 function accLoyalty() {
   return `
@@ -7103,7 +7385,7 @@ function accLoyalty() {
       <div class="px-4 py-6 flex flex-col gap-2 text-primary-foreground" style="background:var(--surface-dark)">
         <span class="t-single">DAFC Membership</span>
         <p class="text-[18px] font-medium leading-7">Hạng Vàng</p>
-        <span class="t-lead">UserOne · 0909 *** 123</span>
+        <span class="t-lead">${PROFILE.name} · ${maskPhone(PROFILE.phone)}</span>
         <div class="pt-4 flex items-center justify-between gap-4">
           <span class="t-single">Chi tiêu tích lũy</span>
           <span class="t-lead">142.500.000 ₫</span>
@@ -7174,10 +7456,65 @@ function accPoints() {
    · tổng kết · hành động. Mở khi bấm "Chi tiết" ở tab Đơn hàng.
 ════════════════════════════════════════════════════════════════ */
 const ORDER_STEPS = ['Đã đặt hàng', 'Đã xác nhận', 'Đang giao', 'Đã giao'];
+/* 06/09/2026 — đơn có hàng đặt trước đi thêm MỘT chặng "Chờ hàng về" giữa xác nhận
+   và giao: đó là quãng dài nhất của luồng này (gần một tháng) mà bộ 4 chặng cũ
+   không có chỗ nào để chỉ. Chọn bộ chặng theo DỮ LIỆU đơn, không theo cờ riêng. */
+const ORDER_STEPS_PRE = ['Đã đặt hàng', 'Đã xác nhận', 'Chờ hàng về', 'Đang giao', 'Đã giao'];
 
 function screenORDER() {
   const o = ORDERS.find(x => x.id === currentOrder) || ORDERS[0];
   const done = o.steps;
+  const hasPre = orderHasPre(o), allPre = orderAllPre(o);
+  const steps = hasPre ? ORDER_STEPS_PRE : ORDER_STEPS;
+  /* Một dòng hàng dùng lại 2 chỗ: danh sách phẳng (đơn thường / đơn toàn đặt trước)
+     và danh sách chia đợt (đơn hỗn hợp). Trước đây khuôn này viết thẳng trong map
+     nên không tách nhóm được mà không chép đôi markup. */
+  const itemRow = it => `
+              <div class="flex gap-4">
+                <div class="w-[72px] h-[96px] bg-secondary overflow-hidden shrink-0">
+                  <img src="${A}${it.img}" class="w-full h-full object-cover" alt="${it.name}">
+                </div>
+                <div class="flex-1 min-w-0 flex flex-col">
+                  <span class="t-single text-muted-foreground">Versace</span>
+                  <!-- 03/09/2026: badge "Đặt trước" ĐỨNG TRƯỚC TÊN như mọi thẻ
+                       khác, và dòng ngày THÔI mở đầu bằng "Pre-order" — vừa lặp
+                       badge, vừa là chữ Anh trong câu Việt (nhãn VI chốt 27/08 là
+                       "Đặt trước"). Nay dòng đi đúng khoá i18n sẵn có
+                       'Nhận hàng dự kiến' của hàng giỏ. -->
+                  <span class="flex items-start gap-1.5 min-w-0">
+                    ${it.preorder ? `<span class="t-single badge-inline px-1 font-medium text-foreground shrink-0">Đặt trước</span>` : ''}
+                    <span class="t-multiline w-full min-w-0 text-foreground line-clamp-2">${it.name}</span>
+                  </span>
+                  <span class="t-single text-muted-foreground mt-1">${it.variant}</span>
+                  ${it.preorder ? `<span class="t-single text-foreground-alt mt-0.5">Nhận hàng dự kiến <span class="font-medium">${it.preorder}</span></span>` : ''}
+                  <div class="flex items-center justify-between mt-auto">
+                    <span class="t-single text-muted-foreground">SL: ${it.qty}</span>
+                    <span class="t-multiline font-medium text-foreground">${it.price}</span>
+                  </div>
+                </div>
+              </div>`;
+  /* Dòng QUÀ TẶNG trong đơn — cùng khuôn dòng hàng, khác đúng 3 chỗ: badge "Quà tặng"
+     đứng trước tên (chỗ của badge "Đặt trước"), dòng phụ là TÊN CHƯƠNG TRÌNH thay cho
+     phân loại, và giá 0 ₫. Trước 06/09 quà chỉ sống ở giỏ, thanh toán và màn Hoàn tất;
+     mở lại đơn cũ thì không còn dấu vết nào của quà đã nhận. */
+  const giftRow = ({ pk, g }) => `
+              <div class="flex gap-4">
+                <div class="w-[72px] h-[96px] bg-secondary overflow-hidden shrink-0">
+                  <img src="${A}${g.img}" class="w-full h-full object-cover" alt="${g.name}">
+                </div>
+                <div class="flex-1 min-w-0 flex flex-col">
+                  <span class="t-single text-muted-foreground">${g.brand}</span>
+                  <span class="flex items-start gap-1.5 min-w-0">
+                    <span class="t-single badge-inline px-1 font-medium text-foreground shrink-0">Quà tặng</span>
+                    <span class="t-multiline w-full min-w-0 text-foreground line-clamp-2">${g.name}</span>
+                  </span>
+                  <span class="t-single text-muted-foreground mt-1">${(GIFT_PROGRAMS[pk] || {}).name || ''}</span>
+                  <div class="flex items-center justify-between mt-auto">
+                    <span class="t-single text-muted-foreground">SL: 1</span>
+                    <span class="t-multiline font-medium text-foreground">0 ₫</span>
+                  </div>
+                </div>
+              </div>`;
 
   return `
   <div class="w-full" data-scroller>
@@ -7205,7 +7542,7 @@ function screenORDER() {
           <!-- timeline theo dõi -->
           <div class="py-6 border-b border-border">
             <div class="flex items-start">
-              ${ORDER_STEPS.map((label, i) => {
+              ${steps.map((label, i) => {
                 const reached = i < done;
                 const isCur = i === done - 1;
                 return `
@@ -7218,7 +7555,18 @@ function screenORDER() {
                 </div>`;
               }).join('')}
             </div>
-            ${o.tone==='warning' ? `
+            <!-- 06/09/2026 — băng ghi chú dưới timeline: đơn có hàng đặt trước nói ngày
+                 hàng về, đơn thường nói ngày giao + mã vận đơn. Hai băng LOẠI TRỪ nhau:
+                 đơn hỗn hợp mang cả tone warning lẫn hàng đặt trước, in cả hai là hai
+                 băng chồng nhau nói hai ngày khác nhau, người đọc không biết tin cái nào. -->
+            ${hasPre ? `
+              <div class="mt-4 bg-accent-0 px-4 py-2 flex items-start gap-2">
+                <span class="w-4 h-4 text-foreground shrink-0 mt-0.5">${I.truck}</span>
+                <span class="t-single text-foreground-alt">${allPre
+                  ? `Đơn hàng đặt trước · hàng dự kiến về ngày <b class="font-medium">${orderEta(o)}</b>`
+                  : `Đơn giao ${orderGroups(o).length} đợt · hàng có sẵn giao trước, hàng đặt trước dự kiến <b class="font-medium">${orderEta(o)}</b>`}</span>
+              </div>`
+            : o.tone==='warning' ? `
               <div class="mt-4 bg-accent-0 px-4 py-2 flex items-center gap-2">
                 <span class="w-4 h-4 text-foreground shrink-0">${I.truck}</span>
                 <span class="t-single text-foreground-alt">Dự kiến giao ngày 12/08/2026 · Mã vận đơn <b class="font-medium">TKN284917</b></span>
@@ -7247,30 +7595,23 @@ function screenORDER() {
           <!-- danh sách sản phẩm -->
           <div class="py-6 border-b border-border flex flex-col gap-4">
             <span class="t-single text-muted-foreground">Sản phẩm (${o.items.length})</span>
-            ${o.items.map(it => `
-              <div class="flex gap-4">
-                <div class="w-[72px] h-[96px] bg-secondary overflow-hidden shrink-0">
-                  <img src="${A}${it.img}" class="w-full h-full object-cover" alt="${it.name}">
-                </div>
-                <div class="flex-1 min-w-0 flex flex-col">
-                  <span class="t-single text-muted-foreground">Versace</span>
-                  <!-- 03/09/2026: badge "Đặt trước" ĐỨNG TRƯỚC TÊN như mọi thẻ
-                       khác, và dòng ngày THÔI mở đầu bằng "Pre-order" — vừa lặp
-                       badge, vừa là chữ Anh trong câu Việt (nhãn VI chốt 27/08 là
-                       "Đặt trước"). Nay dòng đi đúng khoá i18n sẵn có
-                       'Nhận hàng dự kiến' của hàng giỏ. -->
-                  <span class="flex items-start gap-1.5 min-w-0">
-                    ${it.preorder ? `<span class="t-single badge-inline px-1 font-medium text-foreground shrink-0">Đặt trước</span>` : ''}
-                    <span class="t-multiline w-full min-w-0 text-foreground line-clamp-2">${it.name}</span>
-                  </span>
-                  <span class="t-single text-muted-foreground mt-1">${it.variant}</span>
-                  ${it.preorder ? `<span class="t-single text-foreground-alt mt-0.5">Nhận hàng dự kiến <span class="font-medium">${it.preorder}</span></span>` : ''}
-                  <div class="flex items-center justify-between mt-auto">
-                    <span class="t-single text-muted-foreground">SL: ${it.qty}</span>
-                    <span class="t-multiline font-medium text-foreground">${it.price}</span>
-                  </div>
-                </div>
-              </div>`).join('')}
+            <!-- 06/09/2026 — đơn HỖN HỢP tách làm 2 đợt giao. Không tách thì hai dòng
+                 hàng nằm cạnh nhau mà một dòng có ngày nhận còn dòng kia không, người
+                 đọc phải tự đoán là cả đơn chờ hay chỉ một món chờ. Đơn toàn hàng đặt
+                 trước thì KHÔNG tách: mọi dòng đã mang badge và ngày. -->
+            ${(() => {
+              const groups = orderGroups(o), gifts = orderGifts(o);
+              /* Một đợt thì in phẳng: mọi dòng đã mang badge và ngày của chính nó, thêm
+                 tiêu đề "Đợt 1" chỉ là chữ thừa. Quà đi kèm ĐỢT ĐẦU vì đó là kiện rời
+                 kho trước; đơn một đợt thì quà xuống cuối danh sách. */
+              if (groups.length < 2) return o.items.map(itemRow).join('') + gifts.map(giftRow).join('');
+              return groups.map((g, i) => `
+              <div class="flex flex-col gap-4 ${i ? 'pt-4 border-t border-border' : ''}">
+                <span class="t-single font-medium text-foreground">Đợt ${i + 1} · ${g.label}</span>
+                ${g.items.map(itemRow).join('')}
+                ${i === 0 ? gifts.map(giftRow).join('') : ''}
+              </div>`).join('');
+            })()}
           </div>
 
           <!-- tổng kết -->
@@ -7299,7 +7640,13 @@ function screenORDER() {
                thêm bằng mực là hai tín hiệu cho một việc), và nút CSKH nhận .btn-s để
                có state — rule của bộ da ép .btn-s về 12/16 nên khai đúng 12/16. -->
           <div class="pt-8 flex items-center gap-4">
-            ${o.tone==='warning'
+            ${allPre && done < 4
+              ? /* Đơn đặt trước chưa tới chặng giao: chưa có mã vận đơn nên "Theo dõi đơn
+                   hàng" không có gì để mở. Việc đúng của người mua lúc này là chờ hàng về,
+                   nên nút chính mượn đúng khuôn "Nhận thông báo khi có hàng" đã có ở PDP. */
+                `<button data-toast="Sẽ nhắc bạn khi hàng về" class="t-lead h-12 px-8 bg-primary text-primary-foreground btn-p press">Nhắc tôi khi hàng về</button>
+                 <button data-toast="Đã gửi yêu cầu huỷ" class="t-lead h-12 px-8 border border-border bg-background text-foreground btn-o press">Huỷ đơn đặt trước</button>`
+              : o.tone==='warning'
               ? `<button data-toast="Theo dõi đơn TKN284917" class="t-lead h-12 px-8 bg-primary text-primary-foreground btn-p press">Theo dõi đơn hàng</button>
                  <button data-toast="Đã gửi yêu cầu huỷ" class="t-lead h-12 px-8 border border-border bg-background text-foreground btn-o press">Huỷ đơn hàng</button>`
               : `<button data-toast="Đã thêm lại vào giỏ" class="t-lead h-12 px-8 bg-primary text-primary-foreground btn-p press">Mua lại</button>
@@ -8660,9 +9007,11 @@ function screenCHECKOUT() {
      tới bước Thanh toán. */
   const modeTabs = `
     <div id="ckModeTabs" class="px-4 pt-1 pb-4">
-      <div class="max-w-[360px]">
-        ${segToggle('data-ck-mode', [['ship','Giao hàng'], ['pickup','Nhận tại cửa hàng']], ckMode, 'h-10')}
-      </div>
+      <!-- 06/09/2026 — bỏ khung kẹp max-w-[360px]: toggle nay rộng bằng cột form (699 ở
+           khổ 1440) như mọi ô nhập cùng cột, và như chính nó ở bản mobile. Kẹp 360 làm
+           nó ngắn hơn mọi thứ dưới nó, trông như một mẩu rơi lạc chứ không phải bước
+           đầu của form. Hai nút vẫn chia đôi vì segBtnClass đã có flex-1. -->
+      ${segToggle('data-ck-mode', [['ship','Giao hàng'], ['pickup','Nhận tại cửa hàng']], ckMode, 'h-10')}
     </div>`;
   /* ── Section 0: Thông tin giao hàng ──
      Khách ĐÃ ĐĂNG NHẬP thì mở ra là sổ địa chỉ đã lưu (chọn 1 chạm là xong
@@ -8674,8 +9023,8 @@ function screenCHECKOUT() {
       ${field('Họ','Nhập họ')}
     </div>
     ${field('Số điện thoại','0 1234 5678','tel', { val: ckShipPhone, key: 'sphone', auto: 'tel' })}
-    ${pickField('Tỉnh , thành phố','Chọn tỉnh / thành phố','province', ckProvince)}
-    ${pickField('Phường xã','Chọn phường / xã','ward', ckWard)}
+    ${pickField('Tỉnh / thành phố','Chọn tỉnh / thành phố','province', ckProvince)}
+    ${pickField('Phường / xã','Chọn phường / xã','ward', ckWard)}
     ${field('Địa chỉ','Số nhà, tên đường','', { val: ckShipLine, key: 'saddr', auto: 'street-address' })}
     <div class="px-4 pt-1">
       <label class="flex items-center gap-2 press">
@@ -8696,7 +9045,7 @@ function screenCHECKOUT() {
         </span>
         <span class="flex-1 min-w-0">
           <span class="t-multiline block font-medium text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="t-single font-normal text-muted-foreground">(Mặc định)</span>' : ''}</span>
-          <span class="t-multiline block text-secondary-foreground">${a.line}</span>
+          <span class="t-multiline block text-secondary-foreground">${addrLine(a)}</span>
         </span>
       </button>`).join('')}
       <button class="opt ${ckAddr === 'new' ? 'on' : ''} w-full flex items-center gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-addr="new">
@@ -8773,9 +9122,9 @@ function screenCHECKOUT() {
       </div>
       <div id="vatFields" class="ck-open"><div class="acc-inner">
         <div class="px-4 pt-3 flex flex-col gap-3">
-          <div class="max-w-[360px]">
-            ${segToggle('data-vat-type', [['personal','Cá nhân'], ['company','Công ty']], vatType, 'h-10')}
-          </div>
+          <!-- Bỏ kẹp 360 y như toggle Giao hàng ở trên: hai toggle của cùng màn checkout
+               phải cùng bề rộng, không thì lại là hai luật cho một loại phần tử. -->
+          ${segToggle('data-vat-type', [['personal','Cá nhân'], ['company','Công ty']], vatType, 'h-10')}
           <p class="t-multiline text-secondary-foreground">Hóa đơn VAT chỉ xuất trong ngày, khách hàng có nhu cầu xuất hóa đơn vui lòng điền đầy đủ thông tin bên dưới.</p>
         </div>
         <div id="vatFieldRows">${vatFieldRows(vatType)}</div>
@@ -10776,6 +11125,10 @@ function refreshActiveFilters(root) {
    Tách 2 biến để bấm "Thay đổi" ở bước 1 không kéo bước 2-3 về "chưa làm":
    trạng thái giờ tính theo ckMaxStep, còn ckStep chỉ nói đang mở cái nào. */
 let ckAuth = false, ckStep = 0, ckMaxStep = 0;   // checkout: đã đăng nhập? / đang mở section nào
+/* 06/09/2026 — lựa chọn giao nhanh trước đây chỉ đổi CHỮ trong dòng tóm tắt rồi thôi:
+   không có state nào giữ lại, nên đơn ghi vào lịch sử luôn là "Giao hàng thông thường"
+   dù khách chọn giao nhanh. Giữ cờ ở đây để placeOrder ghi đúng phương thức. */
+let ckShipFast = false;
 let vatType = 'personal';         // 'personal' | 'company' — loại xuất hoá đơn VAT (Figma 3028:47246, mặc định "Cá nhân")
 let loginFrom = null;             // mở login từ màn nào
 let scrollCleanups = [];          // gỡ listener khi đổi màn
@@ -10979,7 +11332,7 @@ const I18N = {
   'Nhập Mã số thuế':'Enter tax code', 'Nhập Email nhận hóa đơn VAT':'Enter email for VAT invoice',
   'Hóa đơn VAT chỉ xuất trong ngày, khách hàng có nhu cầu xuất hóa đơn vui lòng điền đầy đủ thông tin bên dưới.':'VAT invoices are issued same-day only. Please complete all fields below if you need one.',
   'Họ':'Last name', 'Tên':'First name', 'Nhập họ':'Enter last name', 'Nhập tên':'Enter first name',
-  'Số nhà, tên đường':'House number, street', 'Tỉnh , thành phố':'Province / city',
+  'Số nhà, tên đường':'House number, street', 
   'Chọn tỉnh / thành phố':'Select province / city', 'Chọn phường / xã':'Select ward',
   'Lưu địa chỉ':'Save address', 'Thời gian nhận hàng dự kiến từ ngày 14/07 đến ngày 18/07':'Estimated delivery between 14/07 and 18/07',
   'Đăng nhập và hoàn tất đơn hàng để nhận ngay':'Sign in and complete your order to earn',
@@ -11036,6 +11389,39 @@ const I18N = {
   'Quà sinh nhật độc quyền':'Exclusive birthday gift', 'để lên hạng Bạch Kim':'to reach Platinum',
   'Điểm thưởng hiện có':'Available points', 'Lịch sử điểm':'Points history',
   'Quà sinh nhật':'Birthday gift', 'Đổi voucher giảm giá':'Redeemed discount voucher',
+  /* ── Trang tài khoản: form sửa thông tin · đổi mật khẩu · sổ địa chỉ (05/09/2026) ──
+     Hai giá trị giới tính Nam / Nữ KHÔNG có khoá ở đây: 2 chuỗi đó đã là khoá của
+     NGÀNH HÀNG (dịch sang Men / Women), thêm bản dịch giới tính là đổi luôn nhãn ngành
+     hàng trên toàn app. Bản EN vì thế đọc giới tính là Men / Women — ghi lại ở đây để
+     lượt sau biết đó là đánh đổi có chủ ý, không phải sót. */
+  'Bảo mật':'Security', 'Nhận tin':'Email preferences',
+  'Nhận email về bộ sưu tập mới và ưu đãi dành riêng cho thành viên':'Get emails about new collections and member-only offers',
+  'Đã bật nhận bản tin':'Newsletter turned on', 'Đã tắt nhận bản tin':'Newsletter turned off',
+  'Huỷ':'Cancel', 'Đã lưu thông tin':'Profile saved', '(Mặc định)':'(Default)',
+  'Ví dụ: 123 Đồng Khởi':'For example: 123 Dong Khoi',
+  'Chọn giới tính':'Select gender',
+  'Định dạng ngày/tháng/năm, ví dụ 01/01/1990':'Day/month/year, for example 01/01/1990',
+  'Ngày sinh chưa đúng, nhập theo dd/mm/yyyy':'Enter a valid date of birth as dd/mm/yyyy',
+  'Đổi mật khẩu':'Change password', 'Mật khẩu hiện tại':'Current password',
+  'Nhập mật khẩu hiện tại':'Enter current password',
+  'Tối thiểu 8 ký tự, gồm cả chữ và số':'At least 8 characters, with letters and numbers',
+  'Đã đổi mật khẩu':'Password changed',
+  'Vui lòng nhập mật khẩu hiện tại':'Please enter your current password',
+  'Mật khẩu cần tối thiểu 8 ký tự, gồm cả chữ và số':'Password needs at least 8 characters, with letters and numbers',
+  'Hai lần nhập chưa khớp':'The two entries do not match',
+  'Mật khẩu mới phải khác mật khẩu hiện tại':'New password must differ from the current one',
+  'Sửa':'Edit', 'Xoá':'Delete', 'Giữ lại':'Keep', 'Đặt mặc định':'Set as default',
+  'Xoá địa chỉ này?':'Delete this address?', 'Sửa địa chỉ':'Edit address',
+  'Đặt làm địa chỉ mặc định':'Set as default address',
+  'Đây là địa chỉ mặc định của sổ.':'This is the default address in your book.',
+  'Sổ địa chỉ đang trống. Thêm một địa chỉ để lần đặt hàng sau không phải nhập lại.':'Your address book is empty. Add one so you never have to type it again at checkout.',
+  'Tỉnh / thành phố':'Province / city', 'Phường / xã':'Ward',
+  'Đã thêm địa chỉ':'Address added', 'Đã lưu địa chỉ':'Address saved',
+  'Đã xoá địa chỉ':'Address deleted', 'Đã đặt địa chỉ mặc định':'Default address updated',
+  'Vui lòng nhập số nhà, tên đường':'Please enter the house number and street',
+  'Vui lòng chọn tỉnh / thành phố':'Please select a province / city',
+  'Vui lòng chọn phường / xã':'Please select a ward',
+
   'Chi tiết đơn hàng':'Order details', 'Sản phẩm (2)':'Items (2)',
   'Đã đặt hàng':'Ordered', 'Đã xác nhận':'Confirmed', 'Đang giao':'In transit', 'Đã giao':'Delivered',
   'Theo dõi đơn hàng':'Track order', 'Huỷ đơn hàng':'Cancel order', 'Mua lại':'Buy again',
@@ -11184,7 +11570,7 @@ const I18N = {
 
   // ── Vá 20 chuỗi desktop hiển thị nhưng thiếu bản dịch (quét 11/08/2026) ──
   // Bản dịch lấy nguyên từ index.html để 2 bản không lệch chữ.
-  'Phường xã':'Ward', 'Giày':'Shoes',
+  'Giày':'Shoes',
   '1. Thu thập thông tin':'1. Information we collect',
   '2. Mục đích sử dụng':'2. How we use it',
   '3. Bảo mật thông tin':'3. Data security',
@@ -11298,15 +11684,6 @@ const I18N = {
   'Bộ sưu tập AW26':'The AW26 collection', 'Bộ sưu tập denim MCM':'The MCM denim collection',
   'Ưu đãi mùa hè':'Summer offers',
   'Thiết kế táo bạo, phong cách quyến rũ và logo Medusa đặc trưng — Versace là biểu tượng của sự sang trọng và vẻ đẹp hiện đại.':'Bold design, a seductive spirit and the signature Medusa — Versace stands for modern luxury and beauty.',
-  'DAFC Online có giao hàng miễn phí không?':'Does DAFC Online deliver for free?',
-  'Tôi có thể mua trả góp không?':'Can I pay in instalments?',
-  'Chính sách đổi hàng như thế nào?':'What is the exchange policy?',
-  'Thành viên DAFC có những đặc quyền gì?':'What do DAFC members get?',
-  'Hàng đặt trước bao giờ nhận được?':'When will a pre-order arrive?',
-  'Làm sao để chọn đúng kích thước?':'How do I pick the right size?',
-  'Mỗi sản phẩm đặt trước đều hiển thị ngày giao dự kiến ngay tại trang chi tiết sản phẩm.':'Every pre-order shows its estimated delivery date on the product page.',
-  'Mỗi trang sản phẩm đều có nút Bảng kích thước với số đo của chính sản phẩm đó.':'Every product page has a size guide with the measurements for that piece.',
-  'Những thắc mắc thường gặp nhất khi mua sắm tại DAFC Online.':'The questions we are asked most often about shopping at DAFC Online.',
   'Nhận thông tin bộ sưu tập mới và ưu đãi dành riêng cho thành viên DAFC.':'Be the first to hear about new collections and DAFC member offers.',
   'Bằng việc đăng ký, bạn đồng ý với Chính sách bảo mật của DAFC.':'By signing up you agree to the DAFC privacy policy.',
 };
@@ -11319,6 +11696,10 @@ const I18N_RE = [
   [/^≈ (.+) giá trị quy đổi$/, '≈ $1 in value'],
   [/^(\d+) cửa hàng$/,                '$1 stores'],
   [/^(\d+) sản phẩm$/,                '$1 products'],
+  /* Tiêu đề mục hàng ở chi tiết đơn: trước 06/09 chỉ có khoá tĩnh cho (1) và (2) nên
+     đơn 3–4 món là lòi tiếng Việt trong bản Anh. */
+  [/^Sản phẩm \((\d+)\)$/,            'Items ($1)'],
+  [/^SL: (\d+)$/,                     'Qty: $1'],   // dòng số lượng ở chi tiết đơn, trước nay chưa dịch
   [/^(\d+) sản phẩm · (.+)$/,         '$1 items · $2'],
   [/^\+ ([\d.]+) điểm$/,              '+ $1 points'],
   [/^− ([\d.]+) điểm$/,               '− $1 points'],
@@ -11379,6 +11760,8 @@ const I18N_REV_RE = [
   [/^≈ (.+) in value$/, '≈ $1 giá trị quy đổi'],
   [/^(\d+) stores$/,                  '$1 cửa hàng'],
   [/^(\d+) products$/,                '$1 sản phẩm'],
+  [/^Items \((\d+)\)$/,               'Sản phẩm ($1)'],
+  [/^Qty: (\d+)$/,                    'SL: $1'],
   [/^(\d+) items · (.+)$/,            '$1 sản phẩm · $2'],
   [/^\+ ([\d.]+) points$/,            '+ $1 điểm'],
   [/^− ([\d.]+) points$/,             '− $1 điểm'],
@@ -11518,6 +11901,22 @@ Object.assign(I18N, {
   'Chính sách hoàn tiền':'Refund policy',
   'Liên hệ hỗ trợ':'Support contact',
   'Dự kiến giao ngày 12/08/2026 · Mã vận đơn':'Estimated delivery 12/08/2026 · Tracking number',
+  // Đơn có hàng đặt trước (06/09/2026). Chuỗi băng ghi chú cắt ngay trước thẻ <b> chứa
+  // ngày, đúng cách chuỗi "Mã vận đơn" ở trên đang làm — khỏi đẻ luật regex cho ngày.
+  'Chờ hàng về':'Awaiting stock', 'Giao 2 đợt':'2 shipments',
+  'Giao 2 đợt · đợt sau nhận dự kiến':'2 shipments · later batch arrives',
+  'Đơn hàng đặt trước · hàng dự kiến về ngày':'Pre-order · stock expected on',
+  'Đơn giao 2 đợt · hàng có sẵn giao trước, hàng đặt trước dự kiến':'2 shipments · in-stock items ship first, pre-order arrives',
+  'Đợt 1 · Hàng có sẵn':'Shipment 1 · In stock', 'Đợt 2 · Hàng đặt trước':'Shipment 2 · Pre-order',
+  'Nhắc tôi khi hàng về':'Notify me when it arrives', 'Huỷ đơn đặt trước':'Cancel pre-order',
+  'Sẽ nhắc bạn khi hàng về':'We will notify you when it arrives',
+  // Đơn nhiều đợt + có quà (06/09/2026). Tên đợt là khoá tĩnh vì cả số thứ tự lẫn nhãn
+  // đều phải dịch; chỉ có 6 tổ hợp thật sự xảy ra nên không đáng đẻ luật regex.
+  'Giao 3 đợt':'3 shipments', 'Giao 3 đợt · đợt sau nhận dự kiến':'3 shipments · later batch arrives',
+  'Đơn giao 3 đợt · hàng có sẵn giao trước, hàng đặt trước dự kiến':'3 shipments · in-stock items ship first, pre-order arrives',
+  'Đợt 1 · Giao nhanh':'Shipment 1 · Express', 'Đợt 1 · Hàng đặt trước':'Shipment 1 · Pre-order',
+  'Đợt 2 · Hàng có sẵn':'Shipment 2 · In stock', 'Đợt 3 · Hàng đặt trước':'Shipment 3 · Pre-order',
+  'Đơn có quà tặng kèm':'Includes a gift', 'Quà tặng kèm đầm lụa Broken Jewels':'Gift with the Broken Jewels silk dress',
   'GPĐKKD: 0304130177 do Sở KH & ĐT Tp.HCM cấp lần đầu: 22/11/2005':'Business licence 0304130177, first issued by HCMC DPI on 22/11/2005',
   /* ── Nhãn menu / bộ lọc bổ sung theo cây danh mục mới ── */
   'Tắm & dưỡng thể':'Bath & body',
@@ -11984,20 +12383,24 @@ function placeOrder() {
   const orderSub = cartSubtotal(), orderDisc = cartDiscountTotal(), orderTotal = cartTotalNow();
   ckOrderTotal = vndCom(orderTotal);
   ckOrderPoints = rewardPointsEarned().toLocaleString('vi-VN');
-  ckOrderGifts = activeGifts().map(pk => ({ pk, g: giftOf(pk) }));
+  ckOrderGifts = activeGifts().map(pk => ({ pk, key: giftPick[pk] || (GIFT_PROGRAMS[pk] || {}).gifts[0], g: giftOf(pk) }));
   ckOrderPre = (cartSelected().find(c => c.preorder) || {}).preorder || '';
-  const a = (ckAuth && ckAddr !== 'new') ? ADDRESSES[ckAddr] : null;
+  const a = (ckAuth && ckAddr !== 'new') ? (ADDRESSES[ckAddr] || null) : null;
   const st = storeInfo(ckStore);
   ORDERS.unshift({
     id: ckOrderId, status: 'Đã xác nhận', tone: 'info', date: '11/08/2026',
-    items: cartSelected().map(c => ({ img: c.img, name: c.name, variant: c.variant, qty: c.qty, price: c.now, preorder: c.preorder })),
+    /* Hàng sẵn nhận cờ `ship` theo lựa chọn ở bước vận chuyển; hàng đặt trước KHÔNG
+       nhận vì nó chờ về kho rồi mới đi, gắn "giao nhanh" cho nó là hứa sai. */
+    items: cartSelected().map(c => ({ img: c.img, name: c.name, variant: c.variant, qty: c.qty, price: c.now, preorder: c.preorder, ship: (!c.preorder && ckShipFast && ckMode !== 'pickup') ? 'fast' : '' })),
+    /* Quà chốt lúc đặt hàng nay đi THEO ĐƠN, không chỉ hiện một lần ở màn Hoàn tất. */
+    gifts: ckOrderGifts.map(({ pk, key }) => ({ pk, key })),
     sub: vndDot(orderSub), ship: 'Miễn phí', discount: orderDisc ? '− ' + vndDot(orderDisc) : '', total: vndDot(orderTotal),
     payment: 'Thẻ tín dụng/Ghi nợ',
-    method: ckMode === 'pickup' ? 'Nhận tại cửa hàng' : 'Giao hàng thông thường',
+    method: ckMode === 'pickup' ? 'Nhận tại cửa hàng' : (ckShipFast ? 'Giao hàng nhanh' : 'Giao hàng thông thường'),
     address: ckMode === 'pickup'
       ? { name: ckName || 'Khách nhận tại cửa hàng', phone: ckPhone, line: st ? `${st.name} · ${st.addr}` : '' }
       : { name: a ? a.name : ckShipName, phone: a ? a.phone : ckShipPhone,
-          line: a ? a.line : [ckShipLine, ckWard, ckProvince].filter(Boolean).join(', ') },
+          line: a ? addrLine(a) : [ckShipLine, ckWard, ckProvince].filter(Boolean).join(', ') },
     steps: 1,
   });
   // dọn giỏ: badge về 0 và màn Giỏ hàng hiện trạng thái rỗng
@@ -12010,9 +12413,9 @@ function placeOrder() {
    cho chuỗi chết "User name - 0 1234 5678" trước đây (dù gõ gì cũng hiện y
    như vậy). Dùng chung cho lúc render màn và lúc cập nhật tại chỗ. */
 function ckShipDoneHTML() {
-  const a = (ckAuth && ckAddr !== 'new') ? ADDRESSES[ckAddr] : null;
+  const a = (ckAuth && ckAddr !== 'new') ? (ADDRESSES[ckAddr] || null) : null;
   const name = a ? `${a.name} · ${a.phone}` : [ckShipName, ckShipPhone].filter(Boolean).join(' · ');
-  const line = a ? a.line : [ckShipLine, ckWard, ckProvince].filter(Boolean).join(', ');
+  const line = a ? addrLine(a) : [ckShipLine, ckWard, ckProvince].filter(Boolean).join(', ');
   return `
     <p class="t-multiline font-medium text-foreground">${name || 'Chưa có thông tin người nhận'}</p>
     ${line ? `<p class="t-multiline text-foreground">${line}</p>` : ''}`;
@@ -12071,9 +12474,250 @@ function wireAddressPickers(root) {
   });
 }
 
+/* ════════════════════════════════════════════════════════════════
+   TRANG TÀI KHOẢN — sửa thông tin · đổi mật khẩu · sổ địa chỉ
+   (05/09/2026, lượt hoàn thiện tính năng)
+════════════════════════════════════════════════════════════════ */
+/* Cụm tóm tắt (avatar · tên · số che) nằm NGOÀI `#accBody` nên không được vẽ lại
+   theo tab; lưu thông tin xong phải sơn lại nó tại chỗ, nếu không màn hình vẫn
+   nói tên cũ ngay phía trên bảng vừa sửa. */
+function paintAccUser(root) {
+  const box = (root || document).querySelector('#accUser');
+  if (!box) return;
+  box.innerHTML = accUserHTML();
+  localizeNew(box);
+}
+
+/* Mở danh sách cho một Ô CHỌN của trang Tài khoản. Đây là DÒNG DUY NHẤT của khối
+   này khác nhau giữa 2 file: mobile trượt bottom sheet #pickSheet lên (`__openPicker`),
+   desktop xổ dropdown neo ngay dưới ô (`__openPickDD`) — đúng 2 khuôn mà ô địa giới
+   của checkout đang dùng ở từng khổ, không phát sinh kiểu UI mới. */
+function accOpenPick(btn, title, opts, cur, cb) {
+  window.__openPickDD(btn, opts, cur, cb);
+}
+
+/* MỘT handler UỶ QUYỀN gắn MỘT LẦN lên `#accBody`, không phải một listener cho mỗi
+   nút. Lý do rất cụ thể: `wire()` được gọi lại trên nguyên `root` mỗi lần đổi tab,
+   nên gắn thẳng vào nút thì cứ mỗi lượt lại chồng thêm một listener (bấm một cái
+   chạy hai lần). `#accBody` thì chỉ bị thay `innerHTML`, bản thân nó sống suốt màn,
+   nên cờ `dataset.accWired` chặn được việc gắn hai lần; đổi màn -> `#accBody` bị xoá
+   -> cờ mất theo, không cần dọn tay. */
+function wireAccount(root) {
+  const body = root.querySelector('#accBody');
+  if (!body || body.dataset.accWired) return;
+  body.dataset.accWired = '1';
+
+  /* Vẽ lại RIÊNG thân tab. Không gọi `wire(root)` như handler đổi tab đang làm: ở đây
+     mọi thứ trong thân đều chạy bằng uỷ quyền, chỉ nút con mắt của ô mật khẩu là cần
+     listener thật (nút cũ đã bị `innerHTML` xoá cùng node nên không sợ chồng). */
+  const repaint = () => {
+    body.innerHTML = accountBody();
+    wirePasswordToggles(body);
+    localizeNew(body);
+  };
+
+  const inp = k => body.querySelector(`[data-af="${k}"]`);
+  const val = k => { const el = inp(k); return el ? el.value.trim() : ''; };
+  /* Chạy lần lượt các luật, tô đỏ MỌI ô sai nhưng chỉ nhảy con trỏ tới ô sai ĐẦU
+     TIÊN — đúng cách `validatePickup()` của checkout đang làm, dùng lại luôn cặp
+     `setFieldErr` / `clearFieldErr` chứ không đẻ kiểu báo lỗi thứ hai. */
+  const check = rules => {
+    let first = null;
+    rules.forEach(([k, ok, msg]) => {
+      const el = inp(k);
+      if (!el) return;
+      if (ok(el.value)) { clearFieldErr(el); return; }
+      setFieldErr(el, msg);
+      if (!first) first = el;
+    });
+    if (first) { first.focus({ preventScroll: true }); first.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    return !first;
+  };
+  const isPhone = v => /^0\d{8,10}$/.test(v.replace(/\s/g, ''));
+  const isEmail = v => /^\S+@\S+\.\S+$/.test(v.trim());
+  /* Ngày sinh: đúng khuôn dd/mm/yyyy VÀ là ngày có thật VÀ không nằm ở tương lai.
+     `new Date(y, m-1, d)` tự TRÀN (31/02 thành 03/03) nên phải so lại cả 3 số mới
+     biết ngày vừa gõ có tồn tại hay không. */
+  const isDob = v => {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v.trim());
+    if (!m) return false;
+    const [d, mo, y] = m.slice(1).map(Number);
+    const dt = new Date(y, mo - 1, d);
+    return y >= 1900 && dt.getFullYear() === y && dt.getMonth() === mo - 1 && dt.getDate() === d && dt <= new Date();
+  };
+  /* Ô tích vẽ bằng `.chk` chứ không phải `<input type=checkbox>`, nên trạng thái
+     phải tự lật: class `.on` + `aria-checked`. Lật TẠI CHỖ chứ không repaint — repaint
+     một cái ô tích là dựng lại cả thân tab. */
+  const flip = (btn, on) => {
+    btn.setAttribute('aria-checked', String(on));
+    const box = btn.querySelector('.chk');
+    if (box) box.classList.toggle('on', on);
+  };
+
+  body.addEventListener('click', e => {
+    const btn = e.target.closest('[data-acc]');
+    if (!btn) return;
+    const act = btn.dataset.acc;
+    const i = Number(btn.dataset.i);
+
+    /* ── Mở / đóng form ──
+       Mở form nào cũng dọn trạng thái của form kia trước: đang hỏi xoá một địa chỉ mà
+       bấm "Sửa" thì câu hỏi xoá phải biến mất, không nằm lại ở hàng khác. */
+    if (act === 'edit-info') { accResetForms(); accEdit = 'info'; accDraft.gender = PROFILE.gender; repaint(); return; }
+    if (act === 'edit-pass') { accResetForms(); accEdit = 'pass'; repaint(); return; }
+    if (act === 'cancel')    { accResetForms(); repaint(); return; }
+
+    /* ── Nhận bản tin ── */
+    if (act === 'news') {
+      PROFILE.news = !PROFILE.news;
+      flip(btn, PROFILE.news);
+      toast(PROFILE.news ? 'Đã bật nhận bản tin' : 'Đã tắt nhận bản tin');
+      return;
+    }
+
+    /* ── Lưu thông tin ── */
+    if (act === 'save-info') {
+      if (!check([
+        ['name',  v => !!v.trim(), 'Vui lòng nhập họ và tên'],
+        ['phone', isPhone,         'Số điện thoại chưa đúng'],
+        ['email', isEmail,         'Email chưa đúng'],
+        ['dob',   isDob,           'Ngày sinh chưa đúng, nhập theo dd/mm/yyyy'],
+      ])) return;
+      PROFILE.name   = val('name');
+      PROFILE.phone  = val('phone');
+      PROFILE.email  = val('email');
+      PROFILE.dob    = val('dob');
+      PROFILE.gender = accDraft.gender || PROFILE.gender;
+      accResetForms(); repaint();
+      paintAccUser(root);        // tên + số che ở cụm tóm tắt phải đổi theo
+      toast('Đã lưu thông tin');
+      return;
+    }
+
+    /* ── Đổi mật khẩu ──
+       Đọc `.value` THÔ (không trim) vì khoảng trắng là ký tự hợp lệ trong mật khẩu.
+       Luật "khác mật khẩu hiện tại" tách ra ngoài `check()`: hai luật cùng gắn vào một
+       ô thì luật sau chạy `clearFieldErr` và xoá mất lời báo của luật trước. */
+    if (act === 'save-pass') {
+      const cur = inp('cur') ? inp('cur').value : '';
+      const nw  = inp('new') ? inp('new').value : '';
+      const nw2 = inp('new2') ? inp('new2').value : '';
+      if (!check([
+        ['cur',  () => !!cur.trim(), 'Vui lòng nhập mật khẩu hiện tại'],
+        ['new',  () => nw.length >= 8 && /[a-zA-Z]/.test(nw) && /\d/.test(nw), 'Mật khẩu cần tối thiểu 8 ký tự, gồm cả chữ và số'],
+        ['new2', () => !!nw2 && nw2 === nw, 'Hai lần nhập chưa khớp'],
+      ])) return;
+      if (nw === cur) {
+        setFieldErr(inp('new'), 'Mật khẩu mới phải khác mật khẩu hiện tại');
+        inp('new').focus({ preventScroll: true });
+        return;
+      }
+      accResetForms(); repaint(); toast('Đã đổi mật khẩu');
+      return;
+    }
+
+    /* ── Sổ địa chỉ ── */
+    if (act === 'addr-new') {
+      accResetForms(); addrEdit = 'new'; accDraft = { province: '', ward: '', def: false };
+      repaint(); return;
+    }
+    if (act === 'addr-edit') {
+      const a = ADDRESSES[i];
+      if (!a) return;
+      accResetForms(); addrEdit = i; accDraft = { province: a.province, ward: a.ward, def: !!a.def };
+      repaint(); return;
+    }
+    if (act === 'addr-del')    { addrDel = i;    repaint(); return; }
+    if (act === 'addr-del-no') { addrDel = null; repaint(); return; }
+    if (act === 'addr-del-yes') {
+      const gone = ADDRESSES.splice(i, 1)[0];
+      /* Xoá đúng địa chỉ mặc định thì phải có địa chỉ khác lên thay: sổ không còn cờ
+         mặc định nào là checkout mở ra không chọn sẵn gì. */
+      if (gone && gone.def && ADDRESSES.length) ADDRESSES[0].def = true;
+      /* `ckAddr` trỏ theo VỊ TRÍ trong mảng, nên xoá xong phải kéo nó về trong tầm —
+         nếu không, bước giao hàng của checkout đọc phải `undefined`. */
+      if (typeof ckAddr === 'number') ckAddr = Math.min(ckAddr, Math.max(0, ADDRESSES.length - 1));
+      addrDel = null; repaint(); toast('Đã xoá địa chỉ');
+      return;
+    }
+    if (act === 'addr-def') {
+      ADDRESSES.forEach((x, k) => { x.def = k === i; });
+      repaint(); toast('Đã đặt địa chỉ mặc định');
+      return;
+    }
+    if (act === 'addr-def-toggle') { accDraft.def = !accDraft.def; flip(btn, accDraft.def); return; }
+
+    if (act === 'save-addr') {
+      if (!check([
+        ['aname',   v => !!v.trim(), 'Vui lòng nhập họ và tên'],
+        ['aphone',  isPhone,         'Số điện thoại chưa đúng'],
+        ['astreet', v => !!v.trim(), 'Vui lòng nhập số nhà, tên đường'],
+      ])) return;
+      /* 2 ô CHỌN là <button> nên không gắn được `.fld-err` (class đó tô viền ô nhập) —
+         báo bằng toast rồi trả con trỏ về đúng ô, cùng cách checkout đang chặn khi
+         chưa chọn tỉnh. */
+      const miss = !accDraft.province ? ['aprovince', 'Vui lòng chọn tỉnh / thành phố']
+                 : !accDraft.ward     ? ['award',     'Vui lòng chọn phường / xã'] : null;
+      if (miss) {
+        toast(miss[1]);
+        const el = body.querySelector(`[data-apick="${miss[0]}"]`);
+        if (el) el.focus({ preventScroll: true });
+        return;
+      }
+      const isNew = addrEdit === 'new';
+      const keepDef = !isNew && !!(ADDRESSES[addrEdit] || {}).def;
+      const rec = {
+        name: val('aname'), phone: val('aphone'), street: val('astreet'),
+        ward: accDraft.ward, province: accDraft.province, def: false,
+      };
+      if (isNew) ADDRESSES.push(rec); else ADDRESSES[addrEdit] = rec;
+      const idx = isNew ? ADDRESSES.length - 1 : addrEdit;
+      /* Cờ mặc định bật khi: đang sửa chính địa chỉ mặc định (giữ nguyên) · khách tích
+         ô · hoặc đây là địa chỉ ĐẦU TIÊN của sổ (không có lựa chọn nào khác). */
+      if (keepDef || accDraft.def || ADDRESSES.length === 1) ADDRESSES.forEach((x, k) => { x.def = k === idx; });
+      accResetForms(); repaint(); toast(isNew ? 'Đã thêm địa chỉ' : 'Đã lưu địa chỉ');
+      return;
+    }
+  });
+
+  /* Ô CHỌN. Phường phụ thuộc tỉnh nên đổi tỉnh là XOÁ phường đang chọn — giữ lại sẽ ra
+     một địa chỉ không tồn tại; ràng buộc này sao y `wireAddressPickers()` của checkout. */
+  body.addEventListener('click', e => {
+    const btn = e.target.closest('[data-apick]');
+    if (!btn) return;
+    const k = btn.dataset.apick;
+    if (k === 'gender') {
+      accOpenPick(btn, 'Chọn giới tính', GENDERS, accDraft.gender || '', v => {
+        accDraft.gender = v;
+        setPickLabel(btn, v, 'Chọn giới tính');
+      });
+      return;
+    }
+    if (k === 'aprovince') {
+      accOpenPick(btn, 'Chọn tỉnh / thành phố', VN_LOCATIONS.map(([pv]) => pv), accDraft.province || '', v => {
+        if (v === accDraft.province) return;
+        accDraft.province = v; accDraft.ward = '';
+        setPickLabel(btn, v, 'Chọn tỉnh / thành phố');
+        const w = body.querySelector('[data-apick="award"]');
+        if (w) setPickLabel(w, '', 'Chọn phường / xã');
+      });
+      return;
+    }
+    if (k === 'award') {
+      if (!accDraft.province) { toast('Chọn tỉnh / thành phố trước'); return; }
+      const wards = (VN_LOCATIONS.find(([pv]) => pv === accDraft.province) || ['', []])[1];
+      accOpenPick(btn, 'Chọn phường / xã', wards, accDraft.ward || '', v => {
+        accDraft.ward = v;
+        setPickLabel(btn, v, 'Chọn phường / xã');
+      });
+    }
+  });
+}
+
 function wire(root) {
   wirePasswordToggles(root);
   wireAddressPickers(root);
+  wireAccount(root);
   // "Bảng kích thước" ở PDP / quick add -> mở bảng size thật trong info dialog
   // (03/09/2026 bỏ mũi tên "→" khỏi nhãn theo lệnh user; nút nay có underline)
   root.querySelectorAll('[data-size-chart]').forEach(b =>
@@ -12265,6 +12909,7 @@ function wire(root) {
   root.querySelectorAll('[data-atab]').forEach(btn => {
     btn.addEventListener('click', () => {
       accountTab = btn.dataset.atab;
+      accResetForms();   // rời tab là bỏ form đang mở (form đó sẽ bị innerHTML xoá)
       root.querySelectorAll('[data-atab]').forEach(x => {
         if (x.dataset.atab === accountTab) x.setAttribute('aria-current', 'true');
         else x.removeAttribute('aria-current');
@@ -12550,8 +13195,9 @@ function wire(root) {
     // đổi tóm tắt vận chuyển theo lựa chọn
     root.querySelectorAll('#shipOpts [data-opt]').forEach(o => {
       o.addEventListener('click', () => {
+        ckShipFast = o.dataset.opt === 'fast';
         const lbl = root.querySelector('#shipDoneLabel');
-        if (lbl) lbl.textContent = o.dataset.opt === 'fast' ? 'Giao hàng nhanh' : 'Giao hàng thông thường';
+        if (lbl) lbl.textContent = ckShipFast ? 'Giao hàng nhanh' : 'Giao hàng thông thường';
       });
     });
   }

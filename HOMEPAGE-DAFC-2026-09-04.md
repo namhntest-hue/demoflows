@@ -36,12 +36,12 @@ Phần kể chuyện (băng nhà mốt, banner ưu đãi, cam kết, FAQ) xếp 
 | 5 | Ưu đãi — banner KV + dải 11 thẻ | *ngoài brief* (xem §6) | banner + `.dk-rail` |
 | 6 | Nhà mốt trong ngày | **4a** — Brand day | `.dk-look-band` **nguyên vẹn** |
 | 7 | Thương hiệu tại DAFC — 5 thẻ | **4b** — Brand list card | `.hm-brand-card` (mới) |
-| 8 | Cam kết DAFC | **5** — USP block | `camKetSection()` **nguyên vẹn** |
-| 9 | Câu hỏi thường gặp | **5** — QA block | accordion PDP (`data-pdp-acc`) |
-| 10 | Đăng ký nhận tin | **6** — Sign up | khối riêng trên footer (xem §6) |
-| 11 | Footer | — | `footer()` **nguyên vẹn, 0 sửa** |
+| ~~8~~ | ~~Cam kết DAFC~~ | ~~**5** — USP block~~ | **ĐÃ GỠ 06/09 — xem §12** |
+| ~~9~~ | ~~Câu hỏi thường gặp~~ | ~~**5** — QA block~~ | **ĐÃ GỠ 06/09 — xem §12** |
+| 8 | Đăng ký nhận tin | **6** — Sign up | khối riêng trên footer (xem §6) |
+| 9 | Footer | — | `footer()` **nguyên vẹn, 0 sửa** |
 
-Phủ **6/6 khối brief**. Khối 5 (Ưu đãi) là khối duy nhất NGOÀI brief — lý do: `DK_NAV_CATS`
+Phủ **6/6 khối brief** lúc dựng; từ 06/09 còn **5/6** (khối 5 đã gỡ theo lệnh user — §12). Khối 5 (Ưu đãi) là khối duy nhất NGOÀI brief — lý do: `DK_NAV_CATS`
 có mục "Khuyến mãi" nên trang chủ phải có cửa vào đó, `kv-sale.jpg` là tấm ngang duy nhất
 trong kho chưa dùng ở đâu, và 11/48 SP đã có `off` + chip `-%` sẵn.
 
@@ -432,3 +432,44 @@ nó. Khối `@media (max-width: 1023px)` nay chỉ còn `.hm-faq-cols` và `.hm-
 Desktop dùng lại nguyên `.dk-rail` + `wireRail()` cho cả 3 dải mới; mobile theo nếp sẵn có
 của bản mobile: vuốt tay, không mũi tên.
 
+---
+
+## 12. Lượt 06/09/2026 — GỠ khối Q&A và USP khỏi trang chủ
+
+Lệnh user: *"Remove q&a and usp from homepage."*
+
+Gỡ ở **cả 2 file**: khối **Câu hỏi thường gặp** (accordion 6 mục) và khối **Cam kết DAFC**
+(4 dòng USP).
+
+**Cái gì xoá, cái gì chỉ thôi gọi — hai việc khác nhau:**
+
+* `camKetSection()` **KHÔNG xoá**. Nó vẫn phục vụ **6 màn PDP + màn Hoàn tất** (đếm được:
+  còn 2 lời gọi ở `desktop.html`, 8 ở `index.html`). Trang chủ chỉ thôi gọi nó.
+* `hmFaq()` · `hmFaqCol()` · `HM_FAQ` **xoá hẳn** — chỉ trang chủ dùng, giữ lại là nuôi code
+  chết. Gỡ 2.941 ký tự ở desktop, 1.863 ở mobile.
+* Rule `.hm-faq-cols` gỡ theo; khối `@media (max-width: 1023px)` của trang chủ nay còn đúng
+  **một dòng** (`.hm-signup`).
+* **9 khoá i18n** của 6 câu hỏi + 2 câu trả lời + đoạn dẫn: gỡ hẳn (đếm trước khi gỡ — chuỗi
+  nào còn chỗ dùng thì giữ). `'Câu hỏi thường gặp'` **cố ý GIỮ**: đó là nhãn link ở footer,
+  có từ trước trang chủ. 4 câu trả lời còn lại vốn dùng nguyên văn `CAM_KET` nên không có
+  khoá riêng để gỡ.
+
+**Trang chủ nay còn 5 tiêu đề mục**, đo trên trang chạy ở cả 2 khổ:
+Hàng mới về · Mua theo danh mục · Đang giảm giá · Thương hiệu tại DAFC · Đăng ký nhận tin.
+
+**Ngắn thêm một lượt nữa:**
+
+| | trước 05/09 | sau 05/09 (1 hàng) | **sau 06/09 (gỡ 2 khối)** |
+|---|---|---|---|
+| desktop | 5.794 | 5.204 | **4.785** |
+| mobile | 5.935 | 4.674 | **3.868** |
+
+Tính từ bản dựng đầu: desktop **−17%**, mobile **−35%**.
+
+**Hệ quả với brief khách — cần bạn biết:** khối 5 của brief là *"USP DAFC Online / QA block"*.
+Gỡ 2 khối này tức trang chủ **thôi phủ khối 5**, còn 5/6. Bốn dòng cam kết vẫn còn ở PDP nên
+người mua vẫn gặp chúng trong luồng, chỉ là không gặp ở trang chủ nữa.
+
+**Đã kiểm:** `node --check` cả 2 file OK · 18 screen render 0 lỗi · `home_hasFAQ = false` và
+`home_hasUSP = false` ở cả 2 khổ · `pdp_hasUSP = true` (PDP không bị đụng) · không tràn ngang ·
+0 log lỗi console · grep `hmFaq|HM_FAQ|hm-faq-cols` chỉ còn hit trong comment.
