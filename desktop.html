@@ -3599,6 +3599,42 @@ window.RESP = (function () {
   @media (max-width: 1023px) {
     .hm-signup { grid-template-columns: minmax(0, 1fr); }
   }
+
+  /* ══ TRANG CHỦ — 4 KHỐI THEO FEEDBACK KHÁCH 06/09/2026 ═══════════════════════
+     Spotlight thương hiệu · dải ô "Mặc gì cho dịp" · hàng USP · 3 thẻ câu chuyện.
+     Vẫn theo luật cũ: base trước @media, mọi tên bắt đầu bằng `.hm-`, bo góc 0, không bóng. */
+
+  /* Spotlight: ẢNH 4 cột lưới + cột chữ phần còn lại. Ảnh brand-hero.png là 1200x1484
+     (0,81) nên ô 3/4 giữ 93% chiều cao — gần như không cắt. Khai `grid` chứ không `flex`
+     vì cột chữ phải co được mà ô ảnh thì KHÔNG (ảnh co là đổi cả phép cắt). */
+  .hm-spot { display: grid; grid-template-columns: 460px minmax(0, 1fr); gap: 24px; }
+  .hm-spot-photo { aspect-ratio: 3 / 4; }
+  /* Tầng 2: 3 sản phẩm của chính bộ spotlight. Ô rộng bằng nhau, khe 24 = một máng lưới. */
+  .hm-spot-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+
+  /* Dải "Mặc gì cho dịp": ô rộng HẰNG SỐ như mọi dải khác của trang chủ (xem ghi chú
+     `.hm-cat`) — 4 ô 330 + 3 khe 24 = 1392 nên ở 1440 nó cuộn một nhịp ngắn, dải hẹp thì
+     cuộn nhiều hơn; luôn MỘT HÀNG. 330 = 3 cột lưới + 2 máng, đúng cỡ thẻ của băng PDP. */
+  .hm-occ { display: flex; gap: 24px; }
+  .hm-occ-item { flex: 0 0 330px; }
+
+  /* Hàng USP: 4 mục chia đều, icon trên nhãn dưới, canh giữa — khác khối camKetSection
+     (icon bên trái + đoạn mô tả) vốn vẫn phục vụ 6 màn PDP. */
+  .hm-usp { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+
+  /* 3 thẻ câu chuyện: lưới 3 cột đều, ảnh ngang 3/2. Không phải carousel — 3 thẻ vừa khít
+     một hàng ở mọi khổ desktop, nên để lưới và hạ cột ở dải hẹp. */
+  .hm-stories { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+
+  @media (max-width: 1023px) {
+    /* Spotlight xếp DỌC: ở dải hẹp cột chữ còn dưới 400 thì headline 24/32 vỡ dòng xấu,
+       và ô ảnh 460 chiếm quá nửa khung. */
+    .hm-spot { grid-template-columns: minmax(0, 1fr); }
+    .hm-spot-photo { aspect-ratio: 3 / 2; }
+    .hm-stories { grid-template-columns: minmax(0, 1fr); }
+    .hm-usp { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
 </style>
 </head>
 
@@ -4494,7 +4530,7 @@ function lookRailCards(title, n, selfIdx, w, badgeAt = -1) {
     .map(({ p, i }, k) => productCard(p, i, { w, noColors: true, model: true, badge: badge(k) })).join('');
 }
 
-function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false } = {}) {
+function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false } = {}) {
   /* 27/08: 'Pre-order' THÔI làm nhãn đè ảnh — nó xuống đứng trước TÊN (xem dưới).
      Chặn ngay tại đây, một chỗ, nên 6 nơi gọi vẫn truyền `badge: 'Pre-order'` như
      cũ mà không phải sửa nơi nào. Nhãn khác (New Season…) vẫn đè ảnh bình thường. */
@@ -4580,10 +4616,17 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
              'Đặt trước' -> 'Pre-order'. Ghi chú cũ ("Pre-order là wordmark, phải
              skip kẻo lượt dịch ngược biến nó thành Đặt trước") hết hiệu lực —
              chính "Đặt trước" mới là bản tiếng Việt đúng. -->
+        <!-- noName (06/09/2026, feedback khách): BỎ dòng tên SP, chỉ để headline là tên
+             thương hiệu — "lam product card giong net a porter cho clean". Phạm vi user
+             chốt: CHỈ TRANG CHỦ. PLP và 6 màn PDP là 2 màn đã chốt với khách nên giữ
+             nguyên tên SP; ở PLP tên còn là thông tin tra cứu chính của trang danh sách.
+             Badge "Đặt trước" VẪN Ở LẠI khi bỏ tên: nó nói tình trạng bán của SKU, không
+             phải một phần của tên. -->
+        ${(p.preorder || !noName) ? `
         <div class="flex items-center gap-1.5 min-w-0">
           ${p.preorder ? `<span class="t-single badge-inline px-1 font-medium text-foreground shrink-0">Đặt trước</span>` : ''}
-          <p class="t-multiline text-secondary-foreground truncate min-w-0">${p.name}</p>
-        </div>
+          ${noName ? '' : `<p class="t-multiline text-secondary-foreground truncate min-w-0">${p.name}</p>`}
+        </div>` : ''}
       </div>
       <div class="flex flex-col pb-2">
         <!-- whitespace-nowrap: chuỗi giá dùng space thường trước ₫ nên khi
@@ -6581,10 +6624,54 @@ function hmSec(title, right, body, tag = 'h2') {
    ĐÍCH BẤM là DANH MỤC, không phải thương hiệu: 2 tấm thuộc chiến dịch AW26 và MCM, mà
    cả hai hãng đó KHÔNG bán trong catalog demo (48 SP của 5 hãng khác) — gắn nhãn hãng
    vào đây là nói sai dữ liệu. */
+/* CÔNG TẮC KHỐI TRANG CHỦ (06/09/2026, lệnh user: *"ẩn khối câu chuyện và đang giảm giá đi"*).
+   ẨN chứ không XOÁ, và đi bằng công tắc cùng lối `HM_PROMO` ngay dưới đây, vì cả hai khối
+   đều có thể bị đòi lại: "Đang giảm giá" là cửa vào mục "Khuyến mãi" của thanh nav, còn
+   "Câu chuyện" chính là gạch "Landing pages hili" trong slide feedback của khách. Bật lại
+   chỉ tốn đổi `false` thành `true` — hàm dựng, CSS và khoá i18n vẫn còn nguyên.
+   ⚠ Vì vậy `hmStories()`/`HM_STORIES` KHÔNG phải code chết: chúng đang chờ công tắc. */
+const HM_SHOW = { sale: false, stories: false };
+
+/* PROMO BANNER — CÓ CÔNG TẮC (06/09/2026, feedback khách: *"Promo banner on-off, mục đích
+   là highlight sale trong các giai đoạn EOSS / Private sale"*).
+   Đặt `null` là TẮT: cả khối biến mất khỏi trang, không để lại khoảng trống nào. Đây là
+   thứ bật theo GIAI ĐOẠN nên nó phải là một công tắc chứ không phải một khối cố định.
+   Ảnh: kv-sale.jpg (1600x600) khớp tỉ lệ 8/3 TUYỆT ĐỐI, 0 pixel bị cắt. Tấm này trước
+   06/09 đang làm banner giữa trang cho mục Ưu đãi; nay dời LÊN TRÊN CÙNG theo đúng mẫu
+   khách (mẫu của họ chỉ có banner sale ở đầu trang, không có banner sale thứ hai ở giữa),
+   và mục Ưu đãi giữ lại tiêu đề + dải thẻ giảm giá. */
+const HM_PROMO = { img: 'kv-sale.jpg', ratio: '1600/600', alt: 'Ưu đãi mùa hè', cat: 'Khuyến mãi' };
+
+/* HERO — 4 SLIDE CÓ VAI (06/09/2026, feedback khách: *"Slider KV: 1. Ecom camp, 2. Brand
+   days (#2, #3, #4)"*). Cột `role` là để đọc ra vai, không vẽ ra chữ nào trên ảnh — luật
+   hero thuần ảnh vẫn nguyên.
+   BA SLIDE BRAND DAY dùng KV THẬT của 3 nhà mốt có ảnh chiến dịch trong kho: MCM ·
+   Stefano Ricci · Christian Louboutin. Cả 3 hãng này KHÔNG có sản phẩm trong catalog demo
+   (48 SP của 5 hãng khác) nên đích bấm là DANH MỤC, không phải trang thương hiệu — gắn
+   nhãn hãng vào đích bấm là nói sai dữ liệu.
+   Cột thứ 2 là object-position, số lấy từ REELS của main.html, không đoán lại.
+   ⚠ PHẦN TRĂM GIỮ ĐƯỢC ở ô 2:1 (1377x688) — 2 slide sau cắt nặng vì kho không có KV
+   NGANG cho 2 hãng đó; ghi ra để xin ảnh đúng khổ, không im lặng:
+     kv-women-6 (1,83) giữ 92% cao · kv-men-9 (3,00) giữ 66,7% NGANG (tĩnh vật, cắt 2 mép
+     chịu được) · kv-women-5 (1,78) giữ 89% cao · kv-men-7 (1,00) giữ 50% cao. */
 const HM_HERO = [
-  ['kv-women-6.jpg', '50% 42%', 'Bộ sưu tập AW26', 'Sản phẩm mới'],
-  ['kv-women-5.jpg', '50% 50%', 'Bộ sưu tập denim MCM', 'Quần áo'],
+  ['kv-women-6.jpg', '50% 42%', 'Bộ sưu tập AW26',                  'Sản phẩm mới', 'Ecom camp'],
+  ['kv-women-5.jpg', '50% 50%', 'Bộ sưu tập denim MCM',             'Quần áo',      'Brand day'],
+  ['kv-men-9.jpg',   '42% 50%', 'Stefano Ricci tại DAFC Online',    'Phụ kiện',     'Brand day'],
+  ['kv-men-7.jpg',   '50% 46%', 'Christian Louboutin tại DAFC Online', 'Giày dép',  'Brand day'],
 ];
+
+/* Banner promo — trả về rỗng khi công tắc TẮT. Cả tấm là MỘT chỗ bấm, 0 chữ do code vẽ
+   (chữ chiến dịch đã nằm trong pixel). */
+function hmPromo() {
+  if (!HM_PROMO) return '';
+  return `
+      <div class="px-6 pt-4">
+        <a ${dkCatAttrs(HM_PROMO.cat)} class="block w-full overflow-hidden bg-secondary cursor-pointer press" style="aspect-ratio:${HM_PROMO.ratio}">
+          <img src="${A}${HM_PROMO.img}" alt="${HM_PROMO.alt}" class="w-full h-full object-cover lazy">
+        </a>
+      </div>`;
+}
 
 function hmHero() {
   if (!HM_HERO.length) return '';
@@ -6623,7 +6710,7 @@ function hmRail(list) {
   return `
           <div class="dk-rail">
             <div class="dk-rail-track drag-x flex gap-1 overflow-x-auto no-scrollbar">
-              ${list.map(({ p, i }) => productCard(p, i, { noColors: true, w: 'dk-rail-item shrink-0' })).join('')}
+              ${list.map(({ p, i }) => productCard(p, i, { noColors: true, noName: true, w: 'dk-rail-item shrink-0' })).join('')}
             </div>
             <button class="dk-rail-arrow dk-rail-prev press" data-rail-prev hidden aria-label="Xem sản phẩm trước">${I.chevL}</button>
             <button class="dk-rail-arrow dk-rail-next press" data-rail-next hidden aria-label="Xem sản phẩm tiếp">${I.chevR()}</button>
@@ -6683,28 +6770,61 @@ function hmCatTiles() {
 const HM_MAISON = 'Versace';
 const HM_MAISON_COPY = 'Thiết kế táo bạo, phong cách quyến rũ và logo Medusa đặc trưng — Versace là biểu tượng của sự sang trọng và vẻ đẹp hiện đại.';
 
+/* ── THƯƠNG HIỆU NỔI BẬT — "Brands of the moment" ─────────────────────────────
+   Feedback khách 06/09: *"1 spotlight blocks (new in brand / key collection hoặc brand có
+   invest nhieu)"* + *"1 block ben duoi hoac la de 2-3 brands nho nho hoac la product cua
+   collection cua brand spotlights"*.
+   Dựng đúng hai tầng đó: SPOTLIGHT (ảnh biên tập + logo hãng + headline + Mua ngay) rồi
+   NGAY DƯỚI là 3 sản phẩm CỦA CHÍNH hãng đó.
+
+   ĐỔI SO VỚI BẢN 04/09: bản cũ dùng băng xám .dk-look-band của PDP với cột chữ bên trái và
+   3 thẻ trồi lên. Khuôn đó không có chỗ cho ẢNH BIÊN TẬP — mà ảnh chính là thứ khách vẽ to
+   nhất trong slide. Nay ảnh vào ô 3/4 và cột chữ đứng cạnh.
+
+   ẢNH: brand-hero.png (1200x1484, look Versace, ảnh chiến dịch DUY NHẤT của hãng trong kho).
+   Ô 3/4 giữ 93% chiều cao — trước đây báo cáo 04/09 ghi "cố ý không dùng" vì ô 575x320 của
+   PLP chỉ giữ 45%; ở ô dọc thì nó gần như không mất gì. Đây là chỗ đúng của tấm đó.
+
+   VÌ SAO SPOTLIGHT LÀ VERSACE: nó là hãng DUY NHẤT trong kho có đủ 3 thứ cùng lúc — wordmark,
+   ảnh chiến dịch, và sản phẩm thật có ảnh người mẫu (19 SP). Ba hãng có KV đẹp hơn (MCM ·
+   Stefano Ricci · Christian Louboutin) đều KHÔNG có SP trong catalog nên "Mua ngay" sẽ dẫn
+   vào trang rỗng — đó là sai dữ liệu, không phải sai đẹp. */
+/* ẢNH SPOTLIGHT LẤY TỪ DATA, không in cứng tên tệp: nó là ảnh người mẫu của SP ĐẦU TIÊN
+   trong danh sách, và 3 thẻ dưới là 3 SP TIẾP THEO. Nhờ vậy 3 thứ nói cùng một chuyện và
+   ảnh spotlight không bị lặp lại ở hàng thẻ.
+   BẢN ĐẦU 06/09 SAI CHỖ NÀY và đo được trên trang: ảnh là brand-hero.png (look NAM) trong
+   khi headline gọi tên hoạ tiết Broken Jewels (đầm NỮ) và 3 thẻ dưới đều là hàng nữ — một
+   khối nói ba giọng. Nay ảnh chính là chiếc đầm mang hoạ tiết đó.
+   Hệ quả: brand-hero.png trở lại trạng thái CHƯA DÙNG như trước 06/09 (ghi ở mục 4 báo cáo
+   — kho không có ô nào cắt nó nhẹ). */
+const HM_SPOT_HEADLINE = 'Broken Jewels — hoạ tiết đặc trưng của Versace';
+
 function hmMaison() {
   const B = brandPage(HM_MAISON);
-  const list = PRODUCTS.map((p, i) => ({ p, i }))
-    .filter(({ p }) => p.brand === HM_MAISON && p.model).slice(0, 3);
-  if (list.length < 3) return '';
+  const all = PRODUCTS.map((p, i) => ({ p, i }))
+    .filter(({ p }) => p.brand === HM_MAISON && p.model);
+  const spot = all[0], list = all.slice(1, 4);
+  if (!spot || list.length < 3) return '';
   const attrs = `data-nav="plp" data-plp-brand="${HM_MAISON}"`;
-  return `
-      <div class="px-6 reveal">
-        <div class="dk-look-band">
-          <div class="dk-look-aside flex flex-col gap-4">
-            <p class="t-single text-mid-alt">Nhà mốt trong ngày</p>
-            ${B.logo
-              ? `<img src="${A}${B.logo}" alt="${B.name}" class="h-7 w-[149px] object-contain object-left lazy">`
-              : `<p class="text-[18px] font-medium leading-7 text-foreground">${B.name}</p>`}
-            <p class="t-multiline text-foreground">${HM_MAISON_COPY}</p>
-            <button ${attrs} class="t-multiline h-9 px-3 w-fit rounded-xs border border-primary bg-background text-foreground btn-o press">Xem tất cả sản phẩm</button>
+  return hmSec('Thương hiệu nổi bật',
+    hmLink('Tất cả thương hiệu', 'data-nav="plp"'),
+    `<div class="hm-spot">
+            <a ${attrs} class="hm-spot-photo block overflow-hidden bg-secondary cursor-pointer press">
+              <img src="${A}${spot.p.model}" alt="${spot.p.name}" class="w-full h-full object-cover lazy">
+            </a>
+            <div class="flex flex-col gap-4 self-center">
+              ${B.logo
+                ? `<img src="${A}${B.logo}" alt="${B.name}" class="h-7 w-[149px] object-contain object-left lazy">`
+                : `<p class="text-[18px] font-medium leading-7 text-foreground">${B.name}</p>`}
+              <p class="text-[18px] font-medium leading-7 text-foreground">${HM_SPOT_HEADLINE}</p>
+              <p class="t-multiline text-foreground-alt">${HM_MAISON_COPY}</p>
+              <button ${attrs} class="t-lead h-12 px-8 w-fit border border-border bg-background text-foreground btn-o press">Mua ngay</button>
+            </div>
           </div>
-          <div class="dk-look-grid">
-            ${list.map(({ p, i }) => productCard(p, i, { noColors: true, model: true })).join('')}
-          </div>
-        </div>
-      </div>`;
+          <!-- Tầng 2 của khối: sản phẩm CỦA CHÍNH bộ spotlight, không phải hãng khác. -->
+          <div class="hm-spot-row">
+            ${list.map(({ p, i }) => productCard(p, i, { noColors: true, noName: true, model: true })).join('')}
+          </div>`)
 }
 
 /* ── 5 THẺ THƯƠNG HIỆU 259×128 ─────────────────────────────────────────────────
@@ -6735,6 +6855,96 @@ function hmBrandCards() {
             <button class="dk-rail-arrow dk-rail-prev press" data-rail-prev hidden aria-label="Xem sản phẩm trước">${I.chevL}</button>
             <button class="dk-rail-arrow dk-rail-next press" data-rail-next hidden aria-label="Xem sản phẩm tiếp">${I.chevR()}</button>
           </div>`;
+}
+
+/* ── MẶC GÌ CHO DỊP — "Occasions / What to wear for" ──────────────────────────
+   Feedback khách 06/09. Mỗi ô = ảnh NGƯỜI MẪU + nhãn dịp; bấm ra danh mục.
+   ẢNH: chỉ chọn trong 27 SP có trường `model`, ô dọc 3/4 nên ảnh 1200x1484 (0,81) giữ
+   gần trọn — 0 tấm nào phải cắt nặng.
+   ⚠ NHÃN DỊP LÀ THỨ TÔI ĐẶT, không phải dữ liệu có sẵn: catalog không có trường occasion.
+   Bốn nhãn dưới đây suy từ chính món trong ảnh (đầm lụa -> tiệc tối, giày lười -> công sở…),
+   nhưng đây là TAXONOMY cần khách chốt, và khi có trường thật thì thay bằng lọc thật. */
+const HM_OCCASIONS = [
+  ['p1-1.jpg',  'Tiệc tối',    'Quần áo'],
+  ['p5-1.jpg',  'Công sở',     'Giày dép'],
+  ['p3-1.jpg',  'Dạo phố',     'Túi xách'],
+  ['p10-1.jpg', 'Phụ kiện tinh tế', 'Phụ kiện'],
+];
+
+function hmOccasions() {
+  return hmSec('Mặc gì cho dịp',
+    hmLink('Tất cả danh mục', dkCatAttrs('Sản phẩm mới', [hmFashionDept()])),
+    `<div class="dk-rail">
+            <div class="hm-occ dk-rail-track drag-x overflow-x-auto no-scrollbar">
+              ${HM_OCCASIONS.map(([img, label, cat]) => `
+              <button ${dkCatAttrs(cat, [hmFashionDept()])} class="hm-occ-item flex flex-col press group text-left">
+                <div class="w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
+                  <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
+                </div>
+                <div class="flex items-center p-1 h-8">
+                  <p class="t-lead text-foreground truncate">${label}</p>
+                </div>
+              </button>`).join('')}
+            </div>
+            <button class="dk-rail-arrow dk-rail-prev press" data-rail-prev hidden aria-label="Xem sản phẩm trước">${I.chevL}</button>
+            <button class="dk-rail-arrow dk-rail-next press" data-rail-next hidden aria-label="Xem sản phẩm tiếp">${I.chevR()}</button>
+          </div>`)
+}
+
+/* ── USP — HÀNG ICON GỌN ──────────────────────────────────────────────────────
+   Feedback khách 06/09 liệt USP là một khối của trang chủ (mẫu của họ: một hàng icon nhỏ,
+   icon trên nhãn dưới, canh giữa). User chốt: đưa lại nhưng ĐIỀU CHỈNH ICON cho phù hợp.
+   KHÁC khối `camKetSection()` (vẫn phục vụ 6 màn PDP + màn Hoàn tất, không đụng): ở đó mỗi
+   dòng là icon-bên-trái + tiêu đề + MỘT ĐOẠN MÔ TẢ; ở đây chỉ icon + MỘT dòng nhãn, canh
+   giữa, cao 1/3 khối cũ.
+   COPY không bịa: 4 nhãn là bản rút gọn của chính 4 mô tả trong CAM_KET (đã duyệt).
+   ICON: giữ medal · exchange · truck của CAM_KET; ĐỔI `wallet` -> `card` cho nhãn trả góp —
+   nhãn ở đây hẹp lại thành "Trả góp 0% lãi suất" nên hình chiếc thẻ đọc ra đúng hơn cái ví. */
+const HM_USP = [
+  ['medal',    'Đặc quyền thành viên'],
+  ['card',     'Trả góp 0% lãi suất'],
+  ['exchange', 'Đổi trả miễn phí 7 ngày'],
+  ['truck',    'Miễn phí giao hàng'],
+];
+
+function hmUsp() {
+  return `
+      <div class="max-w-[1440px] mx-auto px-6">
+        <div class="hm-usp py-8 reveal">
+          ${HM_USP.map(([ico, label]) => `
+          <div class="flex flex-col items-center gap-2 text-center">
+            <span class="w-5 h-5 flex items-center justify-center">${I[ico]}</span>
+            <p class="t-single text-foreground">${label}</p>
+          </div>`).join('')}
+        </div>
+      </div>`;
+}
+
+/* ── CÂU CHUYỆN TẠI DAFC — "Landing pages hili / TOP STORIES" ─────────────────
+   Feedback khách 06/09. Ba thẻ = ảnh ngang + nhãn nhóm + tiêu đề, bấm ra trang đích.
+   ⚠ KHO KHÔNG CÓ ẢNH/BÀI BIÊN TẬP. Ba tiêu đề dưới đây vì vậy KHÔNG BỊA: chúng nói đúng
+   thứ tấm ảnh đang chụp, và cái thứ nhất lấy nguyên văn một dòng trong PROMO_MESSAGES của
+   chính demo. Khi khách cấp bài viết thật thì thay cả 3 (ảnh + nhãn + tiêu đề + đích bấm).
+   Đích bấm hiện là DANH MỤC vì 3 hãng trong ảnh không có SP trong catalog. */
+const HM_STORIES = [
+  ['kv-men-9.jpg',   '42% 50%', 'Thương hiệu', 'Stefano Ricci đã có mặt tại DAFC Online', 'Phụ kiện'],
+  ['kv-women-6.jpg', '50% 42%', 'Bộ sưu tập',  'Bộ sưu tập AW26',                         'Sản phẩm mới'],
+  ['kv-women-5.jpg', '50% 50%', 'Thương hiệu', 'Bộ sưu tập denim MCM',                    'Quần áo'],
+];
+
+function hmStories() {
+  return hmSec('Câu chuyện tại DAFC',
+    '',
+    `<div class="hm-stories">
+            ${HM_STORIES.map(([img, pos, eyebrow, title, cat]) => `
+            <button ${dkCatAttrs(cat, [hmFashionDept()])} class="flex flex-col gap-3 press group text-left">
+              <div class="w-full overflow-hidden bg-secondary" style="aspect-ratio:3/2">
+                <img src="${A}${img}" alt="${title}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]" style="object-position:${pos}">
+              </div>
+              <p class="t-single text-mid-alt">${eyebrow}</p>
+              <p class="t-lead text-foreground">${title}</p>
+            </button>`).join('')}
+          </div>`)
 }
 
 /* ── ĐĂNG KÝ NHẬN TIN ──────────────────────────────────────────────────────────
@@ -6775,7 +6985,15 @@ function screenHOME() {
   return `
   <div class="w-full" data-scroller>
     ${navBar()}
+    <!-- THỨ TỰ KHỐI ĐI THEO SLIDE FEEDBACK CỦA KHÁCH 06/09/2026, đọc trái sang phải:
+         promo banner (on-off) · slider KV 4 slide · product cards · shop by category |
+         brands of the moment (spotlight + product của bộ đó) | occasions · USP ·
+         landing pages hili · sign up.
+         Khối "Câu hỏi thường gặp" KHÔNG có trong feedback nên vẫn ở ngoài (gỡ 06/09).
+         Khối USP TRỞ LẠI theo feedback, nhưng ở dạng hàng icon gọn — xem hmUsp(). -->
     <div class="max-w-[1440px] mx-auto w-full">
+      ${hmPromo()}
+
       ${hmHero()}
 
       ${news.length ? hmSec('Hàng mới về',
@@ -6787,36 +7005,25 @@ function screenHOME() {
         hmLink('Tất cả danh mục', dkCatAttrs('Sản phẩm mới', [hmFashionDept()])),
         hmCatTiles())}
 
-      ${sales.length ? `
-      <div class="px-6 py-8 reveal">
-        <div class="pt-8 flex flex-col gap-6">
-          <!-- Banner khớp tỉ lệ nguồn TUYỆT ĐỐI: kv-sale.jpg là 1600x600, ô 1392x522,
-               cùng 2,667 nên không cắt một pixel nào và không cần object-position.
-               0 chữ do code vẽ: chữ chiến dịch đã nằm trong pixel, chồng thêm là hai
-               giọng cùng lúc. -->
-          <a ${dkCatAttrs('Khuyến mãi')} class="block w-full overflow-hidden bg-secondary cursor-pointer press" style="aspect-ratio:1600/600">
-            <img src="${A}kv-sale.jpg" alt="Ưu đãi mùa hè" class="w-full h-full object-cover lazy">
-          </a>
-          <div class="flex items-end justify-between gap-2">
-            <h2 class="text-[18px] min-w-0 font-medium leading-7 text-foreground">Đang giảm giá</h2>
-            ${hmLink('Xem tất cả', dkCatAttrs('Khuyến mãi'))}
-          </div>
-          ${hmRail(sales)}
-        </div>
-      </div>` : ''}
-
       ${hmMaison()}
 
       ${hmSec('Thương hiệu tại DAFC',
         hmLink('Tất cả thương hiệu', 'data-nav="plp"'),
         hmBrandCards())}
 
-      <!-- 06/09/2026 (lệnh user): GỠ 2 khối khỏi trang chủ — "Cam kết DAFC" (USP) và
-           "Câu hỏi thường gặp" (Q&A). camKetSection() KHÔNG xoá: nó vẫn phục vụ 6 màn
-           PDP và màn Hoàn tất; ở đây chỉ thôi gọi. hmFaq/hmFaqCol/HM_FAQ thì chỉ trang
-           chủ dùng nên xoá hẳn, không nuôi code chết.
-           Hệ quả với brief khách: khối 5 (USP / QA block) nay KHÔNG còn trên trang chủ,
-           tức phủ 5/6 khối thay vì 6/6 — đã ghi vào báo cáo. -->
+      <!-- Mục Ưu đãi THÔI CÓ BANNER: tấm kv-sale đã dời lên promo banner đầu trang theo
+           mẫu khách (mẫu của họ chỉ có một banner sale, ở trên cùng). Mục này giữ tiêu đề
+           + dải 11 thẻ đang giảm giá. -->
+      ${(HM_SHOW.sale && sales.length) ? hmSec('Đang giảm giá',
+        hmLink('Xem tất cả', dkCatAttrs('Khuyến mãi')),
+        hmRail(sales)) : ''}
+
+      ${hmOccasions()}
+
+      ${hmUsp()}
+
+      ${HM_SHOW.stories ? hmStories() : ''}
+
       ${hmSignup()}
     </div>
     ${footer()}
@@ -11656,6 +11863,23 @@ const I18N = {
   'Trang sức khác':'Other jewelry', 'Đồng hồ':'Watches', 'Đồng hồ automatic':'Automatic watch',
   'Đồng hồ mechanical':'Mechanical watch', 'Đồng hồ quartz':'Quartz watch',
   'Đồng hồ thông minh':'Smart watch', 'Phiếu quà tặng':'Gift cards',
+  /* ── TRANG CHỦ: 4 khối theo feedback khách 06/09/2026 ────────────────────────
+     Đặt TRƯỚC I18N_REV như mọi khoá khác; đã soát 0 giá trị EN nào trùng khoá cũ.
+     Dùng lại khoá SẴN CÓ, không đẻ mới: 'Tất cả thương hiệu' · 'Tất cả danh mục' ·
+     'Ưu đãi mùa hè' · 'Thương hiệu' · 'Bộ sưu tập AW26' · 'Bộ sưu tập denim MCM' ·
+     'Sản phẩm mới' · 'Quần áo' · 'Túi xách' · 'Giày dép' · 'Phụ kiện' · 'Khuyến mãi'.
+     4 nhãn USP là bản rút gọn của mô tả CAM_KET nên phải có khoá riêng (chuỗi khác). */
+  'Thương hiệu nổi bật':'Brands of the moment', 'Mua ngay':'Shop now',
+  'Broken Jewels — hoạ tiết đặc trưng của Versace':'Broken Jewels — the Versace signature print',
+  'Mặc gì cho dịp':'What to wear for', 'Câu chuyện tại DAFC':'Stories at DAFC',
+  'Tiệc tối':'Evening', 'Công sở':'The office', 'Dạo phố':'Off duty',
+  'Phụ kiện tinh tế':'Finishing touches',
+  'Bộ sưu tập':'Collection',
+  'Đặc quyền thành viên':'Member benefits', 'Trả góp 0% lãi suất':'0% instalments',
+  'Đổi trả miễn phí 7 ngày':'Free 7-day returns',
+  'Stefano Ricci tại DAFC Online':'Stefano Ricci at DAFC Online',
+  'Christian Louboutin tại DAFC Online':'Christian Louboutin at DAFC Online',
+  'MCM tại DAFC Online':'MCM at DAFC Online',
 
   /* ── TRANG CHỦ (`screenHOME`, 04/09/2026) ────────────────────────────────────
      Đặt TRƯỚC `I18N_REV` như mọi khoá khác. Đã soát trùng giá trị EN: 0 chuỗi nào
