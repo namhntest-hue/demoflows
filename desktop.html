@@ -3598,6 +3598,28 @@ window.RESP = (function () {
      Đệm 12 -> 16 vì chữ to hơn cần lề tương ứng; 16 vẫn nằm trên thang 4/8/16/24.
      Dùng chung cho CẢ dải danh mục lẫn dải "Mặc gì cho dịp" (cùng lượt 07/09). */
   .hm-cat-label { position: absolute; left: 16px; right: 16px; bottom: 16px; }
+  /* NHÃN CỦA NGÀNH NỮ — Inter chữ HOA (07/09/2026, lệnh user; xem `hmLabelUp`).
+     Dựng ban đầu làm nhánh B của một A/B 3+3 để so; nay nó thôi là trạng thái so sánh và
+     thành nhãn CHÍNH THỨC của ngành Nữ — ngành Nam giữ Libre.
+     Bậc là `T3` 14/20 của STYLE-RULES §1.2 — TẦNG NHÃN, đúng chỗ mà 13.1 xếp mọi
+     chữ hoa của bộ da vào. Không phải bậc mới: 14/20 là bậc nhãn cấp 1 đang chạy ở
+     nav ngành hàng.
+     VÌ SAO 14 MÀ KHÔNG 12 hay 18 — đo bằng canvas, chuỗi dài nhất `QUÀ TẶNG`:
+       14/20 · 500 · HOA -> 78,6px    (Libre 18 chữ thường: 76,7px — lệch 1,9px)
+       12/16 · 500 · HOA -> 68,0px    (hụt 11% khối lượng, đọc ra nhỏ hơn hẳn)
+     Chọn 14 để 2 nhánh có CÙNG khối lượng thị giác, chỉ khác GIỌNG — có thế mới so
+     được. Chữ hoa vốn chiếm cao hơn chữ thường ở cùng cỡ nên 14 hoa ~ 18 thường.
+     `font-weight: 500` là BẮT BUỘC đi kèm chữ hoa (§1.1 khoá cặp 500 <-> HOA), và
+     phải khai tường minh vì `html.skin-mt .font-medium` ép mọi `font-medium` về 400.
+     KHÔNG khai `letter-spacing`: 0,5px đã tới từ `html.skin-mt body` (§1.4 một nguồn).
+     Dấu tiếng Việt trên chữ HOA: đo `actualBoundingBox` của `QUẦN ÁO` ở 14/20 ra
+     mực cao 17px trong hộp dòng 20 -> còn 1,5px mỗi mép, không bị `truncate` cắt.
+     ĐẶC HIỆU (0,5,2) — thắng cả hook bậc trưng bày (0,3,2) LẪN rule 18/24 của bản
+     mobile (0,4,2), nên KHAI GIỐNG HỆT ở 2 file mà không phải đọc thứ tự khai. */
+  html.skin-mt.skin-li .hm-cat-media p.hm-cat-label.hm-cat-label-up {
+    font-size: 14px; line-height: 20px;
+    font-family: var(--font-app); font-weight: 500; text-transform: uppercase;
+  }
 
 
   /* 4 — HÀNG 5 THẺ THƯƠNG HIỆU 259×128.
@@ -3639,13 +3661,72 @@ window.RESP = (function () {
      Spotlight thương hiệu · dải ô "Mặc gì cho dịp" · hàng USP · 3 thẻ câu chuyện.
      Vẫn theo luật cũ: base trước @media, mọi tên bắt đầu bằng `.hm-`, bo góc 0, không bóng. */
 
-  /* Spotlight: ẢNH 4 cột lưới + cột chữ phần còn lại. Ảnh brand-hero.png là 1200x1484
-     (0,81) nên ô 3/4 giữ 93% chiều cao — gần như không cắt. Khai `grid` chứ không `flex`
-     vì cột chữ phải co được mà ô ảnh thì KHÔNG (ảnh co là đổi cả phép cắt). */
-  .hm-spot { display: grid; grid-template-columns: 460px minmax(0, 1fr); gap: 24px; }
-  .hm-spot-photo { aspect-ratio: 3 / 4; }
+  /* SPOTLIGHT: TOÀN BỘ NỘI DUNG NẰM TRONG ẢNH (07/09/2026, lệnh user). Trước đó là lưới
+     2 cột — ảnh 460 bên trái, cột chữ bên phải.
+     ĐỌC ĐƯỢC LÀ NHỜ ĐO, KHÔNG PHẢI MAY: ảnh nguồn 1200x1484 có chủ thể nằm ĐÚNG NỬA GIỮA,
+     hai bên là nền `#f1f1f1` CDN nướng sẵn. Đo bằng PIL trên chính tệp: dải 0-30% bề rộng
+     cho sáng 241,0 · LỆCH CHUẨN 0,00 · min 241 — tức một dải phẳng TUYỆT ĐỐI, cao hết ảnh.
+     Chữ đặt vào đó là 17,5:1 với mực #0a0a0a. Nên KHÔNG CÓ SCRIM ở bản này: đo ra không cần.
+     VÌ SAO KHÔNG PHẢI CHỮ TRẮNG + GRADIENT ĐEN như nhãn ô danh mục: ảnh này sáng 225/255,
+     chữ trắng trên nó chỉ 1,13:1, và gradient đen .45 cũng chỉ đưa lên 1,89:1 — vẫn trượt
+     xa 4,5:1. Thêm nữa `brand-logo.png` là mực GẦN ĐEN (sáng 34/255 ở phần đặc) nên trên
+     scrim tối nó biến mất. Ảnh sáng thì mực phải TỐI: đó là kết luận của số đo, không phải
+     đổi ý về phong cách.
+     TỈ LỆ 3/2: ảnh 1200 rộng zoom lên 1377 (x1,1475) nên KHÔNG cắt ngang một pixel — dải
+     phẳng bên trái giữ nguyên 30% = 413px hiện. Cắt DỌC còn 53,9% chiều cao; với
+     `object-position 50% 12%` thì thấy từ ~5,5% đến ~59,4% ảnh gốc, tức đầu + trọn thân
+     đầm (đo profile chủ thể: đầu-vai 5-20%, thân đầm 30-55%, chân 60-90%). Mất chân dưới
+     đầu gối — mọi phép cắt ngang đều mất một đầu, vì chủ thể trải 5-95%.
+     `pointer-events` trên khối chữ để nguyên cả tấm vẫn là một cửa bấm vào PLP, chỉ nút
+     CTA nhận lại cú bấm của chính nó. */
+  .hm-spot { position: relative; }
+  .hm-spot-photo { display: block; aspect-ratio: 3 / 2; }
+  .hm-spot-copy {
+    position: absolute; inset-block: 0; left: 0; width: 30%;
+    display: flex; flex-direction: column; justify-content: center; gap: 16px;
+    padding-left: 40px; padding-right: 32px;
+    pointer-events: none;
+  }
+  .hm-spot-copy button { pointer-events: auto; }
   /* Tầng 2: 3 sản phẩm của chính bộ spotlight. Ô rộng bằng nhau, khe 24 = một máng lưới. */
   .hm-spot-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+  /* Nhánh A của tầng 2: 2 ô thương hiệu. 2 cột nên ô ra (1377 − 24)/2 = 676,5; ảnh cao 160
+     cho ~4,2/1, gần đúng dải ngang của trang thương hiệu (xem `hmSpotBrands`).
+     Cao 160 khai bằng CSS chứ không utility: bản Tailwind của dự án là bản BUILD SẴN, các
+     lớp `h-[...]` lạ không có trong đó và chết âm thầm. */
+  /* Veil SÁNG cho ca khối chữ nằm ở ĐÁY ảnh (dải hẹp desktop + bản mobile). Ở bản rộng
+     nó TẮT vì chữ nằm trên dải phẳng 241, không cần.
+     VÌ SAO SÁNG CHỨ KHÔNG TỐI, và vì sao .78: đo đáy ảnh bằng PIL — sáng trung bình 234,7
+     nhưng ô 24px TỐI NHẤT chỉ 78,5 (bóng/giày). Mực #0a0a0a trên 78 ra 2,65:1, TRƯỢT.
+     Trắng .78 phủ lên 78 cho 255-(255-78)*0,22 = 216 -> mực đen ra ~14:1; phủ lên dải
+     phẳng 241 thì thành 251, gần như không thấy đổi. Tức veil sáng chỉ "ăn" đúng chỗ tối,
+     không bôi xám cả tấm như gradient đen từng làm với 2 ô packshot của dải danh mục. */
+  .hm-spot-veil {
+    display: none;
+    position: absolute; inset-inline: 0; bottom: 0; height: 58%;
+    background: linear-gradient(to top, rgba(255,255,255,.78) 0%, rgba(255,255,255,.78) 42%, transparent 100%);
+    pointer-events: none;
+  }
+
+  .hm-spot-brands { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+  .hm-spot-brand-photo { height: 160px; }
+
+  /* BẢN NỮ — SPOTLIGHT THÀNH BANNER MỘT HÀNG (07/09/2026, lệnh user: *"ở mục brand highlight
+     cho nó to như cái banner ở 1 hàng"*). Tỉ lệ 8/3 là ĐÚNG tỉ lệ promo banner đầu trang
+     (`HM_PROMO` 1600/600) nên "to như cái banner" là nghĩa chữ, không phải ví von: ở 1440 ra
+     1377x516.
+     Cột chữ vẫn nằm trên dải phẳng 30% — cắt DỌC không đụng cột nào, nên 241,0 / lệch 0,00
+     giữ nguyên (xem ghi chú `.hm-spot`). Nội dung đo được cao 274, lòng banner 516 − 64 = 452
+     nên vừa.
+     `object-position` Y đổi 12% -> 43%: ở 8/3 chỉ còn 30,3% chiều cao ảnh, nên phải ngắm lại
+     vào THÂN ĐẦM (nguồn ~30-60%) thay vì đầu-và-thân như bản 3/2. Profile chủ thể ở ghi chú
+     `.hm-spot`. Mất cả đầu lẫn chân — đó là giá của tỉ lệ banner với tư liệu ảnh DỌC. */
+  .hm-spot-photo.hm-spot-banner { aspect-ratio: 8 / 3; }
+
+  /* BẢN NỮ — 3 ô thương hiệu CHUNG MỘT HÀNG. Ô ra (1377 − 48)/3 = 443, ảnh cao 160 nên
+     ~2,77/1 (bản Nam là 677 -> 4,23/1). Vẫn không cắt ngang: 443 nhỏ hơn 1200 nên zoom
+     cover ăn theo BỀ RỘNG, chỉ cắt dọc. */
+  .hm-spot-brands.hm-spot-brands-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
   /* Dải "Mặc gì cho dịp": ô rộng HẰNG SỐ như mọi dải khác của trang chủ (xem ghi chú
      `.hm-cat`) — 4 ô 330 + 3 khe 24 = 1392 nên ở 1440 nó cuộn một nhịp ngắn, dải hẹp thì
@@ -3662,10 +3743,19 @@ window.RESP = (function () {
   .hm-stories { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
 
   @media (max-width: 1023px) {
-    /* Spotlight xếp DỌC: ở dải hẹp cột chữ còn dưới 400 thì headline 24/32 vỡ dòng xấu,
-       và ô ảnh 460 chiếm quá nửa khung. */
-    .hm-spot { grid-template-columns: minmax(0, 1fr); }
-    .hm-spot-photo { aspect-ratio: 3 / 2; }
+    /* Ở dải hẹp, dải phẳng 30% tụt xuống dưới 300px nên cột chữ không còn chỗ: đưa khối
+       chữ về ĐÁY ảnh và bật veil SÁNG (cùng cơ chế bản mobile — xem index.html). */
+    .hm-spot-photo, .hm-spot-photo.hm-spot-banner { aspect-ratio: 9 / 16; }
+    /* Banner 8/3 ở dải hẹp là 516 -> dưới 300 cao, không đủ chỗ cho khối chữ nằm trong.
+       3 ô cũng về MỘT cột: ở dưới 1024 thì ô 3 cột chỉ còn ~310, wordmark trần 22px của
+       `brand-logo-dg.png` vẽ ra 218 — sát mép, không còn chỗ cho dòng đếm bên phải. */
+    .hm-spot-brands, .hm-spot-brands.hm-spot-brands-3 { grid-template-columns: minmax(0, 1fr); }
+    .hm-spot-copy {
+      inset-block: auto 0; left: 0; width: 100%;
+      justify-content: flex-end; gap: 12px;
+      padding: 24px;
+    }
+    .hm-spot-veil { display: block; }
     .hm-stories { grid-template-columns: minmax(0, 1fr); }
     .hm-usp { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
@@ -4565,7 +4655,7 @@ function lookRailCards(title, n, selfIdx, w, badgeAt = -1) {
     .map(({ p, i }, k) => productCard(p, i, { w, noColors: true, model: true, badge: badge(k) })).join('');
 }
 
-function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false, noQuick = false, quickPerRow = SIZE_PER_ROW } = {}) {
+function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false, noQuick = false, quickPerRow = SIZE_PER_ROW, quickMaxRows = Infinity } = {}) {
   /* 27/08: 'Pre-order' THÔI làm nhãn đè ảnh — nó xuống đứng trước TÊN (xem dưới).
      Chặn ngay tại đây, một chỗ, nên 6 nơi gọi vẫn truyền `badge: 'Pre-order'` như
      cũ mà không phải sửa nơi nào. Nhãn khác (New Season…) vẫn đè ảnh bình thường. */
@@ -4633,7 +4723,7 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
              lưới size, không nhan đề, không dòng ngày.
              Ngày nhận dự kiến vẫn còn ở PDP và ở giỏ hàng, nên thông tin không
              mất — chỉ là không nói ở lớp hover của thẻ nữa. -->
-        <div class="pc-sizes" style="--pc-cols:${Math.ceil(list.length / Math.ceil(list.length / quickPerRow))}">
+        <div class="pc-sizes" style="--pc-cols:${pcSizeCols(list.length, quickPerRow, quickMaxRows)}">
           ${list.map(s => `<button class="pc-size press${s.oos ? ' is-oos' : ''}" data-pc-size="${s.label}"${s.oos ? ' data-oos="1"' : ''}>${s.label}</button>`).join('')}
         </div>
       </div>`;
@@ -4856,6 +4946,20 @@ const sizeRaw = l => String(l).startsWith(`${SIZE_UNIT} `) ? String(l).slice(SIZ
    đủ dải size đang bán), không phải bộ chọn size của một sản phẩm. */
 const SIZE_MAX_SHOWN = 9;
 const SIZE_PER_ROW = 5;
+
+/* SỐ CỘT của lưới size trong quick add — MỘT chỗ tính, 2 tham số.
+   `perRow` là TRẦN Ô/HÀNG (đọc theo bề rộng thẻ), `maxRows` là TRẦN SỐ DÒNG.
+   Công thức vẫn là công thức TRẢI ĐỀU: chốt số dòng trước, rồi chia đều size vào
+   số dòng đó — nên 4 size ra 2+2 chứ không 3+1, 9 size ra 5+4 chứ không 5+5-thiếu.
+     rows = min(maxRows, ceil(n / perRow))     cols = ceil(n / rows)
+   `maxRows = Infinity` là mặc định, tức PLP và PDP không có trần dòng — ở đó thẻ
+   341/443 nên 3 dòng vẫn đọc được, và trần dòng là yêu cầu riêng của trang chủ
+   (07/09/2026, lệnh user: *"ở carousel list 5 có thể nhét limit tối đa 2 dòng"*).
+   Vì sao trần dòng KHÔNG suy được từ trần ô/hàng: hai thứ kéo ngược nhau — hạ
+   `perRow` làm chip TO ra nhưng lưới CAO thêm. Muốn vừa thấp vừa không quá nhỏ thì
+   phải khai cả hai, và chấp nhận chip hẹp đúng ở ca nhiều size nhất. */
+const pcSizeCols = (n, perRow, maxRows = Infinity) =>
+  Math.ceil(n / Math.min(maxRows, Math.ceil(n / perRow)));
 const capSizes = list => list.slice(0, SIZE_MAX_SHOWN);
 
 /* BỘ SIZE GIÀY — demo ĐỦ 9 BẬC, đúng trần SIZE_MAX_SHOWN ở trên (lệnh user
@@ -6688,6 +6792,24 @@ const HM_SHOW = { sale: false, stories: false, quickAdd: true };
    bù lại được thẻ hẹp hơn. */
 const HM_QUICK_PER_ROW = 3;
 
+/* TRẦN SỐ DÒNG của lưới size ở TRANG CHỦ (07/09/2026, lệnh user).
+   Đo trước khi sửa, dải 5 thẻ ở khổ 1440 (8 thẻ trong dải):
+     9 size -> 3+3+3, tấm cao 112     <- ĐÚNG 1/8 thẻ rơi vào ca này
+     6 size -> 3+3,   tấm cao 74
+     5 size -> 3+2,   tấm cao 74
+     4 size -> 2+2,   tấm cao 74
+     2 size -> 2,     tấm cao 36
+   Đặt trần 2 thì chỉ thẻ 9 size đổi: 5+4, tấm 112 -> 74, và mọi thẻ trong dải về
+   CÙNG MỘT chiều cao tấm khi mở.
+   GIÁ PHẢI TRẢ, nói thẳng bằng số: chip của thẻ 9 size tụt 89,4 -> 52,8 — chip HẸP
+   NHẤT của cả dự án (PLP là 66,6). Đây là quick add của bản DESKTOP, mở bằng rê
+   chuột và bấm bằng con trỏ, nên luật vùng chạm 44 của cảm ứng không áp; chữ size
+   dài nhất trong bộ 9 bậc vẽ ra ~25px nên vẫn còn ~14px đệm mỗi bên.
+   Băng nhà mốt (thẻ 443) cũng nhận trần này cho trang chủ nói một giọng: ở đó 9 size
+   ra 5 cột, chip 87 — vẫn to hơn chip 89,4 hiện tại của dải 5 thẻ một chút thôi.
+   ĐƯỜNG LÙI 1 DÒNG: đổi về `Infinity` là quay lại 3 dòng. */
+const HM_QUICK_MAX_ROWS = 2;
+
 /* PROMO BANNER — CÓ CÔNG TẮC (06/09/2026, feedback khách: *"Promo banner on-off, mục đích
    là highlight sale trong các giai đoạn EOSS / Private sale"*).
    Đặt `null` là TẮT: cả khối biến mất khỏi trang, không để lại khoảng trống nào. Đây là
@@ -6766,7 +6888,7 @@ function hmRail(list) {
   return `
           <div class="dk-rail">
             <div class="dk-rail-track drag-x flex gap-1 overflow-x-auto no-scrollbar">
-              ${list.map(({ p, i }) => productCard(p, i, { noColors: true, noName: true, noQuick: !HM_SHOW.quickAdd, quickPerRow: HM_QUICK_PER_ROW, w: 'hm-rail-item shrink-0' })).join('')}
+              ${list.map(({ p, i }) => productCard(p, i, { noColors: true, noName: true, noQuick: !HM_SHOW.quickAdd, quickPerRow: HM_QUICK_PER_ROW, quickMaxRows: HM_QUICK_MAX_ROWS, w: 'hm-rail-item shrink-0' })).join('')}
             </div>
             <button class="dk-rail-arrow dk-rail-prev press" data-rail-prev hidden aria-label="Xem sản phẩm trước">${I.chevL}</button>
             <button class="dk-rail-arrow dk-rail-next press" data-rail-next hidden aria-label="Xem sản phẩm tiếp">${I.chevR()}</button>
@@ -6796,6 +6918,21 @@ const HM_CATS = [
    không đi qua hàm này. */
 const hmFashionDept = () => (dkDept === 'Làm đẹp' ? DK_DEPTS[0] : dkDept);
 
+/* NGÀNH HÀNG ĐANG XEM, một cửa đọc duy nhất cho trang chủ. Hai file giữ state ở 2 biến
+   khác nhau (`dkDept` ở bản desktop vì có hàng nav ngành hàng; `menuTab` ở bản mobile vì
+   ngành nằm ở hàng tab trong drawer) — bọc lại để phần trang chủ khai GIỐNG HỆT 2 file. */
+const hmDeptNow = () => dkDept;
+
+/* NHÃN TRONG HÌNH: bản NỮ đi Inter chữ HOA, bản NAM giữ Libre (07/09/2026, lệnh user:
+   *"ở homepage nữ thì hãy clone lại bản của bản Nam nhưng các title bên trong hình dùng
+   uppercase inter là được"*).
+   ĐÂY LÀ CHỐT CHO A/B DỰNG CÙNG NGÀY: lượt trước dựng 3 ô Libre + 3 ô Inter HOA cạnh nhau
+   để so, và ghi rõ "chốt xong phải xoá nhánh thua". Nay không nhánh nào thua — mỗi nhánh
+   nhận MỘT NGÀNH HÀNG, nên tiêu chí phân biệt thôi là chỉ số ô (vô nghĩa với người đọc) mà
+   thành ngành hàng (có nghĩa). Trạng thái so sánh 3+3 vì vậy biến mất.
+   Áp cho CẢ HAI dải ô có nhãn trong hình: "Mua theo danh mục" và "Mặc gì cho dịp". */
+const hmLabelUp = () => hmDeptNow() === 'Nữ';
+
 function hmCatTiles() {
   return `
           <div class="dk-rail">
@@ -6805,7 +6942,7 @@ function hmCatTiles() {
               <div class="hm-cat-media w-full aspect-square overflow-hidden ${img === 'b1.jpg' ? 'bg-accent-0' : 'bg-secondary'}">
                 <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]" style="object-position:${pos}">
                 <span class="hm-cat-scrim" aria-hidden="true"></span>
-                <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>
+                <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>
               </div>
             </button>`).join('')}
             </div>
@@ -6854,32 +6991,123 @@ const HM_MAISON_COPY = 'Thiết kế táo bạo, phong cách quyến rũ và log
    — kho không có ô nào cắt nó nhẹ). */
 const HM_SPOT_HEADLINE = 'Broken Jewels — hoạ tiết đặc trưng của Versace';
 
+/* NHÃN LÝ DO SPOTLIGHT (07/09/2026, user chốt: *"có — nhãn chữ thường"*).
+   Brief khách nêu 3 tiêu chí để một hãng lên spotlight — *new in brand · key collection ·
+   brand có invest nhiều* — nhưng khối cũ KHÔNG nói ra tiêu chí nào, đo trên trang: 0 nhãn.
+   Người mua mở ra không có cách nào biết vì sao là hãng này.
+   Tiêu chí thứ 3 (*invest nhiều*) là lý do THƯƠNG MẠI NỘI BỘ, không bao giờ hiện cho người
+   mua — nên chỉ 2 tiêu chí đầu có nhãn được. Đây là hằng số để đổi theo chiến dịch:
+   'Bộ sưu tập chính' hoặc 'Mới về'.
+   BẬC 12/16 · Inter · 400 · CHỮ THƯỜNG (`.t-single`) — user chốt chữ thường thay vì bậc nhãn
+   cấp 2 (12/16 · 500 · HOA) để không mở thêm một vai chữ hoa thứ 5 vào danh sách đang ĐÓNG
+   của STYLE-RULES §1.5. Dịch bằng khoá tĩnh, xem I18N. */
+const HM_SPOT_EYEBROW = 'Bộ sưu tập chính';
+
+/* "1 BLOCK BÊN DƯỚI" — BRIEF KHÁCH CHO CHỌN, NAY DEMO CẢ HAI (07/09/2026, user chốt).
+   Nguyên văn brief: *"1 block bên dưới hoặc là để 2-3 brands nhỏ nhỏ hoặc là product của
+   collection của brand spotlights"*.
+     'products' — nhánh B: 3 sản phẩm CỦA CHÍNH bộ spotlight (trạng thái từ 06/09).
+     'brands'   — nhánh A: 2 thương hiệu nhỏ, mỗi ô một cửa vào PLP của hãng.
+     'both'     — TRẠNG THÁI SO SÁNH: vẽ cả hai, xếp trên dưới.
+   ⚠ 'both' KHÔNG PHẢI TRẠNG THÁI CHỐT. Brief nói MỘT block; để cả hai là trang có 3 tầng
+   brand liền nhau. Chốt xong đổi về 'products' hoặc 'brands' và xoá nhánh thua.
+   ĐANG THỬ 'brands' (07/09/2026, lệnh user: *"ẩn cái danh sách sản phẩm ở brand thử đi"*) —
+   tức khối còn ĐÚNG hai tầng như brief: spotlight + 2 ô thương hiệu nhỏ. Đổi lại 'products'
+   là 3 sản phẩm quay về. */
+const HM_SPOT_BELOW = 'brands';
+
+/* Hai hãng của nhánh A — VÌ SAO ĐÚNG 2 CHỨ KHÔNG 3, đếm trên dữ liệu:
+     Versace        19 SP · 8 ảnh model · có logo   -> nhưng CHÍNH LÀ hãng spotlight, lặp
+     Dolce&Gabbana  14 SP · 7 ảnh model · có logo   -> ĐỦ
+     Zimmermann     12 SP · 12 ảnh model · có logo  -> ĐỦ
+     Montblanc       2 SP · 0 ảnh model · KHÔNG logo, KHÔNG có trong BRAND_PAGES
+     Moschino        1 SP · 0 ảnh model · KHÔNG logo, KHÔNG có trong BRAND_PAGES
+   Ô thứ 3 sẽ không có ảnh lẫn wordmark, tức một ô BỊA. Brief ghi "2-3" nên 2 là hợp lệ, và
+   dự án đã có tiền lệ không mượn logo hãng khác gán vào (hàng 5 thẻ, chốt khách 27/08). */
+const HM_SPOT_BRANDS = ['Dolce&Gabbana', 'Zimmermann'];
+
+/* BẢN NỮ: 3 ô chung một hàng (07/09/2026, lệnh user). Buộc phải gồm CẢ hãng đang spotlight
+   — kho chỉ có ĐÚNG 3 hãng thời trang đủ tư liệu (Versace · Dolce&Gabbana · Zimmermann);
+   Montblanc và Moschino là hàng LÀM ĐẸP (`dept:'beauty'`, nước hoa), không phải hãng thời
+   trang, nên không đứng được trong hàng này.
+   Hệ quả phải biết: hãng spotlight XUẤT HIỆN HAI LẦN trong cùng một mục — một lần làm banner
+   biên tập, một lần làm cửa vào PLP. Ảnh thì KHÔNG lặp (xem `hmSpotBrands`). Muốn hết lặp thì
+   phải bỏ về 2 ô như bản Nam, hoặc xin thêm tư liệu một hãng thời trang thứ tư. */
+const HM_SPOT_BRANDS_NU = ['Versace', 'Dolce&Gabbana', 'Zimmermann'];
+
+/* NHÁNH A: ô thương hiệu nhỏ. ẢNH DÙNG LẠI ĐÚNG CẶP `hero` + `pos` của trang thương hiệu,
+   có chủ ý: cặp đó đã được canh tay cho dải NGANG 1377x320 (~4,3/1) ở màn brand. Ô đây cao
+   160 nên ở khổ 1440 ra 676x160 = 4,2/1 — gần như CÙNG một phép cắt, `pos` chuyển sang là
+   dùng được luôn, không phải canh lại một crop mới.
+   VÌ SAO KHÔNG lấy ảnh người mẫu 3/4 như ô spotlight: ô 676 mà cao 3/4 là 901 — cao hơn cả
+   ảnh spotlight (613), tức "brands nhỏ nhỏ" lại to hơn thứ nó phụ thuộc. Ô cao 160 + 16 khe
+   + 22 wordmark = ~198, đúng vai phụ.
+   TRẦN WORDMARK 22px là SỐ TUYỆT ĐỐI (chốt khách 27/08) — dùng lại y nguyên của hàng 5 thẻ
+   nên 2 hàng thương hiệu trên trang đứng chung một trục quang học.
+   Dòng đếm đi luật i18n có sẵn [/^(\d+) sản phẩm$/, '$1 products'] — không thêm khoá. */
+function hmSpotBrands(avoidImg) {
+  const women = hmLabelUp();
+  const tiles = (women ? HM_SPOT_BRANDS_NU : HM_SPOT_BRANDS).map(name => {
+    const B = brandPage(name);
+    const n = PRODUCTS.filter(p => p.brand === name).length;
+    if (!B || !B.logo || !B.hero || !n) return '';
+    /* Ô KHÔNG ĐƯỢC ĐI ĐÚNG TẤM ẢNH CỦA SPOTLIGHT. Bẫy thật: `BRAND_PAGES['Versace'].hero`
+       là `p1-1.jpg`, đúng tấm mà spotlight đang dùng — nên ở bản Nữ (có ô Versace) hai tầng
+       của cùng một mục sẽ vẽ cùng một ảnh. Rơi về ảnh người mẫu KHÁC của chính hãng đó. */
+    let img = B.hero;
+    if (avoidImg && img === avoidImg) {
+      const alt = PRODUCTS.find(p => p.brand === name && p.model && p.model !== avoidImg);
+      if (alt) img = alt.model;
+    }
+    return `<a data-nav="plp" data-plp-brand="${name}" class="block cursor-pointer press">
+              <img src="${A}${img}" alt="${B.name}" class="hm-spot-brand-photo w-full object-cover lazy" style="object-position:${B.pos || '50% 50%'}">
+              <div class="flex items-center justify-between gap-4 pt-4">
+                <img src="${A}${B.logo}" alt="${B.name}" class="h-[22px] w-auto object-contain object-left lazy">
+                <p class="t-single text-muted-foreground shrink-0">${n} sản phẩm</p>
+              </div>
+            </a>`;
+  }).filter(Boolean);
+  if (tiles.length < 2) return '';
+  return `<div class="hm-spot-brands${women ? ' hm-spot-brands-3' : ''}">${tiles.join('')}</div>`;
+}
+
 function hmMaison() {
   const B = brandPage(HM_MAISON);
   const all = PRODUCTS.map((p, i) => ({ p, i }))
     .filter(({ p }) => p.brand === HM_MAISON && p.model);
   const spot = all[0], list = all.slice(1, 4);
-  if (!spot || list.length < 3) return '';
+  /* Điều kiện dựng phải THEO NHÁNH đang bật. Trước đây luôn đòi 3 sản phẩm, kể cả khi tầng 2
+     là 2 ô thương hiệu — bẫy ngủ: đổi HM_MAISON sang một hãng chỉ có 1-2 ảnh người mẫu là cả
+     khối biến mất im lặng dù nhánh 'brands' không dùng tới `list`. Ảnh spotlight thì vẫn cần
+     `all[0]` nên `spot` là điều kiện chung. */
+  if (!spot || (HM_SPOT_BELOW !== 'brands' && list.length < 3)) return '';
   const attrs = `data-nav="plp" data-plp-brand="${HM_MAISON}"`;
   return hmSec('Thương hiệu nổi bật',
     hmLink('Tất cả thương hiệu', 'data-nav="plp"'),
     `<div class="hm-spot">
-            <a ${attrs} class="hm-spot-photo block overflow-hidden bg-secondary cursor-pointer press">
-              <img src="${A}${spot.p.model}" alt="${spot.p.name}" class="w-full h-full object-cover lazy">
+            <a ${attrs} class="hm-spot-photo${hmLabelUp() ? ' hm-spot-banner' : ''} overflow-hidden bg-secondary cursor-pointer press">
+              <img src="${A}${spot.p.model}" alt="${spot.p.name}" class="w-full h-full object-cover lazy" style="object-position:50% ${hmLabelUp() ? '43%' : '12%'}">
             </a>
-            <div class="flex flex-col gap-4 self-center">
-              ${B.logo
-                ? `<img src="${A}${B.logo}" alt="${B.name}" class="h-7 w-[149px] object-contain object-left lazy">`
-                : `<p class="text-[18px] font-medium leading-7 text-foreground">${B.name}</p>`}
+            <span class="hm-spot-veil" aria-hidden="true"></span>
+            <div class="hm-spot-copy">
+              <div class="flex flex-col gap-2">
+                <p class="t-single text-muted-foreground">${HM_SPOT_EYEBROW}</p>
+                ${B.logo
+                  ? `<img src="${A}${B.logo}" alt="${B.name}" class="h-7 w-[149px] object-contain object-left lazy">`
+                  : `<p class="text-[18px] font-medium leading-7 text-foreground">${B.name}</p>`}
+              </div>
               <p class="text-[18px] font-medium leading-7 text-foreground">${HM_SPOT_HEADLINE}</p>
               <p class="t-multiline text-foreground-alt">${HM_MAISON_COPY}</p>
               <button ${attrs} class="t-lead h-12 px-8 w-fit border border-border bg-background text-foreground btn-o press">Mua ngay</button>
             </div>
           </div>
-          <!-- Tầng 2 của khối: sản phẩm CỦA CHÍNH bộ spotlight, không phải hãng khác. -->
+          <!-- Tầng 2 của khối. Brief khách cho chọn 1 trong 2; xem HM_SPOT_BELOW.
+               Nhánh B = sản phẩm CỦA CHÍNH bộ spotlight, không phải hãng khác. -->
+          ${HM_SPOT_BELOW === 'brands' ? '' : `
           <div class="hm-spot-row">
-            ${list.map(({ p, i }) => productCard(p, i, { noColors: true, noName: true, noQuick: !HM_SHOW.quickAdd, quickPerRow: HM_QUICK_PER_ROW, model: true })).join('')}
-          </div>`)
+            ${list.map(({ p, i }) => productCard(p, i, { noColors: true, noName: true, noQuick: !HM_SHOW.quickAdd, quickPerRow: HM_QUICK_PER_ROW, quickMaxRows: HM_QUICK_MAX_ROWS, model: true })).join('')}
+          </div>`}
+          ${HM_SPOT_BELOW === 'products' ? '' : hmSpotBrands(spot.p.model)}`)
 }
 
 /* ── 5 THẺ THƯƠNG HIỆU 259×128 ─────────────────────────────────────────────────
@@ -6936,7 +7164,7 @@ function hmOccasions() {
                 <div class="hm-cat-media w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
                   <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
                   <span class="hm-cat-scrim" aria-hidden="true"></span>
-                  <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>
+                  <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>
                 </div>
               </button>`).join('')}
             </div>
@@ -11927,11 +12155,15 @@ const I18N = {
   'Broken Jewels — hoạ tiết đặc trưng của Versace':'Broken Jewels — the Versace signature print',
   'Mặc gì cho dịp':'What to wear for', 'Câu chuyện tại DAFC':'Stories at DAFC',
   'Tiệc tối':'Evening', 'Công sở':'The office', 'Dạo phố':'Off duty',
-  /* Nhãn dịp rút ngắn 07/09: bậc chữ lên 24/32 nên 'Phụ kiện tinh tế' không vừa ô 210
-     ở khổ máy (đo ra ~200px trong lòng 178). ĐỔI KHOÁ, không thêm khoá thứ hai — nhãn cũ
-     không còn chỗ dùng nào. */
+  /* Nhãn dịp rút ngắn 07/09 — LÝ DO NẰM Ở KHỔ MOBILE, không ở khổ này. Ở bản mobile ô
+     dịp là 210 (lòng 178) và 'Phụ kiện tinh tế' ở bậc 24 đo ra 179,7px ⇒ tràn. Bên
+     desktop ô là 330 (lòng 298) nên chuỗi cũ vốn vừa thoải mái — chuỗi phải theo bản
+     hẹp hơn vì HM_OCCASIONS là cùng một bộ nhãn ở 2 file.
+     ĐỔI KHOÁ, không thêm khoá thứ hai — nhãn cũ không còn chỗ dùng nào.
+     ⚠ Bản mobile cùng ngày đã hạ nhãn về 18/24 nên ở đó chuỗi cũ VỪA LẠI (136,8px trong
+     lòng 178). Giữ 'Điểm nhấn' cho tới khi user chốt; treo ở FONT-LIBRE-INTER 13.9. */
   'Điểm nhấn':'Finishing touches',
-  'Bộ sưu tập':'Collection',
+  'Bộ sưu tập':'Collection', 'Bộ sưu tập chính':'The key collection',
   'Đặc quyền thành viên':'Member benefits', 'Trả góp 0% lãi suất':'0% instalments',
   'Đổi trả miễn phí 7 ngày':'Free 7-day returns',
   'Stefano Ricci tại DAFC Online':'Stefano Ricci at DAFC Online',
@@ -12461,8 +12693,12 @@ function go(name, opts = {}) {
      tấm gợi ý vẫn mở và __scrollLockCount còn 1 -> trang đứng cứng, không cuộn
      được, không còn nút nào để đóng. (Lỗi user báo 17/08/2026.) */
   if (window.__closeDkSearch) window.__closeDkSearch();
-  if (name === current) return;
-  if (current && !opts.back) history.push(current);
+  /* `opts.force` (07/09/2026): dựng LẠI đúng màn đang đứng. Cần cho trang chủ theo
+     ngành hàng — đứng ở `home` bấm "Nữ" thì tên màn không đổi nên chốt chặn dưới đây
+     nuốt luôn lệnh, trang chủ không bao giờ vẽ lại theo ngành mới.
+     Force thì KHÔNG đẩy vào history: đẩy là nút back đi từ home về chính home. */
+  if (name === current && !opts.force) return;
+  if (current && !opts.back && !opts.force) history.push(current);
   if (current) SCROLL_MEM[current] = curScrollY();   // phải chốt TRƯỚC khi xoá DOM
 
   if (name === 'login' && current !== 'login') { loginFrom = current; if (!authViewIntent) authView = 'login'; authViewIntent = false; }
@@ -13107,6 +13343,13 @@ function wire(root) {
       // Đổi dept phải ghi TRƯỚC khi điều hướng: navBar() dựng lại ngay trong go()
       // và subheader đọc dkDept để chọn bộ danh mục (thời trang vs làm đẹp).
       if (el.dataset.dkdept) dkDept = el.dataset.dkdept;
+      /* ĐỨNG Ở TRANG CHỦ thì hàng ngành hàng đổi TRANG CHỦ, không nhảy sang PLP
+         (07/09/2026 — cửa duy nhất vào trang chủ ngành Nữ).
+         Vì sao đúng chứ không phải tiện: ở trang chủ, bấm một NGÀNH HÀNG nghĩa là "tôi
+         đang xem hàng nữ", không phải "cho tôi danh sách sản phẩm". Ở PLP/PDP thì nút này
+         vẫn là cửa PLP như đã chốt — nhánh này chỉ mở khi `current === 'home'`.
+         Phải `force` vì tên màn không đổi; xem ghi chú trong `go()`. */
+      if (current === 'home' && el.dataset.dkdept) { go('home', { force: true }); return; }
       /* Link trong mega panel / breadcrumb không có data-dkdept, nhưng crumbs[0]
          LÀ ngành hàng -> đồng bộ dept đang sáng. Trước đây bấm 'Quần áo' dưới cột
          'Nứ' mà hàng dept vẫn sáng 'Nam'; state đang chọn càng nổi thì cái lệch này
