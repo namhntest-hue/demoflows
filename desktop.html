@@ -3628,12 +3628,22 @@ window.RESP = (function () {
   .hm-brands { display: flex; gap: 16px; }
   /* Hệ chưa có linh kiện "ô viền mảnh + hover đổi sang mặt xám": `.btn-o` khi hover
      thì BỎ nền (ngược hướng), `.ghost-hover` thì phủ đen 5% chứ không phải mặt xám.
-     Và `h-[128px]` cùng MỌI `max-h-[…]` tuỳ ý đều không có trong bản build. */
+     Và mọi `h-[…]` / `max-h-[…]` tuỳ ý đều không có trong bản build sẵn. */
+  /* CAO 48, KHÔNG 128 (07/09/2026, lệnh user). 48 là số hình học sẵn có của dự án —
+     thanh app bar, nút CTA `h-12`, hàng logo trong drawer đều 48.
+     BỀ RỘNG GIỮ 259 vì nó KHÔNG phải số tự do: trần logo 22px là số tuyệt đối (chốt
+     khách 27/08) và `brand-logo-dg.png` ở cao 22 ra rộng 218, nên lòng ô phải >= 218.
+     Hệ quả đọc được: logo thôi chiếm 17% chiều cao ô mà thành 46% — đúng ý "giảm nhỏ
+     lại", vì thu ô lại là logo tự nổi lên mà không phải nâng trần 22. */
   .hm-brand-card {
-    /* 5 thẻ + 4 khe = 5x259 + 4x16 = 1359 < 1377 nên khổ 1440 vừa khít một hàng, không
-       có gì để cuộn; dải hẹp thì cuộn. Khai GIỐNG HỆT bản mobile. */
-    flex: 0 0 259px;
-    height: 128px; display: flex; align-items: center; justify-content: center;
+    /* W 132 (07/09/2026, lệnh user), trước là 259. Hệ quả về bố cục, nói thẳng: 5 thẻ +
+       4 khe = 5x132 + 4x16 = 724 trong vùng 1377, tức hàng chỉ chiếm 53% bề ngang và
+       không còn gì để cuộn ở khổ 1440. Dải vẫn là dải (canh trái) — muốn nó trải kín thì
+       phải thêm hãng hoặc đổi sang trải đều, cả hai là quyết định riêng.
+       Khai GIỐNG HỆT bản mobile. */
+    flex: 0 0 132px;
+    height: 48px; display: flex; align-items: center; justify-content: center;
+    padding-inline: 4px;
     border: 1px solid var(--general-border);
     background: var(--general-background);
     transition: background-color .15s ease;
@@ -3642,7 +3652,17 @@ window.RESP = (function () {
   /* Trần 22px là SỐ TUYỆT ĐỐI (chốt khách 27/08: cả hàng đứng chung một trục quang
      học, dù ô là ảnh hay là chữ). `max-width: 100%` là rào: 3 wordmark trong kho rất
      ngang (tỉ lệ 5,9–9,9), ở dải hẹp ô co lại thì logo tự hạ chiều cao, không tràn ô. */
-  .hm-brand-card img { max-height: 22px; max-width: 100%; width: auto; height: auto; object-fit: contain; }
+  /* TRẦN LOGO 12, KHÔNG CÒN 22 (07/09/2026) — số này KHÔNG tự chọn, nó do bề rộng ô
+     132 quyết định. Tỉ lệ 3 wordmark trong kho: Versace 5,889 · Zimmermann 8,315 ·
+     Dolce&Gabbana 9,907. Ô rộng nhất là D&G, nên chính nó chốt trần:
+        lòng ô = 132 − 2x4 đệm = 124   ->   trần <= 124 / 9,907 = 12,5   ->   12
+     Ở trần 12 thì 3 logo ra rộng 70,7 · 99,8 · 118,9 — cả ba VỪA lòng 124 và cùng
+     một chiều cao, nên TRỤC QUANG HỌC của hàng vẫn giữ (đó là điều mà chốt khách
+     27/08 nhắm tới; con số 22 của chốt đó thì hết hiệu lực cùng lượt này).
+     Muốn trả trần về 22 thì ô phải >= 218 + đệm, tức tối thiểu ~250 như bản cũ —
+     hai thứ không cùng tồn tại được.
+     `max-width: 100%` GIỮ làm rào cho khổ hẹp hơn nữa: logo tự hạ tiếp chứ không tràn. */
+  .hm-brand-card img { max-height: 12px; max-width: 100%; width: auto; height: auto; object-fit: contain; }
 
   /* 5 — DẢI HẸP. Từ 05/09/2026 danh sách này NGẮN ĐI: mọi khối nhiều món trên trang chủ
      nay là dải MỘT HÀNG cuộn ngang (lệnh user), nên `.hm-cats` và `.hm-brands` không còn
@@ -6754,7 +6774,11 @@ function hmSec(title, right, body, tag = 'h2') {
   return `
       <div class="px-6 py-8 reveal">
         <div class="pt-8 flex flex-col gap-6">
-          <div class="flex items-end justify-between gap-2">
+          <!-- CANH GIỮA theo tiêu đề mục (07/09/2026, lệnh user), trước là items-end.
+               Tiêu đề là 24/32 còn nút là 12/18: canh chân chữ thì nút tụt xuống sát đáy
+               hộp 32 và đọc ra như một dòng ghi chú rơi lại; canh giữa thì nó nằm đúng
+               giữa chiều cao tiêu đề. -->
+          <div class="flex items-center justify-between gap-2">
             <${tag} class="text-[18px] min-w-0 font-medium leading-7 text-foreground">${title}</${tag}>
             ${right || ''}
           </div>
@@ -7083,7 +7107,7 @@ function hmMaison() {
   if (!spot || (HM_SPOT_BELOW !== 'brands' && list.length < 3)) return '';
   const attrs = `data-nav="plp" data-plp-brand="${HM_MAISON}"`;
   return hmSec('Thương hiệu nổi bật',
-    hmLink('Tất cả thương hiệu', 'data-nav="plp"'),
+    hmLink('Xem tất cả', 'data-nav="plp"'),
     `<div class="hm-spot">
             <a ${attrs} class="hm-spot-photo${hmLabelUp() ? ' hm-spot-banner' : ''} overflow-hidden bg-secondary cursor-pointer press">
               <img src="${A}${spot.p.model}" alt="${spot.p.name}" class="w-full h-full object-cover lazy" style="object-position:50% ${hmLabelUp() ? '43%' : '12%'}">
@@ -7156,7 +7180,7 @@ const HM_OCCASIONS = [
 
 function hmOccasions() {
   return hmSec('Mặc gì cho dịp',
-    hmLink('Tất cả danh mục', dkCatAttrs('Sản phẩm mới', [hmFashionDept()])),
+    hmLink('Xem tất cả', dkCatAttrs('Sản phẩm mới', [hmFashionDept()])),
     `<div class="dk-rail">
             <div class="hm-occ dk-rail-track drag-x overflow-x-auto no-scrollbar">
               ${HM_OCCASIONS.map(([img, label, cat]) => `
@@ -7284,13 +7308,13 @@ function screenHOME() {
         'h1') : ''}
 
       ${hmSec('Mua theo danh mục',
-        hmLink('Tất cả danh mục', dkCatAttrs('Sản phẩm mới', [hmFashionDept()])),
+        hmLink('Xem tất cả', dkCatAttrs('Sản phẩm mới', [hmFashionDept()])),
         hmCatTiles())}
 
       ${hmMaison()}
 
       ${hmSec('Thương hiệu tại DAFC',
-        hmLink('Tất cả thương hiệu', 'data-nav="plp"'),
+        hmLink('Xem tất cả', 'data-nav="plp"'),
         hmBrandCards())}
 
       <!-- Mục Ưu đãi THÔI CÓ BANNER: tấm kv-sale đã dời lên promo banner đầu trang theo

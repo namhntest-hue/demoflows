@@ -3002,12 +3002,18 @@ window.RESP = (function () {
 
 
   /* 4 — HÀNG THẺ THƯƠNG HIỆU: DẢI TRƯỢT (desktop là lưới 5 ô).
-     Đây là chỗ khổ máy quyết định thay mình: trần logo 22px là SỐ TUYỆT ĐỐI (chốt
-     khách 27/08), mà `brand-logo-dg.png` ở cao 22 ra rộng 218. Ô phải có lòng ≥ 218,
-     tức ô ≥ 250 — ở 390 thì lưới 2 cột chỉ ra ô 171, logo buộc tụt xuống ~15px và cả
-     hàng mất trục quang học. Nên mobile giữ ĐÚNG bề rộng ô 259 của desktop và cho
-     TRƯỢT NGANG, thay vì bóp ô để nhồi vào một hàng. Chiều cao cũng giữ 128 của
-     desktop: một số, hai bản, không có gì phải giải thích thêm. */
+     ⚠ ĐOẠN NÀY ĐÃ HẾT ĐÚNG TỪ 07/09/2026 — giữ lại vì nó ghi cái GIÁ đã trả.
+     Trước đây ô rộng 259 để giữ trần logo 22px (số tuyệt đối, chốt khách 27/08):
+     `brand-logo-dg.png` ở cao 22 ra rộng 218 nên lòng ô phải ≥ 218. Nay user chốt ô
+     132, nên trần buộc xuống 12 (phép tính ở khối `.hm-brand-card img`) — cái GIỮ
+     được là TRỤC QUANG HỌC của hàng, cái MẤT là con số 22.
+     Bề rộng và chiều cao vẫn lấy ĐÚNG số của desktop: một số, hai bản. */
+  /* CAO 48, KHÔNG 128 (07/09/2026, lệnh user). 48 là số hình học sẵn có của dự án —
+     thanh app bar, nút CTA `h-12`, hàng logo trong drawer đều 48.
+     BỀ RỘNG GIỮ 259 vì nó KHÔNG phải số tự do: trần logo 22px là số tuyệt đối (chốt
+     khách 27/08) và `brand-logo-dg.png` ở cao 22 ra rộng 218, nên lòng ô phải >= 218.
+     Hệ quả đọc được: logo thôi chiếm 17% chiều cao ô mà thành 46% — đúng ý "giảm nhỏ
+     lại", vì thu ô lại là logo tự nổi lên mà không phải nâng trần 22. */
   .hm-brands {
     display: flex; gap: 8px; overflow-x: auto;
     padding-inline: 16px;   /* = px-4, khai trong CSS vì đây là khối CUỘN */
@@ -3015,7 +3021,7 @@ window.RESP = (function () {
   }
   .hm-brands::-webkit-scrollbar { display: none; }
   .hm-brand-card {
-    flex: 0 0 259px; height: 128px;
+    flex: 0 0 132px; height: 48px; padding-inline: 4px;
     display: flex; align-items: center; justify-content: center;
     border: 1px solid var(--general-border);
     background: var(--general-background);
@@ -3024,7 +3030,17 @@ window.RESP = (function () {
   .hm-brand-card:hover { background: var(--general-secondary); }
   /* `max-width: 100%` là rào cho khổ máy hẹp hơn 390: logo tự hạ chiều cao chứ không
      tràn ô. 3 wordmark trong kho đều rất ngang (tỉ lệ 5,9 đến 9,9). */
-  .hm-brand-card img { max-height: 22px; max-width: 100%; width: auto; height: auto; object-fit: contain; }
+  /* TRẦN LOGO 12, KHÔNG CÒN 22 (07/09/2026) — số này KHÔNG tự chọn, nó do bề rộng ô
+     132 quyết định. Tỉ lệ 3 wordmark trong kho: Versace 5,889 · Zimmermann 8,315 ·
+     Dolce&Gabbana 9,907. Ô rộng nhất là D&G, nên chính nó chốt trần:
+        lòng ô = 132 − 2x4 đệm = 124   ->   trần <= 124 / 9,907 = 12,5   ->   12
+     Ở trần 12 thì 3 logo ra rộng 70,7 · 99,8 · 118,9 — cả ba VỪA lòng 124 và cùng
+     một chiều cao, nên TRỤC QUANG HỌC của hàng vẫn giữ (đó là điều mà chốt khách
+     27/08 nhắm tới; con số 22 của chốt đó thì hết hiệu lực cùng lượt này).
+     Muốn trả trần về 22 thì ô phải >= 218 + đệm, tức tối thiểu ~250 như bản cũ —
+     hai thứ không cùng tồn tại được.
+     `max-width: 100%` GIỮ làm rào cho khổ hẹp hơn nữa: logo tự hạ tiếp chứ không tràn. */
+  .hm-brand-card img { max-height: 12px; max-width: 100%; width: auto; height: auto; object-fit: contain; }
   /* ══ TRANG CHỦ — 3 KHỐI THEO FEEDBACK KHÁCH 06/09/2026 (bản mobile) ══════════
      Spotlight xếp dọc nên KHÔNG cần class riêng (ảnh full-bleed + khối chữ px-4).
      Còn 3 thứ phải khai: dải ô "Mặc gì cho dịp" · hàng USP 2 cột · dải thẻ câu chuyện.
@@ -6880,7 +6896,10 @@ const hmLink = (label, attrs) =>
 function hmSec(title, right, body, tag = 'h2') {
   return `
     <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
-      <div class="flex items-end justify-between gap-2 px-4">
+      <!-- CANH GIỮA theo tiêu đề mục (07/09/2026, lệnh user), trước là items-end. Tiêu đề
+           18/24 còn nút 12/18: canh chân chữ thì nút tụt sát đáy hộp và đọc ra như ghi chú
+           rơi lại; canh giữa thì nằm đúng giữa chiều cao tiêu đề. -->
+      <div class="flex items-center justify-between gap-2 px-4">
         <${tag} class="text-[18px] min-w-0 font-medium leading-7 text-foreground">${title}</${tag}>
         ${right || ''}
       </div>
@@ -7125,9 +7144,9 @@ function hmMaison() {
   if (!spot || (HM_SPOT_BELOW !== 'brands' && list.length < 3)) return '';
   return `
     <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
-      <div class="flex items-end justify-between gap-2 px-4">
+      <div class="flex items-center justify-between gap-2 px-4">
         <h2 class="text-[18px] min-w-0 font-medium leading-7 text-foreground">Thương hiệu nổi bật</h2>
-        ${hmLink('Tất cả thương hiệu', 'data-hm-brand="Versace"')}
+        ${hmLink('Xem tất cả', 'data-hm-brand="Versace"')}
       </div>
       <div class="hm-spot">
         <a data-hm-brand="${HM_MAISON}" class="hm-spot-photo w-full overflow-hidden bg-secondary cursor-pointer press">
@@ -7165,7 +7184,7 @@ const HM_OCCASIONS = [
 
 function hmOccasions() {
   return hmSec('Mặc gì cho dịp',
-    hmLink('Tất cả danh mục', 'data-hm-cat="Sản phẩm mới"'),
+    hmLink('Xem tất cả', 'data-hm-cat="Sản phẩm mới"'),
     `<div class="hm-occ drag-x overflow-x-auto no-scrollbar px-4">
         ${HM_OCCASIONS.map(([img, label, cat]) => `
         <button data-hm-cat="${cat}" class="hm-occ-item flex flex-col press group text-left">
@@ -7305,13 +7324,13 @@ function screenHOME() {
       'h1') : ''}
 
     ${hmSec('Mua theo danh mục',
-      hmLink('Tất cả danh mục', 'data-hm-cat="Sản phẩm mới"'),
+      hmLink('Xem tất cả', 'data-hm-cat="Sản phẩm mới"'),
       hmCatTiles())}
 
     ${hmMaison()}
 
     ${hmSec('Thương hiệu tại DAFC',
-      hmLink('Tất cả thương hiệu', 'data-hm-brand="Versace"'),
+      hmLink('Xem tất cả', 'data-hm-brand="Versace"'),
       hmBrandCards())}
 
     <!-- Mục Ưu đãi THÔI CÓ BANNER: tấm kv-sale đã dời lên promo banner đầu trang theo mẫu
