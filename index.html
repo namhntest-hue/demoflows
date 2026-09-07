@@ -13969,8 +13969,10 @@ document.body.insertAdjacentHTML('beforeend', `
   /* hàng "Trang chủ …/Tất cả …" — Figma 3358:55288: cùng khuôn 52px/padding 16
      và cùng 14/20 medium như hàng danh mục, chỉ khác là KHÔNG có chevron.
      Phân cấp nằm ở chỗ thiếu chevron chứ không phải ở font weight. */
-  const headRow = (label, extra = '') => `
-    <button data-nav="plp" ${extra} class="w-full flex items-center px-4 py-4 press">
+  /* `nav` mặc định 'plp' để ví dụ bật-lại ở comment màn con bên dưới vẫn đúng nguyên văn;
+     hàng "Trang chủ <ngành>" truyền 'home' (07/09/2026 — xem chỗ gọi). */
+  const headRow = (label, extra = '', nav = 'plp') => `
+    <button data-nav="${nav}" ${extra} class="w-full flex items-center px-4 py-4 press">
       <span class="t-multiline flex-1 min-w-0 text-left font-medium text-foreground truncate">${label}</span>
     </button>`;
   /* attrs điều hướng PLP chế độ danh mục (breadcrumb Trang chủ · dept [· cat]) */
@@ -14094,13 +14096,23 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>`
       : navRoot() + deptTabs() + `
         <div class="ms-view flex-1 overflow-y-auto overscroll-contain py-2">
-          <!-- Hàng "Trang chủ <ngành>" đẩy crumbs=[dept] cho MỌI ngành (26/08 chiều).
-               Trước đây chỉ Làm đẹp có, nên bấm "Trang chủ nữ" ra PLP chế độ 'brand'
-               — PLP đó không mang giới tính nào, nên bộ lọc hiện cây ĐỦ và không có
-               mục Độ cao giày; user yêu cầu chuyển sang trang chủ nữ là phải có ngay.
-               Đổi lại, PLP này giờ là chế độ 'category' (breadcrumb + tiêu đề) đúng
-               như "Trang chủ làm đẹp" vẫn làm từ trước. -->
-          ${headRow(d.home, `data-plp-title="${d.home}" data-plp-crumbs="${menuTab}"`)}
+          <!-- Hàng "Trang chủ <ngành>" nay đi ĐÚNG TRANG CHỦ của ngành đó (07/09/2026,
+               lệnh user: cho nó bằng với swap Nam/Nữ ở trang chủ bản desktop).
+               TRƯỚC ĐÓ nó là một cửa PLP: chốt 26/08 chiều đẩy crumbs=[dept] cho mọi ngành
+               để PLP mang giới tính, vì lúc ấy TRANG CHỦ THEO NGÀNH CHƯA TỒN TẠI — hàng này
+               là thứ gần nhất với "trang chủ nữ" mà bấm được. Nay trang chủ theo ngành đã có
+               nên hàng làm đúng thứ nhãn của nó nói.
+               Ý ĐỊNH 26/08 KHÔNG MẤT: chốt đó là "Độ cao giày phải hiện ngay khi user chuyển
+               qua trang chủ nữ, không phải đợi bấm Nữ > Giày". Mọi liên kết trên trang chủ
+               đều đẩy crumbs=[dept] (xem hmFashionDept), nên PLP mở TỪ trang chủ nữ vẫn cho
+               plpGender() = 'Nữ' và mục Độ cao giày vẫn hiện. Đường đi dài thêm một bước,
+               kết quả giữ nguyên.
+               ⚠ CHỖ MẤT, ghi để không tưởng là sót: drawer thôi có cửa vào PLP của CẢ NGÀNH
+               (crumbs chỉ có [dept], không có danh mục). Các hàng danh mục vẫn đẩy
+               crumbs=[dept, cat] nên PLP mang giới tính vẫn tới được; chỉ riêng "xem tất cả
+               hàng nữ" là không còn nút. Bản desktop cũng vậy sau lượt 07/09 — đứng ở trang
+               chủ bấm ngành hàng thì đổi trang chủ, không ra PLP nữa. -->
+          ${headRow(d.home, `data-ms-dept="${menuTab}"`, 'home')}
           ${d.cats.map(([label, sub], i) => row(label, sub ? `data-ms-sub="${i}"` : catAttrs(label, [menuTab]))).join('')}
         </div>
         <!-- Vùng tiện ích ghim đáy — tài khoản là TÍNH NĂNG, tách khỏi nhóm danh mục -->
@@ -14131,6 +14143,15 @@ document.body.insertAdjacentHTML('beforeend', `
     panel.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => {
       const v = b.dataset.authView; if (v) { authView = v; authViewIntent = true; }
       closeM();
+      /* Hàng "Trang chủ <ngành>": ghi ngành TỪ CHÍNH HÀNG (không đọc `menuTab` lúc bấm) rồi
+         dựng lại trang chủ. `force` là bắt buộc — đứng sẵn ở `home` thì tên màn không đổi nên
+         `go()` return sớm; đây đúng cái bẫy mà nhánh `login` ngay dưới phải vá bằng
+         `rerenderLogin()` từ trước khi có `opts.force`. */
+      if (b.dataset.nav === 'home') {
+        if (b.dataset.msDept) menuTab = b.dataset.msDept;
+        go('home', { force: true });
+        return;
+      }
       if (b.dataset.nav === 'plp') {
         // hàng danh mục -> PLP category (breadcrumb + tiêu đề); còn lại -> PLP brand
         /* 02/09: thêm nhánh THƯƠNG HIỆU. Hàng trong danh sách hãng mang
