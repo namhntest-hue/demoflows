@@ -2854,8 +2854,10 @@ window.RESP = (function () {
      lệch cột. `grid-cols-3` CÓ trong bản build, nhưng khai thành class riêng để khe 8
      và nhánh khổ nhỏ của khối này nằm chung một chỗ. */
   /* Ô TO HƠN (07/09/2026, lệnh user): 140 -> 210, bằng đúng ô của dải "Mặc gì cho dịp"
-     nên 2 dải ô ở trang chủ cùng một bề rộng. Lý do thật sự là NHÃN: nhãn nay đi bậc
-     trưng bày Libre Bodoni 24/32, ô 140 không đủ chỗ cho nó.
+     nên 2 dải ô ở trang chủ cùng một bề rộng. Lý do thật sự là NHÃN: nhãn nay nằm TRONG
+     hình nên ô phải đủ lòng cho nó.
+     Ô GIỮ 210 dù cùng ngày nhãn đã hạ về 18/24: căn cứ thứ nhất (2 dải ô cùng bề rộng)
+     độc lập với cỡ chữ nên vẫn sống — không kéo theo một lượt lùi thứ hai về 140.
      Số "3 ô một lượt" của lệnh là số ở khổ desktop; ở 375 thì 210 cho ra 1,8 ô — ô thứ
      hai ló ra, vẫn đọc ra là còn cuộn được. */
   .hm-cats { display: flex; gap: 8px; }
@@ -2880,13 +2882,65 @@ window.RESP = (function () {
     background: linear-gradient(to top, rgba(0,0,0,.45), transparent);
     pointer-events: none;
   }
-  /* Nhãn đi BẬC TRƯNG BÀY (07/09/2026, lệnh user: *"text cho to hơn và dùng text style
-     libre phù hợp"*). Bậc Libre Bodoni của bộ da chỉ có MỘT — 24/32 — và đường duy nhất
-     lên nó là chuỗi hook `text-[18px] font-medium leading-7` trên h1/h2/p; nhãn ở đây là
-     <p> nên đi thẳng vào hook đó, không đẻ bậc mới.
-     Đệm 12 -> 16 vì chữ to hơn cần lề tương ứng; 16 vẫn nằm trên thang 4/8/16/24.
-     Dùng chung cho CẢ dải danh mục lẫn dải "Mặc gì cho dịp" (cùng lượt 07/09). */
+  /* Nhãn mang chuỗi `text-[18px] font-medium leading-7` để lấy MẶT CHỮ từ hook mục 2
+     (dòng 2227) và để 4 bộ da kia vẽ nó ra 18/24 (dòng 1357 + 1363). CỠ thì rule ngay
+     dưới quyết — 18/24, tức RA KHỎI bậc trưng bày; xem lý do đầy đủ ở đó.
+     Đệm 12 -> 16 GIỮ nguyên: nó đúng thang 4/8/16/24 và độc lập với cỡ chữ.
+     Dùng chung cho CẢ dải danh mục lẫn dải "Mặc gì cho dịp" (cùng lượt 07/09).
+     KHAI GIỐNG HỆT ở index.html và desktop.html — thuộc nhóm "4 class đầu" của khối này. */
   .hm-cat-label { position: absolute; left: 16px; right: 16px; bottom: 16px; }
+
+  /* NHÃN RA KHỎI TẦNG TRƯNG BÀY, VỀ T2 18/24 — CHỈ BẢN MOBILE (07/09/2026, lệnh user:
+     *"các title libre bên trong hình ảnh ở trang chủ bản mobile đang to ngang với title
+     lớn, điều chỉnh lại size của title xuống"*).
+     ĐO TRƯỚC KHI SỬA @375 · dpr 2: tiêu đề mục (`hmSec`) và nhãn trong hình CÙNG 24/32 ·
+     400 · Libre — tỉ lệ 1,00, tức KHÔNG có bậc nào. Nhãn còn đọc ra TO HƠN vì nó nằm
+     trong lòng ô 178 còn tiêu đề mục có cả 343: cùng cỡ, hộp nhỏ hơn.
+     GỐC LỖI: cả hai đi CHUNG một chuỗi hook `text-[18px] font-medium leading-7` (hmSec
+     dòng ~6772 và nhãn dòng ~6884 · ~6957) nên chỉ tách được bằng selector.
+     VÌ SAO 18 VÀ KHÔNG PHẢI CỠ KHÁC — giao của ba điều luật, không phải thẩm mỹ:
+       · STYLE-RULES §1.2 cho đúng 5 cỡ 10·12·14·18·24, cấm đích danh 16 và 20;
+       · câu luật một dòng của 13.1 "từ 18 trở lên là Libre Bodoni chữ thường · dưới 18
+         là Inter" — trong 4 cỡ dưới 24 thì CHỈ 18 giữ được Libre;
+       · F1 "nét mảnh >= 1 pixel THIẾT BỊ", nét = 0,031 x cỡ, nên ngưỡng cỡ ở dpr 2 là
+         16,13px ⇒ 18 là bậc hợp pháp THẤP NHẤT còn đạt.
+     KHÔNG PHẢI BẬC MỚI: `html.skin-mt :where(.text-[18px])` (dòng 1357) +
+     `:where(.leading-7, ...)` (dòng 1363) đã vẽ đúng 18/24 cho chính chuỗi này ở 4 bộ da
+     kia, hôm nay, ở cả 2 file. Rule này chỉ thôi NÂNG nhãn lên 24/32 — nhãn rơi về đúng
+     bậc mà thang gốc vẫn cấp cho nó.
+     ⇒ 13.1 GIỮ NGUYÊN danh sách đóng 3 vai của tầng trưng bày (tiêu đề trang + tiêu đề
+     mục + brand PDP) và giữ nguyên "một bậc DUY NHẤT". Vai thứ 4 mà lượt trước nhét vào
+     nay bị LẤY RA, chứ không phải được cho thêm một bậc.
+     F2: dòng >= 1,14 x cỡ = 20,52 ⇒ dòng 24 cho 3,48px mực thoáng, lệch T0 (32/40 =
+     3,52px) đúng 0,04px. Tỉ lệ 24/18 = 1,333 = §1.3 nhánh "chữ không xuống dòng" (nhãn
+     có `truncate`) và đúng bước T1->T2 của §1.2.
+     ⚠ LỆCH F1 TRÊN VĂN BẢN — ghi danh ở STYLE-RULES §1.2 và FONT-LIBRE-INTER 13.8:
+       dpr 1,00 -> 0,558 (thiếu 44,2%) · dpr 1,25 -> 0,698 (thiếu 30,2%)
+       dpr 2,00 -> 1,116 (ĐẠT, vượt 11,6%) · dpr 3,00 -> 1,674 (ĐẠT)
+     Sàn CỠ suy ra của F1 ghi 24 cho màn >=2x nên 18 lệch VĂN BẢN, nhưng ĐIỀU KIỆN GỐC
+     (>=1 device px) thì ĐẠT ở dpr 2 và 3 — và phạm vi rule là mobile, nơi F1 tự ghi
+     "mọi điện thoại đều >=2x".
+     ⚠ CHỈ index.html. Ở desktop nhãn GIỮ 24/32: ô 448/330 cho lòng 416/298 nên 24 đọc ra
+     đúng vai overlay title (không có lỗi để sửa), còn 18 ở đó ra 0,558/0,698 device px —
+     đúng mức 0,56 mà 13.8 gọi tên là "bôi thành xám". Lệch §1.2 "thang chữ giống hệt 2
+     bản", ghi danh kèm nguyên nhân là BỐ CỤC: lòng 178 so với 416/298.
+     KHAI 4 DÒNG, không 2: mặt chữ hiện tới nhãn CHỈ qua chuỗi utility cũ, đúng cái bẫy mà
+     khối 2b phải sinh ra để vá (21 tiêu đề vẽ bằng Inter vì rule Bodoni chỉ bám utility).
+     Khai `font-family` + `font-weight` tại đây là nhãn thôi phụ thuộc chuỗi markup.
+     KHÔNG khai `letter-spacing` (0,5px tới từ `html.skin-mt body` dòng 1333 — §1.4 đòi
+     đúng một giá trị, một nguồn) và KHÔNG khai `text-transform` (markup không có
+     `uppercase`, mọi rule hoa của skin-mt đều scope theo vai, và hook 2227 vẫn cấp `none`).
+     `.hm-cat-media` là chỗ lấy điểm class thứ 4 để ra (0,4,2) và THẮNG BẰNG ĐIỂM trước
+     hook (0,3,2) — viết `p.hm-cat-label` trơn là ra (0,3,2), HOÀ, thắng-thua do thứ tự
+     khai. Rule nặng nhất của file là title lớp nổi (0,5,2) và nó KHÔNG trúng: nhãn thiếu
+     `.flex-1` và `.min-w-0`.
+     ĐẶT NGOÀI khối `skin-li` có chủ ý: khối đó giữ bất biến "giống hệt từng byte ở 2
+     file" (13.7 · 13.8 · §4.3 mục 4), còn khối trang chủ này là chỗ 2 file ĐÃ lệch có chủ
+     ý (gap 8 vs 24 · ô 210 vs 448 · ô dịp 210 vs 330). */
+  html.skin-mt.skin-li .hm-cat-media p.hm-cat-label {
+    font-size: 18px; line-height: 24px;
+    font-family: var(--font-head); font-weight: 400;
+  }
 
 
   /* 4 — HÀNG THẺ THƯƠNG HIỆU: DẢI TRƯỢT (desktop là lưới 5 ô).
@@ -11118,7 +11172,10 @@ const I18N = {
   'Tiệc tối':'Evening', 'Công sở':'The office', 'Dạo phố':'Off duty',
   /* Nhãn dịp rút ngắn 07/09: bậc chữ lên 24/32 nên 'Phụ kiện tinh tế' không vừa ô 210
      ở khổ máy (đo ra ~200px trong lòng 178). ĐỔI KHOÁ, không thêm khoá thứ hai — nhãn cũ
-     không còn chỗ dùng nào. */
+     không còn chỗ dùng nào.
+     ⚠ CÙNG NGÀY bậc nhãn hạ về 18/24 (xem rule .hm-cat-media p.hm-cat-label) nên chuỗi
+     cũ VỪA LẠI. Giữ 'Điểm nhấn' cho tới khi user chốt — đổi lại là đổi NỘI DUNG, không
+     phải đổi số đo; treo ở FONT-LIBRE-INTER 13.9. */
   'Điểm nhấn':'Finishing touches',
   'Bộ sưu tập':'Collection',
   'Đặc quyền thành viên':'Member benefits', 'Trả góp 0% lãi suất':'0% instalments',
