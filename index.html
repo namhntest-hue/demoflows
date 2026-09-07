@@ -2853,10 +2853,41 @@ window.RESP = (function () {
      không còn đọc ra là cái gì. `minmax(0, 1fr)` bắt buộc: để `1fr` thì nhãn dài đẩy
      lệch cột. `grid-cols-3` CÓ trong bản build, nhưng khai thành class riêng để khe 8
      và nhánh khổ nhỏ của khối này nằm chung một chỗ. */
-  .hm-cats { display: flex; gap: 4px; }
+  /* Ô TO HƠN (07/09/2026, lệnh user): 140 -> 210, bằng đúng ô của dải "Mặc gì cho dịp"
+     nên 2 dải ô ở trang chủ cùng một bề rộng. Lý do thật sự là NHÃN: nhãn nay đi bậc
+     trưng bày Libre Bodoni 24/32, ô 140 không đủ chỗ cho nó.
+     Số "3 ô một lượt" của lệnh là số ở khổ desktop; ở 375 thì 210 cho ra 1,8 ô — ô thứ
+     hai ló ra, vẫn đọc ra là còn cuộn được. */
+  .hm-cats { display: flex; gap: 8px; }
   /* Ô 140 ở khổ 375: vùng nội dung 343 nên thấy 2 ô rưỡi — ô thứ 3 ló ra là tín hiệu
      "còn cuộn được" rõ nhất mà không phải vẽ thêm gì. Bản cũ là lưới 3 cột x 2 hàng. */
-  .hm-cat { flex: 0 0 140px; }
+  .hm-cat { flex: 0 0 210px; }
+  /* NHÃN NẰM TRONG HÌNH + LỚP CHUYỂN MÀU (07/09/2026, lệnh user kèm 2 ảnh tham chiếu).
+     Trước đó nhãn nằm DƯỚI ảnh trong một hàng cao 32 — khuôn của `brandCatStrip`.
+     Nay nhãn đè lên ảnh ở góc dưới-trái, đọc được nhờ một dải tối dâng từ mép dưới.
+     ĐỘ TỐI KHÔNG PHẢI SỐ MỚI: `rgba(0,0,0,.45)` là đúng độ tối scrim mà app đang dùng ở
+     `.dk-scrim` (nền sau mega panel) và `.cg-backdrop` (nền sau thẻ Cookie) — gradient chỉ
+     là cùng giá trị đó kéo về trong suốt, nên bảng màu không phình thêm một sắc nào.
+     Hai chốt: gradient CHỈ phủ 55% dưới (phần trên ảnh giữ nguyên, không phủ toàn tấm) và
+     `pointer-events: none` để nó không ăn cú bấm của thẻ.
+     ⚠ 2/6 ô là PACKSHOT nền sáng (thắt lưng · nước hoa) nên dải tối trên đó đọc ra như một
+     vệt xám, không như 4 ô ảnh biên tập. Cách sửa thật là xin ảnh biên tập cho 2 danh mục
+     đó — đã nằm trong mục xin tư liệu của báo cáo; không vá bằng cách bỏ gradient ở 2 ô,
+     kẻo 6 ô cùng một hàng lại nói hai giọng. */
+  .hm-cat-media { position: relative; }
+  .hm-cat-scrim {
+    position: absolute; inset-inline: 0; bottom: 0; height: 55%;
+    background: linear-gradient(to top, rgba(0,0,0,.45), transparent);
+    pointer-events: none;
+  }
+  /* Nhãn đi BẬC TRƯNG BÀY (07/09/2026, lệnh user: *"text cho to hơn và dùng text style
+     libre phù hợp"*). Bậc Libre Bodoni của bộ da chỉ có MỘT — 24/32 — và đường duy nhất
+     lên nó là chuỗi hook `text-[18px] font-medium leading-7` trên h1/h2/p; nhãn ở đây là
+     <p> nên đi thẳng vào hook đó, không đẻ bậc mới.
+     Đệm 12 -> 16 vì chữ to hơn cần lề tương ứng; 16 vẫn nằm trên thang 4/8/16/24.
+     Dùng chung cho CẢ dải danh mục lẫn dải "Mặc gì cho dịp" (cùng lượt 07/09). */
+  .hm-cat-label { position: absolute; left: 16px; right: 16px; bottom: 16px; }
+
 
   /* 4 — HÀNG THẺ THƯƠNG HIỆU: DẢI TRƯỢT (desktop là lưới 5 ô).
      Đây là chỗ khổ máy quyết định thay mình: trần logo 22px là SỐ TUYỆT ĐỐI (chốt
@@ -3796,7 +3827,7 @@ function lookRailCards(title, n, selfIdx, w, badgeAt = -1) {
     .map(({ p, i }, k) => productCard(p, i, { w, noColors: true, model: true, badge: badge(k) })).join('');
 }
 
-function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false } = {}) {
+function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false, noQuick = false } = {}) {
   /* 27/08: 'Pre-order' THÔI làm nhãn đè ảnh — nó xuống đứng trước TÊN (xem dưới).
      Chặn ngay tại đây, một chỗ, nên 6 nơi gọi vẫn truyền `badge: 'Pre-order'` như
      cũ mà không phải sửa nơi nào. Nhãn khác (New Season…) vẫn đè ảnh bình thường. */
@@ -3818,10 +3849,14 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
       <div class="absolute top-2 left-0 flex flex-col items-start gap-1">
         ${pillBadges.map(b => `<span class="t-micro badge-label px-2 py-1 font-medium text-foreground">${b}</span>`).join('')}
       </div>` : ''}
-      <button class="quick-add press" data-quick="${i}" aria-label="Thêm nhanh vào giỏ"
+      <!-- noQuick (06/09/2026, lệnh user): TRANG CHỦ không có quick add — thẻ ở đó nhỏ
+           hơn thẻ PLP (170 so với 185) và nút tròn 36 chiếm gần 1/5 bề ngang ô ảnh.
+           Bản mobile chỉ có MỘT lối quick add là nút này; lớp size rê chuột là của bản
+           desktop. PLP và PDP không đụng. -->
+      ${noQuick ? '' : `<button class="quick-add press" data-quick="${i}" aria-label="Thêm nhanh vào giỏ"
         style="display:flex;min-width:36px;min-height:36px;padding:var(--2, 8px);justify-content:center;align-items:center;position:absolute;right:8px;bottom:8px;border-radius:var(--rounded-infinite, 9999px);border:1px solid var(--general-border, #E5E5E5);background:var(--general-background, #FFF);">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="m21,6h-3c0-3.309-2.691-6-6-6s-6,2.691-6,6h-3c-1.654,0-3,1.346-3,3v10.5c0,2.481,2.019,4.5,4.5,4.5h12c.276,0,.5-.224.5-.5s-.224-.5-.5-.5H4.5c-1.93,0-3.5-1.57-3.5-3.5v-10.5c0-1.103.897-2,2-2h3v3.5c0,.276.224.5.5.5s.5-.224.5-.5v-3.5h10v3.5c0,.276.224.5.5.5s.5-.224.5-.5v-3.5h3c1.103,0,2,.897,2,2v7.5c0,.276.224.5.5.5s.5-.224.5-.5v-7.5c0-1.654-1.346-3-3-3Zm-14,0c0-2.757,2.243-5,5-5s5,2.243,5,5H7Zm17,13.5c0,.276-.224.5-.5.5h-3.5v3.5c0,.276-.224.5-.5.5s-.5-.224-.5-.5v-3.5h-3.5c-.276,0-.5-.224-.5-.5s.224-.5.5-.5h3.5v-3.5c0-.276.224-.5.5-.5s.5.224.5.5v3.5h3.5c.276,0,.5.224.5.5Z" fill="var(--general-primary, #0a0a0a)"/></svg>
-      </button>
+      </button>`}
     </div>
     <div class="flex flex-col px-1 py-2">
       <div class="flex flex-col gap-0.5 pb-2">
@@ -6755,7 +6790,7 @@ function hmSec(title, right, body, tag = 'h2') {
    "Câu chuyện" chính là gạch "Landing pages hili" trong slide feedback của khách. Bật lại
    chỉ tốn đổi `false` thành `true` — hàm dựng, CSS và khoá i18n vẫn còn nguyên.
    ⚠ Vì vậy `hmStories()`/`HM_STORIES` KHÔNG phải code chết: chúng đang chờ công tắc. */
-const HM_SHOW = { sale: false, stories: false };
+const HM_SHOW = { sale: false, stories: false, quickAdd: true };
 
 /* PROMO BANNER — CÓ CÔNG TẮC (06/09/2026, feedback khách). Đặt `null` là TẮT, cả khối
    biến mất, không để lại khoảng trống. Ảnh kv-sale.jpg (1600x600) khớp tỉ lệ tuyệt đối,
@@ -6813,7 +6848,7 @@ function hmHero() {
 function hmRail(list) {
   return `
       <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
-        ${list.map(({ p, i }) => productCard(p, i, { noColors: true, noName: true, w: 'w-[170px] shrink-0' })).join('')}
+        ${list.map(({ p, i }) => productCard(p, i, { noColors: true, noName: true, noQuick: !HM_SHOW.quickAdd, w: 'w-[170px] shrink-0' })).join('')}
       </div>`;
 }
 
@@ -6843,11 +6878,10 @@ function hmCatTiles() {
       <div class="hm-cats drag-x overflow-x-auto no-scrollbar px-4">
         ${HM_CATS.map(([img, pos, label, dept]) => `
         <button data-hm-cat="${label}"${dept ? ` data-hm-dept="${dept}"` : ''} class="hm-cat flex flex-col press group text-left">
-          <div class="w-full aspect-square overflow-hidden ${img === 'b1.jpg' ? 'bg-accent-0' : 'bg-secondary'}">
+          <div class="hm-cat-media w-full aspect-square overflow-hidden ${img === 'b1.jpg' ? 'bg-accent-0' : 'bg-secondary'}">
             <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]" style="object-position:${pos}">
-          </div>
-          <div class="flex flex-col gap-0.5 p-1 h-8 justify-center">
-            <p class="t-single font-medium text-foreground truncate">${label}</p>
+            <span class="hm-cat-scrim" aria-hidden="true"></span>
+            <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>
           </div>
         </button>`).join('')}
       </div>`;
@@ -6908,7 +6942,7 @@ const HM_OCCASIONS = [
   ['p1-1.jpg',  'Tiệc tối',         'Quần áo'],
   ['p5-1.jpg',  'Công sở',          'Giày dép'],
   ['p3-1.jpg',  'Dạo phố',          'Túi xách'],
-  ['p10-1.jpg', 'Phụ kiện tinh tế', 'Phụ kiện'],
+  ['p10-1.jpg', 'Điểm nhấn', 'Phụ kiện'],
 ];
 
 function hmOccasions() {
@@ -6917,11 +6951,10 @@ function hmOccasions() {
     `<div class="hm-occ drag-x overflow-x-auto no-scrollbar px-4">
         ${HM_OCCASIONS.map(([img, label, cat]) => `
         <button data-hm-cat="${cat}" class="hm-occ-item flex flex-col press group text-left">
-          <div class="w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
+          <div class="hm-cat-media w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
             <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
-          </div>
-          <div class="flex items-center p-1 h-8">
-            <p class="t-lead text-foreground truncate">${label}</p>
+            <span class="hm-cat-scrim" aria-hidden="true"></span>
+            <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>
           </div>
         </button>`).join('')}
       </div>`)
@@ -11083,7 +11116,10 @@ const I18N = {
   'Broken Jewels — hoạ tiết đặc trưng của Versace':'Broken Jewels — the Versace signature print',
   'Mặc gì cho dịp':'What to wear for', 'Câu chuyện tại DAFC':'Stories at DAFC',
   'Tiệc tối':'Evening', 'Công sở':'The office', 'Dạo phố':'Off duty',
-  'Phụ kiện tinh tế':'Finishing touches',
+  /* Nhãn dịp rút ngắn 07/09: bậc chữ lên 24/32 nên 'Phụ kiện tinh tế' không vừa ô 210
+     ở khổ máy (đo ra ~200px trong lòng 178). ĐỔI KHOÁ, không thêm khoá thứ hai — nhãn cũ
+     không còn chỗ dùng nào. */
+  'Điểm nhấn':'Finishing touches',
   'Bộ sưu tập':'Collection',
   'Đặc quyền thành viên':'Member benefits', 'Trả góp 0% lãi suất':'0% instalments',
   'Đổi trả miễn phí 7 ngày':'Free 7-day returns',
@@ -14935,6 +14971,15 @@ document.body.insertAdjacentHTML('beforeend', `
 /* Cột mô tả GIỮ LẠI TRONG DATA nhưng KHÔNG render (chốt 17/08/2026, yêu cầu
    user): pop up chỉ hiện đúng 4 nhãn, không chú thích gì thêm. Để nguyên chuỗi
    ở đây + key i18n tương ứng để bật lại chỉ tốn 1 dòng markup. */
+/* CÔNG TẮC THẺ COOKIE (06/09/2026, lệnh user: *"tạm ẩn cái popup cookies nhé"*).
+   TẠM ẨN nên đi bằng công tắc, không xoá: nội dung thẻ là bản khách đã duyệt 17/08, và
+   panel "Tùy chọn Cookie" đã chốt riêng 18/08 — dựng lại thì tốn cả hai. Đổi `false`
+   thành `true` là thẻ tự trượt lên như cũ.
+   Ẩn ở đây nghĩa là KHÔNG TỰ MỞ. Markup + toàn bộ handler vẫn dựng bình thường, nên mọi
+   lối mở bằng tay (`window.__openCookiePrefs` nếu sau này cần, hay gọi từ console) vẫn
+   chạy — chỉ có hẹn giờ 700ms lúc vào trang là thôi bắn. */
+const COOKIE_AUTO = false;
+
 const COOKIE_CATS = [
   ['need',  'Cookie cần thiết (luôn bật, không thể tắt)', 'Luôn bật, không thể tắt. Giữ cho website hoạt động: giỏ hàng, đăng nhập, bảo mật.', true],
   ['stats', 'Cookie hiệu năng & phân tích',               'Đo lường lượt truy cập và hiệu quả hoạt động để cải thiện trải nghiệm.',            false],
@@ -15076,7 +15121,7 @@ document.body.insertAdjacentHTML('beforeend', `
 
   localizeNew(g);
   /* chờ màn đầu vẽ xong rồi mới trượt lên, cho giống banner thật */
-  setTimeout(openG, 700);
+  if (COOKIE_AUTO) setTimeout(openG, 700);
 })();
 
 /* ── Sheet chọn 1 giá trị từ danh sách (tỉnh/thành, phường/xã) ──

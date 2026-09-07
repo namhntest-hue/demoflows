@@ -11,6 +11,26 @@ Hai phiên bản dùng chung assets/tokens/tailwind.css, **nối với nhau ở 
 - `index.html` — bản **mobile**, dùng khi bề ngang **< 768px** (thiết kế theo 360–412px)
 - `desktop.html` — bản **desktop**, dùng khi bề ngang **≥ 768px**, nội dung bó trong max-w 1440 (xem mục "Bản desktop")
 
+## Bản đồ thư mục
+
+| Ở gốc | |
+|---|---|
+| `index.html` · `desktop.html` | 2 bản demo chính |
+| `desktop-neutral` · `desktop-editorial` · `desktop-atelier`.html | 3 bản fork bộ da (đóng băng từ 21/08/2026) |
+| `main.html` | Trang cổng 3 ngành hàng |
+| `home.html` | Trang chủ dựng bằng CSS ngữ nghĩa — **tư liệu hướng đã thử**, không phải bản đang chạy |
+| `assets/` · `tokens.css` · `tokens07.json` · `gen_tokens.py` · `tailwind.css` · `in.css` · `tailwind.config.js` · `shadcn-theme/` | Ảnh, token, CSS build — **đang chạy, đừng xoá** |
+
+| Thư mục ghi chú | |
+|---|---|
+| `_notes/` — **chỉ có trên máy, không đẩy lên GitHub** (`.gitignore`) | 37 file ghi chú làm việc: luật đang có hiệu lực (`STYLE-RULES.md` · `FONT-LIBRE-INTER.md` · `NAMING-MAGENTO.md`), danh sách việc còn mở, nhật ký thi hành từng trang. Mục lục đầy đủ ở `_notes/README.md` |
+| [`_archive/`](_archive/README.md) | File đã hết việc — demo cũ, PNG cũ, báo cáo một-lần đã tiêu hoá xong. Gom 04/09/2026 |
+
+> Gom `_notes/` ngày **07/09/2026** để gốc repo chỉ còn README + code, và cho vào `.gitignore`
+> theo yêu cầu — **bản trên GitHub không có thư mục này**, file vẫn nằm nguyên ở máy. Chưa xoá
+> gì. Tên file `.md` viết trong backtick ở README này và trong comment các file HTML vẫn giữ
+> nguyên: chúng là ghi chú lịch sử, không phải link.
+
 ## TRANG CHỦ — screen `home` (04/09/2026, CẢ 2 BẢN)
 
 Lệnh user: *"giả sử trang home bạn không bị ràng buộc bởi bất kì skill hay rule nào thì dựa
@@ -443,7 +463,7 @@ User: *"sao khi tôi chuyển font mix thì lại mất uppercase nhỉ, ở ski
 
 ## Dọn TOÀN BỘ điểm lệch theo STYLE-RULES + bộ shadcn (24/08/2026, CẢ 2 BẢN)
 
-Sau bản dò [AUDIT-TYPO-SHADCN-2026-08-24.md](AUDIT-TYPO-SHADCN-2026-08-24.md), user: *"hãy sửa tất cả các điểm còn lệch vào luôn"*. Chi tiết luật + 4 quyết định mới ghi ở `STYLE-RULES.md` **Phần 7**; đây là phần "làm thế nào".
+Sau bản dò `_notes/AUDIT-TYPO-SHADCN-2026-08-24.md`, user: *"hãy sửa tất cả các điểm còn lệch vào luôn"*. Chi tiết luật + 4 quyết định mới ghi ở `STYLE-RULES.md` **Phần 7**; đây là phần "làm thế nào".
 
 | Trục | Trước (mobile · desktop) | Sau |
 |---|---|---|
@@ -2610,7 +2630,7 @@ Khớp sản phẩm bằng **tên + giá trùng khít** với `PRODUCTS`:
 
 > Bản cũ dùng text tự viết và **sai nội dung**: `pdp` + `pdp4` đều tả "túi satchel canvas A.P.C." trong khi SP#1 là đầm lụa Versace và SP#4 là giày cao gót Versace (tab "Về thương hiệu APC" cũng sai theo). Đã sửa cả tab thương hiệu về Versace.
 
-> **Lượt 2 — 26/08/2026, kéo ĐỦ ĐỘ DÀI THẬT (mobile)**: lượt 05/08 mới lấy đoạn mô tả + **một câu `care` đã rút gọn**, nên không đo được ô cần cuộn hay không. Nay mỗi entry mang trọn 3 panel như trang thật (`meta` dòng nhãn:giá trị · `careLead` câu dẫn · `care` thành **mảng bullet nguyên văn**), thêm 2 hằng dùng chung `CARE_SHOES` (bộ bullet giày, 3 đôi dùng chung) + `RETURN_POLICY` (khối đổi hàng, **giống hệt trên cả 6 trang thật**), và một hàm `pdpTabs(i)` dựng nội dung cho cả 6 màn. Số đo từng ô (cả 2 khổ), phương án scroll và các mục chờ chốt: **[PDP-DATA-THAT.md](PDP-DATA-THAT.md)**. Làm ở **CẢ 2 BẢN** cùng ngày; desktop vốn chỉ có MỘT renderer `dkScreenPDP` nên chỉ phải đổi `pdpTabs` — kèm bỏ 2 tuỳ chọn `specs` / `returnTab` và 2 hằng `PDP_RETURN_TAB` / `PDP_BRAND_TAB`. **3 bản fork desktop** (`desktop-neutral` / `desktop-editorial` / `desktop-atelier`) vẫn dùng data rút gọn của lượt 1.
+> **Lượt 2 — 26/08/2026, kéo ĐỦ ĐỘ DÀI THẬT (mobile)**: lượt 05/08 mới lấy đoạn mô tả + **một câu `care` đã rút gọn**, nên không đo được ô cần cuộn hay không. Nay mỗi entry mang trọn 3 panel như trang thật (`meta` dòng nhãn:giá trị · `careLead` câu dẫn · `care` thành **mảng bullet nguyên văn**), thêm 2 hằng dùng chung `CARE_SHOES` (bộ bullet giày, 3 đôi dùng chung) + `RETURN_POLICY` (khối đổi hàng, **giống hệt trên cả 6 trang thật**), và một hàm `pdpTabs(i)` dựng nội dung cho cả 6 màn. Số đo từng ô (cả 2 khổ), phương án scroll và các mục chờ chốt: **`_notes/PDP-DATA-THAT.md`**. Làm ở **CẢ 2 BẢN** cùng ngày; desktop vốn chỉ có MỘT renderer `dkScreenPDP` nên chỉ phải đổi `pdpTabs` — kèm bỏ 2 tuỳ chọn `specs` / `returnTab` và 2 hằng `PDP_RETURN_TAB` / `PDP_BRAND_TAB`. **3 bản fork desktop** (`desktop-neutral` / `desktop-editorial` / `desktop-atelier`) vẫn dùng data rút gọn của lượt 1.
 
 > **Chỗ chật lộ ra khi đo desktop** (có từ trước, không do data): cột `.dk-sticky-info` ghim ở `top: 152px` nên chỉ có `900 − 152 = 748px`, mà cột **đóng hết 4 ô đã cao 762px**; mở ô dài nhất (bảo quản túi da) là 1.140px. Đuôi không mất — cha cột cao 1.731px nên sau ~591px cuộn là cột nhả ghim và trôi lên — nhưng cảm giác là cuộn một đoạn thấy trang không nhích rồi cả cột đột ngột trượt. 3 phương án ở PDP-DATA-THAT.md mục 3.2, **chưa chốt**.
 
