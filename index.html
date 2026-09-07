@@ -2853,17 +2853,31 @@ window.RESP = (function () {
      không còn đọc ra là cái gì. `minmax(0, 1fr)` bắt buộc: để `1fr` thì nhãn dài đẩy
      lệch cột. `grid-cols-3` CÓ trong bản build, nhưng khai thành class riêng để khe 8
      và nhánh khổ nhỏ của khối này nằm chung một chỗ. */
-  /* Ô TO HƠN (07/09/2026, lệnh user): 140 -> 210, bằng đúng ô của dải "Mặc gì cho dịp"
+  /* Ô TO HƠN (07/09/2026, lệnh user): 140 -> 210, bằng đúng ô của dải "Lựa chọn theo mùa"
      nên 2 dải ô ở trang chủ cùng một bề rộng. Lý do thật sự là NHÃN: nhãn nay nằm TRONG
      hình nên ô phải đủ lòng cho nó.
      Ô GIỮ 210 dù cùng ngày nhãn đã hạ về 18/24: căn cứ thứ nhất (2 dải ô cùng bề rộng)
      độc lập với cỡ chữ nên vẫn sống — không kéo theo một lượt lùi thứ hai về 140.
      Số "3 ô một lượt" của lệnh là số ở khổ desktop; ở 375 thì 210 cho ra 1,8 ô — ô thứ
      hai ló ra, vẫn đọc ra là còn cuộn được. */
-  .hm-cats { display: flex; gap: 8px; }
-  /* Ô 140 ở khổ 375: vùng nội dung 343 nên thấy 2 ô rưỡi — ô thứ 3 ló ra là tín hiệu
-     "còn cuộn được" rõ nhất mà không phải vẽ thêm gì. Bản cũ là lưới 3 cột x 2 hàng. */
-  .hm-cat { flex: 0 0 210px; }
+  /* 4 Ô, KHE 2px, LƯỚI 2x2 (07/09/2026, lệnh user kèm hình tham chiếu — ảnh của khách
+     vẽ desktop 4 ô một hàng và mobile 2x2, nên bản này theo đúng ảnh đó).
+     VÌ SAO KHÔNG 4 Ô MỘT HÀNG Ở ĐÂY: ở 375 thì 4 ô ra (375 − 3x2)/4 = 92,25 — nhãn trong
+     hình của ngành Nữ là Inter HOA và chuỗi dài nhất `QUÀ TẶNG` đo được 78,6px, tức gần
+     kín ô 92 và tràn ngay khi chuỗi dài hơn một chữ. 2x2 cho ô 186,5, thoáng.
+     ✅ ĐÃ CHỐT, KHÔNG PHẢI LỆCH TREO (user 07/09/2026: *"mobile 2x2 nhé"*).
+     Ghi rõ vì nó đi ngược một chốt CŨ: 05/09 user nói *mọi carousel ở trang chủ chỉ MỘT
+     HÀNG, cả 2 bản*. Hai chốt KHÔNG đá nhau — chốt 05/09 nói về CAROUSEL (để người dùng tự
+     lướt thay vì xếp nhiều hàng), còn khối này 07/09 thôi là carousel: nó thành LƯỚI CỐ
+     ĐỊNH 4 ô, không cuộn, không mũi tên. Phạm vi chốt 05/09 vì thế không còn phủ tới đây.
+     ⚠ ĐỪNG "KHÔI PHỤC GIÚP" VỀ MỘT HÀNG. Lượt sau đọc chốt 05/09 rồi tự sửa là đi ngược
+     lệnh mới nhất; và 4 ô một hàng ở 375 vốn bất khả (số đo ngay trên). */
+  /* FULL-BLEED, bỏ `px-4`: khe 2 chỉ có nghĩa khi mép ngoài cũng sát mép màn, đúng như
+     ảnh tham chiếu. Trang đã có tiền lệ full-bleed ở banner, hero và ảnh spotlight. */
+  .hm-cats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; }
+  /* `.hm-cat` thôi giữ bề rộng: từ 07/09 khối là LƯỚI, cột do `.hm-cats` chia. `min-width: 0`
+     là rào bắt buộc của ô lưới — không có nó thì nhãn dài đẩy cột rộng ra khỏi phần chia. */
+  .hm-cat { min-width: 0; }
   /* NHÃN NẰM TRONG HÌNH + LỚP CHUYỂN MÀU (07/09/2026, lệnh user kèm 2 ảnh tham chiếu).
      Trước đó nhãn nằm DƯỚI ảnh trong một hàng cao 32 — khuôn của `brandCatStrip`.
      Nay nhãn đè lên ảnh ở góc dưới-trái, đọc được nhờ một dải tối dâng từ mép dưới.
@@ -2888,10 +2902,30 @@ window.RESP = (function () {
      75px mỗi bên của dải nền trống. Đây là phép cắt duy nhất trong các tỉ lệ đã cân giữ
      được trọn chủ thể. */
   .hm-spot { position: relative; }
-  .hm-spot-photo { display: block; aspect-ratio: 9 / 16; }
+  /* CHIỀU CAO HẠ 667 -> 464 (07/09/2026, lệnh user: *"mobile cũng giảm chiều cao xuống"*).
+     464 KHÔNG phải số chọn: `1200 / 1484` là tỉ lệ CỦA CHÍNH ẢNH NGUỒN, và nó là tỉ lệ
+     CHUẨN của cả kho ảnh sản phẩm DAFC — đo cả bộ p* / d* / z* / brand-hero đều đúng
+     1200x1484. Panel mang đúng tỉ lệ đó thì `object-fit: cover` KHÔNG CẮT một pixel nào,
+     cả ngang lẫn dọc. Ở 375 nó ra 463,75.
+     ⇒ Lượt này GIẢM 30% chiều cao mà lại BỚT cắt ảnh, không phải đánh đổi: bản 9/16 cũ
+     (667) đang cắt NGANG 164px (82 mỗi bên), tức ăn vào hai dải nền trống hai bên —
+     chính hai dải làm nhãn đọc được. Nay hai dải đó trở lại đủ.
+     Đo chuỗi các mốc: 667 cắt ngang 164 · 520 cắt 45 · 480 cắt 13 · **464 cắt 0** ·
+     440 bắt đầu cắt DỌC 24 · 400 cắt dọc 64. Hạ dưới 464 là bắt đầu cắt người.
+     Khối chữ cao 260 + lề 16 = 276, còn 188 ảnh hở phía trên. */
+  .hm-spot-photo { display: block; aspect-ratio: 1200 / 1484; }
   .hm-spot-veil {
-    position: absolute; inset-inline: 0; bottom: 0; height: 58%;
-    background: linear-gradient(to top, rgba(255,255,255,.78) 0%, rgba(255,255,255,.78) 42%, transparent 100%);
+    /* HINH HOC TINH BANG PX, KHONG BANG %, va day la loi da sua: ban cu khai 58% + vet dac
+       toi 42%, nen o panel 464 thi vet dac chi cao 113 trong khi khoi chu chiem 276 tinh tu
+       day — phan tren cua khoi chu (gom nhan nho 12/16, phan tu yeu nhat) roi vao doan doc
+       cua gradient. % con sai them o dai hep desktop, noi panel cao gap 2-3 lan ma khoi chu
+       van dung 276.
+       340 va 82% chon theo KHOI CHU: vet dac = 0,82 x 340 = 278,8 >= 276, tuc phu TRON khoi
+       chu; con 61px tren do la doan doc de mep veil khong thanh duong ke.
+       Kiem lai o panel 375x464, vung chu nguon y 601-1432: o 10px toi nhat 26,9 -> muc den
+       KHONG veil chi 1,15:1, CO veil .78 thi nen len 205 -> 12,43:1. */
+    position: absolute; inset-inline: 0; bottom: 0; height: 340px;
+    background: linear-gradient(to top, rgba(255,255,255,.78) 0%, rgba(255,255,255,.78) 82%, transparent 100%);
     pointer-events: none;
   }
   .hm-spot-copy {
@@ -2911,6 +2945,56 @@ window.RESP = (function () {
      giữ panel 9/16 và 3 ô XẾP DỌC; khác bản Nam đúng ở SỐ Ô (3 thay vì 2) và ở nhãn HOA. */
   .hm-spot-brands { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .hm-spot-brand-photo { height: 160px; }
+  /* NHÃN THƯƠNG HIỆU VÀO TRONG HÌNH (07/09/2026, lệnh user: *"nội dung text trong hình
+     luôn nhé"*, ảnh Ounass Block 2). Trước đó wordmark + dòng đếm nằm DƯỚI ảnh.
+     GÓC DƯỚI-TRÁI VÀ MỰC TỐI — đo bằng PIL trên đúng phép cắt của ô 443x160:
+       ảnh          1/3 TRÁI                phần GIỮA (chủ thể)
+       p3-1.jpg     241,0 lệch 0,00         ô 12px tối nhất 19,2
+       d1-1.jpg     241,0 lệch 0,00         ô 12px tối nhất 34,1
+       z2-1.jpg     234,6 lệch 7,70         ô 12px tối nhất 54,6
+     ⇒ mực #0a0a0a ở 1/3 trái cho **17,53 · 17,53 · 13,50 : 1**; ở phần giữa chỉ 1,07-1,65.
+     Chữ TRẮNG thì trượt ở MỌI chỗ (1,09-1,22) vì 3 ảnh đều là ảnh nền sáng.
+     Nên: nhãn nằm trong 1/3 trái, mực tối, KHÔNG scrim — cùng luật đã dùng cho Block 1.
+     TRẦN WORDMARK 12: do ô HẸP NHẤT chốt (ngành Nữ, 443 -> 1/3 trái = 148, trừ lề 16 còn
+     132) và `brand-logo-dg.png` tỉ lệ 9,907 ở cao 12 ra rộng 118,9 <= 132. Đây đúng con số
+     trần của hàng 5 thẻ sau lượt W 132, nên 2 mặt thương hiệu trên trang cùng một trần.
+     Ô của ngành Nam rộng 677 (1/3 = 225) nên CÒN CHỖ cho wordmark lớn hơn — không dùng để
+     khỏi sinh hai trần; muốn tách thì nói.
+     `pointer-events: none` để cả tấm vẫn là một cửa bấm vào PLP của hãng. */
+  .hm-spot-brand { position: relative; }
+  /* VEIL SÁNG CHO Ô THƯƠNG HIỆU — chỉ bật ở khổ HẸP, và đó là số đo bắt phải thế.
+     Dải phẳng của ảnh rộng 300 pixel NGUỒN. Nhãn ở trần 12 rộng 118,9 + lề 16 nên mép phải
+     của nó nằm ở 134,9 pixel HIỆN; quy về nguồn thì phụ thuộc zoom của ô:
+       ô 676 (ngành Nam, desktop)  zoom 0,564  -> nhãn tới nguồn 239   < 300  ✓ trong dải phẳng
+       ô 443 (ngành Nữ, desktop)   zoom 0,369  -> nhãn tới nguồn 366   ~ sát  ✓ đo được 17,5:1
+       ô 343 (khổ máy)             zoom 0,286  -> nhãn tới nguồn 472   > 300  ✗ TRÀN vào chủ thể
+     Đo đúng vùng chữ ở ô 343: ô 10px tối nhất là 57,9 (D&G) · 95,1 (Zimmermann) · 131,0
+     (Versace) -> mực đen ra 1,74 · 3,10 · 5,22 : 1, tức 2/3 ảnh TRƯỢT ngưỡng 4,5.
+     Trắng .78 đưa 3 số đó lên 211,6 · 220 · 227 -> 13,2 · 14,3 · 15,2 : 1. Phủ lên dải
+     phẳng 241 thì thành 252, gần như không thấy đổi — cùng tính chất với `.hm-spot-veil`.
+     Ở desktop TẮT: nhãn nằm trong dải phẳng nên veil chỉ làm mờ ảnh mà không đổi gì. */
+  .hm-spot-brand-veil {
+    position: absolute; inset-inline: 0; bottom: 0; height: 58%;
+    background: linear-gradient(to top, rgba(255,255,255,.78) 0%, rgba(255,255,255,.78) 42%, transparent 100%);
+    pointer-events: none;
+  }
+  .hm-spot-brand-cap {
+    /* RỘNG THEO NỘI DUNG, KHÔNG THEO %. Bản đầu khai `width: calc(33.333% - 16px)` và ĐO
+       RA LỖI ở khổ máy: ô 343 cho cap 98,4 mà `brand-logo-dg.png` ở trần 12 cần 118,9, nên
+       `max-width: 100%` bóp nó lại -> D&G ra cao 9,9 · Zimmermann 11,8 · Versace 12, tức
+       mỗi hãng một chiều cao. Để cap tự co theo nội dung thì trần 12 luôn được tôn trọng. */
+    position: absolute; left: 16px; bottom: 16px; width: auto; max-width: calc(100% - 32px);
+    display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+    pointer-events: none;
+  }
+  /* TRẦN 12 PHẢI KHAI BẰNG CSS, KHÔNG BẰNG UTILITY. Bản đầu dùng `h-[12px]` và ĐO RA LỖI:
+     lớp đó KHÔNG có trong bản Tailwind build sẵn nên chết âm thầm, rồi ảnh bị flex kéo đầy
+     bề rộng cap -> mỗi hãng một chiều cao (Versace 22,4 · D&G 13,3 · Zimmermann 15,8), tức
+     vỡ đúng cái trục quang học mà trần này tồn tại để giữ.
+     Khuôn giống hệt `.hm-brand-card img` của hàng 5 thẻ — một cách khai, hai chỗ dùng. */
+  .hm-spot-brand-cap img {
+    max-height: 12px; max-width: 100%; width: auto; height: auto; object-fit: contain;
+  }
 
   .hm-cat-media { position: relative; }
   .hm-cat-scrim {
@@ -2922,7 +3006,7 @@ window.RESP = (function () {
      (dòng 2227) và để 4 bộ da kia vẽ nó ra 18/24 (dòng 1357 + 1363). CỠ thì rule ngay
      dưới quyết — 18/24, tức RA KHỎI bậc trưng bày; xem lý do đầy đủ ở đó.
      Đệm 12 -> 16 GIỮ nguyên: nó đúng thang 4/8/16/24 và độc lập với cỡ chữ.
-     Dùng chung cho CẢ dải danh mục lẫn dải "Mặc gì cho dịp" (cùng lượt 07/09).
+     Dùng chung cho CẢ dải danh mục lẫn dải "Lựa chọn theo mùa" (cùng lượt 07/09).
      KHAI GIỐNG HỆT ở index.html và desktop.html — thuộc nhóm "4 class đầu" của khối này. */
   .hm-cat-label { position: absolute; left: 16px; right: 16px; bottom: 16px; }
 
@@ -3043,12 +3127,47 @@ window.RESP = (function () {
   .hm-brand-card img { max-height: 12px; max-width: 100%; width: auto; height: auto; object-fit: contain; }
   /* ══ TRANG CHỦ — 3 KHỐI THEO FEEDBACK KHÁCH 06/09/2026 (bản mobile) ══════════
      Spotlight xếp dọc nên KHÔNG cần class riêng (ảnh full-bleed + khối chữ px-4).
-     Còn 3 thứ phải khai: dải ô "Mặc gì cho dịp" · hàng USP 2 cột · dải thẻ câu chuyện.
+     Còn 3 thứ phải khai: dải ô "Lựa chọn theo mùa" · hàng USP 2 cột · dải thẻ câu chuyện.
      Ô rộng HẰNG SỐ như mọi dải khác của trang chủ — xem ghi chú `.hm-cat`. */
-  .hm-occ { display: flex; gap: 8px; }
+  /* NHẤN MÀU NỀN (07/09/2026, lệnh user) — xem phép tính và lý do chọn token ở bản
+     desktop. Ở khổ máy khối là DẢI TRƯỢT nên băng phải full-bleed và đệm ngang đi vào
+     `padding-inline` của chính dải (nó vốn đã có 16 để ô đầu không dính mép); thêm đệm dọc
+     24 là đủ, không lấy 32 của desktop vì ở đây khối hẹp hơn nhiều. */
+  .hm-occ {
+    display: flex; gap: 8px;
+    padding-block: 24px; background: var(--unofficial-accent-0);
+  }
   .hm-occ-item { flex: 0 0 210px; }
   /* USP 2 CỘT ở khổ máy: 4 mục một hàng thì nhãn dài nhất còn ~78px và vỡ 3 dòng. */
-  .hm-usp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+  /* MỘT CỘT, KHÔNG PHẢI HAI (07/09/2026) — và đây là lỗi đã đo rồi sửa, không phải chọn:
+     lượt đưa icon xuống CẠNH nhãn làm mỗi mục cần 16 (icon) + 8 (khe) + bề rộng nhãn. Nhãn
+     dài nhất `Đổi trả miễn phí 7 ngày` đo ra ~154 ⇒ cần 178, mà 2 cột ở 375 chỉ cho mỗi ô
+     160. Kết quả: 2/4 mục vỡ 2 dòng, hàng thành răng cưa (đo được ô 1-2 cao 16, ô 3-4 cao 32).
+     Một cột thì mỗi mục có trọn 343 — mọi nhãn một dòng, và khối vẫn ngắn hơn bản cũ:
+       bản cũ (icon TRÊN nhãn, 2 cột, đệm 32): 176
+       bản này (icon CẠNH nhãn, 1 cột, khe 8, đệm 24): 136  -> giảm 23%
+     Khe 8 chứ không 24: 4 mục cùng một danh sách thì khe hàng phải nhỏ hơn khe giữa các
+     KHỐI, kẻo 4 dòng đọc ra như 4 khối rời.
+     Canh TRÁI (không canh giữa như bản desktop): một cột 4 dòng là một DANH SÁCH, mà danh
+     sách thì căn lề trái mới đọc thành cột. */
+  .hm-usp { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  /* Băng nhấn màu của hàng USP — khuôn y hệt `footer()`: mảng màu TRÀN MÉP, khung 1440
+     nằm trong. Chỉ khai màu ở đây, mọi số đo đệm vẫn ở `.hm-usp`. */
+  .hm-usp-band { background: var(--unofficial-accent-0); }
+  /* CỠ ICON CỦA HÀNG USP — khai bằng CSS THẬT, không dựa vào biến thể utility.
+     Lý do: mọi icon của dự án mang `width="20" height="20"` NGAY TRONG thẻ svg, nên thuộc
+     tính đó thắng nếu utility không tồn tại. Đã soi `tailwind.css` dựng sẵn: có
+     `[&_svg]:w-4` nhưng KHÔNG thấy biến thể `[&_svg]:h-*` nào — tức khai bằng class thì ăn
+     may đúng bề rộng và hụt chiều cao. Rule này chốt cả hai. */
+  .hm-usp svg { width: 16px; height: 16px; }
+
+  /* KẺ NGĂN GIỮA 2 NỬA CỦA KHỐI GỘP (07/09/2026) — ở khổ máy hai nửa xếp DỌC nên kẻ nằm
+     ở MÉP TRÊN, không phải mép trái. Cùng 1px `--general-border`; đệm trên 24 và margin-top
+     8 để kẻ không dính vào dòng pháp lý ngay trên nó. */
+  .hm-member {
+    border-top: 1px solid var(--general-border);
+    padding-top: 24px; margin-top: 8px;
+  }
   .hm-stories { display: flex; gap: 8px; }
   .hm-story { flex: 0 0 280px; }
 
@@ -6893,16 +7012,28 @@ const hmLink = (label, attrs) =>
    pb-6` + tiêu đề `px-4 text-[18px] font-medium leading-7`), nên nhịp giữa 2 mục là
    40 + 24 = 64, đúng nhịp bản mobile. Tiêu đề phải là ĐÚNG CHUỖI `text-[18px]
    font-medium leading-7 text-foreground` — hook duy nhất ra Libre Bodoni 24/32. */
-function hmSec(title, right, body, tag = 'h2') {
+function hmSec(title, right, body, tag = 'h2', eyebrow = '') {
   return `
     <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
+          <!-- HAI KHUÔN ĐẦU MỤC. Mặc định: tiêu đề trái - nút phải, canh giữa theo trục dọc.
+               Có eyebrow thì đổi sang khuôn CANH GIỮA 3 DÒNG của hình khách gửi 07/09:
+                 nhãn nhỏ (Inter 12/16 muted) / dòng trưng bày (Libre 24/32) / liên kết (Inter)
+               Thứ tự phông Inter - Libre - Inter là yêu cầu nguyên văn của lệnh. Nhãn giữ
+               CHỮ THƯỜNG dù hình tham chiếu viết hoa — luật không-dùng-UPPERCASE, và cùng
+               cách đã chốt cho nhãn lý do spotlight. -->
       <!-- CANH GIỮA theo tiêu đề mục (07/09/2026, lệnh user), trước là items-end. Tiêu đề
            18/24 còn nút 12/18: canh chân chữ thì nút tụt sát đáy hộp và đọc ra như ghi chú
            rơi lại; canh giữa thì nằm đúng giữa chiều cao tiêu đề. -->
-      <div class="flex items-center justify-between gap-2 px-4">
-        <${tag} class="text-[18px] min-w-0 font-medium leading-7 text-foreground">${title}</${tag}>
-        ${right || ''}
-      </div>
+      ${eyebrow ? `
+        <div class="flex flex-col items-center gap-2 text-center px-4">
+          <p class="t-single text-muted-foreground">${eyebrow}</p>
+          <${tag} class="text-[18px] font-medium leading-7 text-foreground">${title}</${tag}>
+          ${right || ''}
+        </div>` : `
+        <div class="flex items-center justify-between gap-2 px-4">
+          <${tag} class="text-[18px] min-w-0 font-medium leading-7 text-foreground">${title}</${tag}>
+          ${right || ''}
+        </div>`}
       ${body}
     </div>`;
 }
@@ -6921,7 +7052,16 @@ function hmSec(title, right, body, tag = 'h2') {
    "Câu chuyện" chính là gạch "Landing pages hili" trong slide feedback của khách. Bật lại
    chỉ tốn đổi `false` thành `true` — hàm dựng, CSS và khoá i18n vẫn còn nguyên.
    ⚠ Vì vậy `hmStories()`/`HM_STORIES` KHÔNG phải code chết: chúng đang chờ công tắc. */
-const HM_SHOW = { sale: false, stories: false, quickAdd: true };
+/* `stories` BẬT 07/09/2026 (lệnh user: thêm block Blog). Khối này dựng từ 06/09 rồi tắt
+   ngay vì chưa có bài viết thật — nay user gọi tên nó là "Blog" và cho vào trang, nên nó
+   sống bằng 3 mẩu tư liệu ĐANG CÓ (xem HM_STORIES: đều là chuỗi thật của dự án, không bịa
+   tiêu đề bài). Có bài thật thì thay data, không phải sửa khối. */
+/* `brandCards` TẮT 07/09/2026 (lệnh user: *"bỏ nguyên block brands at dafc ra luôn"*).
+   Tắt bằng công tắc chứ không xoá: `hmBrandCards()` + `HM_BRAND_CARDS` vẫn nguyên, cùng
+   cách đã làm với `sale` và `stories`. Lưu ý cho lượt sau: cùng ngày khối này vừa được
+   chỉnh 2 lần (ô 259x128 -> 132x48, trần logo 22 -> 12) — công sức đó nằm trong công tắc,
+   bật lại là có ngay, không phải dựng lại. */
+const HM_SHOW = { sale: false, stories: true, quickAdd: true, brandCards: false };
 
 /* PROMO BANNER — CÓ CÔNG TẮC (06/09/2026, feedback khách). Đặt `null` là TẮT, cả khối
    biến mất, không để lại khoảng trống. Ảnh kv-sale.jpg (1600x600) khớp tỉ lệ tuyệt đối,
@@ -6987,6 +7127,14 @@ function hmRail(list) {
    Thứ tự và bộ ảnh GIỐNG HỆT bản desktop (3 tấm KV vuông khổ native đứng trước, rồi
    packshot và ảnh quà tặng). Ô "Trang sức" của `CATEGORIES` bị bỏ ở cả 2 bản: ảnh duy
    nhất của nó là `p4-0.jpg` = giày cao gót. */
+/* SỐ Ô DANH MỤC = 4 (07/09/2026, lệnh user kèm hình tham chiếu A.P.C.), trước là 6.
+   Dữ liệu 6 ô GIỮ NGUYÊN, chỉ cắt khi vẽ — đổi lại là sửa một số.
+   ⚠ CHỖ MẤT: 2 ô bị cắt là 'Làm đẹp' và 'Quà tặng', tức trang chủ thôi có cửa trực tiếp
+   vào ngành Làm đẹp từ dải này. Cửa khác vẫn còn: hàng tab ngành hàng ở nav (desktop) và
+   tab trong drawer (mobile). Muốn giữ cửa đó trong dải thì phải đổi THỨ TỰ HM_CATS chứ
+   không phải nâng số ô — 4 là số khách chốt. */
+const HM_CAT_COUNT = 4;
+
 const HM_CATS = [
   ['kv-women-4.jpg',  '50% 30%', 'Quần áo',  ''],
   ['kv-men-4.jpg',    '55% 32%', 'Túi xách', ''],
@@ -7016,13 +7164,13 @@ const hmDeptNow = () => menuTab;
    để so, và ghi rõ "chốt xong phải xoá nhánh thua". Nay không nhánh nào thua — mỗi nhánh
    nhận MỘT NGÀNH HÀNG, nên tiêu chí phân biệt thôi là chỉ số ô (vô nghĩa với người đọc) mà
    thành ngành hàng (có nghĩa). Trạng thái so sánh 3+3 vì vậy biến mất.
-   Áp cho CẢ HAI dải ô có nhãn trong hình: "Mua theo danh mục" và "Mặc gì cho dịp". */
+   Áp cho CẢ HAI dải ô có nhãn trong hình: "Mua theo danh mục" và "Lựa chọn theo mùa". */
 const hmLabelUp = () => hmDeptNow() === 'Nữ';
 
 function hmCatTiles() {
   return `
-      <div class="hm-cats drag-x overflow-x-auto no-scrollbar px-4">
-        ${HM_CATS.map(([img, pos, label, dept]) => `
+      <div class="hm-cats">
+        ${HM_CATS.slice(0, HM_CAT_COUNT).map(([img, pos, label, dept]) => `
         <button data-hm-cat="${label}"${dept ? ` data-hm-dept="${dept}"` : ''} class="hm-cat flex flex-col press group text-left">
           <div class="hm-cat-media w-full aspect-square overflow-hidden ${img === 'b1.jpg' ? 'bg-accent-0' : 'bg-secondary'}">
             <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]" style="object-position:${pos}">
@@ -7039,6 +7187,20 @@ function hmCatTiles() {
    Bản mobile vì vậy xếp DỌC: khối chữ rồi dải trượt 3 thẻ — đúng khuôn của mọi dải
    trượt ở bản mobile, không bịa linh kiện mới. Nền `bg-accent-0` giữ lại từ bản
    desktop để khối vẫn là một mảng riêng trong dòng chảy trang. */
+/* DÒNG BIÊN TẬP CỦA KHỐI "HÀNG MỚI VỀ" (07/09/2026, lệnh user kèm hình tham chiếu:
+   nhãn nhỏ / dòng trưng bày / liên kết, thứ tự phông Inter - Libre - Inter).
+   KHÔNG bịa chữ marketing: lấy đúng chuỗi đã có trong dữ liệu hero (`HM_HERO` slide 1)
+   và đã có khoá i18n. Đổi theo chiến dịch thì sửa một dòng.
+   ⚠ ĐÍNH CHÍNH CÙNG NGÀY: lúc chọn chuỗi này tôi lập luận là nó "chỉ đang sống trong `alt`
+   của hero nên không lặp ở đâu trên trang". Lập luận đó HẾT ĐÚNG khi khối Blog được bật
+   (cùng 07/09): `HM_STORIES` có một thẻ mang ĐÚNG tiêu đề `Bộ sưu tập AW26`, nên chuỗi này
+   nay hiện HAI LẦN trên trang chủ — một lần làm dòng trưng bày ở đầu trang, một lần làm
+   tiêu đề thẻ Blog ở gần cuối.
+   ĐANG CHỜ USER CHỐT, không tự sửa vì đây là NỘI DUNG: hoặc đổi dòng này sang một chuỗi
+   khác (kho đang có `Christian Louboutin tại DAFC Online` chưa dùng làm tiêu đề bài), hoặc
+   đổi tiêu đề thẻ Blog đó, hoặc nhận rằng 2 chỗ cách nhau đủ xa để không đọc ra là lặp. */
+const HM_NEW_LINE = 'Bộ sưu tập AW26';
+
 const HM_MAISON = 'Versace';
 const HM_MAISON_COPY = 'Thiết kế táo bạo, phong cách quyến rũ và logo Medusa đặc trưng — Versace là biểu tượng của sự sang trọng và vẻ đẹp hiện đại.';
 
@@ -7120,11 +7282,12 @@ function hmSpotBrands(avoidImg) {
       const alt = PRODUCTS.find(p => p.brand === name && p.model && p.model !== avoidImg);
       if (alt) img = alt.model;
     }
-    return `<a data-hm-brand="${name}" class="block cursor-pointer press">
+    return `<a data-hm-brand="${name}" class="hm-spot-brand block cursor-pointer press">
               <img src="${A}${img}" alt="${B.name}" class="hm-spot-brand-photo w-full object-cover lazy" style="object-position:${B.pos || '50% 50%'}">
-              <div class="flex items-center justify-between gap-4 pt-4">
-                <img src="${A}${B.logo}" alt="${B.name}" class="h-[22px] w-auto object-contain object-left lazy">
-                <p class="t-single text-muted-foreground shrink-0">${n} sản phẩm</p>
+              <span class="hm-spot-brand-veil" aria-hidden="true"></span>
+              <div class="hm-spot-brand-cap">
+                <img src="${A}${B.logo}" alt="${B.name}" class="lazy">
+                <p class="t-single text-muted-foreground">${n} sản phẩm</p>
               </div>
             </a>`;
   }).filter(Boolean);
@@ -7142,12 +7305,14 @@ function hmMaison() {
      khối biến mất im lặng dù nhánh 'brands' không dùng tới `list`. Ảnh spotlight thì vẫn cần
      `all[0]` nên `spot` là điều kiện chung. */
   if (!spot || (HM_SPOT_BELOW !== 'brands' && list.length < 3)) return '';
+  /* KHỐI SPOTLIGHT THÔI CÓ TIÊU ĐỀ VÀ NÚT (07/09/2026, lệnh user: *"bỏ title Brands of
+     the moment và button view all ra"*). Giữ nguyên khung ngoài nên nhịp dọc không đổi.
+     Đọc ra được vì sao: sau lượt đưa chữ VÀO TRONG ảnh, khối đã tự có wordmark + nhãn
+     "Bộ sưu tập chính" + headline nằm trên tấm; thêm một dòng tiêu đề bên trên là khối nói
+     tên mình hai lần. Đây là khối thứ BA trên trang bỏ đầu mục theo cùng lý lẽ (sau dải
+     danh mục và khối Lựa chọn theo mùa). */
   return `
     <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
-      <div class="flex items-center justify-between gap-2 px-4">
-        <h2 class="text-[18px] min-w-0 font-medium leading-7 text-foreground">Thương hiệu nổi bật</h2>
-        ${hmLink('Xem tất cả', 'data-hm-brand="Versace"')}
-      </div>
       <div class="hm-spot">
         <a data-hm-brand="${HM_MAISON}" class="hm-spot-photo w-full overflow-hidden bg-secondary cursor-pointer press">
           <img src="${A}${spot.p.model}" alt="${spot.p.name}" class="w-full h-full object-cover lazy">
@@ -7175,6 +7340,14 @@ function hmMaison() {
    ⚠ NHÃN DỊP LÀ THỨ TÔI ĐẶT: catalog không có trường occasion. Bốn nhãn suy từ chính món
    trong ảnh; đây là TAXONOMY cần khách chốt, có trường thật thì thay bằng lọc thật.
    KHAI GIỐNG HỆT bản desktop. */
+/* SỐ Ô CỦA KHỐI "MẶC GÌ CHO DỊP" = 3 (07/09/2026, lệnh user kèm ảnh tham chiếu — ảnh đó
+   có đúng 3 slot, chú là Office · Party · Chic dress). Trước là 4.
+   Dữ liệu 4 ô GIỮ NGUYÊN, chỉ cắt khi vẽ — đổi lại là sửa một số.
+   3 cũng là số cột của khuôn `dk-look-band` mà khối này nay đi theo, nên nó không phải số
+   tuỳ ý: 4 ô trong lưới 3 cột là vỡ khuôn.
+   ⚠ CHỖ MẤT: ô thứ 4 là 'Điểm nhấn' (nhãn từng rút ngắn vì bậc chữ, xem ghi chú i18n). */
+const HM_OCC_COUNT = 3;
+
 const HM_OCCASIONS = [
   ['p1-1.jpg',  'Tiệc tối',         'Quần áo'],
   ['p5-1.jpg',  'Công sở',          'Giày dép'],
@@ -7183,10 +7356,14 @@ const HM_OCCASIONS = [
 ];
 
 function hmOccasions() {
-  return hmSec('Mặc gì cho dịp',
-    hmLink('Xem tất cả', 'data-hm-cat="Sản phẩm mới"'),
+  /* BỎ CTA theo chú "Season Pick — BỎ CTA" của lệnh; tiêu đề GIỮ ở đầu mục.
+     VÌ SAO KHÔNG LẤY KHUÔN CỘT-CHỮ-MỘT-BÊN NHƯ DESKTOP: cột chữ của khuôn đó rộng 282,
+     mà vùng nội dung ở đây chỉ 343 — còn 61 cho 3 ô. Ảnh tham chiếu của lệnh cũng ghi rõ
+     "Homepage (Desktop)". Nên bản này giữ dải trượt, chỉ theo desktop ở SỐ Ô (3) và ở
+     việc bỏ CTA. */
+  return hmSec('Lựa chọn theo mùa', '',
     `<div class="hm-occ drag-x overflow-x-auto no-scrollbar px-4">
-        ${HM_OCCASIONS.map(([img, label, cat]) => `
+        ${HM_OCCASIONS.slice(0, HM_OCC_COUNT).map(([img, label, cat]) => `
         <button data-hm-cat="${cat}" class="hm-occ-item flex flex-col press group text-left">
           <div class="hm-cat-media w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
             <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
@@ -7215,12 +7392,29 @@ const HM_USP = [
 
 function hmUsp() {
   return `
-    <div class="hm-usp px-4 py-8 mt-10 reveal">
+    <!-- THU GỌN (07/09/2026, lệnh user kèm ảnh tham chiếu: *"giảm block này — icon nhỏ
+         như này nhe"*). Hai thứ đổi, và chiều cao giảm là HỆ QUẢ của cái thứ nhất:
+           · icon từ TRÊN nhãn xuống CẠNH nhãn -> mục cao 44 thành 16, tức bằng đúng một
+             dòng chữ. Đây là thứ làm block ngắn lại, không phải việc bóp đệm.
+           · icon 20 -> 16 (w-4 h-4) — 16 là cỡ icon đã có của dự án (utilRow trong
+             drawer dùng đúng số này), không phải cỡ mới.
+         Đệm dọc 32 -> 24 theo, vẫn trên thang 4/8/16/24. -->
+    <!-- NHẤN MÀU NỀN CHO HÀNG USP (07/09/2026, lệnh user), và là băng FULL-BLEED.
+         Vì sao full-bleed chứ không bó trong khung 1440: luật khối-nhấn của dự án ghi
+         "trang phẳng không hộp = FULL-BLEED", và footer() ngay dưới đã làm đúng khuôn
+         đó (bg-secondary tràn mép + khung 1440 riêng bên trong) — hàng USP nay là khối
+         thứ hai dùng khuôn ấy nên 2 mảng màu cuối trang cùng một hình.
+         Màu là --unofficial-accent-0, cùng token với khối Lựa chọn theo mùa, nên trang
+         chỉ có MỘT nấc nhấn chứ không hai. Nó nhạt hơn secondary của footer một nấc,
+         nhờ vậy USP và footer không dính thành một mảng. -->
+    <div class="hm-usp-band mt-10">
+      <div class="hm-usp px-4 py-6 reveal">
       ${HM_USP.map(([ico, label]) => `
-      <div class="flex flex-col items-center gap-2 text-center">
-        <span class="w-5 h-5 flex items-center justify-center">${I[ico]}</span>
+      <div class="flex items-center gap-2">
+        <span class="w-4 h-4 shrink-0 flex items-center justify-center [&_svg]:w-4 [&_svg]:h-4">${I[ico]}</span>
         <p class="t-single text-foreground">${label}</p>
       </div>`).join('')}
+      </div>
     </div>`;
 }
 
@@ -7236,6 +7430,13 @@ const HM_STORIES = [
 ];
 
 function hmStories() {
+  /* ĐẦU MỤC CANH GIỮA (07/09/2026, lệnh user: *"phần hiển thị title canh giữa sẽ tương tự
+     block items trên đó bạn đã làm nhưng k có CTA"*) — dùng lại đúng tham số `eyebrow` của
+     `hmSec` đã mở cho khối "Hàng mới về", nên 0 CSS mới.
+     KHÔNG CÓ CTA: chỗ `right` của `hmSec` vốn đã là chuỗi rỗng từ lúc dựng khối 06/09, nên
+     yêu cầu này không phải sửa gì — ghi ra để lượt sau đừng thêm nút vào.
+     NHÃN NHỎ = 'Blog' (chính chữ user gọi), DÒNG TRƯNG BÀY = tiêu đề khối đã có. Không đẻ
+     chuỗi mới, và 'Blog' viết y nhau ở 2 ngôn ngữ nên KHÔNG cần khoá i18n. */
   return hmSec('Câu chuyện tại DAFC',
     '',
     `<div class="hm-stories drag-x overflow-x-auto no-scrollbar px-4">
@@ -7247,7 +7448,7 @@ function hmStories() {
           <p class="t-single text-mid-alt">${eyebrow}</p>
           <p class="t-lead text-foreground">${title}</p>
         </button>`).join('')}
-      </div>`)
+      </div>`, 'h2', 'Blog')
 }
 
 /* ── THẺ THƯƠNG HIỆU — dải trượt, ô 259×128 ────────────────────────────────────
@@ -7279,6 +7480,21 @@ function hmBrandCards() {
    newsletter ngày 26/08 theo lệnh trực tiếp của user, và lượt này footer phải dùng
    nguyên vẹn. Nên đây là một khối RIÊNG đứng ngay TRÊN footer. Ba đường xử lý nằm
    trong báo cáo. Nút full width 48 = đúng bậc CTA của bản mobile. */
+/* GỘP "ĐĂNG KÝ NHẬN TIN" + "HẠNG THÀNH VIÊN" THÀNH MỘT KHỐI (07/09/2026, lệnh user kèm
+   ảnh tham chiếu: *"merge cục đăng ký và hạng thành viên vào nhau"* — ảnh có 1 bên là ô nhập
+   newsletter, 1 bên là DAFC Rewards dẫn link tới nội dung chương trình thành viên).
+   KHỐI HẠNG THÀNH VIÊN TRƯỚC ĐÓ KHÔNG TỒN TẠI trên trang chủ — đây là khối MỚI, nhưng
+   COPY THÌ KHÔNG MỚI: tiêu đề và mô tả lấy nguyên mục `medal` của `CAM_KET` (đã duyệt, đã
+   có khoá i18n cả hai). Không bịa một chữ nào.
+   CTA đi `data-nav="login"` — đúng hành động "join or log in" của ảnh, và là đích THẬT
+   trong demo (màn đó có cả đăng nhập lẫn đăng ký). Nhãn dùng chuỗi sẵn 'Đăng nhập' chứ
+   không đẻ 'Đăng nhập hoặc đăng ký'; và KHÔNG dùng lại 'Đăng ký' vì nút newsletter ngay
+   bên cạnh đã mang đúng chữ đó — hai nút cùng tên trong một khối là đọc sai.
+   ⚠ TRANG ĐÍCH CỦA CHƯƠNG TRÌNH THÀNH VIÊN CHƯA CÓ: khách ghi "(TBC)" trong ảnh, và footer
+   đang có link 'Chương trình thành viên' KHÔNG nằm trong `FOOTER_ROUTES` (link chết có sẵn
+   từ trước). Nên CTA tạm dẫn vào `login`; có trang thật thì đổi một attr.
+   KIỂU NÚT: `btn-o` (viền, nền trắng) chứ không `btn-p` như nút newsletter — hai nút nền
+   đậm cạnh nhau là tranh nhau; đây đúng cặp chính/phụ mà dự án vẫn dùng. */
 function hmSignup() {
   return `
     <div class="flex flex-col gap-4 mt-10 pb-10 px-4 reveal">
@@ -7288,6 +7504,15 @@ function hmSignup() {
              class="t-lead w-full h-12 px-3 rounded-xs border border-border bg-background text-foreground placeholder:text-muted-foreground">
       <button data-toast="Đăng ký nhận tin" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground btn-p press">Đăng ký</button>
       <p class="t-single text-muted-foreground">Bằng việc đăng ký, bạn đồng ý với Chính sách bảo mật của DAFC.</p>
+      <!-- Ở khổ máy 2 cột không đủ chỗ nên hai nửa XẾP DỌC; kẻ mảnh là thứ giữ cho chúng
+           vẫn đọc ra là HAI việc trong MỘT khối. -->
+      <div class="hm-member flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <h2 class="text-[18px] font-medium leading-7 text-foreground">Đặc quyền thành viên DAFC</h2>
+          <p class="t-multiline text-secondary-foreground">Tích lũy điểm thưởng và nhận các đặc quyền phân hạng VIP.</p>
+        </div>
+        <button data-nav="login" class="t-lead h-12 px-8 w-fit rounded-xs border border-border bg-background text-foreground btn-o press">Đăng nhập</button>
+      </div>
     </div>`;
 }
 
@@ -7318,20 +7543,20 @@ function screenHOME() {
 
     ${hmHero()}
 
-    ${news.length ? hmSec('Hàng mới về',
+    ${news.length ? hmSec(HM_NEW_LINE,
       hmLink('Xem tất cả', 'data-hm-cat="Sản phẩm mới"'),
       hmRail(news),
-      'h1') : ''}
+      'h1', 'Hàng mới về') : ''}
 
-    ${hmSec('Mua theo danh mục',
-      hmLink('Xem tất cả', 'data-hm-cat="Sản phẩm mới"'),
-      hmCatTiles())}
+    <!-- KHỐI DANH MỤC THÔI CÓ TIÊU ĐỀ VÀ CTA (07/09/2026, lệnh user) — xem ghi chú cùng
+         tên ở bản desktop. Giữ nhịp dọc của hmSec (mt-10 + pb-6). -->
+    <div class="mt-10 pb-6 reveal">${hmCatTiles()}</div>
 
     ${hmMaison()}
 
-    ${hmSec('Thương hiệu tại DAFC',
+    ${HM_SHOW.brandCards ? hmSec('Thương hiệu tại DAFC',
       hmLink('Xem tất cả', 'data-hm-brand="Versace"'),
-      hmBrandCards())}
+      hmBrandCards()) : ''}
 
     <!-- Mục Ưu đãi THÔI CÓ BANNER: tấm kv-sale đã dời lên promo banner đầu trang theo mẫu
          khách. Mục này giữ tiêu đề + dải thẻ đang giảm giá. -->
@@ -7341,9 +7566,13 @@ function screenHOME() {
 
     ${hmOccasions()}
 
-    ${hmUsp()}
-
+    <!-- Block Blog NGAY DƯỚI khối Lựa chọn theo mùa (07/09/2026, lệnh user). Trước lượt này
+         nó đứng sau hàng USP — thứ tự cũ đến từ slide feedback 06/09, nơi khối câu chuyện
+         nằm gần cuối. Lệnh mới đặt nó cạnh khối theo mùa, tức 2 khối BIÊN TẬP đi liền nhau
+         rồi mới tới hàng cam kết. -->
     ${HM_SHOW.stories ? hmStories() : ''}
+
+    ${hmUsp()}
 
     ${hmSignup()}
 
@@ -11351,7 +11580,14 @@ const I18N = {
      dịch được — đo trên trang: thiếu khoá thì bản EN đọc tiếng Việt. */
   'Bộ sưu tập AW26':'The AW26 collection', 'Bộ sưu tập denim MCM':'The MCM denim collection',
   'Broken Jewels — hoạ tiết đặc trưng của Versace':'Broken Jewels — the Versace signature print',
-  'Mặc gì cho dịp':'What to wear for', 'Câu chuyện tại DAFC':'Stories at DAFC',
+  /* Khối đổi tên 07/09/2026 (lệnh user). ĐỔI KHOÁ chứ không thêm khoá thứ hai: nhãn cũ
+     'What to wear for' không còn chỗ dùng nào sau lượt này.
+     ⚠ 'Season Pick' là ĐÚNG CHỮ CỦA KHÁCH, giữ nguyên cả cách viết hoa (user chốt lại lần
+     hai: *"dùng đúng chữ Season Pick nhé"*). Nó là tiêu đề EN DUY NHẤT của trang chủ viết
+     kiểu title case — 'The AW26 collection' · 'Shop by category' · 'Brands at DAFC' ·
+     'View all' · 'Stories at DAFC' đều là sentence case. ĐỪNG "chuẩn hoá giúp" về
+     'Season pick': đây là chốt, không phải sót. */
+  'Lựa chọn theo mùa':'Season Pick', 'Câu chuyện tại DAFC':'Stories at DAFC',
   'Tiệc tối':'Evening', 'Công sở':'The office', 'Dạo phố':'Off duty',
   /* Nhãn dịp rút ngắn 07/09: bậc chữ lên 24/32 nên 'Phụ kiện tinh tế' không vừa ô 210
      ở khổ máy (đo ra ~200px trong lòng 178). ĐỔI KHOÁ, không thêm khoá thứ hai — nhãn cũ
