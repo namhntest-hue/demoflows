@@ -3819,17 +3819,43 @@ window.RESP = (function () {
      Ở 1377 thì ngược lại: không cắt ngang một pixel, chỉ cắt DỌC còn 42,6% chiều cao.
      `object-position 50% 50%` vì dải giữa của ảnh là dải nhiều chi tiết nhất (lệch chuẩn
      59,5 so với 34,5 và 38,8). */
-  /* BANG LAY DUNG TI LE CUA CHINH ANH (08/09/2026, lenh user: *"day se la banner cho ban
-     desktop kv-sale nhe, ban desktop theo size nay luon"*). Anh khach giao: 1920x337.
-     ⇒ object-cover KHONG cat mot pixel nao o moi be rong: 1440 cho bang cao 250, 1920 cho
-     334. Truoc do la ti le 1425/220 (6,477) — con so cua rieng bo khung cu, va chinh no la
-     thu tung cat mat chu cua tam 1600x600.
-     BO `min-height: 220`: no ton tai de giu con so 220 o kho hep, ma nay chieu cao do CHINH
-     ANH quyet — ep 220 o kho duoi 1253 la lai cat.
-     KHONG dung `h-auto` de "tu theo anh moi": lam vay thi bang khong co chieu cao du tru cho
-     tai anh xong -> nhay layout ngay dau trang. Nen ghim ti le, va DOI ANH LA DOI MOT SO O
-     DAY (toi da noi se "tu dung"; day la doi y co ly do, ghi ra de khong am tham). */
-  .hm-promo { aspect-ratio: 1920 / 337; }
+  /* BANG PROMO = 1440/186 (7,742) — user chot 08/09: *"promo banner set cho toi mobile size
+     ti le la 375x150, desktop ti le la 1440x186"*. Truoc do la 1920/337 (5,697) = dung ti le
+     tam anh khach giao, cat 0 pixel; va truoc nua la 1425/220 (6,477).
+     ⚠ CON SO NAY CAT MAT CHU CUA ANH DANG CO, va day la mot phep tinh chu khong phai cam giac:
+     o giu duoc 1920/7,742 = 248 hang anh, ma vung chu nuong cua `kv-sale-wide.jpg` trai tu
+     y 48 den y 319 = **272 hang** -> THIEU 24 hang (8,9%). Tuc KHONG mot gia tri
+     `object-position` nao cuu duoc ca: de vao dau thi mat dau, mat duoi thi mat duoi.
+     Do bang PIL, dem theo hang cac diem chu DO (R - max(G,B) > 35) va chu TRANG (L > 110):
+       y  48..157  SALE            (+ SHOP MEN / SHOP WOMEN o x 1200+)
+       y 185..256  Final Clearance
+       y 276..292  "Get an additional 20% off items labeled"
+       y 303..319  "'Sale Must-Have'"
+     CHON `50% 31%` — cua so y 28..276, tuc CO CHU DINH bo HAI dong chu nho:
+       · `50% 50%` (mac dinh) cat dinh chu SALE va cat NUA dong cuoi -> vua xau vua sai;
+       · `50% 54%` giu duoc 3 dong dau nhung dong 3 het o chu "labeled" -> cau bo lung;
+       · `50% 31%` bo tron ca 2 dong nho, con lai SALE + Final Clearance + 2 nut, cau khong
+         bo lung, va con 20 hang thoang tren SALE / 20 hang duoi Final Clearance (can nhau).
+     Da dung lai ca 4 phuong an bang PIL roi XEM tung tam, khong suy luan.
+     ⇒ CAN ANH XUAT LAI o 1440x186 (hoac bat ky ti le 7,74) thi banner moi day du. Doi anh
+     xong thi khong phai sua rule nay, chi bo `object-position` ve 50% 50%.
+     ── ANH DA DOI (cung ngay): nay la "The Jewelry Gift Card Event", 1858x278 = 6,684 ────
+     Ti le o KHONG DOI (1440/186 la con so user chot), nhung anh moi det hon nen chuyen cat
+     khac han: giu 240/278 = 86,3% chieu cao (truoc la 73,6%), va vung chu chi can 211 hang
+     -> VUA, con 29 hang du. Tuc **khong mat chu nao** — khac ban SALE.
+     Nhung `object-position` phai doi tu 31% sang **100%**, va day khong phai chuyen tham my:
+       chu do sam trai tu y 59 den y 269 (do bang PIL: (R - max(G,B)) > 55 VA max(G,B) < 110 —
+       phai co dieu kien thu hai, khong thi mau DA va MOI cua nguoi mau cung dem la chu);
+       cua so cao 240 nen `oy` chi duoc trong [29, 38] moi bao het chu, tuc canh doc >= 76,3%.
+       `50% 50%` (oy = 19) CAT 10 hang duoi, an vao dong "Use code JEWELRY at checkout" va nut
+       "SHOP NOW"; `50% 85%` du chu nhung chi con 3 hang duoi dong cuoi; `50% 100%` giu dung
+       le duoi 9 hang MA CHINH THIET KE co, chi cat 38 hang tren (phan do khong co chu nao).
+     Anh moi ti le 6,684 nen muon cat 0 pixel thi o phai la 1440/215.
+     BO `min-height`: da bo tu luot truoc, va cang khong dat lai — ep chieu cao co dinh o kho
+     hep la them mot phep cat nua.
+     KHONG dung `h-auto` de "tu theo anh": bang se khong co chieu cao du tru truoc khi anh tai
+     xong -> nhay layout ngay dau trang. */
+  .hm-promo { aspect-ratio: 1440 / 186; }
 
   /* SPOTLIGHT: TOÀN BỘ NỘI DUNG NẰM TRONG ẢNH (07/09/2026, lệnh user). Trước đó là lưới
      2 cột — ảnh 460 bên trái, cột chữ bên phải.
@@ -7263,13 +7289,19 @@ const HM_QUICK_MAX_ROWS = 2;
    06/09 đang làm banner giữa trang cho mục Ưu đãi; nay dời LÊN TRÊN CÙNG theo đúng mẫu
    khách (mẫu của họ chỉ có banner sale ở đầu trang, không có banner sale thứ hai ở giữa),
    và mục Ưu đãi giữ lại tiêu đề + dải thẻ giảm giá. */
-/* DESKTOP GIỮ BẢN NGANG CŨ (`kv-sale-wide.jpg` = chính tấm 1600x600 trước đây, lấy lại từ
-   git khi user thay `kv-sale.jpg` bằng banner mobile 736x314).
-   VÌ SAO KHÔNG DÙNG TẤM MỚI Ở ĐÂY: băng promo desktop là 1425x220, tức tỉ lệ 6,48. Nhét tấm
-   2,344 vào đó chỉ giữ 36,2% chiều cao — dựng lại crop bằng PIL thấy "SALE" bị cắt nửa, còn
-   dòng "Get an additional 20% off…" và nút "SHOP NOW" MẤT HẲN. Muốn dùng đúng tấm đó thì băng
-   phải cao 608 (gấp 2,8 lần con số 220 user đã chốt) — cần bản NGANG của cùng thiết kế. */
-const HM_PROMO = { img: 'kv-sale-wide.jpg', ratio: '1920/337', alt: 'Final Clearance — giảm thêm 20%', cat: 'Khuyến mãi' };
+/* CHIẾN DỊCH MỚI: "The Jewelry Gift Card Event" (08/09/2026, lệnh user *"thay hình này vào
+   promo banner nhé"*). Ảnh khách giao **1858x278 (tỉ lệ 6,684)**, copy nguyên si vào
+   `assets/kv-jewelry-wide.jpg` — KHÔNG mã hoá lại (file gốc đã 121 KB, encode lại chỉ mất chất).
+   `kv-sale-wide.jpg` GIỮ LẠI trên đĩa: khối này là một CÔNG TẮC theo giai đoạn (EOSS / Private
+   sale / event), nên đổi chiến dịch = đổi ĐÚNG MỘT chuỗi ở dòng dưới, không phải dựng lại.
+   ⚠ CHỈ ĐỔI BẢN DESKTOP. Bản mobile vẫn là banner "Final Clearance": ô mobile tỉ lệ 2,500 mà
+   tấm này 6,684 nên object-cover cắt NGANG, cửa sổ chỉ còn 695/1858 = 37,4% bề ngang (canh
+   giữa là x 581..1276) — mà khối chữ nằm ở x 165..674, tức MẤT GẦN HẾT CHỮ. Cần bản mobile
+   riêng của chính thiết kế này (khổ 375x150 hoặc bất kỳ tỉ lệ 2,5).
+   ⚠ `ratio` Ở ĐÂY LÀ TƯ LIỆU, KHÔNG PHẢI THAM SỐ: bản desktop lấy tỉ lệ từ rule CSS
+   `.hm-promo` (vì băng tràn viền, không đi qua style inline như bản mobile). Vẫn ghi đúng số
+   để nó không nói dối; sửa tỉ lệ thì sửa Ở RULE, không phải ở đây. */
+const HM_PROMO = { img: 'kv-jewelry-wide.jpg', ratio: '1440/186', alt: 'The Jewelry Gift Card Event — nhận thẻ quà tặng, dùng mã JEWELRY', cat: 'Khuyến mãi' };
 
 /* HERO — 4 SLIDE CÓ VAI (06/09/2026, feedback khách: *"Slider KV: 1. Ecom camp, 2. Brand
    days (#2, #3, #4)"*). Cột `role` là để đọc ra vai, không vẽ ra chữ nào trên ảnh — luật
@@ -7368,7 +7400,7 @@ function hmPromo() {
            Dai hero ngay duoi: lenh sau cung ngay ha khe do ve 4px (pt-1), xem chu thich
            o hmHero. Nen thu tu doc tu tren xuong la nav | promo | 4px | hero. -->
       <a ${dkCatAttrs(HM_PROMO.cat)} class="hm-promo block w-full overflow-hidden bg-secondary cursor-pointer press">
-        <img src="${A}${HM_PROMO.img}" alt="${HM_PROMO.alt}" class="w-full h-full object-cover lazy" style="object-position:50% 50%">
+        <img src="${A}${HM_PROMO.img}" alt="${HM_PROMO.alt}" class="w-full h-full object-cover lazy" style="object-position:50% 100%">
       </a>`;
 }
 
