@@ -2844,6 +2844,38 @@ window.RESP = (function () {
   /* 2 — CHẤM CHỈ TRANG: vùng bấm 32×32 quanh chấm 8×8. Ở khổ cầm tay thì đây không
      phải chuyện lịch sự mà là chuyện bấm được: `::before` với `inset: -12px` nới vùng
      bấm mà KHÔNG xê dịch một pixel nào. Không utility nào tạo được pseudo-element. */
+  /* ── HANG CHAM NAM TRONG ANH (07/09/2026, lenh user: *"cai dot o banner slider cho nam
+     vao trong banner nha thay vi nam ngoai"*). Truoc la mot hang cao 40 dung DUOI anh.
+     MAU CHAM CHON BANG DO, khong bang mat — luat cua du an: do anh TRUOC khi de gi len.
+     Do dung o cham se nam (day 16..32px, rong 200 giua khung) tren ca 4 tam hero cua 2 ban:
+       desktop kv-women-6 : mean RGB 40/38/43  -> cham trang 14,90:1 · cham muc 1,33:1
+       desktop kv-women-5 : mean 110/134/149   -> cham trang  3,83:1 · cham muc 5,17:1
+       mobile  kv-men-1   : mean 21/19/18      -> cham trang 18,58:1 · cham muc 1,07:1
+       mobile  kv-men-4   : mean 28/28/29      -> cham trang 17,03:1 · cham muc 1,16:1
+     Tuc KHONG co mot mau phang nao song duoc tren ca 4: cham muc chet o 3 tam toi, cham
+     trang thi tren tam kv-women-5 chi con 3,83:1 va o 8px SANG NHAT trong vung con 2,29:1 —
+     duoi nguong 3:1 cua WCAG cho thanh phan phi-chu.
+     Nen: CHAM TRANG + mot mang PHU day anh. Do lai voi mang phu .45: o xau nhat cua 4 tam
+     ra 10,4 / 6,5 / 4,8 / 6,0 : 1 — dat het.
+     rgba(0,0,0,.45) KHONG phai so moi: dung do tam phu cua .hm-cat-media, .dk-scrim va
+     .cg-backdrop. Mang phu chi dung khi CO hang cham (>1 tam), nen hero mot tam thi anh
+     sach tron. Cao 96 = 6 x 16, tren thang dem cua du an; cham nam o 16..24 tuc trong phan
+     dam nhat cua mang, con dinh mang da nhat han truoc khi tram vao chu the. */
+  .hm-hero { position: relative; }
+  .hm-hero-veil {
+    position: absolute; inset-inline: 0; bottom: 0; height: 96px; z-index: 1;
+    background: linear-gradient(to top, rgba(0, 0, 0, .45) 0%, transparent 100%);
+    pointer-events: none;
+  }
+  .hm-hero-dots {
+    position: absolute; inset-inline: 0; bottom: 16px; z-index: 2;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  /* Mau cham la MUC DE TREN ANH nen de nguyen ma, khong di qua token nen: token nen doi
+     theo che do sang/toi cua app, con cham thi phai trang bat ke che do. Cung ly do cac
+     mang phu san co cua du an dung rgba tuyet doi. */
+  .hm-pip { background: rgba(255, 255, 255, .45); }
+  .hm-pip.hm-pip-on { background: #fff; }
   .hm-pip { position: relative; }
   .hm-pip::before { content: ''; position: absolute; inset: -12px; }
 
@@ -7139,26 +7171,29 @@ function hmHero() {
   const many = HM_HERO.length > 1;
   return `
     <div class="reveal">
-      <div class="hm-hero-track drag-x flex overflow-x-auto no-scrollbar">
-        <!-- VA LOI 07/09/2026: cot thu 5 cua HM_HERO la VAI cua tam ('Ecom camp' /
-             'Brand day'), nhung cho nay dem gan no vao data-hm-dept. Ma wireHomeNav doc dung
-             thuoc tinh do (const dept = el.dataset.hmDept || hmFashionDept(); menuTab = dept)
-             -> bam mot tam hero la menuTab thanh "Ecom camp". Da do tren trang: bam xong
-             menuTab = "Ecom camp", tuc tab menu va moi thu doc theo nganh deu chay tren mot
-             gia tri khong ton tai. Bo thuoc tinh di la handler roi ve dung nhanh du phong
-             hmFashionDept(). Doi ten bien thanh role cho khoi ai lai tuong no la nganh. -->
-        ${HM_HERO.map(([img, pos, alt, cat, role]) => `
-        <a class="hm-hero-slide cursor-pointer press" data-hm-cat="${cat}">
-          <div class="w-full overflow-hidden bg-secondary" style="aspect-ratio:1/1">
-            <img src="${A}${img}" alt="${alt}" class="w-full h-full object-cover lazy" style="object-position:${pos}">
-          </div>
-        </a>`).join('')}
+      <div class="hm-hero">
+        <div class="hm-hero-track drag-x flex overflow-x-auto no-scrollbar">
+          <!-- VA LOI 07/09/2026: cot thu 5 cua HM_HERO la VAI cua tam ('Ecom camp' /
+               'Brand day'), nhung cho nay dem gan no vao data-hm-dept. Ma wireHomeNav doc dung
+               thuoc tinh do (const dept = el.dataset.hmDept || hmFashionDept(); menuTab = dept)
+               -> bam mot tam hero la menuTab thanh "Ecom camp". Da do tren trang: bam xong
+               menuTab = "Ecom camp", tuc tab menu va moi thu doc theo nganh deu chay tren mot
+               gia tri khong ton tai. Bo thuoc tinh di la handler roi ve dung nhanh du phong
+               hmFashionDept(). Doi ten bien thanh role cho khoi ai lai tuong no la nganh. -->
+          ${HM_HERO.map(([img, pos, alt, cat, role]) => `
+          <a class="hm-hero-slide cursor-pointer press" data-hm-cat="${cat}">
+            <div class="w-full overflow-hidden bg-secondary" style="aspect-ratio:1/1">
+              <img src="${A}${img}" alt="${alt}" class="w-full h-full object-cover lazy" style="object-position:${pos}">
+            </div>
+          </a>`).join('')}
+        </div>
+        ${many ? `
+        <span class="hm-hero-veil" aria-hidden="true"></span>
+        <div class="hm-hero-dots" data-hero-dots>
+          ${HM_HERO.map((x, i) => `
+          <button class="hm-pip w-2 h-2 rounded-full press${i === 0 ? ' hm-pip-on' : ''}" data-hero-dot="${i}" aria-label="${x[2]}"></button>`).join('')}
+        </div>` : ''}
       </div>
-      ${many ? `
-      <div class="flex items-center justify-center gap-2 h-10" data-hero-dots>
-        ${HM_HERO.map((x, i) => `
-        <button class="hm-pip w-2 h-2 rounded-full press ${i === 0 ? 'bg-primary' : 'bg-border'}" data-hero-dot="${i}" aria-label="${x[2]}"></button>`).join('')}
-      </div>` : ''}
     </div>`;
 }
 
@@ -7753,10 +7788,10 @@ function wireHeroDots(root) {
   const dots  = root.querySelector('[data-hero-dots]');
   if (!track || !dots) return;
   const pips = [...dots.querySelectorAll('[data-hero-dot]')];
-  const paint = i => pips.forEach((d, k) => {
-    d.classList.toggle('bg-primary', k === i);
-    d.classList.toggle('bg-border', k !== i);
-  });
+  /* Mot class trang thai RIENG thay vi lat 2 class mau cua tailwind: tu 07/09 cham nam
+     TREN anh nen mau cua no do CSS lo (trang / trang 45%), khong con la bg-primary /
+     bg-border. Giu bg-* o day thi chung thanh nhan trang thai doi lot ten mau. */
+  const paint = i => pips.forEach((d, k) => d.classList.toggle('hm-pip-on', k === i));
   /* `cur` = tấm mà dải ĐANG nhắm tới. Nó là biến riêng chứ không suy ra từ `scrollLeft`
      mỗi lượt, vì nhịp tự chạy ở dưới cần một điểm neo KHÔNG phụ thuộc cú cuộn trước đã
      chạy xong hay chưa — xem chú thích ở đó. `sync()` (chạy khi người dùng vuốt/kéo, hoặc
