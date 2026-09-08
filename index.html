@@ -3238,6 +3238,27 @@ window.RESP = (function () {
      cuộn.
      Bản desktop KHÔNG phải sửa: ở đó tiêu đề vốn đã là một ô của chính lưới `.hm-occ`
      (`.hm-occ-aside`), tức đã nằm trong vùng nhấn màu từ lượt trước. */
+  /* KHOI CHU 3 DONG TRONG O OCCASION (08/09/2026) — khuon nay bo tu ban desktop sang, chi
+     khac 2 con so vi o o day nho hon (210x280 so voi 519x519):
+       mang phu cao 200 / dac 112  (desktop 288 / dac 144)
+     Khoi chu do duoc ~92px tinh tu day + le 16 = 108, nen dac 112 phu TRON khoi chu; con 88px
+     tren do la doan doc de mep mang khong thanh duong ke.
+     Vi sao phai co mang rieng: `.hm-cat-scrim` dung chung voi o danh muc chi dac 48px duoi —
+     du cho MOT nhan, nhung dong phu o day nam tan 108px thi roi vao doan doc, alpha tut ve
+     .24 (do duoc) tuc chu thuong khong con doc noi. */
+  .hm-occ-scrim {
+    position: absolute; inset-inline: 0; bottom: 0; height: 200px;
+    background: linear-gradient(to top, rgba(0, 0, 0, .55) 0, rgba(0, 0, 0, .55) 112px, transparent 100%);
+    pointer-events: none;
+  }
+  .hm-occ-copy {
+    position: absolute; left: 16px; right: 16px; bottom: 16px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  /* Nhan von tu dinh vi tuyet doi (dung cho o CHI co nhan); nam trong khoi chu thi tra no ve
+     dong chay binh thuong de 3 dong xep duoc theo nhau. */
+  .hm-occ-copy .hm-cat-label { position: static; }
+
   .hm-occ-band { background: var(--unofficial-accent-0); }
   .hm-occ { display: flex; gap: 4px; }
   .hm-occ-item { flex: 0 0 210px; }
@@ -7186,7 +7207,11 @@ const HM_SHOW = { sale: false, stories: true, quickAdd: true, brandCards: false 
 /* PROMO BANNER — CÓ CÔNG TẮC (06/09/2026, feedback khách). Đặt `null` là TẮT, cả khối
    biến mất, không để lại khoảng trống. Ảnh kv-sale.jpg (1600x600) khớp tỉ lệ tuyệt đối,
    full-bleed ở khổ máy. Dời từ giữa trang lên trên cùng theo mẫu khách. */
-const HM_PROMO = { img: 'kv-sale.jpg', ratio: '1600/600', alt: 'Ưu đãi mùa hè', cat: 'Khuyến mãi' };
+/* ẢNH MỚI CỦA KHÁCH (08/09/2026): user thay thẳng `assets/kv-sale.jpg` bằng banner
+   "SALE — Final Clearance" (736x314). TỈ LỆ PHẢI ĐỔI THEO: khai `1600/600` (2,667) cho một
+   tấm 2,344 là cắt ~12% bề ngang, mà chữ "Get an additional 20% off…" nằm gần mép.
+   Đo ở khổ 375 với tỉ lệ đúng: 375x160, giữ 100% ảnh — cả 4 dòng chữ nướng còn nguyên. */
+const HM_PROMO = { img: 'kv-sale.jpg', ratio: '736/314', alt: 'Final Clearance — giảm thêm 20%', cat: 'Khuyến mãi' };
 
 /* HERO — 4 SLIDE CÓ VAI (06/09/2026, feedback khách: 1 ecom camp + 3 brand day).
    Ô ĐỔI TỪ 4/3 SANG 1/1 và đây là quyết định về NGUỒN chứ không phải thẩm mỹ: 4 slide cần
@@ -7651,18 +7676,27 @@ function hmOccasions() {
           <p class="t-multiline text-secondary-foreground" data-i18n-skip>${HM_OCC_SUB}</p>
         </div>
         <div class="hm-occ drag-x overflow-x-auto no-scrollbar px-4">
-        <!-- O BAN MOBILE CHI VE TIEU DE, khong ve dong phu + chu lien ket nhu desktop: o
-             day rong 210 (long o 178), ma dong phu cua anh tham chieu dai 47 ky tu -> rieng
-             no da 3 dong 12/18, cong tieu de 24/32 xuong 2 dong nua thi khoi chu an gan nua
-             chieu cao o. Anh tham chieu cua lenh cung la khung "Homepage (Desktop)".
-             Bo truncate: tieu de bien tap tieng Anh dai hon nhan mot tu cua ban cu nen phai
-             cho xuong dong, cat giua cau con te hon. -->
+        <!-- O MANG DU KHOI CHU 3 DONG (08/09/2026, lenh user gui 2 anh chup 2 ban kem chu
+             *"day la noi dung bi thieu"*). Truoc do toi CHI ve tieu de va vien ly do o hep —
+             uoc luong sai: do lai bang canvas thi dong phu dai nhat chi 2 dong o long 178,
+             khong phai 3, nen khoi chu ra ~92px tren o cao 280 = 33%, khong phai 39%.
+             Khuon giong desktop tung dong: tieu de Libre 18/24 (desktop 24/32) · dong phu
+             12/18 Inter · chu lien ket 12/16 gach chan.
+             Muc nao KHONG co dong phu thi giu y nguyen khuon mot-nhan cu — 2 muc con lai cua
+             HM_OCCASIONS de rong 2 cot do.
+             Bo truncate: tieu de bien tap dai hon nhan mot tu nen phai duoc xuong dong. -->
         ${HM_OCCASIONS.slice(0, HM_OCC_COUNT).map(([img, label, sub, cta, cat]) => `
         <button data-hm-cat="${cat}" class="hm-occ-item flex flex-col press group text-left">
           <div class="hm-cat-media w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
             <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
-            <span class="hm-cat-scrim" aria-hidden="true"></span>
-            <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground" data-i18n-skip>${label}</p>
+            <span class="${sub ? 'hm-occ-scrim' : 'hm-cat-scrim'}" aria-hidden="true"></span>
+            ${sub ? `
+            <div class="hm-occ-copy">
+              <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground" data-i18n-skip>${label}</p>
+              <p class="t-multiline text-primary-foreground" data-i18n-skip>${sub}</p>
+              ${cta ? `<p class="t-single text-primary-foreground underline underline-offset-2" data-i18n-skip>${cta}</p>` : ''}
+            </div>` : `
+            <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground" data-i18n-skip>${label}</p>`}
           </div>
         </button>`).join('')}
         </div>

@@ -3736,18 +3736,17 @@ window.RESP = (function () {
      Ở 1377 thì ngược lại: không cắt ngang một pixel, chỉ cắt DỌC còn 42,6% chiều cao.
      `object-position 50% 50%` vì dải giữa của ảnh là dải nhiều chi tiết nhất (lệch chuẩn
      59,5 so với 34,5 và 38,8). */
-  /* CAO 220 O KHO THIET KE, ROI LON THEO BE RONG (07/09/2026).
-     Vi sao khong con la height: 220px co dinh: tu luot nay banner TRAN VIEN, nen o man rong
-     hon 1440 be ngang keo ra ma chieu cao dung yen -> object-cover an sau vao anh. Do tren
-     anh nguon 1600x600: khoi chu + nut CTA nam o hang 187..446. Cua so con thay duoc chi
-     255,6 hang o be rong 1377 (kho cu) nhung tut ve 197,2 hang o 1785 -> DA CAT that: dinh
-     chu "Up to 40%" va day nut "SHOP NOW" deu bi cat. Toi da dung lai dung 3 crop bang PIL
-     de xac nhan chu khong doan.
-     Ti le 1425/220 giu nguyen 220 o dung kho 1440 (be ngang thuc 1425 khi co thanh cuon) —
-     tuc con so user chot khong doi — va o 1800 cho 276, dung cai cao ma ban dung lai cho
-     thay chu con nguyen. min-height giu 220 cho moi kho HEP hon 1425, tuc duoi nguong nay
-     hanh vi y NGUYEN nhu truoc. */
-  .hm-promo { aspect-ratio: 1425 / 220; min-height: 220px; }
+  /* BANG LAY DUNG TI LE CUA CHINH ANH (08/09/2026, lenh user: *"day se la banner cho ban
+     desktop kv-sale nhe, ban desktop theo size nay luon"*). Anh khach giao: 1920x337.
+     ⇒ object-cover KHONG cat mot pixel nao o moi be rong: 1440 cho bang cao 250, 1920 cho
+     334. Truoc do la ti le 1425/220 (6,477) — con so cua rieng bo khung cu, va chinh no la
+     thu tung cat mat chu cua tam 1600x600.
+     BO `min-height: 220`: no ton tai de giu con so 220 o kho hep, ma nay chieu cao do CHINH
+     ANH quyet — ep 220 o kho duoi 1253 la lai cat.
+     KHONG dung `h-auto` de "tu theo anh moi": lam vay thi bang khong co chieu cao du tru cho
+     tai anh xong -> nhay layout ngay dau trang. Nen ghim ti le, va DOI ANH LA DOI MOT SO O
+     DAY (toi da noi se "tu dung"; day la doi y co ly do, ghi ra de khong am tham). */
+  .hm-promo { aspect-ratio: 1920 / 337; }
 
   /* SPOTLIGHT: TOÀN BỘ NỘI DUNG NẰM TRONG ẢNH (07/09/2026, lệnh user). Trước đó là lưới
      2 cột — ảnh 460 bên trái, cột chữ bên phải.
@@ -3801,18 +3800,34 @@ window.RESP = (function () {
      Trắng .78 phủ lên 78 cho 255-(255-78)*0,22 = 216 -> mực đen ra ~14:1; phủ lên dải
      phẳng 241 thì thành 251, gần như không thấy đổi. Tức veil sáng chỉ "ăn" đúng chỗ tối,
      không bôi xám cả tấm như gradient đen từng làm với 2 ô packshot của dải danh mục. */
+  /* VEIL CỦA KHỐI SPOTLIGHT — từ 08/09 BẬT ở dải rộng và đổi hướng.
+     Trước: `display: none` ở dải rộng, vì chữ nằm trên dải phẳng 241 của ảnh Versace cũ (lệch
+     chuẩn 0,00, đo 07/09 ra không cần veil). Ảnh khách giao KHÔNG có dải phẳng đó: đo cột chữ
+     30% bên trái ra chữ trắng chỉ **1,53:1** khi không veil. Với veil đen .45 thì lên
+     **4,76:1** — đạt ngưỡng 4,5 của chữ thường.
+     HƯỚNG GRADIENT LÀ SANG PHẢI, không phải lên trên: ở dải rộng khối chữ là một CỘT bên
+     trái cao suốt băng, nên một gradient dâng từ đáy sẽ không phủ nó. Mốc 30% trùng đúng
+     `width: 30%` của `.hm-spot-copy` nên veil luôn dính theo cột chữ; nhạt hết ở 46%.
+     Ở dải hẹp (<1024) khối chữ tụt xuống ĐÁY — chỗ đó đổi lại thành gradient dâng từ đáy,
+     xem media query ở cuối. */
   .hm-spot-veil {
-    display: none;
-    /* HINH HOC TINH BANG PX, KHONG BANG % — xem giai thich day du o index.html.
-       Vet dac = 0,82 x 340 = 278,8 >= 276 (chieu cao khoi chu tinh tu day), nen phu
-       TRON khoi chu; % thi sai o dai hep vi panel cao gap 2-3 lan ma khoi chu van 276. */
-    position: absolute; inset-inline: 0; bottom: 0; height: 340px;
-    background: linear-gradient(to top, rgba(255,255,255,.78) 0%, rgba(255,255,255,.78) 82%, transparent 100%);
+    /* Ở DẢI RỘNG veil phủ TOÀN BĂNG và gradient chạy SANG PHẢI (khối chữ là một cột bên trái
+       cao suốt băng, nên gradient dâng từ đáy không phủ nó). Mốc 30% trùng đúng `width: 30%`
+       của `.hm-spot-copy` nên veil luôn dính theo cột chữ; nhạt hết ở 46%.
+       Dải hẹp (<1024) thì khối chữ tụt xuống đáy — media query ở cuối đổi lại thành gradient
+       dâng từ đáy, cao 340px, đúng cách tính px đã ghi ở index.html. */
+    display: block;
+    position: absolute; inset: 0;
+    background: linear-gradient(to right, rgba(0, 0, 0, .45) 0%, rgba(0, 0, 0, .45) 30%, transparent 46%);
     pointer-events: none;
   }
 
   .hm-spot-brands { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
-  .hm-spot-brand-photo { height: 160px; }
+  /* CAO 386 = 686,5 / 1,778 (08/09/2026): ảnh khách giao cho ô thương hiệu là 736x414. Giữ
+     160 thì ô ra tỉ lệ 4,29 và chỉ giữ 41,5% chiều cao ảnh — dựng lại phép cắt bằng PIL thấy
+     MẤT ĐẦU người mẫu. Ở 386 thì giữ 100%, không cắt một pixel.
+     Hệ quả: hàng ô cao 386 so với băng spotlight 360 — lệch 26px, hai tầng vẫn đọc ra một khối. */
+  .hm-spot-brand-photo { height: 386px; }
   /* NHÃN THƯƠNG HIỆU VÀO TRONG HÌNH (07/09/2026, lệnh user: *"nội dung text trong hình
      luôn nhé"*, ảnh Ounass Block 2). Trước đó wordmark + dòng đếm nằm DƯỚI ảnh.
      GÓC DƯỚI-TRÁI VÀ MỰC TỐI — đo bằng PIL trên đúng phép cắt của ô 443x160:
@@ -3841,12 +3856,17 @@ window.RESP = (function () {
      Trắng .78 đưa 3 số đó lên 211,6 · 220 · 227 -> 13,2 · 14,3 · 15,2 : 1. Phủ lên dải
      phẳng 241 thì thành 252, gần như không thấy đổi — cùng tính chất với `.hm-spot-veil`.
      Ở desktop TẮT: nhãn nằm trong dải phẳng nên veil chỉ làm mờ ảnh mà không đổi gì. */
+  /* VEIL Ô THƯƠNG HIỆU — 08/09 đổi sang ĐEN và BẬT ở dải rộng (trước là trắng .78 và tắt).
+     Đo trên ảnh khách giao ở ô 686,5x386: chữ trắng KHÔNG veil chỉ 1,00 và 1,52:1; với veil
+     đen .45 thì 3,35 (Balmain) và 4,74:1 (Versace) — chữ ở ô này là wordmark thay logo, tức
+     một logotype nên sàn là 3:1. .40 thì Balmain tụt 2,44 -> dưới sàn.
+     Khai bằng PX (96 / đặc 56) như bản mobile, không dùng %. */
   .hm-spot-brand-veil {
-    position: absolute; inset-inline: 0; bottom: 0; height: 58%;
-    background: linear-gradient(to top, rgba(255,255,255,.78) 0%, rgba(255,255,255,.78) 42%, transparent 100%);
+    position: absolute; inset-inline: 0; bottom: 0; height: 96px;
+    background: linear-gradient(to top, rgba(0, 0, 0, .45) 0, rgba(0, 0, 0, .45) 56px, transparent 100%);
     pointer-events: none;
   }
-  .hm-spot-brand-veil { display: none; }
+
   .hm-spot-brand-cap {
     /* RỘNG THEO NỘI DUNG, KHÔNG THEO %. Bản đầu khai `width: calc(33.333% - 16px)` và ĐO
        RA LỖI ở khổ máy: ô 343 cho cap 98,4 mà `brand-logo-dg.png` ở trần 12 cần 118,9, nên
@@ -3864,6 +3884,19 @@ window.RESP = (function () {
   .hm-spot-brand-cap img {
     max-height: 12px; max-width: 100%; width: auto; height: auto; object-fit: contain;
   }
+  /* TÊN HÃNG BẰNG CHỮ cho hãng không có file logo (đồng bộ bản mobile 08/09). Class riêng +
+     CSS thật, KHÔNG đi qua hook `text-[18px]` của bộ da: hook đó cho 24px và khai
+     `text-transform: none` đè mất `uppercase` (đo được ở bản mobile). Chữ HOA là ngoại lệ đã
+     ghi danh của luật không-dùng-UPPERCASE — nó thay cho một wordmark. */
+  .hm-brand-text {
+    font-family: var(--font-head); font-weight: 400;
+    font-size: 18px; line-height: 24px;
+    text-transform: uppercase; letter-spacing: .5px;
+  }
+  /* Trong khối spotlight thì wordmark to hơn ô nhỏ — bản có logo ở đó là `h-7` (28px). */
+  .hm-spot-copy .hm-brand-text { font-size: 24px; line-height: 32px; }
+  /* Wordmark là mực ĐEN trên nền trong nên đảo thành trắng để đọc trên veil đen. */
+  .hm-spot-copy img, .hm-spot-brand-cap img { filter: brightness(0) invert(1); }
 
   /* BẢN NỮ — 3 ô thương hiệu CHUNG MỘT HÀNG. Ô ra (1377 − 48)/3 = 443, ảnh cao 160 nên
      ~2,77/1 (bản Nam là 677 -> 4,23/1). Vẫn không cắt ngang: 443 nhỏ hơn 1200 nên zoom
@@ -4053,7 +4086,13 @@ window.RESP = (function () {
       justify-content: flex-end; gap: 12px;
       padding: 24px;
     }
-    .hm-spot-veil { display: block; }
+    /* Ở dải hẹp khối chữ tụt xuống ĐÁY nên veil phải đổi hướng: dâng từ đáy thay vì từ trái.
+       Cùng độ đậm .45 và cùng hình (đặc rồi nhạt) như bản mobile. */
+    .hm-spot-veil {
+      display: block;
+      background: linear-gradient(to top, rgba(0, 0, 0, .45) 0%, rgba(0, 0, 0, .45) 80%, transparent 100%);
+      height: 300px; inset-block: auto 0;
+    }
     .hm-stories { grid-template-columns: minmax(0, 1fr); }
     .hm-usp { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
@@ -7141,7 +7180,13 @@ const HM_QUICK_MAX_ROWS = 2;
    06/09 đang làm banner giữa trang cho mục Ưu đãi; nay dời LÊN TRÊN CÙNG theo đúng mẫu
    khách (mẫu của họ chỉ có banner sale ở đầu trang, không có banner sale thứ hai ở giữa),
    và mục Ưu đãi giữ lại tiêu đề + dải thẻ giảm giá. */
-const HM_PROMO = { img: 'kv-sale.jpg', ratio: '1600/600', alt: 'Ưu đãi mùa hè', cat: 'Khuyến mãi' };
+/* DESKTOP GIỮ BẢN NGANG CŨ (`kv-sale-wide.jpg` = chính tấm 1600x600 trước đây, lấy lại từ
+   git khi user thay `kv-sale.jpg` bằng banner mobile 736x314).
+   VÌ SAO KHÔNG DÙNG TẤM MỚI Ở ĐÂY: băng promo desktop là 1425x220, tức tỉ lệ 6,48. Nhét tấm
+   2,344 vào đó chỉ giữ 36,2% chiều cao — dựng lại crop bằng PIL thấy "SALE" bị cắt nửa, còn
+   dòng "Get an additional 20% off…" và nút "SHOP NOW" MẤT HẲN. Muốn dùng đúng tấm đó thì băng
+   phải cao 608 (gấp 2,8 lần con số 220 user đã chốt) — cần bản NGANG của cùng thiết kế. */
+const HM_PROMO = { img: 'kv-sale-wide.jpg', ratio: '1920/337', alt: 'Final Clearance — giảm thêm 20%', cat: 'Khuyến mãi' };
 
 /* HERO — 4 SLIDE CÓ VAI (06/09/2026, feedback khách: *"Slider KV: 1. Ecom camp, 2. Brand
    days (#2, #3, #4)"*). Cột `role` là để đọc ra vai, không vẽ ra chữ nào trên ảnh — luật
@@ -7281,11 +7326,15 @@ function hmRail(list) {
    không phải nâng số ô — 4 là số khách chốt. */
 const HM_CAT_COUNT = 4;
 
+/* 4 Ô ĐẦU DÙNG ẢNH KHÁCH GIAO (08/09/2026, lệnh user: *"đồng bộ các hình ảnh bản desktop từ
+   các chỉnh sửa của bản mobile"*) — cùng bộ `Cat-*` đã cắm cho bản mobile.
+   `pos` về '50% 50%': ảnh 1080x1440 = 3/4 đúng bằng khung mới nên không cắt gì; các số pos cũ
+   là canh tay cho ảnh CŨ ở khung vuông. */
 const HM_CATS = [
-  ['kv-women-4.jpg',  '50% 30%', 'Quần áo',  ''],
-  ['kv-men-4.jpg',    '55% 32%', 'Túi xách', ''],
-  ['kv-men-7.jpg',    '50% 46%', 'Giày dép', ''],
-  ['p10-0.jpg',       '50% 45%', 'Phụ kiện', ''],
+  ['cat-rtw.jpg',     '50% 50%', 'Quần áo',  ''],
+  ['cat-bag.jpg',     '50% 50%', 'Túi xách', ''],
+  ['cat-shoes.jpg',   '50% 50%', 'Giày dép', ''],
+  ['cat-acc.jpg',     '50% 50%', 'Phụ kiện', ''],
   ['b1.jpg',          '50% 45%', 'Làm đẹp',  'Làm đẹp'],
   ['hero-holiday.jpg','50% 50%', 'Quà tặng', ''],
 ];
@@ -7321,7 +7370,11 @@ function hmCatTiles() {
             <div class="hm-cats">
             ${HM_CATS.slice(0, HM_CAT_COUNT).map(([img, pos, label, dept]) => `
             <button ${dkCatAttrs(label, [dept || hmFashionDept()])} class="hm-cat flex flex-col press group text-left">
-              <div class="hm-cat-media w-full aspect-square overflow-hidden ${img === 'b1.jpg' ? 'bg-accent-0' : 'bg-secondary'}">
+              <!-- KHUNG 3/4 thay aspect-square (08/09/2026): ảnh khách giao là 1080x1440.
+                   Giữ vuông là cắt 25% chiều cao ảnh của khách. Ô 341,25 -> cao 455.
+                   Nhãn ở đây là 24/32 tức CHỮ LỚN (ngưỡng 3:1) nên scrim .45 sẵn có vẫn đủ:
+                   đo ô sáng nhất vùng nhãn ra 4,08..6,28:1 trên cả 4 ảnh. -->
+              <div class="hm-cat-media w-full overflow-hidden ${img === 'b1.jpg' ? 'bg-accent-0' : 'bg-secondary'}" style="aspect-ratio:3/4">
                 <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]" style="object-position:${pos}">
                 <span class="hm-cat-scrim" aria-hidden="true"></span>
                 <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>
@@ -7353,8 +7406,14 @@ function hmCatTiles() {
    đổi tiêu đề thẻ Blog đó, hoặc nhận rằng 2 chỗ cách nhau đủ xa để không đọc ra là lặp. */
 const HM_NEW_LINE = 'Bộ sưu tập AW26';
 
-const HM_MAISON = 'Versace';
-const HM_MAISON_COPY = 'Thiết kế táo bạo, phong cách quyến rũ và logo Medusa đặc trưng — Versace là biểu tượng của sự sang trọng và vẻ đẹp hiện đại.';
+/* ĐỒNG BỘ TỪ BẢN MOBILE (08/09/2026): spotlight là FERRAGAMO, 2 ô nhỏ là Balmain + Versace.
+   Ba chỗ tạm y như bản mobile: ảnh là tấm dư `shop-by-1-clean.jpg`, wordmark vẽ bằng chữ,
+   `HM_MAISON_COPY` để rỗng (không có mô tả hãng Ferragamo, không bịa). */
+const HM_MAISON = 'Ferragamo';
+const HM_MAISON_COPY = '';
+
+/* Ảnh khối spotlight khi hãng chưa có sản phẩm trong kho; rỗng = rơi về ảnh model của SP đầu. */
+const HM_SPOT_IMG = 'shop-by-1-clean.jpg';
 
 /* ── THƯƠNG HIỆU NỔI BẬT — "Brands of the moment" ─────────────────────────────
    Feedback khách 06/09: *"1 spotlight blocks (new in brand / key collection hoặc brand có
@@ -7383,7 +7442,7 @@ const HM_MAISON_COPY = 'Thiết kế táo bạo, phong cách quyến rũ và log
    khối nói ba giọng. Nay ảnh chính là chiếc đầm mang hoạ tiết đó.
    Hệ quả: brand-hero.png trở lại trạng thái CHƯA DÙNG như trước 06/09 (ghi ở mục 4 báo cáo
    — kho không có ô nào cắt nó nhẹ). */
-const HM_SPOT_HEADLINE = 'Broken Jewels — hoạ tiết đặc trưng của Versace';
+const HM_SPOT_HEADLINE = 'An architectural silhouette, refined leather, and iconic Gancini closure embody Italian craftsmanship';
 
 /* NHÃN LÝ DO SPOTLIGHT (07/09/2026, user chốt: *"có — nhãn chữ thường"*).
    Brief khách nêu 3 tiêu chí để một hãng lên spotlight — *new in brand · key collection ·
@@ -7418,7 +7477,9 @@ const HM_SPOT_BELOW = 'brands';
      Moschino        1 SP · 0 ảnh model · KHÔNG logo, KHÔNG có trong BRAND_PAGES
    Ô thứ 3 sẽ không có ảnh lẫn wordmark, tức một ô BỊA. Brief ghi "2-3" nên 2 là hợp lệ, và
    dự án đã có tiền lệ không mượn logo hãng khác gán vào (hàng 5 thẻ, chốt khách 27/08). */
-const HM_SPOT_BRANDS = ['Dolce&Gabbana', 'Zimmermann'];
+/* ĐÚNG 2 Ô NHỎ: Balmain + Versace — cộng Ferragamo ở khối lớn là tròn 3 hãng (đồng bộ bản
+   mobile). Cả 2 bản ngành dùng cùng bộ vì spotlight nay không phải Versace nữa. */
+const HM_SPOT_BRANDS = ['Balmain', 'Versace'];
 
 /* BẢN NỮ: 3 ô chung một hàng (07/09/2026, lệnh user). Buộc phải gồm CẢ hãng đang spotlight
    — kho chỉ có ĐÚNG 3 hãng thời trang đủ tư liệu (Versace · Dolce&Gabbana · Zimmermann);
@@ -7427,7 +7488,7 @@ const HM_SPOT_BRANDS = ['Dolce&Gabbana', 'Zimmermann'];
    Hệ quả phải biết: hãng spotlight XUẤT HIỆN HAI LẦN trong cùng một mục — một lần làm banner
    biên tập, một lần làm cửa vào PLP. Ảnh thì KHÔNG lặp (xem `hmSpotBrands`). Muốn hết lặp thì
    phải bỏ về 2 ô như bản Nam, hoặc xin thêm tư liệu một hãng thời trang thứ tư. */
-const HM_SPOT_BRANDS_NU = ['Versace', 'Dolce&Gabbana', 'Zimmermann'];
+const HM_SPOT_BRANDS_NU = ['Balmain', 'Versace'];
 
 /* NHÁNH A: ô thương hiệu nhỏ. ẢNH DÙNG LẠI ĐÚNG CẶP `hero` + `pos` của trang thương hiệu,
    có chủ ý: cặp đó đã được canh tay cho dải NGANG 1377x320 (~4,3/1) ở màn brand. Ô đây cao
@@ -7439,16 +7500,32 @@ const HM_SPOT_BRANDS_NU = ['Versace', 'Dolce&Gabbana', 'Zimmermann'];
    TRẦN WORDMARK 22px là SỐ TUYỆT ĐỐI (chốt khách 27/08) — dùng lại y nguyên của hàng 5 thẻ
    nên 2 hàng thương hiệu trên trang đứng chung một trục quang học.
    Dòng đếm đi luật i18n có sẵn [/^(\d+) sản phẩm$/, '$1 products'] — không thêm khoá. */
+/* HAI BẢNG ĐÈ ảnh + logo cho ô thương hiệu (đồng bộ bản mobile 08/09). Để rỗng một hãng là
+   hãng đó rơi về `BRAND_PAGES`. `brand-spotlight-2` là tấm BALMAIN, `-3` là VERSACE (tấm khắc
+   chữ VERSACE trên món kim khí). Có ảnh/logo Ferragamo thì thêm 2 dòng vào đây. */
+const HM_SPOT_BRAND_IMG = {
+  'Versace': 'brand-spotlight-3.jpg',
+  'Balmain': 'brand-spotlight-2.jpg',
+};
+
+const HM_SPOT_BRAND_LOGO = {
+  /* 'Balmain':   'brand-logo-balmain.png',   */
+  /* 'Ferragamo': 'brand-logo-ferragamo.png', */
+};
+
 function hmSpotBrands(avoidImg) {
   const women = hmLabelUp();
   const tiles = (women ? HM_SPOT_BRANDS_NU : HM_SPOT_BRANDS).map(name => {
+    /* Chốt chặn chỉ đòi ẢNH (đồng bộ bản mobile 08/09): hãng chưa có trong `BRAND_PAGES` và
+       chưa có sản phẩm vẫn dựng được ô, tên hãng vẽ bằng chữ nếu không có file logo. */
     const B = brandPage(name);
-    const n = PRODUCTS.filter(p => p.brand === name).length;
-    if (!B || !B.logo || !B.hero || !n) return '';
+    const logo = HM_SPOT_BRAND_LOGO[name] || B.logo;
+    const hero = HM_SPOT_BRAND_IMG[name] || B.hero;
+    if (!hero) return '';
     /* Ô KHÔNG ĐƯỢC ĐI ĐÚNG TẤM ẢNH CỦA SPOTLIGHT. Bẫy thật: `BRAND_PAGES['Versace'].hero`
        là `p1-1.jpg`, đúng tấm mà spotlight đang dùng — nên ở bản Nữ (có ô Versace) hai tầng
        của cùng một mục sẽ vẽ cùng một ảnh. Rơi về ảnh người mẫu KHÁC của chính hãng đó. */
-    let img = B.hero;
+    let img = hero;
     if (avoidImg && img === avoidImg) {
       const alt = PRODUCTS.find(p => p.brand === name && p.model && p.model !== avoidImg);
       if (alt) img = alt.model;
@@ -7456,9 +7533,12 @@ function hmSpotBrands(avoidImg) {
     return `<a data-nav="plp" data-plp-brand="${name}" class="hm-spot-brand block cursor-pointer press">
               <img src="${A}${img}" alt="${B.name}" class="hm-spot-brand-photo w-full object-cover lazy" style="object-position:${B.pos || '50% 50%'}">
               <span class="hm-spot-brand-veil" aria-hidden="true"></span>
+              <!-- Ô CHỈ CÓ WORDMARK (đồng bộ bản mobile 08/09, theo mock user): bỏ dòng
+                   "N sản phẩm" — và đó cũng là điều kiện để bày được hãng chưa có dữ liệu SP. -->
               <div class="hm-spot-brand-cap">
-                <img src="${A}${B.logo}" alt="${B.name}" class="lazy">
-                <p class="t-single text-muted-foreground">${n} sản phẩm</p>
+                ${logo
+                  ? `<img src="${A}${logo}" alt="${B.name}" class="lazy">`
+                  : `<p class="hm-brand-text text-primary-foreground">${B.name}</p>`}
               </div>
             </a>`;
   }).filter(Boolean);
@@ -7475,7 +7555,10 @@ function hmMaison() {
      là 2 ô thương hiệu — bẫy ngủ: đổi HM_MAISON sang một hãng chỉ có 1-2 ảnh người mẫu là cả
      khối biến mất im lặng dù nhánh 'brands' không dùng tới `list`. Ảnh spotlight thì vẫn cần
      `all[0]` nên `spot` là điều kiện chung. */
-  if (!spot || (HM_SPOT_BELOW !== 'brands' && list.length < 3)) return '';
+  /* Ảnh spotlight: ưu tiên `HM_SPOT_IMG` (hãng chưa có SP trong kho vẫn dựng được khối). */
+  const spotImg = HM_SPOT_IMG || (spot && spot.p.model);
+  const spotAlt = HM_SPOT_IMG ? HM_MAISON : (spot && spot.p.name);
+  if (!spotImg || (HM_SPOT_BELOW !== 'brands' && list.length < 3)) return '';
   const attrs = `data-nav="plp" data-plp-brand="${HM_MAISON}"`;
   /* KHỐI SPOTLIGHT THÔI CÓ TIÊU ĐỀ VÀ NÚT (07/09/2026, lệnh user: *"bỏ title Brands of
      the moment và button view all ra"*). Không đi qua `hmSec` nữa — giữ đúng nhịp dọc của
@@ -7499,18 +7582,30 @@ function hmMaison() {
         <div class="pt-8 flex flex-col gap-1">
           <div class="hm-spot">
             <a ${attrs} class="hm-spot-photo overflow-hidden bg-secondary cursor-pointer press">
-              <img src="${A}${spot.p.model}" alt="${spot.p.name}" class="w-full h-full object-cover lazy" style="object-position:50% 38%">
+              <!-- CANH TRÊN (08/09/2026), không phải 38% như tấm cũ: băng này là 1377x360 tức
+                   tỉ lệ 3,83 còn ảnh khách là 3/4, nên chỉ giữ 19,6% chiều cao ảnh. Đã dựng lại
+                   4 phép cắt bằng PIL: canh GIỮA (mọi chiều cao thử: 360 · 560 · 774) đều cắt
+                   MẤT ĐẦU người mẫu; canh TRÊN thì mặt và vai lấp đúng băng. -->
+              <img src="${A}${spotImg}" alt="${spotAlt}" class="w-full h-full object-cover lazy" style="object-position:50% 0%">
             </a>
             <span class="hm-spot-veil" aria-hidden="true"></span>
             <div class="hm-spot-copy">
               <div class="flex flex-col gap-2">
-                <p class="t-single text-muted-foreground">${HM_SPOT_EYEBROW}</p>
+                <p class="t-single text-primary-foreground">${HM_SPOT_EYEBROW}</p>
                 ${B.logo
                   ? `<img src="${A}${B.logo}" alt="${B.name}" class="h-7 w-[149px] object-contain object-left lazy">`
-                  : `<p class="text-[18px] font-medium leading-7 text-foreground">${B.name}</p>`}
+                  : `<p class="hm-brand-text text-primary-foreground">${B.name}</p>`}
               </div>
-              <p class="text-[18px] font-medium leading-7 text-foreground">${HM_SPOT_HEADLINE}</p>
-              <p class="t-multiline text-foreground-alt">${HM_MAISON_COPY}</p>
+              <!-- DONG NAY LA INTER, khong phai Libre (08/09/2026, lenh user: *"subtitle cua
+                   brand highlight Ferragamo o ban desktop cho chu inter thoi, hien tai dang
+                   libre toan bo"*).
+                   Vi sao truoc no ra Libre: chuoi text-[18px] font-medium leading-7 la HOOK
+                   duy nhat dan len bac trung bay cua bo da, nen no keo ca mat chu Libre 24/32.
+                   Dong nay khong phai tieu de — no la cau mo ta duoi wordmark, tuc THAN BAI.
+                   Nay dung t-lead (14/20 Inter) — DUNG class ban mobile dang dung cho cung
+                   dong nay, nen 2 ban thoi lech nhau. Wordmark FERRAGAMO thi VAN Libre. -->
+              <p class="t-lead text-primary-foreground">${HM_SPOT_HEADLINE}</p>
+              ${HM_MAISON_COPY ? `<p class="t-multiline text-primary-foreground">${HM_MAISON_COPY}</p>` : ''}
               <button ${attrs} class="t-lead h-12 px-8 w-fit border border-border bg-background text-foreground btn-o press">Mua ngay</button>
             </div>
           </div>
@@ -7520,7 +7615,7 @@ function hmMaison() {
           <div class="hm-spot-row">
             ${list.map(({ p, i }) => productCard(p, i, { noColors: true, noName: true, noQuick: !HM_SHOW.quickAdd, quickPerRow: HM_QUICK_PER_ROW, quickMaxRows: HM_QUICK_MAX_ROWS, model: true })).join('')}
           </div>`}
-          ${HM_SPOT_BELOW === 'products' ? '' : hmSpotBrands(spot.p.model)}
+          ${HM_SPOT_BELOW === 'products' ? '' : hmSpotBrands(spotImg)}
         </div>
       </div>`;
 }
@@ -7594,8 +7689,11 @@ const HM_OCC_COUNT = 2;
    trang chu. Do tuong phan lai voi mang phu .55: o sang nhat cua d7-1 ra 5,18:1, z10-2 ra
    5,29:1 — dat nguong 4,5:1 cua chu thuong. */
 const HM_OCCASIONS = [
-  ['d7-1.jpg',  'Back to Business',    'A fresh perspective to workwear and beyond',      'Shop now',      'Quần áo'],
-  ['z10-2.jpg', 'Spotlight On: Denim', 'The style staple that belongs in every wardrobe', 'Shop the edit', 'Quần áo'],
+  /* Ảnh khách giao, đồng bộ từ bản mobile (08/09/2026). Bản SẠCH (`-clean`) vì chữ do HTML vẽ.
+     Khung ở đây là 1/1 nên ảnh 3/4 bị cắt 25% chiều cao — KHÔNG mất chữ nào (2 tấm này không
+     nướng chữ) và chủ thể vẫn trong khung. Đo khối chữ 3 dòng qua scrim .55: 6,76 và 8,60:1. */
+  ['shop-by-2-clean.jpg', 'Back to Business',    'A fresh perspective to workwear and beyond',      'Shop now',      'Quần áo'],
+  ['shop-by-3-clean.jpg', 'Spotlight On: Denim', 'The style staple that belongs in every wardrobe', 'Shop the edit', 'Quần áo'],
   ['p3-1.jpg',  'Dạo phố',             '', '', 'Túi xách'],
   ['p10-1.jpg', 'Điểm nhấn',           '', '', 'Phụ kiện'],
 ];
