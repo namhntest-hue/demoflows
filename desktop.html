@@ -272,7 +272,22 @@ window.RESP = (function () {
   img.lazy.loaded { opacity: 1; }
   /* ── Carousel kéo trái/phải ── */
   .drag-x { cursor: grab; }
-  .drag-x.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+  /* `scroll-behavior: auto` KHI DANG KEO — VA MOT LOI THAT (08/09/2026, lenh user:
+     *"dieu chinh lai khi swipe trai phai hinh anh k chay di muot ma"*).
+     NGUYEN NHAN: `dragScroll()` gan `el.scrollLeft` MOI LAN chuot di chuyen (~60 lan/giay),
+     con `.dk-rail-track` khai `scroll-behavior: smooth`. Moi phep gan vi vay mo MOT hoat anh
+     cuon muot moi, va bi phep gan ke tiep huy ngay truoc khi no chay xong -> dai KHONG nhich
+     mot pixel nao trong luc keo, chi giat sang tam ke tiep khi nha chuot va scroll-snap keo ve.
+     DO TREN TRANG, gan 6 gia tri lien tiep roi doc lai ngay:
+       truoc: 40->0  80->0  120->0  160->0  200->0  240->0   (va 700ms sau van 0)
+       sau  : 40->40 80->80 120->120 160->160 200->200 240->240
+     Vi sao khong bo `scroll-behavior: smooth` khoi `.dk-rail-track`: nhip tu chay cua hero va
+     2 nut mui ten cua cac dai san pham can no. Chi tat trong luc keo la du, va tat o day thi
+     va cho CA MOI dai cua file (hero + 2 dai SP + dai thuong hieu) bang mot dong.
+     `scroll-snap-type: none` von da co san o rule nay va van dung — da do lai, khong phai no.
+     BAN MOBILE KHONG PHAI VA: index.html khong co mot khai bao `scroll-behavior` nao, va
+     `dragScroll` thoat som voi `pointerType === 'touch'` nen tren may that la cuon native. */
+  .drag-x.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; scroll-behavior: auto; }
   .drag-x.dragging img { pointer-events: none; }
   /* ── Search screen ── */
   /* ẩn nút ✕ clear mặc định của trình duyệt — đã có nút "Xóa" riêng theo Figma */
@@ -3547,7 +3562,10 @@ window.RESP = (function () {
   .hm-hero-track { gap: 0; scroll-snap-type: x mandatory; }
   /* `.dk-rail-item` khoá cứng ở `flex: 0 0 calc((100% - 12px)/4)` = 1/4 dải; một tấm
      hero là 1/1 nên phải có class riêng, không dùng lại được. */
-  .hm-hero-slide { flex: 0 0 100%; scroll-snap-align: start; }
+  /* `position: relative` (08/09/2026): tu luot nay MOI TAM la moc dinh vi cua mang phu +
+     khoi chu cua chinh no. Truoc do moc la `.hm-hero` (ca khoi hero) vi mang phu dung
+     chung cho moi tam — nay chu di theo tung tam nen mang phu cung phai di theo. */
+  .hm-hero-slide { flex: 0 0 100%; scroll-snap-align: start; position: relative; }
 
   /* 2 — CHẤM CHỈ TRANG: vùng bấm 32×32 quanh chấm 8×8.
      Chấm 8px là số đã chốt cho hero, nhưng ô bấm 8×8 thì dưới chuẩn. `::before` với
@@ -3567,15 +3585,80 @@ window.RESP = (function () {
      Nen: CHAM TRANG + mot mang PHU day anh. Do lai voi mang phu .45: o xau nhat cua 4 tam
      ra 10,4 / 6,5 / 4,8 / 6,0 : 1 — dat het.
      rgba(0,0,0,.45) KHONG phai so moi: dung do tam phu cua .hm-cat-media, .dk-scrim va
-     .cg-backdrop. Mang phu chi dung khi CO hang cham (>1 tam), nen hero mot tam thi anh
-     sach tron. Cao 96 = 6 x 16, tren thang dem cua du an; cham nam o 16..24 tuc trong phan
-     dam nhat cua mang, con dinh mang da nhat han truoc khi tram vao chu the. */
+     .cg-backdrop.
+     ── CAP NHAT 08/09/2026, mang phu doi viec ─────────────────────────────────────────
+     Tu luot nay mang phu KHONG con chi de do hang cham: hero da co TIEU DE + NUT ve bang
+     HTML nam trong anh, nen mang phu la thu do CA KHOI CHU. Ba thay doi:
+       1. Nam trong TUNG TAM (moc `.hm-hero-slide`), khong con o khung hero — chu cuon cung
+          tam nen mang phu phai cuon theo.
+       2. KHONG con phu thuoc `many`: mot tam thi khong co cham, nhung van co chu.
+       3. Cao va dam hon: xem so do va cach do ngay o rule duoi.
+     Bang do o tren van dung nguyen cho HANG CHAM (cham trang o day 16..32), va mang phu moi
+     dam hon .45 nen cham chi doc ro hon. Rieng 2 dong "mobile kv-men-1/4" trong bang la so
+     CU: index.html doi hero sang `top-kv-1/2` cua khach, do lai o chu thich ben file do. */
   .hm-hero { position: relative; }
+  /* MANG PHU CHO KHOI CHU — 260 / dac 160 / .55 (08/09/2026).
+     CACH RA 2 CON SO CAO: do chinh khoi chu tu duoi len. Nut cao 48 (h-12) + khe 8 + tieu de
+     24/32 = 88; khoi dat o day 48 nen dinh chu o 136. Dac den 160 la phu TRON, con 100px doc
+     tren do (160 -> 260) de mep mang khong thanh mot duong ke ngang tren anh.
+     CACH RA .55: do bang PIL, dung lai dung phep cat cua trinh duyet (object-fit: cover +
+     object-position) o khung 1425x534, lay vung chu se nam (x 0..500, day 40..145), chia o
+     10px roi lay o SANG NHAT — vi chu phai doc duoc o cho xau nhat, khong phai o trung binh:
+       kv-women-6  trung binh 163 | o sang nhat 252 -> khong mang 1,03:1 · .45 = 3,43 · .55 = 4,85
+       kv-women-5  trung binh 124 | o sang nhat 214 -> khong mang 1,45:1 · .45 = 4,56 · .55 = 6,25
+     Tieu de 24/32 la CHU LON (nguong WCAG 3:1) nen .45 da du ky thuat, nhung chon .55 vi:
+     (1) mat chu Libre Bodoni la didone, net ngang mong nhu soi chi — 3,43 la mong;
+     (2) o 4,85 thi no dat luon nguong 4,5 cua CHU THUONG, tuc do vao dong phu tieng Viet
+         (cot 6, hien de rong) la khong phai do lai;
+     (3) ban mobile BUOC phai .55 (chu o do co dong phu 12/18), de 2 ban lech nhau mot con so
+         cho cung mot khoi la mam mong cho lan sua sau.
+     .53 la nguong toan hoc cho 4,5 tren o 252; .55 la bac tron gan nhat len tren. */
+  /* CO NHO — CHI DO HANG CHAM (ban goc 96/.45). Dung cho tam CO CHU NUONG: chu trong pixel
+     tu no da doc duoc, phu them chi lam toi art cua khach vo co.
+     Do lai tren 2 KV moi, o 8px sang nhat trong vung cham (giua khung, day 16..32):
+       kv-wide-1 (xe hoi) o sang nhat 182 -> cham trang khong mang 2,02:1 · mang .45 5,90:1
+       kv-wide-2 (sofa)   o sang nhat 121 -> khong mang 4,38:1 · mang .45 10,00:1
+     Tuc tam xe hoi VAN CAN mang (2,02 < 3:1 cua thanh phan phi-chu), .45 la du. */
   .hm-hero-veil {
     position: absolute; inset-inline: 0; bottom: 0; height: 96px; z-index: 1;
     background: linear-gradient(to top, rgba(0, 0, 0, .45) 0%, transparent 100%);
     pointer-events: none;
   }
+  /* CO LON — do CA KHOI CHU khi tieu de/dong phu ve bang HTML. So do va cach do o chu thich
+     ngay tren. Hien 2 tam desktop deu la anh nuong chu nen nhanh nay chua chay o day, nhung
+     no la nhanh `else` cua mot dieu kien SONG (tam khong co cot 7) va la dung khuon ban
+     mobile dang chay — khach giao ban SACH la dung ngay. */
+  .hm-hero-veil-tall {
+    height: 260px;
+    background: linear-gradient(to top, rgba(0, 0, 0, .55) 0, rgba(0, 0, 0, .55) 160px, transparent 100%);
+  }
+  /* KHOI NUT TREN TAM CO CHU NUONG. `left`/`top` do markup cap theo % (xem HM_HERO), nen o
+     day chi khai phan khong doi. KHONG dung `.hm-hero-copy`: khoi do la hop 1440 canh giua
+     cho chu HTML, con nut nay phai bam theo chu NAM TRONG ANH tuc theo % cua chinh anh. */
+  .hm-hero-cta { position: absolute; z-index: 2; pointer-events: none; }
+  .hm-hero-cta button { pointer-events: auto; }
+  /* KHOI CHU TRONG ANH (08/09/2026, lenh user: tieu de + CTA "Discover now" tren banner).
+     LE TRAI KHONG PHAI MOT CON SO CO DINH: hero la khoi TRAN VIEN (nam ngoai khung
+     max-w-[1440px]), nen `left: 40px` se dan chu vao sat mep MAN HINH o kho 1920 — lech han
+     khoi cot noi dung cua ca trang. Cach dung o day la mot hop 1440 canh giua giong khung
+     noi dung, roi dem 40 vao trong:
+       o 1440 -> chu cach mep anh 40, dung bang padding-left cua .hm-spot-copy;
+       o 1920 -> chu o 280, tuc gan sat mep cot noi dung 1440 (264) chu khong theo mep man.
+     `bottom: 48` chu khong 16: hang cham o day 16 va vung bam cua no cao 32 (::before inset
+     -12) nen cham chiem tu day len 36 — 48 la bac dem gan nhat con chua khe.
+     `pointer-events: none` + bat lai o nut: de ca vung chu khong an mat cu keo ngang cua
+     dai hero, va de nut van bam duoc. Dung khuon .hm-spot-copy dang dung. */
+  .hm-hero-copy {
+    position: absolute; z-index: 2; bottom: 48px;
+    left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 1440px; padding-inline: 40px;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+    pointer-events: none;
+  }
+  .hm-hero-copy button { pointer-events: auto; }
+  /* Chan do dai dong: 520 la ~2 dong tieu de 24px, tren mot anh rong 1425 thi mot dong chu
+     keo dai 1360 doc thanh bang hieu chu khong con la tieu de bien tap. */
+  .hm-hero-copy p { max-width: 520px; }
   .hm-hero-dots {
     position: absolute; inset-inline: 0; bottom: 16px; z-index: 2;
     display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -7221,10 +7304,45 @@ const HM_PROMO = { img: 'kv-sale-wide.jpg', ratio: '1920/337', alt: 'Final Clear
    du khoang tho tren dinh dau.
    Do lai hang cham sau khi doi cat (vung day o thay noi dung): chu trang qua mang phu 96px
    ra 5,19:1 va 4,86:1 — van dat, khong phai sua mang phu. */
+/* KV DESKTOP CUA KHACH — 08/09/2026, bo KV-desk.zip (2 tam PNG 2057x1000).
+   PNG -> JPG q88: 7,28 MB -> 629 KB (-91%), dung tien le cua bo Banner-Mobile.
+   Thay 2 tam `kv-women-6/5` la anh CU cua kho, khong phai anh khach.
+   Thu tu KHOP BAN MOBILE: tam 1 = xe hoi (Brand day, Quan ao), tam 2 = sofa (Ecom camp,
+   San pham moi) — de 2 ban ke cung mot cau chuyen theo cung thu tu.
+
+   ⚠ 2 TAM NAY CO CHU NUONG SAN TRONG PIXEL (tieu de + dong phu, khong co nut), nen o day
+   markup KHONG ve tieu de/dong phu bang HTML nua — se hien chu HAI LAN. Chi ve NUT.
+   Do vi tri chu nuong bang PIL (diem gan trang >230, dem theo hang/cot):
+     xe hoi : chu y 39,7%..61,9% | le trai x=127 = 6,17%
+     sofa   : chu y 39,2%..50,7% | le trai x=122 = 5,93%
+   COT THU 7 = mep tren cua NUT tinh theo % chieu cao anh, chon cach chan chu nuong ~24-30px:
+   65% cho tam xe, 55% cho tam sofa (dong phu 12px can nhieu khoang tho hon tieu de lon).
+   Le trai cua nut dung CHUNG mot so 6% (xem HM_HERO_BAKE_X).
+   Vi khai bang %, nut LUON dinh theo chu nuong o moi kho man — khung nay khong cat anh
+   (ti le khung = ti le anh) nen % cua khung anh xa 1:1 vao % cua tam anh.
+
+   Tam nao KHONG co cot 7 thi chay nhanh cu: tieu de + dong phu + nut ve bang HTML (ban
+   mobile dang chay nhanh do). Khach giao duoc ban SACH cua 2 tam nay thi bo cot 7 di la
+   tieu de quay ve HTML, keo theo dich duoc theo cong tac EN. */
 const HM_HERO = [
-  ['kv-women-6.jpg', '50% 0%', 'Bộ sưu tập AW26',      'Sản phẩm mới', 'Ecom camp'],
-  ['kv-women-5.jpg', '50% 0%', 'Bộ sưu tập denim MCM', 'Quần áo',      'Brand day'],
+  ['kv-wide-1.jpg', '50% 50%', 'The Parisian Colleagues', 'Quần áo',      'Brand day', '', 65],
+  ['kv-wide-2.jpg', '50% 50%', 'New season loading',      'Sản phẩm mới', 'Ecom camp', '', 55],
 ];
+
+/* Le trai cua nut tren tam co chu nuong, tinh theo % be ngang anh. Mot so cho ca 2 tam:
+   do ra 5,93% va 6,17% — chenh 0,24% tuc 5px tren anh 2057, mat khong thay, nen lay 6%
+   de nut o 2 tam thang hang nhau khi luot qua. */
+const HM_HERO_BAKE_X = 6;
+
+/* NHAN NUT TREN HERO (08/09/2026, lenh user: *"o banner desktop va mobile hay cho title kem
+   CTA 'discover now' tren banner nhe tuong tu hinh dinh kem"*, kem anh MR PORTER).
+   Viet hoa CHU DAU theo luat khong-dung-UPPERCASE cua du an (anh tham chieu de "Shop now"
+   chu thuong y vay), du user go het chu thuong.
+   DE RIENG MOT HANG vi 2 ban dung chung dung mot chu. La chu ANH nen `data-i18n-skip` —
+   cung cach 2 dong tieu de tieng Anh cua khach dang lam.
+   Muon nhan chay 2 ngon ngu thi doi thanh 'Kham pha ngay' + mot dong trong I18N (da co san
+   'Kham pha' -> 'Discover' cho nut spotlight); mot dong, khong doi cau truc. */
+const HM_HERO_CTA = 'Discover now';
 
 /* Nhịp tự chạy của hero. 4000 KHÔNG phải số mới: đúng con số của #promoSlider trong cùng
    file — dải tự chạy sẵn có của dự án — nên trang chỉ có MỘT nhịp tự chạy. */
@@ -7275,19 +7393,52 @@ function hmHero() {
              khien ma ban mobile dung tu dau. -->
         <div class="hm-hero">
           <div class="dk-rail-track hm-hero-track drag-x flex overflow-x-auto no-scrollbar">
-            ${HM_HERO.map(([img, pos, alt, cat]) => `
-            <a class="hm-hero-slide cursor-pointer press" ${dkCatAttrs(cat, [hmFashionDept()])}>
-              <!-- TI LE 1920x720 (08/09/2026, lenh user: *"banner lon nhat se co ti le hinh
-                 anh la 1920x720"*). Truoc la 2/1. Ghi nguyen 1920/720 chu khong rut gon
-                 thanh 8/3: con so nay la SPEC ANH giao cho khach, de nguyen thi doc ra la
-                 spec. O kho 1440 (be ngang thuc 1425) cho cao 534, o 1920 cho 714. -->
-            <div class="w-full overflow-hidden bg-secondary" style="aspect-ratio:1920/720">
+            ${HM_HERO.map(([img, pos, alt, cat, role, sub, bakeY]) => `
+            <!-- TAM HERO GIO LA MOT KHUNG, KHONG CON LA MOT THE <a> (08/09/2026): trong tam
+                 co mot NUT rieng, ma nut long trong <a> la markup sai (nested interactive) —
+                 trinh doc man hinh doc ra mot chi diem duy nhat, va Enter tren nut se chay
+                 ca hai. Nen: <a> chi boc ANH, nut dung song song, ca hai deu tro ve cung
+                 mot danh muc. -->
+            <div class="hm-hero-slide">
+              <a class="block cursor-pointer press" ${dkCatAttrs(cat, [hmFashionDept()])}>
+              <!-- KHUNG LAY TI LE CUA CHINH ART: 2057/1000 (08/09/2026, bo KV-desk.zip).
+                   ⚠ DAY LA CHO LECH VOI SO DA CHOT: 08/09 user chot hero *"ti le hinh anh la
+                   1920x720"* (2,667), ma art khach giao la 2,057. Nhet 2,057 vao khung 2,667
+                   la chi giu 77,1% chieu cao, cat 11,4% tren + 11,4% duoi — da dung lai phep
+                   cat bang PIL roi XEM: canh giua thi CAT MAT DINH DAU nguoi mau o tam xe hoi
+                   (va cham dinh toc o tam sofa). Canh tren ('50% 0%') thi cuu duoc dau nhung
+                   cat 230px day.
+                   Nen lay ti le art = cat 0 pixel, dung luat da ap cho promo banner (§8.43).
+                   Muon giu 1920/720 thi doi rule nay VA them '50% 0%' — hero thap lai 159px
+                   o kho 1440, doi lai mat 23% day anh. Mot dong, noi la toi doi.
+                   Ghi nguyen 2057/1000 chu khong rut gon: day la SPEC ANH, de nguyen thi doc
+                   ra la spec. O kho 1440 (be ngang thuc 1425) cho cao 692,8; o 1920 cho 926.
+                   object-position vi vay thanh VO NGHIA (khong con gi de cat) — de '50% 50%'
+                   cho khoi ai tuong day la mot phep ngam. -->
+            <div class="w-full overflow-hidden bg-secondary" style="aspect-ratio:2057/1000">
                 <img src="${A}${img}" alt="${alt}" class="w-full h-full object-cover lazy" style="object-position:${pos}">
-              </div>
-            </a>`).join('')}
+                </div>
+              </a>
+              <!-- MANG PHU DI THEO TUNG TAM, khong con dat o khung ngoai: thu no do (chu
+                   hoac hang cham) cuon cung tam anh nen no cung phai cuon theo.
+                   HAI CO: tam co chu nuong chi can mang do HANG CHAM (96px/.45, ban goc);
+                   tam ve chu bang HTML can mang cao phu tron khoi chu (co -tall, 260/160/.55). -->
+              ${bakeY ? `
+              <!-- TAM CO CHU NUONG SAN: chi ve NUT, dat theo % de dinh duoi chu trong anh.
+                   Khong ve tieu de/dong phu bang HTML — se hien chu hai lan. -->
+              <span class="hm-hero-veil" aria-hidden="true"></span>
+              <div class="hm-hero-cta" style="left:${HM_HERO_BAKE_X}%;top:${bakeY}%">
+                <button ${dkCatAttrs(cat, [hmFashionDept()])} class="t-lead h-12 px-8 rounded-xs border border-border bg-background text-foreground btn-o press" data-i18n-skip>${HM_HERO_CTA}</button>
+              </div>` : `
+              <span class="hm-hero-veil hm-hero-veil-tall" aria-hidden="true"></span>
+              <div class="hm-hero-copy">
+                <p class="text-[18px] font-medium leading-7 text-primary-foreground">${alt}</p>
+                ${sub ? `<p class="t-multiline text-primary-foreground">${sub}</p>` : ''}
+                <button ${dkCatAttrs(cat, [hmFashionDept()])} class="t-lead h-12 px-8 w-fit rounded-xs border border-border bg-background text-foreground btn-o press" data-i18n-skip>${HM_HERO_CTA}</button>
+              </div>`}
+            </div>`).join('')}
           </div>
           ${many ? `
-          <span class="hm-hero-veil" aria-hidden="true"></span>
           <div class="hm-hero-dots" data-hero-dots>
             ${HM_HERO.map((x, i) => `
             <button class="hm-pip w-2 h-2 rounded-full press${i === 0 ? ' hm-pip-on' : ''}" data-hero-dot="${i}" aria-label="${x[2]}"></button>`).join('')}
@@ -8162,9 +8313,22 @@ function wireHeroDots(root) {
      (đo được 04/09 khi kiểm) không đến trong 700ms nếu tài liệu đang ở trạng thái
      ẩn. Gọi thẳng sync() thì chấm đúng ngay; sự kiện đến sau chỉ chạy lại đúng phép
      tính đó, vô hại. */
+  /* SUA 08/09/2026: bam cham nay DAT `cur` va son cham THEO CHI SO VUA BAM, khong goi
+     `sync()` nua. `sync()` suy chi so tu `scrollLeft`, ma o thoi diem handler chay thi
+     scrollLeft CHUA nhich (cuon muot vua bat dau) -> no son lai dung cai cham CU. Do duoc:
+     bam cham thu 2, hang cham van bao tam 1.
+     Hai hau qua that, khong chi la chuyen do trong pane:
+       · o trinh duyet that no tu chua duoc nho cac su kien `scroll` den sau, nhung nhay
+         mot nhip — cham sang muon hon cu bam;
+       · `cur` (diem neo cua nhip tu chay) khong duoc cap nhat, nen bam cham 2 xong nhip
+         ke tiep chay (0+1) = dung tam vua chon -> hero nhu dung yen mot luot.
+     Dung `scrollTo` co `behavior` TUONG MINH cho giong nhip tu chay va giong cu snap khi
+     nha chuot. Chinh chu thich cu da noi "trang thai hang cham la HE QUA cua cu bam" —
+     nay code moi lam dung dieu do. */
   pips.forEach((d, i) => d.addEventListener('click', () => {
-    track.scrollLeft = i * track.clientWidth;
-    sync();
+    cur = i;
+    track.scrollTo({ left: i * (track.clientWidth || 1), behavior: 'smooth' });
+    paint(i);
   }));
   track.addEventListener('scroll', sync, { passive: true });
   window.addEventListener('resize', sync, { passive: true });
@@ -15346,6 +15510,33 @@ function dragScroll(el) {
     if (!down) return;
     down = false;
     el.classList.remove('dragging');
+    /* SNAP TAY KHI NHA CHUOT (08/09/2026) — lo ra ngay sau khi va duoc cu keo.
+       Truoc luot nay `scroll-behavior: smooth` lam dai KHONG nhich khi keo, nen nha chuot
+       o dau thi van dung dung mot tam — chuyen snap khong bao gio xay ra. Keo chay that
+       roi thi lo: `scroll-snap-type` chi snap trong mot THAO TAC CUON, con bo class
+       `.dragging` de bat snap tro lai KHONG kich no. Do tren trang: keo 60% roi nha thi
+       dai dung o 855/1425, keo 25% thi dung o 356 — hero nghi lung giua 2 tam, dung cai
+       loi ma scroll-snap dat o do de tranh.
+       CHI LAM CHO DAI CO KHAI SNAP: doc `scroll-snap-type` sau khi da bo `.dragging`
+       (rule do khai `none`, doc truoc la ra sai). Trong ca 2 file chi `.hm-hero-track`
+       khai snap, nen cac dai san pham/thuong hieu van cuon tu do nhu cu.
+       Moc snap = `offsetLeft` cua tung con, TRU offsetLeft cua con dau: con cua dai khong
+       lay track lam moc dinh vi (track khong `position: relative`) nen phai quy ve goc.
+       Cach nay dung cho mo o be rong bat ky, khong gia dinh o = be rong khung.
+       `moved` de mot cu BAM (khong keo) khong lam dai tu nhien nhay. */
+    if (!moved) return;
+    const snapType = getComputedStyle(el).scrollSnapType;
+    if (!snapType || snapType === 'none') return;
+    const kids = el.children;
+    if (!kids.length) return;
+    const base = kids[0].offsetLeft;
+    let best = 0, bd = Infinity;
+    for (const k of kids) {
+      const x = k.offsetLeft - base;
+      const d = Math.abs(x - el.scrollLeft);
+      if (d < bd) { bd = d; best = x; }
+    }
+    el.scrollTo({ left: best, behavior: 'smooth' });
   };
   // chặn click nếu vừa kéo (tránh lỡ mở sản phẩm)
   const onClick = e => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } };
