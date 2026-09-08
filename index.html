@@ -2986,7 +2986,9 @@ window.RESP = (function () {
      `brand-logo-dg.png` (535x54) vẽ ra 218 — tràn gấp đôi ô. Nên bản mobile của ngành Nữ
      giữ panel 9/16 và 3 ô XẾP DỌC; khác bản Nam đúng ở SỐ Ô (3 thay vì 2) và ở nhãn HOA. */
   .hm-spot-brands { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
-  .hm-spot-brand-photo { height: 160px; }
+  /* CAO 211 = 375 / 1,778 (08/09/2026): anh khach giao cho o thuong hieu la 736x414, tuc
+     ti le 1,778. Truoc la 160 (o 375 ra 2,34/1) — giu 160 la cat 24% chieu cao anh. */
+  .hm-spot-brand-photo { height: 211px; }
   /* NHÃN THƯƠNG HIỆU VÀO TRONG HÌNH (07/09/2026, lệnh user: *"nội dung text trong hình
      luôn nhé"*, ảnh Ounass Block 2). Trước đó wordmark + dòng đếm nằm DƯỚI ảnh.
      GÓC DƯỚI-TRÁI VÀ MỰC TỐI — đo bằng PIL trên đúng phép cắt của ô 443x160:
@@ -3039,9 +3041,19 @@ window.RESP = (function () {
   }
 
   .hm-cat-media { position: relative; }
+  /* SCRIM .55 DAC 48px ROI NHAT (08/09/2026) — truoc la .45 mot doan tuyen tinh.
+     LOI CO SAN, khong phai do anh moi: nhan trong hinh cua ban mobile ha xuong 18/24 tu
+     07/09, ma 18px la CHU THUONG theo WCAG (nguong 4,5:1) chu khong phai chu lon (>=24px,
+     nguong 3:1) nhu ban desktop. Scrim thi khong ai do lai sau lan ha bac do.
+     Do tren dung khung ban mobile, o 8px sang nhat trong vung nhan:
+       anh CU   : kv-women-4 2,71 · kv-men-7 2,43 · p10-0 2,54 · kv-men-4 4,31 · d7-1 2,85:1
+       anh MOI  : cat-rtw 3,83 · cat-bag 3,66 · cat-shoes 3,67 · shop-by-2 3,89:1
+     Tuc anh khach giao con SANG HON mot chut, nhung ca hai bo deu duoi 4,5.
+     Voi .55 dac den 48px (nhan nam o 16..40 nen trong tron phan dac): 6,5..10,2:1 — dat het.
+     Cung hinh mang va cung con so .55 da dung cho o occasion ban desktop. */
   .hm-cat-scrim {
     position: absolute; inset-inline: 0; bottom: 0; height: 55%;
-    background: linear-gradient(to top, rgba(0,0,0,.45), transparent);
+    background: linear-gradient(to top, rgba(0, 0, 0, .55) 0, rgba(0, 0, 0, .55) 48px, transparent 100%);
     pointer-events: none;
   }
   /* Nhãn mang chuỗi `text-[18px] font-medium leading-7` để lấy MẶT CHỮ từ hook mục 2
@@ -7148,9 +7160,21 @@ const HM_PROMO = { img: 'kv-sale.jpg', ratio: '1600/600', alt: 'Ưu đãi mùa h
    một "Brand day". Cắt ở khung 1/1: kv-men-1 là 1,11 nên giữ 90%, kv-men-4 là 1,00 nên
    giữ 100% — đúng 2 tấm điểm cao nhất trong bảng đo 06/09 (90/100/100/80).
    Cột thứ 5 là VAI của tấm, giữ làm nhãn tư liệu, KHÔNG render ra đâu cả. */
+/* ANH KHACH GIAO 08/09/2026 (bo Banner-Mobile.zip, 16 tam). Truoc la 2 tam kv-men-*.
+   DUNG BAN CO CHU NUONG SAN (`home-banner-*`) chu khong ban sach (`top-kv-*`): khach xuat
+   ca 2 phien ban cua CUNG 2 tam anh, va o day khoi hero KHONG he ve chu nao bang HTML —
+   nen ban co chu la ban duy nhat cho hero mot dong tieu de. Da dung lai o kho 375 de kiem:
+   chu doc ro (xem bao cao). Day cung dung tien le san co cua du an: `kv-sale.jpg` cua promo
+   banner cung la anh nuong chu.
+   ⚠ Doi lai: chu trong anh KHONG dich duoc theo cong tac EN, va sua chu la phai xuat lai
+   anh. Muon chu chay bang HTML thi doi sang `top-kv-1/2` (cung 2 tam, khong chu) roi tôi
+   danh chu lai — mot dong.
+   `alt` lay dung chu nuong trong anh: day la chu cua chinh tam anh nen doc ra cho trinh
+   doc man hinh la dung nhat, va no cung la aria-label cua hang cham.
+   POS de '50% 50%': anh 1080x1440 = 3/4 dung bang khung moi nen KHONG cat pixel nao. */
 const HM_HERO = [
-  ['kv-men-1.jpg', '50% 24%', 'Bộ sưu tập dành cho nam', 'Sản phẩm mới', 'Ecom camp'],
-  ['kv-men-4.jpg', '55% 32%', 'MCM tại DAFC Online',     'Túi xách',     'Brand day'],
+  ['home-banner-1.jpg', '50% 50%', 'The Parisian Colleagues', 'Quần áo',      'Brand day'],
+  ['home-banner-2.jpg', '50% 50%', 'New season loading',      'Sản phẩm mới', 'Ecom camp'],
 ];
 
 /* Nhịp tự chạy của hero. 4000 KHÔNG phải số mới: đúng con số của #promoSlider trong cùng
@@ -7182,7 +7206,11 @@ function hmHero() {
                hmFashionDept(). Doi ten bien thanh role cho khoi ai lai tuong no la nganh. -->
           ${HM_HERO.map(([img, pos, alt, cat, role]) => `
           <a class="hm-hero-slide cursor-pointer press" data-hm-cat="${cat}">
-            <div class="w-full overflow-hidden bg-secondary" style="aspect-ratio:1/1">
+            <!-- KHUNG 3/4 (08/09/2026): anh khach giao la 1080x1440 = 3/4. Truoc la 1/1 —
+                 con so do chot 06/09 bang bang do 4 tam kv-* cu, nay bo anh khac nen so cu
+                 het hieu luc: de 1/1 la cat mat 25% chieu cao tam anh khach dung, ma phan
+                 duoi chinh la cho khach nuong chu. Ti le 3/4 = 0 pixel bi cat. -->
+            <div class="w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
               <img src="${A}${img}" alt="${alt}" class="w-full h-full object-cover lazy" style="object-position:${pos}">
             </div>
           </a>`).join('')}
@@ -7217,11 +7245,16 @@ function hmRail(list) {
    không phải nâng số ô — 4 là số khách chốt. */
 const HM_CAT_COUNT = 4;
 
+/* 4 O DAU DOI SANG ANH KHACH GIAO 08/09/2026 — bo `Cat-*` cua Banner-Mobile.zip khop DUNG
+   4 danh muc dang bay: rtw = Quan ao · bag = Tui xach · shoes = Giay dep · acc = Phu kien.
+   Hai muc duoi (Lam dep · Qua tang) khong co anh trong bo, giu nguyen anh cu.
+   POS ve '50% 50%': anh 1080x1440 = 3/4 dung bang khung moi nen khong cat gi, cac con so
+   pos cu (30% / 32% / 46% / 45%) la canh tay cho anh CU o khung vuong, khong con nghia. */
 const HM_CATS = [
-  ['kv-women-4.jpg',  '50% 30%', 'Quần áo',  ''],
-  ['kv-men-4.jpg',    '55% 32%', 'Túi xách', ''],
-  ['kv-men-7.jpg',    '50% 46%', 'Giày dép', ''],
-  ['p10-0.jpg',       '50% 45%', 'Phụ kiện', ''],
+  ['cat-rtw.jpg',     '50% 50%', 'Quần áo',  ''],
+  ['cat-bag.jpg',     '50% 50%', 'Túi xách', ''],
+  ['cat-shoes.jpg',   '50% 50%', 'Giày dép', ''],
+  ['cat-acc.jpg',     '50% 50%', 'Phụ kiện', ''],
   ['b1.jpg',          '50% 45%', 'Làm đẹp',  'Làm đẹp'],
   ['hero-holiday.jpg','50% 50%', 'Quà tặng', ''],
 ];
@@ -7254,7 +7287,9 @@ function hmCatTiles() {
       <div class="hm-cats">
         ${HM_CATS.slice(0, HM_CAT_COUNT).map(([img, pos, label, dept]) => `
         <button data-hm-cat="${label}"${dept ? ` data-hm-dept="${dept}"` : ''} class="hm-cat flex flex-col press group text-left">
-          <div class="hm-cat-media w-full aspect-square overflow-hidden ${img === 'b1.jpg' ? 'bg-accent-0' : 'bg-secondary'}">
+          <!-- KHUNG 3/4 thay aspect-square (08/09/2026): anh khach giao 1080x1440. Giu
+               vuong la cat 25% chieu cao anh cua khach. -->
+          <div class="hm-cat-media w-full overflow-hidden ${img === 'b1.jpg' ? 'bg-accent-0' : 'bg-secondary'}" style="aspect-ratio:3/4">
             <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]" style="object-position:${pos}">
             <span class="hm-cat-scrim" aria-hidden="true"></span>
             <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>
@@ -7350,6 +7385,13 @@ const HM_SPOT_BRANDS_NU = ['Versace', 'Dolce&Gabbana', 'Zimmermann'];
    TRẦN WORDMARK 22px là SỐ TUYỆT ĐỐI (chốt khách 27/08) — dùng lại y nguyên của hàng 5 thẻ
    nên 2 hàng thương hiệu trên trang đứng chung một trục quang học.
    Dòng đếm đi luật i18n có sẵn [/^(\d+) sản phẩm$/, '$1 products'] — không thêm khoá. */
+/* Anh o thuong hieu do khach giao (08/09/2026) — de rong mot hang la hang do roi ve
+   `BRAND_PAGES[...].hero` nhu truoc. Xem chu thich trong hmSpotBrands. */
+const HM_SPOT_BRAND_IMG = {
+  'Versace': 'brand-spotlight-3.jpg',
+  'Dolce&Gabbana': 'brand-spotlight-2.jpg',
+};
+
 function hmSpotBrands(avoidImg) {
   const women = hmLabelUp();
   const tiles = (women ? HM_SPOT_BRANDS_NU : HM_SPOT_BRANDS).map(name => {
@@ -7359,7 +7401,14 @@ function hmSpotBrands(avoidImg) {
     /* Ô KHÔNG ĐƯỢC ĐI ĐÚNG TẤM ẢNH CỦA SPOTLIGHT. Bẫy thật: `BRAND_PAGES['Versace'].hero`
        là `p1-1.jpg`, đúng tấm mà spotlight đang dùng — nên ở bản Nữ (có ô Versace) hai tầng
        của cùng một mục sẽ vẽ cùng một ảnh. Rơi về ảnh người mẫu KHÁC của chính hãng đó. */
-    let img = B.hero;
+    /* ANH KHACH GIAO 08/09/2026 cho o thuong hieu, gan THEO HANG chu khong theo vi tri:
+       `brand-spotlight-3` co khac chu VERSACE tren mon kim khi nen chi dat duoc o o Versace
+       (o do chi xuat hien o ban Nu — ban Nam bay D&G + Zimmermann).
+       `brand-spotlight-2` KHONG co dau hieu hang nao (nguoi mau ao da xanh reu); o thuong
+       hieu co logo de len nen gan sai hang la loi noi dung. Tam gan cho Dolce&Gabbana —
+       BAN NOI DUNG HANG NAO THI TOI DOI, mot dong.
+       Zimmermann khong co anh trong bo nen giu anh cu. */
+    let img = HM_SPOT_BRAND_IMG[name] || B.hero;
     if (avoidImg && img === avoidImg) {
       const alt = PRODUCTS.find(p => p.brand === name && p.model && p.model !== avoidImg);
       if (alt) img = alt.model;
@@ -7438,14 +7487,52 @@ function hmMaison() {
    3 cũng là số cột của khuôn `dk-look-band` mà khối này nay đi theo, nên nó không phải số
    tuỳ ý: 4 ô trong lưới 3 cột là vỡ khuôn.
    ⚠ CHỖ MẤT: ô thứ 4 là 'Điểm nhấn' (nhãn từng rút ngắn vì bậc chữ, xem ghi chú i18n). */
-const HM_OCC_COUNT = 3;
+/* 2 O (08/09/2026): anh tham chieu la [o][o][khoi chu], tuc chi cho DUNG 2 noi dung o.
+   Truoc la 3. Ha xuong 2 de moi o tren hang deu co tron bo chu that, thay vi 2 o co chu va
+   1 o tro tro mot nhan — mot hang noi hai giong thi doc ra nhu chua lam xong. */
+const HM_OCC_COUNT = 2;
 
+/* NOI DUNG LAY THEO ANH THAM CHIEU (08/09/2026, lenh user: *"o muc occasion hay demo bang
+   noi dung trong hinh ... va trong cac hinh occasion thi demo bang cac noi dung trong hinh"*).
+   Moi muc nay co 5 cot: anh · tieu de · dong phu · chu cua lien ket · danh muc de bam vao.
+   Hai muc dau mang tron bo chu cua anh tham chieu; 2 muc sau de RONG 2 cot giua vi anh chi
+   cho 2 noi dung — rong thi o chi ve tieu de, dung khuon cu. KHONG bia them chu marketing
+   (cung ly do ma dong dan cua khoi nay tung de rong cho den luot nay).
+   CHU CUA CTA ha ve chu thuong: anh ghi "SHOP NOW" / "SHOP THE EDIT" nhung du an co luat
+   khong-dung-UPPERCASE — cung cach da lam voi "GET INSPIRE" -> "Get inspired".
+   DANH MUC bam vao doi tu 'Giay dep' sang 'Quan ao' cho o thu hai: chu noi ve denim thi
+   khong the dan nguoi ta sang trang giay. */
+/* ANH PHAI KHOP CHU — doi 2 tam sau khi xem lai bang mat:
+     'Back to Business'    p1-1 (dam hoa mini Versace) -> d7-1 (bo tweed ao + chan vay D&G)
+     'Spotlight On: Denim' p5-1 (giay loafer)          -> z10-2 (look quan jeans ong loe)
+   z10-* dung LA san pham denim cua kho: 'Quan jeans ong loe Roselight' (Zimmermann). Mot o
+   ghi 'Denim' ma anh la doi loafer thi khach doc ra ngay.
+   Duoc THEM mot viec: p1-1 chinh la anh cua khoi spotlight ngay tren (spot.p.model cua SP
+   Versace dau danh sach), nen truoc luot nay trang chu bay p1-1 HAI LAN. Doi xong het lap.
+   Ca 2 tam moi chi nam trong thu vien PDP, khong phai bia the (-0) — khong lap gi tren
+   trang chu. Do tuong phan lai voi mang phu .55: o sang nhat cua d7-1 ra 5,18:1, z10-2 ra
+   5,29:1 — dat nguong 4,5:1 cua chu thuong. */
 const HM_OCCASIONS = [
-  ['p1-1.jpg',  'Tiệc tối',         'Quần áo'],
-  ['p5-1.jpg',  'Công sở',          'Giày dép'],
-  ['p3-1.jpg',  'Dạo phố',          'Túi xách'],
-  ['p10-1.jpg', 'Điểm nhấn', 'Phụ kiện'],
+  /* ANH KHACH GIAO 08/09/2026, ban SACH (`-clean`, khong nuong chu): o day chu do HTML ve,
+     dung ban co chu la chu hien HAI LAN. Chon tam theo NOI DUNG anh:
+       'Back to Business'    -> shop-by-2-clean (nguoi mau ao blazer xanh navy)
+       'Spotlight On: Denim' -> shop-by-3-clean (nguoi mau mac JEANS + ao suede)
+     shop-by-1-clean (satin/tweed) thanh du phong — trong ba tam khach giao chi tam thu 3 co
+     denim, ma nhan o day dang la 'Denim'. */
+  ['shop-by-2-clean.jpg', 'Back to Business',    'A fresh perspective to workwear and beyond',      'Shop now',      'Quần áo'],
+  ['shop-by-3-clean.jpg', 'Spotlight On: Denim', 'The style staple that belongs in every wardrobe', 'Shop the edit', 'Quần áo'],
+  ['p3-1.jpg',  'Dạo phố',             '', '', 'Túi xách'],
+  ['p10-1.jpg', 'Điểm nhấn',           '', '', 'Phụ kiện'],
 ];
+
+/* TEN MUC + DONG PHU, lay tu khoi chu ben phai cua anh tham chieu.
+   MOT CHO PHAI DOI: anh ghi "Bottega Veneta Intrecciato coverup", ma DAFC trong demo nay
+   khong ban Bottega Veneta (catalog co Versace · D&G · Zimmermann · MCM · Stefano Ricci ·
+   Christian Louboutin + 2 hang beauty). Dat ten mot hang khach khong ban vao trang chu la
+   loi noi dung, nen doi sang Versace — hang duy nhat co du wordmark + anh model + SP thuc
+   trong kho. Bo luon chu "Intrecciato" vi day la ten kieu det rieng cua Bottega. */
+const HM_OCC_TITLE = 'Time for a trench';
+const HM_OCC_SUB = 'Master between-season dressing in Versace outerwear and more';
 
 function hmOccasions() {
   /* BỎ CTA theo chú "Season Pick — BỎ CTA" của lệnh; tiêu đề GIỮ ở đầu mục.
@@ -7456,14 +7543,23 @@ function hmOccasions() {
   return `
     <div class="mt-10 pb-6 reveal">
       <div class="hm-occ-band flex flex-col gap-4 py-6">
-        <h2 class="text-[18px] font-medium leading-7 text-foreground px-4">Lựa chọn theo mùa</h2>
+        <div class="flex flex-col gap-2 px-4">
+          <h2 class="text-[18px] font-medium leading-7 text-foreground" data-i18n-skip>${HM_OCC_TITLE}</h2>
+          <p class="t-multiline text-secondary-foreground" data-i18n-skip>${HM_OCC_SUB}</p>
+        </div>
         <div class="hm-occ drag-x overflow-x-auto no-scrollbar px-4">
-        ${HM_OCCASIONS.slice(0, HM_OCC_COUNT).map(([img, label, cat]) => `
+        <!-- O BAN MOBILE CHI VE TIEU DE, khong ve dong phu + chu lien ket nhu desktop: o
+             day rong 210 (long o 178), ma dong phu cua anh tham chieu dai 47 ky tu -> rieng
+             no da 3 dong 12/18, cong tieu de 24/32 xuong 2 dong nua thi khoi chu an gan nua
+             chieu cao o. Anh tham chieu cua lenh cung la khung "Homepage (Desktop)".
+             Bo truncate: tieu de bien tap tieng Anh dai hon nhan mot tu cua ban cu nen phai
+             cho xuong dong, cat giua cau con te hon. -->
+        ${HM_OCCASIONS.slice(0, HM_OCC_COUNT).map(([img, label, sub, cta, cat]) => `
         <button data-hm-cat="${cat}" class="hm-occ-item flex flex-col press group text-left">
           <div class="hm-cat-media w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
             <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
             <span class="hm-cat-scrim" aria-hidden="true"></span>
-            <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>
+            <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground" data-i18n-skip>${label}</p>
           </div>
         </button>`).join('')}
         </div>
@@ -7507,7 +7603,14 @@ function hmUsp() {
     <div class="hm-usp-band mt-10">
       <div class="hm-usp px-4 py-6 reveal">
       ${HM_USP.map(([ico, label]) => `
-      <div class="flex items-center gap-2">
+      <!-- O CANH GIUA, ICON TREN - NHAN DUOI (08/09/2026, lenh user). Truoc la icon CANH
+           nhan (dat 07/09 de ha chieu cao khoi). Doi lai: moi o cao 16 -> 40 nen ca khoi
+           2x2 day len ~48px — day la cai gia cua khuon nay, khong phai lo.
+           text-center de nhan nao xuong 2 dong thi 2 dong do cung canh giua; do o kho 375
+           thi nhan dai nhat con vua MOT dong (141,9 tren o 167,5) nen hien tai chua dung
+           den, nhung o khac ngon ngu / kho hep hon thi can.
+           Ban desktop KHONG doi: ben do 4 muc mot hang, icon canh nhan la dung khuon hang. -->
+      <div class="flex flex-col items-center gap-2 text-center">
         <span class="w-4 h-4 shrink-0 flex items-center justify-center [&_svg]:w-4 [&_svg]:h-4">${I[ico]}</span>
         <p class="t-single text-foreground">${label}</p>
       </div>`).join('')}
