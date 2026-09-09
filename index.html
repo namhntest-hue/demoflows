@@ -3302,9 +3302,19 @@ window.RESP = (function () {
      Vi sao phai co mang rieng: `.hm-cat-scrim` dung chung voi o danh muc chi dac 48px duoi —
      du cho MOT nhan, nhung dong phu o day nam tan 108px thi roi vao doan doc, alpha tut ve
      .24 (do duoc) tuc chu thuong khong con doc noi. */
+  /* MỐC ĐẶC 112 -> 136 (09/09/2026), TỔNG GIỮ 200 — chỉ đoạn dốc ngắn lại (88 -> 64).
+     Vì sao: ô thứ ba vừa nhận thêm dòng liên kết nên khối chữ của nó cao thêm 24 (dòng 16 +
+     khe 8). Đo trên trang: khối chữ cao nhất giờ đỉnh ở **126** tính từ đáy ở bản mobile
+     (110px chữ + lề 16) và **116** ở bản desktop — mốc đặc 112 cũ để hở phần trên của tiêu đề
+     rơi vào đoạn dốc. 136 phủ trọn cả hai, còn 10px dư.
+     KHÔNG nâng TỔNG lên theo: nâng là tối thêm phần ảnh phía trên vô cớ (ô mobile chỉ cao 280,
+     200 đã là 71%). Rút đoạn dốc từ 88 xuống 64 vẫn đủ mềm để mép mảng không thành đường kẻ.
+     Đo lại tương phản trên vùng chữ MỚI (đáy 16..136 desktop / 16..146 mobile), ô sáng nhất:
+       desktop  6,71 / 8,91 / 7,38 : 1     mobile  6,41 / 8,42 / 6,79 : 1
+     — đạt hết ngưỡng 4,5 của chữ thường, nên alpha vẫn .55. */
   .hm-occ-scrim {
     position: absolute; inset-inline: 0; bottom: 0; height: 200px;
-    background: linear-gradient(to top, rgba(0, 0, 0, .55) 0, rgba(0, 0, 0, .55) 112px, transparent 100%);
+    background: linear-gradient(to top, rgba(0, 0, 0, .55) 0, rgba(0, 0, 0, .55) 136px, transparent 100%);
     pointer-events: none;
   }
   .hm-occ-copy {
@@ -3366,7 +3376,19 @@ window.RESP = (function () {
   }
   .hm-insta-item { aspect-ratio: 4 / 5; }
   .hm-insta-at { font-style: italic; }
-  .hm-story { flex: 0 0 280px; }
+  /* THẺ BLOG 280 -> 264 (09/09/2026, lệnh user: *"mục Blog thì cho các thẻ nhỏ lại xíu nhé,
+     mục tiêu ở màn 390 xem được tầm 1.4"*).
+     CHỈ BẢN MOBILE: mốc 390 là khổ máy (iPhone 14/15), bản desktop có bộ cỡ thẻ riêng.
+     CÁCH RA SỐ — đo trên trang ở khổ 390 rồi giải ngược:
+       vùng thấy được = 390 − 16 (đệm trái của dải) = 374; số thẻ thấy = 374 / (thẻ + khe 4).
+       trước:  374 / 284 = 1,317 thẻ
+       muốn 1,4 -> thẻ = 374/1,4 − 4 = 263,1
+     LẤY 264 CHỨ KHÔNG 263 dù 263 sát 1,4 hơn (1,401 so với 1,396): thẻ là tỉ lệ 3/4 nên
+     264 cho chiều cao ĐÚNG 352 nguyên (264 × 4/3), còn 263 ra 350,67 tức ảnh rơi vào
+     subpixel. 352 = 22 × 16, vẫn trên thang đếm của dự án. Lệch 0,3% so với đích thì mắt
+     không thấy, còn một hàng pixel mờ thì thấy.
+     Ở khổ khác: 375 cho 1,34 thẻ · 430 cho 1,55 — vẫn giữ tín hiệu "còn lướt được". */
+  .hm-story { flex: 0 0 264px; }
 
 </style>
 </head>
@@ -7228,28 +7250,43 @@ const hmLink = (label, attrs) =>
    pb-6` + tiêu đề `px-4 text-[18px] font-medium leading-7`), nên nhịp giữa 2 mục là
    40 + 24 = 64, đúng nhịp bản mobile. Tiêu đề phải là ĐÚNG CHUỖI `text-[18px]
    font-medium leading-7 text-foreground` — hook duy nhất ra Libre Bodoni 24/32. */
-function hmSec(title, right, body, tag = 'h2', eyebrow = '') {
-  return `
-    <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
-          <!-- HAI KHUÔN ĐẦU MỤC. Mặc định: tiêu đề trái - nút phải, canh giữa theo trục dọc.
-               Có eyebrow thì đổi sang khuôn CANH GIỮA 3 DÒNG của hình khách gửi 07/09:
-                 nhãn nhỏ (Inter 12/16 muted) / dòng trưng bày (Libre 24/32) / liên kết (Inter)
-               Thứ tự phông Inter - Libre - Inter là yêu cầu nguyên văn của lệnh. Nhãn giữ
-               CHỮ THƯỜNG dù hình tham chiếu viết hoa — luật không-dùng-UPPERCASE, và cùng
-               cách đã chốt cho nhãn lý do spotlight. -->
-      <!-- CANH GIỮA theo tiêu đề mục (07/09/2026, lệnh user), trước là items-end. Tiêu đề
-           18/24 còn nút 12/18: canh chân chữ thì nút tụt sát đáy hộp và đọc ra như ghi chú
-           rơi lại; canh giữa thì nằm đúng giữa chiều cao tiêu đề. -->
-      ${eyebrow ? `
+/* HAI KHUÔN ĐẦU MỤC. Mặc định: tiêu đề trái - nút phải, canh giữa theo trục dọc.
+   Có eyebrow (hoặc `center`) thì đổi sang khuôn CANH GIỮA của hình khách gửi 07/09:
+     nhãn nhỏ (Inter 12/16 muted) / dòng trưng bày (Libre 24/32) / liên kết (Inter)
+   Thứ tự phông Inter - Libre - Inter là yêu cầu nguyên văn của lệnh. Nhãn giữ CHỮ THƯỜNG
+   dù hình tham chiếu viết hoa — luật không-dùng-UPPERCASE.
+   CANH GIỮA theo tiêu đề mục ở khuôn mặc định (07/09/2026, lệnh user), trước là items-end:
+   tiêu đề 18/24 còn nút 12/18, canh chân chữ thì nút tụt sát đáy hộp và đọc ra như ghi chú
+   rơi lại; canh giữa thì nằm đúng giữa chiều cao tiêu đề.
+   `px-4` NẰM Ở ĐẦU MỤC chứ không ở khung ngoài: nhiều thân mục là dải TRÀN MÉP (lưới danh
+   mục, dải Instagram), đệm ở khung ngoài là thụt cả dải vào. */
+/* ĐẦU MỤC TÁCH RA KHỎI `hmSec` (09/09/2026, lệnh user: *"thêm title center cho mục shop by
+   cate 'Get ahead' và cục brand highlight 'Brand Spotlights' đồng bộ style với trang chủ"*).
+   VÌ SAO PHẢI TÁCH: 2 khối đó KHÔNG dùng được khung của `hmSec`. Khối brand highlight có ruột
+   phải giữ khe **4px** (`gap-1`, chốt 07/09) mà khung `hmSec` cấp `gap-6` — đi qua hmSec là
+   phá con số đó. Tách riêng phần đầu mục thì cả 3 nơi vẽ ĐÚNG MỘT khuôn chữ, tức "đồng bộ
+   style" là do DÙNG CHUNG CODE, không phải do chép lại class.
+   THAM SỐ `center` LÀ MỚI: trước đây khuôn canh giữa chỉ bật khi CÓ `eyebrow`, và nó in
+   `<p>` nhãn vô điều kiện — truyền eyebrow rỗng thì được một `<p>` RỖNG vẫn chiếm 16px +
+   khe 8. Nay nhãn có chốt chặn riêng, nên gọi được "canh giữa mà chỉ có tiêu đề" — đúng
+   thứ lệnh này cần (không nhãn nhỏ, không liên kết). */
+function hmSecHead(title, right = '', tag = 'h2', eyebrow = '', center = false) {
+  return (eyebrow || center) ? `
         <div class="flex flex-col items-center gap-2 text-center px-4">
-          <p class="t-single text-muted-foreground">${eyebrow}</p>
+          ${eyebrow ? `<p class="t-single text-muted-foreground">${eyebrow}</p>` : ''}
           <${tag} class="text-[18px] font-medium leading-7 text-foreground">${title}</${tag}>
           ${right || ''}
         </div>` : `
         <div class="flex items-center justify-between gap-2 px-4">
           <${tag} class="text-[18px] min-w-0 font-medium leading-7 text-foreground">${title}</${tag}>
           ${right || ''}
-        </div>`}
+        </div>`;
+}
+
+function hmSec(title, right, body, tag = 'h2', eyebrow = '', center = false) {
+  return `
+    <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
+      ${hmSecHead(title, right, tag, eyebrow, center)}
       ${body}
     </div>`;
 }
@@ -7342,7 +7379,7 @@ const HM_HERO = [
    cung cach 2 dong tieu de tieng Anh cua khach dang lam.
    Muon nhan chay 2 ngon ngu thi doi thanh 'Kham pha ngay' + mot dong trong I18N (da co san
    'Kham pha' -> 'Discover' cho nut spotlight); mot dong, khong doi cau truc. */
-const HM_HERO_CTA = 'Discover now';
+const HM_HERO_CTA = 'Khám phá ngay';
 
 /* Nhịp tự chạy của hero. 4000 KHÔNG phải số mới: đúng con số của #promoSlider trong cùng
    file — dải tự chạy sẵn có của dự án — nên trang chỉ có MỘT nhịp tự chạy. */
@@ -7391,7 +7428,7 @@ function hmHero() {
             <div class="hm-hero-copy">
               <p class="text-[18px] font-medium leading-7 text-primary-foreground" data-i18n-skip>${alt}</p>
               ${sub ? `<p class="t-multiline text-primary-foreground" data-i18n-skip>${sub}</p>` : ''}
-              <button data-hm-cat="${cat}" class="t-lead h-12 px-8 w-fit rounded-xs border border-border bg-background text-foreground btn-o press" data-i18n-skip>${HM_HERO_CTA}</button>
+              <button data-hm-cat="${cat}" class="t-lead h-12 px-8 w-fit rounded-xs border border-border bg-background text-foreground btn-o press">${HM_HERO_CTA}</button>
             </div>
           </div>`).join('')}
         </div>
@@ -7429,6 +7466,27 @@ const HM_CAT_COUNT = 4;
    Hai muc duoi (Lam dep · Qua tang) khong co anh trong bo, giu nguyen anh cu.
    POS ve '50% 50%': anh 1080x1440 = 3/4 dung bang khung moi nen khong cat gi, cac con so
    pos cu (30% / 32% / 46% / 45%) la canh tay cho anh CU o khung vuong, khong con nghia. */
+/* TIÊU ĐỀ 2 KHỐI VỪA ĐƯỢC TRẢ LẠI ĐẦU MỤC (09/09/2026, lệnh user).
+   ĐÂY LÀ MỘT LƯỢT ĐẢO, ghi ra để không ai tưởng là sót: 07/09 chính user đã cho BỎ đầu mục
+   của cả hai khối (*"bỏ title Brands of the moment và button view all ra"*) với lý lẽ khối
+   đã tự nói tên mình trong ảnh. Nay đầu mục quay lại nhưng KHÁC 2 điểm: chữ mới do user đặt,
+   và khuôn là CANH GIỮA chỉ-tiêu-đề (không nhãn nhỏ, không liên kết "Xem tất cả" — nút cũ
+   bị bỏ cùng lượt 07/09 và lệnh này không đòi lại).
+   CHỮ ANH, giữ nguyên hoa/thường như user gõ — cùng cách đã làm với chữ biên tập của khách
+   trong `HM_OCCASIONS` ('Back to Business', 'Spotlight On: Denim'). KHÔNG có trong I18N nên
+   đọc như nhau ở cả 2 ngôn ngữ; muốn có bản tiếng Việt thì thêm 1 dòng vào I18N là xong.
+   (Theo luật không-dùng-UPPERCASE thì 'Brand spotlights' — đã báo user, chờ chốt.) */
+/* TÊN TIẾNG VIỆT ĐẶT THÊM 09/09/2026 (lệnh user: *"các tên mà tôi bảo bạn đặt có khi là
+   tiếng anh có khi là tiếng việt, giờ bạn hãy lấy tên mà tôi bảo bạn đặt làm chuẩn mà đặt lại
+   tên còn thiếu sao cho nghe sang trọng"*).
+   NGUỒN TRONG MARKUP NAY LÀ TIẾNG VIỆT, không phải tiếng Anh — đó là chiều BẮT BUỘC của bộ
+   dịch: `applyLang` tra `I18N` theo khoá VI để ra EN, nên chuỗi tiếng Anh nằm trong markup là
+   chuỗi KHÔNG BAO GIỜ dịch được (và trước lượt này chúng đều phải đeo `data-i18n-skip`).
+   TÊN ANH CỦA USER GIỮ NGUYÊN TỪNG KÝ TỰ, làm giá trị EN trong `I18N` — nên bật công tắc ENG
+   là đọc lại đúng chữ user đặt. */
+const HM_CAT_TITLE  = 'Đi trước một bước';
+const HM_SPOT_TITLE = 'Tâm điểm thương hiệu';
+
 const HM_CATS = [
   ['cat-rtw.jpg',     '50% 50%', 'Quần áo',  ''],
   ['cat-bag.jpg',     '50% 50%', 'Túi xách', ''],
@@ -7522,7 +7580,7 @@ const HM_SPOT_IMG = 'shop-by-1-clean.jpg';
    ẢNH LẤY TỪ DATA: là ảnh người mẫu của SP ĐẦU TIÊN trong danh sách, 3 thẻ dưới là 3 SP
    TIẾP THEO — nhờ vậy ảnh không lặp ở hàng thẻ và cả khối nói cùng một chuyện.
    KHAI GIỐNG HỆT bản desktop về data (HM_MAISON · HM_SPOT_HEADLINE · HM_MAISON_COPY). */
-const HM_SPOT_HEADLINE = 'An architectural silhouette, refined leather, and iconic Gancini closure embody Italian craftsmanship';
+const HM_SPOT_HEADLINE = 'Dáng hình kiến trúc, da thuộc tinh tế và khoá Gancini biểu tượng — kết tinh nghề thủ công Ý';
 
 /* NHÃN LÝ DO SPOTLIGHT (07/09/2026, user chốt: *"có — nhãn chữ thường"*).
    Brief khách nêu 3 tiêu chí để một hãng lên spotlight — *new in brand · key collection ·
@@ -7678,12 +7736,19 @@ function hmMaison() {
      tên mình hai lần. Đây là khối thứ BA trên trang bỏ đầu mục theo cùng lý lẽ (sau dải
      danh mục và khối Lựa chọn theo mùa). */
   return `
-    <!-- KHE 4px giua anh spotlight va hang o brand (07/09/2026, lenh user:
-         *"highlight brand cach 2 brand nho ben duoi 4px"*). Truoc la gap-6 = 24.
-         gap-1 CO trong ban tailwind dung san (do tren trang: 4px) — da kiem, vi
-         truoc do toi tung ket luan sai la khong co chi vi grep neo dau dong tren mot
-         file da minify mot dong. -->
-    <div class="flex flex-col gap-1 mt-10 pb-6 reveal">
+    <!-- DAU MUC CANH GIUA 'Brand Spotlights' (09/09/2026, lenh user). KHONG di qua hmSec
+         duoc: khung cua hmSec cap gap-4 cho moi con, ma RUOT khoi nay phai giu khe 4px
+         (chot 07/09) giua anh spotlight va hang o thuong hieu. Nen khung ngoai doi sang
+         gap-4 (= dung khe cua moi muc khac o ban mobile) roi BOC RIENG phan ruot vao mot
+         cot gap-1. Chu lay tu hmSecHead nen dung y mot khuon voi cac muc di qua hmSec. -->
+    <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
+      ${hmSecHead(HM_SPOT_TITLE, '', 'h2', '', true)}
+      <!-- KHE 4px giua anh spotlight va hang o brand (07/09/2026, lenh user:
+           *"highlight brand cach 2 brand nho ben duoi 4px"*). Truoc la gap-6 = 24.
+           gap-1 CO trong ban tailwind dung san (do tren trang: 4px) — da kiem, vi
+           truoc do toi tung ket luan sai la khong co chi vi grep neo dau dong tren mot
+           file da minify mot dong. -->
+      <div class="flex flex-col gap-1">
       <div class="hm-spot">
         <a data-hm-brand="${HM_MAISON}" class="hm-spot-photo w-full overflow-hidden bg-secondary cursor-pointer press">
           <img src="${A}${spotImg}" alt="${spotAlt}" class="w-full h-full object-cover lazy">
@@ -7708,6 +7773,7 @@ function hmMaison() {
            mep lech 16 thanh loi thay ro. Ban desktop khong co viec nay: ca hai deu nam trong
            px-6 cua muc nen von thang mep. -->
       ${HM_SPOT_BELOW === 'products' ? '' : hmSpotBrands(spotImg)}
+      </div>
     </div>`;
 }
 
@@ -7725,7 +7791,14 @@ function hmMaison() {
 /* 2 O (08/09/2026): anh tham chieu la [o][o][khoi chu], tuc chi cho DUNG 2 noi dung o.
    Truoc la 3. Ha xuong 2 de moi o tren hang deu co tron bo chu that, thay vi 2 o co chu va
    1 o tro tro mot nhan — mot hang noi hai giong thi doc ra nhu chua lam xong. */
-const HM_OCC_COUNT = 2;
+/* 3 Ô (09/09/2026, lệnh user *"thêm 1 thẻ nữa"*). Trước là 2, và trước nữa là 3 — con số
+   này đã đảo 3 lần nên đừng "sửa cho khớp" mà không có lệnh.
+   ⚠ ĐỔI SỐ NÀY LÀ ĐỔI CỠ Ô Ở BẢN DESKTOP: lưới `.hm-occ` là `282px repeat(n, 1fr)` trong
+   vùng nội dung 1377 (đệm 24 hai bên) nên n = 2 cho ô 519,5 còn n = 3 cho ô 345 — kéo theo
+   phải xem lại chiều cao mảng phủ, vì mảng phủ khai bằng PX chứ không phải %.
+   Bản mobile KHÔNG bị: `.hm-occ` bên đó là dải trượt `flex: 0 0 210px`, thêm ô là dài thêm
+   dải chứ ô không co. */
+const HM_OCC_COUNT = 3;
 
 /* NOI DUNG LAY THEO ANH THAM CHIEU (08/09/2026, lenh user: *"o muc occasion hay demo bang
    noi dung trong hinh ... va trong cac hinh occasion thi demo bang cac noi dung trong hinh"*).
@@ -7754,8 +7827,29 @@ const HM_OCCASIONS = [
        'Spotlight On: Denim' -> shop-by-3-clean (nguoi mau mac JEANS + ao suede)
      shop-by-1-clean (satin/tweed) thanh du phong — trong ba tam khach giao chi tam thu 3 co
      denim, ma nhan o day dang la 'Denim'. */
-  ['shop-by-2-clean.jpg', 'Back to Business',    'A fresh perspective to workwear and beyond',      'Shop now',      'Quần áo'],
-  ['shop-by-3-clean.jpg', 'Spotlight On: Denim', 'The style staple that belongs in every wardrobe', 'Shop the edit', 'Quần áo'],
+  /* 'Mua ngay' và 2 nhãn ô KHÔNG cần khoá i18n mới: 'Mua ngay' -> 'Shop now' đã có sẵn
+     (chính nút của khối spotlight đang dùng), 'Dạo phố' và 'Điểm nhấn' cũng đã có. */
+  ['shop-by-2-clean.jpg', 'Trở lại công việc', 'Một góc nhìn mới cho trang phục công sở', 'Mua ngay',       'Quần áo'],
+  ['shop-by-3-clean.jpg', 'Tâm điểm: Denim',   'Món đồ căn bản cho mọi tủ áo',            'Xem tuyển chọn', 'Quần áo'],
+  /* Ô THỨ BA (09/09/2026, lệnh user kèm ảnh: *"time for a trech thêm 1 thẻ nữa nhé, nội dung
+     là Spotlight / the chicest way to stay cool this season with satin and more."*).
+     ẢNH LÀ TẤM CỦA CHÍNH ĐOẠN CHỮ ĐÓ: user gửi kèm `shop-by-1.jpg` — bản khách NƯỚNG CHỮ của
+     `shop-by-1-clean.jpg` — và chữ nướng trong tấm đó đúng là 'Spotlight' + 'The chicest way
+     to stay cool this season with satin and more.' Nên đây không phải tôi ghép ảnh với chữ:
+     khách ghép sẵn, chỉ đổi cách vẽ pixel -> HTML (dùng bản `-clean`, không thì chữ hiện 2 lần).
+     Chữ Anh lấy ĐÚNG bản nướng của khách, kể cả dấu chấm cuối và chữ 'The' hoa (user gõ 't'
+     thường, art của khách là 'The' — lấy theo art).
+     CỘT LIÊN KẾT = 'Khám phá thêm' (lệnh sau, cùng ngày: *"ô thứ ba thêm CTA cho đều nhé"*).
+     Art của khách KHÔNG nướng dòng CTA nào cho ô này, nên chuỗi này là tôi đặt — cùng cảnh với
+     2 ô kia ('Mua ngay'/'Xem tuyển chọn' cũng lấy từ ảnh tham chiếu 07/09, không phải từ art).
+     CHỌN CHUỖI THỨ BA khác hẳn 2 ô kia: 3 ô cạnh nhau mà 2 ô cùng chữ thì đọc ra như lỗi copy.
+     'Khám phá thêm' -> 'Discover more' là khoá MỚI (đã soát: chưa có khoá VI, chưa có giá trị
+     EN nào trùng — trùng giá trị là I18N_REV đảo map sai).
+     ⚠ `shop-by-1-clean.jpg` ĐANG ĐƯỢC KHỐI SPOTLIGHT DÙNG làm ảnh TẠM cho Ferragamo (§8.38),
+     nên từ lượt này trang chủ bày tấm đó HAI LẦN (ô này 1/1, khối spotlight cắt băng ngang
+     canh trên). Không tự đổi ảnh khối spotlight vì user vừa duyệt khối đó lượt trước — đã báo
+     và chờ chốt. Đây là chỗ dùng ĐÚNG của tấm: nó là ô thứ 3 của chính bộ occasion khách giao. */
+  ['shop-by-1-clean.jpg', 'Tâm điểm',          'Nét thanh lịch mát mẻ nhất cho mùa này, cùng chất satin và hơn thế nữa.', 'Khám phá thêm', 'Quần áo'],
   ['p3-1.jpg',  'Dạo phố',             '', '', 'Túi xách'],
   ['p10-1.jpg', 'Điểm nhấn',           '', '', 'Phụ kiện'],
 ];
@@ -7766,8 +7860,8 @@ const HM_OCCASIONS = [
    Christian Louboutin + 2 hang beauty). Dat ten mot hang khach khong ban vao trang chu la
    loi noi dung, nen doi sang Versace — hang duy nhat co du wordmark + anh model + SP thuc
    trong kho. Bo luon chu "Intrecciato" vi day la ten kieu det rieng cua Bottega. */
-const HM_OCC_TITLE = 'Time for a trench';
-const HM_OCC_SUB = 'Master between-season dressing in Versace outerwear and more';
+const HM_OCC_TITLE = 'Mùa của áo trench';
+const HM_OCC_SUB = 'Làm chủ lối mặc giao mùa cùng áo khoác Versace và hơn thế nữa';
 
 function hmOccasions() {
   /* BỎ CTA theo chú "Season Pick — BỎ CTA" của lệnh; tiêu đề GIỮ ở đầu mục.
@@ -7779,8 +7873,8 @@ function hmOccasions() {
     <div class="mt-10 pb-6 reveal">
       <div class="hm-occ-band flex flex-col gap-4 py-6">
         <div class="flex flex-col gap-2 px-4">
-          <h2 class="text-[18px] font-medium leading-7 text-foreground" data-i18n-skip>${HM_OCC_TITLE}</h2>
-          <p class="t-multiline text-secondary-foreground" data-i18n-skip>${HM_OCC_SUB}</p>
+          <h2 class="text-[18px] font-medium leading-7 text-foreground">${HM_OCC_TITLE}</h2>
+          <p class="t-multiline text-secondary-foreground">${HM_OCC_SUB}</p>
         </div>
         <div class="hm-occ drag-x overflow-x-auto no-scrollbar px-4">
         <!-- O MANG DU KHOI CHU 3 DONG (08/09/2026, lenh user gui 2 anh chup 2 ban kem chu
@@ -7799,11 +7893,11 @@ function hmOccasions() {
             <span class="${sub ? 'hm-occ-scrim' : 'hm-cat-scrim'}" aria-hidden="true"></span>
             ${sub ? `
             <div class="hm-occ-copy">
-              <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground" data-i18n-skip>${label}</p>
-              <p class="t-multiline text-primary-foreground" data-i18n-skip>${sub}</p>
-              ${cta ? `<p class="t-single text-primary-foreground underline underline-offset-2" data-i18n-skip>${cta}</p>` : ''}
+              <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground">${label}</p>
+              <p class="t-multiline text-primary-foreground">${sub}</p>
+              ${cta ? `<p class="t-single text-primary-foreground underline underline-offset-2">${cta}</p>` : ''}
             </div>` : `
-            <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground" data-i18n-skip>${label}</p>`}
+            <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground">${label}</p>`}
           </div>
         </button>`).join('')}
         </div>
@@ -8022,8 +8116,13 @@ function hmInsta() {
          ngón: drag-x + overflow-x-auto là đủ, đúng khuôn dải Blog ngay trên. -->
     <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
       <div class="flex flex-col items-center gap-2 text-center px-4">
-        <p class="t-single text-muted-foreground" data-i18n-skip>Get inspired</p>
-        <p class="text-[18px] font-medium leading-7 text-foreground" data-i18n-skip>Follow us <em class="hm-insta-at">${HM_INSTA.handle}</em></p>
+        <!-- 09/09/2026: chu thanh TIENG VIET, va data-i18n-skip DOI CHO tu the <p> sang the
+             <em>. applyLang di theo TEXT NODE va bo qua node nao co to tien deo skip — dat skip
+             o <em> thi @dafcvietnam duoc giu nguyen ma dong chu ben ngoai van dich duoc; dat o
+             <p> nhu truoc la chan CA HAI.
+             'Theo doi chung toi' KHONG can khoa moi: khoa do da co san trong I18N. -->
+        <p class="t-single text-muted-foreground">Nguồn cảm hứng</p>
+        <p class="text-[18px] font-medium leading-7 text-foreground">Theo dõi chúng tôi <em class="hm-insta-at" data-i18n-skip>${HM_INSTA.handle}</em></p>
       </div>
       <!-- LUOI 3x2, khong vuot (bo drag-x overflow-x-auto). Chi lay TRANG 1 cua
            HM_INSTA.imgs: ban nay hien het 6 o cung luc nen khong co nut lat trang, va
@@ -8092,7 +8191,12 @@ function screenHOME() {
 
     <!-- KHỐI DANH MỤC THÔI CÓ TIÊU ĐỀ VÀ CTA (07/09/2026, lệnh user) — xem ghi chú cùng
          tên ở bản desktop. Giữ nhịp dọc của hmSec (mt-10 + pb-6). -->
-    <div class="mt-10 pb-6 reveal">${hmCatTiles()}</div>
+    <!-- KHỐI DANH MỤC QUAY LẠI ĐI QUA hmSec (09/09/2026, lệnh user cho tiêu đề canh
+         giữa 'Get ahead'). Khung tự dựng từ 07/09 là mt-10 pb-6 reveal — đúng khung
+         của hmSec trừ flex flex-col gap-4, mà khe 16 đó chỉ có việc khi mục có NHIỀU
+         hơn một con; nay có đầu mục nên nó vào việc. Lưới danh mục tràn mép thì vẫn tràn
+         (đệm nằm ở đầu mục, không ở khung). -->
+    ${hmSec(HM_CAT_TITLE, '', hmCatTiles(), 'h2', '', true)}
 
     ${hmMaison()}
 
@@ -12180,6 +12284,32 @@ const I18N = {
   /* 2 khoá này bản desktop đã có từ 04/09 (alt của hero), bản mobile thì chưa vì hero
      mobile đi 2 tấm khác. Từ 06/09 chúng thành TIÊU ĐỀ của thẻ câu chuyện, tức text node
      dịch được — đo trên trang: thiếu khoá thì bản EN đọc tiếng Việt. */
+  /* ── CHỮ BIÊN TẬP TRANG CHỦ, cặp VI-EN đặt 09/09/2026 ───────────────────────────────
+     Giá trị EN là chuỗi USER ĐẶT, giữ nguyên từng ký tự; khoá VI là tên tôi đặt thêm theo
+     lệnh *"đặt lại tên còn thiếu sao cho nghe sang trọng"*. Bật công tắc ENG là đọc lại
+     đúng chữ user đặt, không lệch một ký tự.
+     KHÔNG đẻ khoá mới cho 4 chuỗi: 'Mua ngay' -> 'Shop now' và 'Theo dõi chúng tôi' ->
+     'Follow us' đã có sẵn (dùng lại, tránh sinh giá trị EN TRÙNG — trùng là I18N_REV đảo
+     map sai), còn 'Dạo phố'/'Điểm nhấn' của 2 ô occasion còn lại cũng đã có từ trước.
+     ⚠ CHỖ CHƯA SẠCH CÓ TỪ TRƯỚC, không phải của lượt này: 'Follow us' đang là giá trị của
+     HAI khoá — 'Kết nối với chúng tôi' (tiêu đề footer) và 'Theo dõi chúng tôi'. I18N_REV
+     vì vậy chỉ trả về được một trong hai khi dịch ngược EN->VI. Đã báo user, chưa sửa vì
+     sửa là đổi chữ hiển thị của footer. */
+  'Khám phá thêm':'Discover more',
+  'Tâm điểm':'Spotlight',
+  'Nét thanh lịch mát mẻ nhất cho mùa này, cùng chất satin và hơn thế nữa.':'The chicest way to stay cool this season with satin and more.',
+  'Đi trước một bước':'Get ahead',
+  'Tâm điểm thương hiệu':'Brand Spotlights',
+  'Khám phá ngay':'Discover now',
+  'Mùa của áo trench':'Time for a trench',
+  'Làm chủ lối mặc giao mùa cùng áo khoác Versace và hơn thế nữa':'Master between-season dressing in Versace outerwear and more',
+  'Trở lại công việc':'Back to Business',
+  'Một góc nhìn mới cho trang phục công sở':'A fresh perspective to workwear and beyond',
+  'Tâm điểm: Denim':'Spotlight On: Denim',
+  'Món đồ căn bản cho mọi tủ áo':'The style staple that belongs in every wardrobe',
+  'Xem tuyển chọn':'Shop the edit',
+  'Dáng hình kiến trúc, da thuộc tinh tế và khoá Gancini biểu tượng — kết tinh nghề thủ công Ý':'An architectural silhouette, refined leather, and iconic Gancini closure embody Italian craftsmanship',
+  'Nguồn cảm hứng':'Get inspired',
   'Bộ sưu tập AW26':'The AW26 collection', 'Bộ sưu tập denim MCM':'The MCM denim collection',
   'Broken Jewels — hoạ tiết đặc trưng của Versace':'Broken Jewels — the Versace signature print',
   /* Khối đổi tên 07/09/2026 (lệnh user). ĐỔI KHOÁ chứ không thêm khoá thứ hai: nhãn cũ
