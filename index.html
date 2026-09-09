@@ -278,6 +278,22 @@ window.RESP = (function () {
   .drag-x { cursor: grab; }
   .drag-x.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
   .drag-x.dragging img { pointer-events: none; }
+  /* ── THANH TIẾN TRÌNH của dải cuộn (09/09/2026, lệnh user kèm ảnh tham chiếu)
+     Bản mobile KHÔNG có mũi tên trái/phải (vuốt tay là đủ, và đó là quyết định
+     đã ghi ở khối dải) — nên thanh này là dấu DUY NHẤT nói cho biết dải còn
+     nội dung và đang đứng ở đâu. Vì vậy nó luôn hiện, không theo hover.
+     2px cho CẢ rãnh và con chạy: cùng một vạch, khác nhau ở MÀU chứ không ở bề
+     dày. Rãnh #dfdfdf = kẻ chuẩn duy nhất của dự án, con chạy #0a0a0a = mực
+     chính. KHÔNG bo góc, KHÔNG bóng — theo hướng phẳng của dự án.
+     Bề rộng + chỗ đứng con chạy tính bằng % trong wireRailBar().
+     `.rail-bar-inset` = 16 hai bên cho khớp px-4 của dải; dải nào đã có đệm ở
+     khối cha thì gọi railBar() không kèm class này (xem PDP#6).
+     ĐỆM PHẢI LÀ MARGIN, không phải padding: con chạy đặt tuyệt đối nên nó quy
+     theo hộp PADDING của rãnh — nhét đệm vào trong là % chạy sai chừng ấy. */
+  .rail-bar { position: relative; height: 2px; background: var(--general-border); }
+  .rail-bar[hidden] { display: none; }
+  .rail-bar-inset { margin-left: 16px; margin-right: 16px; }
+  .rail-thumb { position: absolute; top: 0; bottom: 0; left: 0; width: 100%; background: var(--general-primary); }
 
   /* ── Search screen ── */
   /* ẩn nút ✕ clear mặc định của trình duyệt — đã có nút "Xóa" riêng theo Figma */
@@ -4255,6 +4271,19 @@ function lookRailCards(title, n, selfIdx, w, badgeAt = -1) {
     .map(({ p, i }, k) => productCard(p, i, { w, noColors: true, model: true, badge: badge(k) })).join('');
 }
 
+/* Thanh tiến trình dưới dải cuộn (09/09/2026, lệnh user kèm ảnh tham chiếu
+   Ralph Lauren "Recently Viewed"). CHỈ dựng cho "Gợi ý mua kèm" — đúng phạm vi
+   lệnh; "Sản phẩm tương tự" giữ nguyên dải trần.
+   Kiểm bằng TIÊU ĐỀ chứ không thêm cờ vào 6 chỗ gọi: 2 dải ở PDP vốn đã rẽ
+   nhánh theo tiêu đề (xem lookRailCards), thêm cờ thứ hai nói cùng một việc là
+   sớm muộn hai chỗ lệch nhau.
+   `cls` = đệm hai bên: 5 màn PDP để đệm ở chính dải nên thanh phải tự lấy
+   `.rail-bar-inset`; PDP#6 đặt px-4 ở khối cha nên truyền chuỗi rỗng. */
+function railBar(title, cls = 'rail-bar-inset') {
+  if (title !== 'Gợi ý mua kèm') return '';
+  return `<div class="rail-bar ${cls}" data-rail-bar hidden><span class="rail-thumb"></span></div>`;
+}
+
 function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false, noQuick = false } = {}) {
   /* 27/08: 'Pre-order' THÔI làm nhãn đè ảnh — nó xuống đứng trước TÊN (xem dưới).
      Chặn ngay tại đây, một chỗ, nên 6 nơi gọi vẫn truyền `badge: 'Pre-order'` như
@@ -5550,6 +5579,7 @@ function screenPDP() {
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
         </div>
+        ${railBar(title)}
       </div>`).join('')}
 
     ${camKetSection()}
@@ -5847,6 +5877,7 @@ function screenPDP2() {
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
         </div>
+        ${railBar(title)}
       </div>`).join('')}
 
     ${camKetSection()}
@@ -5972,6 +6003,7 @@ function screenPDP3() {
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
         </div>
+        ${railBar(title)}
       </div>`).join('')}
 
     ${camKetSection()}
@@ -6094,6 +6126,7 @@ function screenPDP4() {
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
         </div>
+        ${railBar(title)}
       </div>`).join('')}
 
     ${camKetSection()}
@@ -7015,6 +7048,7 @@ function screenPDP5() {
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
         </div>
+        ${railBar(title)}
       </div>`).join('')}
 
     ${camKetSection()}
@@ -7142,6 +7176,7 @@ function screenPDP6() {
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0', 3)}
         </div>
+        ${railBar(title, '')}
       </div>`).join('')}
 
     ${camKetSection()}
@@ -13955,6 +13990,7 @@ function wire(root) {
   }
 
   root.querySelectorAll('.drag-x').forEach(dragScroll);
+  wireRailBar(root);
 
   // Chuyển grid 1 cột / 2 cột (Frame 49) — nút trên filter, không sticky
   const plpGrid = root.querySelector('#plpGrid');
@@ -14136,6 +14172,36 @@ function refreshCartCount(root) {
     wire(list);
   }
   refreshCartAll(root);   // giỏ rỗng thì khối quà theo đơn cũng phải trống theo
+}
+
+/* ── Thanh tiến trình của dải cuộn (09/09/2026) ───────────────────────────────
+   Vẽ con chạy theo tỉ lệ ĐANG THẤY / TỔNG BỀ NGANG của dải, và trượt theo
+   scrollLeft. Tính bằng % của chính rãnh nên đổi khổ máy không phải đo lại, và
+   đệm px-4 nằm TRONG dải cũng tự triệt tiêu — cả 3 số (clientWidth, scrollWidth,
+   scrollLeft) đều lấy từ một hệ toạ độ.
+   Track tìm bằng ANH EM CÙNG CHA: markup của dải là <p tiêu đề> · <track .drag-x>
+   · <thanh>, cả ba nằm trong một khối flex-col.
+   Dải không có gì để cuộn thì ẩn hẳn thanh — cùng luật với mũi tên bên desktop:
+   không bày một thanh đầy 100% chẳng nói lên điều gì. ── */
+function wireRailBar(root) {
+  root.querySelectorAll('[data-rail-bar]').forEach(bar => {
+    const track = bar.parentElement && bar.parentElement.querySelector('.drag-x');
+    const thumb = bar.querySelector('.rail-thumb');
+    if (!track || !thumb) return;
+    const draw = () => {
+      const over = track.scrollWidth > track.clientWidth + 1;
+      bar.hidden = !over;
+      if (!over) return;
+      thumb.style.width = (track.clientWidth / track.scrollWidth * 100) + '%';
+      thumb.style.left  = (track.scrollLeft  / track.scrollWidth * 100) + '%';
+    };
+    track.addEventListener('scroll', draw, { passive: true });
+    window.addEventListener('resize', draw, { passive: true });
+    scrollCleanups.push(() => window.removeEventListener('resize', draw));
+    draw();
+    /* Font về muộn có thể đổi bề rộng khối chữ trong thẻ -> đo lại một lượt. */
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+  });
 }
 
 /* ── Kéo ngang carousel bằng chuột (mobile đã có vuốt native) ── */

@@ -730,8 +730,13 @@ window.RESP = (function () {
     --look-pad-y: 32px;      /* đệm dọc băng — cũng là khoảng thẻ cách mép đáy */
     --look-pad-x: 24px;      /* đệm ngang băng = đúng MỘT máng lưới */
     --look-h: 352px;         /* chiều cao băng (số Figma) */
-    --look-rise: 221px;      /* phần ảnh TRỒI LÊN khỏi mép trên băng
-                                = chiều cao thẻ (541) − (--look-h − --look-pad-y) */
+    --look-rise: 247px;      /* phần ảnh TRỒI LÊN khỏi mép trên băng
+                                = (chiều cao thẻ 541 + khe 24 + thanh 2) − (--look-h − --look-pad-y).
+                                09/09/2026: +26 so với 221 cũ vì khung nay chở
+                                THÊM thanh tiến trình dưới thẻ — khung neo mép
+                                ĐÁY nên nó cao thêm bao nhiêu là thẻ trồi lên
+                                bấy nhiêu; không cộng vào đây thì --look-clear
+                                (hở với khối trên) tự ăn mất 26. */
     --look-clear: 56px;      /* hở giữa ĐỈNH ẢNH trồi lên và khối phía trên.
                                 Đo ra 52 (273 − 221) — số duy nhất trong cả dải
                                 rơi ngoài nấc 8; kéo lên 56 cho đồng nhịp với
@@ -756,12 +761,29 @@ window.RESP = (function () {
      chữ nằm 48px dưới mép băng; pt 2 với dòng đầu 24 ra ĐÚNG 48 — giữ nguyên
      vị trí thị giác đã chốt, chỉ đổi cỡ chữ. */
   .dk-look-aside { width: var(--look-aside); padding-top: 2px; }
-  .dk-look-grid {
+  /* ── 09/09/2026 (lệnh user + ảnh tham chiếu Ralph Lauren "Recently Viewed"):
+     3 thẻ ĐỨNG YÊN -> DẢI CUỘN 5 thẻ, 3 thẻ một lượt, có mũi tên + thanh tiến
+     trình. Khung ngoài giữ NGUYÊN chỗ đứng tuyệt đối của .dk-look-grid cũ (mép
+     đáy cách đáy băng --look-pad-y, mép trái đặt sau cột chữ) — chỉ đổi RUỘT.
+     Khung mang thêm class `.dk-rail` để dùng lại nguyên cơ chế của dải "Sản
+     phẩm tương tự": wireRail() ẩn/hiện mũi tên theo hướng CÒN nội dung, canh
+     mũi tên giữa Ô ẢNH, và vẽ thanh tiến trình.
+
+     ⚠ PHẢI qualify bằng `.dk-look-band`: rule `.dk-rail { position: relative }`
+     nằm SAU trong file, cùng specificity 0,1,0 thì đứa sau thắng và khung rơi
+     về relative (tụt xuống dòng chảy, mất trò ảnh trồi lên). 0,2,0 để chốt. */
+  .dk-look-band .dk-look-rail {
     position: absolute; bottom: var(--look-pad-y); right: var(--look-pad-x);
     left: calc(var(--look-pad-x) + var(--look-aside) + 24px);
-    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px; align-items: end;
   }
+  /* Khe 24 = đúng MỘT máng của lưới 12, giữ nguyên khe của bản 3 thẻ cũ; thẻ
+     vẫn ra 330 ở khổ 1440 (3 thẻ + 2 khe = trọn bề ngang dải) nên CỠ THẺ KHÔNG
+     ĐỔI — chỉ có thẻ thứ 4-5 nằm ngoài khung chờ cuộn tới.
+     Thẻ canh TRÊN (mặc định `stretch` của flex, không phải `align-items: end`
+     như lưới cũ): dải cuộn đọc theo BĂNG ẢNH, tên dài ngắn khác nhau mà canh
+     đáy thì mép trên ảnh răng cưa — và mũi tên canh giữa ảnh cũng lệch theo. */
+  .dk-look-track { gap: 24px; }
+  .dk-look-item  { flex: 0 0 calc((100% - 48px) / 3); }
 
   /* ══ BẢN B — "so le" theo ảnh tham chiếu user gửi (28/08) ══════════════════
      Lệnh: *"tạo thêm 1 phiên bản như hình đính kèm nhưng align bottom và cho
@@ -937,7 +959,13 @@ window.RESP = (function () {
        Cho băng về dòng chảy thường: chữ lên trên, 3 ảnh xuống dưới. */
     .dk-look-band       { height: auto; margin-top: 32px; }
     .dk-look-aside      { width: 100%; padding-bottom: 24px; }
-    .dk-look-grid       { position: static; left: auto; right: auto; bottom: auto; }
+    /* Qualify `.dk-look-band` cho khớp rule gốc ở trên (0,2,0) — bỏ ra là
+       thua chính nó và dải hẹp vẫn dính absolute.
+       `relative` chứ KHÔNG `static` (số cũ của .dk-look-grid): khung nay chở 2
+       mũi tên `position: absolute`, để static là chúng nhảy ra neo theo
+       `.dk-look-band` — tức đứng lên cả cột chữ. relative vẫn là nằm trong
+       dòng chảy, chỉ giữ thêm vai trò khung neo. */
+    .dk-look-band .dk-look-rail { position: relative; left: auto; right: auto; bottom: auto; }
     .dk-lookb           { align-items: stretch; }
     /* Bản C dưới 1024: 3 cột 330/1fr/330 chỉ còn ~300 cho ảnh chủ đề -> xếp DỌC,
        kẻ dọc ngăn cột đổi thành kẻ ngang cho đúng hướng đọc mới. */
@@ -1220,6 +1248,20 @@ window.RESP = (function () {
   .dk-rail-arrow:hover { background: var(--general-background); }
   .dk-rail-prev { left: 8px; }
   .dk-rail-next { right: 8px; }
+  /* ── THANH TIẾN TRÌNH của dải cuộn (09/09/2026, lệnh user kèm ảnh tham chiếu)
+     Vai: cho biết dải CÒN nội dung và đang đứng ở đâu. Mũi tên chỉ hiện khi rê
+     chuột, nên lúc tay chưa chạm vào thì đây là dấu hiệu DUY NHẤT nói dải cuộn
+     được — cũng là lý do nó luôn hiện chứ không theo hover.
+     2px cho CẢ rãnh và con chạy: cùng một vạch, khác nhau ở MÀU chứ không ở bề
+     dày (kẻ 1px của dự án là để NGĂN khối; đây là một mặt đọc được nên đi 2px).
+     Rãnh #dfdfdf = kẻ chuẩn duy nhất của dự án, con chạy #0a0a0a = mực chính.
+     Bề rộng + chỗ đứng con chạy tính bằng % trong wireRail() nên đổi khổ không
+     phải đo lại. KHÔNG bo góc, KHÔNG bóng — theo hướng phẳng của dự án.
+     `[hidden]` = dải không có gì để cuộn: cùng luật với mũi tên, không bày một
+     thanh đầy 100% chẳng nói lên điều gì. */
+  .dk-rail-bar { position: relative; height: 2px; margin-top: 24px; background: var(--general-border); }
+  .dk-rail-bar[hidden] { display: none; }
+  .dk-rail-thumb { position: absolute; top: 0; bottom: 0; left: 0; width: 100%; background: var(--general-primary); }
   /* Nền hover của 2 biến thể Button trong nav:
      · Ghost (hàng giới tính + nút tiện ích) → "nhún" nền đen 5%
        (Button/Ghost/Hover: fill #000 5%, label #0a0a0a)
@@ -6807,27 +6849,38 @@ function dkRailSection(title, n, selfIdx = -1) {
       </div>`;
 }
 
-/* PDP#1 — "Gợi ý mua kèm" khuôn CHỮ MỘT BÊN + 4 ẢNH KẾ BÊN (28/08/2026, lệnh
-   user kèm ảnh tham chiếu). Lấy đúng BỐ CỤC của ảnh đó: khối chữ dồn sang trái,
-   hàng ảnh chiếm phần còn lại, kẻ mảnh 1px chạy trên đầu cả dải.
+/* "Gợi ý mua kèm" khuôn CHỮ MỘT BÊN + DẢI ẢNH KẾ BÊN (28/08/2026, lệnh user
+   kèm ảnh tham chiếu; 09/09 hàng ảnh thành dải cuộn 5 thẻ — xem đoạn dưới).
+   Lấy đúng BỐ CỤC của ảnh đó: khối chữ dồn sang trái, hàng ảnh chiếm phần còn
+   lại, kẻ mảnh 1px chạy trên đầu cả dải.
    Khối chữ chỉ còn TIÊU ĐỀ ở cỡ 40 (lệnh bổ sung cùng ngày: bỏ subtitle, tăng
    cỡ) — ngoại lệ thang chữ đã ghi danh tại rule .dk-look-title.
-   KHÔNG bê 3 thứ của ảnh tham chiếu về: chữ HOA (trái luật "chỉ viết hoa chữ
-   đầu"), dấu gạch chéo trang trí trước tiêu đề, và cặp nút mũi tên carousel —
-   ở đây 4 thẻ đứng yên nên nút đó là nút không việc.
-   Số 4 là do lệnh user ("4 hình sản phẩm"); dải cũ 5 thẻ vẫn giữ ở khối dưới.
+   KHÔNG bê 2 thứ của ảnh tham chiếu về: chữ HOA (trái luật "chỉ viết hoa chữ
+   đầu") và dấu gạch chéo trang trí trước tiêu đề.
+
+   ── 09/09/2026 (lệnh user kèm ảnh tham chiếu Ralph Lauren "Recently Viewed"):
+   3 THẺ ĐỨNG YÊN -> DẢI CUỘN 5 THẺ, 3 thẻ một lượt, thêm 2 mũi tên canh giữa Ô
+   ẢNH và một thanh tiến trình dưới thẻ. Cặp mũi tên trước đây bị gạt đi đúng vì
+   "4 thẻ đứng yên nên nút đó là nút không việc" — nay dải cuộn thật thì lý do
+   đó hết hiệu lực. Cơ chế KHÔNG viết mới: dùng lại `.dk-rail` + wireRail() của
+   dải "Sản phẩm tương tự" ngay dưới, đúng như user chỉ.
+   n = 5 nằm ở MẶC ĐỊNH của hàm (chỗ gọi không truyền số nữa) để bản B/C giữ
+   nguyên 3 thẻ theo mặc định của chúng — 2 khuôn đó dựng cho đúng 3 thẻ.
+
    `selfIdx` = SP đang xem, BỊ LOẠI khỏi danh sách: "Gợi ý mua kèm" mà thẻ đầu
-   là chính cái đầm đang mở thì đọc ra vô nghĩa (dải 5 thẻ cũ cũng mắc, nhưng ở
-   đây 1/4 thẻ nên lộ hẳn). Giữ index GỐC của mỗi SP để thẻ vẫn dẫn đúng PDP. */
-function dkLookSection(selfIdx, n = 3) {
+   là chính cái đầm đang mở thì đọc ra vô nghĩa. Giữ index GỐC của mỗi SP để thẻ
+   vẫn dẫn đúng PDP. */
+function dkLookSection(selfIdx, n = 5) {
   /* 02/09/2026: nguồn danh sách chuyển sang lookProducts() — chỉ SP CÓ ảnh
      người mẫu mới vào dải này. Việc loại chính SP đang xem nay nằm trong đó. */
   const list = lookProducts(selfIdx, n);
   return `
       <!-- BẢN A — adapt từ Figma user sửa 28/08 (node 108:3746).
            Băng xám accent-0 cao 352 (đệm 32 dọc / 24 ngang, KHÔNG kẻ), tiêu đề
-           canh trái sát mép trên băng, 3 thẻ LỚN canh ĐÁY và ảnh TRỒI LÊN khỏi
-           băng. Số đo + lý do đặt lưới tuyệt đối: xem rule .dk-look-band.
+           canh trái sát mép trên băng, thẻ LỚN neo mép ĐÁY băng và ảnh TRỒI LÊN
+           khỏi băng. Từ 09/09 hàng thẻ là DẢI CUỘN 5 thẻ (3 thẻ một lượt) nên
+           mép đáy neo là đáy THANH TIẾN TRÌNH, thẻ nằm ngay trên nó.
+           Số đo + lý do đặt khung tuyệt đối: xem rule .dk-look-band.
            KHÔNG có pb ở khối ngoài — 32 phía trên kẻ của dải "Sản phẩm tương
            tự" là do chính dải đó cấp bằng pt-8 (thêm pb vào đây là cộng dồn 64,
            đúng lỗi nhịp đã sửa hôm nay). -->
@@ -6836,8 +6889,20 @@ function dkLookSection(selfIdx, n = 3) {
           <div class="dk-look-aside">
             <p class="dk-look-title text-foreground">${'Gợi ý\nMua kèm'}</p>
           </div>
-          <div class="dk-look-grid">
-            ${list.map(({ p, i }) => productCard(p, i, { noColors: true, model: true })).join('')}
+          <!-- Dải cuộn (09/09/2026): track + 2 mũi tên + thanh tiến trình.
+               Cả 3 việc (ẩn/hiện mũi tên theo hướng còn nội dung · canh mũi tên
+               giữa Ô ẢNH · vẽ thanh) do wireRail() lo, ở đây chỉ dựng markup —
+               móc của nó là class .dk-rail + .dk-rail-track và 3 attribute
+               data-rail-prev / data-rail-next / data-rail-bar.
+               (KHÔNG dấu backtick trong comment này — cả khối nằm trong template
+               literal, một dấu backtick là cắt đôi chuỗi.) -->
+          <div class="dk-look-rail dk-rail">
+            <div class="dk-rail-track dk-look-track drag-x flex overflow-x-auto no-scrollbar">
+              ${list.map(({ p, i }) => productCard(p, i, { noColors: true, model: true, w: 'dk-look-item shrink-0' })).join('')}
+            </div>
+            <button class="dk-rail-arrow dk-rail-prev press" data-rail-prev hidden aria-label="Xem sản phẩm trước">${I.chevL}</button>
+            <button class="dk-rail-arrow dk-rail-next press" data-rail-next hidden aria-label="Xem sản phẩm tiếp">${I.chevR()}</button>
+            <div class="dk-rail-bar" data-rail-bar hidden><span class="dk-rail-thumb"></span></div>
           </div>
         </div>
       </div>`;
@@ -7121,12 +7186,15 @@ function dkScreenPDP(kind) {
 
       <!-- 2 dải gợi ý (28/08 bỏ hẳn section "Đã xem gần đây" — lệnh user).
            02/09/2026 (lệnh user): dải "Gợi ý mua kèm" dùng CHUNG MỘT KHUÔN —
-           bản A (tiêu đề lớn một bên + 3 ảnh model) — ở CẢ 6 PDP. Trước đó mỗi
+           bản A (tiêu đề lớn một bên + dải ảnh model; 09/09: 5 thẻ cuộn) — ở
+           CẢ 6 PDP. Trước đó mỗi
            PDP một kiểu (A ở pdp, C ở pdp2, dải 5 thẻ ở 4 bản còn lại), 6 màn
            cùng một vai mà nói ba giọng.
            "Sản phẩm tương tự" giữ khuôn 5 thẻ ở MỌI bản, và nay BẬT KẺ ở cả 6
            (trước chỉ pdp/pdp2) để nhịp dưới băng xám giống nhau khắp nơi. -->
-      ${LOOK_SECTIONS[LOOK_VARIANT] ? LOOK_SECTIONS[LOOK_VARIANT](D.idx, 3) : dkLookSection(D.idx, 3)}
+      <!-- KHÔNG truyền số thẻ nữa (09/09/2026): bản A đi 5 thẻ dạng dải cuộn,
+           B/C vẫn 3 thẻ — mỗi khuôn tự giữ mặc định của nó. -->
+      ${LOOK_SECTIONS[LOOK_VARIANT] ? LOOK_SECTIONS[LOOK_VARIANT](D.idx) : dkLookSection(D.idx)}
       <!-- 8 thẻ = 2 lượt xem, mỗi lượt 4 thẻ (chốt 03/09/2026). Trước là 5 thẻ
            xếp cứng 5 cột: 4 thẻ một lượt mà chỉ có 5 thẻ thì swipe được đúng
            một mẩu, nút mũi tên gần như không có việc. -->
@@ -12621,10 +12689,20 @@ function wireRail(root) {
     const prev = rail.querySelector('[data-rail-prev]');
     const next = rail.querySelector('[data-rail-next]');
     if (!track || !prev || !next) return;
+    /* Thanh tiến trình (09/09/2026) — dải nào KHÔNG dựng thanh thì bỏ qua, nên
+       một hàm này lo được cả dải có thanh lẫn dải chỉ có mũi tên. */
+    const bar = rail.querySelector('[data-rail-bar]');
+    const thumb = bar && bar.querySelector('.dk-rail-thumb');
     const sync = () => {
       const over = track.scrollWidth > track.clientWidth + 1;
       prev.hidden = !over || track.scrollLeft <= 1;
       next.hidden = !over || track.scrollLeft >= track.scrollWidth - track.clientWidth - 1;
+      if (!bar || !thumb) return;
+      /* Tính bằng % của chính rãnh: không phải đo lại khi đổi khổ, và đệm trong
+         track (nếu có) tự triệt tiêu vì cả 3 số đều lấy từ cùng một hệ toạ độ. */
+      bar.hidden = !over;
+      thumb.style.width = (track.clientWidth / track.scrollWidth * 100) + '%';
+      thumb.style.left  = (track.scrollLeft  / track.scrollWidth * 100) + '%';
     };
     /* Mũi tên canh giữa Ô ẢNH của thẻ, không phải giữa cả thẻ — xem chú thích ở
        rule .dk-rail-arrow. Ô ảnh là con ĐẦU của thẻ (productCard dựng thứ tự
