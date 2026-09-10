@@ -511,7 +511,27 @@ User chỉ đích danh phần tử trong DevTools: `div.py-6.px-4.rise` (phần 
 
 `node --check` trên script inline của cả 2 file: OK. Không cần rebuild tailwind (`pl-3`/`pr-9`/`h-10` đều có sẵn trong build; thay đổi padding là CSS của bộ da, không thêm class).
 
+## Giỏ hàng: TRỞ LẠI ô nhập mã gõ tay (09/09/2026, CẢ 2 BẢN)
+
+Yêu cầu user (chốt của khách): *"ở trang Cart, bây giờ khách không dùng cái loại mở rộng ra bộ voucher cho chọn nữa mà quay lại kiểu truyền thống là hiện cái ô nhập sẵn luôn như trước đó bạn đã làm"*. Đảo lại chốt 17/08 (mục "Chọn ưu đãi kiểu sàn TMĐT") và chốt 24/08 (mục ô `pickField` ngay dưới) — hai mục đó nay là **ghi chép lịch sử**, không còn là hiện trạng.
+
+**Đổi mặt nhập liệu, KHÔNG đổi cách tính**: catalog `VOUCHERS`, luật 1 mã/nhóm, `voucherEligible` / `voucherBlockReason` / `voucherValue` / `pruneVouchers` và các dòng `Giảm giá(<CODE>)` trong khối tóm tắt giữ nguyên 100%.
+
+- **Markup mới** (trong `discountPanel()` ở index.html, trong cột "Tóm tắt đơn hàng" ở desktop.html): `label[for="cartCode"]` giữ nguyên title "Ưu đãi & khuyến mãi" + hàng `flex gap-1` gồm `input#cartCode` (placeholder "Nhập mã ưu đãi") và `button#applyCode` "Áp dụng" (`.btn-s`, khoá khi ô trống qua `bindApplyGate`) + `div#cartCodeList` cho hàng chip.
+- **Khuôn lấy từ khối "Bạn có phiếu mua hàng?"** ngay dưới nút Đặt hàng, không dựng hàng riêng: đo trên trang chạy ra **đúng bằng nhau** — mobile input 254×40 · nút 85×40; desktop input 325×40 · nút 85×40 (desktop dùng `bg-input`, mobile `bg-background`, theo đúng ô `#pbh` của từng file). Title vẫn ăn rule nhãn nhóm skin-mt (đo 12/16 · 500 · HOA) vì rule bắt `:is(p, label).font-medium`, không bắt id.
+- **Lỗi báo TẠI Ô, không bằng toast** (`setFieldErr`, gỡ khi gõ lại): "Mã không hợp lệ" · "Mã đã được áp dụng" · lý do chưa đủ điều kiện lấy thẳng `voucherBlockReason` ("Mua thêm 63,943,000đ để dùng mã"). Ô nhập bọc thêm 1 `div.flex-col` vì `setFieldErr` chèn `<p>` vào `afterend` — không bọc thì dòng lỗi rơi vào giữa hàng flex, nằm cạnh nút.
+- **HÀNG CHIP quay lại** (`renderVoucherUI` giờ vẽ nó, thay việc đổi nhãn ô chọn): chốt 17/08 cố ý KHÔNG hiện chip vì "khối tóm tắt đã liệt kê từng dòng" — nhưng khi bỏ panel thì lập luận đó hỏng: dòng trong tóm tắt **không bấm được**, và mã nhóm ship không sinh dòng tiền nào (chỉ đổi "Phí vận chuyển — Miễn phí"), nên không có chip là áp xong **không còn đường lùi** ngoài tải lại trang. Chip dùng đúng khuôn `.pbh-badge` (mã + ✕), mã mang `data-i18n-skip`.
+- **1 mã/nhóm giữ nguyên, nhưng cách xử khác panel**: gõ mã cùng nhóm với mã đang áp thì mã mới **đẩy** mã cũ ra (toast "Đã thay JUL500 bằng JUL1500") — người mua vừa tự gõ mã khác thì ý họ đã rõ, báo lỗi ở đây là chặn vô cớ. Cộng chồng giữa các nhóm vẫn được (đo: JUL1500 + HOATOC2H + BMSM10 → 3 chip, tổng 186,057,000 − 1,500,000 − 3,000,000 = 181,557,000 khớp DOM).
+- **Enter = Áp dụng** (bàn phím cứng lẫn keyboard mobile).
+- **ĐÃ GỠ HẲN**: `#vcSheet` (mobile bottom sheet / desktop `.dk-drawer`) + IIFE wire của nó, `voucherSheetHTML` · `voucherCardHTML` · `voucherSumOf`, 3 helper của hàng thu gọn (`voucherAvailCount` · `voucherPlaceholder` · `voucherPickValue`), `window.__openVoucherSheet`, và `.vc-panel` trong khối CSS chung của lớp nổi (index.html). Grep xác nhận 0 tham chiếu sống ở cả 2 file. Bản panel tra lại ở git history (có từ commit đầu `d81ffd7`).
+- **i18n**: thêm 2 khoá (`Mã đã được áp dụng` ↔ `Code already applied`, `Gỡ mã` ↔ `Remove code`, đặt TRƯỚC `I18N_REV`) + 2 luật động mỗi chiều (`Đã áp dụng <CODE>` ↔ `<CODE> applied`, `Đã thay A bằng B` ↔ `A replaced by B`). Nhóm chuỗi của panel cũ **giữ trong từ điển** dù UI đã gỡ — khách đã đảo hướng khối này 2 lần, key nằm đó không tốn gì. Đo bản EN: label `Promotions & offers` · placeholder `Enter offer code` · nút `Apply` · lỗi `Invalid code` / `Spend 63,943,000đ more to use this code` · toast `JUL500 replaced by JUL1500`.
+- **Verify** (server 8123, `go('cart')`, skin mặc định `skin-mt skin-li`): mobile 375 + desktop 1440 — mã sai, mã trùng, mã chưa đủ điều kiện, thay mã cùng nhóm, cộng chồng 3 nhóm, gỡ chip, và `pruneVouchers` (bỏ tick 4/5 món → subtotal 15,611,000 → cả 2 mã tự rớt, `#cartCodeList` về `hidden`, toast "Đã gỡ 1 ưu đãi do đơn không còn đủ điều kiện"). Console sạch, không tràn ngang, `node --check` trên cả 4 khối script inline: OK.
+- **Ngoài phạm vi**: `desktop-atelier.html` (fork skin đóng băng 21/08) vẫn còn bản trigger + sheet của riêng nó — user chốt phạm vi "mobile và desktop". `desktop-neutral.html` / `desktop-editorial.html` không có khối này.
+- **Hạn chế đã biết của kiểu truyền thống**: card "Chương trình khuyến mãi" chỉ in mã của WARDROBE REFRESH (JUL1500/1000/500); `BMSM5` · `BMSM10` · `HOATOC2H` · `SHIPQT` không có mã hiện ở đâu trên trang nên người mua phải biết trước — nội dung card là dữ liệu khách nên **chưa tự thêm**.
+
 ## Ô "Chọn mã ưu đãi" dựng lại theo component `pickField` (24/08/2026, mọi bộ da, CHỈ MOBILE)
+
+> **ĐÃ BỊ ĐẢO 09/09/2026** — khối này giờ là ô nhập mã `#cartCode`, không còn hàng bấm `#voucherTrigger`. Giữ mục để tra lại lý do từng chốt; hiện trạng xem mục "Giỏ hàng: TRỞ LẠI ô nhập mã gõ tay".
 
 User: *"cái chọn mã ưu đãi hãy improve ux ui lại cho gọn và chuẩn chỉnh theo component"*. Dự án **đã có** linh kiện đúng vai "bấm mở bottom sheet để chọn": `pickField` (ô chọn tỉnh/phường ở checkout, cùng cách PDP thay `<select>` bằng sheet) — nên dùng lại nguyên khuôn thay vì tự dựng hàng riêng.
 
@@ -797,6 +817,8 @@ Hàng pre-order duy nhất là **SP#1 đầm lụa mini Broken Jewels** — ngà
 - **Bản desktop (port 14/08/2026)** — cùng danh mục trên, các điểm cố ý khác mobile: (1) badge "Pre-order" gắn vào Ô ẢNH ĐẦU của lưới gallery (desktop không có chồng pill New Season); (2) cờ `preorder:true` cũ trong `PDP_DATA.pdp` đã bỏ — CTA suy từ `PRODUCTS[0].preorder` để 1 nguồn; (3) tiện thể sửa popup đăng nhập nhanh còn in cứng "1.135" điểm → `rewardPointsEarned()`. Panel "Tóm tắt đơn hàng" lúc đầu giữ thumb 52×60 gọn, nhưng **user chốt cùng ngày: đồng bộ khuôn dòng theo tóm tắt mobile** (thumb 100×133 + badge + tên 2 dòng + giá đáy-phải + dòng ngày không prefix, quà qua `giftSummaryRow(..., true)`) và **hạ title panel 24 light → 18 medium**. Tiếp đó user chốt thêm: **panel CHỈ để xem thông tin giỏ + tạm tính** — nút "Đặt hàng" cũ trong panel là lỗi UX (bấm được từ bước 0, nhảy thẳng màn hoàn tất, bỏ qua toàn bộ validation các bước) nên đã gỡ, kèm 2 dòng ETA/ghi chú pre-order dưới nút (lặp với bước Phương thức vận chuyển); nút "Đặt hàng" thật giờ nằm **cuối bước Thanh toán như mobile** (khuôn nút inline h-12 px-10 của các bước desktop), chỉ hiện khi đã đi qua đủ các bước.
 
 ## Chọn ưu đãi kiểu sàn TMĐT (17/08/2026, CẢ 2 BẢN)
+
+> **ĐÃ BỊ ĐẢO 09/09/2026** — khách quay về ô nhập mã gõ tay, sheet/panel "Chọn ưu đãi" đã gỡ khỏi cả 2 bản. Phần TÍNH (catalog, 1 mã/nhóm, điều kiện, tự rớt mã) vẫn đúng như mô tả dưới đây.
 
 Yêu cầu user: bỏ ô "Mã giảm giá" gõ tay ở giỏ, thay bằng mô hình của các sàn — **mục "Áp dụng ưu đãi" thu gọn 1 dòng**, bấm vào mở danh sách ưu đãi, **chọn nhiều mã cùng lúc** (freeship + mã giảm + …).
 

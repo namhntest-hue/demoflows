@@ -428,7 +428,7 @@ window.RESP = (function () {
      `0 8px 28px`, menu thì `shadow-lg` của Tailwind — 3 kiểu cho cùng một vai,
      gom về 1 rồi bỏ luôn. */
   .is-panel, .cg-panel, .ns-panel, .qa-panel, .cc-panel,
-  .sz-panel, .gf-panel, .vc-panel, .pk-panel,
+  .sz-panel, .gf-panel, .pk-panel,
   #settingsPanel .sp-card, #sortMenu, #policyMenu {
     border: 1px solid var(--general-border);
     box-shadow: none;
@@ -1632,7 +1632,9 @@ window.RESP = (function () {
        · 2 title = nhãn nhóm `12/16 · 500 · HOA` — cùng bậc nhãn với footer/menu/bộ
          lọc, §1.5 vai 5 (nhãn cũ trong nút voucher nhường vai này nên rule "3 chỗ
          +1 nấc weight" phía dưới đã rút `#voucherTrigger > span.flex-1`; hàng bấm
-         về họ nội dung `12/18 · 400`, chữ đổi thành "Chọn mã ưu đãi" ở markup);
+         về họ nội dung `12/18 · 400`, chữ đổi thành "Chọn mã ưu đãi" ở markup)
+         — 09/09/2026: hàng bấm đó KHÔNG CÒN, chỗ nó là ô nhập `#cartCode`; title
+         vẫn là `<label>` nên 4 rule dưới đây không phải sửa gì;
        · `.opt` lấy mặt trắng: bỏ khung bao rồi thì thẻ radio nằm TRỰC TIẾP trên dải
          xám, mà markup không khai nền → sẽ là xám-trên-xám, mất hẳn hình thẻ;
        · nhịp: title→nội dung 8 (markup gap-2 của khối voucher, khai lại 8 cho khối
@@ -1704,7 +1706,9 @@ window.RESP = (function () {
   /* 24/08/2026 — RÚT `#voucherTrigger > span.flex-1` khỏi nhóm này: nhãn đó đã lên
      thành TITLE của khối (rule nhãn nhóm ở trên lo), hàng bấm còn lại là hành động
      "Chọn mã ưu đãi" nên về họ nội dung 12/18 · 400 do blanket lo. Vai hoa 5 §1.5
-     không mất chỗ nào — nó chuyển từ "nhãn trong nút" sang "title của khối". */
+     không mất chỗ nào — nó chuyển từ "nhãn trong nút" sang "title của khối".
+     09/09/2026 — hook `#voucherTrigger` đã biến hẳn (khối trở lại ô nhập `#cartCode`);
+     nhóm này vẫn đúng 2 selector dưới, không có gì phải thêm bớt. */
   html.skin-mt [data-screen="cart"] div:has(> #cartTotal) > span,
   html.skin-mt [data-screen="cart"] #cartCta .acc-trigger > span:first-child {
     font-weight: 500;
@@ -2346,10 +2350,19 @@ window.RESP = (function () {
      leading-6`) nên lượt trước lọt — đo được nó đang vẽ ra **12/16 · 400 · chữ
      thường**, tức title lớp nổi DUY NHẤT còn mang cỡ THÂN BÀI. Đó chính là phần chốt
      *"title Dialog sẽ đồng bộ lại"* chưa xong; nay vào chung một số với 11 sheet kia.
-     KHAI GIỐNG HỆT ở index.html và desktop.html. */
+     KHAI GIỐNG HỆT ở index.html và desktop.html.
+     ⚠ HOOK 3 ĐỔI SELECTOR 09/09/2026 — `.ns-panel p.text-[16px]` → `.ns-panel p.t-overlay`.
+     Lượt "thang chữ vào code" 04/09 đổi markup của title này sang class ngữ nghĩa
+     (`<p class="t-overlay font-medium text-foreground">`) nên hook cũ bám chuỗi utility
+     CHẾT ÂM THẦM: đo trên trang 09/09 ra `Inter 16/24 · 500 · CHỮ THƯỜNG` — đúng cỡ và
+     đúng độ đậm (cỡ tới từ `.t-overlay` dòng 667, đậm tới từ rule dòng 674) nhưng MẤT
+     chữ hoa, tức lại là title lớp nổi DUY NHẤT lệch, y như ca 25/08 chỉ khác thuộc tính.
+     `.t-overlay` dùng ĐÚNG 1 lần trong markup mỗi file (chính title này) nên bám vào nó
+     không rò sang lớp nổi nào khác; vẫn giữ tiền tố `.ns-panel` để nếu sau này có vai
+     `.t-overlay` thứ hai thì nó không tự động bị ép hoa. */
   html.skin-mt.skin-li p.flex-1.min-w-0.text-\[18px\],
   html.skin-mt.skin-li #filterSheet div:has(> #filterClose) > p,
-  html.skin-mt.skin-li .ns-panel p.text-\[16px\] {
+  html.skin-mt.skin-li .ns-panel p.t-overlay {
     font-size: 16px; line-height: 24px;
     font-family: var(--font-app); font-weight: 500;
     text-transform: uppercase; letter-spacing: 0.5px;
@@ -3218,28 +3231,18 @@ window.RESP = (function () {
     font-size: 18px; line-height: 24px;
     font-family: var(--font-head); font-weight: 400;
   }
-  /* NHÃN CỦA NGÀNH NỮ — Inter chữ HOA (07/09/2026, lệnh user; xem `hmLabelUp`).
-     Dựng ban đầu làm nhánh B của một A/B 3+3 để so; nay nó thôi là trạng thái so sánh và
-     thành nhãn CHÍNH THỨC của ngành Nữ — ngành Nam giữ Libre.
-     Bậc là `T3` 14/20 của STYLE-RULES §1.2 — TẦNG NHÃN, đúng chỗ mà 13.1 xếp mọi
-     chữ hoa của bộ da vào. Không phải bậc mới: 14/20 là bậc nhãn cấp 1 đang chạy ở
-     nav ngành hàng.
-     VÌ SAO 14 MÀ KHÔNG 12 hay 18 — đo bằng canvas, chuỗi dài nhất `QUÀ TẶNG`:
-       14/20 · 500 · HOA -> 78,6px    (Libre 18 chữ thường: 76,7px — lệch 1,9px)
-       12/16 · 500 · HOA -> 68,0px    (hụt 11% khối lượng, đọc ra nhỏ hơn hẳn)
-     Chọn 14 để 2 nhánh có CÙNG khối lượng thị giác, chỉ khác GIỌNG — có thế mới so
-     được. Chữ hoa vốn chiếm cao hơn chữ thường ở cùng cỡ nên 14 hoa ~ 18 thường.
-     `font-weight: 500` là BẮT BUỘC đi kèm chữ hoa (§1.1 khoá cặp 500 <-> HOA), và
-     phải khai tường minh vì `html.skin-mt .font-medium` ép mọi `font-medium` về 400.
-     KHÔNG khai `letter-spacing`: 0,5px đã tới từ `html.skin-mt body` (§1.4 một nguồn).
-     Dấu tiếng Việt trên chữ HOA: đo `actualBoundingBox` của `QUẦN ÁO` ở 14/20 ra
-     mực cao 17px trong hộp dòng 20 -> còn 1,5px mỗi mép, không bị `truncate` cắt.
-     ĐẶC HIỆU (0,5,2) — thắng cả hook bậc trưng bày (0,3,2) LẪN rule 18/24 của bản
-     mobile (0,4,2), nên KHAI GIỐNG HỆT ở 2 file mà không phải đọc thứ tự khai. */
-  html.skin-mt.skin-li .hm-cat-media p.hm-cat-label.hm-cat-label-up {
-    font-size: 14px; line-height: 20px;
-    font-family: var(--font-app); font-weight: 500; text-transform: uppercase;
-  }
+  /* ĐÃ GỠ 09/09/2026 — `.hm-cat-label-up` (nhãn ngành Nữ: Inter 14/20 · 500 · HOA).
+     Lệnh user: *"bản nữ tôi đang demo lung tung, giờ clone từ bản Nam ra rồi demo"*.
+     Nhánh này dựng 07/09 làm phía B của một A/B 3+3; khi chốt thì không nhánh nào thua nên
+     mỗi nhánh nhận một NGÀNH — tức tiêu chí phân biệt thành "ngành hàng" chứ không phải
+     "vai". Hệ quả đo được 09/09 (báo cáo `_notes/TYPO-RULE-2026-09-09.md`): MỘT class nhãn
+     ra BỐN kết cục (Nam mobile Libre 18/24 · Nam desktop Libre 24/32 · Nữ 2 khổ Inter 14/20
+     HOA), và vai chữ hoa thứ 6 này chưa từng được ghi vào danh sách ĐÓNG của §1.5.
+     Nay 2 ngành dùng chung một nhãn — của bản Nam. Đo trước khi gỡ, không có chỗ nào vỡ:
+     nhãn dài nhất `Tâm điểm: Denim` ở Libre 24/32 ra 200px trong ô 309 (65%), 1 dòng,
+     0 nhãn bị `truncate` cắt; mobile giữ nguyên 18/24 vì 2 ngành dùng chung chuỗi nhãn.
+     Muốn demo lại nhánh chữ hoa thì dựng lại từ đây — số đo canvas cũ: chuỗi dài nhất
+     `QUÀ TẶNG` ở 14/20 · 500 · HOA ra 78,6px, Libre 18 chữ thường 76,7px (lệch 1,9px). */
 
 
   /* 4 — HÀNG THẺ THƯƠNG HIỆU: DẢI TRƯỢT (desktop là lưới 5 ô).
@@ -7530,15 +7533,15 @@ const hmFashionDept = () => (menuTab === 'Làm đẹp' ? 'Nam' : menuTab);
    ngành nằm ở hàng tab trong drawer) — bọc lại để phần trang chủ khai GIỐNG HỆT 2 file. */
 const hmDeptNow = () => menuTab;
 
-/* NHÃN TRONG HÌNH: bản NỮ đi Inter chữ HOA, bản NAM giữ Libre (07/09/2026, lệnh user:
-   *"ở homepage nữ thì hãy clone lại bản của bản Nam nhưng các title bên trong hình dùng
-   uppercase inter là được"*).
-   ĐÂY LÀ CHỐT CHO A/B DỰNG CÙNG NGÀY: lượt trước dựng 3 ô Libre + 3 ô Inter HOA cạnh nhau
-   để so, và ghi rõ "chốt xong phải xoá nhánh thua". Nay không nhánh nào thua — mỗi nhánh
-   nhận MỘT NGÀNH HÀNG, nên tiêu chí phân biệt thôi là chỉ số ô (vô nghĩa với người đọc) mà
-   thành ngành hàng (có nghĩa). Trạng thái so sánh 3+3 vì vậy biến mất.
-   Áp cho CẢ HAI dải ô có nhãn trong hình: "Mua theo danh mục" và "Lựa chọn theo mùa". */
-const hmLabelUp = () => hmDeptNow() === 'Nữ';
+/* ĐÃ GỠ 09/09/2026 — `hmLabelUp()`, công tắc "ngành Nữ đi hệ chữ riêng".
+   Lệnh user: *"bản nữ tôi đang demo lung tung, giờ clone từ bản Nam ra rồi demo"*.
+   Công tắc này (dựng 07/09) đã phình ra gánh BA việc không liên quan nhau — nhãn trong hình
+   đi Inter chữ HOA · roster ô thương hiệu + lưới 3 cột · và ở bản desktop là cả một khuôn
+   khối "Mặc gì cho dịp" khác. Một tên hàm nói về NHÃN mà quyết định cả bố cục là chỗ dễ
+   sửa nhầm, nên gỡ trọn thay vì gỡ một nửa.
+   Từ nay trang chủ 2 ngành khác nhau ở DỮ LIỆU (ảnh, nhãn, hãng), không khác ở HỆ CHỮ và
+   BỐ CỤC. Muốn demo lại một nhánh riêng thì dựng lại có chủ đích, đừng mượn công tắc cũ.
+   Số đo và lý lẽ của lượt gỡ: `_notes/TYPO-RULE-2026-09-09.md`. */
 
 function hmCatTiles() {
   return `
@@ -7550,7 +7553,7 @@ function hmCatTiles() {
           <div class="hm-cat-media w-full overflow-hidden ${img === 'b1.jpg' ? 'bg-accent-0' : 'bg-secondary'}" style="aspect-ratio:3/4">
             <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]" style="object-position:${pos}">
             <span class="hm-cat-scrim" aria-hidden="true"></span>
-            <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>
+            <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>
           </div>
         </button>`).join('')}
       </div>`;
@@ -7643,14 +7646,14 @@ const HM_SPOT_BELOW = 'brands';
    ⚠ Balmain chưa có sản phẩm nên bấm vào ra PLP 0 kết quả. Versace thì có 19 SP. */
 const HM_SPOT_BRANDS = ['Balmain', 'Versace'];
 
-/* BẢN NỮ: 3 ô chung một hàng (07/09/2026, lệnh user). Buộc phải gồm CẢ hãng đang spotlight
-   — kho chỉ có ĐÚNG 3 hãng thời trang đủ tư liệu (Versace · Dolce&Gabbana · Zimmermann);
-   Montblanc và Moschino là hàng LÀM ĐẸP (`dept:'beauty'`, nước hoa), không phải hãng thời
-   trang, nên không đứng được trong hàng này.
-   Hệ quả phải biết: hãng spotlight XUẤT HIỆN HAI LẦN trong cùng một mục — một lần làm banner
-   biên tập, một lần làm cửa vào PLP. Ảnh thì KHÔNG lặp (xem `hmSpotBrands`). Muốn hết lặp thì
-   phải bỏ về 2 ô như bản Nam, hoặc xin thêm tư liệu một hãng thời trang thứ tư. */
-const HM_SPOT_BRANDS_NU = ['Balmain', 'Versace'];
+/* ĐÃ GỠ 09/09/2026 — `HM_SPOT_BRANDS_NU` (roster riêng của bản Nữ, "3 ô chung một hàng",
+   chốt 07/09). Nó đã tự hết việc từ 08/09: khi user chốt lại đúng 2 ô Balmain + Versace cho
+   CẢ 2 ngành thì 2 bảng trùng nhau từng phần tử, chỉ còn class lưới 3 cột là khác — và đó
+   đúng là chỗ hỏng đo được trên bản Nữ desktop (2 ô trong lưới 3 cột).
+   Ràng buộc tư liệu vẫn còn nguyên nếu sau này muốn dựng lại 3 ô: kho chỉ có ĐÚNG 3 hãng
+   thời trang đủ ảnh (Versace · Dolce&Gabbana · Zimmermann) — Montblanc và Moschino là hàng
+   LÀM ĐẸP — nên ô thứ ba buộc phải là chính hãng đang spotlight, tức hãng đó xuất hiện hai
+   lần trong cùng một mục. */
 
 /* NHÁNH A: ô thương hiệu nhỏ. ẢNH DÙNG LẠI ĐÚNG CẶP `hero` + `pos` của trang thương hiệu,
    có chủ ý: cặp đó đã được canh tay cho dải NGANG 1377x320 (~4,3/1) ở màn brand. Ô đây cao
@@ -7683,8 +7686,11 @@ const HM_SPOT_BRAND_LOGO = {
 };
 
 function hmSpotBrands(avoidImg) {
-  const women = hmLabelUp();
-  const tiles = (women ? HM_SPOT_BRANDS_NU : HM_SPOT_BRANDS).map(name => {
+  /* MỘT ROSTER CHO CẢ 2 NGÀNH (09/09/2026 — lượt clone bản Nữ từ bản Nam). Trước đây nhánh
+     Nữ đọc `HM_SPOT_BRANDS_NU` và thêm class lưới 3 cột; cả hai đã hết việc: 2 bảng hãng
+     TRÙNG NHAU từ 08/09 (cùng `['Balmain', 'Versace']`), nên trên bản Nữ desktop đo được
+     2 ô nằm trong lưới 3 cột — hàng bỏ trống đúng một phần ba bề ngang. */
+  const tiles = HM_SPOT_BRANDS.map(name => {
     /* `|| { name }` để một hãng CHƯA có trong `BRAND_PAGES` vẫn dựng được ô — cần cho
        Ferragamo/Balmain của mock, hai hãng demo chưa có dữ liệu. Chốt chặn nay chỉ hỏi
        ĐỦ ẢNH VÀ ĐỦ LOGO, không hỏi số sản phẩm nữa: ô theo mock không in số sản phẩm, nên
@@ -7733,7 +7739,7 @@ function hmSpotBrands(avoidImg) {
             </a>`;
   }).filter(Boolean);
   if (tiles.length < 2) return '';
-  return `<div class="hm-spot-brands${women ? ' hm-spot-brands-3' : ''}">${tiles.join('')}</div>`;
+  return `<div class="hm-spot-brands">${tiles.join('')}</div>`;
 }
 
 function hmMaison() {
@@ -7914,11 +7920,11 @@ function hmOccasions() {
             <span class="${sub ? 'hm-occ-scrim' : 'hm-cat-scrim'}" aria-hidden="true"></span>
             ${sub ? `
             <div class="hm-occ-copy">
-              <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground">${label}</p>
+              <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground">${label}</p>
               <p class="t-multiline text-primary-foreground">${sub}</p>
               ${cta ? `<p class="t-single text-primary-foreground underline underline-offset-2">${cta}</p>` : ''}
             </div>` : `
-            <p class="hm-cat-label${hmLabelUp() ? ' hm-cat-label-up' : ''} text-[18px] font-medium leading-7 text-primary-foreground">${label}</p>`}
+            <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground">${label}</p>`}
           </div>
         </button>`).join('')}
         </div>
@@ -8832,29 +8838,17 @@ function dafcRewards() {
   </div>`;
 }
 
-/* Dòng thu gọn (chốt user 17/08/2026): TRÁI luôn là tên mục tĩnh, PHẢI là con số —
-   2 trạng thái: chưa chọn "( N )" với N = số mã ĐANG ĐỦ ĐIỀU KIỆN (mã ẩn và mã chưa
-   đạt mức không tính: đếm cả thứ bấm vào không dùng được thì số nói dối) · đã chọn
-   "( Đã áp dụng N )". Không in số tiền giảm ở đây — khối tóm tắt ngay dưới đã có
-   từng dòng "Giảm giá(<CODE>)" rồi.
-
-   24/08/2026 — DỰNG LẠI THEO COMPONENT `pickField` (lệnh user: *"cái chọn mã ưu đãi
-   hãy improve ux ui lại cho gọn và chuẩn chỉnh theo component"*). Ô chọn của dự án
-   chỉ có MỘT slot chữ (`.pick-label`), nên 2 phần của chốt 17/08 gộp vào 1 chuỗi và
-   trạng thái chuyển sang đúng cơ chế của component: đổi MỰC (placeholder mực phụ ->
-   giá trị mực chính) do `setPickLabel()` lo, không còn cột số riêng bên phải.
-     · chưa áp: "Chọn mã ưu đãi ( 6 )" — hết mã đủ điều kiện thì BỎ phần số, không
-       in "( 0 )" vô nghĩa (trước đây có in);
-     · đã áp:  "Đã áp dụng 2 mã" — mã nào thì khối tóm tắt ngay dưới liệt kê rồi. */
-const voucherAvailCount = () => VOUCHERS.filter(v => !v.hidden && voucherEligible(v)).length;
-const voucherPlaceholder = () => {
-  const n = voucherAvailCount();
-  return n ? `Chọn mã ưu đãi ( ${n} )` : 'Chọn mã ưu đãi';
-};
-const voucherPickValue = () => {
-  const n = activeVouchers().length;
-  return n ? `Đã áp dụng ${n} mã` : '';
-};
+/* ── 09/09/2026 — TRỞ LẠI Ô NHẬP MÃ GÕ TAY (chốt khách) ──
+   Khách bỏ mô hình "hàng thu gọn -> sheet chọn ưu đãi" của chốt 17/08: ở giỏ nay
+   HIỆN SẴN ô nhập + nút "Áp dụng" như bản trước 17/08.
+   ĐÃ GỠ theo cái sheet: 3 helper của hàng thu gọn (voucherAvailCount /
+   voucherPlaceholder / voucherPickValue — sinh chữ "Chọn mã ưu đãi ( 6 )" và "Đã áp
+   dụng 2 mã" cho `.pick-label`), thẻ ưu đãi + danh sách theo nhóm (voucherCardHTML /
+   voucherSheetHTML / voucherSumOf) và cả lớp nổi #vcSheet.
+   GIỮ NGUYÊN toàn bộ phần TÍNH: catalog VOUCHERS, luật 1 mã/nhóm, voucherEligible /
+   voucherBlockReason / voucherValue / pruneVouchers và các dòng trong khối tóm tắt —
+   đợt này đổi MẶT NHẬP LIỆU, không đổi cách tính đồng nào.
+   Bản sheet tra lại ở git history (có từ commit đầu d81ffd7). */
 
 /* Phiếu mua hàng: demo không có backend tra cứu mã thật, nên sinh số tiền giảm
    ổn định theo chuỗi mã (cùng 1 mã luôn ra cùng 1 số tiền) — 50,000 .. 1,000,000đ,
@@ -8953,39 +8947,30 @@ function discountPanel() {
   <div class="py-6 px-4 bg-secondary flex flex-col gap-4 rise">
     <div class="flex flex-col gap-2">
       ${rewardsCard}
-      <!-- Ưu đãi THU GỌN còn ĐÚNG 1 dòng (yêu cầu user 17/08/2026): ô nhập mã +
-           nút "Áp dụng" đã dọn vào sheet, và KHÔNG hiện chip mã ra ngoài giỏ —
-           mã nào đang áp thì khối tóm tắt ngay dưới đã liệt kê từng dòng rồi,
-           thêm một hàng chip nữa là nói 2 lần. Lý do bỏ ô input: 90% người mua
-           không thuộc mã, ô trống chỉ chiếm chỗ; danh sách ưu đãi trong sheet
-           mới là thứ họ cần thấy. -->
-      <!-- Title tách khỏi hàng bấm (24/08/2026): trước đây nhãn "Ưu đãi & khuyến
-           mãi" nằm TRONG nút, nên khối này không có nhãn nhóm như khối thành viên.
-           Nay nhãn lên thành title cùng khuôn với title khối thành viên.
-           Ô bên dưới = ĐÚNG COMPONENT pickField (ô chọn địa giới ở checkout) — cùng
-           vai "bấm mở bottom sheet để chọn", nên dùng lại nguyên khuôn thay vì tự dựng
-           hàng riêng: label[for] + button h-10 viền --general-border pl-2 pr-9 +
-           chevron chevD 14 cách mép phải 12 + aria-haspopup="dialog", chữ trong ô là
-           span.pick-label (đổi mực theo trạng thái qua setPickLabel).
-           Bỏ so với bản trước: 2 div bọc (card py-1 > div py-2), icon ticket 20, cột
-           số riêng bên phải, rounded-md, chevR. Cao 62 -> 40.
-           label[for] cũng là nâng cấp a11y: bấm cả title cũng mở được sheet, và trình
-           đọc màn hình đọc được tên nút (trước chỉ đọc chữ bên trong).
+      <!-- 09/09/2026 — Ô NHẬP MÃ HIỆN SẴN, TRỞ LẠI KIỂU TRUYỀN THỐNG (chốt khách):
+           hàng thu gọn "Chọn mã ưu đãi ( N )" + sheet liệt kê ưu đãi của chốt 17/08 đã
+           GỠ HẲN. Người mua đến giỏ là đã có mã trong tay (email, hoặc card "Chương
+           trình khuyến mãi" ngay TRÊN khối này in đủ JUL1500 · JUL1000 · JUL500), nên
+           gõ vào là xong — không phải bấm mở thêm một lớp nữa mới thấy ô nhập.
+           Khuôn lấy ĐÚNG cặp ô nhập + nút của khối "Bạn có phiếu mua hàng?" bên dưới
+           nút Đặt hàng (input h-10 viền border-border px-2 + nút .btn-s "Áp dụng"): hai
+           khối cùng vai "gõ mã vào giỏ" nên phải cùng một khuôn, không dựng hàng riêng.
+           label[for] trỏ vào ô nhập: bấm title là con trỏ nhảy vào ô (trước là mở sheet).
+           Hàng chip dưới ô = chỗ GỠ mã, xem renderVoucherUI.
            LƯU Ý CHO LẦN SAU: comment này nằm TRONG template literal — không được dùng
            dấu backtick ở đây, nó ngắt chuỗi và làm sập cả script. -->
       <div class="flex flex-col gap-2">
-        <label for="voucherTrigger" class="t-single font-medium text-foreground">Ưu đãi &amp; khuyến mãi</label>
-        <div class="relative">
-          <button type="button" id="voucherTrigger" aria-haspopup="dialog" class="t-multiline w-full h-10 bg-background border border-border rounded-xs pl-2 pr-9 text-left flex items-center btn-o press transition-colors focus:border-primary">
-            <span class="pick-label truncate ${voucherPickValue() ? 'text-foreground' : 'text-muted-foreground'}">${voucherPickValue() || voucherPlaceholder()}</span>
-          </button>
-          <!-- MŨI TÊN SANG PHẢI, không phải xuống (24/08/2026, lệnh user): pickField gốc
-               là dropdown/picker nên dùng chevD, còn ô này MỞ MỘT LỚP KHÁC (#vcSheet) —
-               mũi tên phải mới nói đúng việc "đi sang chỗ khác chọn". chevR cùng 14x14
-               nên vị trí right-3 giữ nguyên; class acc-chev có sẵn trong icon chỉ xoay
-               khi nằm trong .acc.open, ở đây không có nên nó đứng yên. -->
-          <span class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">${I.chevR('var(--general-primary)')}</span>
+        <label for="cartCode" class="t-single font-medium text-foreground">Ưu đãi &amp; khuyến mãi</label>
+        <!-- Bọc CỘT quanh ô nhập: setFieldErr chèn dòng lỗi vào afterend của ô, không
+             bọc thì dòng lỗi rơi vào giữa hàng flex, nằm cạnh nút. Lỗi ẩn bằng
+             display:none nên lúc không lỗi khối cao đúng như cũ, không hở thêm gì. -->
+        <div class="flex gap-1 items-start">
+          <div class="flex-1 min-w-0 flex flex-col">
+            <input id="cartCode" placeholder="Nhập mã ưu đãi" class="t-multiline w-full h-10 bg-background border border-border rounded-xs px-2 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+          </div>
+          <button id="applyCode" disabled class="t-multiline h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
         </div>
+        <div id="cartCodeList" class="${cartVouchers.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
       </div>
     </div>
 
@@ -11826,6 +11811,10 @@ const I18N = {
   'Nhập mã ưu đãi':'Enter offer code', 'Dùng mã':'Use code',
   'Chưa chọn ưu đãi nào':'No offers selected', 'Mã không hợp lệ':'Invalid code',
   'Mã đã được chọn':'Code already selected', 'Đã gỡ ưu đãi':'Offers removed',
+  /* 09/09/2026 — ô nhập mã trở lại ở giỏ: 2 chuỗi mới của nó. Nhóm chuỗi của sheet
+     phía trên GIỮ NGUYÊN trong từ điển dù UI đã gỡ — khách đã đảo hướng khối này 2
+     lần (17/08 vào sheet, 09/09 ra ô nhập), key nằm đây không tốn gì. */
+  'Mã đã được áp dụng':'Code already applied', 'Gỡ mã':'Remove code',
   'Miễn phí giao hoả tốc 2 giờ':'Free 2-hour express delivery', 'Nội thành Hà Nội và TP.HCM':'Inner-city Hanoi and HCMC',
   'Miễn phí giao hàng quốc tế':'Free international delivery', 'Áp dụng cho đơn giao ngoài Việt Nam':'For orders shipped outside Vietnam',
   'Giảm thêm 10%':'Extra 10% off', 'Giảm thêm 5%':'Extra 5% off',
@@ -12422,6 +12411,10 @@ const I18N_RE = [
   [/^Đã gỡ (\d+) ưu đãi do đơn không còn đủ điều kiện$/, '$1 offers removed — the order no longer qualifies'],
   [/^Đã chọn ([A-Z0-9]+)$/,           '$1 selected'],
   [/^Đã gỡ ([A-Z0-9]+)$/,             '$1 removed'],
+  /* Ô nhập mã ở giỏ (09/09/2026). Đặt SAU 2 luật "Đã áp dụng N mã" ở trên cho chắc
+     thứ tự, dù mã voucher là [A-Z0-9]+ nên không thể khớp luật đếm số. */
+  [/^Đã áp dụng ([A-Z0-9]+)$/,        '$1 applied'],
+  [/^Đã thay ([A-Z0-9]+) bằng ([A-Z0-9]+)$/, '$1 replaced by $2'],
   [/^Giảm ([\d,]+)đ$/,                '$1đ off'],
   [/^Tối đa ([\d,]+)đ$/,              'Up to $1đ'],
   [/^Trị giá ([\d,]+)đ$/,             'Worth $1đ'],
@@ -12479,6 +12472,8 @@ const I18N_REV_RE = [
   [/^(\d+) offers removed — the order no longer qualifies$/, 'Đã gỡ $1 ưu đãi do đơn không còn đủ điều kiện'],
   [/^([A-Z0-9]+) selected$/,          'Đã chọn $1'],
   [/^([A-Z0-9]+) removed$/,           'Đã gỡ $1'],
+  [/^([A-Z0-9]+) applied$/,           'Đã áp dụng $1'],
+  [/^([A-Z0-9]+) replaced by ([A-Z0-9]+)$/, 'Đã thay $1 bằng $2'],
   [/^([\d,]+)đ off$/,                 'Giảm $1đ'],
   [/^Up to ([\d,]+)đ$/,               'Tối đa $1đ'],
   [/^Worth ([\d,]+)đ$/,               'Trị giá $1đ'],
@@ -13968,13 +13963,35 @@ function wire(root) {
   });
   renderPbhList();
 
-  // Cart: ưu đãi — dòng "Áp dụng ưu đãi" thu gọn, bấm mở sheet chọn nhiều mã
-  // (xem #vcSheet). Ô nhập mã gõ tay đã dọn vào trong sheet.
-  const vTrigger = root.querySelector('#voucherTrigger');
-  if (vTrigger) vTrigger.addEventListener('click', () => window.__openVoucherSheet && window.__openVoucherSheet(() => {
-    renderVoucherUI(root);
-    refreshCartSummary(root);
-  }));
+  /* Cart: ưu đãi — Ô NHẬP MÃ GÕ TAY (chốt khách 09/09/2026, thay hàng thu gọn +
+     sheet của 17/08). Dùng lại bindApplyGate ngay trên: nút chỉ sáng khi ô có chữ.
+     Mã sai / chưa đủ điều kiện báo NGAY TẠI Ô bằng setFieldErr chứ không bằng toast
+     — toast bay đi mất, mà đây là lỗi người mua phải sửa trong chính ô đó. */
+  const vcInp = root.querySelector('#cartCode');
+  const vcBtn = root.querySelector('#applyCode');
+  bindApplyGate(vcInp, vcBtn);
+  if (vcInp) vcInp.addEventListener('input', () => clearFieldErr(vcInp));   // gõ lại thì lỗi cũ hết nghĩa
+  const useCartCode = () => {
+    if (!vcInp) return;
+    const code = vcInp.value.trim().toUpperCase();
+    if (!code) return;
+    const v = voucherByCode(code);
+    if (!v)                          { setFieldErr(vcInp, 'Mã không hợp lệ');      return; }
+    if (cartVouchers.includes(code)) { setFieldErr(vcInp, 'Mã đã được áp dụng');   return; }
+    if (!voucherEligible(v))         { setFieldErr(vcInp, voucherBlockReason(v));  return; }
+    /* 1 mã / nhóm — luật của catalog, KHÔNG đổi: các mã trong cùng nhóm là các MỨC
+       của cùng một chương trình (JUL500/1000/1500) nên mã mới ĐẨY mã cũ ra thay vì
+       báo lỗi; người mua vừa gõ mã khác thì ý họ đã rõ. Toast nói rõ mã nào bị thay. */
+    const old = cartVouchers.find(c => { const o = voucherByCode(c); return o && o.group === v.group; });
+    cartVouchers = cartVouchers.filter(c => c !== old).concat(code);
+    vcInp.value = '';
+    if (vcBtn) { vcBtn.disabled = true; vcBtn.style.opacity = '.4'; }
+    clearFieldErr(vcInp);
+    refreshCartSummary(root);        // gọi luôn renderVoucherUI -> hàng chip vẽ lại
+    toast(old ? `Đã thay ${old} bằng ${code}` : `Đã áp dụng ${code}`);
+  };
+  if (vcBtn) vcBtn.addEventListener('click', useCartCode);
+  if (vcInp) vcInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); useCartCode(); } });
   renderVoucherUI(root);
 
   // Show more → skeleton then append
@@ -14264,16 +14281,32 @@ function giftAppear(el, skipLang) {
 /* Cộng ưu đãi hội viên (đã đăng nhập) + mã giảm giá + N phiếu mua hàng -> render
    lại toàn bộ #discountLines (số dòng thay đổi động theo số phiếu đang áp) +
    cập nhật Tổng cộng / Tiết kiệm, không reload lại cả màn cart. */
-/* Cập nhật con số bên phải dòng thu gọn (khả dụng / đã áp). Để ngoài wire() vì
-   refreshCartSummary cũng phải gọi được — số khả dụng đổi theo giỏ, và mã có
-   thể TỰ RỚT khi giỏ teo lại. Tên mục bên trái là chữ tĩnh, không đụng tới. */
+/* HÀNG CHIP mã đang áp, ngay dưới ô nhập (09/09/2026 — thay việc đổi nhãn ô chọn
+   của bản sheet). Để ngoài wire() vì refreshCartSummary cũng phải gọi được: mã có
+   thể TỰ RỚT khi giỏ teo lại (pruneVouchers), lúc đó chip phải biến theo.
+   Vì sao cần chip: khối tóm tắt bên dưới CÓ liệt kê từng dòng "Giảm giá(CODE)"
+   nhưng dòng đó không bấm được, mà mã ship lại không sinh dòng tiền nào — không có
+   chip thì áp xong không còn đường lùi ngoài việc tải lại trang.
+   Khuôn chip lấy đúng `.pbh-badge` của khối phiếu mua hàng (cùng vai "mã đã gõ vào
+   giỏ", chỉ khác hook class/data để 2 khối gỡ độc lập). */
 function renderVoucherUI(root) {
   if (!root) return;
-  /* 24/08/2026 — ô chọn mã nay là component `pickField`, nên cập nhật bằng CHÍNH
-     helper của component (`setPickLabel`): nó lo cả chữ lẫn mực (giá trị = mực
-     chính, placeholder = mực phụ). Trước đây chỉ đổi textContent của cột số. */
-  const btn = root.querySelector('#voucherTrigger');
-  if (btn) { setPickLabel(btn, voucherPickValue(), voucherPlaceholder()); localizeNew(btn); }
+  const list = root.querySelector('#cartCodeList');
+  if (!list) return;
+  // Ẩn hẳn khi rỗng, tránh flex gap tạo khoảng trống thừa dưới ô nhập (như #pbhList)
+  list.className = cartVouchers.length ? 'flex gap-2 flex-wrap' : 'hidden';
+  list.innerHTML = cartVouchers.map(c => `
+    <span class="vc-badge bg-secondary rounded flex items-center gap-1.5 px-2 py-0.5 h-6" data-vc-code="${c}">
+      <span data-i18n-skip class="t-single font-medium text-secondary-foreground truncate max-w-[140px]">${c}</span>
+      <button class="vc-del w-3 h-3 flex items-center justify-center shrink-0 press [&_svg]:w-3 [&_svg]:h-3" aria-label="Gỡ mã">${IcoCross}</button>
+    </span>`).join('');
+  list.querySelectorAll('.vc-del').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    const code = b.closest('.vc-badge').dataset.vcCode;
+    cartVouchers = cartVouchers.filter(c => c !== code);
+    refreshCartSummary(root);      // vẽ lại cả chip lẫn khối tiền
+    toast('Đã gỡ ' + code);
+  }));
 }
 
 function refreshCartSummary(root) {
@@ -16089,191 +16122,6 @@ document.body.insertAdjacentHTML('beforeend', `
   window.__openGiftSheet = openGF;
 })();
 
-/* ── Sheet "Chọn ưu đãi" (yêu cầu user 17/08/2026) ──
-   Mobile trượt lên từ đáy — dùng lại đúng khuôn #giftSheet/#sizeSheet (backdrop
-   + panel translate-y-full + lockBodyScroll). Bản desktop.html là cùng logic
-   nhưng panel trượt vào từ mép PHẢI.
-   Lựa chọn trong sheet là TẠM (biến `temp`): đóng bằng ✕ / backdrop = huỷ, chỉ
-   nút "Áp dụng ưu đãi" mới ghi vào cartVouchers. Nếu ghi thẳng thì mỗi lần chạm
-   thử một mã là khối tiền phía sau nhảy một lần — và không có đường lùi. */
-function voucherSumOf(sel) {
-  return sel.map(voucherByCode).filter(v => v && voucherEligible(v)).reduce((s, v) => s + voucherValue(v), 0);
-}
-/* Thẻ 1 ưu đãi. Mã chưa đủ điều kiện KHÔNG bị giấu đi — vẫn hiện, làm mờ, khoá
-   bấm và nói rõ còn thiếu gì ("Mua thêm 4.000.000đ để dùng mã"): đó là thứ đẩy
-   giỏ hàng lên, giấu đi thì người mua không biết mình sắp có gì. */
-function voucherCardHTML(v, on) {
-  const ok = voucherEligible(v);
-  const why = ok ? '' : voucherBlockReason(v);
-  const cond = [];
-  if (v.note)   cond.push(v.note);
-  if (v.cap)    cond.push(`Tối đa ${v.cap.toLocaleString('en-US')}đ`);
-  if (v.worth)  cond.push(`Trị giá ${v.worth.toLocaleString('en-US')}đ`);
-  if (v.minSub) cond.push(`Đơn từ ${v.minSub.toLocaleString('en-US')}đ`);
-  if (v.minQty) cond.push(`Mua từ ${v.minQty} sản phẩm`);
-  return `
-  <button class="vc-item opt ${on ? 'on' : ''} w-full flex gap-3 items-start border ${on ? 'border-border-5' : 'border-border'} rounded-md p-3 text-left ${ok ? 'press' : ''}"
-          data-vc="${v.code}" ${ok ? '' : 'disabled style="opacity:.45"'}>
-    <span class="w-9 h-9 rounded-xs bg-secondary flex items-center justify-center shrink-0">${I.ticket()}</span>
-    <span class="flex-1 min-w-0 flex flex-col gap-1">
-      <span class="flex items-center gap-2">
-        <span class="t-multiline flex-1 min-w-0 font-medium text-foreground">${voucherTitle(v)}</span>
-        <span data-i18n-skip class="t-single font-medium text-muted-foreground shrink-0">${v.code}</span>
-      </span>
-      ${cond.map(c => `<span class="t-single block text-secondary-foreground">${c}</span>`).join('')}
-      <span class="flex items-center gap-1 pt-0.5">
-        <span data-i18n-skip class="t-single text-muted-foreground truncate">${v.prog}</span>
-        <span class="t-single text-muted-foreground shrink-0">· HSD ${v.exp}</span>
-      </span>
-      ${why ? `<span class="t-single block text-destructive">${why}</span>` : ''}
-    </span>
-    <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border-2 ${on ? 'border-primary' : 'border-border'} flex items-center justify-center shrink-0">
-      <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
-    </span>
-  </button>`;
-}
-/* Danh sách theo nhóm. Mã `hidden` (bộ JUNE* cũ) chỉ hiện khi đang được chọn —
-   gõ tay xong phải thấy nó ở đâu đó để còn bỏ chọn được. Trong mỗi nhóm, mã
-   dùng được xếp lên trước. */
-function voucherSheetHTML(sel) {
-  return VOUCHER_GROUPS.map(g => {
-    const items = VOUCHERS
-      .filter(v => v.group === g.key && (!v.hidden || sel.includes(v.code)))
-      .sort((a, b) => (voucherEligible(b) ? 1 : 0) - (voucherEligible(a) ? 1 : 0));
-    if (!items.length) return '';
-    return `
-    <div class="flex flex-col gap-2 pt-4 first:pt-1">
-      <div class="flex items-baseline justify-between gap-2">
-        <p class="t-multiline font-medium text-foreground">${g.title}</p>
-        <span class="t-single text-muted-foreground shrink-0">Chọn tối đa 1</span>
-      </div>
-      ${items.map(v => voucherCardHTML(v, sel.includes(v.code))).join('')}
-    </div>`;
-  }).join('');
-}
-
-document.body.insertAdjacentHTML('beforeend', `
-  <div id="vcSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
-    <div class="vc-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
-    <div class="vc-panel absolute inset-x-0 bottom-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col"
-         style="max-height:88vh" role="dialog" aria-label="Chọn ưu đãi">
-      <span class="absolute left-1/2 -translate-x-1/2 top-2 w-[50px] h-[3px] rounded-full bg-border"></span>
-      <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
-        <p class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">Chọn ưu đãi</p>
-        <button id="vcClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
-      </div>
-      <!-- Ô nhập mã vẫn còn (mã riêng / mã gửi qua email không nằm trong danh
-           sách) nhưng lùi xuống vai phụ: nằm trong sheet, không chiếm chỗ ở giỏ -->
-      <!-- Bọc cột để dòng lỗi nằm dưới cặp [ô nhập | nút]. Lỗi ẩn bằng .hidden
-           (display:none) nên KHÔNG tính là flex item -> lúc không lỗi khối này
-           cao đúng như cũ, không hở thêm khoảng trống nào. -->
-      <div class="px-4 pb-3 shrink-0 flex gap-1 items-start">
-        <div class="flex-1 min-w-0 flex flex-col">
-          <input id="vcCode" placeholder="Nhập mã ưu đãi" class="t-multiline w-full h-10 bg-background border border-border rounded-xs px-2 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-        </div>
-        <button id="vcCodeApply" disabled class="t-multiline h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Dùng mã</button>
-      </div>
-      <div id="vcList" class="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 pb-4 flex flex-col"></div>
-      <div class="shrink-0 border-t border-border-1 px-4 pt-3 flex flex-col gap-3">
-        <div class="flex items-center justify-between gap-2">
-          <span id="vcCount" class="t-multiline text-foreground"></span>
-          <span id="vcSum" class="t-multiline font-medium text-destructive"></span>
-        </div>
-        <button id="vcApply" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center">Áp dụng ưu đãi</button>
-        <div class="safe-b"></div>
-      </div>
-    </div>
-  </div>`);
-
-(() => {
-  const sh    = document.getElementById('vcSheet');
-  const panel = sh.querySelector('.vc-panel');
-  const list  = sh.querySelector('#vcList');
-  const input = sh.querySelector('#vcCode');
-  const codeBtn = sh.querySelector('#vcCodeApply');
-  let temp = [], onDone = null;
-
-  /* resetCode dọn luôn dòng lỗi: ô trống thì lỗi cũ không còn nghĩa. Cũng là
-     chỗ duy nhất chạy khi MỞ LẠI sheet, nên lỗi không sống sót qua 2 lần mở. */
-  const resetCode = () => { input.value = ''; codeBtn.disabled = true; codeBtn.style.opacity = '.4'; clearFieldErr(input); };
-  const syncFoot = () => {
-    const n = temp.filter(c => voucherEligible(voucherByCode(c))).length;
-    const sum = voucherSumOf(temp);
-    sh.querySelector('#vcCount').textContent = n ? `Đã chọn ${n} ưu đãi` : 'Chưa chọn ưu đãi nào';
-    sh.querySelector('#vcSum').textContent   = sum ? `-${sum.toLocaleString('en-US')}đ` : '';
-    localizeNew(sh.querySelector('#vcCount'));
-  };
-  const render = () => {
-    list.innerHTML = voucherSheetHTML(temp);
-    localizeNew(list);
-    list.querySelectorAll('[data-vc]').forEach(b => b.addEventListener('click', () => {
-      const v = voucherByCode(b.dataset.vc);
-      if (!v || !voucherEligible(v)) return;
-      pickVoucher(v, temp.includes(v.code));
-    }));
-    syncFoot();
-  };
-  /* 1 mã / nhóm: chọn mã mới thì mã cùng nhóm tự nhả; chạm lại đúng mã đang
-     chọn = bỏ chọn (không cần nút "bỏ chọn" riêng). */
-  const pickVoucher = (v, off) => {
-    temp = temp.filter(c => { const o = voucherByCode(c); return !o || o.group !== v.group; });
-    if (!off) temp.push(v.code);
-    render();
-  };
-
-  input.addEventListener('input', () => {
-    const has = input.value.trim().length > 0;
-    codeBtn.disabled = !has; codeBtn.style.opacity = has ? '1' : '.4';
-    clearFieldErr(input);   // gõ lại thì lỗi cũ hết nghĩa
-  });
-  const useCode = () => {
-    const code = input.value.trim().toUpperCase();
-    if (!code) return;
-    const v = voucherByCode(code);
-    if (!v) { setFieldErr(input, 'Mã không hợp lệ'); return; }
-    if (!voucherEligible(v)) { setFieldErr(input, voucherBlockReason(v)); return; }
-    if (temp.includes(code)) { setFieldErr(input, 'Mã đã được chọn'); return; }
-    pickVoucher(v, false);
-    resetCode();
-    toast('Đã chọn ' + code);
-  };
-  codeBtn.addEventListener('click', useCode);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); useCode(); } });
-
-  const close = () => {
-    sh.querySelector('.vc-backdrop').classList.add('opacity-0');
-    panel.classList.add('translate-y-full');
-    sh.classList.add('pointer-events-none');
-    unlockBodyScroll();
-    setTimeout(() => sh.setAttribute('aria-hidden', 'true'), 300);
-  };
-  const open = done => {
-    onDone = done || null;
-    temp = [...cartVouchers];
-    resetCode();
-    render();
-    localizeNew(panel);      // sheet nằm ngoài .screen nên không được applyLang lúc đổi ngôn ngữ
-    list.scrollTop = 0;
-    sh.classList.remove('pointer-events-none'); sh.setAttribute('aria-hidden', 'false');
-    sh.querySelector('.vc-backdrop').classList.remove('opacity-0');
-    panel.classList.remove('translate-y-full');
-    lockBodyScroll();
-  };
-
-  sh.querySelector('#vcApply').addEventListener('click', () => {
-    const had = cartVouchers.length;
-    cartVouchers = temp.filter(c => voucherEligible(voucherByCode(c)));
-    close();
-    if (onDone) onDone();
-    const n = cartVouchers.length;
-    toast(n ? `Đã áp dụng ${n} ưu đãi` : (had ? 'Đã gỡ ưu đãi' : 'Chưa chọn ưu đãi nào'));
-  });
-  sh.querySelector('.vc-backdrop').addEventListener('click', close);
-  sh.querySelector('#vcClose').addEventListener('click', close);
-  // Esc đóng sheet (bàn phím cứng khi xem bằng máy tính) — chỉ khi đang mở
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && sh.getAttribute('aria-hidden') === 'false') close(); });
-  window.__openVoucherSheet = open;
-})();
 
 
 /* ════════════════════════════════════════════════════════════════
