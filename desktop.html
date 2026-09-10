@@ -3837,17 +3837,72 @@ window.RESP = (function () {
      `max-width: 100%` GIỮ làm rào cho khổ hẹp hơn nữa: logo tự hạ tiếp chứ không tràn. */
   .hm-brand-card img { max-height: 12px; max-width: 100%; width: auto; height: auto; object-fit: contain; }
 
+  /* ══ BĂNG ĐĂNG KÝ — khuôn ảnh tham chiếu (10/09/2026, lệnh user: *"canh giữa cục ô đăng ký
+     đi rồi giảm padding trên dưới của block lớn lại. thử làm kiểu như trong hình đính kèm"*,
+     kèm ảnh HUGO BOSS XP) ═══════════════════════════════════════════════════════════════
+     Đọc ra 3 việc từ ảnh đó: (1) ảnh nằm BÊN PHẢI và NHOÈ DẦN vào nền băng chứ không có mép
+     cứng; (2) chữ nằm trong một TẤM TRẮNG nổi trên băng, canh GIỮA theo trục dọc; (3) băng
+     mỏng hơn — đệm dọc nhỏ.
+     KHÔNG bê linh kiện của họ về (luật tham-chiếu-≠-bê-nguyên): form đăng ký vẫn là form của
+     dự án (ô email + nút + dòng pháp lý), chỉ đổi CHỖ ĐẶT và cái nền.
+     Trước lượt này khối là `grid grid-cols-2 gap-6 py-12` — hai nửa bằng nhau 676,5 và cùng
+     cao 265, không có nền. Bỏ lưới vì khuôn mới KHÔNG phải 2 cột: ảnh là một lớp NỀN chạy
+     suốt chiều cao băng, tấm chữ nổi lên trên nó.
+
+     ĐỆM DỌC 48 -> 32: đúng con số của `.hm-occ` (khối occasion cũng là một băng nhấn màu
+     trong khung nội dung) nên đây không phải bậc đệm mới. Băng đo lại 361 -> 274.
+     NỀN dùng `--unofficial-accent-0` — cùng token với băng occasion và băng USP, nên 3 băng
+     nhấn màu của trang chủ cùng một sắc.
+     `align-items: center` là chỗ trả lời "canh giữa cục ô đăng ký": tấm chữ tự nằm giữa
+     chiều cao băng, còn ảnh thì `inset-block: 0` nên luôn cao trọn băng. */
+  /* ⚠ ĐỆM DỌC KHAI BẰNG CSS THẬT, KHÔNG DÙNG UTILITY — và đây là một bẫy vừa dính:
+     bản `tailwind.css` của dự án là bản BUILD SẴN và nó CHỈ có `.mt-1 .mt-2 .mt-3 .mt-4
+     .mt-10`, KHÔNG có `.mt-8`, và KHÔNG có một class `.my-*` nào. Lượt đầu tôi gõ `my-8`
+     (desktop) và `mt-8` (mobile) — cả hai là CLASS CHẾT, rơi im lặng, đo trên trang ra
+     margin-top = 0. Nên con số 32 nằm ở đây.
+     32 = đúng đệm dọc của băng occasion, nên khoảng cách 2 băng nhấn màu bằng nhau. */
+  .hm-signup-band {
+    position: relative; overflow: hidden;
+    background: var(--unofficial-accent-0);
+    display: flex; align-items: center;
+    padding: 32px 24px; margin-block: 32px;
+  }
+  /* 58% ở khổ 1440 cho ảnh rộng 799 và bắt đầu ở x = 578 — tức chờm 12px sang trái mép phải
+     của tấm chữ (24 + 566 = 590), nhờ vậy KHÔNG có kẽ hở giữa tấm chữ và ảnh. */
+  .hm-signup-photo { position: absolute; inset-block: 0; right: 0; width: 58%; }
+  /* NHOÈ DẦN bằng một lớp phủ gradient chứ không bằng `mask-image`: cả 2 file chưa dùng
+     `mask` ở đâu, còn lớp phủ gradient là khuôn đã có (.hm-hero-veil · .hm-spot-veil ·
+     .hm-occ-scrim). Màu phủ là CHÍNH màu nền băng nên chỗ nhoè liền mạch, không thấy mép.
+     Nhoè hết ở 45% (= 359px của ảnh 799): tấm chữ hết ở 590, nên đoạn 590 -> 937 là dải ảnh
+     đang hiện dần — đúng khoảng chuyển mềm của ảnh tham chiếu. */
+  .hm-signup-veil {
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(to right, var(--unofficial-accent-0) 0%, transparent 45%);
+  }
+  /* 566 = ĐÚNG 5 CỘT LƯỚI (94×5 + 24×4) — con số đã dùng cho ô lớn của khuôn occasion bản
+     Nữ, không phải bề rộng tuỳ ý. Lòng tấm còn 566 − 64 = 502, đủ cho ô email + nút 176. */
+  .hm-signup-card {
+    position: relative; z-index: 1;
+    width: 566px; max-width: 100%;
+    background: var(--background);
+    padding: 32px;
+  }
   /* 5 — DẢI HẸP. Từ 05/09/2026 danh sách này NGẮN ĐI: mọi khối nhiều món trên trang chủ
      nay là dải MỘT HÀNG cuộn ngang (lệnh user), nên `.hm-cats` và `.hm-brands` không còn
      nhánh hạ cột — hết nội dung thì chúng cuộn, không xuống hàng. `.hm-newgrid` gỡ hẳn:
      lưới 4 cột 2 hàng đã đổi thành dải dùng chung `.dk-rail`.
-     `.hm-signup` chỉ tồn tại như MÓC override: base của nó là utility
-     `grid grid-cols-2 gap-6` vốn đã có trong bản build. Nó KHÔNG phải carousel (là khối
-     nội dung) nên vẫn hạ cột như cũ.
      `.hm-faq-cols` đã gỡ 06/09 cùng khối Câu hỏi thường gặp.
-     `.dk-look-band` tự có nhánh <1024 nên khối nhà mốt không cần thêm gì. */
+     `.dk-look-band` tự có nhánh <1024 nên khối nhà mốt không cần thêm gì.
+     `.hm-signup` (móc override cho lưới 2 cột) NGHỈ HƯU 10/09 cùng lượt đổi khuôn — băng mới
+     không phải lưới nên không có gì để hạ cột; thay vào đó ở dải hẹp nó XẾP DỌC. */
   @media (max-width: 1023px) {
-    .hm-signup { grid-template-columns: minmax(0, 1fr); }
+    /* Dải hẹp: ảnh thôi làm lớp nền, trở về dòng chảy và nằm DƯỚI tấm chữ — đúng khuôn
+       xếp dọc của bản mobile, nên 2 bản đọc ra một thiết kế. Lớp nhoè tắt vì không còn
+       chỗ nào để nhoè vào. */
+    .hm-signup-band  { flex-direction: column; gap: 16px; }
+    .hm-signup-photo { position: static; width: 100%; aspect-ratio: 358 / 140; }
+    .hm-signup-veil  { display: none; }
+    .hm-signup-card  { width: 100%; }
   }
 
   /* ══ TRANG CHỦ — 4 KHỐI THEO FEEDBACK KHÁCH 06/09/2026 ═══════════════════════
@@ -3912,31 +3967,53 @@ window.RESP = (function () {
      xa 4,5:1. Thêm nữa `brand-logo.png` là mực GẦN ĐEN (sáng 34/255 ở phần đặc) nên trên
      scrim tối nó biến mất. Ảnh sáng thì mực phải TỐI: đó là kết luận của số đo, không phải
      đổi ý về phong cách.
-     TỈ LỆ 3/2: ảnh 1200 rộng zoom lên 1377 (x1,1475) nên KHÔNG cắt ngang một pixel — dải
-     phẳng bên trái giữ nguyên 30% = 413px hiện. Cắt DỌC còn 53,9% chiều cao; với
-     `object-position 50% 12%` thì thấy từ ~5,5% đến ~59,4% ảnh gốc, tức đầu + trọn thân
-     đầm (đo profile chủ thể: đầu-vai 5-20%, thân đầm 30-55%, chân 60-90%). Mất chân dưới
-     đầu gối — mọi phép cắt ngang đều mất một đầu, vì chủ thể trải 5-95%.
+     ── ĐỔI KHUÔN 10/09/2026 ─────────────────────────────────────────────────────────────
+     Lệnh user: *"mục Tâm điểm thương hiệu layout bản mobile là 1 dọc 2 ngang, thì bản
+     desktop phải tương đối giống tỉ lệ để người tạo hình ảnh đơn giản và tạo cảm giác
+     đồng nhất"*.
+     Hai đoạn ngay trên là số đo của TẤM VERSACE CŨ (1200x1484, dải phẳng 241 hai bên) và
+     của băng ngang 1377x360 — cả hai đã hết việc; giữ lại làm lịch sử vì chúng giải thích
+     vì sao bản đầu của khối này KHÔNG có scrim.
+     Nay bản desktop đi ĐÚNG hai tỉ lệ của bản mobile — 1 ô DỌC + 2 ô NGANG:
+       ô dọc  = 3/4  -> cùng tỉ lệ MỌI khung ảnh dọc khác của trang chủ (đo trên trang: ô
+                        danh mục 341,3x455 · ô dịp 345x460 · thẻ Câu chuyện 272x363, cả ba
+                        ra đúng 0,750) VÀ đúng tỉ lệ tệp đang cắm (shop-by-1-clean.jpg =
+                        1080x1440) nên `object-fit: cover` cắt 0 pixel. Khung 1200/1484 cũ
+                        cắt 7,25% chiều cao của chính tệp đó.
+       ô ngang = 16/9 -> đúng art khách giao cho ô thương hiệu (736x414), cũng 0 cắt.
+     ⇒ cả trang chủ chỉ còn HAI con số để đặt hàng ảnh: 3/4 và 16/9. Đây là chỗ trả lời
+     "để người tạo hình ảnh đơn giản".
      `pointer-events` trên khối chữ để nguyên cả tấm vẫn là một cửa bấm vào PLP, chỉ nút
      CTA nhận lại cú bấm của chính nó. */
   .hm-spot { position: relative; }
-  /* CHIỀU CAO 360, MỘT SỐ CHO CẢ 2 NGÀNH (07/09/2026, lệnh user: *"cục highlight brand
-     giảm chiều cao xuống"*, kèm ảnh Ounass Block 1). Trước: ngành Nam 3/2 = 918, ngành Nữ
-     8/3 = 516 — nay gộp về một số, nên biến thể `.hm-spot-banner` hết việc và đã gỡ.
-     VÌ SAO 360 CHỨ KHÔNG THẤP HƠN — SÀN DO NỘI DUNG ĐẶT, không phải do thẩm mỹ: khối chữ
-     đo được cao **274** (nhãn 16 + khe 16 + wordmark 28 + khe 16 + headline 64 + khe 16 +
-     copy 54 + khe 16 + nút 48). 360 để lại 86 thở, tức 43 trên/dưới khi canh giữa. Hạ tới
-     tỉ lệ 4/1 của ảnh tham chiếu (=344) thì chỉ còn 35 mỗi bên — vẫn vừa, nhưng hết đệm
-     nếu headline vỡ thêm một dòng. 360 cho ra 1377/360 = 3,83/1, sát ảnh tham chiếu.
-     GIÁ PHẢI TRẢ: ảnh gốc dọc (1200x1484) nên ở 360 chỉ còn thấy 314/1484 = 21,2% chiều
-     cao — một DẢI NGANG của chiếc đầm, mất cả đầu lẫn chân. Trước đó ngành Nam thấy 53,9%.
-     `object-position 50% 38%` ngắm vào thân đầm (nguồn hàng 445-759 = 30%-51%).
-     CỘT CHỮ KHÔNG ĐỔI: cắt DỌC không đụng cột nào nên dải phẳng 30% vẫn 241,0 / lệch 0,00. */
-  .hm-spot-photo { display: block; height: 360px; }
+  /* ĐÃ GỠ 10/09/2026 — `height: 360px` (băng ngang 1377x360, chốt 07/09 khi khối còn là
+     một dải NẰM và cột chữ ở bên trái). Giá phải trả của nó đã được ghi rõ ngay lúc đó:
+     ảnh gốc DỌC nên ở 360 chỉ còn thấy 19,6% chiều cao — một dải ngang của chiếc đầm, mất
+     cả đầu lẫn chân. Khung 3/4 nay không cắt một pixel nào.
+     CẶP Ô — 630 VÀ 743 KHÔNG PHẢI HAI SỐ CHỌN, chúng là nghiệm của đúng một phương trình
+     "cột dọc cao bằng cột hai ô ngang":
+         P x 4/3 = 2 x (R x 9/16) + 4     và     P + R = 1373     (lòng 1377 trừ khe 4)
+       => P = 630 -> cao 840,0    ·    R = 743 -> ô 418,0 x2 + khe 4 = 840,0
+     Khớp tới 0,0px nên hai cột dừng ở CÙNG một đường — điều kiện để hai tầng đọc ra một
+     khối. Khai bằng `fr` chứ không px để tỉ lệ giữ nguyên suốt dải 1024-1440 (tính ở lòng
+     996: lệch 1,0px).
+     Cả khối cao 750 -> 840 (+90). Đổi lại: tấm spotlight từ 1377x360 thành 630x840, tức
+     ảnh hiện ĐỦ NGƯỜI thay vì một dải ngang cắt ở cổ và ở đầu gối. */
+  .hm-spot-photo { display: block; aspect-ratio: 3 / 4; }
+  .hm-spot-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 630fr) minmax(0, 743fr);
+    gap: 4px;
+  }
+  /* KHỐI CHỮ VỀ ĐÁY ẢNH — cùng chỗ với bản mobile, và là SỐ ĐO bắt phải thế: cột chữ cũ
+     rộng 30%, ở băng 1377 ra 413px thì đủ làm một cột, nhưng ở ô dọc 630 chỉ còn 189px.
+     Đúng cái lý lẽ bản mobile đã ghi từ 07/09 (ở 343 thì 30% chỉ ra ~103px).
+     Ba dòng dưới TRƯỚC LƯỢT NÀY là nội dung của nhánh <1024; nay chúng thành nền chung
+     của cả dải rộng, nên nhánh đó không còn gì để đè. */
   .hm-spot-copy {
-    position: absolute; inset-block: 0; left: 0; width: 30%;
-    display: flex; flex-direction: column; justify-content: center; gap: 16px;
-    padding-left: 40px; padding-right: 32px;
+    position: absolute; inset-block: auto 0; left: 0; width: 100%;
+    display: flex; flex-direction: column; justify-content: flex-end; gap: 12px;
+    padding: 24px;
     pointer-events: none;
   }
   .hm-spot-copy button { pointer-events: auto; }
@@ -3964,23 +4041,32 @@ window.RESP = (function () {
      Ở dải hẹp (<1024) khối chữ tụt xuống ĐÁY — chỗ đó đổi lại thành gradient dâng từ đáy,
      xem media query ở cuối. */
   .hm-spot-veil {
-    /* Ở DẢI RỘNG veil phủ TOÀN BĂNG và gradient chạy SANG PHẢI (khối chữ là một cột bên trái
-       cao suốt băng, nên gradient dâng từ đáy không phủ nó). Mốc 30% trùng đúng `width: 30%`
-       của `.hm-spot-copy` nên veil luôn dính theo cột chữ; nhạt hết ở 46%.
-       Dải hẹp (<1024) thì khối chữ tụt xuống đáy — media query ở cuối đổi lại thành gradient
-       dâng từ đáy, cao 340px, đúng cách tính px đã ghi ở index.html. */
+    /* GRADIENT DÂNG TỪ ĐÁY — MỘT HÌNH CHO CẢ 2 BẢN (10/09/2026). Trước là `to right` vì khối
+       chữ là một CỘT bên trái cao suốt băng ngang; nay khối chữ nằm ở ĐÁY ô dọc nên gradient
+       phải đổi trục. Đúng cơ chế nhánh <1024 đã dùng từ trước, nay thành nền chung.
+       ĐỘ ĐẬM .45 GIỮ NGUYÊN — và đây là số đo trên ĐÚNG phép cắt mới, không phải chép lại:
+       khung 3/4 không cắt pixel nào nên 2 bản soi CÙNG một vùng ảnh. Đo bằng PIL trên vùng
+       chữ, ô mẫu 10px hiện quy về nguồn:
+         ô SÁNG NHẤT rgb(202,191,196) -> chữ trắng KHÔNG veil chỉ **1,79:1**, TRƯỢT
+         veil đen .35 -> 4,07:1  ·  .40 -> 4,64:1  ·  **.45 -> 5,37:1**  ·  .50 -> 6,17:1
+       Bản mobile cùng vùng ra 1,81 và 5,39:1 — chênh 0,02, tức một số cho hai bản.
+       Cao 300 / vệt đặc 240 (80%): khối chữ đo được 216 tính từ đáy, nên vệt đặc phủ TRỌN
+       nó và còn 24px dự trữ; 60px trên là đoạn dốc để mép veil không thành một đường kẻ. */
     display: block;
-    position: absolute; inset: 0;
-    background: linear-gradient(to right, rgba(0, 0, 0, .45) 0%, rgba(0, 0, 0, .45) 30%, transparent 46%);
+    position: absolute; inset-inline: 0; bottom: 0; height: 300px;
+    background: linear-gradient(to top, rgba(0, 0, 0, .45) 0%, rgba(0, 0, 0, .45) 80%, transparent 100%);
     pointer-events: none;
   }
 
-  .hm-spot-brands { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
-  /* CAO 386 = 686,5 / 1,778 (08/09/2026): ảnh khách giao cho ô thương hiệu là 736x414. Giữ
-     160 thì ô ra tỉ lệ 4,29 và chỉ giữ 41,5% chiều cao ảnh — dựng lại phép cắt bằng PIL thấy
-     MẤT ĐẦU người mẫu. Ở 386 thì giữ 100%, không cắt một pixel.
-     Hệ quả: hàng ô cao 386 so với băng spotlight 360 — lệch 26px, hai tầng vẫn đọc ra một khối. */
-  .hm-spot-brand-photo { height: 386px; }
+  /* 2 Ô XẾP DỌC trong cột phải của `.hm-spot-pair` (10/09/2026) — trước là 2 ô NẰM NGANG
+     dưới băng spotlight. Nay khai GIỐNG HỆT bản mobile: một cột, khe 4. Đó là chỗ trả lời
+     "tạo cảm giác đồng nhất" — không còn hai cách xếp cho cùng một khối. */
+  .hm-spot-brands { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  /* TỈ LỆ THAY CHIỀU CAO CỨNG (10/09/2026). Trước là `height: 386px` = 686,5 / 1,778, tức
+     một con số chỉ đúng ở ĐÚNG bề rộng 686,5 của khuôn 2 cột cũ; ô nay rộng 743 nên số đó
+     sẽ cắt 8% chiều cao. `16 / 9` là ĐÚNG tỉ lệ art khách giao (736x414 = 1,7778) nên ô cắt
+     0 pixel ở MỌI bề rộng — và cùng một dòng khai với bản mobile. */
+  .hm-spot-brand-photo { aspect-ratio: 16 / 9; }
   /* NHÃN THƯƠNG HIỆU VÀO TRONG HÌNH (07/09/2026, lệnh user: *"nội dung text trong hình
      luôn nhé"*, ảnh Ounass Block 2). Trước đó wordmark + dòng đếm nằm DƯỚI ảnh.
      GÓC DƯỚI-TRÁI VÀ MỰC TỐI — đo bằng PIL trên đúng phép cắt của ô 443x160:
@@ -4175,7 +4261,7 @@ window.RESP = (function () {
      nhau; ở đây dùng kẻ 1px `--general-border`, đúng bộ viền sẵn có, và đệm 24 = một máng
      lưới. Không mảng màu: khối này đứng ngay trên footer vốn đã `bg-secondary` (ghi chú
      "xám dính xám" ở `hmSignup` vẫn còn hiệu lực). */
-  .hm-member { border-left: 1px solid var(--general-border); padding-left: 24px; }
+
 
   /* 5 BÀI MỘT HÀNG, KHE 4px (07/09/2026, lệnh user), trước là 3 cột khe 24.
      ĐÍNH CHÍNH 09/09 — 3 con số trong chú thích cũ ở đây đã SAI so với code đang chạy:
@@ -4225,29 +4311,18 @@ window.RESP = (function () {
   .hm-insta-at { font-style: italic; }
 
   @media (max-width: 1023px) {
-    /* Ở dải hẹp, dải phẳng 30% tụt xuống dưới 300px nên cột chữ không còn chỗ: đưa khối
-       chữ về ĐÁY ảnh và bật veil SÁNG (cùng cơ chế bản mobile — xem index.html). */
-    /* Dải hẹp lấy ĐÚNG tỉ lệ ảnh nguồn như bản mobile — xem phép tính ở index.html. */
-    .hm-spot-photo { height: auto; aspect-ratio: 1200 / 1484; }
-    /* Banner 8/3 ở dải hẹp là 516 -> dưới 300 cao, không đủ chỗ cho khối chữ nằm trong.
-       3 ô cũng về MỘT cột: ở dưới 1024 thì ô 3 cột chỉ còn ~310, wordmark trần 22px của
-       `brand-logo-dg.png` vẽ ra 218 — sát mép, không còn chỗ cho dòng đếm bên phải. */
-    .hm-spot-brands { grid-template-columns: minmax(0, 1fr); }
+    /* CẶP Ô XẾP DỌC ở dải hẹp: ô dọc trên, 2 ô ngang dưới — đúng thứ tự bản mobile, nên
+       khối này có MỘT hình duy nhất ở cả ba khổ. Vì sao không giữ 2 cột tới 1024: ở đó ô dọc
+       chỉ còn 434 rộng mà vẫn phải nhồi khối chữ 216 cao vào đáy, còn 2 ô ngang tụt về 288
+       cao — nhãn wordmark bắt đầu chạm mép. Xếp dọc thì ô dọc lấy trọn lòng. */
+    .hm-spot-pair { grid-template-columns: minmax(0, 1fr); }
     /* Ô về MỘT cột nên rộng như khổ máy -> nhãn tràn quá dải phẳng, bật veil (xem phép tính
        ở khối `.hm-spot-brand-veil`). */
     .hm-spot-brand-veil { display: block; }
-    .hm-spot-copy {
-      inset-block: auto 0; left: 0; width: 100%;
-      justify-content: flex-end; gap: 12px;
-      padding: 24px;
-    }
-    /* Ở dải hẹp khối chữ tụt xuống ĐÁY nên veil phải đổi hướng: dâng từ đáy thay vì từ trái.
-       Cùng độ đậm .45 và cùng hình (đặc rồi nhạt) như bản mobile. */
-    .hm-spot-veil {
-      display: block;
-      background: linear-gradient(to top, rgba(0, 0, 0, .45) 0%, rgba(0, 0, 0, .45) 80%, transparent 100%);
-      height: 300px; inset-block: auto 0;
-    }
+    /* ĐÃ GỠ 10/09/2026 — 4 rule của nhánh này: `.hm-spot-photo` (tỉ lệ ảnh nguồn),
+       `.hm-spot-brands` (về một cột), `.hm-spot-copy` (khối chữ về đáy) và `.hm-spot-veil`
+       (gradient dâng từ đáy). Cả bốn từng là đặc sản của dải hẹp; từ lượt đổi khuôn thì
+       chúng LÀ NỀN CHUNG của cả dải rộng, nên giữ lại chỉ còn là 4 rule chết. */
     .hm-stories { grid-template-columns: minmax(0, 1fr); }
     .hm-usp { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
@@ -7896,19 +7971,21 @@ function hmMaison() {
            tuc dung y mot khuon voi cac muc di qua hmSec. -->
         <div class="pt-8 flex flex-col gap-6">
         ${hmSecHead(HM_SPOT_TITLE, '', 'h2', 'Tâm điểm thương hiệu')}
-          <!-- KHE 4px giua anh spotlight va hang o brand (07/09/2026, lenh user:
-               *"highlight brand cach 2 brand nho ben duoi 4px"*). Truoc la gap-6 = 24.
-               gap-1 CO trong ban tailwind dung san (do tren trang: 4px) — da kiem, vi
-               truoc do toi tung ket luan sai la khong co chi vi grep neo dau dong tren mot
-               file da minify mot dong. -->
-        <div class="flex flex-col gap-1">
+          <!-- CAP O: 1 DOC + 2 NGANG dat CANH NHAU (10/09/2026, lenh user). Khe 4px giua
+               hai cot nay la grid-gap cua .hm-spot-pair, khong con la gap-1 cua mot cot
+               flex (khe 4px chot 07/09, lenh user: *"highlight brand cach 2 brand nho ben
+               duoi 4px"*).
+               VAN GIU nhanh flex cho truong hop HM_SPOT_BELOW = products: nhanh do bay 3
+               the san pham thay cho 2 o thuong hieu, va 3 the thi phai nam DUOI mot tam
+               spotlight rong chu khong ep vao mot cot 743 duoc. -->
+        <div class="${HM_SPOT_BELOW === 'brands' ? 'hm-spot-pair' : 'flex flex-col gap-1'}">
           <div class="hm-spot">
             <a ${attrs} class="hm-spot-photo overflow-hidden bg-secondary cursor-pointer press">
-              <!-- CANH TRÊN (08/09/2026), không phải 38% như tấm cũ: băng này là 1377x360 tức
-                   tỉ lệ 3,83 còn ảnh khách là 3/4, nên chỉ giữ 19,6% chiều cao ảnh. Đã dựng lại
-                   4 phép cắt bằng PIL: canh GIỮA (mọi chiều cao thử: 360 · 560 · 774) đều cắt
-                   MẤT ĐẦU người mẫu; canh TRÊN thì mặt và vai lấp đúng băng. -->
-              <img src="${A}${spotImg}" alt="${spotAlt}" class="w-full h-full object-cover lazy" style="object-position:50% 0%">
+              <!-- KHONG CON object-position (10/09/2026): khung 3/4 dung bang ti le tep
+                   1080x1440 nen object-cover cat 0 pixel, tuc khong con phep cat nao de
+                   canh. Bo luon chu thich "canh TREN" cua ban 1377x360 — do la so do cua
+                   bang ngang cu, chi giu 19,6% chieu cao nen phai ngam vao mat va vai. -->
+              <img src="${A}${spotImg}" alt="${spotAlt}" class="w-full h-full object-cover lazy">
             </a>
             <span class="hm-spot-veil" aria-hidden="true"></span>
             <div class="hm-spot-copy">
@@ -8332,8 +8409,26 @@ function hmInsta() {
 function hmSignup() {
   return `
       <div class="max-w-[1440px] mx-auto px-6">
-        <div class="hm-signup grid grid-cols-2 gap-6 py-12 reveal">
-          <div class="flex flex-col gap-4">
+        <div class="hm-signup-band reveal">
+          <!-- ANH LA LOP NEN, khong phai mot nua cua luoi: no chay suot chieu cao bang va
+               nhoe dan vao nen o mep trai. VAN BAM DUOC va van tro dung cho cu
+               (data-nav login) — bo di la trang chu mat mot cua vao trang thanh vien.
+               alt de RONG vi the <a> da co aria-label: anh o day la trang tri, doc lai ten
+               hai lan cho trinh doc man hinh la du.
+               ── LAI LICH TAM ANH (10/09/2026) ──────────────────────────────────────────
+               User luu vao assets luc 09:22 ten "Subscription banner.png" (358x140) — da doi
+               ten bo DAU CACH cho khoi phai encode %20 trong URL. Cai TUI trong anh co
+               wordmark 24S.com, tuc mot nha ban le CANH TRANH cua DAFC; da vet di bang cach
+               khop mat phang bac 1 tren 2.293 diem sach cua long tui roi to lai (xem bao cao
+               §8.57). Ban goc giu o assets/subscription-banner-24s.png.
+               ⚠ ANH NAY LA CO MOBILE: 358 = dung 390 − 32 nen o kho may khit 1:1, con o day
+               lop anh rong 799 nen phong 2,23x va mem net. Can ban >= 799x274 (1x) hoac
+               1598x548 (2x). -->
+          <a data-nav="login" class="hm-signup-photo" aria-label="Đặc quyền thành viên DAFC">
+            <img src="${A}subscription-banner.jpg" alt="" class="w-full h-full object-cover lazy">
+            <span class="hm-signup-veil" aria-hidden="true"></span>
+          </a>
+          <div class="hm-signup-card flex flex-col gap-4">
             <div class="flex flex-col gap-2">
               <h2 class="text-[18px] font-medium leading-7 text-foreground">Đăng ký nhận tin</h2>
               <p class="t-multiline text-secondary-foreground">Nhận thông tin bộ sưu tập mới và ưu đãi dành riêng cho thành viên DAFC.</p>
@@ -8346,13 +8441,6 @@ function hmSignup() {
               </div>
               <p class="t-single text-muted-foreground">Bằng việc đăng ký, bạn đồng ý với Chính sách bảo mật của DAFC.</p>
             </div>
-          </div>
-          <div class="hm-member flex flex-col gap-4">
-            <div class="flex flex-col gap-2">
-              <h2 class="text-[18px] font-medium leading-7 text-foreground">Đặc quyền thành viên DAFC</h2>
-              <p class="t-multiline text-secondary-foreground">Tích lũy điểm thưởng và nhận các đặc quyền phân hạng VIP.</p>
-            </div>
-            <button data-nav="login" class="t-lead h-12 px-8 w-fit rounded-xs border border-border bg-background text-foreground btn-o press">Khám phá</button>
           </div>
         </div>
       </div>`;
