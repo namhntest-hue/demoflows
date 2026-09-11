@@ -558,6 +558,20 @@ window.RESP = (function () {
   /* vai "title lop noi" luon 500 (bang chuan 13.1); dac hieu 0,3,0 de thang
      `html.skin-mt .font-medium { font-weight:400 }` von dat o khoi bo da. */
   html.skin-mt .t-overlay.t-overlay { font-weight: 500; }
+  /* NHÃN USP = 14/20 **500** (10/09/2026, đồng bộ ngược từ Figma `299:28864`: nhãn đo được
+     14/20 Medium). Rule này BẮT BUỘC phải có — gõ `font-medium` trong markup là KHÔNG ĐỦ:
+     bộ da đang bật (`skin-mt`) có một rule quét sạch MỌI utility độ đậm về 400
+     (`html.skin-mt .font-light, …, .font-medium, …, b, strong { font-weight: 400 }`, mục 5).
+     Đo trên trang: **117/149** phần tử mang utility đậm đang vẽ 400 — tức `font-medium` là
+     một class CHẾT ở bộ da này. Muốn một vai giữ 500 thì phải khai NGOẠI LỆ CÓ TÊN, và bộ da
+     đã có ~25 ngoại lệ như vậy (nav · h1 · .ck-title · .facc · .t-overlay · button.search-tab
+     …). Đây là ngoại lệ thứ 26, không phải một cách làm mới.
+     ĐẶC HIỆU (0,2,2) để thắng blanket (0,2,1) — cùng bẫy đã ghi ở `button.search-tab`.
+     ⚠ CĂNG VỚI STYLE-RULES: luật cốt lõi ghi "500 luôn đi cặp với uppercase", còn nhãn này
+     là chữ thường theo luật không-dùng-UPPERCASE. Bản thiết kế của user cho 500 + chữ
+     thường, nên code theo thiết kế; muốn giữ luật thì 2 đường: về 400, hoặc dùng `t-overlay`
+     (16/24 — vai đã CÓ SẴN 500 ở ngay rule trên). */
+  html.skin-mt .hm-usp p { font-weight: 500; }
   /* ── HÀNG TAB TÀI KHOẢN (`.acc-tab`) — 05/09/2026 ─────────────────────────────
      `.acc-tab` và `.acc-tab-underline` có mặt trong markup CẢ 2 FILE và trong 2 dòng
      JS từ lúc dựng màn, nhưng grep cả 2 file lẫn `tailwind.css` KHÔNG ra một rule nào
@@ -1582,6 +1596,18 @@ window.RESP = (function () {
   /* ── PDP desktop: cột info dính khi cuộn gallery ── */
   .dk-sticky-info { position: sticky; top: 156px; align-self: flex-start; }   /* 136 + 20 */
   .dk-sticky-side { position: sticky; top: 156px; align-self: flex-start; }   /* 136 + 20 */
+  /* ĐỆM TRÊN CỦA FOOTER = 80 (11/09/2026, lệnh user: *"tăng padding top footer lên 80 luôn
+     nhé, mobile 48 như hiện tại"*). Sáng cùng ngày footer vừa về 48/48 ở cả 2 bản; nay khổ
+     desktop lấy 80 trên · 48 dưới, khổ máy giữ 48/48 — lệch 2 bản là CHỦ Ý theo lệnh, không
+     phải trôi.
+     ⚠ PHẢI KHAI CSS THẬT, KHÔNG DÙNG `pt-20`: bản `tailwind.css` dựng sẵn **không có**
+     `.pt-20` (đã grep: chỉ tới `.pt-16`; riêng `.pb-20` thì có — dễ tưởng là cả cặp đều có).
+     Gõ `pt-20` là class chết, đệm rơi im lặng về 0. Đây là lần thứ 4 dự án chạm bẫy này
+     (trước: `.mt-8`/`.my-*` ở băng đăng ký §8.58, `bg-* / NN`, `h-[...]` của icon USP).
+     80 KHÔNG phải bậc mới ngoài thang: nó là 48 + 32, và cũng là `--spacing-20` mà bản build
+     đã dùng cho `.pb-20`. Đệm DƯỚI vẫn là utility `pb-12` (48) trong markup — chỉ đệm trên
+     cần rule này, nên `pt-12` đã gỡ khỏi chuỗi class để không có 2 nguồn tranh nhau. */
+  .dk-footer-in { padding-top: 80px; }
   /* Bề ngang cột info của PDP#1 (.dk-info-wide) và cột chữ dải "Gợi ý mua kèm"
      (.dk-look-aside) KHÔNG khai ở đây mà nằm NGAY TRÊN khối "DẢI DESKTOP HẸP":
      hai class đó là class ngữ nghĩa của chính file này, nên phải đứng TRƯỚC các
@@ -3854,38 +3880,119 @@ window.RESP = (function () {
      NỀN dùng `--unofficial-accent-0` — cùng token với băng occasion và băng USP, nên 3 băng
      nhấn màu của trang chủ cùng một sắc.
      `align-items: center` là chỗ trả lời "canh giữa cục ô đăng ký": tấm chữ tự nằm giữa
-     chiều cao băng, còn ảnh thì `inset-block: 0` nên luôn cao trọn băng. */
+     chiều cao băng, còn ảnh thì `inset-block: 0` nên luôn cao trọn băng.
+
+     ── ĐỔI LẦN 2 TRONG NGÀY: 10/09/2026, ảnh tham chiếu FRONT ROW by TAM SON x VISA ────────
+     Lệnh user: *"block đăng ký thành viên cho giống hình đính kèm nhé"*. Ba việc đọc ra từ
+     ảnh đó, và cả ba đều ĐẢO một quyết định của lượt trước:
+       (1) KHÔNG có tấm trắng nổi — chữ nằm THẲNG trên mảng màu, tức mảng màu LÀ nửa trái;
+       (2) ảnh có MÉP CỨNG ở giữa băng, không nhoè -> lớp `.hm-signup-veil` nghỉ hưu;
+       (3) nội dung CANH GIỮA theo cả hai trục, trong một cột hẹp.
+     Nửa/nửa: ảnh tham chiếu chia 918/880 trên 1798 = 51/49, nên `width: 50%` cho cả hai —
+     mép cứng rơi đúng 688,5 và tấm chữ hết đúng ở đó, KHÔNG kẽ hở, KHÔNG chờm.
+     ⚠ VÌ SAO KHÔNG chia nửa trái thành 2 cột con như ảnh tham chiếu (bên trái chữ + CTA,
+     bên phải 2 thẻ Visa + chi tiết): ĐO RA KHÔNG VỪA. Hàng form của mình cần nút 176 + khe 8
+     + ô email, tối thiểu ~448; cột con ở 688,5/2 trừ đệm chỉ còn 312. Cấu trúc 2 cột con đó
+     là của NỘI DUNG họ (một khuyến mãi thẻ với 2 ảnh thẻ), không phải của form đăng ký. Nên
+     lấy đúng phần đọc được: MỘT cột canh giữa. */
   /* ⚠ ĐỆM DỌC KHAI BẰNG CSS THẬT, KHÔNG DÙNG UTILITY — và đây là một bẫy vừa dính:
      bản `tailwind.css` của dự án là bản BUILD SẴN và nó CHỈ có `.mt-1 .mt-2 .mt-3 .mt-4
      .mt-10`, KHÔNG có `.mt-8`, và KHÔNG có một class `.my-*` nào. Lượt đầu tôi gõ `my-8`
      (desktop) và `mt-8` (mobile) — cả hai là CLASS CHẾT, rơi im lặng, đo trên trang ra
      margin-top = 0. Nên con số 32 nằm ở đây.
      32 = đúng đệm dọc của băng occasion, nên khoảng cách 2 băng nhấn màu bằng nhau. */
+  /* ══ ĐỒNG BỘ NGƯỢC TỪ FIGMA (10/09/2026) ═══════════════════════════════════════════════
+     Nguồn: `Test agent` / page `screens` / `Trang chủ / desktop 1440 · ngành Nam` / frame
+     **299:28864**, đọc bằng plugin cầu nối. Lệnh user: *"tôi vừa chỉnh sửa lại thiết kế của
+     2 block usp và đăng ký nhận thông tin, hãy update lại theo thiết kế của tôi"*.
+     CÁCH ĐỌC BẢN THIẾT KẾ — BẮT BUỘC, vì Figma được sửa TRÊN bản mirror CŨ (dựng trước 2
+     lượt sửa cùng ngày): đối chiếu với frame `ngành Nữ` (294:28125) là bản mirror KHÔNG bị
+     sửa. Chỗ nào 2 frame khác nhau thì đúng là user sửa:
+       | | Nữ (mirror = code cũ)              | Nam (user sửa)                        |
+       | băng | 1392x274, nền xám, đệm 32/24  | 1440x308,8, nền TRẮNG, đệm 24 bốn phía |
+       | khối xám | (chính là băng)           | `Frame 2` MỚI 1392x260,8 nằm trong     |
+       | ảnh | 807,4 tuyệt đối bên PHẢI + veil| 708 trong dòng bên TRÁI, đệm phải 56   |
+       | veil | có                            | KHÔNG                                  |
+       | tấm chữ | 566x210, đệm 32            | 684x146, đệm 0/8, canh giữa DỌC        |
+       | nút | 176x48                         | 98x48 (hug, đệm 20)                    |
+     ⇒ 4 việc user sửa thật: (1) ảnh sang BÊN TRÁI + khe 56; (2) khối xám thu vào KHUNG NỘI
+     DUNG (không tràn mép) và có 24 trắng trên/dưới; (3) veil bỏ; (4) nút hug.
+     ⚠ (2) ĐẢO lệnh *"nền xám full w trải dài luôn"* của chính lượt trước — theo Figma vì
+     user nói rõ "update theo thiết kế của tôi". Khôi phục khung `max-w-[1440px] px-6` ở
+     markup, tức khối xám lại rộng bằng khung nội dung (1377 ở khổ 1440 — Figma cho 1392 vì
+     canvas không có thanh cuộn 15px; CÙNG một phép dựng).
+     LƯỚI 652/676 + KHE 64 là số của bản thiết kế, không phải nửa/nửa: ảnh 652 trên khối xám
+     1392 = 46,84%; khe thì Figma tách làm hai (đệm phải 56 của khung ảnh + đệm trái 8 của
+     tấm chữ) — gộp lại thành MỘT khe 64 cho đúng một chỗ khai.
+     ẢNH NAY THEO ĐÚNG TỈ LỆ ART (358/140) nên **cắt 0 pixel** — lần đầu của khối này; và vì
+     ảnh cao hơn cụm chữ nên CHÍNH NÓ đặt chiều cao khối, cụm chữ canh giữa theo
+     (`align-items: center`). */
   .hm-signup-band {
-    position: relative; overflow: hidden;
     background: var(--unofficial-accent-0);
-    display: flex; align-items: center;
-    padding: 32px 24px; margin-block: 32px;
+    display: grid;
+    grid-template-columns: minmax(0, 652fr) minmax(0, 676fr);
+    gap: 64px;
+    align-items: center;
+    margin-block: 24px;
   }
-  /* 58% ở khổ 1440 cho ảnh rộng 799 và bắt đầu ở x = 578 — tức chờm 12px sang trái mép phải
-     của tấm chữ (24 + 566 = 590), nhờ vậy KHÔNG có kẽ hở giữa tấm chữ và ảnh. */
-  .hm-signup-photo { position: absolute; inset-block: 0; right: 0; width: 58%; }
-  /* NHOÈ DẦN bằng một lớp phủ gradient chứ không bằng `mask-image`: cả 2 file chưa dùng
-     `mask` ở đâu, còn lớp phủ gradient là khuôn đã có (.hm-hero-veil · .hm-spot-veil ·
-     .hm-occ-scrim). Màu phủ là CHÍNH màu nền băng nên chỗ nhoè liền mạch, không thấy mép.
-     Nhoè hết ở 45% (= 359px của ảnh 799): tấm chữ hết ở 590, nên đoạn 590 -> 937 là dải ảnh
-     đang hiện dần — đúng khoảng chuyển mềm của ảnh tham chiếu. */
-  .hm-signup-veil {
-    position: absolute; inset: 0; pointer-events: none;
-    background: linear-gradient(to right, var(--unofficial-accent-0) 0%, transparent 45%);
-  }
-  /* 566 = ĐÚNG 5 CỘT LƯỚI (94×5 + 24×4) — con số đã dùng cho ô lớn của khuôn occasion bản
-     Nữ, không phải bề rộng tuỳ ý. Lòng tấm còn 566 − 64 = 502, đủ cho ô email + nút 176. */
-  .hm-signup-card {
-    position: relative; z-index: 1;
-    width: 566px; max-width: 100%;
-    background: var(--background);
-    padding: 32px;
+  .hm-signup-photo { overflow: hidden; aspect-ratio: 358 / 140; }
+  /* ĐÃ GỠ 10/09/2026 — `.hm-signup-veil` (lớp phủ gradient làm ảnh nhoè dần vào nền, dựng
+     sáng cùng ngày) và cả cụm canh-giữa-ngang của tấm chữ. Bản thiết kế của user canh chữ
+     sang TRÁI (`counterAxisAlignItems: MIN` trong Figma) nên `text-align: center` +
+     `align-items: center` hết việc; kéo theo `> * { width: 100% }` cũng hết việc, vì hết
+     canh giữa là con của flex-col tự trải hết bề rộng.
+     TRẦN 502 là con số CỦA BẢN THIẾT KẾ (3 hộp con trong Figma đều FIXED 502) — nó cho hàng
+     form đúng như bản vẽ: ô email 396 + khe 8 + nút 98 = 502. Gốc của 502 là lòng tấm chữ
+     566 − 64 của khuôn ngày 08/09, tức một con số thừa hưởng chứ không phải mới đặt. */
+  .hm-signup-card > * { max-width: 502px; }
+
+  /* ══ BẢN CHUẨN SPACING + TYPO — LỚP BẬT THEO TAB NỮ (11/09/2026) ═══════════════════════
+     Lệnh user 10/09: *"scan toàn bộ trang homepage và áp dụng một bản chuẩn chỉnh hơn về spacing
+     cũng như typo vào homepage nữ"*; 11/09 chốt đích: *"homepage nữ là đây desktop.html nhưng bật
+     qua tab nữ"*. Vì hai ngành dùng chung một screen (09/09), bản chuẩn được bật bằng class
+     `hm-chuan` trên <html> khi đứng ở home + dept Nữ (xem go()). Tab Nam = hiện trạng để so.
+     Nguồn từng con số: _notes/HOMEPAGE-CHUAN-2026-09-11.md — Phần 3 (bản chuẩn), Phần 4 (danh
+     sách đổi), Phần 5 (9 quyết định). Ở đây áp: toàn bộ 4A (0 quyết định) + khuyến nghị của
+     quyết định #3, #4, #5 (giới hạn dải trang chủ), #6 (phương án B theo luật). KHÔNG áp #2
+     (nhãn trong hình .hm-cat-label — cần khách gật và đo lại tương phản ở 14px), #1 giữ 96,
+     #7 giữ Instagram 2px, #8/#9 là việc của bản mobile / chuỗi i18n.
+     Đặc hiệu: mọi rule mang tiền tố html.hm-chuan nên (0,2,x)+, thắng .t-* (0,1,0), thắng
+     :where() của bộ da (0 đặc hiệu); riêng nhãn USP phải (0,3,2) để thắng
+     `html.skin-mt .hm-usp p { font-weight: 500 }` (0,2,2). */
+  /* hero → eyebrow mục đầu 64 → 96 = một nhịp đầy như mục→mục (C02): hero là khối không pb nên
+     chỉ nhận nửa nhịp; thêm pb 32 vào chính khung hero. */
+  html.hm-chuan .hm-hero-wrap { padding-bottom: 32px; }
+  /* Trắng trên mảng USP 32 → 96 (C04/C05): mép trên mảng nhấn đứng đúng vị trí eyebrow của khổ,
+     bằng băng dịp (hmOccasions cố ý giữ nhịp hmSec). 32 pb Instagram + 64 = 96; margin gộp
+     xuyên wrapper px-6 không đệm dọc. */
+  html.hm-chuan .hm-usp { margin-top: 64px; }
+  /* Nhánh ngủ (chỉ hiện khi KV không nướng chữ): lề chữ hero 40 → 24 = px-6 cột nội dung = inset
+     .hm-spot-copy (C16). Mốc 40 viện ".hm-spot-copy" đã trôi từ d1eefb6. */
+  html.hm-chuan .hm-hero-copy { padding-inline: 24px; }
+  /* Link "Xem tất cả" 12/18 → 12/16: chữ chắc chắn một dòng (13.1 hàng 661; C29); khớp mobile. */
+  html.hm-chuan .hm-link { line-height: 16px; }
+  /* Chữ pháp lý băng đăng ký 12/16 → 12/18: đoạn văn có thể xuống dòng (13.2 #4; C28). */
+  html.hm-chuan .hm-legal { line-height: 18px; }
+  /* Headline spotlight 14/20 → 12/18 (C25): mô tả trong ảnh về cùng vai với ô dịp và hero; bản VI
+     desktop về 1 dòng (chuỗi 566 < lòng 582) — đổi nhìn thấy, đảo CỠ của lệnh 08/09 (lệnh đó
+     chốt MẶT CHỮ Inter, cỡ 14 là "theo t-lead"). Không đụng nút (button.t-lead). */
+  html.hm-chuan .hm-spot-copy p.t-lead { font-size: 12px; line-height: 18px; }
+  /* Tiêu đề thẻ blog 14/20 → 12/18 (quyết định #6, phương án B = theo luật §1.3 1,5 khi xuống
+     dòng; 1/5 thẻ đang 2 dòng). Phân cấp với nhãn nhóm 12/16 #666 nay chỉ còn nhờ màu — soi. */
+  html.hm-chuan .hm-stories p.t-lead { font-size: 12px; line-height: 18px; }
+  /* Giá thẻ 12/18 → 12/16 (quyết định #5) — CHỈ dải trang chủ; component productCard toàn site
+     giữ nguyên chờ gật phạm vi. Chuỗi khoá nowrap = chắc chắn một dòng (13.1 hàng 661). */
+  html.hm-chuan .hm-rail-item p.t-multiline.whitespace-nowrap { line-height: 16px; }
+  /* Nhãn USP 500 chữ thường → 400 (quyết định #4 A'): về vai 14/20 · 400 của 13.1, hết vi phạm
+     cặp "500 đi cùng hoa" §1.1. (0,3,2) thắng rule ngoại lệ 500 ở đầu <style>. */
+  html.skin-mt.hm-chuan .hm-usp p { font-weight: 400; }
+  /* Wordmark chữ Ferragamo/Balmain: Libre 24/32 + 18/24 · HOA · 400 → Inter 14/20 · 500 · HOA,
+     MỘT bậc cho cả spotlight và ô nhỏ (quyết định #3 b' — 14 là T3 có sẵn, 16 nằm ngoài thang
+     §1.2). font-family: inherit = chữ thân bài của bộ da (Inter ở skin-li). Đích vẫn là PNG
+     wordmark nền trong; rule này chết theo khi cắm PNG. */
+  html.hm-chuan .hm-brand-text, html.hm-chuan .hm-spot-copy .hm-brand-text {
+    font-family: inherit; font-size: 14px; line-height: 20px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: .5px;
   }
   /* 5 — DẢI HẸP. Từ 05/09/2026 danh sách này NGẮN ĐI: mọi khối nhiều món trên trang chủ
      nay là dải MỘT HÀNG cuộn ngang (lệnh user), nên `.hm-cats` và `.hm-brands` không còn
@@ -3899,10 +4006,11 @@ window.RESP = (function () {
     /* Dải hẹp: ảnh thôi làm lớp nền, trở về dòng chảy và nằm DƯỚI tấm chữ — đúng khuôn
        xếp dọc của bản mobile, nên 2 bản đọc ra một thiết kế. Lớp nhoè tắt vì không còn
        chỗ nào để nhoè vào. */
-    .hm-signup-band  { flex-direction: column; gap: 16px; }
-    .hm-signup-photo { position: static; width: 100%; aspect-ratio: 358 / 140; }
-    .hm-signup-veil  { display: none; }
-    .hm-signup-card  { width: 100%; }
+    /* Dải hẹp: lưới 2 cột về MỘT cột (ảnh trên, chữ dưới) — đúng khuôn xếp dọc của bản
+       mobile. Khe 64 của khổ rộng hạ về 16: 64 là khe NGANG giữa ảnh và cột chữ, dùng lại
+       cho khe DỌC thì rời rạc. `.hm-signup-photo` không cần rule riêng nữa — tỉ lệ 358/140
+       nay là nền chung. */
+    .hm-signup-band  { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   }
 
   /* ══ TRANG CHỦ — 4 KHỐI THEO FEEDBACK KHÁCH 06/09/2026 ═══════════════════════
@@ -4243,17 +4351,47 @@ window.RESP = (function () {
      dải còn 1329 − 566 − 24 = 739, ô dải 341 (= bề rộng thẻ lưới PLP) khe 4 → 2,12 ô thấy
      được; tỉ lệ ảnh 3/4 theo lượt đồng bộ 09/09; nền `--unofficial-accent-0`, đệm 32/24. */
 
-  /* Hàng USP: 4 mục chia đều, icon trên nhãn dưới, canh giữa — khác khối camKetSection
-     (icon bên trái + đoạn mô tả) vốn vẫn phục vụ 6 màn PDP. */
-  .hm-usp { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
-  /* Băng nhấn màu của hàng USP — khuôn y hệt `footer()`: mảng màu TRÀN MÉP, khung 1440
-     nằm trong. Chỉ khai màu ở đây, mọi số đo đệm vẫn ở `.hm-usp`. */
-  .hm-usp-band { background: var(--unofficial-accent-0); }
+  /* Hàng USP: 4 mục chia đều, icon cạnh nhãn, canh giữa — khác khối camKetSection
+     (icon bên trái + đoạn mô tả) vốn vẫn phục vụ 6 màn PDP.
+     ── NHẤN MÀU THÔI TRÀN MÉP (10/09/2026, lệnh user: *"cái block usp bản desktop nhấn màu
+        nó cũng bị giới hạn tương tự block đăng ký nha, bỏ cái nhấn màu trải dài đi"*) ─────
+     Màu chuyển từ `.hm-usp-band` (khối TRÀN MÉP bọc ngoài) vào ĐÂY — `.hm-usp` nằm trong
+     khung `max-w-[1440px] mx-auto px-6` nên mảng màu ra đúng bề rộng khung nội dung: 1377 ở
+     khổ 1440, 1392 ở khổ ≥ 1488. **Đúng con số của khối xám băng đăng ký**, nên 2 mảng nhấn
+     cuối trang thẳng mép nhau.
+     Việc này CŨNG có trong bản Figma user sửa: ở frame `ngành Nam` (294:27732) node `hm-usp`
+     có `fill: 247,247,247`, còn frame `ngành Nữ` (bản mirror chưa sửa) thì KHÔNG — tức user
+     đã tự tô màu vào đúng lớp 1392 này. Lượt §8.62 tôi chỉ đối chiếu phần chữ nên bỏ sót. */
+  .hm-usp {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px;
+    background: var(--unofficial-accent-0);
+  }
+  /* ĐÃ GỠ 10/09/2026 — `.hm-usp-band` (mảng màu tràn mép, dựng 07/09 theo khuôn `footer()`).
+     Lý lẽ cũ: luật khối-nhấn ghi "trang phẳng không hộp = FULL-BLEED" và footer ngay dưới
+     cũng tràn mép, nên 2 mảng màu cuối trang cùng một hình. Nay user chốt ngược: nhấn màu
+     phải bị khung nội dung giới hạn, y như băng đăng ký. Rule + cả `<div>` bọc đã xoá —
+     giữ lại là một class chết cộng một tầng DOM không việc.
+     BẢN MOBILE ĐỒNG BỘ NGAY LƯỢT SAU (10/09, lệnh user *"đồng bộ cho bản mobile luôn nhé"*):
+     `.hm-usp-band` gỡ ở CẢ 2 FILE, mảng màu về 358 ở khổ 390. Khuyến nghị ban đầu của tôi là
+     giữ tràn mép cho bản mobile (thu vào thì còn 16 trắng mỗi bên, dễ đọc ra 2 vệt trắng hơn
+     là một khối) — user chốt đồng bộ nên theo, và đo lại thì lưới KHÔNG đổi một số nào vì
+     `px-4` vốn đã nằm trên chính `.hm-usp`, nay chỉ chuyển ra khung bọc. */
   /* CỠ ICON CỦA HÀNG USP — khai bằng CSS THẬT, không dựa vào biến thể utility.
      Lý do: mọi icon của dự án mang `width="20" height="20"` NGAY TRONG thẻ svg, nên thuộc
      tính đó thắng nếu utility không tồn tại. Đã soi `tailwind.css` dựng sẵn: có
      `[&_svg]:w-4` nhưng KHÔNG thấy biến thể `[&_svg]:h-*` nào — tức khai bằng class thì ăn
-     may đúng bề rộng và hụt chiều cao. Rule này chốt cả hai. */
+     may đúng bề rộng và hụt chiều cao. Rule này chốt cả hai.
+     ── 16 -> 40 -> **16 lại** ────────────────────────────────────────────────────────────
+     Sáng 10/09 lệnh user là *"tăng icon lên 40x40px"*; chiều cùng ngày user **sửa thẳng
+     thiết kế trong Figma** (Test agent / screens / `Trang chủ / desktop 1440 · ngành Nam`,
+     frame `299:28864`) và bảo code chạy theo. Trong bản Figma đó icon là **16x16** và nằm
+     **CẠNH** nhãn — nên 40 nghỉ. Cách tách "user sửa thật" khỏi "mirror chưa cập nhật":
+     đối chiếu với frame `ngành Nữ` (294:28106) — bản mirror KHÔNG bị sửa; chỗ nào 2 frame
+     khác nhau thì đúng là user sửa. Icon 16 trùng nhau ở cả hai, nhãn thì khác (xem dưới).
+     Ô vuông vẫn khai ở đây chứ không dùng `w-4 h-4`: bản build CÓ `[&_svg]:w-4` nhưng
+     KHÔNG có biến thể `[&_svg]:h-*` nào, mà icon dự án mang `height="20"` ngay trong thẻ
+     svg nên thuộc tính sẽ thắng. Để cả cặp ô + svg ở một rule thì hết chỗ ăn may. */
+  .hm-usp-ico { width: 16px; height: 16px; }
   .hm-usp svg { width: 16px; height: 16px; }
 
   /* KẺ NGĂN GIỮA 2 NỬA CỦA KHỐI GỘP (07/09/2026). Gộp 2 khối vào một hàng thì phải có
@@ -6084,11 +6222,20 @@ const FOOTER_COLS = [
 function footer() {
   return `
   <div class="bg-secondary mt-4">
-    <div class="max-w-[1440px] mx-auto px-6 pt-8 pb-10 flex flex-col gap-8">
+    <!-- DEM DOC 80 TREN / 48 DUOI (11/09/2026, 2 lenh user trong ngay: *"nguyen block footer
+         day len padding top,bottom = 48px"* roi *"tang padding top footer len 80 luon nhe,
+         mobile 48 nhu hien tai"*). Truoc ca 2 lenh: pt-8 pb-10 = 32/40 — le nhau 8 va khong
+         co ly do ghi (pb-10 la so cua khuon mega panel chep sang).
+         Dem nam o KHUNG TRONG chu khong o mang mau: mang mau bg-secondary tran mep nen dat
+         dem o day thi mang tu cao theo, va khung 1440 giu nguyen vai khung noi dung.
+         Dem TREN khai bang rule that .dk-footer-in (80) vi pt-20 la CLASS CHET — xem canh bao
+         o rule do; dem DUOI van la utility pb-12 (48, co that trong ban build).
+         BAN MOBILE GIU 48/48 theo lenh — 2 ban lech co chu y. -->
+    <div class="dk-footer-in max-w-[1440px] mx-auto px-6 pb-12 flex flex-col gap-8">
       <!-- Newsletter ĐÃ BỎ (26/08/2026, yêu cầu user) — band canh giữa của Figma
            2257:110556. Gỡ kèm cả vạch h-px bg-border đứng ngay sau nó: band đi rồi
            thì vạch đó thành sợi kẻ lửng ở MÉP TRÊN footer, không ngăn cách gì nữa.
-           Lưới điều hướng bên dưới nay là con đầu; pt-8 của cha lo khoảng thở nên
+           Lưới điều hướng bên dưới nay là con đầu; pt-12 của cha lo khoảng thở nên
            không bù padding, và gap-8 giữa các band vẫn đúng cho phần còn lại.
            ⚠ KHÔNG dùng dấu backtick trong comment này — cả khối nằm trong template
            literal, backtick là đứt chuỗi (đã dính khi làm chỗ tương ứng ở mobile). -->
@@ -7334,7 +7481,7 @@ const hmSale  = () => PRODUCTS.map((p, i) => ({ p, i })).filter(({ p }) => p.off
 /* Link "xem tất cả" ở mép phải hàng tiêu đề. Treatment lấy của `#brandToggle` (nút
    Xem thêm ở mô tả thương hiệu PLP): 12/18 gạch chân, không phải nút viền. */
 const hmLink = (label, attrs) =>
-  `<button ${attrs} class="t-multiline shrink-0 text-foreground underline underline-offset-2 press">${label}</button>`;
+  `<button ${attrs} class="hm-link t-multiline shrink-0 text-foreground underline underline-offset-2 press">${label}</button>`;
 
 /* Khuôn MỘT MỤC của trang chủ — chép đúng khuôn section của `dkRailSection`:
    `px-6 py-8` ngoài + `pt-8 flex flex-col gap-6` trong, nên nhịp giữa 2 mục = 32 + 32
@@ -7586,7 +7733,7 @@ function hmHero() {
            pt-1 CO trong ban tailwind dung san (do tren trang: 4px, cung token --spacing-1
            voi gap-1 da dung cho khe spotlight). 4 cung dung con so khe THE HINH cua trang
            chu, nen day khong phai bac dem moi. -->
-      <div class="pt-1 reveal">
+      <div class="hm-hero-wrap pt-1 reveal">
         <!-- KHONG CO MUI TEN TRAI/PHAI (07/09/2026, lenh user). Bo luon khung .dk-rail boc
              ngoai: viec duy nhat cua no la lam moc dinh vi cho 2 nut do (position: relative),
              het nut thi no thanh markup noi doi — dung loai voi 2 class chet vua go khoi dai
@@ -8132,7 +8279,28 @@ const HM_OCCASIONS = [
    Christian Louboutin + 2 hang beauty). Dat ten mot hang khach khong ban vao trang chu la
    loi noi dung, nen doi sang Versace — hang duy nhat co du wordmark + anh model + SP thuc
    trong kho. Bo luon chu "Intrecciato" vi day la ten kieu det rieng cua Bottega. */
-const HM_OCC_TITLE = 'Mùa của áo trench';
+/* ── ĐẦU MỤC VỀ MOTIF CỦA TRANG CHỦ (11/09/2026, lệnh user: *"điều chỉnh lại title theo
+   đúng motif của toàn trang homepage là một text nhỏ và một text lớn bên dưới"*) ───────────
+   Trước: tiêu đề 24/32 ở TRÊN + một câu mô tả 12/18 ở DƯỚI — khối DUY NHẤT trên trang đi
+   thứ tự đó. 5 mục kia (hàng mới · danh mục · spotlight · blog · Instagram) đều là
+   [nhãn nhỏ 12/16 muted] rồi [dòng lớn Libre 24/32] ở dưới, dựng qua `hmSecHead`.
+   Nay khối này cùng 2 tầng đó: `HM_OCC_EYEBROW` trên, `HM_OCC_TITLE` dưới.
+   NỘI DUNG lấy từ chính frame user sửa — Figma `300:29588`, node `323:30771` (nhãn nhỏ) và
+   `300:29590` (dòng lớn), đọc 11/09/2026 bằng REST (plugin Desktop Bridge không nối được, nhưng
+   token REST có sẵn nên `fileUrl` + `nodeId` là đủ — KHÔNG cần plugin cho việc ĐỌC).
+   ⚠ TÊN NODE TRONG FIGMA LÀ TÊN CŨ ("Tâm điểm thương hiệu" / "Mùa của áo trench") vì user gõ
+   chữ mới vào node sẵn có — phải đọc trường `characters`, đừng tin tên node.
+   ⚠ ĐỔI LẠI 11/09 cùng ngày (lệnh user: *"hiện tại nó đang anh việt lẫn lộn, dịch lại cho
+   đồng bộ 2 ver"*): bản vẽ ghi dòng lớn bằng TIẾNG ANH ("Perfect for every moment"), nhưng để
+   nguyên là bản tiếng Việt của trang có một tiêu đề mục tiếng Anh giữa 5 tiêu đề tiếng Việt.
+   Nên chuỗi gốc về TIẾNG VIỆT và câu của user thành GIÁ TRỊ EN của khoá i18n — bản EN ra đúng
+   chữ trong Figma, bản VI hết lẫn. Cơ chế i18n của dự án chạy MỘT CHIỀU VI→EN (tra `I18N` theo
+   khoá tiếng Việt), nên tiếng Anh BẮT BUỘC phải nằm ở phía giá trị, không phải phía khoá.
+   `HM_OCC_SUB` và khoá `'Mùa của áo trench'` ĐỖ LẠI, KHÔNG XOÁ: motif chỉ có 2 tầng nên câu mô
+   tả thôi được vẽ. Giữ cả hai theo đúng tiền lệ nhóm chuỗi panel ưu đãi (khách đã đảo hướng
+   khối này nhiều lần, khoá nằm đó không tốn gì); xoá bây giờ là mất chuỗi đã duyệt. */
+const HM_OCC_EYEBROW = 'Lựa chọn theo mùa';
+const HM_OCC_TITLE = 'Trọn vẹn cho mọi dịp';
 const HM_OCC_SUB = 'Làm chủ lối mặc giao mùa cùng áo khoác Versace và hơn thế nữa';
 
 function hmOccasions() {
@@ -8173,8 +8341,14 @@ function hmOccasions() {
   const nam = () => `
             <div class="hm-occ">
               <div class="hm-occ-aside flex flex-col gap-2">
+                <!-- MOTIF: chu nho tren, chu lon duoi (11/09/2026). Cung chuoi class voi 5 dau
+                     muc kia — nhan nho t-single text-muted-foreground, dong lon giu dung hook
+                     text-[18px] font-medium leading-7 (hook DUY NHAT cho ra Libre 24/32).
+                     KHONG canh giua nhu hmSecHead: dau muc nay nam trong COT CHU 282 ben trai
+                     luoi o (chot theo anh tham chieu §8.16), canh giua la vo cot. Muon canh
+                     giua thi phai bo ca cot — viec khac. -->
+                <p class="t-single text-muted-foreground">${HM_OCC_EYEBROW}</p>
                 <h2 class="text-[18px] font-medium leading-7 text-foreground">${HM_OCC_TITLE}</h2>
-                <p class="t-multiline text-secondary-foreground">${HM_OCC_SUB}</p>
               </div>
               <!-- TI LE 3/4, KHONG PHAI 1/1 (09/09/2026, lenh user: *"the card cua mua ao
                    trench dang bi bop o chieu cao, hay lay ti le chuan cua hinh ma dong bo cho
@@ -8220,28 +8394,44 @@ function hmUsp() {
              · icon 20 -> 16 (w-4 h-4) — 16 là cỡ icon đã có của dự án (utilRow trong
                drawer dùng đúng số này), không phải cỡ mới.
            Đệm dọc 32 -> 24 theo, vẫn trên thang 4/8/16/24. -->
-      <!-- NHẤN MÀU NỀN CHO HÀNG USP (07/09/2026, lệnh user), và là băng FULL-BLEED.
-           Vì sao full-bleed chứ không bó trong khung 1440: luật khối-nhấn của dự án ghi
-           "trang phẳng không hộp = FULL-BLEED", và footer() ngay dưới đã làm đúng khuôn
-           đó (bg-secondary tràn mép + khung 1440 riêng bên trong) — hàng USP nay là khối
-           thứ hai dùng khuôn ấy nên 2 mảng màu cuối trang cùng một hình.
-           ⚠ ĐỂ THẬT SỰ TRÀN MÉP THÌ KHỐI PHẢI NẰM NGOÀI khung 1440 của trang chủ — xem
-           ghi chú cùng tên ở screenHOME. Bản đầu để trong khung và đo ở 1800 ra băng chỉ
-           1440 trong khi footer 1785; comment này lúc đó nói sai.
-           Màu là --unofficial-accent-0, cùng token với khối Lựa chọn theo mùa, nên trang
-           chỉ có MỘT nấc nhấn chứ không hai. Nó nhạt hơn secondary của footer một nấc,
-           nhờ vậy USP và footer không dính thành một mảng. -->
-      <div class="hm-usp-band">
-        <div class="max-w-[1440px] mx-auto px-6">
-          <div class="hm-usp py-6 reveal">
+      <!-- NHẤN MÀU BỊ KHUNG NỘI DUNG GIỚI HẠN (10/09/2026, lệnh user: *"cái block usp bản
+           desktop nhấn màu nó cũng bị giới hạn tương tự block đăng ký nha, bỏ cái nhấn màu
+           trải dài đi"*). Tầng bọc .hm-usp-band (tràn mép, dựng 07/09 theo khuôn footer)
+           ĐÃ GỠ; màu nay nằm trên chính .hm-usp, tức bên trong max-w-[1440px] px-6 nên
+           ra đúng bề rộng khung nội dung — cùng con số với khối xám của băng đăng ký.
+           Khuôn markup nay GIỐNG HỆT hmSignup(): khung nội dung ở ngoài, khối mang màu ở
+           trong. Màu vẫn là --unofficial-accent-0, cùng token với khối Lựa chọn theo mùa và
+           băng đăng ký, nên trang chỉ có MỘT nấc nhấn; nó nhạt hơn secondary của footer một
+           nấc nên USP và footer không dính thành một mảng. -->
+      <div class="max-w-[1440px] mx-auto px-6">
+        <div class="hm-usp py-6 reveal">
           ${HM_USP.map(([ico, label]) => `
           <div class="flex items-center justify-center gap-2">
-            <span class="w-4 h-4 shrink-0 flex items-center justify-center [&_svg]:w-4 [&_svg]:h-4">${I[ico]}</span>
-            <p class="t-single text-foreground">${label}</p>
+            <!-- ICON CANH NHAN + NHAN 14/20 MEDIUM — DONG BO NGUOC TU FIGMA (10/09/2026).
+                 Nguon: Test agent / screens / Trang chu / desktop 1440 · nganh Nam, frame
+                 299:28864, doc bang plugin cau noi.
+                 ⚠ LUOT NAY DAO 2 LENH CUA CHINH SANG NAY (icon 40 · chu 16/24 · icon TREN
+                 nhan): user sua thang thiet ke roi bao code chay theo, nen Figma la ben
+                 CHUAN. Do duoc trong Figma: muc la HORIZONTAL gap 8, canh giua trong o 330,
+                 icon 16x16, nhan 14/20 Medium.
+                 CACH TACH "user sua that" khoi "mirror chua cap nhat": frame nganh Nu
+                 (294:28106) la ban mirror KHONG bi sua — no cho nhan 12/16 Regular, Nam cho
+                 14/20 Medium. Tuc CHI nhan la thay doi that; icon 16 va cach xep
+                 icon-canh-nhan la trang thai von co cua khoi truoc luot sang nay.
+                 ⚠ BAN MOBILE VAN XEP ICON-TREN (tu 08/09) va Figma cua ban mobile CHUA duoc
+                 cap nhat, nen 2 ban dang lech cach xep. Chua tu dong sua mobile: o kho may
+                 nhan dai nhat chi con bien 1,6px trong luoi 2 cot nen doi la vo dong.
+                 CO ICON khai o CSS (.hm-usp-ico / .hm-usp svg), khong phai o day: xem canh
+                 bao bien the [&_svg]:h-* trong rule .hm-usp svg.
+                 t-lead font-medium = 14/20 Medium. t-lead la bac 14 CO SAN cua thang chu nen
+                 tu mang line-height 20 (luat "doi font-size la doi line-height"); font-medium
+                 la cach du an dien dat vai NHAN o mot bac chu — 6 bac x font-medium = 9 vai
+                 Figma, ghi o dot dua thang chu vao code 04/09. -->
+            <span class="hm-usp-ico shrink-0 flex items-center justify-center">${I[ico]}</span>
+            <p class="t-lead font-medium text-foreground">${label}</p>
           </div>`).join('')}
           </div>
-        </div>
-      </div>`;
+        </div>`;
 }
 
 /* ── CÂU CHUYỆN TẠI DAFC — "Landing pages hili / TOP STORIES" ─────────────────
@@ -8360,7 +8550,10 @@ function hmInsta() {
                  <p> nhu truoc la chan CA HAI.
                  'Theo doi chung toi' KHONG can khoa moi: khoa do da co san trong I18N. -->
             <p class="t-single text-muted-foreground">Nguồn cảm hứng</p>
-            <p class="text-[18px] font-medium leading-7 text-foreground">Theo dõi chúng tôi <em class="hm-insta-at" data-i18n-skip>${HM_INSTA.handle}</em></p>
+            <!-- h2, khong phai p (11/09/2026): 6 dau muc kia deu la heading di qua hmSecHead; dong lon
+                 nay la tieu de muc thu 7 nen phai cung the. 0 pixel doi — hook Libre 24/32 cua bo da bat
+                 :is(h1, h2, p) nen h2 va p cung mot rule. -->
+            <h2 class="text-[18px] font-medium leading-7 text-foreground">Theo dõi chúng tôi <em class="hm-insta-at" data-i18n-skip>${HM_INSTA.handle}</em></h2>
           </div>
           <!-- KHONG con la mot .dk-rail: het cuon, het keo, nen cung khong dung
                data-rail-prev/next cua wireRail() nua — 2 nut o day lat TRANG va do
@@ -8408,10 +8601,18 @@ function hmInsta() {
    đậm cạnh nhau là tranh nhau; đây đúng cặp chính/phụ mà dự án vẫn dùng. */
 function hmSignup() {
   return `
+      <!-- KHUNG NOI DUNG TRO LAI (10/09/2026) — dong bo nguoc tu Figma frame 299:28864.
+           Sang cung ngay khung nay DA BI GO theo lenh *"nen xam full w trai dai luon"*; ban
+           thiet ke cua user thi cho khoi xam nam TRONG khung noi dung (do duoc 1392 = 1440
+           tru 2 x 24, con o day ra 1377 vi khung 1440 phai tru thanh cuon 15px — CUNG mot
+           phep dung). Nen khung tro lai.
+           Khoi nay VAN nam ngoai khung 1440 cua trang chu (ghi chu cung ten o screenHOME),
+           nen day la khung RIENG cua chinh no — bo hay giu chi doi mot khoi nay. -->
       <div class="max-w-[1440px] mx-auto px-6">
         <div class="hm-signup-band reveal">
-          <!-- ANH LA LOP NEN, khong phai mot nua cua luoi: no chay suot chieu cao bang va
-               nhoe dan vao nen o mep trai. VAN BAM DUOC va van tro dung cho cu
+          <!-- ANH LA LOP NEN, khong phai mot nua cua luoi: no chay suot chieu cao bang.
+               MEP CUNG o giua bang (10/09/2026, anh tham chieu FRONT ROW x VISA) — lop nhoe
+               .hm-signup-veil da nghi huu. VAN BAM DUOC va van tro dung cho cu
                (data-nav login) — bo di la trang chu mat mot cua vao trang thanh vien.
                alt de RONG vi the <a> da co aria-label: anh o day la trang tri, doc lai ten
                hai lan cho trinh doc man hinh la du.
@@ -8422,11 +8623,13 @@ function hmSignup() {
                khop mat phang bac 1 tren 2.293 diem sach cua long tui roi to lai (xem bao cao
                §8.57). Ban goc giu o assets/subscription-banner-24s.png.
                ⚠ ANH NAY LA CO MOBILE: 358 = dung 390 − 32 nen o kho may khit 1:1, con o day
-               lop anh rong 799 nen phong 2,23x va mem net. Can ban >= 799x274 (1x) hoac
-               1598x548 (2x). -->
+               khung anh rong 644,6 nen phong 1,80x va mem net (truoc la 712,5 / 1,99x). Can
+               ban >= 645x252 (1x) hoac 1290x504 (2x).
+               KHONG CON object-position (10/09/2026, dong bo nguoc tu Figma): khung nay nay
+               mang DUNG ti le art (358/140) nen object-cover cat 0 pixel — het phep cat nao
+               de canh. Cac ban truoc trong ngay deu cat: 15,3% roi 18,2% chieu cao. -->
           <a data-nav="login" class="hm-signup-photo" aria-label="Đặc quyền thành viên DAFC">
             <img src="${A}subscription-banner.jpg" alt="" class="w-full h-full object-cover lazy">
-            <span class="hm-signup-veil" aria-hidden="true"></span>
           </a>
           <div class="hm-signup-card flex flex-col gap-4">
             <div class="flex flex-col gap-2">
@@ -8437,9 +8640,14 @@ function hmSignup() {
               <div class="flex gap-2">
                 <input type="email" inputmode="email" autocomplete="email" placeholder="Nhập email"
                        class="t-lead flex-1 h-12 px-3 rounded-xs border border-border bg-background text-foreground placeholder:text-muted-foreground">
-                <button data-toast="Đăng ký nhận tin" class="t-lead w-[176px] h-12 shrink-0 rounded-xs bg-primary text-primary-foreground btn-p press">Đăng ký</button>
+                <!-- NUT HUG (10/09/2026, lenh user: *"button dang ky cho hug lai nam chung
+                     hang voi field nhap"*), va DEM 20 lay tu Figma 299:28864: instance
+                     action o do do duoc 98x48 voi dem ngang 20 — px-8 (32) cua luot truoc
+                     cho 122, lech 24 so voi ban ve. px-5 cho dung 98.
+                     shrink-0 giu nguyen de nut khong bi bop khi o email doi be rong. -->
+                <button data-toast="Đăng ký nhận tin" class="t-lead h-12 px-5 w-fit shrink-0 rounded-xs bg-primary text-primary-foreground btn-p press">Đăng ký</button>
               </div>
-              <p class="t-single text-muted-foreground">Bằng việc đăng ký, bạn đồng ý với Chính sách bảo mật của DAFC.</p>
+              <p class="hm-legal t-single text-muted-foreground">Bằng việc đăng ký, bạn đồng ý với Chính sách bảo mật của DAFC.</p>
             </div>
           </div>
         </div>
@@ -13466,13 +13674,19 @@ const I18N = {
   'Thương hiệu nổi bật':'Brands of the moment', 'Mua ngay':'Shop now',
   'Broken Jewels — hoạ tiết đặc trưng của Versace':'Broken Jewels — the Versace signature print',
   /* Khối đổi tên 07/09/2026 (lệnh user). ĐỔI KHOÁ chứ không thêm khoá thứ hai: nhãn cũ
-     'What to wear for' không còn chỗ dùng nào sau lượt này.
+     'What to wear for' không còn chỗ dùng nào sau lượt này. (11/09/2026 có một lượt thêm tạm
+     khoá 'Mặc gì cho dịp' → 'What to wear for' khi chưa đọc được Figma; đọc được rồi thì nhãn
+     nhỏ thật là 'Lựa chọn theo mùa' — khoá tạm ĐÃ GỠ, chuỗi EN này lại không có chỗ dùng.)
      ⚠ 'Season Pick' là ĐÚNG CHỮ CỦA KHÁCH, giữ nguyên cả cách viết hoa (user chốt lại lần
      hai: *"dùng đúng chữ Season Pick nhé"*). Nó là tiêu đề EN DUY NHẤT của trang chủ viết
      kiểu title case — 'The AW26 collection' · 'Shop by category' · 'Brands at DAFC' ·
      'View all' · 'Stories at DAFC' đều là sentence case. ĐỪNG "chuẩn hoá giúp" về
      'Season pick': đây là chốt, không phải sót. */
-  'Lựa chọn theo mùa':'Season Pick', 'Câu chuyện tại DAFC':'Stories at DAFC',
+  'Lựa chọn theo mùa':'Season Pick',
+  /* Dòng lớn khối dịp (11/09/2026). Chuỗi EN là NGUYÊN VĂN user gõ trong Figma 300:29588;
+     chuỗi VI là bản dịch để bản tiếng Việt không còn tiêu đề mục tiếng Anh. Không trùng giá
+     trị EN nào khác (đã đếm) nên `I18N_REV` đảo về đúng. */
+  'Trọn vẹn cho mọi dịp':'Perfect for every moment', 'Câu chuyện tại DAFC':'Stories at DAFC',
   'Tiệc tối':'Evening', 'Công sở':'The office', 'Dạo phố':'Off duty',
   /* Nhãn dịp rút ngắn 07/09 — LÝ DO NẰM Ở KHỔ MOBILE, không ở khổ này. Ở bản mobile ô
      dịp là 210 (lòng 178) và 'Phụ kiện tinh tế' ở bậc 24 đo ra 179,7px ⇒ tràn. Bên
@@ -14062,6 +14276,15 @@ function go(name, opts = {}) {
   const el = document.createElement('div');
   el.className = 'screen';
   el.dataset.screen = name;
+  /* BAN CHUAN SPACING/TYPO — LOP BAT THEO TAB NU (11/09/2026, lenh user: "homepage nu la day
+     desktop.html nhung bat qua tab nu"). Tu 09/09 hai nganh dung chung MOT screen home (nhanh
+     rieng cua ban Nu da go theo lenh "clone tu ban Nam"), nen "ap ban chuan vao homepage nu"
+     = bat mot class tren <html> khi dung o home voi dept Nu; khoi CSS "html.hm-chuan ..." trong
+     <style> mang toan bo ban chuan (_notes/HOMEPAGE-CHUAN-2026-09-11.md Phan 3-4). Tab Nam giu
+     nguyen hien trang de lat tab so sanh; duyet xong thi bo dieu kien nay va bo tien to
+     html.hm-chuan trong CSS la ban chuan thanh chuan chung. Dat TRUOC RENDER de markup co the
+     doc cung co neu can; roi man khac thi class tu tat (chi .hm-* dung no). */
+  document.documentElement.classList.toggle('hm-chuan', name === 'home' && dkDept === 'Nữ');
   el.innerHTML = RENDER[name]();
   viewport.appendChild(el);
   void el.offsetWidth;   // ép tính layout trước khi cuộn
