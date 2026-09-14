@@ -10315,11 +10315,22 @@ function screenCHECKOUT() {
      đứng ngay dưới thẻ tóm tắt — giống bố cục tham chiếu Ralph Lauren (thẻ
      "Shipping Address" + Edit, và "+ Add New Address" là dòng riêng bên dưới,
      không nằm trong sheet "Address book"). */
+  /* 14/09/2026 — ĐÓNG KHUNG lại thẻ tóm tắt (lệnh user: "đóng khung cái ô
+     addressbook lại như trước chúng ta đã làm"): từ lúc đổi sang tóm tắt +
+     nút Sửa (brief trang 31, 13/09), khối này chỉ còn 1 hàng chữ trần, không
+     viền — lệch với tham chiếu Ralph Lauren (thẻ "Shipping Address" viền rõ)
+     VÀ lệch với chính các hàng địa chỉ bên TRONG #addrSheet (đang dùng khuôn
+     .opt: border border-border rounded-xs bg-background). Thêm border +
+     rounded-md + bg-background vào thẻ tóm tắt (và cả dòng "Sổ địa chỉ của
+     bạn đang trống" — cùng 1 chỗ đứng, phải cùng khung để không lệch khi đổi
+     trạng thái) cho khớp cả 2 tham chiếu. Không dùng nguyên class `.opt` vì
+     đó là khuôn NÚT bấm chọn (có state on/hover/press) — thẻ này chỉ hiển thị
+     tĩnh, chỉ nút "Sửa" bên trong mới bấm được. */
   const addrSummary = (() => {
     const a = ADDRESSES[ckAddr] || null;
-    if (!a) return `<p class="t-multiline text-muted-foreground px-4 py-3">Sổ địa chỉ của bạn đang trống.</p>`;
+    if (!a) return `<p class="t-multiline text-muted-foreground px-4 py-3 border border-border rounded-md bg-background">Sổ địa chỉ của bạn đang trống.</p>`;
     return `
-    <div class="px-4 py-3 flex items-start justify-between gap-3">
+    <div class="px-4 py-3 flex items-start justify-between gap-3 border border-border rounded-md bg-background">
       <div class="flex-1 min-w-0 flex flex-col gap-1">
         <p class="t-multiline font-medium text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="t-multiline font-normal text-muted-foreground">(Mặc định)</span>' : ''}</p>
         <p class="t-multiline text-secondary-foreground">${addrLine(a)}</p>
@@ -12142,6 +12153,20 @@ function screenPOLICY(key) {
   <div class="w-full" data-scroller>
     ${navBar()}
 
+    <!-- Top banner KV — brief PDF trang 34, mục 1, ĐỒNG BỘ với desktop cùng
+         ngày ("tiến hành làm bản mobile luôn"). Ảnh riêng cho mobile
+         (assets/kv-policy-mobile.jpg, 475x227) — cắt từ ĐÚNG tấm đã mượn của
+         Net-a-Porter (assets/kv-policy.jpg) nhưng lấy PHẦN KHÁC: bản desktop
+         giữ nguyên khung hình gốc (đủ rộng nên còn chữ "Customer Care/
+         Exchanges and Returns" của họ ở giữa-trái); bản mobile hẹp (375) nếu
+         giữ nguyên tỉ lệ gốc 6,4:1 sẽ chỉ cao ~59px — quá dẹt để đáng gọi là
+         banner, nên đổi qua lấy PHẦN BÊN PHẢI của CÙNG tấm ảnh (mặt người mẫu,
+         x từ 970-1445, không dính chữ) ở tỉ lệ 2,09:1 — cao hơn, còn nguyên
+         ảnh KHÔNG chữ (khác bản desktop). Cao 180 (375/2,09≈179,4, làm tròn). -->
+    <div class="w-full h-[180px] overflow-hidden rise">
+      <img src="${A}kv-policy-mobile.jpg" alt="" class="w-full h-full object-cover">
+    </div>
+
     <div class="flex flex-col gap-6 pt-6 px-4 pb-12">
       <!-- Tab chuyển qua lại giữa các trang chính sách (cuộn ngang) + nút mũi
            tên bên phải mở dropdown liệt kê đủ danh sách (Figma có gợi ý icon
@@ -12195,11 +12220,29 @@ function screenPOLICY(key) {
           </button>`).join('')}
       </div>
 
-      <div class="flex flex-col gap-8">
+      <!-- brief PDF trang 34: "Prefer Toggle / Group xổ nội dung như Net a
+           porter / Mytheresa" — ĐỒNG BỘ với desktop cùng ngày (xem chú thích
+           đầy đủ ở bản đó): đổi đoạn văn LUÔN MỞ sang khối gập/mở, đóng mặc
+           định. Dùng ĐÚNG khuôn .acc/.acc-trigger/.acc-body có sẵn (đã dùng ở
+           accordion "Bạn có phiếu mua hàng?"/PDP…) nên KHÔNG cần JS mới —
+           wire(root) đã bắt mọi .acc-trigger (đóng-mở loại trừ theo nhóm anh
+           em). KHÔNG bọc icon bằng ghost-hover như bản desktop — đó là xử lý
+           riêng cho hover chuột, mobile chạm tay nên bỏ qua. Tiêu đề đổi sang
+           .t-section-title (Libre Bodoni, khớp desktop, cùng lượt yêu cầu). -->
+      <div class="flex flex-col gap-2">
         ${p.sections.map(([h, txt], i) => `
-          <div data-policy-sec="${i}" class="flex flex-col gap-3 scroll-mt-[64px] reveal">
-            <h2 class="t-single font-medium text-foreground">${i + 1}. ${h}</h2>
-            ${body(txt)}
+          <div data-policy-sec="${i}" class="acc scroll-mt-[64px] reveal">
+            <button class="acc-trigger w-full flex items-center justify-between gap-3 py-4 border-b border-border text-left press">
+              <span class="t-section-title text-foreground">${i + 1}. ${h}</span>
+              ${I.chevR()}
+            </button>
+            <!-- Đệm trên/dưới canh đều (đồng bộ desktop cùng ngày): pt-3/pb-4
+                 (12/16, lệch) -> py-4 (16/16), khớp py-4 của hàng tiêu đề. -->
+            <div class="acc-body"><div class="acc-inner">
+              <div class="flex flex-col gap-3 py-4">
+                ${body(txt)}
+              </div>
+            </div></div>
           </div>`).join('')}
       </div>
     </div>
@@ -14851,13 +14894,19 @@ function wire(root) {
     scrollCleanups.push(() => document.removeEventListener('click', closePolicyMenu));
   }
 
-  // Mục lục trang chính sách -> cuộn tới section tương ứng.
-  // scroll-mt-[64px] trên section đã trừ sẵn chiều cao navbar sticky (48px)
-  // + 16px thở, nên tiêu đề không bị nav che.
+  // Mục lục trang chính sách -> mở đúng mục (nay là accordion đóng mặc định,
+  // xem screenPOLICY, đồng bộ desktop cùng ngày) rồi cuộn tới. scroll-mt-[64px]
+  // trên section đã trừ sẵn chiều cao navbar sticky (48px) + 16px thở, nên
+  // tiêu đề không bị nav che.
   root.querySelectorAll('[data-policy-toc]').forEach(btn => {
     btn.addEventListener('click', () => {
-      root.querySelector(`[data-policy-sec="${btn.dataset.policyToc}"]`)
-        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const sec = root.querySelector(`[data-policy-sec="${btn.dataset.policyToc}"]`);
+      if (sec) {
+        [...sec.parentElement.children].forEach(sib => {
+          if (sib.classList && sib.classList.contains('acc')) sib.classList.toggle('open', sib === sec);
+        });
+      }
+      sec?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
 

@@ -1069,7 +1069,7 @@ window.RESP = (function () {
      kính, không viền không bóng): `.dk-mega` (panel menu) và `#dkSearchLayer
      .ds-sheet` (tấm gợi ý tìm kiếm) — xem rule riêng của từng cái.
      Sửa 1 chỗ này là đổi cả bộ; ĐỪNG thêm border/box-shadow vào từng mặt. */
-  .dk-modal, .dk-drawer, .lp-card, .cc-drop,
+  .dk-modal, .dk-drawer, .lp-card, .cc-drop, .acc-drop,
   #infoSheet .is-panel, #filterSheet .fs-panel,
   #cookieBar, #cookiePrefs .cp-panel, #settingsPanel .sp-card, #sortMenu, [data-pick-list] {
     border: 1px solid var(--general-border);
@@ -1179,6 +1179,30 @@ window.RESP = (function () {
      là tấm tự rút. */
   #cartConfirm.cc-peek { pointer-events: none; }
   #cartConfirm.cc-peek .cc-panel { pointer-events: auto; }
+
+  /* ── Icon Tài khoản: dropdown khi RÊ CHUỘT ─────────────────────────────────
+     Brief PDF trang 36 ("Hover vào Account xổ ra màn đăng nhập hoặc đăng ký
+     tài khoản", tham chiếu Ralph Lauren). Y HỆT kỹ thuật của `.cc-drop` (mini-
+     cart ngay trên: neo icon bằng toạ độ JS, cờ `translate-y-full` JS toggle,
+     opacity+translateY) nhưng khai RIÊNG lớp `.acc-drop` — không mượn `.cc-drop`
+     vì tên đó thuộc về mini-cart, sửa CSS mini-cart sau này không nên vô tình
+     kéo theo bảng tài khoản. Không cần nhánh "vừa thêm món" như mini-cart —
+     panel này CHỈ có một chế độ (rê chuột), nên bỏ hẳn lớp nền chặn + cờ
+     `-peek`: `#accPeek` tự nó `pointer-events:none` cố định, chỉ tấm
+     `.acc-drop` mở `pointer-events:auto` lại (xem IIFE gần cuối file). */
+  .acc-drop {
+    /* 340 (từ 320) + đệm trong rộng hơn (đợt sau, yêu cầu user: "cho nó thêm
+       padding đồ cho đẹp") — 320 làm nhãn/ô nhập/nút bên trong sát mép, đọc chật.
+       Bo góc 0 (từ 8, yêu cầu user kèm ảnh tham chiếu Ralph Lauren: "cho nó
+       vuông") — khớp đúng khung vuông của ảnh, KHÔNG theo .cc-drop mini-cart
+       (vẫn bo 8, cố ý không đụng — user chỉ nói "cái hover đó"/panel này). */
+    position: fixed; width: 340px; max-width: calc(100vw - 32px);
+    border-radius: 0; overflow: hidden; pointer-events: auto;
+    transform: translateY(0); opacity: 1;
+    transition: opacity .18s ease, transform .2s cubic-bezier(.22,1,.36,1);
+  }
+  .acc-drop.translate-y-full { transform: translateY(-8px); opacity: 0; }
+
   /* ── Drawer desktop: panel cao hết màn, TRƯỢT VÀO TỪ MÉP PHẢI (yêu cầu user
      17/08/2026 cho sheet chọn ưu đãi). Vẫn dùng chung cờ `translate-y-full` mà
      JS toggle như bottom sheet mobile — nhờ vậy hai bản chạy đúng một đoạn JS,
@@ -2178,10 +2202,17 @@ window.RESP = (function () {
      hạ — xem [[dafc-t-section-title-18-24]] mục Đợt 3) — không cần khai cỡ chữ ở
      đây vì `.t-single` đã lo. Class `.dk-summary-title` giờ CHỈ còn việc hoá nhãn
      (hoa + 500), không cần đấu đặc trưng với hook 2b-bis nữa vì không còn đứng
-     cùng `.t-section-title`. */
+     cùng `.t-section-title`.
+     14/09/2026, NGAY SAU ĐÓ — user tự sửa trong Figma (node 373:25655, khung "Giỏ
+     / desktop · 5 dòng, tick hết") rồi yêu cầu đưa lại vào code: cỡ chữ lên 14/20
+     (khớp đúng `.t-lead` — trùng ĐÚNG bậc đã dùng cho heading này ở bản 13/09,
+     trước khi đảo sang t-single ngày 14/09, xem lịch sử ở chỗ gọi) + thêm
+     letter-spacing 0.5px (đo trực tiếp từ node Figma). Chỗ gọi đổi `.t-single`
+     sang `.t-lead`, class này chỉ còn lo hoa + 500 + spacing. */
   html.skin-mt .dk-summary-title {
     text-transform: uppercase;
     font-weight: 500;
+    letter-spacing: 0.5px;
   }
 
   /* 2c — TIÊU ĐỀ BƯỚC Ở CHECKOUT VÀO ĐÚNG TẦNG NHÃN (13.1: "nhãn nhóm menu/footer/
@@ -6356,7 +6387,13 @@ function navBar({ logoOnly = false, plp = false } = {}) {
         <div class="flex-1 flex items-center justify-end px-0.5">
           <button id="dkSearchBtn" class="ghost-hover w-11 h-11 rounded-xs flex items-center justify-center press [&_svg]:w-4 [&_svg]:h-4" aria-label="Tìm kiếm">${I.search}</button>
           <button data-dklang class="t-multiline ghost-hover h-9 px-3 rounded-xs flex items-center gap-2 font-medium text-mid-alt transition-colors press" aria-label="Đổi ngôn ngữ">${dkLangChip()}</button>
-          <button class="ghost-hover w-11 h-11 rounded-xs flex items-center justify-center press [&_svg]:w-4 [&_svg]:h-4" data-nav="${ckAuth ? 'account' : 'login'}" aria-label="Tài khoản">${I.user}</button>
+          <!-- brief PDF trang 36: "Hover vào Account xổ ra màn đăng nhập hoặc
+               đăng ký tài khoản" (tham chiếu Ralph Lauren). data-acc-icon là
+               móc RIÊNG cho panel hover (đợt sau, xem IIFE gần cuối file) —
+               data-nav đổi giá trị theo ckAuth nên không dùng được làm móc
+               cố định để neo toạ độ panel. Bấm vẫn sang thẳng màn account/
+               login như cũ (handler data-nav chung, không đổi). -->
+          <button data-acc-icon class="ghost-hover w-11 h-11 rounded-xs flex items-center justify-center press [&_svg]:w-4 [&_svg]:h-4" data-nav="${ckAuth ? 'account' : 'login'}" aria-label="Tài khoản">${I.user}</button>
           <button data-nav="cart" class="ghost-hover w-11 h-11 rounded-xs flex items-center justify-center press relative [&_svg]:w-4 [&_svg]:h-4" aria-label="Giỏ hàng">
             ${I.bag}
             <span class="t-micro cart-badge absolute top-1.5 right-1 min-w-[15px] h-[15px] px-1 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center">${cartQty}</span>
@@ -10725,25 +10762,26 @@ function screenCART() {
                  user chỉ nói "2 cái padding" — hiểu là đệm TRONG của 2 card tóm tắt, không
                  phải đệm trang; đệm trang CHƯA đụng). Chọn px-8 (32, gần đúng 30) + py-6
                  (24, gần đúng 20-22) — bậc có sẵn trong thang Tailwind của bản build này
-                 (đã dùng ở nhiều nơi khác, không phải class chết). -->
-            <div class="px-8 py-6">
+                 (đã dùng ở nhiều nơi khác, không phải class chết).
+                 NGAY SAU ĐÓ cùng ngày — user tự sửa trong Figma rồi yêu cầu đưa lại vào
+                 code: đệm hạ về 16 đều 4 cạnh (p-4) — xem node 373:25655, khung "Giỏ /
+                 desktop · 5 dòng, tick hết". Không giữ px-8/py-6 nữa. -->
+            <div class="p-4">
               <!-- Hạ 1 cấp so với "Giỏ hàng" (brief: "Order summary là 1 phần của giỏ
                    hàng nên không cùng cấp với chữ Giỏ hàng" — tham chiếu Ralph Lauren,
                    nơi các khối trong tóm tắt chỉ là nhãn phụ chứ không phải tiêu đề
-                   trang). TỪNG dùng lớp t-lead (14/20, không kèm font-medium) 13/09/2026
-                   — nhưng ĐẢO LẠI 14/09/2026 (lệnh user: "tiêu đề tóm tắt đơn hàng
-                   đang nhẹ hơn cả mấy dòng uppercase"): nhãn "Ưu đãi & khuyến mãi"/
-                   "Chương trình khuyến mãi" trong CHÍNH khối này đã 500+HOA qua hook
-                   chung của cột tóm tắt (xem CSS, chọn theo the p/label mang font-medium)
-                   — h2 14/20 400 chữ thường đọc NHẸ HƠN chính nhãn con của nó, lệch
-                   tầng bậc ngược.
-                   Đổi sang lớp t-section-title (18/24 Libre Bodoni, xem thang chữ đầu
-                   file) — vẫn thấp hơn hẳn lớp t-display-title 24/32 của "Giỏ hàng" nên
-                   không phá lý do hạ cấp ban đầu, nhưng đủ lớn + đủ khác mặt chữ để
-                   thắng rõ 2 nhãn uppercase 12px bên dưới. -->
-              <h2 class="t-single dk-summary-title text-foreground">Tóm tắt đơn hàng</h2>
+                   trang).
+                   Cỡ chữ đi trọn 1 vòng trong ngày: t-lead (14/20, 13/09) -> t-section-
+                   title (18/24 Libre Bodoni) -> t-single (12/16, đảo lại vì nhãn con
+                   "Ưu đãi & khuyến mãi"/"Chương trình khuyến mãi" cùng khối đã 500+HOA
+                   qua hook chung, 12/16 400 đọc nhẹ hơn nhãn con của nó) -> NAY quay lại
+                   ĐÚNG t-lead 14/20 (user tự sửa trong Figma, thêm letter-spacing 0.5px
+                   qua class hook dk-summary-title, xem CSS) — vẫn thấp hơn t-display-title
+                   24/32 của "Giỏ hàng", đủ lớn + đủ khác kiểu (hoa + tracking) để thắng
+                   rõ 2 nhãn uppercase 12px bên dưới. -->
+              <h2 class="t-lead dk-summary-title text-foreground">Tóm tắt đơn hàng</h2>
             </div>
-            <div class="px-8 pb-6 flex flex-col gap-4">
+            <div class="px-4 pb-4 flex flex-col gap-4">
               <!-- 13/09/2026 — ĐẢO THỨ TỰ theo "Flow trên mobile đoạn dưới Giỏ hàng"
                    của brief (1. Ưu đãi & khuyến mãi + mã · 2. Ưu đãi thành viên): ô mã
                    lên TRƯỚC, khối thành viên xuống SAU — áp cả desktop để 2 bản khớp
@@ -10832,11 +10870,15 @@ function screenCART() {
                ĐÃ khớp đúng bản mobile (index.html, discountPanel()): mobile để card này
                NGOÀI panel tóm tắt từ trước (Figma 3458:56933, "Chương trình khuyến mãi
                vẫn để ngoài khối này"), desktop nay mới về khớp.
-               Class giữ NGUYÊN y hệt bản cũ (không đổi border/bo/đệm) — chỉ đổi CHỖ
-               ĐỨNG. Khoảng cách với card phía trên do cặp lớp flex flex-col gap-4 mới
-               thêm vào div cột dk-sticky-side dk-cart-summary lo (xem chỗ khai div đó),
-               không cần margin riêng ở đây. -->
-          <div class="border border-border rounded-md py-2 px-3 flex flex-col gap-2">
+               Khoảng cách với card phía trên do cặp lớp flex flex-col gap-4 mới thêm
+               vào div cột dk-sticky-side dk-cart-summary lo (xem chỗ khai div đó),
+               không cần margin riêng ở đây.
+               NGAY SAU ĐÓ cùng ngày — đệm ngang px-3 (12) -> px-4 (16), user tự sửa
+               trong Figma rồi yêu cầu đưa lại vào code (khớp đệm ngang 16 của 2 khối
+               "Tóm tắt đơn hàng" phía trên, cả 3 khối trong cột phải nay cùng 1 số đệm
+               ngang). Đệm dọc giữ nguyên py-2 (8) — số đo Figma 9 chỉ lệch 1px, không
+               đáng kể/không rõ là chủ ý. -->
+          <div class="border border-border rounded-md py-2 px-4 flex flex-col gap-2">
             <p class="t-single text-foreground">Chương trình khuyến mãi (3)</p>
             <div id="promoPeek" class="promo-peek flex flex-col gap-2">
               ${promoRule(
@@ -11527,12 +11569,22 @@ function screenCHECKOUT() {
      sheet cuối file, cạnh #giftSheet). "+ Thêm địa chỉ mới" tách thành hành
      động RIÊNG, đứng ngay dưới thẻ tóm tắt — giống bố cục tham chiếu Ralph
      Lauren (thẻ "Shipping Address" + Edit, và "+ Add New Address" là dòng
-     riêng bên dưới, không nằm trong sheet "Address book"). */
+     riêng bên dưới, không nằm trong sheet "Address book").
+     14/09/2026 — ĐÓNG KHUNG lại thẻ (lệnh user: "đóng khung cái ô addressbook
+     lại như trước chúng ta đã làm"): từ lúc đổi sang tóm tắt + nút Sửa, khối
+     này chỉ còn 1 hàng chữ trần, không viền — lệch với chính tham chiếu Ralph
+     Lauren nhắc ở trên (thẻ "Shipping Address" viền rõ) VÀ lệch với các hàng
+     địa chỉ bên TRONG #addrSheet (đang dùng khuôn .opt: border border-border
+     rounded-xs bg-background). Thêm border + rounded-md + bg-background (cả
+     dòng "Sổ địa chỉ của bạn đang trống" — cùng 1 chỗ đứng, phải cùng khung).
+     Không dùng nguyên `.opt` vì đó là khuôn NÚT bấm chọn (state on/hover/
+     press) — thẻ này chỉ hiển thị tĩnh, chỉ nút "Sửa" bên trong mới bấm được.
+     KHAI GIỐNG HỆT ở index.html — sửa 1 file nhớ sửa cả 2. */
   const addrSummary = (() => {
     const a = ADDRESSES[ckAddr] || null;
-    if (!a) return `<p class="t-multiline text-muted-foreground px-4 py-3">Sổ địa chỉ của bạn đang trống.</p>`;
+    if (!a) return `<p class="t-multiline text-muted-foreground px-4 py-3 border border-border rounded-md bg-background">Sổ địa chỉ của bạn đang trống.</p>`;
     return `
-    <div class="px-4 py-3 flex items-start justify-between gap-3">
+    <div class="px-4 py-3 flex items-start justify-between gap-3 border border-border rounded-md bg-background">
       <div class="flex-1 min-w-0 flex flex-col gap-1">
         <p class="t-multiline font-medium text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="t-single font-normal text-muted-foreground">(Mặc định)</span>' : ''}</p>
         <p class="t-multiline text-secondary-foreground">${addrLine(a)}</p>
@@ -11709,15 +11761,25 @@ function screenCHECKOUT() {
                Libre Bodoni THẬT — lớp riêng, không mang class text-[18px] nên thoát
                hook) — vừa đúng ý định gốc, vừa đồng bộ với heading cùng tên ở panel
                Tóm tắt cột phải trang giỏ hàng (đổi cùng ngày, cùng lý do).
-               Đệm 24 -> 32 ngang, 14/09/2026 (lệnh user: "giãn 2 cái padding ra luôn,
+               Đệm 24 -> 32 ngang, cùng ngày (lệnh user: "giãn 2 cái padding ra luôn,
                tham khảo Ralph Lauren" — cùng lượt và cùng số đo với card tóm tắt bên
-               trang giỏ hàng, xem chú thích đầy đủ ở đó: RL đệm ngang 30px cho card
-               "ORDER SUMMARY" của họ, px-8=32 là bậc Tailwind gần nhất có sẵn). pt-2
-               (8px) quá sát so với mặt bằng chung, lên pt-4 (16) cho cân với pb-6 mới. -->
-          <div class="px-8 py-6 border-b border-border-1">
-            <p class="t-single dk-summary-title text-foreground">Tóm tắt đơn hàng</p>
+               trang giỏ hàng, xem chú thích đầy đủ ở đó). pt-2 (8px) quá sát so với
+               mặt bằng chung, lên pt-4 (16) cho cân với pb-6 mới.
+               NGAY SAU ĐÓ cùng ngày — user tự sửa card "Tóm tắt đơn hàng" bên trang
+               giỏ hàng trong Figma rồi yêu cầu đưa lại vào code (spacing+typo); áp
+               NGƯỢC LẠI đúng thay đổi đó vào panel checkout để 2 khối tiếp tục khớp
+               nhau (luật xuyên suốt ngày: 2 panel luôn cùng 1 số đo). Đệm heading về
+               p-4 (16 đều 4 cạnh, từ 32 ngang/24 dọc) + chữ trả về .t-lead (14/20,
+               đã có letter-spacing 0.5px qua .dk-summary-title) — thật ra ĐÚNG BẰNG
+               heading này đã dùng TRƯỚC lượt t-section-title đầu ngày (xem đoạn trên),
+               lịch sử đầy đủ nằm ở CSS .dk-summary-title cùng file. Đệm ngang của
+               2 khối dưới (body + accordion) cũng về px-4 theo cùng lượt, đệm dọc
+               (pt-4/pb-6) giữ nguyên vì panel checkout có khung/đường kẻ chia 3 khối
+               (khác panel giỏ hàng là 1 khối liền không viền trong). -->
+          <div class="p-4 border-b border-border-1">
+            <p class="t-lead dk-summary-title text-foreground">Tóm tắt đơn hàng</p>
           </div>
-          <div class="px-8 pt-4 pb-6 flex flex-col">
+          <div class="px-4 pt-4 pb-6 flex flex-col">
             ${ckCodeRow()}
             ${row('Tạm tính', vndCom(cartSubtotal()))}
             ${cartDiscountTotal() > 0 ? row('Giảm giá', '-' + vndCom(cartDiscountTotal())) : ''}
@@ -11732,10 +11794,10 @@ function screenCHECKOUT() {
             </div>
           </div>
           <!-- Padding panel 16 -> 24 + hàng cách nhau 20px: nhịp thoáng Farfetch (14/08/2026).
-               24 -> 32 ngang, 14/09/2026: đồng bộ với 2 khối phía trên trong CÙNG card sau
-               lượt giãn padding tham khảo Ralph Lauren (xem chú thích đầy đủ ở khối heading
-               cùng file) — cả 3 khối trong 1 card phải chung 1 số đệm ngang. -->
-          <div class="px-8 pb-6 border-t border-border-1">
+               24 -> 32 -> 16 ngang, cùng ngày 14/09/2026: đồng bộ với 2 khối phía trên
+               trong CÙNG card, số đo sau cùng theo Figma-sync (xem chú thích đầy đủ ở
+               khối heading cùng file) — cả 3 khối trong 1 card phải chung 1 số đệm ngang. -->
+          <div class="px-4 pb-6 border-t border-border-1">
             <div id="ckSumAcc" class="acc">
               <button class="acc-trigger w-full h-14 flex items-center justify-between press">
                 <span class="t-multiline text-foreground">Giỏ hàng của bạn (${cartSelected().length})</span>
@@ -13365,6 +13427,22 @@ function screenPOLICY(key) {
   <div class="w-full" data-scroller>
     ${navBar()}
     <div class="max-w-[1440px] mx-auto w-full">
+      <!-- Top banner KV — brief PDF trang 34, mục 1: "Thêm top banner KV lấy
+           đỡ ảnh của Net a porter qua nha". MƯỢN TẠM đúng ảnh chụp trang
+           "Exchanges and Returns" của Net-a-Porter (đã cắt bỏ thanh nav đen
+           #0a0a0a của họ — nav đó là CỦA HỌ, trang mình đã có navBar() riêng
+           ngay trên). Cao 226 = đúng tỉ lệ khung hình gốc (1445x227) co về
+           1440 rộng, KHÔNG bóp méo. CHỦ Ý CHƯA xoá dòng "Customer Care" /
+           "Exchanges and Returns" in sẵn trong ảnh — mục 1 (khung này) chỉ
+           xin ảnh, còn mục 2 "chữ trên banner nhảy theo mục, headline dùng
+           Libre" là việc RIÊNG chưa được yêu cầu ở lượt này (xem
+           dafc-policy-page-toggle-brief-p34.md). Ảnh có chữ tiếng Anh của
+           NAP là giới hạn đã biết của bản mượn tạm, sẽ thay khi làm mục 2
+           (cần bản ảnh sạch chữ hoặc thêm lớp phủ đè chữ ta lên trên). -->
+      <div class="w-full h-[226px] overflow-hidden rise">
+        <img src="${A}kv-policy.jpg" alt="" class="w-full h-full object-cover">
+      </div>
+
       ${dkCrumbs(['Trang chủ', p.title])}
 
       <div class="flex gap-6 px-6 pt-2 pb-12 items-start">
@@ -13397,10 +13475,43 @@ function screenPOLICY(key) {
             </div>
           </div>
 
+          <!-- brief PDF trang 34: "Prefer Toggle / Group xổ nội dung như Net a
+               porter / Mytheresa" — mỗi mục đổi từ đoạn văn LUÔN MỞ sang khối
+               gập/mở kiểu FAQ (tham chiếu 2 ảnh chụp NAP "Exchanges and
+               returns ⌄" / Mytheresa "How To Track Your Order ⌄"). Đóng mặc
+               định, giống ảnh tham chiếu (mọi mục đều chevron chỉ phải, chưa
+               mục nào mở). Dùng ĐÚNG khuôn .acc/.acc-trigger/.acc-body có sẵn
+               (đã dùng ở panel Tóm tắt giỏ hàng, "Giỏ hàng của bạn" checkout…)
+               nên KHÔNG cần thêm JS mới — wire(root) đã bắt mọi .acc-trigger
+               (dòng ~16411, đóng-mở loại trừ theo nhóm anh em, đúng hành vi
+               "mở 1 mục thì đóng mục khác" của FAQ). -->
           ${p.sections.map(([h, txt], i) => `
-            <div data-policy-sec="${i}" class="flex flex-col gap-3 scroll-mt-[128px] reveal">
-              <h2 class="t-single font-medium text-foreground">${i + 1}. ${h}</h2>
-              ${body(txt)}
+            <div data-policy-sec="${i}" class="acc scroll-mt-[128px] reveal">
+              <button class="acc-trigger w-full flex items-center justify-between gap-3 py-4 border-b border-border text-left press">
+                <!-- Libre Bodoni (yêu cầu user cùng ngày, ngay sau lượt dựng toggle
+                     — "mấy cái mục mở ra vô cho dùng font libre"): đổi từ
+                     t-single font-medium (12/16 Inter) sang .t-section-title có
+                     sẵn (18/24, hook Bodoni riêng — xem [[dafc-t-section-title-18-24]]),
+                     khớp đúng mặt chữ serif "Exchanges and returns"/"How To Track
+                     Your Order" trong 2 ảnh tham chiếu. Bỏ font-medium: hook
+                     2b-bis của .t-section-title đã tự đặt weight 400 (Regular). -->
+                <span class="t-section-title text-foreground">${i + 1}. ${h}</span>
+                <!-- Bọc riêng icon bằng ghost-hover (khuôn y hệt 4 nút tiện ích
+                     header — search/ngôn ngữ/tài khoản/giỏ hàng): nền mờ 5%
+                     nổi lên NGAY DƯỚI CON TRỎ khi rê chuột — đúng yêu cầu "hover
+                     vào icon ở desktop" (mobile không có hover nên không cần
+                     xử lý riêng). -->
+                <span class="w-8 h-8 rounded-xs ghost-hover shrink-0 flex items-center justify-center">${I.chevR()}</span>
+              </button>
+              <!-- Đệm trên/dưới của nội dung khi mở CANH ĐỀU (yêu cầu user
+                   cùng ngày): trước là pt-3/pb-4 (12/16, lệch nhau) — nay
+                   py-4 (16/16 đều), khớp luôn py-4 của chính hàng tiêu đề
+                   phía trên nó nên nhịp dọc nhất quán xuyên suốt cả khối. -->
+              <div class="acc-body"><div class="acc-inner">
+                <div class="flex flex-col gap-3 py-4">
+                  ${body(txt)}
+                </div>
+              </div></div>
             </div>`).join('')}
         </div>
       </div>
@@ -15899,6 +16010,21 @@ function wire(root) {
     btn.addEventListener('click', () => window.__closeCartConfirm && window.__closeCartConfirm());
   });
 
+  /* ── RÊ CHUỘT VÀO ICON TÀI KHOẢN -> mở panel đăng nhập/menu tài khoản
+     (brief PDF trang 36, cùng kỹ thuật với mini-cart ngay trên — xem IIFE
+     `#accPeek` gần cuối file). Bấm vào icon vẫn sang thẳng màn account/login
+     như cũ (handler [data-nav] ngay dưới), chỉ thêm việc đóng panel lại.
+     TRỪ khi đang Ở NGAY màn login/register (yêu cầu user 14/09/2026: "ở màn
+     đăng nhập/đăng ký thì giữ nguyên cái header mặc định") — đứng sẵn trên
+     đúng cái form đó rồi mà rê icon lại xổ thêm 1 bản rút gọn CỦA CHÍNH form
+     đang xem là thừa/rối. `current === 'login'` gộp cả 2 vì đăng nhập lẫn
+     đăng ký đều chung MỘT tên màn (`authView` mới là cái phân biệt 2 tab). */
+  root.querySelectorAll('[data-acc-icon]').forEach(btn => {
+    btn.addEventListener('mouseenter', () => { if (current !== 'login') window.__openAccPeek && window.__openAccPeek(btn); });
+    btn.addEventListener('mouseleave', () => window.__closeAccPeek && window.__closeAccPeek());
+    btn.addEventListener('click', () => window.__closeAP && window.__closeAP());
+  });
+
   // navigation
   root.querySelectorAll('[data-nav]').forEach(el => {
     el.addEventListener('click', e => {
@@ -17045,11 +17171,20 @@ function wire(root) {
     });
   });
 
-  // Mục lục trang chính sách — bấm để nhảy tới section
+  // Mục lục trang chính sách — bấm để mở đúng mục (nay là accordion đóng mặc
+  // định, xem screenPOLICY) rồi nhảy tới đó. Đóng các mục anh em khác cho khớp
+  // hành vi loại trừ của accordion (mở 1 mục thì đóng mục còn lại) — không gọi
+  // .click() lên .acc-trigger vì nút đó không phân biệt được "mở" khỏi "đóng",
+  // ở đây LUÔN muốn mở (không phải bật/tắt) nên set thẳng class.
   root.querySelectorAll('[data-policy-toc]').forEach(btn => {
     btn.addEventListener('click', () => {
-      root.querySelector(`[data-policy-sec="${btn.dataset.policyToc}"]`)
-        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const sec = root.querySelector(`[data-policy-sec="${btn.dataset.policyToc}"]`);
+      if (sec) {
+        [...sec.parentElement.children].forEach(sib => {
+          if (sib.classList && sib.classList.contains('acc')) sib.classList.toggle('open', sib === sec);
+        });
+      }
+      sec?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
 
@@ -18959,6 +19094,159 @@ document.body.insertAdjacentHTML('beforeend', `
   cc.querySelector('.cc-backdrop').addEventListener('click', closeCC);
   cc.querySelector('#ccClose').addEventListener('click', closeCC);
   cc.querySelector('#ccGoCart').addEventListener('click', () => { closeCC(); go('cart'); });
+})();
+
+/* ── Panel Tài khoản khi RÊ CHUỘT vào icon (14/09/2026, brief PDF trang 36:
+   "Hover vào Account xổ ra màn đăng nhập hoặc đăng ký tài khoản", tham chiếu
+   Ralph Lauren) ──
+   CHƯA đăng nhập: form đăng nhập RÚT GỌN ngay trong panel (số điện thoại +
+   mật khẩu, khớp field thật của viewLogin()/#loginPop — dự án dùng SĐT chứ
+   không phải email như ảnh tham chiếu, xem [[dafc-tham-chieu-khong-be-nguyen]]:
+   giữ đúng field/quy ước của app, chỉ mượn Ý TƯỞNG "hover ra panel" của RL) +
+   "Tạo tài khoản"/"Quên mật khẩu?" — 2 link này đưa sang màn login đầy đủ
+   (authView tương ứng) vì luồng đăng ký/quên mật khẩu nhiều bước, không hợp
+   nhét vừa một panel nhỏ. Bấm "Đăng nhập" trong panel KHÔNG điều hướng đi đâu
+   (khác #loginPop/viewLogin — 2 chỗ đó luôn có "về đâu sau khi đăng nhập" vì
+   mở ra TỪ một luồng cụ thể): panel này mở từ MỌI màn nên chỗ hợp lý nhất là
+   Ở LẠI màn đang đứng, chỉ đổi trạng thái icon + tái dựng màn tại chỗ.
+   ĐÃ đăng nhập: lời chào + Đăng xuất + rút gọn ACCOUNT_TABS làm menu tắt (bấm
+   một mục là set đúng accountTab rồi mới vào màn account, khỏi phải luôn rơi
+   vào tab "Thông tin" mặc định).
+   Cùng kỹ thuật neo icon + JS đặt toạ độ như mini-cart (IIFE ngay trên) — xem
+   comment đầy đủ trong khối CSS ".acc-drop". KHÔNG có nhánh "vừa xong việc gì"
+   như mini-cart nên không cần lớp nền chặn: `#accPeek` tự pointer-events:none,
+   chỉ `.acc-drop` mở lại. */
+document.body.insertAdjacentHTML('beforeend', `
+  <div id="accPeek" class="fixed inset-0 z-[220] pointer-events-none" aria-hidden="true">
+    <div class="acc-drop bg-background translate-y-full" role="dialog" aria-label="Tài khoản">
+      <div id="apBody"></div>
+    </div>
+  </div>`);
+(() => {
+  const ap = document.getElementById('accPeek');
+  const panel = ap.querySelector('.acc-drop');
+  const body = ap.querySelector('#apBody');
+
+  /* Neo panel vào ĐÚNG icon Tài khoản — same lý do/kỹ thuật với `place()` của
+     mini-cart: navBar() dựng lại mỗi lần đổi màn nên phải đo lại rect mỗi lần
+     mở, không nhét panel cố định vào trong nút. `data-acc-icon` là móc riêng
+     (xem chú thích ở navBar) vì `data-nav` đổi giá trị theo ckAuth. */
+  /* KHÔNG chừa khe hở giữa icon và panel (yêu cầu user: "hover mượt hơn, hiện
+     đang hơi khó hover") — mini-cart chừa 8px (CC_PEEK_MS bắc cầu qua khe đó)
+     nhưng khe đó CHÍNH LÀ vùng chết: rê chuột thẳng xuống mà lệch dù chỉ vài
+     px là ra khỏi cả icon lẫn panel, dễ rớt hẳn ra ngoài trước khi chạm được
+     panel. Panel dính sát đáy icon (top = mép dưới icon, không +8) thì MỌI
+     đường đi thẳng xuống từ icon đều lọt thẳng vào panel, không còn khe. */
+  const place = (anchor = null) => {
+    const btn = anchor || document.querySelector('[data-acc-icon]');
+    const w = panel.offsetWidth || 320;
+    if (!btn) { panel.style.top = '72px'; panel.style.left = (innerWidth - w - 16) + 'px'; return; }
+    const r = btn.getBoundingClientRect();
+    const left = Math.min(Math.max(16, r.right - w), innerWidth - w - 16);
+    panel.style.top = r.bottom + 'px';
+    panel.style.left = left + 'px';
+  };
+  addEventListener('scroll', () => { if (!panel.classList.contains('translate-y-full')) place(); }, { passive: true });
+  addEventListener('resize', () => { if (!panel.classList.contains('translate-y-full')) place(); });
+
+  // Rời chuột khỏi icon là đóng sau một nhịp ngắn — dù đã bỏ khe hở (xem place()),
+  // vẫn giữ độ trễ rộng rãi hơn mini-cart (220 -> 350ms) để dễ thở hơn khi rê tay.
+  const AP_MS = 350;
+  let apTimer = null;
+  const disarmAP = () => { clearTimeout(apTimer); apTimer = null; };
+  const armAP = () => { disarmAP(); apTimer = setTimeout(closeAP, AP_MS); };
+  panel.addEventListener('mouseenter', disarmAP);
+  panel.addEventListener('mouseleave', () => { if (!panel.classList.contains('translate-y-full')) armAP(); });
+
+  /* Dựng lại ruột panel mỗi lần mở, để luôn khớp ckAuth/PROFILE.name hiện tại.
+     Đệm/cỡ CHỈNH LẠI theo yêu cầu user ("thêm padding cho đẹp") — khớp đúng
+     con số đã dùng ở #loginPop (form đăng nhập nhanh từ giỏ hàng, cùng vai
+     "panel đăng nhập rút gọn" nên lấy làm chuẩn thay vì tự chế số mới):
+     tiêu đề đổi t-lead (14/20) -> t-overlay (16/24, đủ lớn để đọc như MỘT
+     TIÊU ĐỀ, không lẫn với chữ thường xung quanh); ô nhập/nút h-10/h-11
+     (40/44) -> h-11/h-12, khớp `#lpPhone`/`#lpLogin` thật; khoảng cách các
+     nhóm field gap-3 (12) -> gap-4 (16, khớp #loginPop).
+     ⚠ TÌM RA khi đo lại: khối bọc form dùng `p-6` (đệm đều 4 cạnh) NHƯNG
+     `tailwind.css` (bản build sẵn) KHÔNG có class này — chỉ có 2 lớp riêng
+     trục ngang/dọc (px, py), đúng bẫy "class chết" đã dính nhiều lần trong
+     dự án (utility CHƯA TỪNG dùng ở đâu trong 2 file thì không có trong bản
+     build). Đệm ĐÃ ÂM THẦM = 0 suốt từ lượt dựng đầu — đây nhiều khả năng
+     CHÍNH LÀ lý do user
+     thấy panel "chật/xấu". Sửa bằng tách trục `px-6 py-6` (2 utility ĐÃ xác
+     nhận có trong bản build). Tương tự `gap-1.5` (nhãn-ô nhập) cũng chết —
+     đổi `gap-2` (8px, bậc gần nhất còn sống); LƯU Ý `#loginPop` (form đăng
+     nhập nhanh ở giỏ hàng) đang DÙNG NGUYÊN `gap-1.5` này — tức dính CÙNG lỗi
+     nhưng KHÔNG sửa ở đây (ngoài phạm vi yêu cầu, chỉ đang chỉnh panel hover
+     tài khoản) — cờ lại trong memory. */
+  const renderAP = () => {
+    body.innerHTML = ckAuth ? `
+      <div class="px-6 py-5 flex items-center justify-between gap-3 border-b border-border">
+        <p class="t-overlay font-medium text-foreground truncate">Xin chào, ${PROFILE.name}!</p>
+        <button id="apLogout" class="t-single shrink-0 underline text-muted-foreground hover:text-foreground transition-colors press">Đăng xuất</button>
+      </div>
+      <div class="flex flex-col py-2">
+        ${ACCOUNT_TABS.map(([id, label]) => `<button data-ap-tab="${id}" class="t-multiline h-12 px-6 flex items-center text-left text-foreground ghost-hover press">${label}</button>`).join('')}
+      </div>` : `
+      <div class="px-6 py-5 flex items-center justify-between gap-3 border-b border-border">
+        <p class="t-overlay font-medium text-foreground">Đăng nhập</p>
+        <button id="apRegister" class="t-single underline text-muted-foreground hover:text-foreground transition-colors press">Tạo tài khoản</button>
+      </div>
+      <div class="px-6 py-6 flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <label for="apPhone" class="t-multiline font-medium text-foreground">Số điện thoại</label>
+          <input id="apPhone" type="tel" inputmode="tel" placeholder="Nhập số điện thoại" autocomplete="tel" class="t-single h-11 bg-background border border-border rounded-xs px-3 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+        </div>
+        <div class="flex flex-col gap-2">
+          <label for="apPass" class="t-multiline font-medium text-foreground">Mật khẩu</label>
+          <input id="apPass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password" class="t-single h-11 bg-background border border-border rounded-xs px-3 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+        </div>
+        <button id="apForgot" class="t-single self-end underline text-muted-foreground hover:text-foreground transition-colors press">Quên mật khẩu?</button>
+        <button id="apSubmit" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press">Đăng nhập</button>
+      </div>`;
+  };
+
+  const openAP = (anchor) => {
+    renderAP();
+    ap.classList.remove('pointer-events-none');
+    ap.setAttribute('aria-hidden', 'false');
+    place(anchor);
+    panel.classList.remove('translate-y-full');
+  };
+  const closeAP = () => {
+    disarmAP();
+    panel.classList.add('translate-y-full');
+    ap.classList.add('pointer-events-none');
+    setTimeout(() => ap.setAttribute('aria-hidden', 'true'), 300);
+  };
+  window.__openAP = openAP;
+  window.__closeAP = closeAP;
+  window.__openAccPeek = (btn) => { disarmAP(); openAP(btn); };
+  window.__closeAccPeek = () => { if (!panel.classList.contains('translate-y-full')) armAP(); };
+
+  /* Uỷ quyền trên `ap`: ruột panel dựng lại mỗi lần mở (renderAP) nên bind
+     thẳng lên từng nút thì lượt mở sau mất hết handler — y hệt lý do #ccList
+     của mini-cart dùng uỷ quyền ở IIFE trên. */
+  ap.addEventListener('click', e => {
+    if (e.target.closest('#apLogout')) {
+      ckAuth = false; closeAP(); go('plp'); toast('Đã đăng xuất');
+      return;
+    }
+    if (e.target.closest('#apRegister')) {
+      closeAP(); authView = 'register'; authViewIntent = true; loginFrom = current; go('login');
+      return;
+    }
+    if (e.target.closest('#apForgot')) {
+      closeAP(); authView = 'forgot'; authViewIntent = true; loginFrom = current; go('login');
+      return;
+    }
+    if (e.target.closest('#apSubmit')) {
+      // Giống hệt handler [data-login-submit] thật: không kiểm tra ô nhập, chỉ bật cờ.
+      ckAuth = true; closeAP(); go(current, { force: true }); toast('Đăng nhập thành công');
+      return;
+    }
+    const tabBtn = e.target.closest('[data-ap-tab]');
+    if (tabBtn) { accountTab = tabBtn.dataset.apTab; closeAP(); go('account', { force: true }); }
+  });
 })();
 
 /* Sản phẩm đang xem theo màn PDP — dùng cho sheet xác nhận thêm giỏ */
