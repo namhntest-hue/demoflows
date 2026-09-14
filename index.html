@@ -256,6 +256,12 @@ window.RESP = (function () {
      Đo trên trang chạy: 1px -> 2px làm thẻ radio checkout cao thêm 2px và đẩy ruột
      lệch 1px chéo mỗi lần bấm — đúng cái "nhún" user bắt được 02/09. */
   .btn-o:active            { border-color: var(--general-primary); opacity: 1; }
+  /* BẢN NÀY KHÔNG KHAI .btn-oi, có chủ ý. Lớp đó là biến thể "outline trên ảnh" của
+     bản desktop (11/09/2026) — sinh ra chỉ để chặn hover làm mất nền nút đặt trên KV.
+     Ở đây cả khối state cố ý KHÔNG có một dòng :hover nào (thiết bị cảm ứng, xem đầu
+     khối), nên không có gì phải chặn. 2 nút trên ảnh của bản này VẪN GẮN class
+     btn-oi làm NHÃN VAI, để markup 2 bản không lệch nhau và để lượt sau ai thêm
+     hover cho mobile thì đã có sẵn chỗ móc. */
   .btn-o:focus-visible     { border-color: var(--unofficial-border-4); }
   .btn-o[disabled]         { background: var(--general-secondary); }
   .btn-d:active            { background: var(--unofficial-destructive-active); opacity: 1; }
@@ -278,22 +284,6 @@ window.RESP = (function () {
   .drag-x { cursor: grab; }
   .drag-x.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
   .drag-x.dragging img { pointer-events: none; }
-  /* ── THANH TIẾN TRÌNH của dải cuộn (09/09/2026, lệnh user kèm ảnh tham chiếu)
-     Bản mobile KHÔNG có mũi tên trái/phải (vuốt tay là đủ, và đó là quyết định
-     đã ghi ở khối dải) — nên thanh này là dấu DUY NHẤT nói cho biết dải còn
-     nội dung và đang đứng ở đâu. Vì vậy nó luôn hiện, không theo hover.
-     2px cho CẢ rãnh và con chạy: cùng một vạch, khác nhau ở MÀU chứ không ở bề
-     dày. Rãnh #dfdfdf = kẻ chuẩn duy nhất của dự án, con chạy #0a0a0a = mực
-     chính. KHÔNG bo góc, KHÔNG bóng — theo hướng phẳng của dự án.
-     Bề rộng + chỗ đứng con chạy tính bằng % trong wireRailBar().
-     `.rail-bar-inset` = 16 hai bên cho khớp px-4 của dải; dải nào đã có đệm ở
-     khối cha thì gọi railBar() không kèm class này (xem PDP#6).
-     ĐỆM PHẢI LÀ MARGIN, không phải padding: con chạy đặt tuyệt đối nên nó quy
-     theo hộp PADDING của rãnh — nhét đệm vào trong là % chạy sai chừng ấy. */
-  .rail-bar { position: relative; height: 2px; background: var(--general-border); }
-  .rail-bar[hidden] { display: none; }
-  .rail-bar-inset { margin-left: 16px; margin-right: 16px; }
-  .rail-thumb { position: absolute; top: 0; bottom: 0; left: 0; width: 100%; background: var(--general-primary); }
 
   /* ── Search screen ── */
   /* ẩn nút ✕ clear mặc định của trình duyệt — đã có nút "Xóa" riêng theo Figma */
@@ -433,6 +423,11 @@ window.RESP = (function () {
     border: 1px solid var(--general-border);
     box-shadow: none;
   }
+  /* Nhãn nhóm "Đã có tài khoản?" / "Chưa có tài khoản?" của popup đăng nhập giỏ
+     hàng (13/09/2026, brief PDF trang 28) — đúng vai NHÃN của §1.1 STYLE-RULES.md
+     (500 + HOA đi cùng nhau, không phải ngoại lệ) nên khai thẳng, không mượn
+     .font-medium (sẽ bị khối "Mọi độ đậm về 400" quét mất). */
+  #loginPop .lp-label { font-weight: 500; text-transform: uppercase; }
   /* Option trong menu Sắp xếp có phản hồi rê/focus (bổ sung 28/08 — trước đây
      .sort-opt trần trụi, rê qua không đổi gì): lấy đúng nền ghost-hover đang
      dùng cho các hàng cùng vai, không mở mặt mới. */
@@ -652,6 +647,44 @@ window.RESP = (function () {
   /* ── Toast ── */
   @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px) scale(.96); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
   #toast.show { animation: toastIn .3s cubic-bezier(.22,1,.36,1) both; }
+
+  /* "Đang cập nhật" — xem cartBusy(). Chỉ mờ + khoá tay, KHÔNG spinner: khối này
+     tính xong trong một khung hình, gắn spinner vào là dựng ra một quãng chờ
+     không có thật. */
+  .is-busy { opacity: .45; pointer-events: none; }
+
+  /* MÃ QR MINH HOẠ — lưới 21×21 ô vuông, ô bật thì tô mực. Vẽ bằng CSS thay vì
+     ảnh: không cần thêm file, và đổi mã đơn là đổi hình ngay. */
+  .pay-qr {
+    display: grid; grid-template-columns: repeat(21, 1fr);
+    width: 168px; height: 168px; padding: 8px; background: #fff;
+    border: 1px solid var(--general-border);
+  }
+  .pay-qr i { background: transparent; }
+  .pay-qr i.on { background: var(--general-foreground); }
+  /* Con quay của màn "đang chuyển sang cổng" — cùng mực với nút chính. */
+  .pay-spin {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 2px solid var(--general-border); border-top-color: var(--general-primary);
+    animation: paySpin .8s linear infinite;
+  }
+  @keyframes paySpin { to { transform: rotate(360deg); } }
+
+  /* DẢI GỢI Ý RỖNG (11/09/2026): ẩn cả mục khi không còn thẻ nào. Làm bằng CSS vì
+     cụm dải lặp ở 6 màn PDP + màn giỏ — một luật thay bảy chỗ sửa markup.
+     `:empty` ăn khi track KHÔNG có node con nào; template sinh `>${cards}<` nên
+     dải hết thẻ là rỗng thật, không còn khoảng trắng nào lọt vào. */
+  div:has(> .drag-x:empty) { display: none; }
+
+  /* Dòng hết hàng: LÙI cả ảnh lẫn chữ một bậc, nhưng CHỪA dòng báo đỏ và nút xoá
+     ở độ đậm đầy đủ — hai thứ đó chính là việc người ta cần làm với dòng này.
+     Làm mờ bằng opacity trên từng phần, KHÔNG phủ một lớp trắng lên cả dòng:
+     lớp phủ sẽ nuốt luôn cả nút xoá. */
+  .cart-row.is-oos img,
+  .cart-row.is-oos .price,
+  .cart-row.is-oos p:not(.text-destructive) { opacity: .45; }
+  .cart-row.is-oos .qty-btn, .cart-row.is-oos .qty { opacity: .35; }
+  .is-busy, .is-busy * { transition: opacity .12s ease; }
 
   /* ══ THANG CHU — 6 bac co/dong, ten theo VAI (04/09/2026) ═══════════════════
      Thay cho loi khai bang utility `text-[Npx]` + `leading-*`. Truoc day 5 bo da
@@ -1710,7 +1743,7 @@ window.RESP = (function () {
      09/09/2026 — hook `#voucherTrigger` đã biến hẳn (khối trở lại ô nhập `#cartCode`);
      nhóm này vẫn đúng 2 selector dưới, không có gì phải thêm bớt. */
   html.skin-mt [data-screen="cart"] div:has(> #cartTotal) > span,
-  html.skin-mt [data-screen="cart"] #cartCta .acc-trigger > span:first-child {
+  html.skin-mt [data-screen="cart"] #pbhAcc .acc-trigger > span:first-child {
     font-weight: 500;
     text-transform: uppercase;
     line-height: 16px;
@@ -1837,7 +1870,7 @@ window.RESP = (function () {
     color: var(--general-foreground); /* tên chương trình = mực chính, markup đang #333
                                          (21/08: thôi hoa -> thôi 500, blanket .font-* trả về 400) */
   }
-  html.skin-mt [data-screen="cart"] #cartCta .acc-inner p {
+  html.skin-mt [data-screen="cart"] #pbhAcc .acc-inner p {
     color: var(--general-muted-foreground);
     line-height: 18px;
   }
@@ -2542,6 +2575,24 @@ window.RESP = (function () {
      bật cặp font — nhưng đó là hành vi CÓ TỪ TRƯỚC, do khối "CẶP FONT THỬ" bắt `h1` và
      PDP brand là `h1.pc-brand`, không phải rule của Maika.) */
 
+  /* ── 13/09/2026 — brief PDF trang 25 ("Cart – Overview layout") mở lại ĐÚNG
+     phần đã rollback ở trên, nhưng CHỈ cho hàng giỏ (không đụng card/hàng gợi ý/
+     quick-add — những chỗ đó KHÔNG có trong brief này, giữ nguyên rollback).
+     ".cart-brand" là class riêng, không phải ".pc-brand": ".pc-brand" còn kéo
+     theo cỡ 14/20 dành cho PDP, mà hàng giỏ vẫn giữ nguyên cỡ t-multiline 12/18
+     — brief chỉ xin đổi MẶT CHỮ, không xin đổi cỡ. */
+  html.skin-mt.skin-li [data-screen="cart"] .cart-row .cart-brand { font-family: var(--font-head); }
+  /* "Giá bold lên" (brief cùng trang) — `.font-medium` có sẵn trong markup giá bị
+     khối "Mọi độ đậm về 400" ở trên quét phẳng, nên phải là NGOẠI LỆ CÓ TÊN riêng
+     giống `.pc-brand`/`.t-overlay`, không thể chỉ thêm/đổi utility. Trần của hệ là
+     500 (không có 600/700 nào trong dự án) nên "đậm" ở đây là 500.
+     13/09/2026 — rà lại rule typo: §1.1 STYLE-RULES.md bắt "500 phải đi cùng CHỮ
+     HOA", mà giá là chữ NỘI DUNG không thể viết hoa — đã hỏi lại user, CHỐT GIỮ
+     500 chữ thường, ghi thành ngoại lệ thứ hai của §1.1 (ngoại lệ đầu là
+     `#filterSheet .facc`). Giá PDP (`#pdpPrice`) KHÔNG đổi, vẫn 400 — chỉ giá
+     hàng giỏ mới đậm. Xem `_notes/STYLE-RULES.md` mục "Ngoại lệ ghi danh thứ hai". */
+  html.skin-mt [data-screen="cart"] .cart-row .price { font-weight: 500; }
+
   /* Danh sách hàng: mỗi món ngăn nhau bằng một hairline. Dùng `:not(:first-child)`
      chứ không `+`: dải quà `.gift-group` chèn giữa các dòng, mà quà phải DÍNH món
      của nó — kẻ chỉ được rơi vào đầu mỗi món mới. */
@@ -2732,14 +2783,22 @@ window.RESP = (function () {
      áp trong màn giỏ -> nay toàn app). */
   html.skin-mt .bg-destructive-subtle { background: transparent; padding: 0; }
 
-  /* §2.1 — "hết hàng" thôi hạ mực dưới sàn `#666` (chốt E-3): chuyển sang GẠCH NGANG
-     + mực phụ, cùng khuôn `.pc-size.is-oos` của desktop. Bỏ luôn mảng nền
-     `rgba(0,0,0,.04)` — mặt thứ ba không có trong §2.2, mà gạch ngang đã đủ nói
-     "không mua được". */
+  /* §2.1 — "hết hàng" thôi hạ mực dưới sàn `#666` (chốt E-3): mực phụ, cùng khuôn
+     `.pc-size.is-oos` của desktop. Bỏ luôn mảng nền `rgba(0,0,0,.04)` — mặt thứ
+     ba không có trong §2.2.
+     ── 11/09/2026 (lệnh khách qua user): BỎ GẠCH NGANG, bù lại MỜ THÊM 20%.
+     `opacity: .8` đặt trên CẢ Ô, không riêng chữ: mất gạch ngang thì chữ nhạt
+     một mình không đủ nói "không mua được", cho viền ô lùi theo thì ô size đó
+     chìm hẳn một bậc so với size còn hàng.
+     Đo trên trang chạy: chữ #666 trên nền trắng ra #858585 (tương phản 5,74 ->
+     3,69), viền #dfdfdf ra #e5e5e5 — dưới 4,5 là CÓ CHỦ Ý, WCAG không tính
+     tương phản cho thành phần không khả dụng.
+     Bộ số phải GIỐNG desktop: cùng một trạng thái, hai file. Ô vẫn bấm được
+     (mở khung nhận thông báo) nên không dùng [disabled]. */
   html.skin-mt .chip.off {
     background: transparent;
     color: var(--general-muted-foreground);
-    text-decoration: line-through;
+    opacity: .8;
   }
 
   /* ── CỤM ACCORDION PDP: THANG CHỮ CỦA skin-mt (25/08/2026) ────────────────────────
@@ -3465,6 +3524,11 @@ window.RESP = (function () {
      không thấy, còn một hàng pixel mờ thì thấy.
      Ở khổ khác: 375 cho 1,34 thẻ · 430 cho 1,55 — vẫn giữ tín hiệu "còn lướt được". */
   .hm-story { flex: 0 0 264px; }
+  /* Ô của dải danh mục dưới GIỎ TRỐNG (13/09/2026). Khai bề rộng bằng CSS chứ
+     không bằng utility `w-[…]`: bản CSS của demo dựng sẵn, mọi giá trị tuỳ ý
+     không có trong bản dựng đều là class CHẾT — đo được đúng thế, ô phình ra
+     1080px theo bề rộng thật của ảnh. */
+  .cart-cat-cell { flex: 0 0 156px; }
 
 </style>
 </head>
@@ -3479,6 +3543,10 @@ window.RESP = (function () {
   <div class="flex items-center gap-2 glass-ink-95 backdrop-blur text-primary-foreground text-[12px] font-medium px-4 py-2.5 rounded-full shadow-lg whitespace-nowrap">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span id="toastMsg">Đã thêm vào giỏ</span>
+    <!-- Nút hành động của toast (11/09/2026) — nền cho "Hoàn tác" sau khi xoá món.
+         Ẩn mặc định; toast(msg, act) bật lên và gắn handler. Vạch ngăn 1px để nút
+         tách khỏi câu chữ mà không phải đổi nền hay bo thêm một lớp nữa. -->
+    <button id="toastAct" class="hidden items-center pl-2 ml-1 border-l border-white/30 font-medium underline press"></button>
   </div>
 </div>
 
@@ -3524,7 +3592,12 @@ const PRODUCTS = [
      hoa", 07/08/2026) — tên/giá/ảnh đúng như site, không còn data tự bịa.
      `sizes` = các dung tích cùng dòng mà site đang bán (dòng chỉ có 1 SKU
      thì để đúng 1 dung tích). */
-  { img:'b1.jpg', dept:'beauty', brand:'Versace',        name:'Nước hoa Crystal Noir EDP 90ml',           price:'4.406.400 ₫', sizes:['90 ml'] },
+  /* 11/09/2026 — SP LÀM ĐẸP CÓ NHIỀU DUNG TÍCH (user chốt 3 mức 30/50/90 ml).
+     Tên BỎ "90ml": dung tích nay là thứ người mua chọn, gói nó vào tên là nói
+     trước một mức. `price` giữ MỨC THẤP NHẤT vì đó là giá thẻ PLP/trang chủ bày
+     ra ("từ ..."), còn PDP đổi theo ô đang chọn qua pdpPriceNow(). */
+  { img:'b1.jpg', dept:'beauty', brand:'Versace',        name:'Nước hoa Crystal Noir EDP',                price:'1.890.000 ₫', sizes:['30 ml','50 ml','90 ml'],
+    priceBySize: { '30 ml':'1.890.000 ₫', '50 ml':'2.950.000 ₫', '90 ml':'4.406.400 ₫' } },
   { img:'b2.jpg', dept:'beauty', brand:'Versace',        name:'Nước hoa Eros Energy EDP 100ml',           price:'2.895.000 ₫', sizes:['100 ml'] },
   { img:'b3.jpg', dept:'beauty', brand:'Versace',        name:'Nước hoa Dylan Blue Pour Homme EDT 100ml', price:'2.517.000 ₫', sizes:['100 ml'] },
   { img:'b4.jpg', dept:'beauty', brand:'Dolce&Gabbana',  name:'Nước hoa The Only One EDP 100ml',          price:'4.950.000 ₫', sizes:['100 ml'] },
@@ -4369,19 +4442,6 @@ function lookRailCards(title, n, selfIdx, w, badgeAt = -1) {
     .map(({ p, i }, k) => productCard(p, i, { w, noColors: true, model: true, badge: badge(k) })).join('');
 }
 
-/* Thanh tiến trình dưới dải cuộn (09/09/2026, lệnh user kèm ảnh tham chiếu
-   Ralph Lauren "Recently Viewed"). CHỈ dựng cho "Gợi ý mua kèm" — đúng phạm vi
-   lệnh; "Sản phẩm tương tự" giữ nguyên dải trần.
-   Kiểm bằng TIÊU ĐỀ chứ không thêm cờ vào 6 chỗ gọi: 2 dải ở PDP vốn đã rẽ
-   nhánh theo tiêu đề (xem lookRailCards), thêm cờ thứ hai nói cùng một việc là
-   sớm muộn hai chỗ lệch nhau.
-   `cls` = đệm hai bên: 5 màn PDP để đệm ở chính dải nên thanh phải tự lấy
-   `.rail-bar-inset`; PDP#6 đặt px-4 ở khối cha nên truyền chuỗi rỗng. */
-function railBar(title, cls = 'rail-bar-inset') {
-  if (title !== 'Gợi ý mua kèm') return '';
-  return `<div class="rail-bar ${cls}" data-rail-bar hidden><span class="rail-thumb"></span></div>`;
-}
-
 function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false, noQuick = false } = {}) {
   /* 27/08: 'Pre-order' THÔI làm nhãn đè ảnh — nó xuống đứng trước TÊN (xem dưới).
      Chặn ngay tại đây, một chỗ, nên 6 nơi gọi vẫn truyền `badge: 'Pre-order'` như
@@ -4578,11 +4638,11 @@ const CART_BASE = [
   /* `giftStyle: 'plain'` = dùng OPTION B (khuôn dòng sản phẩm, không nền nhấn) cho
      khối quà của dòng này — bản thử 31/08, đặt ở SP#1 theo lệnh user để so trực
      tiếp với OPTION A đang chạy ở dòng túi Lou mini bên dưới. Bỏ cờ này là về A. */
-  { img:'p1-0.jpg', brand:'Versace', name:'Đầm lụa mini Broken Jewels', variant:'Broken Jewels , 39', off:'', was:'', now:'72.557.000 ₫', qty:1, sel:true, preorder: PRODUCTS[0].preorder, gift:'dressBundle', giftStyle:'plain' },
-  { img:'p8-0.jpg', brand:'Versace', name:'Túi da Lou mini',            variant:'Onesize , Black', off:'', was:'', now:'45.066.000 ₫', qty:1, sel:true, gift:'bagBundle' },
-  { img:'p5-0.jpg', brand:'Versace', name:'Giày loafer da Manu',        variant:'40 , Black',      off:'-30%', was:'50.354.000 ₫', now:'35.248.000 ₫', qty:1, sel:true },
-  { img:'p10-0.jpg',brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm', variant:'95 , Black', off:'-15%', was:'20.676.000 ₫', now:'17.575.000 ₫', qty:1, sel:true },
-  { img:'p2-0.jpg', brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant:'Onesize', off:'', was:'', now:'15.611.000 ₫', qty:1, sel:true },
+  { img:'p1-0.jpg', brand:'Versace', name:'Đầm lụa mini Broken Jewels', variant:'Broken Jewels , 39', off:'', was:'', now:'72.557.000 ₫', qty:1, sel:true, stock:5, preorder: PRODUCTS[0].preorder, gift:'dressBundle', giftStyle:'plain' },
+  { img:'p8-0.jpg', brand:'Versace', name:'Túi da Lou mini',            variant:'Onesize , Black', off:'', was:'', now:'45.066.000 ₫', qty:1, sel:true, stock:3, gift:'bagBundle' },
+  { img:'p5-0.jpg', brand:'Versace', name:'Giày loafer da Manu',        variant:'40 , Black',      off:'-30%', was:'50.354.000 ₫', now:'35.248.000 ₫', qty:1, sel:true, stock:2 },
+  { img:'p10-0.jpg',brand:'Versace', name:'Thắt lưng da mặt khóa tròn 3.5 cm', variant:'95 , Black', off:'-15%', was:'20.676.000 ₫', now:'17.575.000 ₫', qty:1, sel:true, stock:8 },
+  { img:'p2-0.jpg', brand:'Versace', name:'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant:'Onesize', off:'', was:'', now:'15.611.000 ₫', qty:1, sel:true, stock:4 },
 ];
 const CART = CART_BASE.map(c => ({ ...c }));
 
@@ -4597,6 +4657,92 @@ const CART = CART_BASE.map(c => ({ ...c }));
 [PRODUCTS, CART_BASE, CART].forEach(arr => arr.forEach(x => {
   if (x.preorder) { x.off = ''; x.was = ''; }
 }));
+
+/* ── DANH MỤC 3 CẤP CỦA TỪNG SẢN PHẨM (12/09/2026) ───────────────────────────
+   Trước lượt này cây Danh mục trong bộ lọc — phần lớn nhất của sheet, dựng từ
+   Excel của khách — BẤM VÀO KHÔNG LỌC GÌ: chọn "Quần áo" hay "Đầm ngắn" đều trả
+   đủ 40 sản phẩm. Cùng lỗ đó làm breadcrumb "Nữ › Quần áo" bày ra cả túi và giày.
+   Lý do: PRODUCTS không mang danh mục.
+
+   Gán bằng MẢNG RIÊNG theo chỉ số, KHÔNG nhét vào 48 dòng PRODUCTS: những dòng
+   đó đã dài sẵn và là dữ liệu cào từ site thật — thêm một field nữa vào đó thì
+   lần cào sau phải chép tay lại. Ở đây thì chỉ cần sửa một mảng.
+   Nhãn lấy ĐÚNG NGUYÊN VĂN từ FILTER_CATS (suy từ tên sản phẩm) — lệch một chữ
+   là facet không khớp. Đây là bản SUY, khách duyệt lại khi có danh mục chính thức. */
+const PRODUCT_CATS = [
+  ['Quần áo','Đầm & áo liền quần','Đầm ngắn'],          //  0 Đầm lụa mini Broken Jewels
+  ['Phụ kiện','Khăn','Khăn'],                            //  1 Khăn lụa 90x90
+  ['Túi xách','Túi đeo vai','Túi đeo vai'],              //  2 Túi đeo vai Emblème
+  ['Giày dép','Giày cao gót','Giày cao gót'],            //  3 Cao gót Gianni 90
+  ['Giày dép','Giày loafers & slip-ons','Giày loafers'], //  4 Loafer Manu
+  ['Giày dép','Giày thể thao','Giày thể thao'],          //  5 Sneaker Greca Court
+  ['Túi xách','Túi đeo vai','Túi đeo vai'],              //  6 Vivian East/West
+  ['Túi xách','Túi đeo vai','Túi đeo vai'],              //  7 Lou mini
+  ['Túi xách','Túi tote','Túi tote'],                    //  8 Tote Rivière
+  ['Phụ kiện','Thắt lưng','Thắt lưng'],                  //  9 Thắt lưng khóa tròn
+  ['Làm đẹp','Nước hoa','Eau de Parfum'],                // 10 Crystal Noir EDP
+  ['Làm đẹp','Nước hoa','Eau de Parfum'],                // 11 Eros Energy EDP
+  ['Làm đẹp','Nước hoa','Eau de Toilette'],              // 12 Dylan Blue EDT
+  ['Làm đẹp','Nước hoa','Eau de Parfum'],                // 13 The Only One EDP
+  ['Làm đẹp','Nước hoa','Eau de Parfum'],                // 14 Devotion EDP
+  ['Làm đẹp','Nước hoa','Eau de Parfum'],                // 15 Explorer Platinum
+  ['Làm đẹp','Nước hoa','Eau de Parfum'],                // 16 Legend Blue
+  ['Làm đẹp','Nước hoa','Eau de Parfum'],                // 17 Toy 2 Pearl
+  ['Giày dép','Giày sandals','Giày sandals'],            // 18 Sandal cao gót Medusa
+  ['Quần áo','Đầm & áo liền quần','Đầm dài'],            // 19 Đầm lụa midi
+  ['Giày dép','Giày cao gót','Giày cao gót'],            // 20 Cao gót Nyx 80
+  ['Quần áo','Đầm & áo liền quần','Đầm ngắn'],           // 21 Đầm polo tay ngắn
+  ['Quần áo','Áo thun & áo polo','Áo thun tay ngắn'],    // 22 Áo thun cotton jersey
+  ['Quần áo','Áo sơ mi & áo kiểu','Áo kiểu'],            // 23 Sơ mi lụa crop
+  ['Quần áo','Đầm & áo liền quần','Đầm dài'],            // 24 Đầm dài Carretto
+  ['Giày dép','Giày cao gót','Giày hở gót'],             // 25 Cao gót slingback
+  ['Quần áo','Chân váy','Váy midi'],                     // 26 Chân váy poplin dài
+  ['Quần áo','Áo khoác ngoài','Áo khoác ngắn'],          // 27 Áo khoác da viền gân
+  ['Phụ kiện','Thắt lưng','Thắt lưng'],                  // 28 Thắt lưng khóa DG
+  ['Giày dép','Giày loafers & slip-ons','Giày loafers'], // 29 Loafer da bê
+  ['Quần áo','Áo khoác ngoài','Áo khoác ngắn'],          // 30 Áo khoác tweed lửng
+  ['Phụ kiện','Khăn','Khăn'],                            // 31 Khăn lụa Maiolica
+  ['Túi xách','Túi xách tay','Túi xách tay'],            // 32 Sicily Carretto
+  ['Túi xách','Túi đeo vai','Túi đeo vai'],              // 33 Túi da bê Lock
+  ['Túi xách','Ví & ví đựng thẻ','Ví đựng thẻ'],         // 34 Ví đựng thẻ
+  ['Phụ kiện','Nón','Nón lưỡi trai'],                    // 35 Nón lưỡi trai
+  ['Quần áo','Đầm & áo liền quần','Đầm ngắn'],           // 36 Đầm len merino
+  ['Quần áo','Đầm & áo liền quần','Đầm dài'],            // 37 Đầm midi cổ V
+  ['Quần áo','Đầm & áo liền quần','Đầm ngắn'],           // 38 Đầm ngắn dáng xòe
+  ['Quần áo','Chân váy','Váy midi'],                     // 39 Chân váy midi chữ A
+  ['Quần áo','Áo sơ mi & áo kiểu','Áo kiểu'],            // 40 Áo kiểu ren phối nơ
+  ['Quần áo','Quần dài & quần shorts','Quần dài'],       // 41 Quần culotte len
+  ['Quần áo','Đầm & áo liền quần','Đầm dài'],            // 42 Đầm midi trễ vai
+  ['Quần áo','Đầm & áo liền quần','Đầm dài'],            // 43 Đầm maxi Indra
+  ['Quần áo','Đầm & áo liền quần','Áo liền quần'],       // 44 Playsuit cổ yếm
+  ['Quần áo','Quần dài & quần shorts','Quần jeans'],     // 45 Quần jeans ống loe
+  ['Quần áo','Áo khoác ngoài','Áo khoác ngắn'],          // 46 Áo khoác Rebellion
+  ['Quần áo','Chân váy','Váy midi'],                     // 47 Chân váy midi tulle
+];
+PRODUCTS.forEach((p, i) => { if (PRODUCT_CATS[i]) p.cat = PRODUCT_CATS[i]; });
+
+/* ── ĐIỀN SIZE CHO 10 SẢN PHẨM CÒN TRỐNG (12/09/2026) ────────────────────────
+   32/48 sản phẩm đã có `sizes` thật từ đợt dữ liệu D&G + Zimmermann (02/09):
+   nước hoa theo ml, D&G theo IT, thắt lưng theo cm (85-105), nón 57/58,
+   Zimmermann theo bảng 0-4 của hãng. Khối Versace thì không, nên `sizesOf` trả
+   về ĐÚNG MỘT bộ cho cả khối — IT 39-44, hoặc IT 36-44 nếu là giày. Hệ quả đo
+   được: tick một ô size trong bộ lọc không bỏ ra được sản phẩm nào (ai cũng có
+   mọi size), còn PDP túi xách thì bày IT 39-44.
+
+   KHÔNG đụng 6 sản phẩm đầu (0-5): đó là 6 biến thể PDP mẫu, vừa có khung Figma
+   vừa được 3 template PDP chọn sẵn chip bằng `s === '39'`. Chúng giữ bộ IT mặc
+   định, và bộ lọc cũng đọc đúng bộ đó nên PDP với bộ lọc vẫn một giọng. */
+const PRODUCT_SIZES = {
+  6:  ['Onesize'], 7: ['Onesize'], 8: ['Onesize'],      // túi Vivian · Lou · Rivière
+  9:  ['85','90','95','100'],                           // thắt lưng — cùng hệ cm với thắt lưng D&G
+  18: ['35','36','37','38','39','40'],                  // sandal Medusa
+  19: ['38','40','42','44'],                            // đầm lụa midi
+  20: ['36','37','38','39','40','41'],                  // cao gót Nyx
+  21: ['40','42','44','46'],                            // đầm polo
+  22: ['38','40','42','44','46'],                       // áo thun logo
+  23: ['38','40','42'],                                 // sơ mi lụa crop
+};
+PRODUCTS.forEach((p, i) => { if (!p.sizes && PRODUCT_SIZES[i]) p.sizes = PRODUCT_SIZES[i]; });
 
 /* ── Tiền: 2 định dạng CÓ SẴN trong project, giữ nguyên cả 2 ──
    · dòng sản phẩm dùng kiểu Việt "45.066.000 ₫" (dấu chấm, có khoảng trắng + ₫)
@@ -5056,6 +5202,9 @@ let pdpIdx = 0;
 const PDP_SCREENS = ['pdp', 'pdp2', 'pdp3', 'pdp4', 'pdp5', 'pdp6'];
 function goPdp(i) {
   pdpIdx = Number(i) || 0;
+  /* Mã sản phẩm không có thật -> màn "sản phẩm không còn" (11/09/2026). Trước đây
+     rơi vào screenPDP rồi ném TypeError ngay dòng đọc `P.img`: trang trắng. */
+  if (!PRODUCTS[pdpIdx]) { go('pdpGone'); return; }
   const name = PDP_SCREENS[pdpIdx] || 'pdp';
   /* Đang đứng sẵn ở `pdp` mà bấm sang SP khác: go() thấy trùng tên màn là return
      luôn, phải ép dựng lại — cùng cách goPlp() xử. */
@@ -5179,7 +5328,10 @@ function screenPLPList() {
       <div class="flex items-center justify-between h-9">
         <button data-sheet="filter" class="t-multiline flex items-center gap-2 px-3 h-9 rounded-xs border border-primary bg-background text-foreground btn-o press">${I.sliders} Bộ lọc</button>
         <div class="relative">
-          <button id="sortBtn" class="t-single flex items-center gap-2 px-3 h-9 text-foreground press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
+          <!-- 12/09/2026: nút nay NÓI RA kiểu đang sắp. Trước đó luôn ghi trơ
+               "Sắp xếp" dù đang sắp theo giá — muốn biết phải mở menu ra xem ô
+               nào đang tick. Bản desktop vốn đã có nhãn này. -->
+          <button id="sortBtn" class="t-single flex items-center gap-2 px-3 h-9 text-foreground press"><span id="sortBtnLabel">${plpSort === 'relevance' ? 'Sắp xếp' : (SORT_OPTIONS.find(o => o[0] === plpSort) || [, 'Sắp xếp'])[1]}</span> ${I.chevD('#0a0a0a')}</button>
           <div id="sortMenu" class="hidden absolute mt-1 bg-background z-50" style="right:0;top:100%;width:240px">
             ${SORT_OPTIONS.map(([id, label]) => `
               <button class="t-multiline sort-opt w-full text-left px-4 h-11 flex items-center justify-between ${id === plpSort ? 'font-medium text-foreground' : 'text-foreground-alt'}" data-sort="${id}">
@@ -5191,6 +5343,7 @@ function screenPLPList() {
       </div>
     </div>
 
+    <div id="plpChips" class="hidden"></div>
     <div id="plpGrid" class="grid ${plpGridCols === '1' ? 'grid-cols-1' : 'grid-cols-2'} gap-x-0.5 px-0.5 pt-2" style="row-gap:24px">
       ${plpGridInner(sortedProducts(), card)}
     </div>
@@ -5315,7 +5468,10 @@ function screenPLP() {
       <div class="flex items-center justify-between h-9">
         <button data-sheet="filter" class="t-multiline flex items-center gap-2 px-3 h-9 rounded-xs border border-primary bg-background text-foreground btn-o press">${I.sliders} Bộ lọc</button>
         <div class="relative">
-          <button id="sortBtn" class="t-single flex items-center gap-2 px-3 h-9 text-foreground press">Sắp xếp ${I.chevD('#0a0a0a')}</button>
+          <!-- 12/09/2026: nút nay NÓI RA kiểu đang sắp. Trước đó luôn ghi trơ
+               "Sắp xếp" dù đang sắp theo giá — muốn biết phải mở menu ra xem ô
+               nào đang tick. Bản desktop vốn đã có nhãn này. -->
+          <button id="sortBtn" class="t-single flex items-center gap-2 px-3 h-9 text-foreground press"><span id="sortBtnLabel">${plpSort === 'relevance' ? 'Sắp xếp' : (SORT_OPTIONS.find(o => o[0] === plpSort) || [, 'Sắp xếp'])[1]}</span> ${I.chevD('#0a0a0a')}</button>
           <div id="sortMenu" class="hidden absolute mt-1 bg-background z-50" style="right:0;top:100%;width:240px">
             ${SORT_OPTIONS.map(([id, label]) => `
               <button class="t-multiline sort-opt w-full text-left px-4 h-11 flex items-center justify-between ${id === plpSort ? 'font-medium text-foreground' : 'text-foreground-alt'}" data-sort="${id}">
@@ -5328,6 +5484,7 @@ function screenPLP() {
     </div>
 
     <!-- grid -->
+    <div id="plpChips" class="hidden"></div>
     <div id="plpGrid" class="grid ${plpGridCols === '1' ? 'grid-cols-1' : 'grid-cols-2'} gap-x-0.5 px-0.5 pt-2" style="row-gap:24px">
       ${plpGridInner(sortedProducts(), card)}
     </div>
@@ -5564,9 +5721,12 @@ function screenPDP() {
     <div class="relative w-full bg-secondary" style="height:520px">
       <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
         ${gallery.map((s, i) => `
-          <div class="w-full h-full shrink-0 snap-center relative">
+          <!-- 11/09/2026: ô ảnh thành NÚT mang data-zoom, y khuôn PDP4 vốn đã có
+               từ trước — bản mobile trước lượt này chạm vào ảnh không mở gì, trong
+               khi lớp phóng to (#zoomBox + window.__openZoom) đã sẵn sàng. -->
+          <button class="zoomable w-full h-full shrink-0 snap-center relative block" data-zoom="${A}${s}">
             <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
-          </div>`).join('')}
+          </button>`).join('')}
       </div>
       <!-- 28/08: badge "Đặt trước" THÔI đè ảnh — xuống đứng trước TÊN (xem header),
            đồng bộ với PLP 27/08. Chồng nhãn trên ảnh chỉ còn nhãn chiến dịch. -->
@@ -5599,7 +5759,8 @@ function screenPDP() {
       </div>
       <div class="flex flex-col gap-2">
         <div class="flex gap-1.5 items-center">
-          <p class="t-single font-medium ${P.off ? 'text-destructive' : 'text-foreground'}">${P.price}</p>
+          <!-- id để đổi giá tại chỗ khi chọn dung tích khác (11/09/2026) -->
+          <p id="pdpPrice" class="t-single font-medium ${P.off ? 'text-destructive' : 'text-foreground'}">${pdpPriceNow(P)}</p>
           ${P.off ? `<span class="t-multiline bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive">${P.off}</span>` : ''}
           ${P.was ? `<p class="t-multiline text-muted-foreground line-through">${P.was}</p>` : ''}
         </div>
@@ -5678,13 +5839,12 @@ function screenPDP() {
     </div>
 
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
-    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
+    ${[['Gợi ý mua kèm', 3], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
       <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
         <p class="px-4 text-[18px] font-medium leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
         </div>
-        ${railBar(title)}
       </div>`).join('')}
 
     ${camKetSection()}
@@ -5894,9 +6054,12 @@ function screenPDP2() {
     <div class="relative w-full bg-secondary" style="height:520px">
       <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
         ${gallery.map(s => `
-          <div class="w-full h-full shrink-0 snap-center relative">
+          <!-- 11/09/2026: ô ảnh thành NÚT mang data-zoom, y khuôn PDP4 vốn đã có
+               từ trước — bản mobile trước lượt này chạm vào ảnh không mở gì, trong
+               khi lớp phóng to (#zoomBox + window.__openZoom) đã sẵn sàng. -->
+          <button class="zoomable w-full h-full shrink-0 snap-center relative block" data-zoom="${A}${s}">
             <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
-          </div>`).join('')}
+          </button>`).join('')}
       </div>
       <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
         <span class="t-single badge-label px-2 py-1 font-medium text-foreground">New Season</span>
@@ -5976,13 +6139,12 @@ function screenPDP2() {
     </div>
 
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
-    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
+    ${[['Gợi ý mua kèm', 3], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
       <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
         <p class="px-4 text-[18px] font-medium leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
         </div>
-        ${railBar(title)}
       </div>`).join('')}
 
     ${camKetSection()}
@@ -6021,9 +6183,12 @@ function screenPDP3() {
     <div class="relative w-full bg-secondary" style="height:520px">
       <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
         ${gallery.map(s => `
-          <div class="w-full h-full shrink-0 snap-center relative">
+          <!-- 11/09/2026: ô ảnh thành NÚT mang data-zoom, y khuôn PDP4 vốn đã có
+               từ trước — bản mobile trước lượt này chạm vào ảnh không mở gì, trong
+               khi lớp phóng to (#zoomBox + window.__openZoom) đã sẵn sàng. -->
+          <button class="zoomable w-full h-full shrink-0 snap-center relative block" data-zoom="${A}${s}">
             <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
-          </div>`).join('')}
+          </button>`).join('')}
       </div>
       <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
         <span class="t-single badge-label px-2 py-1 font-medium text-foreground">New Season</span>
@@ -6102,13 +6267,12 @@ function screenPDP3() {
     </div>
 
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 -->
-    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
+    ${[['Gợi ý mua kèm', 3], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
       <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
         <p class="px-4 text-[18px] font-medium leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
         </div>
-        ${railBar(title)}
       </div>`).join('')}
 
     ${camKetSection()}
@@ -6225,13 +6389,12 @@ function screenPDP4() {
     </div>
 
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
-    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
+    ${[['Gợi ý mua kèm', 3], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
       <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
         <p class="px-4 text-[18px] font-medium leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
         </div>
-        ${railBar(title)}
       </div>`).join('')}
 
     ${camKetSection()}
@@ -7054,9 +7217,12 @@ function screenPDP5() {
     <div class="relative w-full bg-secondary" style="height:520px">
       <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
         ${gallery.map(s => `
-          <div class="w-full h-full shrink-0 snap-center relative">
+          <!-- 11/09/2026: ô ảnh thành NÚT mang data-zoom, y khuôn PDP4 vốn đã có
+               từ trước — bản mobile trước lượt này chạm vào ảnh không mở gì, trong
+               khi lớp phóng to (#zoomBox + window.__openZoom) đã sẵn sàng. -->
+          <button class="zoomable w-full h-full shrink-0 snap-center relative block" data-zoom="${A}${s}">
             <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
-          </div>`).join('')}
+          </button>`).join('')}
       </div>
       <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
         <span class="t-single badge-label px-2 py-1 font-medium text-foreground">New Season</span>
@@ -7147,13 +7313,12 @@ function screenPDP5() {
     </div>
 
     <!-- Recently Viewed ×3: Card-item 254px gap 4 -->
-    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
+    ${[['Gợi ý mua kèm', 3], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
       <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
         <p class="px-4 text-[18px] font-medium leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
         </div>
-        ${railBar(title)}
       </div>`).join('')}
 
     ${camKetSection()}
@@ -7194,9 +7359,12 @@ function screenPDP6() {
     <div class="relative w-full bg-secondary" style="height:520px">
       <div id="pdpGallery" class="drag-x flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar">
         ${gallery.map(s => `
-          <div class="w-full h-full shrink-0 snap-center relative">
+          <!-- 11/09/2026: ô ảnh thành NÚT mang data-zoom, y khuôn PDP4 vốn đã có
+               từ trước — bản mobile trước lượt này chạm vào ảnh không mở gì, trong
+               khi lớp phóng to (#zoomBox + window.__openZoom) đã sẵn sàng. -->
+          <button class="zoomable w-full h-full shrink-0 snap-center relative block" data-zoom="${A}${s}">
             <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
-          </div>`).join('')}
+          </button>`).join('')}
       </div>
       <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
         <span class="t-single badge-label px-2 py-1 font-medium tracking-[0.004em] text-foreground">New Season</span>
@@ -7275,13 +7443,12 @@ function screenPDP6() {
     </div>
 
     <!-- Recently Viewed ×3: pad 24,16 · gap 16 · title Regular 20/28 ls .5% căn TRÁI -->
-    ${[['Gợi ý mua kèm', 5], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
+    ${[['Gợi ý mua kèm', 3], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
       <div class="flex flex-col gap-4 px-4 mt-10 pb-6 reveal">
         <p class="text-[18px] font-medium leading-7 tracking-[0.005em] text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0', 3)}
         </div>
-        ${railBar(title, '')}
       </div>`).join('')}
 
     ${camKetSection()}
@@ -7515,7 +7682,7 @@ function hmHero() {
             <div class="hm-hero-copy">
               <p class="text-[18px] font-medium leading-7 text-primary-foreground" data-i18n-skip>${alt}</p>
               ${sub ? `<p class="t-multiline text-primary-foreground" data-i18n-skip>${sub}</p>` : ''}
-              <button data-hm-cat="${cat}" class="t-lead h-12 px-8 w-fit rounded-xs border border-border bg-background text-foreground btn-o press">${HM_HERO_CTA}</button>
+              <button data-hm-cat="${cat}" class="t-lead h-12 px-8 w-fit rounded-xs border border-border bg-background text-foreground btn-o btn-oi press">${HM_HERO_CTA}</button>
             </div>
           </div>`).join('')}
         </div>
@@ -7863,7 +8030,7 @@ function hmMaison() {
           </div>
           <p class="t-lead text-primary-foreground">${HM_SPOT_HEADLINE}</p>
           ${HM_MAISON_COPY ? `<p class="t-multiline text-primary-foreground">${HM_MAISON_COPY}</p>` : ''}
-          <button data-hm-brand="${HM_MAISON}" class="t-lead h-12 px-8 w-fit border border-border bg-background text-foreground btn-o press">Mua ngay</button>
+          <button data-hm-brand="${HM_MAISON}" class="t-lead h-12 px-8 w-fit border border-border bg-background text-foreground btn-o btn-oi press">Mua ngay</button>
         </div>
       </div>
       ${HM_SPOT_BELOW === 'brands' ? '' : hmRail(list)}
@@ -8553,13 +8720,21 @@ const cartItems = () => CART.filter(c => !c.removed);
    tick lại. Mọi chỗ coi giỏ là "đơn hàng" (thanh toán, tóm tắt, chốt đơn) phải
    dùng cartSelected(), không thì màn thanh toán liệt kê 4 món mà chỉ tính tiền
    3 món. */
-const cartSelected = () => CART.filter(c => !c.removed && c.sel !== false);
+/* `stock === 0` bị loại KHỎI ĐÂY chứ không phải khỏi cartItems(): món hết hàng
+   vẫn phải nằm trong danh sách cho người ta thấy và tự xoá, nhưng không được
+   góp một đồng nào vào tạm tính, vào điều kiện mã, hay vào đơn đặt ra
+   (11/09/2026). */
+const cartSelected = () => CART.filter(c => !c.removed && c.sel !== false && c.stock !== 0);
 /* Điểm thưởng của đơn: demo dùng đúng tỉ lệ 1 điểm / 100.000 ₫ (giỏ mặc định
    186.057.000 ₫ khi tick đủ 5 món -> 1.860 điểm; con số tự tính nên thêm/bớt
    món là các màn tự khớp theo). */
 const rewardPointsEarned = () => Math.floor(cartSubtotal() / 100000);
 function cartSubtotal() {
-  return cartItems().reduce((s, c) => s + (c.sel === false ? 0 : vndNum(c.now) * (c.qty || 1)), 0);
+  /* Đi qua cartSelected() chứ KHÔNG tự lọc lại (sửa 11/09/2026): trước đây chỗ này
+     chép lại luật "bỏ qua món chưa tick", nên khi thêm luật "món hết hàng không
+     tính tiền" vào cartSelected() thì tạm tính vẫn cộng cả món hết hàng — hai nơi
+     giữ hai bản của cùng một luật là hai nơi phải nhớ sửa. */
+  return cartSelected().reduce((s, c) => s + vndNum(c.now) * (c.qty || 1), 0);
 }
 /* Mốc đã đạt (theo thứ tự mốc) và mốc kế tiếp chưa đạt — dùng cho khối quà
    theo đơn và dòng gợi ý "mua thêm ... để nhận ...". */
@@ -8579,6 +8754,15 @@ function orderGiftState() {
 const REWARD_POINTS = 1240;      // = "Điểm thưởng hiện có" ở tab Điểm thưởng (accPoints) — 2 nơi phải cùng 1 số
 const REWARD_POINT_VALUE = 1000;
 let cartReward = 'points';       // 'member' | 'points'
+/* 13/09/2026 — brief PDF trang 25 ("Sử dụng điểm thưởng opt > show box để nhập
+   điểm và thông báo đã dùng bao nhiêu điểm"): trước đây chọn "points" là DÙNG HẾT
+   luôn (REWARD_POINTS, kẹp trần 10%), không cho sửa. Nay `cartPointsUsed` giữ số
+   điểm NGƯỜI DÙNG CHỌN — mặc định = trần khả dụng (giữ hành vi cũ khi vừa chọn),
+   ô nhập ở dafcRewards() cho sửa xuống. Kẹp trần tính ở maxUsablePoints(). */
+let cartPointsUsed = REWARD_POINTS;
+function maxUsablePoints() {
+  return Math.min(REWARD_POINTS, Math.floor(cartSubtotal() * 0.10 / REWARD_POINT_VALUE));
+}
 let cartPbh = [];                // [{code, amount}] — phiếu mua hàng đang áp, có thể nhiều mã cùng lúc
 
 /* ── Kho ưu đãi (yêu cầu user 17/08/2026) ──
@@ -8602,15 +8786,15 @@ const VOUCHER_GROUPS = [
   { key: 'bulk',  title: 'Ưu đãi mua nhiều' },
 ];
 const VOUCHERS = [
-  { code: 'HOATOC2H', group: 'ship',  type: 'ship',    worth: 150000,  title: 'Miễn phí giao hoả tốc 2 giờ', note: 'Nội thành Hà Nội và TP.HCM',    minSub: 5000000,   exp: '31/08/2026', prog: 'DAFC Express' },
+  { code: 'HOATOC2H', group: 'ship',  type: 'ship',    worth: 150000,  title: 'Miễn phí giao hoả tốc 2 giờ', note: 'Nội thành Hà Nội và TP.HCM',    minSub: 5000000,   exp: '30/09/2026', prog: 'DAFC Express' },
   { code: 'SHIPQT',   group: 'ship',  type: 'ship',    worth: 2500000, title: 'Miễn phí giao hàng quốc tế',  note: 'Áp dụng cho đơn giao ngoài Việt Nam', minSub: 250000000, exp: '30/09/2026', prog: 'DAFC Global' },
 
-  { code: 'JUL1500',  group: 'promo', type: 'amount',  amount: 1500000, minSub: 16000000, exp: '31/08/2026', prog: 'WARDROBE REFRESH' },
-  { code: 'JUL1000',  group: 'promo', type: 'amount',  amount: 1000000, minSub: 11000000, exp: '31/08/2026', prog: 'WARDROBE REFRESH' },
-  { code: 'JUL500',   group: 'promo', type: 'amount',  amount: 500000,  minSub: 8000000,  exp: '31/08/2026', prog: 'WARDROBE REFRESH' },
+  { code: 'JUL1500',  group: 'promo', type: 'amount',  amount: 1500000, minSub: 16000000, exp: '30/09/2026', prog: 'WARDROBE REFRESH' },
+  { code: 'JUL1000',  group: 'promo', type: 'amount',  amount: 1000000, minSub: 11000000, exp: '30/09/2026', prog: 'WARDROBE REFRESH' },
+  { code: 'JUL500',   group: 'promo', type: 'amount',  amount: 500000,  minSub: 8000000,  exp: '30/09/2026', prog: 'WARDROBE REFRESH' },
 
-  { code: 'BMSM10',   group: 'bulk',  type: 'percent', pct: 10, cap: 3000000, minQty: 3, exp: '24/08/2026', prog: 'BUY MORE SAVE MORE' },
-  { code: 'BMSM5',    group: 'bulk',  type: 'percent', pct: 5,  cap: 1500000, minQty: 2, exp: '24/08/2026', prog: 'BUY MORE SAVE MORE' },
+  { code: 'BMSM10',   group: 'bulk',  type: 'percent', pct: 10, cap: 3000000, minQty: 3, exp: '30/09/2026', prog: 'BUY MORE SAVE MORE' },
+  { code: 'BMSM5',    group: 'bulk',  type: 'percent', pct: 5,  cap: 1500000, minQty: 2, exp: '30/09/2026', prog: 'BUY MORE SAVE MORE' },
 
   { code: 'JUNE2000', group: 'promo', type: 'amount', amount: 2000000, exp: '30/06/2026', prog: 'JUNE SALE', hidden: true },
   { code: 'JUNE900',  group: 'promo', type: 'amount', amount: 900000,  exp: '30/06/2026', prog: 'JUNE SALE', hidden: true },
@@ -8630,16 +8814,51 @@ function voucherTitle(v) {
 const voucherByCode = code => VOUCHERS.find(v => v.code === code);
 /* Số sản phẩm ĐANG TICK (nhân số lượng) — điều kiện của nhóm "mua nhiều" */
 const cartSelectedQty = () => cartSelected().reduce((s, c) => s + (c.qty || 1), 0);
+
+/* ── BA TRẠNG THÁI CỦA MỘT DÒNG GIỎ (11/09/2026, lệnh user "dựng demo luôn") ──
+   Cả ba đều là chuyện xảy ra GIỮA lúc bỏ vào giỏ và lúc trả tiền, nên chỗ báo
+   phải là chính dòng hàng đó — không phải một lớp nổi chặn cả trang, cũng không
+   phải một toast bay đi mất.
+     · hết hàng      -> mực đỏ, dòng bị làm mờ, bỏ tick và khoá tick
+     · vượt tồn kho  -> mực hổ phách, chỉ nhắc, KHÔNG chặn (số lượng đã bị kẹp)
+     · đổi giá       -> mực thường + giá cũ gạch ngang, để so được ngay
+   Dùng `t-single` 12/16 như dòng phân loại: đây là chú thích của dòng, không
+   phải một bậc thông tin mới. */
+function cartRowNote(c) {
+  if (!c) return '';
+  if (c.stock === 0)
+    return `<p class="cart-note t-single text-destructive pt-1">Sản phẩm đã hết hàng</p>`;
+  if (c.stock != null && (c.qty || 1) >= c.stock)
+    return `<p class="cart-note t-single pt-1" style="color:var(--general-warning,#a1670a)">Chỉ còn ${c.stock} sản phẩm</p>`;
+  if (c.priceWas)
+    return `<p class="cart-note t-single text-foreground-alt pt-1">Giá đã thay đổi, trước là <span class="line-through">${c.priceWas}</span></p>`;
+  return '';
+}
 /* Điều kiện áp mã tính trên GIỎ HIỆN TẠI: bỏ tick / giảm số lượng là mã có thể
    rớt điều kiện — xem pruneVouchers(). */
+/* ── HẠN DÙNG (11/09/2026, lệnh user) ─────────────────────────────────────────
+   Trước lượt này KHÔNG có chỗ nào đọc `exp`: gõ JUNE2000 (hết hạn 30/06/2026, cờ
+   `hidden`) là demo nhận và trừ 2.000.000đ. Ngày trong catalog ghi kiểu Việt
+   "dd/mm/yyyy" nên phải tự tách, `new Date('30/06/2026')` trả Invalid Date.
+   So tới HẾT ngày hết hạn (cộng 1 ngày rồi so "nhỏ hơn"): mã ghi 30/09 thì suốt
+   ngày 30/09 vẫn dùng được, đúng cách người ta đọc một tờ voucher. */
+function voucherExpired(v) {
+  if (!v || !v.exp) return false;
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(v.exp).trim());
+  if (!m) return false;                       // ngày lạ -> KHÔNG tự ý chặn
+  const end = new Date(+m[3], +m[2] - 1, +m[1] + 1);
+  return new Date() >= end;
+}
 function voucherEligible(v) {
   if (!v) return false;
+  if (voucherExpired(v)) return false;
   if (v.minSub && cartSubtotal() < v.minSub) return false;
   if (v.minQty && cartSelectedQty() < v.minQty) return false;
   return true;
 }
 /* Lý do chưa dùng được — hiện ngay trên thẻ ưu đãi (thay vì chỉ làm mờ nó) */
 function voucherBlockReason(v) {
+  if (voucherExpired(v)) return `Mã đã hết hạn ngày ${v.exp}`;
   if (v.minSub && cartSubtotal() < v.minSub) return `Mua thêm ${(v.minSub - cartSubtotal()).toLocaleString('en-US')}đ để dùng mã`;
   if (v.minQty && cartSelectedQty() < v.minQty) return `Cần mua từ ${v.minQty} sản phẩm`;
   return '';
@@ -8655,16 +8874,53 @@ const cartVoucherTotal  = () => activeVouchers().reduce((s, v) => s + voucherVal
 /* Giỏ teo lại (bỏ tick / bớt số lượng) thì mã hết điều kiện phải TỰ RỚT, không
    thì tóm tắt in ra một khoản giảm mà đơn không được hưởng. Trả về danh sách mã
    vừa rớt để chỗ gọi báo cho người dùng biết. */
+/* ÁP MỘT MÃ — luật gốc, dùng chung cho ô nhập ở GIỎ và ô nhập ở THANH TOÁN
+   (11/09/2026). Trả về { err } để chỗ gọi tự quyết định báo ở đâu: ở giỏ là dòng
+   đỏ dưới ô, ở thanh toán cũng vậy — nhưng hàm này không được biết chuyện đó.
+   Luật 1 mã / nhóm giữ nguyên: mã mới ĐẨY mã cũ cùng nhóm ra (các mã trong một
+   nhóm là các mức của cùng một chương trình), và trả `replaced` để báo cho đúng. */
+function cartApplyCode(raw) {
+  const code = String(raw || '').trim().toUpperCase();
+  if (!code) return { err: '' };
+  const v = voucherByCode(code);
+  if (!v) return { err: 'Mã không hợp lệ' };
+  if (cartVouchers.includes(code)) return { err: 'Mã đã được áp dụng' };
+  if (!voucherEligible(v)) return { err: voucherBlockReason(v) };
+  const old = cartVouchers.find(c => { const o = voucherByCode(c); return o && o.group === v.group; });
+  cartVouchers = cartVouchers.filter(c => c !== old).concat(code);
+  return { ok: true, code, replaced: old };
+}
+
 function pruneVouchers() {
   const dropped = cartVouchers.filter(c => !voucherEligible(voucherByCode(c)));
   if (dropped.length) cartVouchers = cartVouchers.filter(c => !dropped.includes(c));
   return dropped;
 }
 
+/* ── ƯỚC TÍNH PHÍ VẬN CHUYỂN (11/09/2026, lệnh user "dựng demo luôn") ─────────
+   Trước lượt này giỏ KHÔNG nói gì về phí giao: người mua thấy "Tổng cộng" ở giỏ,
+   sang thanh toán mới biết còn một khoản nữa — đúng chỗ dễ mất đơn nhất.
+   Mốc miễn phí lấy ĐÚNG con số đang quảng cáo ở khối "Chương trình khuyến mãi"
+   (Miễn phí vận chuyển cho đơn hàng từ 8 triệu), không đẻ thêm một mốc thứ hai.
+   Ba đường về 0đ, theo thứ tự đọc:
+     · giỏ chưa chọn món nào  -> không có gì để giao
+     · đang áp mã vận chuyển  -> mã lo phần này
+     · tạm tính đã qua mốc    -> chương trình lo phần này
+   Gọi là "ƯỚC TÍNH" vì phí thật còn phụ thuộc địa chỉ, chốt ở màn thanh toán. */
+const SHIP_FEE = 50000;
+const SHIP_FREE_FROM = 8000000;
+function cartShipFee() {
+  const sub = cartSubtotal();
+  if (sub <= 0) return 0;
+  if (activeVouchers().some(v => v.type === 'ship')) return 0;
+  if (sub >= SHIP_FREE_FROM) return 0;
+  return SHIP_FEE;
+}
+
 function rewardAmount(kind) {
   const sub = cartSubtotal();
   if (kind === 'member') return Math.round(sub * 0.04);
-  if (kind === 'points') return Math.min(REWARD_POINTS * REWARD_POINT_VALUE, Math.round(sub * 0.10));
+  if (kind === 'points') return Math.min(cartPointsUsed * REWARD_POINT_VALUE, Math.round(sub * 0.10));
   return 0;
 }
 
@@ -8915,10 +9171,16 @@ function giftSummaryRow(pk, g, big) {
   /* Bản big: giá 0 ₫ ghim đáy cột thông tin (justify-between) — cùng khuôn với
      dòng sản phẩm của tóm tắt checkout sau chỉnh 14/08/2026, không thì trong
      cùng danh sách giá món thường nằm đáy mà giá quà lại nằm giữa cạnh phải. */
+  /* 13/09/2026 — rà lại rule typo trang giỏ (user yêu cầu): 2 dòng dưới đổi từ
+     utility rời `text-[12px]` (không cặp line-height, "tự chế" ngoài thang) sang
+     `.t-multiline` (12/18) — đúng bậc đã dùng cho tên sản phẩm ở hàng giỏ chính
+     (`row()`), cùng vai "tên phụ" nên phải cùng class ngữ nghĩa, không phải cỡ
+     rời dù ra cùng 12px. Hàm này còn dùng lại ở checkout/Hoàn tất nên sửa 1 chỗ
+     là khớp lại cả 3 nơi. */
   const info = `
                   <p class="t-multiline font-medium text-foreground truncate">${g.brand}</p>
-                  <p class="text-[12px] text-secondary-foreground ${big ? 'line-clamp-2' : 'truncate'}">${g.name}</p>
-                  <p class="text-[12px] text-muted-foreground ${big ? 'mt-0.5' : ''} truncate">${p.name}</p>`;
+                  <p class="t-multiline text-secondary-foreground ${big ? 'line-clamp-2' : 'truncate'}">${g.name}</p>
+                  <p class="t-multiline text-muted-foreground ${big ? 'mt-0.5' : ''} truncate">${p.name}</p>`;
   return `
               <div class="flex gap-3 ${big ? '' : 'items-center'}">
                 <span class="relative ${big ? 'w-[100px] h-[133px]' : 'w-[52px] h-[60px]'} shrink-0 bg-secondary overflow-hidden">
@@ -8948,25 +9210,50 @@ function dafcRewards() {
      dải xám nên khối 6c cấp cho nó mặt trắng; markup vẫn để nguyên khung cho bộ da
      mặc định. Title đổi chữ từ "Ưu đãi chương trình DAFC Rewards" để nhãn nhóm viết
      hoa không đụng luật cấm hoa tên chương trình.)* */
-  const opt = (id, title, sub) => {
+  /* 13/09/2026 — ô nhập số điểm dời VÀO TRONG khung "Sử dụng điểm thưởng" (trước
+     là 1 hàng rời nằm dưới cả 2 khung, theo yêu cầu user). Card đổi từ <button>
+     đơn sang <div class="opt"> bọc ngoài + <button data-reward> chỉ ôm hàng
+     radio/chữ — <input> không được lồng trong <button> (HTML không cho phép nội
+     dung tương tác lồng nhau); border/nền "đang chọn" (.opt.on) chuyển ra div
+     ngoài, JS wire() đọc theo `closest('[data-reward-card]')` thay vì chính nút. */
+  const opt = (id, title, sub, extra) => {
     const on = cartReward === id;
     return `
-    <button class="opt ${on ? 'on' : ''} w-full flex gap-2 items-start border ${on ? 'border-border-5' : 'border-border'} rounded-xs px-3 py-2 press text-left" data-reward="${id}">
-      <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border-2 ${on ? 'border-primary' : 'border-border'} flex items-center justify-center shrink-0">
-        <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
-      </span>
-      <span class="flex-1 min-w-0 flex flex-col gap-1">
-        <span class="t-multiline block font-medium text-foreground-alt">${title}</span>
-        <span class="t-single block text-muted-foreground">${sub}</span>
-      </span>
-    </button>`;
+    <div class="opt ${on ? 'on' : ''} border ${on ? 'border-border-5' : 'border-border'} rounded-xs" data-reward-card="${id}">
+      <button class="w-full flex gap-2 items-start px-3 py-2 press text-left" data-reward="${id}">
+        <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border-2 ${on ? 'border-primary' : 'border-border'} flex items-center justify-center shrink-0">
+          <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+        </span>
+        <span class="flex-1 min-w-0 flex flex-col gap-1">
+          <span class="t-multiline block font-medium text-foreground-alt">${title}</span>
+          <span class="t-single block text-muted-foreground">${sub}</span>
+        </span>
+      </button>
+      ${extra || ''}
+    </div>`;
   };
-  const pointsSub = `Đã áp dụng <b class="font-medium text-foreground">${REWARD_POINTS.toLocaleString('vi-VN')} điểm</b> ( 1 điểm = ${REWARD_POINT_VALUE.toLocaleString('en-US')}đ ).`;
+  const maxPts = maxUsablePoints();
+  if (cartPointsUsed > maxPts) cartPointsUsed = maxPts;
+  /* Luôn NẰM SẴN trong DOM (ẩn bằng .hidden khi chưa chọn "points"), không dựng/
+     xoá theo lượt chọn radio — handler đổi radio chỉ toggle class, không render
+     lại, nên input phải là phần tử ổn định để khỏi mất giá trị đang gõ.
+     pl-8 (32px) canh GẦN ĐÚNG cột chữ của hàng trên (px-3 12 + icon 16 + gap-2 8 =
+     36 — pl-9 không có trong bản build, lệch 4px không đáng kể so với dựng riêng
+     một class chết hay dùng style nội tuyến). */
+  const pointsExtra = `
+    <div id="pointsInputWrap" class="${cartReward === 'points' ? '' : 'hidden'} flex items-center gap-2 pl-8 pr-3 pb-3">
+      <input id="pointsInput" type="number" inputmode="numeric" min="0" max="${maxPts}" value="${cartPointsUsed}"
+             class="t-single w-20 h-9 border border-border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+      <span class="t-single text-muted-foreground">/ ${maxPts.toLocaleString('vi-VN')} điểm tối đa</span>
+    </div>`;
   return `
   <div id="rewardOpts" class="flex flex-col gap-2">
     ${opt('member', 'Giảm giá thành viên', 'Ưu đãi 4% trên sản phẩm nguyên giá')}
-    ${opt('points', 'Sử dụng điểm thưởng ( tối đa 10% )', pointsSub)}
+    ${opt('points', 'Sử dụng điểm thưởng ( tối đa 10% )', pointsSubText(), pointsExtra)}
   </div>`;
+}
+function pointsSubText() {
+  return `Đã dùng <b id="pointsUsedVal" class="font-medium text-foreground">${cartPointsUsed.toLocaleString('vi-VN')} điểm</b> ( 1 điểm = ${REWARD_POINT_VALUE.toLocaleString('en-US')}đ ).`;
 }
 
 /* ── 09/09/2026 — TRỞ LẠI Ô NHẬP MÃ GÕ TAY (chốt khách) ──
@@ -8998,6 +9285,48 @@ function cartPbhTotal() { return cartPbh.reduce((s, p) => s + p.amount, 0); }
    Theo đúng Figma 3437:55820: MỖI mã (voucher hoặc phiếu mua hàng) có 1 dòng
    riêng dạng "Giảm giá(<CODE>)" — cả 2 loại dùng CHUNG format nhãn này, không
    gộp/rút gọn thành 1 dòng tổng như bản trước. */
+/* Ô NHẬP MÃ Ở MÀN THANH TOÁN (11/09/2026, lệnh user "dựng demo luôn").
+   Trước lượt này quên mã ở giỏ là phải quay lui một màn để gõ — mà giỏ thì nằm
+   sau nút "Đặt hàng" nên quay lui là mất hết những gì vừa điền.
+   Đặt NGAY TRÊN khối tiền, không nhét vào một mục đóng-mở: người đang ở bước cuối
+   mà còn phải đi tìm chỗ gõ mã thì thà quay lui thật.
+   Dùng lại y khuôn ô nhập của giỏ (input h-10 + nút Áp dụng bg-secondary) — cùng
+   một việc thì cùng một mặt. */
+function ckCodeRow() {
+  return `
+    <div class="flex flex-col gap-2 py-3">
+      <p class="t-single font-medium text-foreground">Mã ưu đãi</p>
+      <div class="flex gap-1">
+        <input id="ckCode" placeholder="Nhập mã ưu đãi" class="t-multiline flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+        <button id="ckApplyCode" disabled class="t-multiline h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
+      </div>
+      <div id="ckCodeList" class="${cartVouchers.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
+    </div>`;
+}
+
+/* Hàng chip mã đang áp ở màn thanh toán — sinh lại từ state mỗi lượt, y như
+   renderVoucherUI() của giỏ. Gỡ mã xong dựng lại cả màn: bỏ một mã là mọi dòng
+   tiền bên dưới đổi theo. */
+function renderCkCodes(root) {
+  if (!root) return;
+  const list = root.querySelector('#ckCodeList');
+  if (!list) return;
+  list.className = cartVouchers.length ? 'flex gap-2 flex-wrap' : 'hidden';
+  list.innerHTML = cartVouchers.map(c => `
+    <span class="vc-badge bg-secondary rounded flex items-center gap-1.5 px-2 py-0.5 h-6" data-vc-code="${c}">
+      <span data-i18n-skip class="t-single font-medium text-secondary-foreground truncate max-w-[140px]">${c}</span>
+      <button class="vc-del w-3 h-3 flex items-center justify-center shrink-0 press [&_svg]:w-3 [&_svg]:h-3" aria-label="Gỡ mã">${IcoCross}</button>
+    </span>`).join('');
+  list.querySelectorAll('.vc-del').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    const code = b.closest('.vc-badge').dataset.vcCode;
+    cartVouchers = cartVouchers.filter(c => c !== code);
+    const scr = document.querySelector('[data-screen="checkout"]');
+    if (scr) rerenderCheckout(scr);
+    toast('Đã gỡ ' + code);
+  }));
+}
+
 function discountLinesHTML() {
   /* py-2 (không h-9 cố định) + items-start: mã dài (VOUCHERPBH...) sẽ XUỐNG
      DÒNG thay vì bị cắt "..." — đúng theo Figma (dòng đó cao 56px = 2 dòng
@@ -9022,15 +9351,22 @@ function discountLinesHTML() {
   if (sub > 0) {
     if (ckAuth) {
       const amt = rewardAmount(cartReward);
-      if (amt > 0) rows.push(line(cartReward === 'points' ? `Dùng ${REWARD_POINTS} điểm` : 'Giảm giá thành viên', amt, true));
+      if (amt > 0) rows.push(line(cartReward === 'points' ? `Dùng ${cartPointsUsed.toLocaleString('vi-VN')} điểm` : 'Giảm giá thành viên', amt, true));
     }
     /* MỖI mã 1 dòng riêng (Figma 3437:55820) — giờ có thể nhiều mã cùng lúc,
        nên đây là vòng lặp chứ không còn 1 dòng cứng như bản 1-mã. */
     activeVouchers().forEach(v => {
-      if (v.type === 'ship') rows.push(lineText('Phí vận chuyển', 'Miễn phí'));
-      else rows.push(line(`Giảm giá(${v.code})`, voucherValue(v), true));
+      if (v.type !== 'ship') rows.push(line(`Giảm giá(${v.code})`, voucherValue(v), true));
     });
     cartPbh.forEach(p => rows.push(line(`Giảm giá(${p.code})`, p.amount, true)));
+    /* Phí giao đứng SAU mọi dòng giảm giá: nó là khoản CỘNG vào, đọc xuôi từ trên
+       xuống thì tạm tính → trừ các khoản → cộng phí giao → tổng cộng.
+       Mã vận chuyển không còn dòng riêng nữa — nó đã nói bằng chính chữ "Miễn phí"
+       ở đây, in hai dòng cùng nội dung là thừa. */
+    const ship = cartShipFee();
+    rows.push(ship > 0
+      ? line('Phí vận chuyển (ước tính)', ship, false)
+      : lineText('Phí vận chuyển (ước tính)', 'Miễn phí'));
   }
   return rows.join('');
 }
@@ -9042,7 +9378,9 @@ function cartDiscountTotal() {
   const reward = ckAuth ? rewardAmount(cartReward) : 0;
   return Math.min(reward + cartVoucherTotal() + cartPbhTotal(), cartSubtotal());
 }
-function cartTotalNow() { return Math.max(0, cartSubtotal() - cartDiscountTotal()); }
+/* Phí giao CỘNG SAU khi đã trừ ưu đãi, và chỉ khi còn hàng để giao — giỏ rỗng
+   hoặc bỏ tick hết thì tổng phải là 0đ chứ không phải 50.000đ tiền ship suông. */
+function cartTotalNow() { return Math.max(0, cartSubtotal() - cartDiscountTotal()) + cartShipFee(); }
 
 /* Khối hợp nhất theo Figma 3458:56933 (đọc lại lần 4 — user xác nhận "chưa
    đúng thiết kế", bỏ hẳn kiểu "card nổi bo góc" của 2 vòng trước): panel giờ
@@ -9051,8 +9389,9 @@ function cartTotalNow() { return Math.max(0, cartSubtotal() - cartDiscountTotal(
    wrapper ngoài + card trong lồng nhau). Nền secondary (#f5f5f5) giữ nguyên.
    Summary KHÔNG còn thụt vào thêm 8px như trước — giờ rộng bằng 2 card phía
    trên (358px, không phải 342px). "Chương trình khuyến mãi" vẫn để ngoài
-   khối này. "Bạn có phiếu mua hàng?" ở #cartCta (screenCART()), gap với nút
-   "Đặt hàng" tăng 8px→16px theo số liệu mới. */
+   khối này. "Bạn có phiếu mua hàng?" — 13/09/2026 dời VÀO trong khối này
+   (id="pbhAcc", xem brief trang 25); #cartCta ở screenCART() giờ chỉ còn
+   nút "Đặt hàng". */
 /* Tổng phải trả lấy thẳng từ cartTotalNow() (trước đây truyền qua tham số
    cùng tên nên che mất hàm) */
 /* 24/08/2026 — HAI KHỐI ƯU ĐÃI VỀ MỘT CONCEPT HIỂN THỊ (lệnh user: *"đồng bộ lại
@@ -9076,8 +9415,10 @@ function discountPanel() {
     </div>` : '';
   return `
   <div class="py-6 px-4 bg-secondary flex flex-col gap-4 rise">
+    <!-- 13/09/2026 — ĐẢO THỨ TỰ theo brief PDF trang 25 ("Flow trên mobile đoạn
+         dưới Giỏ hàng": 1. Ưu đãi & khuyến mãi + mã · 2. Ưu đãi thành viên — mã
+         lên TRƯỚC, khối thành viên xuống SAU; trước đây thành viên đứng trước). -->
     <div class="flex flex-col gap-2">
-      ${rewardsCard}
       <!-- 09/09/2026 — Ô NHẬP MÃ HIỆN SẴN, TRỞ LẠI KIỂU TRUYỀN THỐNG (chốt khách):
            hàng thu gọn "Chọn mã ưu đãi ( N )" + sheet liệt kê ưu đãi của chốt 17/08 đã
            GỠ HẲN. Người mua đến giỏ là đã có mã trong tay (email, hoặc card "Chương
@@ -9103,6 +9444,7 @@ function discountPanel() {
         </div>
         <div id="cartCodeList" class="${cartVouchers.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
       </div>
+      ${rewardsCard}
     </div>
 
     <div class="flex flex-col">
@@ -9114,6 +9456,32 @@ function discountPanel() {
       <p class="t-multiline text-secondary-foreground">${ckAuth
         ? `Hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`
         : `<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`}</p>
+    </div>
+
+    <!-- "Bạn có phiếu mua hàng?" — CHUYỂN VÀO ĐÂY 13/09/2026, từ chỗ cũ TRƯỚC là
+         SAU nút "Đặt hàng" (quyết định 09/09, coi đây là 1 phương thức mua hàng
+         chứ không phải ưu đãi). Brief PDF trang 25 liệt "Phiếu mua hàng" là mục 4
+         trong luồng, đứng NGAY SAU mục 3 "Tạm tính" — tức TRƯỚC nút, không phải
+         sau. Brief mới hơn nên theo brief; markup/khuôn giữ NGUYÊN, chỉ đổi chỗ.
+         id="pbhAcc" MỚI THÊM: 2 rule CSS trước bám #cartCta .acc-trigger /
+         #cartCta .acc-inner p (nhãn hoa 500 + màu chữ phụ) — dời khối ra khỏi
+         #cartCta thì 2 rule đó trật, phải đổi hook sang id riêng của khối.
+         (LƯU Ý: comment này nằm TRONG template literal — KHÔNG dùng backtick.) -->
+    <div id="pbhAcc" class="acc">
+      <button class="acc-trigger w-full h-9 flex items-center justify-between press">
+        <span class="t-multiline font-medium text-foreground">Bạn có phiếu mua hàng?</span>
+        ${accIco}
+      </button>
+      <div class="acc-body"><div class="acc-inner">
+        <div class="flex flex-col gap-2 pt-2 pb-2">
+          <p class="t-single text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
+          <div class="flex gap-1">
+            <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="t-multiline flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+            <button id="applyPbh" disabled class="t-multiline h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
+          </div>
+          <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
+        </div>
+      </div></div>
     </div>
   </div>`;
 }
@@ -9128,6 +9496,38 @@ function promoRule(headline, scheme, tnc) {
     <p class="t-multiline font-medium text-foreground">${headline}</p>
     ${scheme ? `<p class="t-multiline text-foreground">${scheme}</p>` : ''}
     ${tnc ? `<p class="t-single text-foreground">${tnc}</p>` : ''}
+  </div>`;
+}
+
+/* ── SẢN PHẨM ĐÃ GỠ (11/09/2026, lệnh user "dựng demo luôn") ─────────────────
+   Trước lượt này goPdp() với một mã không có thật ném thẳng TypeError ở dòng đọc
+   `P.img` — trang trắng, không lời nào. Nay có màn riêng.
+   KHÔNG dùng trang 404 chung: người ta tới đây từ một đường dẫn sản phẩm cụ thể,
+   nên lời đáp phải nói về SẢN PHẨM và mở ra đường đi tiếp trong cùng ngành hàng,
+   chứ không đá về trang chủ rồi thôi. Dải gợi ý ngay dưới là phần việc đó. */
+function screenPDPGone() {
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+    <div class="flex flex-col items-center gap-3 py-20 px-8 text-center">
+      ${I.bag}
+      <p class="t-multiline font-medium text-foreground">Sản phẩm không còn bán</p>
+      <p class="t-multiline text-muted-foreground">Sản phẩm này đã được gỡ khỏi cửa hàng, hoặc đường dẫn không đúng.</p>
+      <div class="flex flex-col gap-2 w-full pt-2">
+        <button data-nav="plp" class="t-multiline h-10 px-6 bg-primary text-primary-foreground font-semibold rounded-xs btn-p press">Xem sản phẩm tương tự</button>
+        <button data-nav="home" class="t-multiline h-10 px-6 border border-border rounded-xs font-medium text-foreground btn-o press">Về trang chủ</button>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-4 pb-6 reveal">
+      <p class="px-4 text-[18px] font-medium leading-7 text-foreground">Gợi ý cho bạn</p>
+      <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
+        ${lookRailCards('Sản phẩm tương tự', 6, -1, 'w-[170px] shrink-0')}
+      </div>
+    </div>
+
+    ${camKetSection()}
+    ${footer()}
   </div>`;
 }
 
@@ -9146,9 +9546,9 @@ function screenCART() {
      27/08: mặt .badge-inline, nhãn 12 medium, shrink-0, tên co bằng truncate.
      Ô ảnh giữ class "relative" vì còn là mốc cho lớp phủ khác nếu có. */
   const row = (c, i) => `
-    <div class="cart-row flex gap-2 px-4 py-4" data-row="${i}">
+    <div class="cart-row flex gap-2 px-4 py-4${c.stock === 0 ? ' is-oos' : ''}" data-row="${i}">
       <div class="w-4 shrink-0 flex items-center">
-        <button class="chk ${c.sel === false ? '' : 'on'} w-4 h-4 border border-border bg-background-3 rounded-xs shadow-sm flex items-center justify-center btn-o press" data-check>${I.tick}</button>
+        <button class="chk ${c.sel === false || c.stock === 0 ? '' : 'on'} w-4 h-4 border border-border bg-background-3 rounded-xs shadow-sm flex items-center justify-center btn-o press"${c.stock === 0 ? ' disabled' : ''} data-check>${I.tick}</button>
       </div>
       <div class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
         <!-- alt mang tên hàng, không để rỗng: ảnh này là ĐƯỜNG DẪN vào PDP
@@ -9159,7 +9559,7 @@ function screenCART() {
         <div class="flex flex-col">
           <div class="pb-2">
             <div class="flex items-center gap-2 h-5">
-              <p class="t-multiline flex-1 min-w-0 font-medium text-foreground truncate">${c.brand}</p>
+              <p class="t-multiline cart-brand flex-1 min-w-0 font-medium text-foreground truncate">${c.brand}</p>
               <button class="del w-3.5 h-3.5 shrink-0 flex items-center justify-center press">${I.trash}</button>
             </div>
             <div class="flex items-center gap-1.5 min-w-0">
@@ -9169,25 +9569,30 @@ function screenCART() {
           </div>
           <p class="t-single text-muted-foreground">${c.variant}</p>
           ${c.preorder ? `<p class="t-single text-foreground-alt pt-1">Nhận hàng dự kiến <span class="font-medium">${c.preorder}</span></p>` : ''}
+          ${cartRowNote(c)}
         </div>
-        <!-- giá + stepper ghim đáy ô, giá thường đen / giá khuyến mãi đỏ (item-cart 2851:28705) -->
+        <!-- giá + stepper ghim đáy ô — ĐẢO CHỖ 13/09/2026 theo brief (PDF trang 25,
+             "Swap vị trí giá và số lượng"): số lượng giờ đứng TRƯỚC (trái), giá đứng
+             SAU (phải). Class .price thêm hook riêng để khai đậm lên (xem CSS "Giá
+             hàng giỏ đậm lên" — .font-medium bị skin-mt quét về 400 nên phải có
+             ngoại lệ tên riêng, không thể chỉ thêm class font-medium/font-bold). -->
         <div class="flex items-end justify-between gap-0.5">
+          <!-- stepper ghost không viền (item-cart 2851:28705): [− 12px][02 12 medium][+ 12px], cao 24 -->
+          <div class="flex items-center shrink-0">
+            <button class="qty-btn min-h-6 px-2 rounded-xs flex items-center justify-center press"${(c.qty || 1) <= 1 ? ' disabled' : ''} data-step="-1" aria-label="Giảm số lượng"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--unofficial-ghost-foreground)"><path d="M23.5,12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H23.5c.276,0,.5,.224,.5,.5s-.224,.5-.5,.5Z"/></svg></button>
+            <span class="t-single qty w-7 min-h-6 flex items-center justify-center font-medium" style="color:var(--unofficial-ghost-foreground)">${String(c.qty).padStart(2,'0')}</span>
+            <button class="qty-btn min-h-6 px-2 rounded-xs flex items-center justify-center press"${c.stock === 0 || (c.stock != null && (c.qty || 1) >= c.stock) ? ' disabled' : ''} data-step="1" aria-label="Tăng số lượng"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--unofficial-ghost-foreground)"><path d="M24,12c0,.276-.224,.5-.5,.5H12.5v11c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5V12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H11.5V.5c0-.276,.224-.5,.5-.5s.5,.224,.5,.5V11.5h11c.276,0,.5,.224,.5,.5Z"/></svg></button>
+          </div>
           <!-- whitespace-nowrap trên 2 dòng giá: chuỗi giá mang space thường
                trước ₫, hàng flex thiếu chỗ (giá dài + chip -%) là ký hiệu ₫
                rớt xuống dòng riêng — lỗi (b) đã ghi nhận, tái hiện ở 3 hàng
                có chip khuyến mãi. -->
-          <div class="pt-1 flex flex-col justify-end min-w-0">
+          <div class="pt-1 flex flex-col justify-end items-end min-w-0">
             <div class="flex gap-1 items-center">
               <p class="t-multiline price whitespace-nowrap font-medium ${c.off ? 'text-destructive' : 'text-foreground'}">${c.now}</p>
               ${c.off ? `<span class="t-single bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${c.off}</span>` : ''}
             </div>
             ${c.was ? `<p class="t-single whitespace-nowrap text-muted-foreground line-through">${c.was}</p>` : ''}
-          </div>
-          <!-- stepper ghost không viền (item-cart 2851:28705): [− 12px][02 12 medium][+ 12px], cao 24 -->
-          <div class="flex items-center shrink-0">
-            <button class="qty-btn min-h-6 px-2 rounded-xs flex items-center justify-center press" data-step="-1" aria-label="Giảm số lượng"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--unofficial-ghost-foreground)"><path d="M23.5,12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H23.5c.276,0,.5,.224,.5,.5s-.224,.5-.5,.5Z"/></svg></button>
-            <span class="t-single qty w-7 min-h-6 flex items-center justify-center font-medium" style="color:var(--unofficial-ghost-foreground)">${String(c.qty).padStart(2,'0')}</span>
-            <button class="qty-btn min-h-6 px-2 rounded-xs flex items-center justify-center press" data-step="1" aria-label="Tăng số lượng"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--unofficial-ghost-foreground)"><path d="M24,12c0,.276-.224,.5-.5,.5H12.5v11c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5V12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H11.5V.5c0-.276,.224-.5,.5-.5s.5,.224,.5,.5V11.5h11c.276,0,.5,.224,.5,.5Z"/></svg></button>
           </div>
         </div>
       </div>
@@ -9198,7 +9603,10 @@ function screenCART() {
     ${navBar()}
 
     <div class="px-4 pt-4 pb-2 rise">
-      <h2 class="text-[18px] font-medium text-foreground">Giỏ hàng <span id="cartCount" class="text-muted-foreground">(${cartItems().length})</span></h2>
+      <!-- Số lượng sản phẩm nhỏ lại (brief PDF trang 25, nhấn 3 lần "nhỏ lại"): span
+           đếm tách khỏi cỡ tiêu đề (trước ăn nguyên 18px kế thừa từ h2) về class
+           t-single, 12/16 — bậc nhỏ nhất của thang, không tự chế cỡ mới. -->
+      <h2 class="text-[18px] font-medium text-foreground">Giỏ hàng <span id="cartCount" class="t-single text-muted-foreground">(${cartItems().length})</span></h2>
     </div>
 
     <div class="flex items-center justify-between px-4 py-2 rise">
@@ -9206,7 +9614,7 @@ function screenCART() {
         <!-- Ô tick tổng phải SUY TỪ STATE, không in cứng "on": tick chọn giờ là
              state sống qua các lần vào/ra màn, in cứng thì bỏ tick 1 dòng rồi
              quay lại là ô tổng nói dối (và cú bấm sau đó đảo ngược ý người dùng). -->
-        <span class="chk ${cartItems().length && cartItems().every(c => c.sel !== false) ? 'on' : ''} w-4 h-4 border border-border-3 rounded-xs shadow-sm flex items-center justify-center">${I.tick}</span>
+        <span class="chk ${(() => { const a = cartItems().filter(c => c.stock !== 0); return a.length && a.every(c => c.sel !== false); })() ? 'on' : ''} w-4 h-4 border border-border-3 rounded-xs shadow-sm flex items-center justify-center">${I.tick}</span>
         <!-- 1 text node duy nhất (không bọc span quanh con số) để applyLang dịch
              được cả câu bằng luật regex I18N_RE -->
         <span id="selAllLabel" class="t-multiline font-medium text-foreground">${ckAuth ? `Chọn tất cả ( ${cartItems().length} sản phẩm )` : 'Chọn tất cả'}</span>
@@ -9242,12 +9650,12 @@ function screenCART() {
         <p class="t-single font-medium text-foreground">Chương trình khuyến mãi (3)</p>
         <div id="promoPeek" class="promo-peek flex flex-col gap-2">
           ${promoRule(
-            '* WARDROBE REFRESH - [01/08 - 31/08]',
+            '* WARDROBE REFRESH - [01/09 - 30/09]',
             'Nhập mã JUL1500 - giảm 1.5 triệu cho đơn từ 16 triệu JUL1000 - giảm 1 triệu cho đơn từ 11 triệu JUL500 - giảm 500K cho đơn từ 8 triệu',
             '(*) Không áp dụng cho Stefano Ricci, TUMI, Montblanc, Phiếu Quà Tặng và New Season'
           )}
           ${promoRule(
-            '** BUY MORE SAVE MORE - [28/07 - 24/08]',
+            '** BUY MORE SAVE MORE - [28/08 - 30/09]',
             'Mua 2 giảm thêm 5% Mua 3 giảm thêm 10%',
             '(**) Sản phẩm chọn lọc'
           )}
@@ -9258,29 +9666,21 @@ function screenCART() {
     </div>
 
     <!-- Ưu đãi Rewards + Mã giảm giá + Phiếu mua hàng + Summary — 1 panel theo
-         Figma 3428:55499, xem discountPanel(). -->
+         Figma 3428:55499, xem discountPanel(). Phiếu mua hàng nay VẼ TRONG panel
+         đó (13/09/2026, brief trang 25) nên #cartCta chỉ còn nút Đặt hàng. -->
     ${discountPanel()}
 
-    <!-- "Bạn có phiếu mua hàng?" — coi là 1 phương thức mua hàng, không phải ưu
-         đãi giảm giá, nên đặt bên dưới nút Đặt hàng (theo Figma 3428:55499,
-         Frame 427319741) thay vì chung nhóm với Rewards/Mã giảm giá phía trên. -->
     <div id="cartCta" class="px-4 py-4 flex flex-col gap-4">
       <button data-checkout class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center">Đặt hàng</button>
-      <div class="acc">
-        <button class="acc-trigger w-full h-9 flex items-center justify-between press">
-          <span class="t-multiline font-medium text-foreground">Bạn có phiếu mua hàng?</span>
-          ${accIco}
-        </button>
-        <div class="acc-body"><div class="acc-inner">
-          <div class="flex flex-col gap-2 pt-2 pb-2">
-            <p class="t-single text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
-            <div class="flex gap-1">
-              <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="t-multiline flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-              <button id="applyPbh" disabled class="t-multiline h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
-            </div>
-            <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
-          </div>
-        </div></div>
+    </div>
+
+    <!-- Dải gợi ý (11/09/2026) — dùng lại đúng khuôn dải của PDP: tiêu đề mục 18,
+         thẻ 170 cuộn ngang, khe 4. Nguồn thẻ đi qua lookRailCards() nên thẻ ở đây
+         là CÙNG MỘT productCard với PLP/PDP, không đẻ khuôn thẻ thứ hai. -->
+    <div class="flex flex-col gap-4 mt-4 pb-6 reveal">
+      <p class="px-4 text-[18px] font-medium leading-7 text-foreground">Gợi ý cho bạn</p>
+      <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
+        ${lookRailCards('Sản phẩm tương tự', 6, -1, 'w-[170px] shrink-0')}
       </div>
     </div>
 
@@ -9308,6 +9708,8 @@ let authView = 'login';
 let authViewIntent = false;
 let authPhone = '';
 let authFlow = 'register';   // luồng đang dùng OTP: 'register' (SĐT → OTP → điền thông tin) | 'forgot' (SĐT → OTP → đặt lại mật khẩu)
+let forgotEmailSent = '';    // khác rỗng = vừa quên mật khẩu bằng EMAIL (brief trang 23, Opt2) — viewLogin() vẽ banner xanh; dọn ở [data-auth-go]
+let regFullName = '';        // "Họ Tên" chốt lúc bấm Tạo tài khoản — màn 04c (regsuccess) đọc lại để chào tên
 
 /* Nút mắt cho ô mật khẩu — dùng chung cho afield và popup đăng nhập nhanh.
    Đặt absolute nên không ảnh hưởng chiều cao ô input; ô nào có nút thì chừa
@@ -9361,25 +9763,54 @@ function authNav(title) {
   </div>`;
 }
 
+/* ── Tab Đăng nhập / Tạo tài khoản — 13/09/2026 ──────────────────────────────
+   2 tab theo màn mẫu khách gửi (Sign in | Create Account): mượn NGUYÊN khuôn
+   `.acc-tab` của tab trang Tài khoản (mực 3 bậc + vạch 2px qua [aria-current]),
+   chỉ đổi cỡ chữ sang `.t-display-title` (Libre Bodoni 24/32) vì đây là tiêu đề
+   MÀN chứ không phải nhãn phụ nhỏ — cùng mặt chữ với tiêu đề mục trang chủ/PDP/PLP.
+   Thay hẳn 2 dòng link chéo cũ ("Chưa có tài khoản? Đăng ký ngay" / "Đã có tài
+   khoản? Đăng nhập" ở cuối form): tab đã gánh việc chuyển màn nên 2 link đó
+   thành thừa — bỏ luôn cho khỏi 2 lối cùng làm một việc.
+   CANH ĐỀU 2 CỘT — bản đầu xếp bằng flex tự nhiên nên 2 tab dồn hết sang trái,
+   dư mảng trắng bên phải (user bắt lỗi 13/09). Đổi sang `grid-cols-2`: mỗi tab
+   đúng 1 nửa bề rộng hàng, chữ giữa (`text-center`) trong nửa của mình — vạch
+   `::after` của `.acc-tab` (left/right:0) theo đó cũng dài đúng NỬA hàng, không
+   còn ngắn bằng mỗi chữ.
+   BỎ `px-4` NGANG (cùng đợt 13/09): hàng tab tự lấy hết bề ngang màn hình thay vì
+   thụt vào theo lề nội dung — 2 tab nhờ vậy cân giữa đúng tâm màn hình, không lệch
+   theo lề 16px như trước. Nội dung bên dưới (field/nút) vẫn giữ `px-4` riêng, không
+   đụng. */
+const AUTH_TABS = [['login', 'Đăng nhập'], ['register', 'Đăng ký']];
+function authTabs(active) {
+  return `
+  <div class="auth-tabs grid grid-cols-2 pt-4 border-b border-border">
+    ${AUTH_TABS.map(([id, label]) => `
+      <button data-auth-go="${id}"${id === active ? ' aria-current="true"' : ''} class="t-display-title acc-tab pb-4 press text-center">${label}</button>`).join('')}
+  </div>`;
+}
+
 /* ── 01 Login ── */
+/* Banner xanh Opt2 của Quên mật khẩu (brief trang 23) — vẽ trên CHÍNH màn Đăng
+   nhập chứ không phải màn riêng, đúng bố cục brief. Cố ý không xác nhận email
+   đó có tài khoản hay không (chữ "Nếu có tài khoản…") — tránh lộ email nào đã
+   đăng ký. Mực/khung mượn nguyên khuôn banner đã có ở screenDONE (bg-accent-0);
+   dấu tích mượn đúng cách viewRegInfo báo "đã xác thực" (span.text-success). */
 function viewLogin() {
   return `
   ${authNav('Đăng nhập')}
+  ${authTabs('login')}
   <div class="flex flex-col gap-8 px-4 pt-6 pb-10">
-    <div class="flex flex-col gap-2">
-      <h2 class="t-display-title font-light text-foreground">Đăng nhập</h2>
-      <p class="t-multiline text-muted-foreground">Chào mừng bạn trở lại</p>
-    </div>
+    ${forgotEmailSent ? `
+    <div class="rounded-xs bg-accent-0 px-4 py-3">
+      <p class="t-multiline text-muted-foreground"><span class="text-success">✓</span> Nếu có tài khoản đăng ký với địa chỉ <b class="font-medium text-foreground">${forgotEmailSent}</b>, bạn sẽ nhận được email kèm theo đường link để đặt lại mật khẩu.</p>
+    </div>` : ''}
+    <p class="t-multiline text-muted-foreground">Chào mừng bạn trở lại</p>
     <div class="flex flex-col gap-6">
       ${afield('Số điện thoại', 'type="tel" inputmode="tel" id="loginId"', 'Nhập số điện thoại')}
       ${afield('Mật khẩu', 'type="password"', 'Nhập mật khẩu',
         '<button data-auth-go="forgot" class="t-multiline text-muted-foreground press">Quên mật khẩu?</button>')}
     </div>
     ${abtn('Đăng nhập', 'data-login-submit')}
-    <div class="flex items-center justify-center gap-1">
-      <span class="t-multiline text-muted-foreground">Chưa có tài khoản?</span>
-      <button data-auth-go="register" class="t-multiline font-medium text-foreground press">Đăng ký ngay</button>
-    </div>
   </div>`;
 }
 
@@ -9387,31 +9818,41 @@ function viewLogin() {
 function viewRegister() {
   return `
   ${authNav('Đăng ký')}
+  ${authTabs('register')}
   <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
-    <h2 class="t-display-title font-light text-foreground">Tạo tài khoản</h2>
     <div class="t-multiline flex flex-col gap-3" style="color:var(--unofficial-ghost-foreground)">
       <p>Để tận hưởng những ưu đãi độc quyền, Quý khách vui lòng sử dụng số điện thoại đã đăng ký chương trình Khách hàng thân thiết tại hệ thống cửa hàng DAFC khi mua sắm trực tuyến tại DAFC Online.</p>
       <p>Hãy sẵn sàng trải nghiệm những đặc quyền mua sắm tuyệt vời chỉ dành riêng cho bạn!</p>
     </div>
     ${afield('Số điện thoại', `type="tel" inputmode="tel" id="regPhone" value="${authPhone.replace(/"/g, '&quot;')}"`, 'Nhập thông tin...', '', 'text-foreground')}
     ${abtn('Gửi mã OTP', 'data-auth-otp', 'h-10')}
-    <div class="flex items-center justify-center gap-1">
-      <span class="t-multiline text-muted-foreground">Đã có tài khoản?</span>
-      <button data-auth-go="login" class="t-multiline font-medium text-foreground press">Đăng nhập</button>
-    </div>
   </div>`;
 }
 
-/* ── 03 Forgot Password ── */
+/* ── 03 Forgot Password (PDF brief "UI UX Feedback - Designer" trang 23) ──
+   Ô nhận CẢ số điện thoại lẫn email (nhãn/placeholder/câu dẫn tái dùng đúng 3
+   khoá I18N đã khai sẵn từ trước nhưng chưa chỗ nào dùng tới — đúng những gì
+   màn này cần). Nhánh theo brief ngay trong [data-auth-otp]:
+     Opt1 (SĐT)  → luồng OTP cũ, KHÔNG đổi (Gửi mã > Xác thực OTP > Đặt mật khẩu mới)
+     Opt2 (email) → KHÔNG gửi OTP; quay lại Đăng nhập kèm banner xanh xác nhận
+                    kiểu "nếu có tài khoản thì sẽ có email" — tránh xác nhận
+                    ngược liệu email đó có tồn tại hay không.
+   Giữ `id="regPhone"`: handler `[data-auth-otp]` đọc đúng id này cho CẢ màn Đăng
+   ký lẫn màn này từ trước — đổi tên phải sửa theo, mà đây chỉ là hook DOM, không
+   còn mang nghĩa "chỉ số điện thoại" nữa.
+   Nút "Huỷ" thay hẳn link mũi tên cũ — đúng chữ + khoá I18N đã dùng cho MỌI nút
+   huỷ khác trong app (accFormBtns, huỷ đơn…), không bịa "Hủy bỏ" như ảnh brief. */
 function viewForgot() {
   return `
   ${authNav('Quên mật khẩu')}
   <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
     <h2 class="t-display-title font-light text-foreground">Quên mật khẩu</h2>
-    <p class="t-multiline text-muted-foreground">Nhập số điện thoại đã đăng ký. Chúng tôi sẽ gửi mã OTP để xác thực.</p>
-    ${afield('Số điện thoại', `type="tel" inputmode="tel" id="regPhone" value="${authPhone.replace(/"/g, '&quot;')}"`, 'Nhập số điện thoại')}
-    ${abtn('Gửi mã xác thực', 'data-auth-otp')}
-    <button data-auth-go="login" class="t-multiline text-center text-muted-foreground press">← Quay lại đăng nhập</button>
+    <p class="t-multiline text-muted-foreground">Nhập số điện thoại hoặc email đã đăng ký. Chúng tôi sẽ gửi mã OTP để xác thực.</p>
+    ${afield('Số điện thoại hoặc Email', `type="text" id="regPhone" value="${authPhone.replace(/"/g, '&quot;')}"`, 'Nhập số điện thoại hoặc email')}
+    <div class="flex flex-col gap-3">
+      ${abtn('Gửi mã xác thực', 'data-auth-otp')}
+      <button data-auth-go="login" class="t-multiline w-full h-11 rounded-xs border border-border bg-background text-foreground font-medium tracking-wide btn-o press">Huỷ</button>
+    </div>
   </div>`;
 }
 
@@ -9441,7 +9882,14 @@ function viewOtp() {
   </div>`;
 }
 
-/* ── 04b Hoàn tất đăng ký — điền thông tin sau khi xác thực OTP ── */
+/* ── 04b Hoàn tất đăng ký — điền thông tin sau khi xác thực OTP ──
+   Theo brief khách (PDF "UI UX Feedback - Designer" trang 21, "Account – Register
+   account"): thêm Tên/Họ TÁCH RIÊNG + Ngày sinh, Email chuyển bắt buộc, thêm đoạn
+   nhận tin qua email. XẾP DỌC từng ô một — user chốt rõ KHÔNG chia đôi hàng kiểu
+   "First name | Last name" như bản tham chiếu tiếng Anh trong brief, nên mỗi field
+   vẫn đi qua `afield()` (component gốc của MÀN này) thay vì ghép cột.
+   Nhãn/placeholder 'Tên'·'Họ'·'Ngày sinh' lấy nguyên chữ đã dùng ở checkout/account
+   (đã có sẵn khoá I18N, không cần thêm). */
 function viewRegInfo() {
   return `
   ${authNav('Đăng ký')}
@@ -9451,16 +9899,38 @@ function viewRegInfo() {
       <p class="t-multiline text-muted-foreground"><span class="text-success">✓</span> Số điện thoại ${authPhone ? `<b class="font-medium text-foreground">${authPhone}</b> ` : ''}đã được xác thực.</p>
     </div>
     <div class="flex flex-col gap-5">
-      ${afield('Họ và tên', 'type="text"', 'Nhập họ và tên', '', 'text-foreground')}
-      ${afield('Email ( không bắt buộc )', 'type="email" inputmode="email"', 'Nhập email', '', 'text-foreground')}
+      ${afield('Tên', 'type="text" id="regFirstName" autocomplete="given-name"', 'Nhập tên', '', 'text-foreground')}
+      ${afield('Họ', 'type="text" id="regLastName" autocomplete="family-name"', 'Nhập họ', '', 'text-foreground')}
+      ${afield('Ngày sinh', 'type="text" inputmode="numeric" autocomplete="bday"', 'dd/mm/yyyy', '', 'text-foreground')}
+      ${afield('Email', 'type="email" inputmode="email"', 'Nhập email', '', 'text-foreground')}
       ${afield('Mật khẩu', 'type="password"', 'Nhập mật khẩu', '', 'text-foreground')}
       ${afield('Xác nhận mật khẩu', 'type="password"', 'Nhập lại mật khẩu', '', 'text-foreground')}
     </div>
+    <p class="t-single text-muted-foreground">Chúng tôi muốn gửi đến bạn thông tin mới nhất về DAFC qua email, gồm tin tức sự kiện tại cửa hàng, ưu đãi và khuyến mãi. Bạn có thể ngừng nhận bất cứ lúc nào qua liên kết hủy đăng ký trong email, hoặc đổi tùy chọn trong mục Tài khoản. Xem thêm tại <button data-toast="Chính sách bảo mật" class="text-foreground underline press">Chính sách bảo mật</button>.</p>
     <label class="flex items-start gap-3">
       <input type="checkbox" checked class="w-4 h-4 mt-0.5 accent-black shrink-0">
       <span class="t-single text-muted-foreground">Tôi đồng ý với <button data-toast="Điều khoản sử dụng" class="text-foreground underline press">Điều khoản sử dụng</button> và <button data-toast="Chính sách bảo mật" class="text-foreground underline press">Chính sách bảo mật</button></span>
     </label>
     ${abtn('Tạo tài khoản', 'data-reg-done', 'h-10')}
+  </div>`;
+}
+
+/* ── 04c Đăng ký thành công (PDF brief trang 22, "Success Register") ──
+   Brief chỉ có đúng 2 thứ: lời chào kèm tên + nút "Tiếp tục mua sắm" (2 tham
+   chiếu khác trong cùng trang — modal newsletter của dunhill.com và dashboard
+   Ralph Lauren — chỉ là ảnh minh hoạ phong cách, không phải nội dung cần dựng).
+   `regFullName` đọc từ Tên/Họ lúc bấm Tạo tài khoản (xem [data-reg-done]); rỗng
+   thì bỏ hẳn dòng tên thay vì bịa placeholder — khỏi phải thêm khoá dịch cho một
+   chữ đệm không xảy ra trong luồng thật. */
+function viewRegSuccess() {
+  return `
+  ${authNav('Đăng ký thành công')}
+  <div class="flex flex-col items-center gap-6 pt-16 pb-10 px-8 text-center">
+    <div class="flex flex-col gap-1">
+      <h2 class="t-display-title font-light text-foreground">Chào mừng bạn đến với DAFC Online,</h2>
+      ${regFullName ? `<p class="t-display-title font-light text-foreground">${regFullName}</p>` : ''}
+    </div>
+    ${abtn('Tiếp tục mua sắm', 'data-reg-continue', 'h-10')}
   </div>`;
 }
 
@@ -9483,10 +9953,11 @@ function viewSetPass() {
       <p id="pwHint" class="t-single text-muted-foreground">Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật</p>
     </div>
     ${abtn('Cập nhật mật khẩu', 'data-login-submit')}
+    <button data-auth-go="login" class="t-multiline w-full h-11 rounded-xs border border-border bg-background text-foreground font-medium tracking-wide btn-o press">Huỷ</button>
   </div>`;
 }
 
-const AUTH_VIEWS = { login: viewLogin, register: viewRegister, otp: viewOtp, reginfo: viewRegInfo, setpass: viewSetPass, forgot: viewForgot };
+const AUTH_VIEWS = { login: viewLogin, register: viewRegister, otp: viewOtp, reginfo: viewRegInfo, regsuccess: viewRegSuccess, setpass: viewSetPass, forgot: viewForgot };
 
 function screenLOGIN() {
   return `<div class="w-full min-h-screen bg-background">${(AUTH_VIEWS[authView] || viewLogin)()}</div>`;
@@ -9508,20 +9979,25 @@ const ETA = 'Thời gian nhận hàng dự kiến từ ngày 14/07 đến ngày 
    24 và giữ tỉ lệ bằng object-contain. Bề rộng lấy đúng Figma 3028:47246:
    76 cho cặp Visa+Mastercard, 38 cho các logo đơn. Không có class w-[76px]
    trong bản tailwind build sẵn nên đặt bằng style. */
-function richRadio(id, label, sub, on, icon) {
+/* `off` = LÝ DO không dùng được (11/09/2026). Thẻ vẫn BÀY RA chứ không ẩn đi:
+   người mua cần biết sàn có phương thức đó và vì sao đơn này không dùng được —
+   ẩn đi thì họ đi tìm, hoặc tưởng sàn không nhận. `disabled` là đủ để mờ + không
+   bấm được (bộ da có sẵn rule button[disabled] { opacity: .5 }). */
+function richRadio(id, label, sub, on, icon, off) {
   /* Có dòng phụ (phương thức vận chuyển) -> canh MÉP TRÊN để nút radio thẳng
      hàng với dòng tiêu đề. Chỉ một dòng (phương thức thanh toán) -> canh GIỮA,
      vì thẻ cao 64 mà chữ dính mép trên nhìn lệch hẳn so với logo vốn đã căn
      giữa. mt-0.5 của nút radio cũng chỉ cần khi canh mép trên. */
-  const single = !sub;
+  const single = !sub && !off;
   return `
-  <button class="opt ${on ? 'on' : ''} w-full flex ${single ? 'items-center' : 'items-start'} gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-opt="${id}">
+  <button class="opt ${on && !off ? 'on' : ''} w-full flex ${single ? 'items-center' : 'items-start'} gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-opt="${id}"${off ? ' disabled aria-disabled="true"' : ''}>
     <span class="radio ${on ? 'on' : ''} w-4 h-4 ${single ? '' : 'mt-0.5 '}rounded-full border border-border-3 flex items-center justify-center shrink-0">
       <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
     </span>
     <span class="flex-1 min-w-0">
       <span class="t-multiline block font-medium text-foreground">${label}</span>
       ${sub ? `<span class="t-multiline block text-foreground">${sub}</span>` : ''}
+      ${off ? `<span class="t-single block text-muted-foreground">${off}</span>` : ''}
     </span>
     ${icon ? `<img src="${A}${icon[0]}" alt="${icon[2] || ''}" class="shrink-0 self-center h-6 object-contain" style="width:${icon[1]}px">` : ''}
   </button>`;
@@ -9639,9 +10115,14 @@ let ckName = '', ckPhone = '', ckEmail = '';
 let ckAddr = 0, ckShipName = '', ckShipPhone = '', ckShipLine = '';
 /* Đã đặt hàng xong: khoá không cho đặt lại đơn thứ hai khi bấm back, và giữ
    mã đơn vừa sinh để màn Hoàn tất / Chi tiết đơn cùng đọc một nguồn. */
+/* Trần cho "thanh toán khi nhận hàng" (11/09/2026). Một chỗ khai: thẻ chọn ở
+   bước 3 và lời giải thích kèm theo đều đọc từ đây. */
+const COD_MAX = 20000000;
+let ckNote = '';          // ghi chú đơn hàng (11/09/2026)
 let ckPlaced = false, ckOrderId = '', ckOrderTotal = '', ckOrderPoints = '';   // tổng + điểm chốt lúc đặt hàng (giỏ bị dọn ngay sau đó)
 let ckOrderGifts = [];   // [{pk, g}] quà của đơn vừa đặt — chốt luôn cả MÓN đang chọn, không chỉ key chương trình
 let ckOrderPre = '';     // ngày nhận pre-order của đơn vừa đặt — chốt lúc placeOrder vì sau đó giỏ bị dọn rỗng
+let ckOrderEmail = '';   // email nhận xác nhận — chốt lúc đặt, vì form bị dọn ngay sau đó (11/09/2026)
 
 /* gap-2.5 = 10 và px-2 = 8 trong ô nhập: đúng số đo Figma (nhóm field gap 10,
    Input padding 8/8, cao 40, r2, viền #e5e5e5).
@@ -9796,8 +10277,13 @@ function screenCHECKOUT() {
      không được coi bước nào là xong. */
   if (ckMode === 'pickup' && !ckStore) { ckStep = 0; ckMaxStep = 0; }
 
+  /* Brief PDF trang 31: "Khi đã log in bỏ mục Đăng nhập tài khoản UserOne, show
+     thẳng default info" — khách vãng lai vẫn thấy khối nhắc điểm thưởng như cũ,
+     khách đã đăng nhập thì bỏ hẳn khối này (địa chỉ mặc định hiện thẳng trong
+     thân Section 0 rồi, xem addrSummary bên dưới, không cần nhắc lại "đăng nhập
+     tài khoản UserOne" nữa). */
   const notice = ckAuth
-    ? `<p class="t-multiline text-foreground">Đăng nhập tài khoản <b class="font-medium">UserOne</b></p>`
+    ? ''
     : `<p class="t-multiline font-medium text-foreground">Bạn đang thanh toán không đăng nhập</p>
        <p class="t-multiline text-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-medium">${rewardPointsEarned().toLocaleString('vi-VN')} điểm thưởng</b></p>
        <button data-nav="login" class="t-multiline self-start font-medium text-foreground underline press">Đăng nhập</button>`;
@@ -9814,11 +10300,32 @@ function screenCHECKOUT() {
   /* ── Section 0: Thông tin giao hàng ──
      Khách ĐÃ ĐĂNG NHẬP thì mở ra là sổ địa chỉ đã lưu (chọn 1 chạm là xong
      bước này), cuối danh sách mới là "Thêm địa chỉ mới" xổ form 6 ô. Khách
-     vãng lai vẫn thấy form ngay như cũ. */
+     vãng lai vẫn thấy form ngay như cũ.
+     Brief PDF trang 29: gom form thành 2 khối có tên — "Thông tin liên hệ" và
+     "Thông tin giao hàng" (Tỉnh/Phường/Địa chỉ GIỮ NGUYÊN xếp dọc — brief nói
+     rõ khối này phải custom lại theo VN, không ghép cặp kiểu Street/City/
+     State/Zip của Ralph). Khối "Thông tin liên hệ" TỪNG ghép cặp 2x2 (Tên/Họ +
+     SĐT/Email, giống tham chiếu Ralph) nhưng user chốt lại 14/09/2026: "cho nó
+     nằm xuống 1 hàng dọc" — mọi ô nay xếp dọc như khối "Thông tin giao hàng"
+     bên dưới, đồng nhất toàn bộ Section 0. Email vẫn CHỈ hiện với khách vãng
+     lai như từ 11/09/2026 (khách đã đăng nhập có sẵn email hồ sơ). Tiêu đề
+     khối dùng chuỗi hook Libre Bodoni 18/28 (text-[18px] font-medium
+     leading-7) — cùng chuỗi mọi tiêu đề khối khác trong file (panel tóm tắt,
+     Bộ lọc, ACC_H1...), không dùng .t-display-title vì đó là cỡ tiêu đề
+     TRANG, không phải tiêu đề khối con. */
   const addrForm = `
+    <div class="px-4 pt-2 pb-2">
+      <p class="text-[18px] font-medium leading-7 text-foreground">Thông tin liên hệ</p>
+    </div>
     ${field('Tên','Nhập tên','', { val: ckShipName, key: 'sname', auto: 'given-name' })}
     ${field('Họ','Nhập họ')}
     ${field('Số điện thoại','0 1234 5678','tel', { val: ckShipPhone, key: 'sphone', auto: 'tel' })}
+    ${ckAuth ? '' : `
+    ${field('Email','Nhập email nhận xác nhận đơn','email', { val: ckEmail, key: 'email', auto: 'email' })}
+    <div id="ckEmailKnown" class="hidden px-4 pt-1"></div>`}
+    <div class="px-4 pt-6 pb-2">
+      <p class="text-[18px] font-medium leading-7 text-foreground">Thông tin giao hàng</p>
+    </div>
     ${pickField('Tỉnh / thành phố','Chọn tỉnh / thành phố','province', ckProvince)}
     ${pickField('Phường / xã','Chọn phường / xã','ward', ckWard)}
     ${field('Địa chỉ','Số nhà, tên đường','', { val: ckShipLine, key: 'saddr', auto: 'street-address' })}
@@ -9828,32 +10335,56 @@ function screenCHECKOUT() {
         <span class="t-multiline text-foreground">Lưu vào sổ địa chỉ</span>
       </label>
     </div>`;
+
+  /* GHI CHÚ ĐƠN HÀNG (11/09/2026) — cuối bước 1, sau khi đã xong người nhận và
+     địa chỉ: nó là thứ bổ sung cho việc giao, đặt trên form là chen vào giữa một
+     chuỗi ô bắt buộc. Dùng <textarea> chứ không phải <input>: lời nhắn giao hàng
+     hay dài hơn một dòng ("giao giờ hành chính, gọi trước 15 phút"). */
+  const noteField = `
+    <div class="px-4 pt-3 flex flex-col gap-1">
+      <label class="t-single font-medium text-foreground" for="ckNote">Ghi chú đơn hàng <span class="font-normal text-muted-foreground">(không bắt buộc)</span></label>
+      <textarea id="ckNote" data-ckf="note" rows="2" maxlength="200" placeholder="Lời nhắn cho người giao hàng" class="t-multiline w-full bg-background border border-border rounded-xs px-2 py-2 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors resize-none">${ckNote}</textarea>
+    </div>`;
+  /* Brief PDF trang 31: bỏ danh sách địa chỉ bày HẾT ngay trong thân accordion
+     (mọi thẻ + "+ Thêm địa chỉ mới" cùng lúc) — đổi thành CHỈ hiện địa chỉ ĐANG
+     CHỌN dạng tóm tắt + nút "Sửa" mở sheet #addrSheet để đổi (xem sheet cuối
+     file, cạnh #giftSheet). "+ Thêm địa chỉ mới" tách thành hành động RIÊNG,
+     đứng ngay dưới thẻ tóm tắt — giống bố cục tham chiếu Ralph Lauren (thẻ
+     "Shipping Address" + Edit, và "+ Add New Address" là dòng riêng bên dưới,
+     không nằm trong sheet "Address book"). */
+  const addrSummary = (() => {
+    const a = ADDRESSES[ckAddr] || null;
+    if (!a) return `<p class="t-multiline text-muted-foreground px-4 py-3">Sổ địa chỉ của bạn đang trống.</p>`;
+    return `
+    <div class="px-4 py-3 flex items-start justify-between gap-3">
+      <div class="flex-1 min-w-0 flex flex-col gap-1">
+        <p class="t-multiline font-medium text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="t-multiline font-normal text-muted-foreground">(Mặc định)</span>' : ''}</p>
+        <p class="t-multiline text-secondary-foreground">${addrLine(a)}</p>
+      </div>
+      <button type="button" data-open-addrbook class="t-single shrink-0 text-muted-foreground hover:text-foreground underline press">Sửa</button>
+    </div>`;
+  })();
   const s0open = ckAuth ? `
-    <div class="px-4 py-2 flex flex-col gap-3" id="addrOpts">
-      ${ADDRESSES.map((a, i) => `
-      <button class="opt ${ckAddr === i ? 'on' : ''} w-full flex items-start gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-addr="${i}">
-        <span class="radio ${ckAddr === i ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
-          <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
-        </span>
-        <span class="flex-1 min-w-0">
-          <span class="t-multiline block font-medium text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="t-multiline font-normal text-muted-foreground">(Mặc định)</span>' : ''}</span>
-          <span class="t-multiline block text-secondary-foreground">${addrLine(a)}</span>
-        </span>
-      </button>`).join('')}
-      <button class="opt ${ckAddr === 'new' ? 'on' : ''} w-full flex items-center gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-addr="new">
-        <span class="radio ${ckAddr === 'new' ? 'on' : ''} w-4 h-4 rounded-full border border-border-3 flex items-center justify-center shrink-0">
-          <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
-        </span>
-        <span class="t-multiline font-medium text-foreground">+ Thêm địa chỉ mới</span>
-      </button>
+    <div id="addrOpts">
+      ${ckAddr === 'new' ? `
+      <div class="px-4 pt-2 pb-1 flex items-center justify-between">
+        <span class="t-multiline text-muted-foreground">Địa chỉ mới</span>
+        ${ADDRESSES.length ? `<button type="button" data-open-addrbook class="t-single text-foreground underline press">Chọn địa chỉ đã lưu</button>` : ''}
+      </div>
+      ${addrForm}` : `
+      ${addrSummary}
+      <div class="px-4 pb-2">
+        <button type="button" data-addr="new" class="t-multiline text-foreground underline press">+ Thêm địa chỉ mới</button>
+      </div>`}
     </div>
-    ${ckAddr === 'new' ? addrForm : ''}
+    ${noteField}
     <div class="px-4 py-4">
-      <button class="t-multiline ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="1">Xác nhận</button>
+      <button class="t-multiline ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="1" data-require="ship">Xác nhận</button>
     </div>` : `
     ${addrForm}
+    ${noteField}
     <div class="px-4 py-4">
-      <button class="t-multiline ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="1">Xác nhận</button>
+      <button class="t-multiline ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="1" data-require="ship">Xác nhận</button>
     </div>`;
   const s0done = `<div id="ckShipDone" class="px-4 py-2 flex flex-col gap-1">${ckShipDoneHTML()}</div>`;
 
@@ -9898,11 +10429,19 @@ function screenCHECKOUT() {
   /* ── Section 2: Thanh toán ── */
   /* [id, nhãn, đang chọn, [file logo, bề rộng px, alt]] — logo lấy từ assets,
      bề rộng theo Figma 3028:47246 (76 cho cặp Visa+Mastercard, 38 cho logo đơn) */
+  /* COD thêm 11/09/2026 (user chốt: BÀY RA nhưng KHOÁ với đơn lớn). Hàng xa xỉ
+     giá trăm triệu thì không sàn nào cho trả khi nhận; để trống mục này thì người
+     mua tưởng sàn quên, bày ra kèm lý do thì họ hiểu ngay. Mốc đọc từ COD_MAX —
+     một chỗ khai, chỗ nào cần cũng lấy đúng con số đó. */
+  const codOff = cartSubtotal() > COD_MAX
+    ? `Không áp dụng cho đơn trên ${COD_MAX.toLocaleString('en-US')}đ`
+    : '';
   const pays = [
     ['cc','Thẻ tín dụng/Ghi nợ', true,  ['pay-1.png', 76, 'Visa, Mastercard']],
     ['qr','Chuyển khoản / QR code', false, ['pay-3.png', 38, 'QR code']],
     ['atm','ATM', false, ['pay-4.png', 38, 'Napas']],
     ['inst','Thanh toán trả góp 0% qua thẻ tín dụng', false, ['pay-2.png', 38, 'Payoo']],
+    ['cod','Thanh toán khi nhận hàng', false, null, codOff],
   ];
   const row = (l, v) => `
     <div class="h-9 flex items-center justify-between">
@@ -9911,7 +10450,7 @@ function screenCHECKOUT() {
     </div>`;
   const s2open = `
     <div id="payOpts" class="px-4 py-2 flex flex-col gap-3">
-      ${pays.map(([id, l, on, icon]) => richRadio(id, l, '', on, icon)).join('')}
+      ${pays.map(([id, l, on, icon, off]) => richRadio(id, l, '', on, icon, off)).join('')}
     </div>
     <!-- Xuất hóa đơn VAT (Frame 427319857) -->
     <div class="pt-4">
@@ -9930,6 +10469,7 @@ function screenCHECKOUT() {
       </div></div>
     </div>
     <div class="px-4 pt-4">
+      ${ckCodeRow()}
       ${row('Tạm tính', vndCom(cartSubtotal()))}
       ${cartDiscountTotal() > 0 ? row('Giảm giá', '-' + vndCom(cartDiscountTotal())) : ''}
       ${ckMode === 'pickup' ? row('Nhận hàng','Tại cửa hàng') : row('Giao hàng','Free')}
@@ -10013,10 +10553,13 @@ function screenCHECKOUT() {
       </div>
     </div>
 
-    <!-- Hộp thông báo — Figma: khối padding 8/16, hộp trong padding 8, bo 8 -->
+    <!-- Hộp thông báo — Figma: khối padding 8/16, hộp trong padding 8, bo 8.
+         Rỗng khi đã đăng nhập (xem ghi chú ở khai báo notice) nên bỏ luôn cả
+         khung màu — để trống khung mà không có nội dung là một ô xám vô cớ. -->
+    ${notice ? `
     <div class="ck-notice px-4 py-2">
       <div class="bg-accent-0 rounded-md px-2 py-2 flex flex-col gap-2">${notice}</div>
-    </div>
+    </div>` : ''}
 
     <!-- Giao tận nơi: 3 section · Nhận tại cửa hàng: 2 (không có bước chọn
          phương thức vận chuyển), chỉ số section vẫn chạy 0,1,... nên toàn bộ
@@ -10083,6 +10626,9 @@ function screenDONE() {
   /* Đơn có hàng pre-order: thêm 1 dòng ngày nhận riêng — ngày chốt lúc đặt hàng
      (ckOrderPre); vào thẳng màn này chưa đặt (demo) thì lấy tạm từ giỏ như gifts. */
   const pre = ckOrderPre || (cartSelected().find(c => c.preorder) || {}).preorder || '';
+  /* Email hiện trên màn hoàn tất: ưu tiên cái đã chốt lúc đặt, rồi tới ô đang
+     gõ, rồi tới email tài khoản. Vào thẳng màn này để xem (demo) thì vẫn có chữ. */
+  const doneEmail = ckOrderEmail || ckEmail || (ckAuth ? PROFILE.email : '');
   const rows = ckMode === 'pickup'
     ? [['Mã đơn hàng', oid],['Tổng cộng', total],['Nhận tại', st ? st.name : 'Cửa hàng DAFC'],['Sẵn sàng nhận','Từ 12/08']]
     : [['Mã đơn hàng', oid],['Tổng cộng', total],['Vận chuyển','Miễn phí'],['Dự kiến giao','12 – 16/08']];
@@ -10127,6 +10673,27 @@ function screenDONE() {
       <div class="t-multiline flex items-center gap-2 text-muted-foreground w-full px-4 py-3 rounded-xs bg-accent-0 rise">
         ${I.gift}<span>Bạn nhận được <strong class="text-foreground-alt">${points} điểm thưởng</strong> từ đơn hàng này</span>
       </div>
+
+      <!-- XÁC NHẬN QUA EMAIL + HOÁ ĐƠN (11/09/2026). Trước lượt này màn hoàn tất
+           không nói một chữ nào về email, trong khi đó là thứ người mua đi tìm
+           đầu tiên sau khi đặt xong. Email lấy từ ckOrderEmail (chốt lúc đặt). -->
+      <div class="w-full flex flex-col gap-2 px-4 py-3 rounded-xs bg-accent-0 rise">
+        <p class="t-multiline text-secondary-foreground">${doneEmail ? `Đã gửi xác nhận đơn hàng tới <span class="font-medium text-foreground">${doneEmail}</span>.` : 'Xác nhận đơn hàng đã được gửi tới email của bạn.'}</p>
+        <button id="dlInvoice" class="t-multiline self-start underline font-medium text-foreground press">Tải hoá đơn (PDF)</button>
+      </div>
+
+      <!-- KHÁCH VÃNG LAI: mời tạo tài khoản (11/09/2026). Đặt SAU khối thông tin
+           đơn, TRƯỚC hai nút điều hướng: nó là lời mời, không phải việc bắt buộc,
+           nên không được chen lên trên phần người ta đang cần đọc. -->
+      ${ckAuth ? '' : `
+      <div class="w-full flex flex-col gap-3 px-4 py-4 rounded-xs border border-border rise">
+        <div class="flex flex-col gap-1">
+          <p class="t-multiline font-medium text-foreground">Tạo tài khoản để theo dõi đơn này</p>
+          <p class="t-single text-muted-foreground">Đơn vừa đặt sẽ được gắn vào tài khoản, và bạn nhận ${points} điểm thưởng.</p>
+        </div>
+        ${doneEmail ? `<p class="t-single text-secondary-foreground">Email: <span class="font-medium text-foreground">${doneEmail}</span></p>` : ''}
+        <button data-nav="login" data-signup class="t-multiline self-start h-10 px-6 rounded-xs bg-primary text-primary-foreground font-semibold btn-p press">Tạo tài khoản</button>
+      </div>`}
 
       <div class="w-full flex flex-col gap-2.5 rise">
         <button data-nav="plp" data-reset class="t-multiline w-full text-primary-foreground font-semibold py-3.5 rounded-xs tracking-wider bg-primary btn-p press">Tiếp tục mua sắm</button>
@@ -10341,6 +10908,13 @@ const FILTER_VOLUMES = ['50 ml','75 ml','100 ml'];
    Lọc được: thương hiệu · màu · đang giảm giá · hàng mới về.
    KHÔNG lọc được: Size (PRODUCTS không mang size) · Danh mục · Ưu đãi beauty. */
 let plpFilters = [];
+/* Khoảng giá — để NGOÀI plpFilters vì nó không phải một nhãn bật/tắt mà là 2 con
+   số. null = không chặn đầu đó (12/09/2026). */
+let plpPriceMin = null, plpPriceMax = null;
+/* Giá đang GÕ trong sheet, chưa bấm Áp dụng — để số trên nút Áp dụng nhảy theo
+   từng chữ số mà lưới phía sau chưa đổi, đúng như mọi facet khác (12/09/2026). */
+let plpPricePend = { min: null, max: null };
+const priceNum = v => { const n = String(v).replace(/\D/g, ''); return n ? +n : null; };
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const __colorBucket = {};
 /* Quy màu sản phẩm về ô màu bộ lọc. KHÔNG dùng khoảng cách RGB: RGB không phân
@@ -10417,18 +10991,39 @@ function updatePlpCount(root, n) {
 }
 /* Listener UỶ QUYỀN: nút "Xóa tất cả bộ lọc" được vẽ lại liên tục ở nhiều đường
    (template màn, renderPlpGrid) nên bind theo id sau mỗi lần render là bỏ sót. */
+/* Cùng lý do uỷ quyền như nút dưới: `wire(root)` bind [data-nav] một lần lúc
+   dựng màn, mà khối 0-kết-quả vẽ vào #plpGrid sau đó nên nút trong khối không
+   bao giờ có dây — bấm đứng im (đo được 12/09/2026). */
+document.addEventListener('click', e => {
+  if (!e.target.closest('[data-plp-home]')) return;
+  go('home');
+});
 document.addEventListener('click', e => {
   if (!e.target.closest('[data-clear-filters]')) return;
   plpFilters = [];
+  /* Nút hứa "Xóa TẤT CẢ bộ lọc" nên phải dọn cả khoảng giá. Bỏ sót thì bấm xong
+     lưới vẫn 0 kết quả và khối 0-kết-quả vẫn nằm nguyên — nút bấm như hỏng. */
+  plpPriceMin = null; plpPriceMax = null; plpPricePend = { min: null, max: null };
     renderPlpGrid(document);
   if (window.syncFilterToDom) syncFilterToDom();
 });
-function plpFilterEmptyHTML() {
+/* `coLoc` = đang có điều kiện nào đó chặn (facet tick hoặc khoảng giá).
+   Hai lý do khác nhau phải nói hai câu khác nhau (12/09/2026):
+   · CÓ bộ lọc  -> bảo cách gỡ, và nút "Xóa tất cả bộ lọc" là lối ra đúng;
+   · KHÔNG bộ lọc (tìm kiếm trượt, danh mục chưa có hàng) -> nút đó vô nghĩa,
+     bấm vào không đổi gì, nên đổi thành lối ra thật. */
+function plpFilterEmptyHTML(coLoc) {
+  const tim = typeof plpMode !== 'undefined' && plpMode.type === 'search';
+  const tuKhoa = tim ? (plpMode.query || '').trim() : '';
   return `
     <div class="col-span-full py-14 px-4 flex flex-col items-center gap-3 text-center">
-      <p class="t-multiline font-light text-foreground">Không có sản phẩm nào khớp bộ lọc</p>
-      <p class="t-multiline text-muted-foreground">Thử bỏ một vài điều kiện để xem thêm sản phẩm.</p>
-      <button data-clear-filters class="t-multiline h-12 px-5 rounded-xs border border-primary bg-background text-foreground btn-o press">Xóa tất cả bộ lọc</button>
+      <p class="t-multiline font-light text-foreground">${coLoc ? 'Không có sản phẩm nào khớp bộ lọc'
+        : tim ? `Không tìm thấy sản phẩm nào cho “${tuKhoa}”` : 'Danh mục này chưa có sản phẩm'}</p>
+      <p class="t-multiline text-muted-foreground">${coLoc ? 'Thử bỏ một vài điều kiện để xem thêm sản phẩm.'
+        : tim ? 'Thử từ khoá ngắn hơn, hoặc tìm theo tên thương hiệu.' : 'Mời bạn xem các danh mục khác.'}</p>
+      ${coLoc
+        ? `<button data-clear-filters class="t-multiline h-12 px-5 rounded-xs border border-primary bg-background text-foreground btn-o press">Xóa tất cả bộ lọc</button>`
+        : `<button data-plp-home class="t-multiline h-12 px-5 rounded-xs border border-primary bg-background text-foreground btn-o press">Về trang chủ</button>`}
     </div>`;
 }
 /* Nội dung #plpGrid: thẻ sản phẩm, hoặc khối 0-kết-quả khi bộ lọc lọc sạch. */
@@ -10445,7 +11040,9 @@ function plpFilterEmptyHTML() {
 const PLP_PER_PAGE = 24;
 
 function plpGridInner(list, card) {
-  if (!list.length && plpFilters.length) return plpFilterEmptyHTML();
+  /* Khoảng giá cũng tính là "đang lọc": lọc CHỈ theo giá mà ra 0 kết quả thì lời
+     nhắn phải là lời nhắn của bộ lọc, không phải "danh mục chưa có sản phẩm". */
+  if (!list.length) return plpFilterEmptyHTML(plpFilters.length > 0 || plpPriceMin != null || plpPriceMax != null);
   return list.slice(0, PLP_PER_PAGE).map(({ p, i }) => card(p, i)).join('');
 }
 
@@ -10464,7 +11061,25 @@ function syncShowMore(root) {
   if (!sm) return;
   sm.parentElement.classList.toggle('hidden', plpShownCount(root) >= sortedProducts().length);
 }
-function matchProducts(list, labels) {
+/* Zimmermann đánh số theo BẢNG RIÊNG CỦA HÃNG (0 = XS · 1 = S · 2 = M · 3 = L ·
+   4 = XL). Bộ facet lấy từ Excel của khách chỉ có nhóm chữ, nên không nối hai hệ
+   thì 11 sản phẩm Zimmermann không bao giờ khớp một ô size nào. Giữ CẢ token gốc
+   để sau này khách muốn bày đúng "0-4" thành một nhóm facet riêng vẫn dùng được.
+   Lưu ý: đây là bảng của chính hãng, khác hẳn việc quy đổi US ↔ UK ↔ IT — chỗ đó
+   vẫn để nguyên, demo không đoán hộ khách. */
+const ZIM_SIZE = { '0': 'XS', '1': 'S', '2': 'M', '3': 'L', '4': 'XL' };
+function sizeTokens(p) {
+  /* `p.sizes` trước, `sizesOf` sau — đúng thứ tự mà PDP và quick add đang đọc,
+     để cái bộ lọc tin là bộ mà màn hình đang bày. */
+  const s = p.sizes && p.sizes.length ? p.sizes : sizesOf(p);
+  return p.brand === 'Zimmermann' ? s.concat(s.map(v => ZIM_SIZE[v]).filter(Boolean)) : s;
+}
+
+/* `price` = { min, max }; bỏ trống thì lấy khoảng ĐÃ ÁP. Có tham số này để nút
+   Áp dụng đếm theo giá đang gõ mà không phải ghi đè state thật (12/09/2026). */
+function matchProducts(list, labels, price) {
+  const pMin = price ? price.min : plpPriceMin;
+  const pMax = price ? price.max : plpPriceMax;
   const brands = labels.filter(l => FILTER_BRANDS.includes(l));
   /* "Nhiều màu" tách khỏi mảng màu đơn sắc — nó không có bucket HSL, lọc bằng cờ
      `multi` của sản phẩm. Tick nó CÙNG các ô màu khác vẫn là HỢP (OR) như mọi
@@ -10475,7 +11090,32 @@ function matchProducts(list, labels) {
   const sizes  = labels.filter(l => FILTER_VOLUMES.includes(l));
   const promos = labels.filter(l => FILTER_PROMOS.includes(l));
   const heels  = labels.filter(l => FILTER_HEELS.some(([n]) => n === l));
+  /* DANH MỤC (12/09/2026) — khớp ở BẤT KỲ cấp nào trong đường dẫn của sản phẩm:
+     chọn "Quần áo" ra cả nhánh, chọn "Đầm ngắn" ra đúng lá. Tick nhiều ô là HỢP
+     (OR) như mọi facet khác. */
+  const cats = labels.filter(l => FILTER_CAT_LABELS.has(l));
+  /* KÍCH THƯỚC THỜI TRANG & GIÀY (12/09/2026) — nhãn trong plpFilters mang tiền
+     tố ("Size XXS", "Size IT/EU 40"), còn PRODUCTS ghi số trần ("40"), nên phải
+     bóc tiền tố trước khi so. KHÔNG quy đổi US/UK sang IT: bảng quy đổi trong
+     demo là bản tự dựng, quy đổi bằng nó là đoán hộ khách. */
+  const fsizes = labels.filter(l => FILTER_SIZE_LABELS.has(l))
+                       .map(l => l.replace(/^Size (?:IT\/EU |US |UK )?/, ''));
   return list.filter(({ p }) => {
+    if (cats.length) {
+      const path = p.cat || [];
+      if (!cats.some(c => path.includes(c))) return false;
+    }
+    if (fsizes.length) {
+      const has = sizeTokens(p);
+      if (!fsizes.some(v => has.includes(v))) return false;
+    }
+    /* KHOẢNG GIÁ (12/09/2026) — đọc từ 2 ô Từ/Đến. Bỏ trống thì không chặn đầu
+       đó, nên gõ mỗi "Từ" vẫn lọc được. */
+    if (pMin != null || pMax != null) {
+      const v = vndNum(p.price);
+      if (pMin != null && v < pMin) return false;
+      if (pMax != null && v > pMax) return false;
+    }
     if (brands.length && !brands.includes(p.brand)) return false;
     if (colors.length || multi) {
       const buckets = (p.colors || []).map(c => colorBucketOf(c.hex));
@@ -10528,6 +11168,58 @@ function setColorChip(btn, on) {
   btn.querySelector('.fcolor-label').className =
     'fcolor-label text-[12px] leading-4 ' + (on ? 'text-foreground' : 'text-muted-foreground');
 }
+/* Mọi nhãn của cây Danh mục, cả 3 cấp — để matchProducts biết label nào đang
+   nói về danh mục (12/09/2026). Dựng một lần từ chính FILTER_CATS nên thêm cấp
+   vào cây là tập này tự có, không phải khai hai nơi. */
+const FILTER_CAT_LABELS = (() => {
+  const out = new Set();
+  FILTER_CATS.forEach(([l1, subs]) => {
+    out.add(l1);
+    (subs || []).forEach(([l2, leaves]) => { out.add(l2); (leaves || []).forEach(l3 => out.add(l3)); });
+  });
+  return out;
+})();
+
+/* ── CÂY DANH MỤC: TRA NGƯỢC LÊN CHA (13/09/2026) ───────────────────────────
+   Tick một ô danh mục là cây tự lan xuống toàn bộ nhánh con, nên `plpFilters`
+   sau khi tick "Quần áo" có 49 nhãn. Bày cả 49 thành chip thì hàng chip dài hơn
+   lưới sản phẩm mà không thêm được nghĩa nào. Hai hàm dưới gói lại ở tầng BÀY. */
+const FILTER_CAT_PARENT = (() => {
+  const m = {};
+  FILTER_CATS.forEach(([l1, subs]) => {
+    (subs || []).forEach(s => {
+      const [l2, leaves] = Array.isArray(s) ? s : [s, []];
+      if (l2 !== l1) m[l2] = l1;
+      /* BẪY: cây của khách có lá TRÙNG TÊN với chính cha nó ("Túi xách > Túi đeo
+         vai > Túi đeo vai"). Ghi thẳng là m[x] = x — một vòng tự trỏ, và vòng
+         while tra ngược lên cha chạy vô tận, treo cả trang. Đã treo thật 13/09. */
+      (leaves || []).forEach(l3 => { if (l3 !== l2 && l3 !== l1) m[l3] = l2; });
+    });
+  });
+  return m;
+})();
+/* Bỏ mọi nhãn có CHA (hoặc ông) cũng đang được chọn. Nhãn không thuộc cây danh
+   mục (thương hiệu, màu, size…) không có cha nên đi thẳng qua. */
+function plpCatTop(labels) {
+  const co = new Set(labels);
+  return labels.filter(l => {
+    /* Chặn 3 vòng: cây chỉ sâu 3 cấp, và chặn cứng để một bản dữ liệu lỗi không
+       bao giờ treo được trang lần nữa. */
+    let p = FILTER_CAT_PARENT[l];
+    for (let i = 0; p && i < 3; i++) { if (co.has(p)) return false; p = FILTER_CAT_PARENT[p]; }
+    return true;
+  });
+}
+/* Gỡ chip cha phải gỡ luôn cả nhánh dưới — không thì nhánh con ở lại trong
+   plpFilters, lưới vẫn bị lọc y như cũ mà trên trang không còn chip nào để hiểu. */
+function plpCatSubtree(label) {
+  return Object.keys(FILTER_CAT_PARENT).filter(k => {
+    let p = FILTER_CAT_PARENT[k];
+    for (let i = 0; p && i < 3; i++) { if (p === label) return true; p = FILTER_CAT_PARENT[p]; }
+    return false;
+  });
+}
+
 const FILTER_PROMOS  = ['Nguyên giá','10% - 30%','30% - 50%','50% - 70%','Trên 70%'];
 /* ── ƯU ĐÃI = MỨC GIẢM GIÁ — sheet "Promo" của Filter - Beauty cate demo.xlsx ──
    (bổ sung 19/08/2026, user báo thiếu). 5 lựa chọn khớp đúng file Excel; nhãn
@@ -10832,12 +11524,12 @@ function filterBody(beauty, gender, heel) {
       <div class="flex items-end gap-3">
         <label class="flex-1 min-w-0 flex flex-col gap-1">
           <span class="t-single text-muted-foreground">Từ</span>
-          <input inputmode="numeric" value="0" class="t-multiline w-full min-w-0 h-9 bg-input border border-border rounded-xs px-2 outline-none focus:border-primary transition-colors">
+          <input data-price="min" inputmode="numeric" value="${plpPriceMin == null ? '' : plpPriceMin.toLocaleString('en-US')}" placeholder="0" class="t-multiline w-full min-w-0 h-9 bg-input border border-border rounded-xs px-2 outline-none focus:border-primary transition-colors">
         </label>
         <span class="w-2.5 h-px bg-border mb-4 shrink-0"></span>
         <label class="flex-1 min-w-0 flex flex-col gap-1">
           <span class="t-single text-muted-foreground">Đến</span>
-          <input inputmode="numeric" value="50,000,000" class="t-multiline w-full min-w-0 h-9 bg-input border border-border rounded-xs px-2 outline-none focus:border-primary transition-colors">
+          <input data-price="max" inputmode="numeric" value="${plpPriceMax == null ? '' : plpPriceMax.toLocaleString('en-US')}" placeholder="50,000,000" class="t-multiline w-full min-w-0 h-9 bg-input border border-border rounded-xs px-2 outline-none focus:border-primary transition-colors">
         </label>
       </div>
       <div class="flex flex-col gap-3">
@@ -11194,9 +11886,23 @@ function wireFilter() {
 
   window.syncFilterFooter = () => {
     const cnt = sh.querySelector('#filterApplyCount');
-    if (cnt) cnt.textContent = ` (${matchProducts(plpProducts(), pickedLabels()).length})`;
-    sh.querySelector('#filterReset').classList.toggle('hidden', plpFilters.length === 0);
+    if (cnt) cnt.textContent = ` (${matchProducts(plpProducts(), pickedLabels(), plpPricePend).length})`;
+    const trống = plpFilters.length === 0 && plpPriceMin == null && plpPriceMax == null
+                  && plpPricePend.min == null && plpPricePend.max == null;
+    sh.querySelector('#filterReset').classList.toggle('hidden', trống);
   };
+
+  /* 2 ô khoảng giá (12/09/2026) — gõ tới đâu số trên nút Áp dụng nhảy tới đó,
+     nhưng chỉ ghi vào state thật khi bấm Áp dụng, y như các facet tick. */
+  /* Bắt Ở THÂN SHEET chứ không gắn vào từng ô: renderFilterBody() vẽ lại thân
+     mỗi lần mở nên ô input là phần tử MỚI, gắn thẳng vào ô thì mở lần thứ hai
+     là đứt dây (đo được đúng lỗi này lúc dựng 12/09/2026). */
+  sh.addEventListener('input', e => {
+    const inp = e.target.closest && e.target.closest('[data-price]');
+    if (!inp) return;
+    plpPricePend[inp.dataset.price] = priceNum(inp.value);
+    syncFilterFooter();
+  });
   /* Đẩy plpFilters NGƯỢC vào DOM. Cần vì nút "Xóa tất cả bộ lọc" ở empty state nằm
      NGOÀI sheet: nó xoá plpFilters nhưng các ô trong sheet vẫn còn tick, mở lại là
      thấy tick không còn hiệu lực và số kết quả lệch hẳn với lưới. */
@@ -11208,6 +11914,14 @@ function wireFilter() {
       btn.querySelector('.chk')?.classList.toggle('on', has(lbl));
     });
     sh.querySelectorAll('.fcolor').forEach(b => setColorChip(b, has(b.dataset.color)));
+    /* 2 ô khoảng giá đi cùng luật với facet tick: mọi đường đổi state từ ngoài
+       (chip ✕, "Xoá tất cả") đều kéo ô về đúng số, không thì bỏ chip giá xong
+       mở lại drawer vẫn thấy con số cũ nằm đó (12/09/2026). */
+    plpPricePend = { min: plpPriceMin, max: plpPriceMax };
+    sh.querySelectorAll('[data-price]').forEach(i => {
+      const v = plpPricePend[i.dataset.price];
+      i.value = v == null ? '' : v.toLocaleString('en-US');
+    });
     sh.querySelectorAll('.fsize').forEach(b => {
       const on = has((b.dataset.size || '').trim() || b.textContent.trim());
       b.classList.toggle('on', on);
@@ -11222,6 +11936,7 @@ function wireFilter() {
   sh.querySelector('#filterClose').addEventListener('click', closeFilter);
   sh.querySelector('#filterApply').addEventListener('click', () => {
     plpFilters = pickedLabels();
+    plpPriceMin = plpPricePend.min; plpPriceMax = plpPricePend.max;
     closeFilter();
     renderPlpGrid(document);
     toast(plpFilters.length ? `Áp dụng ${plpFilters.length} bộ lọc` : 'Đã bỏ hết bộ lọc');
@@ -11235,6 +11950,11 @@ function wireFilter() {
        query không khớp gì). Bắn event input để đi đúng handler sẵn có. */
     const bb = sh.querySelector('#fBrandSearch');
     if (bb && bb.value) { bb.value = ''; bb.dispatchEvent(new Event('input')); }
+    /* Đặt lại phải dọn CẢ khoảng giá — bỏ sót thì bấm "Đặt lại" xong lưới vẫn bị
+       chặn theo giá cũ mà trong sheet không còn ô nào sáng để hiểu vì sao. */
+    sh.querySelectorAll('[data-price]').forEach(i => { i.value = ''; });
+    plpPricePend = { min: null, max: null };
+    plpPriceMin = null; plpPriceMax = null;
     plpFilters = [];
     renderPlpGrid(document);
     syncFilterFooter();
@@ -11511,7 +12231,8 @@ const RENDER = {
   /* 'home' đứng đầu FLOW từ 04/09/2026 — xem khối SCREEN: HOME. */
   home: screenHOME,
   plp: screenPLP, search: screenSearch, pdp: screenPDP, pdp2: screenPDP2, pdp3: screenPDP3, pdp4: screenPDP4, pdp5: screenPDP5, pdp6: screenPDP6, account: screenACCOUNT, order: screenORDER, cart: screenCART, login: screenLOGIN,
-  checkout: screenCHECKOUT, done: screenDONE,
+  pdpGone: screenPDPGone,
+  checkout: screenCHECKOUT, done: screenDONE, pay: screenPAY,
   privacy: () => screenPOLICY('privacy'), terms: () => screenPOLICY('terms'), returns: () => screenPOLICY('returns'),
 };
 
@@ -11679,6 +12400,51 @@ function wireProductCards(root) {
   });
 }
 
+/* ── CHIP BỘ LỌC ĐANG ÁP (12/09/2026) ────────────────────────────────────────
+   Trước lượt này áp lọc xong KHÔNG có dấu hiệu nào trên trang ngoài con số đếm:
+   muốn biết mình đang lọc theo gì, hoặc muốn bỏ một điều kiện, đều phải mở lại
+   cả sheet. Chip đặt NGAY TRÊN lưới — chỗ mắt nhìn khi kết quả ít hơn mong đợi.
+   Khoảng giá cũng là một chip, vì nó cũng là một điều kiện đang chặn. */
+function plpChipList() {
+  const out = plpCatTop(plpFilters).map(l => ({ label: l, kind: 'label' }));
+  if (plpPriceMin != null || plpPriceMax != null) {
+    const f = plpPriceMin != null ? plpPriceMin.toLocaleString('en-US') + 'đ' : '0đ';
+    const t = plpPriceMax != null ? plpPriceMax.toLocaleString('en-US') + 'đ' : 'trở lên';
+    out.push({ label: `${f} – ${t}`, kind: 'price' });
+  }
+  return out;
+}
+function renderPlpChips(root) {
+  const box = (root || document).querySelector('#plpChips');
+  if (!box) return;
+  const list = plpChipList();
+  box.className = list.length ? 'flex gap-2.5 flex-wrap px-4 pb-3' : 'hidden';
+  /* Khuôn chip = ĐÚNG chuỗi class của `.af-chip` bên desktop (user chốt 12/09):
+     cao 32 · vuông · pad 12 · gap 8, cả thẻ là nút bấm chứ không phải chỉ dấu ✕.
+     Giữ y nguyên để MỘT component `filter-chip` phủ được cả hai bản. */
+  box.innerHTML = list.map(c => `
+    <button class="t-multiline af-chip h-8 px-3 rounded-xs bg-secondary flex items-center gap-2 font-medium text-secondary-foreground btn-s press [&_svg]:w-3 [&_svg]:h-3" data-chip="${c.kind}" data-chip-label="${c.label}" aria-label="Bỏ bộ lọc ${c.label}">
+      <span>${c.label}</span>${I.close}
+    </button>`).join('')
+    + (list.length > 1 ? `<button id="plpChipClear" class="t-multiline h-8 px-3 rounded-xs flex items-center font-medium text-mid-alt ghost-hover press"><span>Xóa tất cả</span></button>` : '');
+  box.querySelectorAll('[data-chip]').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.chip === 'price') { plpPriceMin = null; plpPriceMax = null; plpPricePend = { min: null, max: null }; }
+    else {
+      const bo = new Set([b.dataset.chipLabel, ...plpCatSubtree(b.dataset.chipLabel)]);
+      plpFilters = plpFilters.filter(l => !bo.has(l));
+    }
+    if (window.syncFilterToDom) syncFilterToDom();
+    renderPlpGrid(document);
+  }));
+  const clr = box.querySelector('#plpChipClear');
+  if (clr) clr.addEventListener('click', () => {
+    plpFilters = []; plpPriceMin = null; plpPriceMax = null; plpPricePend = { min: null, max: null };
+    if (window.syncFilterToDom) syncFilterToDom();
+    renderPlpGrid(document);
+  });
+  localizeNew(box);
+}
+
 function renderPlpGrid(root) {
   const grid = root.querySelector('#plpGrid');
   if (!grid) return;
@@ -11691,6 +12457,7 @@ function renderPlpGrid(root) {
   if (list.length) wireProductCards(grid);
   localizeNew(grid);
   updatePlpCount(root, list.length);
+  renderPlpChips(root);          // chip đi theo lưới: mọi đường đổi lọc đều qua đây
   /* 0 kết quả -> ẩn cụm nút "Xem thêm" (nó nằm NGOÀI #plpGrid nên đường
      innerHTML ở trên không đụng tới nó được) — xem chú thích ở chỗ bind nút. */
   syncShowMore(root);   // gộp cả 2 việc: ẩn khi lọc sạch, và ẩn khi đã vẽ hết hàng
@@ -11704,7 +12471,7 @@ let ckAuth = false, ckStep = 0, ckMaxStep = 0;
    dù khách chọn giao nhanh. Giữ cờ ở đây để placeOrder ghi đúng phương thức. */
 let ckShipFast = false;
 let vatType = 'personal';         // 'personal' | 'company' — loại xuất hoá đơn VAT (Figma 3028:47246, mặc định "Cá nhân")
-let loginFrom = null;             // mở login từ màn nào
+let loginFrom = null, authGuardTo = '';             // mở login từ màn nào
 let scrollCleanups = [];          // gỡ listener khi đổi màn
 
 /* ════════════════════════════════════════════════════════════════
@@ -11928,6 +12695,18 @@ const I18N = {
   'Phí vận chuyển':'Shipping fee', 'Vận chuyển':'Shipping', 'Giao hàng':'Delivery',
   'Mã giảm giá':'Promo code', 'Nhập voucher':'Enter voucher', 'Bạn có phiếu mua hàng?':'Have a gift voucher?',
   'DAFC Phiếu mua hàng':'DAFC Gift Voucher', 'Xóa sản phẩm đã chọn':'Remove selected',
+  'Hoàn tác':'Undo', 'Đã khôi phục sản phẩm':'Item restored', 'Chưa chọn sản phẩm nào':'No items selected',
+  'Phí vận chuyển (ước tính)':'Shipping (estimated)', 'Sản phẩm đã hết hàng':'Out of stock',
+  'Gợi ý cho bạn':'Recommended for you', 'Mã ưu đãi':'Promo code',
+  'Sản phẩm không còn bán':'Product no longer available', 'Xem sản phẩm tương tự':'See similar products',
+  'Đang chuyển tới cổng thanh toán':'Redirecting to payment gateway', 'Quét mã để thanh toán':'Scan to pay',
+  'Tôi đã thanh toán':'I have paid', 'Huỷ và chọn cách khác':'Cancel and choose another method',
+  'Thanh toán không thành công':'Payment failed', 'Phiên thanh toán đã hết hạn':'Payment session expired',
+  'Thử lại':'Try again', 'Tạo mã mới':'Generate a new code', 'Chọn cách thanh toán khác':'Choose another payment method',
+  'Đang xử lý…':'Processing…', 'Ghi chú đơn hàng':'Order note', 'Thanh toán khi nhận hàng':'Cash on delivery',
+  'Tải hoá đơn (PDF)':'Download invoice (PDF)', 'Tạo tài khoản':'Create account',
+  'Về trang chủ':'Back to home', 'Đang thêm…':'Adding…', 'Đã có trong giỏ':'Already in your bag', 'Xem giỏ hàng':'View bag',
+  'Giá đã thay đổi, trước là':'Price changed, was',
   // ── Sheet chọn ưu đãi (17/08/2026) ──
   'Áp dụng ưu đãi':'Apply offers', 'Chọn ưu đãi':'Select offers',
   /* KHÔNG dùng 'Offers & promotions' cho key này: chuỗi đó đã là bản dịch của
@@ -11988,9 +12767,11 @@ const I18N = {
   'Quên mật khẩu?':'Forgot password?', '← Quay lại đăng nhập':'← Back to sign in',
   'Tạo tài khoản':'Create account', 'Họ và tên':'Full name',
   'Nhập họ và tên':'Enter your full name', 'Số điện thoại':'Phone number', 'Nhập số điện thoại':'Enter phone number',
-  'Nhập email':'Enter email', 'Email ( không bắt buộc )':'Email ( optional )',
+  'Nhập email':'Enter email',
   'Xác nhận mật khẩu':'Confirm password', 'Nhập lại mật khẩu':'Re-enter password',
   'Tôi đồng ý với':'I agree to the', 'Điều khoản sử dụng':'Terms of Use', 'Chính sách bảo mật':'Privacy policy',
+  'Chúng tôi muốn gửi đến bạn thông tin mới nhất về DAFC qua email, gồm tin tức sự kiện tại cửa hàng, ưu đãi và khuyến mãi. Bạn có thể ngừng nhận bất cứ lúc nào qua liên kết hủy đăng ký trong email, hoặc đổi tùy chọn trong mục Tài khoản. Xem thêm tại':
+    'We’d love to keep you posted on the latest from DAFC by email, including store events, offers and promotions. You can stop anytime via the unsubscribe link in our emails, or by changing your preferences in Account. Find out more in our',
   'Nhập số điện thoại hoặc email đã đăng ký. Chúng tôi sẽ gửi mã OTP để xác thực.':'Enter the phone number or email you registered with. We\u2019ll send you an OTP to verify.',
   'Gửi mã xác thực':'Send verification code', 'Xác thực OTP':'OTP verification',
   'Mã xác thực đã được gửi đến':'A verification code has been sent to',
@@ -12001,6 +12782,7 @@ const I18N = {
   'Độ mạnh mật khẩu:':'Password strength:', 'Cập nhật mật khẩu':'Update password',
   'Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật':'Medium — add a special character to strengthen it',
   'Đăng nhập thành công':'Signed in successfully', 'Đăng ký thành công':'Account created',
+  'Chào mừng bạn đến với DAFC Online,':'Welcome to DAFC Online,',
   'Để tận hưởng những ưu đãi độc quyền, Quý khách vui lòng sử dụng số điện thoại đã đăng ký chương trình Khách hàng thân thiết tại hệ thống cửa hàng DAFC khi mua sắm trực tuyến tại DAFC Online.':'To enjoy exclusive privileges, please use the phone number registered with the DAFC loyalty programme at our stores when shopping online at DAFC Online.',
   'Hãy sẵn sàng trải nghiệm những đặc quyền mua sắm tuyệt vời chỉ dành riêng cho bạn!':'Get ready to enjoy wonderful shopping privileges reserved just for you!',
   'Nhập thông tin...':'Enter details...', 'Gửi mã OTP':'Send OTP code',
@@ -12010,6 +12792,9 @@ const I18N = {
   'Số điện thoại đã được xác thực.':'Your phone number has been verified.',
   'Đã gửi mã OTP':'OTP code sent', 'Đã gửi lại mã OTP':'OTP code re-sent',
   'Vui lòng nhập số điện thoại':'Please enter your phone number',
+  'Vui lòng nhập số điện thoại hoặc email':'Please enter your phone number or email',
+  'Nếu có tài khoản đăng ký với địa chỉ':'If there’s an account registered with',
+  ', bạn sẽ nhận được email kèm theo đường link để đặt lại mật khẩu.':', you’ll receive an email with a link to reset your password.',
   'Vui lòng nhập đủ 6 số':'Please enter all 6 digits',
 
   // ── Trang tài khoản ──
@@ -12726,7 +13511,19 @@ function go(name, opts = {}) {
   if (current && !opts.back && !opts.force) history.push(current);
   if (current) SCROLL_MEM[current] = curScrollY();   // phải chốt TRƯỚC khi xoá DOM
 
-  if (name === 'login' && current !== 'login') { loginFrom = current; if (!authViewIntent) authView = 'login'; authViewIntent = false; }
+    /* CHẶN VÀO TÀI KHOẢN KHI CHƯA ĐĂNG NHẬP (11/09/2026, lệnh user). Đo trước khi vá:
+     đặt `ckAuth = false` rồi `go('account')` vẫn vẽ ra màn tài khoản kèm tên và hạng
+     của một người — demo tự mâu thuẫn với chính nút Đăng nhập của nó.
+     Đẩy sang màn đăng nhập và GIỮ ĐÍCH: `authGuardTo` nhớ màn vừa bị chặn, dòng ngay
+     dưới lấy nó làm `loginFrom` nên đăng nhập xong vào đúng màn đó, không rơi về màn
+     đang đứng. */
+  if ((name === 'account' || name === 'order') && !ckAuth) {
+    toast('Đăng nhập để xem tài khoản');
+    authView = 'login'; authViewIntent = false;
+    authGuardTo = name;
+    name = 'login';
+  }
+  if (name === 'login' && current !== 'login') { loginFrom = authGuardTo || current; authGuardTo = ''; if (!authViewIntent) authView = 'login'; authViewIntent = false; }
 
   scrollCleanups.forEach(fn => fn());
   scrollCleanups = [];
@@ -12881,10 +13678,241 @@ function validatePickup(root) {
   return !first;
 }
 
+/* Kiểm định dạng ngay khi bấm Xác nhận ở bước Vận chuyển (nhánh giao hàng) —
+   cùng cách validatePickup() đã làm cho nhánh nhận tại cửa hàng (brief PDF
+   trang 29: "Thêm notification nếu field bị sai thông tin ngay tại block
+   lỗi"). Trước đây nhánh giao hàng KHÔNG kiểm gì ở bước này, chỉ bắt ở tận
+   nút Đặt hàng cuối cùng (ckGuard/ckMissingFields) — bấm Xác nhận với ô
+   trống vẫn đi tiếp được tới lúc đó mới báo lỗi. Mọi lookup null-guard nên
+   khi addrForm không dựng (đã đăng nhập + chọn địa chỉ có sẵn) hàm tự coi
+   như hợp lệ, không cần tách nhánh riêng ở chỗ gọi. */
+function validateShipping(root) {
+  const get = k => root.querySelector(`[data-ckf="${k}"]`);
+  const pick = k => { const b = root.querySelector('#pk-' + k); return b ? b.parentElement : null; };
+  const rules = [
+    [get('sname'), v => !!v.trim(), 'Nhập tên người nhận'],
+    [get('sphone'), v => /^0\d{8,10}$/.test(v.replace(/\s/g, '')), 'Số điện thoại chưa đúng'],
+    [get('saddr'), v => !!v.trim(), 'Nhập địa chỉ nhận hàng'],
+  ];
+  const emailInp = get('email');
+  if (emailInp) rules.push([emailInp, v => !!v.trim() && /^\S+@\S+\.\S+$/.test(v.trim()), 'Email chưa đúng']);
+  let first = null;
+  rules.forEach(([inp, ok, msg]) => {
+    if (!inp) return;
+    if (ok(inp.value)) { clearFieldErr(inp); return; }
+    setFieldErr(inp, msg);
+    if (!first) first = inp;
+  });
+  [['province', 'Chọn tỉnh / thành phố', ckProvince], ['ward', 'Chọn phường / xã', ckWard]].forEach(([k, msg, v]) => {
+    const el = pick(k);
+    if (!el) return;
+    if (v) { clearFieldErr(el); return; }
+    if (!el.id) el.id = 'ckship-' + k;
+    setFieldErr(el, msg);
+    if (!first) first = el;
+  });
+  if (first) { if (first.focus) first.focus({ preventScroll: true }); first.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  return !first;
+}
+
 /* ── Chốt đơn ──
    Sinh mã theo đúng hệ DAFC1029xx của màn Đơn hàng (trước đây màn Hoàn tất in
    cứng #MG-2026-0807, không khớp với bất kỳ đơn nào trong ORDERS), đẩy đơn mới
    lên đầu ORDERS để tab Đơn hàng thấy ngay, rồi DỌN GIỎ. */
+/* ── CHẶN ĐẶT HÀNG KHI FORM GIAO HÀNG CÒN TRỐNG (11/09/2026, lệnh user) ──────
+   Trước lượt này `placeOrder()` không đọc lấy một ô nào. Đo trên trang: xoá sạch
+   tên · SĐT · địa chỉ rồi bấm Đặt hàng thì demo VẪN sinh đơn và nhảy thẳng sang màn
+   Hoàn tất — đơn ra đời với người nhận rỗng.
+   Kiểm THEO CHẾ ĐỘ đang chọn, không kiểm mù cả hai form:
+     · giao hàng + đã đăng nhập + đang chọn địa chỉ trong sổ -> KHÔNG kiểm ô nào
+       (dữ liệu lấy từ ADDRESSES, form không hiện ra);
+     · giao hàng, các trường hợp còn lại -> tên · SĐT · tỉnh · phường · địa chỉ;
+     · nhận tại cửa hàng -> cửa hàng · họ tên · SĐT.
+   Báo lỗi TẠI Ô bằng `setFieldErr` — cùng cách khối mã ưu đãi ở giỏ và các form xác
+   thực đang làm. KHÔNG lấy toast làm lời báo chính: toast tắt trước khi người ta kịp
+   nhìn ô nào sai; ở đây toast chỉ là lời nhắc phụ.
+   Ô chọn tỉnh/phường là <button> nằm trong `div.relative`, nên gắn lỗi vào CHÍNH div
+   đó: gắn vào button thì <p> lỗi rơi vào giữa nút và mũi tên chevron. */
+function ckMissingFields(root) {
+  const fld = k => root.querySelector('[data-ckf="' + k + '"]');
+  const pick = k => { const b = root.querySelector('#pk-' + k); return b ? b.parentElement : null; };
+  const miss = [];
+  if (ckMode === 'pickup') {
+    if (!ckStore) miss.push([root.querySelector('#storeOpts') || root.querySelector('#ckStoreGroup'), 'Chọn một cửa hàng để nhận hàng']);
+    if (!String(ckName).trim())  miss.push([fld('name'),  'Nhập họ và tên người nhận']);
+    if (!String(ckPhone).trim()) miss.push([fld('phone'), 'Nhập số điện thoại']);
+  } else if (!(ckAuth && ckAddr !== 'new')) {
+    if (!String(ckShipName).trim())  miss.push([fld('sname'),  'Nhập tên người nhận']);
+    if (!String(ckShipPhone).trim()) miss.push([fld('sphone'), 'Nhập số điện thoại']);
+    if (!ckProvince) miss.push([pick('province'), 'Chọn tỉnh / thành phố']);
+    if (!ckWard)     miss.push([pick('ward'),     'Chọn phường / xã']);
+    if (!String(ckShipLine).trim())  miss.push([fld('saddr'),  'Nhập địa chỉ nhận hàng']);
+  }
+  /* KHÔNG lọc theo phần tử: ô chưa được render vẫn là điều kiện còn thiếu.
+     (Chế độ nhận tại cửa hàng lúc chưa chọn thành phố thì cả khối cửa hàng lẫn form
+     người nhận đều chưa có trong DOM — lọc theo phần tử là guard tự vô hiệu hoá.) */
+  return miss;
+}
+
+/* Trả về true = được phép đặt hàng. Gọi TRƯỚC placeOrder() ở chỗ bắt data-nav="done". */
+function ckGuard() {
+  const root = document.querySelector('[data-screen="checkout"]');
+  if (!root) return true;                       // không ở màn thanh toán thì không chặn
+  root.querySelectorAll('.fld-err').forEach(el => clearFieldErr(el));
+  if (!ckMissingFields(root).length) return true;
+  /* Mở lại bước Vận chuyển TRƯỚC khi vẽ lỗi: nút Đặt hàng nằm ở bước 3, không mở lại
+     thì người dùng thấy báo lỗi mà không thấy ô nào. `ckMaxStep` giữ nguyên nên các
+     bước đã xong vẫn ở dạng tóm tắt — không mất dữ liệu đã nhập. */
+  ckStep = 0;
+  paintCheckout(root);
+  const after = document.querySelector('[data-screen="checkout"]') || root;
+  ckMissingFields(after).forEach(([el, msg], i) => {
+    if (!el) return;                             // thiếu nhưng ô chưa render -> chỉ còn toast
+    if (!el.id) el.id = 'ckmiss' + i;            // setFieldErr đặt id dòng lỗi theo id của ô
+    setFieldErr(el, msg);
+  });
+  const first = after.querySelector('.fld-err');
+  if (first) {
+    first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (first.focus) setTimeout(() => first.focus({ preventScroll: true }), 320);
+  }
+  toast('Còn thiếu thông tin nhận hàng');
+  return false;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SCREEN: PAY — CỔNG THANH TOÁN (11/09/2026, user chốt "đủ luồng")
+
+   Trước lượt này bấm "Đặt hàng" là nhảy thẳng sang màn Hoàn tất: demo bỏ qua
+   đúng quãng mà người mua lo nhất — tiền đã đi chưa, quét mã ở đâu, lỡ hỏng thì
+   sao. Bốn chặng dưới đây là bốn màn THẬT của một đơn trả qua cổng:
+
+     redirect -> đang chuyển sang cổng (ngắn, nhưng phải có: nó giải thích vì sao
+                 trang đổi, và là chỗ duy nhất nói "đừng tắt trình duyệt")
+     qr       -> mã + số tiền + mã đơn + ĐỒNG HỒ ĐẾM NGƯỢC
+     fail     -> thất bại, mở 2 đường: thử lại / đổi phương thức
+     timeout  -> hết phiên, KHÁC thất bại: mã cũ chết chứ tiền chưa hề đi
+
+   Kết cục KHÔNG ngẫu nhiên: đọc công tắc `paySim` trong bảng cài đặt demo, để
+   khách bấm xem được từng nhánh. Demo mà random thì người xem không chủ động
+   dựng lại được cảnh mình cần. */
+let payStage = '', payLeft = 0, payTimer = null;
+let paySim = 'success';      // 'success' | 'fail' | 'timeout' — công tắc demo
+const PAY_SECS = 15 * 60;    // 15 phút, đúng mức các cổng trong nước đang dùng
+
+const payMM = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+
+/* Ô mã QR MINH HOẠ — sinh từ mã đơn nên cùng đơn thì cùng hình, đổi đơn thì đổi
+   hình. KHÔNG phải mã quét được: demo không có cổng thật, vẽ một mã quét ra tiền
+   là nói dối. Ghi rõ "mã minh hoạ" ngay dưới ô. */
+function payQR(seed) {
+  let h = 0;
+  for (let i = 0; i < String(seed).length; i++) h = (h * 31 + String(seed).charCodeAt(i)) >>> 0;
+  const N = 21, cells = [];
+  for (let i = 0; i < N * N; i++) {
+    const r = Math.floor(i / N), c = i % N;
+    /* 3 ô định vị ở góc — thứ làm cho hình nhìn ra là mã QR */
+    const eye = (rr, cc) => (rr < 7 && cc < 7) && !((rr > 1 && rr < 5) && (cc > 1 && cc < 5)) === false
+      ? false : (rr < 7 && cc < 7) && (rr === 0 || rr === 6 || cc === 0 || cc === 6 || (rr > 1 && rr < 5 && cc > 1 && cc < 5));
+    const inEye = eye(r, c) || eye(r, c - (N - 7)) || eye(r - (N - 7), c);
+    h = (h * 1103515245 + 12345) >>> 0;
+    cells.push(inEye || (h >>> 16) % 100 < 46);
+  }
+  return `<div class="pay-qr" aria-label="Mã QR minh hoạ">${cells.map(on => `<i class="${on ? 'on' : ''}"></i>`).join('')}</div>`;
+}
+
+function screenPAY() {
+  const oid = ckOrderId || 'DAFC102939';
+  const total = ckOrderTotal || vndCom(cartTotalNow());
+  const shell = (body) => `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+    <div class="flex flex-col items-center justify-center gap-6 px-8 py-16 text-center">${body}</div>
+  </div>`;
+
+  if (payStage === 'redirect') return shell(`
+    <div class="pay-spin"></div>
+    <div class="flex flex-col gap-2">
+      <p class="t-multiline font-medium text-foreground">Đang chuyển tới cổng thanh toán</p>
+      <p class="t-multiline text-muted-foreground">Vui lòng không tắt trình duyệt cho tới khi thanh toán xong.</p>
+    </div>`);
+
+  if (payStage === 'fail') return shell(`
+    <div class="w-16 h-16 rounded-full border border-destructive flex items-center justify-center">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="m7 7 10 10M17 7 7 17" stroke="var(--general-destructive)" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </div>
+    <div class="flex flex-col gap-2">
+      <p class="t-multiline font-medium text-foreground">Thanh toán không thành công</p>
+      <p class="t-multiline text-muted-foreground">Ngân hàng từ chối giao dịch. Tiền chưa bị trừ. Đơn <span class="font-medium text-foreground">${oid}</span> vẫn đang chờ thanh toán.</p>
+    </div>
+    <div class="w-full flex flex-col gap-2.5">
+      <button data-pay-retry class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-semibold btn-p press">Thử lại</button>
+      <button data-pay-back class="t-multiline w-full h-12 rounded-xs border border-border font-medium text-foreground btn-o press">Chọn cách thanh toán khác</button>
+    </div>`);
+
+  if (payStage === 'timeout') return shell(`
+    <div class="w-16 h-16 rounded-full border border-border-3 flex items-center justify-center">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="var(--general-muted-foreground)" stroke-width="1.4"/><path d="M12 7v5.5l3.5 2" stroke="var(--general-muted-foreground)" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </div>
+    <div class="flex flex-col gap-2">
+      <p class="t-multiline font-medium text-foreground">Phiên thanh toán đã hết hạn</p>
+      <p class="t-multiline text-muted-foreground">Mã QR chỉ có hiệu lực 15 phút. Tiền chưa bị trừ — tạo mã mới để thanh toán lại đơn <span class="font-medium text-foreground">${oid}</span>.</p>
+    </div>
+    <div class="w-full flex flex-col gap-2.5">
+      <button data-pay-retry class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-semibold btn-p press">Tạo mã mới</button>
+      <button data-pay-back class="t-multiline w-full h-12 rounded-xs border border-border font-medium text-foreground btn-o press">Chọn cách thanh toán khác</button>
+    </div>`);
+
+  // payStage === 'qr'
+  return shell(`
+    <div class="flex flex-col gap-2">
+      <p class="t-multiline font-medium text-foreground">Quét mã để thanh toán</p>
+      <p class="t-multiline text-muted-foreground">Mở ứng dụng ngân hàng và quét mã bên dưới.</p>
+    </div>
+    ${payQR(oid)}
+    <p class="t-single text-muted-foreground">Mã minh hoạ cho bản demo — không quét được.</p>
+    <div class="w-full rounded-xs border border-border overflow-hidden">
+      <div class="t-multiline flex justify-between px-4 py-3"><span class="text-muted-foreground">Số tiền</span><span class="font-medium text-foreground">${total}</span></div>
+      <div class="t-multiline flex justify-between px-4 py-3 border-t border-border-1"><span class="text-muted-foreground">Nội dung</span><span class="font-medium text-foreground">${oid}</span></div>
+      <div class="t-multiline flex justify-between px-4 py-3 border-t border-border-1"><span class="text-muted-foreground">Mã hết hạn sau</span><span id="payClock" class="font-medium text-foreground">${payMM(payLeft)}</span></div>
+    </div>
+    <div class="w-full flex flex-col gap-2.5">
+      <button data-pay-done class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-semibold btn-p press">Tôi đã thanh toán</button>
+      <button data-pay-back class="t-multiline w-full h-12 rounded-xs border border-border font-medium text-foreground btn-o press">Huỷ và chọn cách khác</button>
+    </div>`);
+}
+
+/* Mở màn QR (lần đầu hoặc tạo lại mã): đặt lại đồng hồ rồi mới vẽ. */
+function payOpenQR() {
+  payStage = 'qr';
+  payLeft = PAY_SECS;
+  go('pay', { force: true });
+}
+
+/* Dừng đồng hồ ở MỌI đường ra khỏi màn QR — không dọn thì nó chạy ngầm và
+   quăng người dùng về màn hết phiên khi họ đã ở màn khác. */
+function payStopClock() { if (payTimer) { clearInterval(payTimer); payTimer = null; } }
+
+/* Bấm "Đặt hàng": trạng thái ĐANG XỬ LÝ rồi mới rẽ nhánh. Quãng chờ này có thật
+   (máy chủ tạo đơn), và nó là chỗ duy nhất chặn cú bấm thứ hai. */
+function startPayment(btn) {
+  const root = document.querySelector('[data-screen="checkout"]');
+  const sel = root && root.querySelector('#payOpts .opt.on');
+  const method = sel ? sel.dataset.opt : 'cc';
+  document.querySelectorAll('[data-nav="done"]').forEach(b => {
+    b.disabled = true; b.dataset.busy = '1'; b.innerHTML = 'Đang xử lý…';
+  });
+  ckOrderEmail = ckEmail || (ckAuth ? PROFILE.email : '');
+  setTimeout(() => {
+    /* COD không đi qua cổng: đơn ra ngay, tiền thu lúc giao. */
+    if (method === 'cod') { placeOrder(); go('done'); return; }
+    ckOrderId = 'DAFC1029' + (39 + ORDERS.length - 3);   // có mã trước khi sang cổng, để đối soát
+    payStage = 'redirect';
+    go('pay');
+    setTimeout(() => { if (payStage === 'redirect') payOpenQR(); }, 1400);
+  }, 700);
+}
+
 function placeOrder() {
   ckPlaced = true;
   ckOrderId = 'DAFC1029' + (39 + ORDERS.length - 3);
@@ -13366,7 +14394,7 @@ function wire(root) {
       /* Bấm "Đặt hàng": chốt đơn lại. Sinh mã theo hệ DAFC1029xx của màn Đơn
          hàng, đẩy đơn vào ORDERS để tab Đơn hàng thấy ngay, rồi DỌN GIỎ —
          trước đây đặt xong quay lại giỏ vẫn thấy đủ 4 món "vừa mua". */
-      if (t === 'done' && !ckPlaced) placeOrder();
+      if (t === 'done' && !ckPlaced) { if (!ckGuard()) return; startPayment(el); return; }
       if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = 0; ckMaxStep = 0; }
       if (t === 'back') { window.history.back(); return; }
       if (el.hasAttribute('data-loading')) {
@@ -13425,19 +14453,34 @@ function wire(root) {
     });
   });
 
-  // ── AUTH: chuyển view ──
+  // ── AUTH: chuyển view ── (mọi cú bấm tab/link đều dọn banner Opt2 của trang 23)
   root.querySelectorAll('[data-auth-go]').forEach(btn => {
-    btn.addEventListener('click', () => { authView = btn.dataset.authGo; rerenderLogin(); });
+    btn.addEventListener('click', () => { authView = btn.dataset.authGo; forgotEmailSent = ''; rerenderLogin(); });
   });
 
-  // Nhận OTP: lấy SĐT (bắt buộc) -> ghi nhớ luồng -> sang view OTP
+  /* Nhận OTP / Quên mật khẩu: ô #regPhone giờ nhận CẢ số điện thoại lẫn email
+     (brief trang 23). Ở màn Đăng ký, ô này LUÔN là số điện thoại nên đi thẳng
+     luồng OTP như cũ. Ở màn Quên mật khẩu mới rẽ theo Opt1/Opt2: gõ dạng email
+     (có "@") thì KHÔNG gửi OTP — ghi lại email rồi quay về Đăng nhập để vẽ banner
+     xác nhận; gõ số điện thoại thì đi tiếp OTP như trước, không đổi. */
   root.querySelectorAll('[data-auth-otp]').forEach(btn => {
     btn.addEventListener('click', () => {
       const inp = root.querySelector('#regPhone');
-      authPhone = inp && inp.value.trim() ? inp.value.trim() : '';
-      if (!authPhone) { if (inp) { setFieldErr(inp, 'Vui lòng nhập số điện thoại'); inp.focus(); } return; }
+      const val = inp && inp.value.trim() ? inp.value.trim() : '';
+      const isForgot = authView === 'forgot';
+      if (!val) {
+        if (inp) { setFieldErr(inp, isForgot ? 'Vui lòng nhập số điện thoại hoặc email' : 'Vui lòng nhập số điện thoại'); inp.focus(); }
+        return;
+      }
       if (inp) clearFieldErr(inp);
-      authFlow = authView === 'forgot' ? 'forgot' : 'register';
+      if (isForgot && /^\S+@\S+\.\S+$/.test(val)) {
+        forgotEmailSent = val;
+        authView = 'login';
+        rerenderLogin();
+        return;
+      }
+      authPhone = val;
+      authFlow = isForgot ? 'forgot' : 'register';
       btn.innerHTML = spinnerSVG();
       setTimeout(() => { authView = 'otp'; rerenderLogin(); toast('Đã gửi mã OTP'); }, 700);
     });
@@ -13508,10 +14551,22 @@ function wire(root) {
   // Hoàn tất đăng ký (sau OTP): tạo tài khoản -> đăng nhập luôn, quay về màn gọi
   root.querySelectorAll('[data-reg-done]').forEach(btn => {
     btn.addEventListener('click', () => {
+      const fn = root.querySelector('#regFirstName'), ln = root.querySelector('#regLastName');
+      regFullName = [ln && ln.value.trim(), fn && fn.value.trim()].filter(Boolean).join(' ');
       ckAuth = true; ckStep = 0;   // vào checkout luôn mở bước Vận chuyển — xem ghi chú ở screenCHECKOUT
       btn.innerHTML = spinnerSVG();
+      setTimeout(() => { authView = 'regsuccess'; rerenderLogin(); }, 700);
+    });
+  });
+
+  /* Nút "Tiếp tục mua sắm" của màn Đăng ký thành công (brief trang 22) — trả về
+     ĐÚNG nơi luồng đăng ký đã bắt đầu (checkout nếu đang mua, else màn cũ), y hệt
+     đường `back` mà [data-reg-done] từng đi thẳng trước khi có màn thành công này. */
+  root.querySelectorAll('[data-reg-continue]').forEach(btn => {
+    btn.addEventListener('click', () => {
       const back = loginFrom || 'checkout';
-      setTimeout(() => { authView = 'login'; go(back); toast('Đăng ký thành công'); }, 700);
+      authView = 'login';
+      go(back);
     });
   });
 
@@ -13534,26 +14589,66 @@ function wire(root) {
   // add to cart -> bay ảnh vào giỏ rồi mở sheet xác nhận (thay toast + tự chuyển giỏ)
   root.querySelectorAll('[data-add]').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (btn.dataset.oosState) return;   // đang ở trạng thái hết hàng -> không thêm giỏ
+      if (btn.dataset.oosState || btn.dataset.busy) return;   // hết hàng / đang thêm -> bỏ qua
       const img = root.querySelector('#pdpGallery img');
       if (img) flyToCart(img);
-      cartQty++;
-      document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
+      /* "ĐANG THÊM…" (11/09/2026): trước đây bấm xong không có gì đổi trong 450ms
+         chờ tấm xác nhận mở ra, nên bấm hai lần là thêm hai lần mà không ai định
+         thế. Khoá nút + đổi chữ trong đúng quãng đó; nhãn cũ cất lại để trả về,
+         KHÔNG dựng lại từ hằng số (nút có thể đang mang chữ "Đặt trước"). */
+      const oldLabel = btn.innerHTML;
+      btn.disabled = true; btn.dataset.busy = '1';
+      btn.innerHTML = 'Đang thêm…';
       const p = PRODUCTS[screenProductIdx()];
       const colorEl = root.querySelector('#colorName');
       // mọi PDP chọn size bằng chip (28/08 — nhánh đọc .size-trigger-label của dropdown đã bỏ)
       const sizeChip = root.querySelector('.chip.on');
       const size = chipSizeText(sizeChip);
       const variant = [colorEl ? colorEl.textContent.trim() : '', size].filter(Boolean).join(' , ');
-      setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
-        img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
-        price: p.price, off: p.off, was: p.was, preorder: p.preorder,
-      }), 450);
+      /* GHI THẬT vào CART (11/09/2026) — trước đây mobile chỉ nhích chấm đếm. */
+      addToCart({ img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
+                  price: pdpPriceNow(p, root), off: p.off, was: p.was, preorder: p.preorder });
+      setTimeout(() => {
+        btn.disabled = false; delete btn.dataset.busy; btn.innerHTML = oldLabel;
+        pdpInCartSync(root);
+        window.__openCartConfirm && window.__openCartConfirm({
+          img: `${A}${p.img}`, brand: p.brand, name: p.name, variant,
+          price: pdpPriceNow(p, root), off: p.off, was: p.was, preorder: p.preorder,
+        });
+      }, 450);
     });
   });
 
+  /* ── MÀN CỔNG THANH TOÁN ── */
+  if (root.querySelector('[data-pay-done], [data-pay-retry]')) {
+    const clock = root.querySelector('#payClock');
+    payStopClock();
+    if (clock) payTimer = setInterval(() => {
+      payLeft--;
+      if (payLeft <= 0) { payStopClock(); payStage = 'timeout'; go('pay', { force: true }); return; }
+      clock.textContent = payMM(payLeft);
+    }, 1000);
+    const done = root.querySelector('[data-pay-done]');
+    if (done) done.addEventListener('click', () => {
+      payStopClock();
+      if (paySim === 'fail')    { payStage = 'fail';    go('pay', { force: true }); return; }
+      if (paySim === 'timeout') { payStage = 'timeout'; go('pay', { force: true }); return; }
+      placeOrder();
+      go('done');
+    });
+    root.querySelectorAll('[data-pay-retry]').forEach(b => b.addEventListener('click', () => { payStopClock(); payOpenQR(); }));
+    root.querySelectorAll('[data-pay-back]').forEach(b => b.addEventListener('click', () => {
+      payStopClock(); payStage = ''; ckStep = 2;
+      go('checkout', { force: true });
+    }));
+  }
+
   // toast buttons
   root.querySelectorAll('[data-toast]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); toast(b.dataset.toast); }));
+
+  /* Tải hoá đơn — demo không sinh PDF thật, nên nói thẳng thay vì giả vờ tải. */
+  const dl = root.querySelector('#dlInvoice');
+  if (dl) dl.addEventListener('click', () => toast('Hoá đơn sẽ được gửi kèm email xác nhận'));
 
   // checkout: chuyển section (không chuyển trang)
   if (root.querySelector('#ckSections')) {
@@ -13579,12 +14674,27 @@ function wire(root) {
        cửa hàng (dựng lại phần thân) không làm mất chữ, và phần tóm tắt sau khi
        Xác nhận có dữ liệu để nhắc lại. */
     const CKF = { name: v => ckName = v, phone: v => ckPhone = v, email: v => ckEmail = v,
-                  sname: v => ckShipName = v, sphone: v => ckShipPhone = v, saddr: v => ckShipLine = v };
+                  sname: v => ckShipName = v, sphone: v => ckShipPhone = v, saddr: v => ckShipLine = v,
+                  note: v => ckNote = v };
     root.querySelectorAll('[data-ckf]').forEach(inp => {
       inp.addEventListener('input', () => {
         CKF[inp.dataset.ckf] && CKF[inp.dataset.ckf](inp.value);
         clearFieldErr(inp);
       });
+    });
+
+    /* EMAIL ĐÃ CÓ TÀI KHOẢN (11/09/2026) — mời đăng nhập thay vì im lặng để họ
+       đặt tiếp dưới dạng khách vãng lai rồi mất luôn lịch sử đơn.
+       Kiểm lúc RỜI Ô (blur), không phải lúc gõ: gõ dở "user" đã bắn lời mời là
+       chen ngang. Và chỉ MỜI, KHÔNG chặn — họ có quyền đặt với tư cách khách. */
+    const emailInp = root.querySelector('[data-ckf="email"]');
+    const known = root.querySelector('#ckEmailKnown');
+    if (emailInp && known) emailInp.addEventListener('blur', () => {
+      const hit = String(emailInp.value).trim().toLowerCase() === PROFILE.email.toLowerCase();
+      known.classList.toggle('hidden', !hit);
+      if (!hit) { known.innerHTML = ''; return; }
+      known.innerHTML = `<p class="t-single text-foreground-alt">Email này đã có tài khoản. <button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> để dùng địa chỉ đã lưu và cộng điểm cho đơn này.</p>`;
+      wire(known);
     });
 
     root.querySelectorAll('.ck-next').forEach(btn => {
@@ -13595,6 +14705,7 @@ function wire(root) {
           if (!validatePickup(root)) return;
           paintStore(root);   // đồng bộ tóm tắt với chữ vừa gõ trước khi thu gọn
         }
+        if (btn.dataset.require === 'ship' && !validateShipping(root)) return;
         // bước giao hàng: đồng bộ tóm tắt với địa chỉ/chữ vừa nhập
         const shipDone = root.querySelector('#ckShipDone');
         if (shipDone) { shipDone.innerHTML = ckShipDoneHTML(); localizeNew(shipDone); }
@@ -13617,24 +14728,30 @@ function wire(root) {
         window.scrollTo(0, 0);
       });
     });
-    /* Sổ địa chỉ: chọn địa chỉ đã lưu chỉ cần đổi thẻ đang chọn; chuyển sang
-       (hoặc rời khỏi) "Thêm địa chỉ mới" thì phải dựng lại vì form 6 ô xổ ra /
-       thu vào. Tóm tắt cập nhật ngay để nút Xác nhận thu gọn là thấy đúng. */
-    root.querySelectorAll('#addrOpts [data-addr]').forEach(o => {
+    /* Brief PDF trang 31: danh sách địa chỉ dời vào sheet #addrSheet, thân
+       accordion chỉ còn "+ Thêm địa chỉ mới" (dựng lại vì form xổ ra) và nút
+       "Sửa"/"Chọn địa chỉ đã lưu" mở sheet. Chọn xong trong sheet (bấm Áp
+       dụng) luôn dựng lại — tóm tắt thẻ + form xổ/thu đều là THAY ĐỔI CẤU TRÚC
+       chứ không phải cùng một khuôn như dãy radio cũ, nên không còn đường tắt
+       "chỉ đổi thẻ đang chọn" như bản trước. */
+    root.querySelectorAll('#addrOpts [data-addr="new"]').forEach(o => {
       o.addEventListener('click', () => {
-        const v = o.dataset.addr === 'new' ? 'new' : +o.dataset.addr;
-        if (v === ckAddr) return;
-        const formToggles = (v === 'new') !== (ckAddr === 'new');
-        ckAddr = v;
-        if (formToggles) { rerenderCheckout(root); return; }
-        root.querySelectorAll('#addrOpts [data-addr]').forEach(x => {
-          x.classList.remove('on'); x.querySelector('.radio').classList.remove('on');
-        });
-        o.classList.add('on'); o.querySelector('.radio').classList.add('on');
-        const done = root.querySelector('#ckShipDone');
-        if (done) { done.innerHTML = ckShipDoneHTML(); localizeNew(done); }
+        if (ckAddr === 'new') return;
+        ckAddr = 'new';
+        rerenderCheckout(root);
       });
     });
+    if (window.__openAddrSheet) {
+      root.querySelectorAll('[data-open-addrbook]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          window.__openAddrSheet(ckAddr === 'new' ? null : ckAddr, picked => {
+            if (picked === ckAddr) return;
+            ckAddr = picked;
+            rerenderCheckout(root);
+          });
+        });
+      });
+    }
 
     /* Danh sách cửa hàng: lần chọn ĐẦU TIÊN phải dựng lại để lộ khối thông tin
        người nhận; các lần đổi sau chỉ chuyển thẻ đang chọn — giữ nguyên chữ
@@ -13855,6 +14972,13 @@ function wire(root) {
         sizeBtns.forEach(x => { x.classList.remove('on'); x.classList.replace('border-primary', 'border-border'); });
         b.classList.add('on'); b.classList.replace('border-border', 'border-primary');
         setCta(b.dataset.oos || '', b.dataset.size);   // '' | 'oos' | 'notify' — lấy thẳng từ size
+        /* Đổi dung tích là đổi GIÁ (11/09/2026, sản phẩm làm đẹp): cập nhật tại
+           chỗ, không dựng lại màn — dựng lại là mất vị trí cuộn và đóng hết
+           accordion người ta đang mở. */
+        const pNow = PRODUCTS[screenProductIdx()];
+        const priceEl = root.querySelector('#pdpPrice');
+        if (priceEl && pNow) priceEl.textContent = pdpPriceNow(pNow, root);
+        pdpInCartSync(root);       // biến thể đổi -> dòng "đã có trong giỏ" đổi theo
       });
     });
 
@@ -13926,24 +15050,52 @@ function wire(root) {
   // Cart (thành viên): Ưu đãi DAFC Rewards — radio đúng nghĩa, chọn 1 trong 2
   const rewardGroup = root.querySelector('#rewardOpts');
   if (rewardGroup) {
+    const pointsWrap = rewardGroup.querySelector('#pointsInputWrap');
     rewardGroup.querySelectorAll('[data-reward]').forEach(b => {
       b.addEventListener('click', () => {
         if (b.dataset.reward === cartReward) return;
         cartReward = b.dataset.reward;
         rewardGroup.querySelectorAll('[data-reward]').forEach(x => {
           const on = x === b;
-          x.classList.toggle('on', on);
-          x.classList.toggle('border-border-5', on);
-          x.classList.toggle('border-border', !on);
+          // .opt/.on + viền nay nằm trên div bọc ngoài (data-reward-card), không
+          // còn trên chính nút — nút chỉ ôm hàng radio/chữ (đổi 13/09 để nhét
+          // được ô nhập điểm vào trong card mà không lồng input trong button).
+          const card = x.closest('[data-reward-card]');
+          if (card) {
+            card.classList.toggle('on', on);
+            card.classList.toggle('border-border-5', on);
+            card.classList.toggle('border-border', !on);
+          }
           const rd = x.querySelector('.radio');
           rd.classList.toggle('on', on);
           rd.classList.toggle('border-primary', on);
           rd.classList.toggle('border-border', !on);
         });
+        // Ô nhập số điểm chỉ hiện khi đang chọn "points" (brief PDF trang 25)
+        if (pointsWrap) pointsWrap.classList.toggle('hidden', cartReward !== 'points');
         refreshCartSummary(root);
         toast('Đã áp dụng: ' + (cartReward === 'member' ? 'Giảm giá thành viên' : 'Điểm thưởng'));
       });
     });
+
+    /* Ô tự gõ số điểm muốn dùng (brief PDF trang 25, "show box để nhập điểm và
+       thông báo đã dùng bao nhiêu điểm"). Kẹp trần lúc TÍNH (cartPointsUsed) chứ
+       không kẹp NGAY GIÁ TRỊ ĐANG GÕ — gõ dở "12" của "1240" mà kẹp cứng theo
+       trần cũ sẽ kẹt con trỏ giữa chừng; giá trị hiển thị chỉ snap về số đã kẹp
+       lúc rời ô (blur), gõ vẫn mượt. */
+    const pointsInput = rewardGroup.querySelector('#pointsInput');
+    if (pointsInput) {
+      const recalcPoints = () => {
+        const maxPts = maxUsablePoints();
+        const v = Math.round(Number(pointsInput.value) || 0);
+        cartPointsUsed = Math.max(0, Math.min(v, maxPts));
+        const val = rewardGroup.querySelector('#pointsUsedVal');
+        if (val) val.textContent = `${cartPointsUsed.toLocaleString('vi-VN')} điểm`;
+        refreshCartSummary(root);
+      };
+      pointsInput.addEventListener('input', recalcPoints);
+      pointsInput.addEventListener('blur', () => { pointsInput.value = cartPointsUsed; });
+    }
   }
 
   // Cart: "Chương trình khuyến mãi" — mặc định hiện mấp mé, bấm mới hiện hết
@@ -13960,13 +15112,34 @@ function wire(root) {
   root.querySelectorAll('.qty-btn').forEach(b => {
     b.addEventListener('click', () => {
       const row = b.closest('.cart-row'), el = row.querySelector('.qty');
+      const it0 = CART[+row.dataset.row];
       let v = parseInt(el.textContent, 10) + parseInt(b.dataset.step, 10);
-      v = Math.max(1, Math.min(99, v));
+      /* Trần là TỒN KHO nếu món có khai, không thì 99 như cũ. Kẹp ở đây chứ không
+         chỉ khoá nút: bàn phím (Enter trên nút) và i18n vẫn đi qua đúng nhánh này. */
+      const cap = it0 && it0.stock != null ? Math.min(it0.stock, 99) : 99;
+      const hit = v > cap;
+      v = Math.max(1, Math.min(cap, v));
+      if (hit) toast(`Chỉ còn ${cap} sản phẩm`);
       el.textContent = String(v).padStart(2, '0');
       el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
       const item = CART[+row.dataset.row];
       if (!item) return;
       item.qty = v;
+      /* Nút trừ phải ĐỔI THEO ngay tại đây, không chỉ lúc dựng màn (11/09/2026):
+         markup sinh ra đã khoá đúng ở số lượng 01, nhưng bấm + lên 02 mà không
+         mở lại thì người mua không giảm xuống được nữa. Cùng một luật, hai chỗ
+         phải nói giống nhau. */
+      syncQtyBtns(row, item);
+      /* Ghi chú "Chỉ còn N" bật/tắt ngay theo số lượng vừa đổi — nó nằm dưới dòng
+         phân loại nên thay tại chỗ, không phải dựng lại cả dòng. */
+      const noteOld = row.querySelector('.cart-note');
+      const noteNew = cartRowNote(item);
+      if (noteOld) noteOld.remove();
+      if (noteNew) {
+        const anchor = row.querySelector('.t-single.text-muted-foreground');
+        if (anchor) anchor.parentElement.insertAdjacentHTML('beforeend', noteNew);
+      }
+      cartBusy(root);            // khối tiền mờ đi trong lúc tính lại
       refreshCartAll(root);      // tăng đủ mốc là quà theo đơn hiện ngay ở đây
     });
   });
@@ -13979,6 +15152,10 @@ function wire(root) {
          quà phản ánh đúng lúc người dùng thấy dòng bắt đầu trượt đi. Không splice
          khỏi CART vì các dòng sau còn tham chiếu chỉ số qua data-row. */
       const item = CART[+row.dataset.row];
+      /* Nhớ trạng thái tick CŨ trước khi dọn (11/09/2026): hoàn tác mà trả món về
+         với sel = true trong khi trước đó người ta đã cố ý bỏ tick nó là sửa thêm
+         một thứ người dùng không nhờ. */
+      const wasSel = item ? item.sel : undefined;
       if (item) { item.removed = true; item.sel = false; }
       const giftEl = row.nextElementSibling;   // dòng quà kèm của chính item này
       if (giftEl && giftEl.dataset.giftOf === row.dataset.row) giftEl.remove();
@@ -13990,7 +15167,20 @@ function wire(root) {
       });
       setTimeout(() => { row.remove(); refreshCartCount(root); }, 330);
       refreshCartAll(root);
-      toast('Đã xóa sản phẩm');
+      /* HOÀN TÁC (11/09/2026, user chốt "chỉ hoàn tác", không hỏi xác nhận trước).
+         Xoá trong giỏ là thao tác lặp nhiều lần nhất của màn này — chặn tay mỗi
+         lần bằng một lớp hỏi là đổi một cú bấm thành ba. Ở đây cứ cho xoá, rồi
+         chừa 5 giây để lấy lại.
+         Dựng LẠI cả màn khi hoàn tác: dòng vừa xoá đã biến khỏi DOM, và dòng quà
+         kèm của nó cũng đi theo — refreshCartAll() chỉ cập nhật số, không dựng
+         lại được hai thứ đó. */
+      toast('Đã xóa sản phẩm', { label: 'Hoàn tác', fn: () => {
+        if (!item) return;
+        item.removed = false;
+        if (wasSel !== undefined) item.sel = wasSel;
+        rerenderCart();
+        toast('Đã khôi phục sản phẩm');
+      } });
     });
   });
 
@@ -14020,15 +15210,31 @@ function wire(root) {
     /* Trạng thái đích suy từ STATE (không đọc class của chính ô tổng): đang
        chọn hết -> bỏ hết, còn lại -> chọn hết. Đọc class thì sau khi bỏ tick 1
        dòng, cú bấm đầu tiên lại đi bỏ tick nốt phần còn lại. */
-    const items = cartItems();
+    /* Món hết hàng đứng NGOÀI luật "chọn tất cả": nó không mua được nên không
+       tính vào "tất cả", và cũng không được tick lên theo. */
+    const items = cartItems().filter(c => c.stock !== 0);
     const on = !(items.length && items.every(c => c.sel !== false));
-    root.querySelectorAll('.cart-row .chk').forEach(c => c.classList.toggle('on', on));
+    root.querySelectorAll('.cart-row:not(.is-oos) .chk').forEach(c => c.classList.toggle('on', on));
     items.forEach(c => { c.sel = on; });
+    cartBusy(root);
     refreshCartAll(root);
   });
+  /* "Xóa sản phẩm đã chọn" (11/09/2026) — KHÔNG còn bấm hộ từng nút xoá nữa.
+     Cách cũ đẻ ra N toast chồng nhau, mà cái cuối cùng chỉ hoàn tác được đúng
+     một món. Nay: dọn cả nhóm trong một lượt, vẽ lại màn, và MỘT toast hoàn tác
+     trả về nguyên nhóm kèm đúng trạng thái tick của từng món. */
   const delSel = root.querySelector('#delSelected');
   if (delSel) delSel.addEventListener('click', () => {
-    root.querySelectorAll('.cart-row').forEach(r => { if (r.querySelector('.chk').classList.contains('on')) r.querySelector('.del').click(); });
+    const picked = cartItems().filter(c => c.sel !== false);
+    if (!picked.length) { toast('Chưa chọn sản phẩm nào'); return; }
+    const snap = picked.map(c => ({ c, sel: c.sel }));
+    picked.forEach(c => { c.removed = true; c.sel = false; });
+    rerenderCart();
+    toast(`Đã xóa ${picked.length} sản phẩm`, { label: 'Hoàn tác', fn: () => {
+      snap.forEach(({ c, sel }) => { c.removed = false; c.sel = sel; });
+      rerenderCart();
+      toast('Đã khôi phục ' + snap.length + ' sản phẩm');
+    } });
   });
 
   // Cart: Đặt hàng — khách -> popup đăng nhập nhanh (2858:42899); đã đăng nhập -> checkout
@@ -14110,26 +15316,42 @@ function wire(root) {
   if (vcInp) vcInp.addEventListener('input', () => clearFieldErr(vcInp));   // gõ lại thì lỗi cũ hết nghĩa
   const useCartCode = () => {
     if (!vcInp) return;
-    const code = vcInp.value.trim().toUpperCase();
-    if (!code) return;
-    const v = voucherByCode(code);
-    if (!v)                          { setFieldErr(vcInp, 'Mã không hợp lệ');      return; }
-    if (cartVouchers.includes(code)) { setFieldErr(vcInp, 'Mã đã được áp dụng');   return; }
-    if (!voucherEligible(v))         { setFieldErr(vcInp, voucherBlockReason(v));  return; }
-    /* 1 mã / nhóm — luật của catalog, KHÔNG đổi: các mã trong cùng nhóm là các MỨC
-       của cùng một chương trình (JUL500/1000/1500) nên mã mới ĐẨY mã cũ ra thay vì
-       báo lỗi; người mua vừa gõ mã khác thì ý họ đã rõ. Toast nói rõ mã nào bị thay. */
-    const old = cartVouchers.find(c => { const o = voucherByCode(c); return o && o.group === v.group; });
-    cartVouchers = cartVouchers.filter(c => c !== old).concat(code);
+    /* Luật nằm ở cartApplyCode() — cùng một hàm với ô nhập mã ở màn thanh toán. */
+    const res = cartApplyCode(vcInp.value);
+    if (res.err) { setFieldErr(vcInp, res.err); return; }
+    if (!res.ok) return;
+    const code = res.code, old = res.replaced;
     vcInp.value = '';
     if (vcBtn) { vcBtn.disabled = true; vcBtn.style.opacity = '.4'; }
     clearFieldErr(vcInp);
+    cartBusy(root);
     refreshCartSummary(root);        // gọi luôn renderVoucherUI -> hàng chip vẽ lại
     toast(old ? `Đã thay ${old} bằng ${code}` : `Đã áp dụng ${code}`);
   };
   if (vcBtn) vcBtn.addEventListener('click', useCartCode);
   if (vcInp) vcInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); useCartCode(); } });
   renderVoucherUI(root);
+
+  /* Ô nhập mã ở MÀN THANH TOÁN (11/09/2026) — cùng luật, khác chỗ báo và khác
+     cách vẽ lại: ở đây phải dựng lại cả màn vì khối tiền của checkout được sinh
+     một lần lúc dựng, không có hàm cập nhật tại chỗ như refreshCartSummary(). */
+  const ckInp = root.querySelector('#ckCode'), ckBtn = root.querySelector('#ckApplyCode');
+  if (ckInp) {
+    bindApplyGate(ckInp, ckBtn);
+    ckInp.addEventListener('input', () => clearFieldErr(ckInp));
+    const useCkCode = () => {
+      const res = cartApplyCode(ckInp.value);
+      if (res.err) { setFieldErr(ckInp, res.err); return; }
+      if (!res.ok) return;
+      clearFieldErr(ckInp);
+      const scr = document.querySelector('[data-screen="checkout"]');
+      if (scr) rerenderCheckout(scr);
+      toast(res.replaced ? `Đã thay ${res.replaced} bằng ${res.code}` : `Đã áp dụng ${res.code}`);
+    };
+    if (ckBtn) ckBtn.addEventListener('click', useCkCode);
+    ckInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); useCkCode(); } });
+  }
+  renderCkCodes(root);
 
   // Show more → skeleton then append
   const sm = root.querySelector('#showMore');
@@ -14238,6 +15460,12 @@ function wire(root) {
           if (isOn && !tick) o.insertAdjacentHTML('beforeend', '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="m3 8.5 3 3 7-7" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>');
           if (!isOn && tick) tick.remove();
         });
+        // nhãn nút = giá trị đang chọn; "Phù hợp nhất" là mặc định nên vẫn ghi "Sắp xếp"
+        const sLabel = root.querySelector('#sortBtnLabel');
+        if (sLabel) {
+          sLabel.textContent = plpSort === 'relevance' ? 'Sắp xếp' : (SORT_OPTIONS.find(([id]) => id === plpSort) || [, 'Sắp xếp'])[1];
+          localizeNew(sLabel);
+        }
         renderPlpGrid(root);
       });
     });
@@ -14296,7 +15524,6 @@ function wire(root) {
   }
 
   root.querySelectorAll('.drag-x').forEach(dragScroll);
-  wireRailBar(root);
 
   // Chuyển grid 1 cột / 2 cột (Frame 49) — nút trên filter, không sticky
   const plpGrid = root.querySelector('#plpGrid');
@@ -14332,6 +15559,17 @@ function spinnerSVG() {
    trạng thái "tổng đã đổi mà quà chưa đổi". */
 function refreshCartAll(root) {
   if (!root || !root.querySelector('#cartList')) return;   // không phải màn giỏ
+  /* NÚT ĐẶT HÀNG PHẢI NHÌN RA LÀ ĐANG KHOÁ khi không còn món nào được tick
+     (11/09/2026). Chốt chặn logic đã có sẵn ở chỗ bắt `[data-checkout]` (bấm thì ra
+     toast "Hãy chọn ít nhất 1 sản phẩm"), nhưng nút vẫn đen nhánh y như bấm được —
+     người mua chỉ biết mình sai SAU khi bấm, mà tạm tính lúc đó đang là 0đ.
+     `disabled` là đủ, không phải thêm class mới: bộ da đã có sẵn rule
+     `button[disabled], [aria-disabled="true"] { opacity: .5 }`. */
+  const canBuy = cartSelected().length > 0;
+  root.querySelectorAll('[data-checkout]').forEach(b => {
+    b.disabled = !canBuy;
+    b.setAttribute('aria-disabled', String(!canBuy));
+  });
   refreshCartSummary(root);
   refreshCartGifts(root);
   const items = cartItems();
@@ -14468,15 +15706,116 @@ function refreshCartSummary(root) {
   // điểm thưởng hứa hẹn phải theo tổng thật, không đứng yên ở con số của giỏ mặc định
   const pts = root.querySelector('#cartPointsVal');
   if (pts) pts.textContent = rewardPointsEarned().toLocaleString('vi-VN');
+
+  /* Trần điểm thưởng co theo tạm tính (đổi khi thêm/bớt sp, tick/bỏ tick) — kẹp
+     lại số điểm đang dùng nếu giờ vượt trần mới. KHÔNG re-render #rewardOpts (mất
+     focus nếu người dùng đang gõ chỗ khác trong panel); chỉ cập nhật thuộc tính +
+     chữ số, và bỏ qua nếu chính ô đó đang được gõ (tránh giật giá trị giữa chừng). */
+  const pointsInput = root.querySelector('#pointsInput');
+  if (pointsInput) {
+    const maxPts = maxUsablePoints();
+    if (cartPointsUsed > maxPts) cartPointsUsed = maxPts;
+    pointsInput.max = maxPts;
+    if (document.activeElement !== pointsInput) pointsInput.value = cartPointsUsed;
+    const maxLabel = pointsInput.nextElementSibling;
+    if (maxLabel) maxLabel.textContent = `/ ${maxPts.toLocaleString('vi-VN')} điểm tối đa`;
+    const val = root.querySelector('#pointsUsedVal');
+    if (val) val.textContent = `${cartPointsUsed.toLocaleString('vi-VN')} điểm`;
+  }
 }
 
 /* Trạng thái giỏ rỗng — tách ra hàm riêng vì giờ có 2 đường tới: xoá hết item
    (refreshCartCount) và đặt hàng xong nên giỏ được dọn (screenCART). */
+/* ── DẢI 4 CỬA DANH MỤC DƯỚI GIỎ TRỐNG (13/09/2026, lệnh user) ──────────────
+   Dùng lại ĐÚNG dữ liệu (`HM_CATS`) và ĐÚNG khuôn ô (`.hm-cat`) của 4 cửa danh
+   mục ở trang chủ. Ô bề rộng HẰNG SỐ trong `.drag-x` — khuôn chung của mọi dải
+   trượt trong demo; `wire()` tự gắn kéo-để-cuộn và ảnh lazy cho khối vừa chèn.
+   Nhãn đi qua `data-cart-cat` RIÊNG chứ không mượn `data-hm-cat`: cửa trang chủ
+   có handler gắn theo màn, khối này thì được vẽ vào #cartList bằng innerHTML ở
+   hai đường khác nhau nên phải uỷ quyền ở document. */
+function cartEmptyCatsHTML() {
+  return `
+    <div class="flex flex-col gap-3 pb-12">
+      <h3 class="t-single px-4 text-muted-foreground">Mua theo danh mục</h3>
+      <div class="drag-x flex gap-0.5 overflow-x-auto no-scrollbar px-4">
+        ${HM_CATS.slice(0, HM_CAT_COUNT).map(([img, pos, label, dept]) => `
+        <button data-cart-cat="${label}"${dept ? ` data-cart-dept="${dept}"` : ''} class="hm-cat cart-cat-cell flex flex-col press group text-left">
+          <div class="hm-cat-media w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
+            <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]" style="object-position:${pos}">
+            <span class="hm-cat-scrim" aria-hidden="true"></span>
+            <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>
+          </div>
+        </button>`).join('')}
+      </div>
+    </div>`;
+}
+/* Uỷ quyền ở document, cùng cách `data-clear-filters` bên PLP đang dùng. */
+document.addEventListener('click', e => {
+  const el = e.target.closest && e.target.closest('[data-cart-cat]');
+  if (!el) return;
+  const dept = el.dataset.cartDept || hmFashionDept();
+  menuTab = dept;
+  goPlp({ type: 'category', title: el.dataset.cartCat, crumbs: [dept] });
+});
+
 function cartEmptyHTML() {
-  return `<div class="flex flex-col items-center gap-3 py-16 px-8 text-center">
+  /* Đệm dưới thu về 10 vì ngay dưới đã có dải danh mục, không còn là đáy khối. */
+  return `<div class="flex flex-col items-center gap-3 pt-16 pb-10 px-8 text-center">
       ${I.bag}<p class="t-multiline font-medium text-foreground">Giỏ hàng trống</p>
       <p class="t-multiline text-muted-foreground">Hãy khám phá bộ sưu tập mới nhất.</p>
-      <button data-nav="plp" class="t-multiline mt-2 h-10 px-6 bg-primary text-primary-foreground font-semibold rounded-xs btn-p press">Tiếp tục mua sắm</button></div>`;
+      <button data-nav="plp" class="t-multiline mt-2 h-10 px-6 bg-primary text-primary-foreground font-semibold rounded-xs btn-p press">Tiếp tục mua sắm</button></div>`
+    + cartEmptyCatsHTML();
+}
+
+/* Vẽ LẠI màn giỏ tại chỗ, giữ nguyên vị trí cuộn (11/09/2026). Dùng cho những
+   thay đổi đụng tới CẤU TRÚC danh sách — khôi phục món vừa xoá, đổi tồn kho —
+   mà refreshCartAll() không lo được vì nó chỉ cập nhật các con số.
+   Cùng khuôn với rerenderCheckout()/rerenderLogin() đã có. KHÔNG dùng
+   go('cart', {force:true}) vì lượt đó trả trang về đầu. */
+function rerenderCart(root) {
+  if (!root) root = document.querySelector('[data-screen="cart"]');
+  if (!root || !root.querySelector('#cartList')) return;
+  const y = curScrollY();
+  scrollCleanups.forEach(fn => fn());
+  scrollCleanups = [];
+  root.innerHTML = RENDER.cart();
+  wire(root);
+  localizeNew(root);
+  const sc = root.querySelector('[data-scroller]') || root;
+  requestAnimationFrame(() => { if (sc.scrollTo) sc.scrollTo(0, y); window.scrollTo(0, y); });
+}
+
+/* TRẠNG THÁI "ĐANG CẬP NHẬT" (11/09/2026). Đổi số lượng / áp mã là một lượt tính
+   lại cả khối tiền; trước đây con số nhảy ngay nên không ai thấy là nó vừa đổi.
+   Làm mờ + khoá tay đúng khối tiền trong khoảnh khắc đó, không đụng phần còn lại
+   của trang — mờ cả màn cho một phép cộng là phản ứng quá tay. */
+function cartBusy(root, ms) {
+  if (!root) return;
+  const box = root.querySelector('#discountLines');
+  const el = box ? box.closest('.flex.flex-col') || box.parentElement : null;
+  [box, el, root.querySelector('#cartTotal')].forEach(x => {
+    if (!x) return;
+    x.classList.add('is-busy');
+    clearTimeout(x._busyT);
+    x._busyT = setTimeout(() => x.classList.remove('is-busy'), ms || 420);
+  });
+}
+
+/* Một chỗ duy nhất quyết định hai nút của stepper mở hay khoá (11/09/2026).
+   Trừ: khoá ở số lượng 01 — dưới 01 thì việc đúng là XOÁ món, không phải về 0.
+   Cộng: khoá khi đã chạm tồn kho (c.stock) hoặc trần 99 của demo. */
+function syncQtyBtns(row, item) {
+  if (!row || !item) return;
+  const q = item.qty || 1;
+  const max = item.stock != null ? Math.min(item.stock, 99) : 99;
+  const set = (sel, off) => {
+    const b = row.querySelector(sel);
+    if (!b) return;
+    b.disabled = off;
+    b.setAttribute('aria-disabled', String(off));
+  };
+  set('[data-step="-1"]', q <= 1);
+  set('[data-step="1"]', q >= max);
 }
 
 function refreshCartCount(root) {
@@ -14494,36 +15833,6 @@ function refreshCartCount(root) {
     wire(list);
   }
   refreshCartAll(root);   // giỏ rỗng thì khối quà theo đơn cũng phải trống theo
-}
-
-/* ── Thanh tiến trình của dải cuộn (09/09/2026) ───────────────────────────────
-   Vẽ con chạy theo tỉ lệ ĐANG THẤY / TỔNG BỀ NGANG của dải, và trượt theo
-   scrollLeft. Tính bằng % của chính rãnh nên đổi khổ máy không phải đo lại, và
-   đệm px-4 nằm TRONG dải cũng tự triệt tiêu — cả 3 số (clientWidth, scrollWidth,
-   scrollLeft) đều lấy từ một hệ toạ độ.
-   Track tìm bằng ANH EM CÙNG CHA: markup của dải là <p tiêu đề> · <track .drag-x>
-   · <thanh>, cả ba nằm trong một khối flex-col.
-   Dải không có gì để cuộn thì ẩn hẳn thanh — cùng luật với mũi tên bên desktop:
-   không bày một thanh đầy 100% chẳng nói lên điều gì. ── */
-function wireRailBar(root) {
-  root.querySelectorAll('[data-rail-bar]').forEach(bar => {
-    const track = bar.parentElement && bar.parentElement.querySelector('.drag-x');
-    const thumb = bar.querySelector('.rail-thumb');
-    if (!track || !thumb) return;
-    const draw = () => {
-      const over = track.scrollWidth > track.clientWidth + 1;
-      bar.hidden = !over;
-      if (!over) return;
-      thumb.style.width = (track.clientWidth / track.scrollWidth * 100) + '%';
-      thumb.style.left  = (track.scrollLeft  / track.scrollWidth * 100) + '%';
-    };
-    track.addEventListener('scroll', draw, { passive: true });
-    window.addEventListener('resize', draw, { passive: true });
-    scrollCleanups.push(() => window.removeEventListener('resize', draw));
-    draw();
-    /* Font về muộn có thể đổi bề rộng khối chữ trong thẻ -> đo lại một lượt. */
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
-  });
 }
 
 /* ── Kéo ngang carousel bằng chuột (mobile đã có vuốt native) ── */
@@ -14598,13 +15907,108 @@ function observeReveal(root) {
 
 /* ── Toast ── */
 let toastT;
-function toast(msg) {
+/* `act` = { label, fn } -> toast mọc thêm một nút bấm được (11/09/2026).
+   Toast CÓ nút thì sống 5s thay vì 1,8s: 1,8 giây là vừa đủ đọc xong một câu
+   báo, không đủ để quyết định có bấm hoàn tác hay không.
+   Nút được dựng lại mỗi lượt bằng cloneNode để không chồng handler của lượt
+   trước — bấm "Hoàn tác" của món B mà khôi phục luôn món A là lỗi nặng hơn cả
+   cái nó sửa. */
+/* ── THÊM GIỎ GHI THẬT VÀO CART (mobile, 11/09/2026) ─────────────────────────
+   Trước lượt này bản mobile chỉ `cartQty++` rồi mở tấm "đã thêm": chấm đếm nhích
+   lên nhưng vào màn giỏ thì vẫn đúng 5 dòng seed — demo tự nói ngược. Bản desktop
+   đã ghi thật từ 28/08; đây là port nguyên hàm sang, KHÔNG viết lại luật.
+   Trùng biến thể thì CỘNG SỐ LƯỢNG chứ không đẻ dòng mới — cùng khoá so sánh
+   (tên + biến thể) mà "đã có trong giỏ" đang dùng. */
+function addToCart(d = {}) {
+  const variant = d.variant || '';
+  const img = String(d.img || '');
+  const hit = CART.find(c => !c.removed && c.name === d.name && (c.variant || '') === variant);
+  if (hit) {
+    hit.qty = (hit.qty || 1) + 1;
+    hit.sel = true; hit.removed = false;   // món đang bỏ tick / đã xoá mà thêm lại thì quay về đơn
+  } else {
+    CART.unshift({
+      img: img.startsWith(A) ? img.slice(A.length) : img,
+      brand: d.brand || '', name: d.name || '', variant,
+      off: d.off || '', was: d.was || '', now: d.price || d.now || '',
+      qty: 1, sel: true, preorder: d.preorder || '',
+    });
+  }
+  syncCartBadge(true);
+}
+/* Chấm đếm nói theo CART chứ không tự `cartQty++` — một nguồn, hết cảnh số trên
+   icon lệch số dòng trong giỏ. Giữ đúng nghĩa cũ = SỐ DÒNG. */
+function syncCartBadge(pop = false) {
+  cartQty = cartItems().length;
+  document.querySelectorAll('.cart-badge').forEach(b => {
+    b.textContent = cartQty;
+    if (pop) { b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+  });
+}
+
+/* Giá ĐANG hiện của PDP — sản phẩm khai `priceBySize` (nước hoa nhiều dung tích)
+   thì giá đi theo ô đang chọn, còn lại trả `price` như cũ. Một hàm cho cả chỗ vẽ
+   giá, chỗ thêm giỏ và chỗ dựng tấm xác nhận, để ba nơi không nói ba giá.
+   (11/09/2026) */
+function pdpPriceNow(p, root) {
+  if (!p) return '';
+  if (!p.priceBySize) return p.price;
+  const scope = root || document;
+  const chip = scope.querySelector('.chip.on');
+  const key = chip ? (chip.dataset.size || '') : '';
+  return p.priceBySize[key] || p.price;
+}
+
+/* ── "ĐÃ CÓ TRONG GIỎ" (11/09/2026) ──────────────────────────────────────────
+   Dòng nhắc đặt DƯỚI nút CTA, không phải trên: nó là thông tin phụ, chen lên trên
+   là đẩy nút mua xuống. Chèn bằng JS thay vì sửa markup vì cụm CTA lặp ở 6 màn
+   PDP của bản mobile — sửa một chỗ, cả sáu màn có.
+   Khoá so sánh = TÊN + BIẾN THỂ đang chọn, đúng khoá addToCart() dùng để gộp
+   dòng; nhờ vậy đổi size là dòng nhắc tự đổi theo. */
+function pdpInCartSync(root) {
+  root = root || document.querySelector('[data-screen^="pdp"]') || document;
+  const cta = root.querySelector('#pdpCta');
+  if (!cta) return;
+  let el = cta.querySelector('#pdpInCart');
+  if (!el) {
+    cta.insertAdjacentHTML('beforeend', '<p id="pdpInCart" class="t-single hidden text-secondary-foreground"></p>');
+    el = cta.querySelector('#pdpInCart');
+  }
+  const p = PRODUCTS[screenProductIdx()];
+  if (!p) { el.classList.add('hidden'); return; }
+  const colorEl = root.querySelector('#colorName');
+  const sizeChip = root.querySelector('.chip.on');
+  const size = sizeChip ? (sizeChip.dataset.sizeLabel || sizeChip.dataset.size || '') : '';
+  const variant = [colorEl ? colorEl.textContent.trim() : '', size].filter(Boolean).join(' , ');
+  const hit = CART.find(c => !c.removed && c.name === p.name && (c.variant || '') === variant);
+  if (!hit) { el.classList.add('hidden'); el.textContent = ''; return; }
+  el.classList.remove('hidden');
+  el.innerHTML = `Đã có trong giỏ · <span class="font-medium">${hit.qty}</span> sản phẩm — <button data-nav="cart" class="underline font-medium text-foreground press">Xem giỏ hàng</button>`;
+  wire(el);
+}
+
+function toast(msg, act) {
   if (LANG === 'en') { const _t = tr(String(msg), 'en'); if (_t) msg = _t; }
   const t = document.getElementById('toast');
   document.getElementById('toastMsg').textContent = msg;
+  let btn = document.getElementById('toastAct');
+  if (btn) {
+    const fresh = btn.cloneNode(false);
+    fresh.id = 'toastAct';
+    btn.replaceWith(fresh);
+    btn = fresh;
+    if (act && act.fn) {
+      btn.textContent = LANG === 'en' ? (tr(act.label, 'en') || act.label) : act.label;
+      btn.className = 'flex items-center pl-2 ml-1 border-l border-white/30 font-medium underline press';
+      btn.addEventListener('click', () => { t.classList.add('hidden'); clearTimeout(toastT); act.fn(); });
+    } else {
+      btn.textContent = '';
+      btn.className = 'hidden';
+    }
+  }
   t.classList.remove('hidden'); t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
   clearTimeout(toastT);
-  toastT = setTimeout(() => t.classList.add('hidden'), 1800);
+  toastT = setTimeout(() => t.classList.add('hidden'), act && act.fn ? 5000 : 1800);
 }
 
 /* ── Fly to cart ── */
@@ -15025,6 +16429,19 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>
       </div>
       <div class="h-px bg-border mx-3"></div>
+      <!-- TÌNH HUỐNG THANH TOÁN (11/09/2026) — công cụ của người xem demo: chọn
+           trước kết cục rồi bấm Đặt hàng để dựng lại đúng cảnh cần xem. Không
+           random: demo mà random thì không dựng lại được cảnh mình cần. -->
+      <div class="px-3 pt-3 pb-2">
+        <p class="t-multiline tracking-[0.12em] text-muted-foreground">Tình huống thanh toán</p>
+      </div>
+      <div class="px-3 pb-3">
+        <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Tình huống thanh toán">
+          ${[['success','Thành công'],['fail','Thất bại'],['timeout','Hết phiên']].map(([id, label]) => `
+            <button data-paysim="${id}" class="t-multiline paysimopt flex-1 h-8 rounded-full transition-colors press ${id === paySim ? 'bg-background text-foreground font-medium shadow-sm' : 'text-muted-foreground'}">${label}</button>`).join('')}
+        </div>
+      </div>
+      <div class="h-px bg-border mx-3"></div>
       <!-- BỘ DA đặt NGAY TRÊN "Giao diện": nó là lựa chọn thô nhất (đổi cả bảng
            màu và mặt chữ), 2 mục dưới chỉ tinh chỉnh trong bộ da đó. -->
       <div class="px-3 pt-3 pb-2">
@@ -15101,6 +16518,22 @@ document.body.insertAdjacentHTML('beforeend', `
   fab.addEventListener('click', e => { e.stopPropagation(); panel.classList.contains('open') ? closeP() : openP(); });
   panel.querySelector('.sp-backdrop').addEventListener('click', closeP);
   // ── đổi ngôn ngữ: dịch thật toàn bộ UI ──
+  /* Công tắc tình huống thanh toán — chỉ đổi biến, không dựng lại màn nào: nó
+     chỉ có tác dụng ở lần bấm "Tôi đã thanh toán" kế tiếp. */
+  panel.querySelectorAll('[data-paysim]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      paySim = btn.dataset.paysim;
+      panel.querySelectorAll('[data-paysim]').forEach(x => {
+        const on = x.dataset.paysim === paySim;
+        x.classList.toggle('bg-background', on);
+        x.classList.toggle('text-foreground', on);
+        x.classList.toggle('font-medium', on);
+        x.classList.toggle('shadow-sm', on);
+        x.classList.toggle('text-muted-foreground', !on);
+      });
+    });
+  });
+
   panel.querySelectorAll('[data-lang]').forEach(btn => {
     btn.addEventListener('click', () => {
       const to = btn.dataset.lang;
@@ -15867,7 +17300,11 @@ document.body.insertAdjacentHTML('beforeend', `
         <p class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">Đăng nhập</p>
         <button id="lpClose" class="w-8 h-8 -mr-2 flex items-center justify-center press" aria-label="Đóng">${I.close}</button>
       </div>
+      <!-- 13/09/2026 — tách 2 khu theo brief PDF trang 28: xem chú thích đầy đủ ở
+           bản desktop (desktop.html, cùng khối). Handler #lpLogin/#lpGuest/
+           #lpRegister/#lpForgot GIỮ NGUYÊN — chỉ đổi markup/nhãn. -->
       <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain py-2">
+        <p class="lp-label t-single px-4 pb-1 text-muted-foreground">Đã có tài khoản?</p>
         <p class="t-multiline px-4 py-2 text-secondary-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng</p>
         <div class="px-4 py-2 flex flex-col gap-2.5">
           <p class="t-multiline font-medium text-foreground">Số điện thoại*</p>
@@ -15886,8 +17323,15 @@ document.body.insertAdjacentHTML('beforeend', `
         <div class="p-4">
           <button id="lpLogin" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press flex items-center justify-center">Đăng nhập</button>
         </div>
-        <p class="t-multiline px-4 text-center font-medium text-foreground">Hoặc</p>
-        <div class="p-4">
+
+        <div class="mx-4 my-1 border-t border-border"></div>
+
+        <p class="lp-label t-single px-4 pt-3 pb-1 text-muted-foreground">Chưa có tài khoản?</p>
+        <p class="t-multiline px-4 py-2 text-secondary-foreground">Hãy sẵn sàng trải nghiệm những đặc quyền mua sắm tuyệt vời chỉ dành riêng cho bạn!</p>
+        <div class="px-4 pt-2 pb-2">
+          <button id="lpRegister" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press flex items-center justify-center">Tạo tài khoản</button>
+        </div>
+        <div class="p-4 pt-2">
           <button id="lpGuest" class="t-multiline w-full h-12 rounded-xs border border-border bg-background font-medium text-foreground btn-o press flex items-center justify-center" style="background:var(--unofficial-outline)">Mua hàng không đăng nhập</button>
         </div>
         <div class="safe-b"></div>
@@ -15933,6 +17377,13 @@ document.body.insertAdjacentHTML('beforeend', `
   lp.querySelector('#lpForgot').addEventListener('click', () => {
     closeLP();
     authView = 'forgot'; authViewIntent = true;
+    go('login');
+  });
+  /* 13/09/2026 — nút "Tạo tài khoản" MỚI (brief trang 28, khu "Chưa có tài
+     khoản?"): mở màn auth ở tab Đăng ký, y hệt lối desktop đã có sẵn. */
+  lp.querySelector('#lpRegister').addEventListener('click', () => {
+    closeLP();
+    authView = 'register'; authViewIntent = true;
     go('login');
   });
 })();
@@ -16257,6 +17708,84 @@ document.body.insertAdjacentHTML('beforeend', `
   gf.querySelector('.gf-backdrop').addEventListener('click', closeGF);
   gf.querySelector('#gfClose').addEventListener('click', closeGF);
   window.__openGiftSheet = openGF;
+})();
+
+/* ── Sheet "Sổ địa chỉ" (brief PDF trang 31, 13/09/2026) ──
+   Checkout Section 0 (đã đăng nhập) nay chỉ bày ĐỊA CHỈ ĐANG CHỌN dạng tóm
+   tắt + nút "Sửa" — sheet này là nơi thật sự đổi sang địa chỉ khác. Cùng
+   khuôn #giftSheet (mobile trượt đáy, desktop .dk-modal — xem bản desktop.html),
+   nhưng KHÁC ở chỗ có nút "Áp dụng" xác nhận (như #filterSheet): chọn thẻ
+   trong danh sách chỉ đổi state PENDING của sheet, ghi thật vào ckAddr lúc
+   bấm Áp dụng — vì đổi địa chỉ giao hàng là một quyết định cần xác nhận rõ,
+   không phải chạm 1 dòng là xong như chọn tỉnh/phường. */
+document.body.insertAdjacentHTML('beforeend', `
+  <div id="addrSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
+    <div class="ab-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
+    <div class="ab-panel absolute inset-x-0 bottom-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col"
+         style="border-radius:0; max-height:80vh" role="dialog" aria-label="Sổ địa chỉ">
+      <span class="absolute left-1/2 -translate-x-1/2 top-2 w-[50px] h-[3px] rounded-full bg-border"></span>
+      <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
+        <p class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">Sổ địa chỉ</p>
+        <button id="abClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
+      </div>
+      <div id="abList" class="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 py-2 flex flex-col gap-3"></div>
+      <div class="shrink-0 bg-background px-4 pt-4 safe-b">
+        <button id="abApply" class="t-multiline h-12 w-full rounded-xs bg-primary text-primary-foreground btn-p press">Áp dụng</button>
+      </div>
+    </div>
+  </div>`);
+(() => {
+  const ab = document.getElementById('addrSheet');
+  const panel = ab.querySelector('.ab-panel');
+  const list = ab.querySelector('#abList');
+  let onPick = null, pending = 0;
+
+  const cardHTML = (a, i, on) => `
+    <button type="button" class="opt ${on ? 'on' : ''} w-full flex items-start gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-ab-opt="${i}">
+      <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
+        <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+      </span>
+      <span class="flex-1 min-w-0">
+        <span class="t-multiline block font-medium text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="t-multiline font-normal text-muted-foreground">(Mặc định)</span>' : ''}</span>
+        <span class="t-multiline block text-secondary-foreground">${addrLine(a)}</span>
+      </span>
+    </button>`;
+
+  const paint = () => {
+    list.innerHTML = ADDRESSES.length
+      ? ADDRESSES.map((a, i) => cardHTML(a, i, i === pending)).join('')
+      : '<p class="t-multiline text-muted-foreground px-1 py-3">Sổ địa chỉ của bạn đang trống.</p>';
+    list.querySelectorAll('[data-ab-opt]').forEach(b => b.addEventListener('click', () => {
+      pending = +b.dataset.abOpt;
+      paint();
+    }));
+    localizeNew(list);
+  };
+
+  const closeAB = () => {
+    ab.querySelector('.ab-backdrop').classList.add('opacity-0');
+    panel.classList.add('translate-y-full');
+    ab.classList.add('pointer-events-none');
+    unlockBodyScroll();
+    setTimeout(() => ab.setAttribute('aria-hidden', 'true'), 300);
+  };
+  const openAB = (current, cb) => {
+    onPick = cb;
+    pending = (typeof current === 'number') ? current : 0;
+    paint();
+    ab.classList.remove('pointer-events-none'); ab.setAttribute('aria-hidden', 'false');
+    ab.querySelector('.ab-backdrop').classList.remove('opacity-0');
+    panel.classList.remove('translate-y-full');
+    lockBodyScroll();
+  };
+  ab.querySelector('.ab-backdrop').addEventListener('click', closeAB);
+  ab.querySelector('#abClose').addEventListener('click', closeAB);
+  ab.querySelector('#abApply').addEventListener('click', () => {
+    const picked = pending;
+    closeAB();
+    if (onPick) onPick(picked);
+  });
+  window.__openAddrSheet = openAB;
 })();
 
 
