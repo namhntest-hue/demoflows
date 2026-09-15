@@ -704,8 +704,23 @@ window.RESP = (function () {
      dung lai utility tho `.text-[18px]`) nen KHONG bi hook cu gom — chi 2 cho goi
      ten no moi thuc su ra 18/24 (tab Dang nhap/Dang ky + tieu de khoi checkout
      "Thong tin lien he"/"Thong tin giao hang"), moi noi khac van 24/32 nhu cu. */
+  /* `.t-block-title` (15/09/2026, yeu cau user): bac Libre thu BA, 16/24. Sinh ra vi
+     checkout can mot thang GIAM DAN 3 muc — "Thanh toan (N)" 24 > buoc "Van chuyen"
+     18 > khoi "Thong tin lien he" 16 (lenh user: *"Check out > Van chuyen > thong tin
+     lien he, no se xuong tung bac"*). Truoc do buoc va khoi dung chung 18 nen mat mot
+     nac.
+     KHAC `.t-overlay` du cung 16/24: `.t-overlay` la vai "title lop noi", LUON Inter
+     500 + CHU HOA va co y KHONG bao gio len Bodoni; `.t-block-title` la vai noi dung
+     trong than trang, Bodoni 400 chu thuong (hook rieng ben duoi, cung khuon 2b).
+     Hai vai cung con so nhung khac mat chu — vi vay phai la 2 class, khong gop.
+     ⚠ Bac 16 nam DUOI san net F1 cua Libre (net manh = 0,031 × co → 16px ra 0,50 CSS
+     px, tuc 0,62 px thiet bi o dpr 1,25): cung rui ro "boi thanh xam" da ghi danh cho
+     bac 18 o 13.8. Day la lech CO Y THUC theo lenh user, can ghi vao FONT-LIBRE-INTER
+     §13.1 nhu mot ngoai le co ten.
+     KHAI GIONG HET o desktop.html. */
   .t-display-title { font-size: 24px; line-height: 32px; }
   .t-section-title { font-size: 18px; line-height: 24px; }
+  .t-block-title   { font-size: 16px; line-height: 24px; }
   .t-overlay       { font-size: 16px; line-height: 24px; }
   .t-lead          { font-size: 14px; line-height: 20px; }
   .t-multiline     { font-size: 12px; line-height: 18px; }
@@ -1751,12 +1766,46 @@ window.RESP = (function () {
      không mất chỗ nào — nó chuyển từ "nhãn trong nút" sang "title của khối".
      09/09/2026 — hook `#voucherTrigger` đã biến hẳn (khối trở lại ô nhập `#cartCode`);
      nhóm này vẫn đúng 2 selector dưới, không có gì phải thêm bớt. */
-  html.skin-mt [data-screen="cart"] div:has(> #cartTotal) > span,
+  html.skin-mt [data-screen="cart"] div:has(> #cartTotal) > span {
+    font-weight: 500;
+    text-transform: uppercase;
+    /* 15/09/2026: 16 -> 20 theo bậc .t-lead mới của hàng tổng (xem hook .ck-total
+       bên dưới). TÁCH khỏi nhánh #pbhAcc cùng lượt: trigger phiếu mua hàng vẫn ở
+       .t-multiline 12/18 nên phải giữ nhịp 16 của nó, không đi theo 20. */
+    line-height: 20px;
+  }
   html.skin-mt [data-screen="cart"] #pbhAcc .acc-trigger > span:first-child {
     font-weight: 500;
     text-transform: uppercase;
     line-height: 16px;
   }
+  /* Nhãn "Tổng cộng" + trigger "Bạn có phiếu mua hàng?" VỀ CHỮ THƯỜNG (14/09/2026, port từ
+     desktop.html — desktop đã vá theo yêu cầu user "tổng cộng cũng viết thường thôi" nhưng
+     quên mirror sang mobile, gây lệch 2 file). Chỉ đè SPAN NHÃN (`:first-child`, tăng đặc
+     hiệu để thắng rule 500+HOA ở trên); số tiền `#cartTotal` (span thứ 2) KHÔNG đụng, vẫn
+     hoa+đậm — user chỉ nói tới chữ "tổng cộng", số tiền vẫn cần nổi bật nhất khối. */
+  html.skin-mt [data-screen="cart"] div:has(> #cartTotal) > span:first-child {
+    /* 15/09/2026: BỎ font-weight 400 — user nâng đậm cả hàng tổng, nhãn nay giữ
+       500 của hook trên, chỉ còn gỡ chữ hoa (chốt 14/09). */
+    text-transform: none;
+  }
+  html.skin-mt [data-screen="cart"] #pbhAcc .acc-trigger > span:first-child {
+    font-weight: 400;
+    text-transform: none;
+  }
+  /* 15/09/2026 (lệnh user: *"cái tổng cộng tiền cho nâng font weight và lên font
+     typo 14 cho cả cart và checkout"*): hàng TỔNG CỘNG ở giỏ và ở checkout lên
+     bậc .t-lead 14/20 + đậm 500 cho cả nhãn lẫn số tiền — trước đó là .t-single
+     12/16, và ở checkout thì font-medium còn CHẾT (bộ da quét mọi .font-medium về
+     400) nên số tiền mảnh y hệt mấy dòng phụ ngay trên.
+     Vì sao phải khai lại 500 ở đây: .font-medium là class chết dưới skin-mt, muốn
+     giữ 500 phải khai NGOẠI LỆ CÓ TÊN — đây là hook đó, bám class .ck-total mới
+     thêm vào markup hàng tổng (dùng chung cho cả 2 màn nên 2 chỗ không lệch nhau).
+     ⚠ NỢ LUẬT: 500 + chữ thường phá cặp "500 luôn đi với HOA" (§1.1). Nhãn này đã
+     bị user chốt về chữ thường hôm 14/09, nay lại nâng đậm — cùng dạng với ngoại
+     lệ (b) đã ghi danh cho giá hàng giỏ ("giá không viết hoa được"). Cần ghi thành
+     ngoại lệ có tên trong STYLE-RULES §1.1, CHƯA làm. */
+  html.skin-mt [data-screen="checkout"] .ck-total > span { font-weight: 500; }
   /* Brand trong hàng giỏ đi theo chốt 24/08 "brand không uppercase": họ nội dung
      400 chữ thường, nổi hơn tên sp bằng BẬC CỠ 14/20 — khớp `.pc-brand` ở mục 5c.
      (Trước 24/08 chỗ này là 500 + HOA + 16 theo vai nhãn của chốt C1.) */
@@ -2314,18 +2363,31 @@ window.RESP = (function () {
     font-family: var(--font-head); text-transform: none; font-weight: 400;
   }
 
-  /* 2c — TIÊU ĐỀ BƯỚC Ở CHECKOUT VÀO ĐÚNG TẦNG NHÃN (13.1: "nhãn nhóm menu/footer/
-     accordion" = 12/16 · 500 · HOA). Trước lượt này chúng ra 12/16 · 400 · chữ thường,
-     tức trông y hệt dòng địa chỉ ngay dưới nó, trong khi cùng một vai ở chỗ khác của
-     app đã là nhãn thật: `ƯU ĐÃI & KHUYẾN MÃI` ở giỏ, `DANH MỤC`/`THƯƠNG HIỆU` ở panel
-     bộ lọc, 4 cột chân trang. Markup vốn đã ghi `font-medium` nhưng skin-mt kéo mọi
-     `font-medium` về 400 (đúng luật cặp 500⇔HOA), nên phải khai LẠI cả hai vế ở đây.
-     Cỡ và dòng không khai: `.t-single` trong markup đã là 12/16.
-     Bám thêm `[data-screen="checkout"]` cho đủ nặng hơn rule chuẩn hoá đậm của skin-mt,
-     không phụ thuộc thứ tự khai — đúng cách `skin-mp` đang làm cho chính class này. */
-  html.skin-mt.skin-li [data-screen="checkout"] .ck-title {
-    font-weight: 500; text-transform: uppercase;
+  /* 2b-quater — `.t-block-title` (15/09/2026): bậc Libre thứ BA, 16/24, cho khối
+     NẰM TRONG một bước checkout. Cùng khuôn hệt 2b/2b-bis.
+     KHÔNG gộp với `.t-overlay` dù trùng 16/24: `.t-overlay` cố ý ở lại Inter 500 +
+     CHỮ HOA cho title lớp nổi, còn vai này là Bodoni 400 chữ thường trong thân
+     trang. Trùng số, khác mặt chữ. KHAI GIỐNG HỆT ở desktop.html. */
+  html.skin-mt.skin-li .t-block-title {
+    font-family: var(--font-head); text-transform: none; font-weight: 400;
   }
+
+  /* 2c — ĐÃ GỠ 15/09/2026. Rule cũ đẩy tiêu đề BƯỚC của checkout vào tầng NHÃN
+     (12/16 · 500 · HOA, theo 13.1 "nhãn nhóm menu/footer/accordion"). Lệnh user
+     15/09 đảo hẳn tầng: *"ở trang checkout, cái tiêu đề lớn nhất sẽ dùng libre 24
+     ví dụ tiêu đề Vận chuyển, còn bên trong Vận chuyển là dùng bậc nhỏ hơn của
+     libre"* — tức tiêu đề bước lên tầng TRƯNG BÀY `.t-display-title` (24/32 ·
+     Libre Bodoni · 400 · chữ thường, do hook 2b cấp), ngang hàng tiêu đề trang
+     "Thanh toán (N)"; các khối bên trong bước giữ `.t-section-title` 18/24.
+     Phải GỠ chứ không sửa: rule này (0,4,1) nặng hơn hook 2b (0,3,1) nên để lại
+     là Libre bị ép chữ hoa — đúng thứ mà chốt skin-li cấm ("ở skin-li các font
+     Libre sẽ không ghi uppercase nữa"), và cũng phá cặp 500⇔HOA của §1.1 theo
+     chiều ngược lại.
+     Cỡ/dòng nay do chính `.t-display-title` trong markup cấp, không khai ở đây.
+     Vì sao tầng cũ hết đúng: nó khiến tiêu đề bước (12) NHỎ HƠN tiêu đề khối con
+     của chính nó (18) — phân cấp ngược, đã ghi ở FIGMA-PARITY-AUDIT-2026-09-15.
+     `skin-mp` vẫn giữ rule .ck-title riêng của nó (mục 9), không đụng.
+     KHAI GIỐNG HỆT ở desktop.html. */
 
   /* 3 — BRAND Ở PDP: CÙNG BẬC TRƯNG BÀY **24/32**, LIBRE BODONI.
      Đường đi của con số này, ghi đủ để không ai hỏi lại: bản đầu 32/40 → user bác
@@ -3246,22 +3308,18 @@ window.RESP = (function () {
     max-height: 12px; max-width: 100%; width: auto; height: auto; object-fit: contain;
   }
   /* TÊN HÃNG BẰNG CHỮ, cho hãng không có file logo (08/09/2026 — user không tìm được logo
-     PNG nền trong). KHÔNG đi qua hook `text-[18px]` của bộ da: đo lần đầu ra 24px (hook
-     trưng bày dùng chung) và `uppercase` bị hook ghi đè bằng `text-transform: none` — nên
-     class riêng + CSS thật, hết tranh chấp thang độ ưu tiên.
-     18/24 là bậc nhãn-trong-hình của bản mobile (đã có từ 07/09), không phải bậc mới.
-     Chữ HOA: ngoại lệ đã ghi danh của luật không-dùng-UPPERCASE — nó thay cho một wordmark
-     thương hiệu. `letter-spacing: .5px` là tracking chung của dự án.
-     Cỡ so với logo: 18px Libre cho cao chữ hoa ~13,7 so với trần 12 của ảnh logo — lệch
-     1,7px, tức 2 kiểu ô vẫn cùng một trục quang học. */
+     PNG nền trong). Chữ HOA: ngoại lệ đã ghi danh của luật không-dùng-UPPERCASE — nó thay
+     cho một wordmark thương hiệu. `letter-spacing: .5px` là tracking chung của dự án.
+     ĐÃ VÁ 14/09/2026 (port từ desktop.html, đồng bộ 2 file): bản cũ (Libre Bodoni 18/24 +
+     HOA) phạm luật riêng "Libre không bao giờ hoa" — Bodoni và chữ hoa không đi cùng nhau
+     được ở bộ da này. Đổi sang **Inter 14/20 · 500 · HOA** — đúng vai NHÃN (T3, §1.1),
+     thoát hẳn hook `text-[18px]`/`--font-head`. MỘT bậc cho cả spotlight và ô nhỏ (trước
+     tách 18/24 vs 24/32). */
   .hm-brand-text {
-    font-family: var(--font-head); font-weight: 400;
-    font-size: 18px; line-height: 24px;
+    font-family: inherit; font-weight: 500;
+    font-size: 14px; line-height: 20px;
     text-transform: uppercase; letter-spacing: .5px;
   }
-  /* Trong khoi spotlight thi wordmark to hon o nho — o do ban co logo la `h-[26px]`, nen
-     ban chu di bac 24/32 (bac trung bay cua thang chu du an) cho khoi lech vai. */
-  .hm-spot-copy .hm-brand-text { font-size: 24px; line-height: 32px; }
 
   .hm-cat-media { position: relative; }
   /* SCRIM .55 DAC 48px ROI NHAT (08/09/2026) — truoc la .45 mot doan tuyen tinh.
@@ -4507,7 +4565,7 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
     </div>
     <div class="flex flex-col px-1 py-2">
       <div class="flex flex-col gap-0.5 pb-2">
-        <p class="t-multiline pc-brand font-medium text-foreground truncate">${p.brand}</p>
+        <p class="t-lead pc-brand font-medium text-foreground truncate">${p.brand}</p>
         <!-- BADGE PRE-ORDER ĐỨNG TRƯỚC TÊN (27/08/2026, lệnh user + ảnh đính kèm).
              Trước đây nó là nhãn ĐÈ LÊN ẢNH, chung chồng với New Season / La Vacanza.
              Tách ra vì hai thứ nói hai chuyện: nhãn chiến dịch thuộc về ẢNH, còn
@@ -9405,8 +9463,8 @@ function discountPanel() {
     <div class="flex flex-col">
       <div id="discountLines" class="flex flex-col">${discountLinesHTML()}</div>
       <div class="flex justify-between items-center h-14">
-        <span class="t-single font-medium text-foreground">Tổng cộng</span>
-        <span id="cartTotal" class="t-single font-medium text-foreground">${vndCom(cartTotalNow())}</span>
+        <span class="t-lead font-medium text-foreground">Tổng cộng</span>
+        <span id="cartTotal" class="t-lead font-medium text-foreground">${vndCom(cartTotalNow())}</span>
       </div>
       <p class="t-multiline text-secondary-foreground">${ckAuth
         ? `Hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`
@@ -9708,13 +9766,16 @@ const abtn = (label, attrs, h = 'h-11') => `
    có dấu thương hiệu. `title` giữ lại làm aria-label để trình đọc màn hình vẫn
    biết đang ở bước nào — chuỗi đó cũng đã có sẵn trong I18N.
    Logo cố ý KHÔNG bấm được: điều hướng ra khỏi luồng đã có nút back bên trái. */
+/* 15/09/2026 — BỎ LOGO khỏi thanh này: từ lượt này `screenLOGIN()` đã bọc
+   `navBar()` (header mặc định, có logo giữa + 4 icon) nên logo ở đây thành logo
+   THỨ HAI cách nhau 48px. Giữ lại đúng nút back vì 4 view sâu trong luồng cần
+   lùi từng bước; `sticky top-0` cũng bỏ theo — chồng 2 thanh dính là thanh dưới
+   đè lên thanh trên khi cuộn. 2 view đăng nhập/đăng ký KHÔNG gọi hàm này nữa
+   (hàng 2 tab đã là tiêu đề của chúng). */
 function authNav(title) {
   return `
-  <div class="h-12 flex items-center px-2 sticky top-0 bg-background z-10" aria-label="${title}">
+  <div class="h-12 flex items-center px-2 bg-background" aria-label="${title}">
     <button data-auth-back class="w-9 h-9 flex items-center justify-center press" aria-label="Quay lại">${I.chevL}</button>
-    <div class="flex-1 flex items-center justify-center pr-9">
-      <img src="${A}logo.png" alt="DAFC" class="h-[20px] w-[93px] object-contain">
-    </div>
   </div>`;
 }
 
@@ -9753,7 +9814,6 @@ function authTabs(active) {
    dấu tích mượn đúng cách viewRegInfo báo "đã xác thực" (span.text-success). */
 function viewLogin() {
   return `
-  ${authNav('Đăng nhập')}
   ${authTabs('login')}
   <div class="flex flex-col gap-8 px-4 pt-6 pb-10">
     ${forgotEmailSent ? `
@@ -9773,7 +9833,6 @@ function viewLogin() {
 /* ── 02 Register — chỉ nhập SĐT để nhận OTP (Figma 3107:50758) ── */
 function viewRegister() {
   return `
-  ${authNav('Đăng ký')}
   ${authTabs('register')}
   <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
     <div class="t-multiline flex flex-col gap-3" style="color:var(--unofficial-ghost-foreground)">
@@ -9915,8 +9974,26 @@ function viewSetPass() {
 
 const AUTH_VIEWS = { login: viewLogin, register: viewRegister, otp: viewOtp, reginfo: viewRegInfo, regsuccess: viewRegSuccess, setpass: viewSetPass, forgot: viewForgot };
 
+/* HEADER MẶC ĐỊNH CHO MÀN XÁC THỰC (15/09/2026, yêu cầu user: *"bấm vô icon
+   account hoặc menu account thì hiện màn có đăng ký đăng nhập, cái header của
+   màn đó vẫn giữ cái header mặc định có logo và 4 icon"*).
+   Trước lượt này màn xác thực là màn DUY NHẤT của bản mobile không có `navBar()`
+   — nó tự dựng thanh riêng `authNav` (back + logo) nên vào màn là mất hẳn lối ra
+   giỏ/tìm kiếm/menu, đọc ra như một hộp thoại toàn màn hình chứ không phải một
+   trang. Nay đi đúng khuôn bản desktop (screenLOGIN của desktop.html bọc
+   `navBar()` + `footer()` từ 19/08).
+   Vì sao đặt ở ĐÂY chứ không thêm vào từng view: 7 view dùng chung một vỏ, đặt ở
+   vỏ thì mọi view đều có header, không sót view nào khi thêm view mới.
+   `authNav` KHÔNG xoá theo (khác bản desktop): 4 view sâu trong luồng (OTP · quên
+   mật khẩu · điền hồ sơ · đặt mật khẩu mới) dùng nút back của nó để lùi TỪNG BƯỚC
+   (otp → register, setpass → otp…) — bỏ đi là kẹt luồng, đúng lỗ hổng mà chính
+   bản desktop còn nợ. Nó chỉ bỏ phần LOGO để không lặp logo của navBar. */
 function screenLOGIN() {
-  return `<div class="w-full min-h-screen bg-background">${(AUTH_VIEWS[authView] || viewLogin)()}</div>`;
+  return `
+  <div class="w-full min-h-screen bg-background">
+    ${navBar()}
+    ${(AUTH_VIEWS[authView] || viewLogin)()}
+  </div>`;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -9979,7 +10056,7 @@ const vatFieldSets = {
 };
 function vatFieldRows(type) {
   return vatFieldSets[type].map(([lb, ph, im]) => `
-    <div class="px-4 py-2 flex flex-col gap-2">
+    <div class="px-3 py-2 flex flex-col gap-2">
       <label class="t-multiline font-medium text-foreground">${lb}</label>
       <input ${im ? `inputmode="${im}"` : ''} placeholder="${ph}" class="t-multiline h-10 bg-background border border-border rounded-xs px-2 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
     </div>`).join('');
@@ -10007,7 +10084,7 @@ function ckSection(i, title, openBody, doneBody) {
   return `
   <div class="ck-sec" data-sec="${i}">
     <div class="ck-head h-[56px] px-4 flex items-center justify-between">
-      <p class="t-single ck-title font-medium text-foreground transition-opacity duration-300">${title}</p>
+      <p class="t-section-title ck-title text-foreground transition-opacity duration-300">${title}</p>
       <button class="t-multiline ck-change text-foreground press" data-goto="${i}">Thay đổi</button>
     </div>
     <div class="ck-open acc-body"><div class="acc-inner">${openBody}</div></div>
@@ -10274,7 +10351,7 @@ function screenCHECKOUT() {
      RIÊNG, không mang `.text-[18px]` nên thoát hẳn hook cũ. */
   const addrForm = `
     <div class="px-4 pt-2 pb-2">
-      <p class="t-section-title text-foreground">Thông tin liên hệ</p>
+      <p class="t-block-title text-foreground">Thông tin liên hệ</p>
     </div>
     ${field('Tên','Nhập tên','', { val: ckShipName, key: 'sname', auto: 'given-name' })}
     ${field('Họ','Nhập họ')}
@@ -10283,7 +10360,7 @@ function screenCHECKOUT() {
     ${field('Email','Nhập email nhận xác nhận đơn','email', { val: ckEmail, key: 'email', auto: 'email' })}
     <div id="ckEmailKnown" class="hidden px-4 pt-1"></div>`}
     <div class="px-4 pt-6 pb-2">
-      <p class="t-section-title text-foreground">Thông tin giao hàng</p>
+      <p class="t-block-title text-foreground">Thông tin giao hàng</p>
     </div>
     ${pickField('Tỉnh / thành phố','Chọn tỉnh / thành phố','province', ckProvince)}
     ${pickField('Phường / xã','Chọn phường / xã','ward', ckWard)}
@@ -10330,7 +10407,7 @@ function screenCHECKOUT() {
     const a = ADDRESSES[ckAddr] || null;
     if (!a) return `<p class="t-multiline text-muted-foreground px-4 py-3 border border-border rounded-md bg-background">Sổ địa chỉ của bạn đang trống.</p>`;
     return `
-    <div class="px-4 py-3 flex items-start justify-between gap-3 border border-border rounded-md bg-background">
+    <div class="px-4 py-3 flex items-start justify-between gap-3 border border-primary rounded-md bg-background">
       <div class="flex-1 min-w-0 flex flex-col gap-1">
         <p class="t-multiline font-medium text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="t-multiline font-normal text-muted-foreground">(Mặc định)</span>' : ''}</p>
         <p class="t-multiline text-secondary-foreground">${addrLine(a)}</p>
@@ -10346,9 +10423,30 @@ function screenCHECKOUT() {
         ${ADDRESSES.length ? `<button type="button" data-open-addrbook class="t-single text-foreground underline press">Chọn địa chỉ đã lưu</button>` : ''}
       </div>
       ${addrForm}` : `
-      ${addrSummary}
-      <div class="px-4 pb-2">
-        <button type="button" data-addr="new" class="t-multiline text-foreground underline press">+ Thêm địa chỉ mới</button>
+      <!-- 15/09/2026, hai lượt liền nhau:
+           (1) "+ Thêm địa chỉ mới" từ LINK gạch chân đổi thành NÚT THẬT — lượt
+               đầu tự chế khung theo thẻ tóm tắt (rounded-md, py-3), lượt sau
+               user chốt lại: *"nó là button outline á, cho nó về component đó
+               để có hiệu ứng như một button"* → nay dùng ĐÚNG khuôn nút outline
+               của dự án, y hệt các nút cùng loại (Huỷ đơn hàng / Xuất hoá đơn ở
+               màn Chi tiết đơn): t-lead + w-full + h-12 + viền border + nền
+               background + .btn-o + .press, nhãn canh giữa.
+               Bỏ rounded-md của lượt trước: nút trong dự án vuông góc (§3.2
+               radius 0), bo tròn là khuôn THẺ chứ không phải khuôn NÚT. Đổi lại
+               nó cao bằng đúng nút Xác nhận ngay dưới (h-12) và nhận đủ trạng
+               thái: .press cho phản hồi nhấn, .btn-o đổi viền khi active/focus
+               (bản mobile cố ý không có hover vì là thiết bị cảm ứng).
+           (2) THỤT LỀ 16px cho cả cặp (lệnh user "đóng khung rồi thì thụt vô
+               cho cân với padding của các phần còn lại"): trước đó cả 2 khối
+               chạy full-bleed 0-375 nên viền dính sát mép màn, lệch với mọi
+               thứ khác trong bước (nút Xác nhận 16-359, tiêu đề bước lề 16).
+               Bọc chung một div px-4 thay vì thêm lề cho từng khối — cùng một
+               nguồn lề thì 2 khối không thể lệch nhau về sau.
+               gap-2 thay cho pt-2/pb-2 cũ: khe 8px giữa 2 khối do CHA quyết,
+               không phải do lề riêng của từng khối cộng lại. -->
+      <div class="px-4 pb-2 flex flex-col gap-2">
+        ${addrSummary}
+        <button type="button" data-addr="new" class="t-lead w-full h-12 flex items-center justify-center border border-border bg-background text-foreground btn-o press">+ Thêm địa chỉ mới</button>
       </div>`}
     </div>
     <div class="px-4 py-4">
@@ -10422,33 +10520,52 @@ function screenCHECKOUT() {
       <span class="t-multiline text-foreground">${v}</span>
     </div>`;
   const s2open = `
-    <div id="payOpts" class="px-4 py-2 flex flex-col gap-3">
-      ${pays.map(([id, l, on, icon, off]) => richRadio(id, l, '', on, icon, off)).join('')}
-    </div>
+    <!-- 15/09/2026 (lệnh user: *"ở mục thanh toán thì cho cái xuất hóa đơn VAT lên
+         trên phần phương thức"*): khối VAT ĐỔI CHỖ lên TRƯỚC danh sách phương thức.
+         Đệm dọc đi theo chỗ đứng: VAT nay là phần tử đầu của bước nên pt-4 xuống
+         pt-2 (8px, đúng bằng lề trên cũ của payOpts) và thêm pb-4 làm khe 16px
+         xuống danh sách; payOpts bỏ pt (py-2 -> pb-2) vì khe trên đã do VAT cấp.
+         KHAI GIỐNG HỆT ở desktop.html. -->
     <!-- Xuất hóa đơn VAT (Frame 427319857) -->
-    <div class="pt-4">
-      <div class="px-4">
-        <label id="vatToggle" class="flex items-center gap-2 press w-fit cursor-pointer">
+    <div class="px-4 pt-2 pb-4">
+      <!-- 15/09/2026 (lệnh user: *"cái ô Xuất hóa đơn VAT sẽ cho dạng đóng mở box,
+           bấm vào mở box ra chọn cty hay cá nhân như hiện tại"*): khối VAT từ một
+           hàng tick trần đổi thành HỘP ĐÓNG/MỞ — viền + nền mượn y khuôn thẻ chọn
+           phương thức ngay dưới (richRadio: border border-border bg-background
+           rounded-xs p-3) để 2 thứ đứng cạnh nhau đọc ra cùng một họ.
+           Hộp mang class .acc CHỈ để mượn cặp rule đổi icon +/- có sẵn
+           (.acc.open .acc-ico-plus/minus); KHÔNG đặt .acc-trigger lên nút vì wiring
+           chung của .acc-trigger sẽ toggle lần hai, thành bấm một cái đóng mở hai
+           lần. Cơ chế xổ vẫn là #vatFields.ck-open + .is-open như cũ, handler chỉ
+           thêm một dòng toggle .open cho hộp để icon đổi theo.
+           Ô tick GIỮ LẠI: nó là trạng thái "có xuất VAT hay không", còn +/- là chỉ
+           báo đóng/mở — hai việc khác nhau, bỏ tick là mất nghĩa. -->
+      <div id="vatBox" class="acc border border-border bg-background rounded-xs">
+        <label id="vatToggle" class="flex items-center gap-2 p-3 press cursor-pointer">
           <span class="chk w-4 h-4 rounded-xs border border-border-3 flex items-center justify-center shrink-0">${I.tick}</span>
-          <span class="t-multiline font-medium text-foreground">Xuất hóa đơn VAT</span>
+          <span class="t-multiline flex-1 font-medium text-foreground">Xuất hóa đơn VAT</span>
+          ${accIco}
         </label>
-      </div>
-      <div id="vatFields" class="ck-open"><div class="acc-inner">
-        <div class="px-4 pt-3 flex flex-col gap-3">
+        <div id="vatFields" class="ck-open"><div class="acc-inner">
+          <div class="px-3 pt-1 pb-1 flex flex-col gap-3">
           ${segToggle('data-vat-type', [['personal','Cá nhân'], ['company','Công ty']], vatType, 'h-10')}
           <p class="t-multiline text-secondary-foreground">Hóa đơn VAT chỉ xuất trong ngày, khách hàng có nhu cầu xuất hóa đơn vui lòng điền đầy đủ thông tin bên dưới.</p>
         </div>
-        <div id="vatFieldRows">${vatFieldRows(vatType)}</div>
-      </div></div>
+          <div id="vatFieldRows">${vatFieldRows(vatType)}</div>
+        </div></div>
+      </div>
+    </div>
+    <div id="payOpts" class="px-4 pb-2 flex flex-col gap-3">
+      ${pays.map(([id, l, on, icon, off]) => richRadio(id, l, '', on, icon, off)).join('')}
     </div>
     <div class="px-4 pt-4">
       ${ckCodeRow()}
       ${row('Tạm tính', vndCom(cartSubtotal()))}
       ${cartDiscountTotal() > 0 ? row('Giảm giá', '-' + vndCom(cartDiscountTotal())) : ''}
       ${ckMode === 'pickup' ? row('Nhận hàng','Tại cửa hàng') : row('Giao hàng','Free')}
-      <div class="h-14 flex items-center justify-between">
-        <span class="t-single font-medium text-foreground">Tổng cộng</span>
-        <span class="t-single font-medium text-foreground">${vndCom(cartTotalNow())}</span>
+      <div class="ck-total h-14 flex items-center justify-between">
+        <span class="t-lead font-medium text-foreground">Tổng cộng</span>
+        <span class="t-lead font-medium text-foreground">${vndCom(cartTotalNow())}</span>
       </div>
     </div>
     <div class="px-4 pb-4">
@@ -14838,10 +14955,15 @@ function wire(root) {
     if (vatToggle) {
       const chk = vatToggle.querySelector('.chk');
       const fields = root.querySelector('#vatFields');
+      const vatBox = root.querySelector('#vatBox');
       vatToggle.addEventListener('click', () => {
         const on = !chk.classList.contains('on');
         chk.classList.toggle('on', on);
         fields.classList.toggle('is-open', on);
+        /* 15/09/2026: hộp VAT mượn rule .acc.open để đổi icon + <-> - (xem markup).
+           Toggle ở đây chứ không dùng wiring .acc-trigger chung — nếu gắn class đó
+           lên nút thì một cú bấm sẽ toggle hai lần, mở rồi đóng ngay. */
+        if (vatBox) vatBox.classList.toggle('open', on);
         if (on) setTimeout(() => fields.querySelector('input')?.focus({ preventScroll: true }), 380);
       });
     }
