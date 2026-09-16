@@ -1676,6 +1676,73 @@ window.RESP = (function () {
      !important vì utility .border-border cùng mức specificity và thắng cascade. */
   .fld-err, .fld-err:focus { border-color: var(--general-destructive) !important; }
 
+  /* ══ FIELD NỔI (floating label), kiểu Ralph Lauren — 15/09/2026 ══
+     Lệnh user: *"sửa lại theo phong cách của ralphlauren.com là hiện 1 placeholder
+     và khi bấm vào sẽ đẩy title lên trên nhé, áp dụng cho toàn bộ trang"*. Thay
+     khuôn CŨ "nhãn tĩnh phía trên (label/span) + placeholder trong ô" (hai dòng nói
+     cùng một điều: vd "Số điện thoại" phía trên, "Nhập số điện thoại" bên trong) bằng
+     MỘT nhãn duy nhất — nằm ngay vị trí placeholder lúc nghỉ, bấm vào (hoặc ô đã có
+     chữ) thì tự đẩy lên thành caption nhỏ phía trên, chữ gõ hiện bên dưới trong CÙNG
+     một ô.
+     CƠ CHẾ THUẦN CSS — không JS, không đổi một hành vi nào của form đang chạy:
+       · input/textarea cần `placeholder=" "` (MỘT DẤU CÁCH, không phải rỗng hẳn) —
+         :placeholder-shown chỉ so được khi CÓ thuộc tính placeholder; bỏ hẳn thuộc
+         tính thì pseudo-class này không bao giờ khớp, nhãn đứng yên mãi ở vị trí nổi.
+       · <label> đứng NGAY SAU input trong DOM (anh em liền kề) để chọn bằng tổ hợp `+`.
+       · Value đã có sẵn lúc dựng (sửa thông tin, quay lại từ state) thì input KHÔNG
+         rỗng ngay từ đầu — nhãn nổi sẵn, không cần đợi lượt gõ đầu tiên.
+     CAO 48 THỐNG NHẤT cho MỌI ô đổi sang khuôn này (trước lệch h-9/h-10/h-11/h-12 tuỳ
+     chỗ) — nhãn nổi cần khoảng hở phía trên mà các cỡ cũ không đủ chỗ; đây là lệch CÓ
+     Ý THỨC để đồng bộ toàn trang, không phải quên.
+     `.is-btn` là biến thể cho Ô CHỌN mở sheet/dropdown (pickField/accPick — một <button>,
+     không phải input thật nên không có :placeholder-shown): nổi hay không do class
+     `.is-filled` gắn ngay lúc DỰNG theo `val` đang có, cộng `:focus-within` cho đúng lượt
+     vừa bấm mở mà giá trị chưa kịp đổi. */
+  .field-float { position: relative; display: flex; flex-direction: column; }
+  .field-float > input, .field-float > textarea {
+    width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px;
+    border-color: transparent;
+  }
+  .field-float > textarea { height: auto; min-height: 72px; padding-top: 22px; resize: none; }
+  .field-float > label {
+    position: absolute; left: 9px; right: 36px; top: 50%; transform: translateY(-50%);
+    font-size: 14px; line-height: 20px; letter-spacing: .5px;
+    pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: top .15s ease, transform .15s ease, font-size .15s ease;
+  }
+  /* 16/09/2026 — user dựng lại bộ field trong Figma, tự đóng góp 2 luật:
+     (1) viền TRONG SUỐT lúc nghỉ (kể cả đã có chữ) — chỉ hiện viền khi FOCUS
+     (primary) hoặc LỖI (destructive, xem .fld-err); nghỉ để trống hẳn cho nhẹ,
+     không mượn #dfdfdf như trước. (2) nhãn nổi 11px là size TỰ CHẾ (phạm luật
+     "cấm 11/13/15/22" của thang chữ) — đổi đúng về .t-micro 10/14 có sẵn. */
+  .field-float > input:focus + label, .field-float > input:not(:placeholder-shown) + label,
+  .field-float > textarea:focus + label, .field-float > textarea:not(:placeholder-shown) + label {
+    top: 8px; transform: translateY(0); font-size: 10px; line-height: 14px;
+  }
+  .field-float.is-btn > button { width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px; border-color: transparent; }
+  .field-float.is-btn > label { top: 50%; transform: translateY(-50%); }
+  .field-float.is-btn.is-filled > label, .field-float.is-btn:focus-within > label {
+    top: 8px; transform: translateY(0); font-size: 10px; line-height: 14px;
+  }
+  /* FOCUS RING (15/09/2026, sửa lại 16/09/2026) — khớp biến thể đã có sẵn của nút
+     (`.press:focus-visible`, xem khối "State của Button" phía trên): shadow tròn 3px,
+     KHÔNG blur, màu `--btn-focus-ring`. Ô CHỌN (pickField/accPick) mang class `.press`
+     nên ĐÃ có ring này qua đúng rồi (nút thì `:focus-visible` của trình duyệt tự loại
+     click chuột, chỉ còn bàn phím — không cần sửa gì).
+     ⚠ <input>/<textarea> thật thì `:focus-visible` KHÔNG lọc được: Chrome/Firefox coi
+     MỌI lượt focus vào ô nhập là "visible" bất kể chuột hay Tab (khác hẳn <button>).
+     Lệnh user 16/09: "ring chỉ hiện khi dùng Tab, bấm thường chỉ đổi màu viền" — border
+     (`focus:border-primary`) vẫn đổi màu ở MỌI cách focus như cũ; RIÊNG ring gắn cờ tay
+     `html.kbd-nav` (bật khi gõ phím Tab, tắt khi bấm chuột — xem script cuối file) thay
+     vì dựa vào `:focus-visible`. */
+  html.kbd-nav .field-float > input:focus, html.kbd-nav .field-float > textarea:focus {
+    box-shadow: 0 0 0 3px var(--btn-focus-ring);
+  }
+  /* Ô lỗi (`.fld-err`) đổi sang ring đỏ — đúng cặp với `.btn-d:focus-visible` dùng
+     `--focus-ring-error`. Cần !important: specificity của rule ring mặc định ngay trên
+     cao hơn `.fld-err:focus` đứng riêng. */
+  html.kbd-nav .fld-err:focus { box-shadow: 0 0 0 3px var(--focus-ring-error) !important; }
+
   /* ══ OFFSET STICKY CANH THEO ĐÁY HEADER — GOM MỘT CHỖ ══════════════════════
      4 mặt dưới đây phải ghim ngay dưới đáy header khi cuộn. Header = promo bar 32
      (cuộn khỏi màn nhờ .navbar sticky top-[-32px]) + hàng nav 60 + subheader 72.
@@ -4427,46 +4494,78 @@ window.RESP = (function () {
      Đo trên ảnh khách giao ở ô 686,5x386: chữ trắng KHÔNG veil chỉ 1,00 và 1,52:1; với veil
      đen .45 thì 3,35 (Balmain) và 4,74:1 (Versace) — chữ ở ô này là wordmark thay logo, tức
      một logotype nên sàn là 3:1. .40 thì Balmain tụt 2,44 -> dưới sàn.
-     Khai bằng PX (96 / đặc 56) như bản mobile, không dùng %. */
+     Khai bằng PX (96 / đặc 56) như bản mobile, không dùng %.
+     ⚠ CON SỐ .45 VÀ LẬP LUẬN "logotype nên sàn 3:1" HẾT HIỆU LỰC 15/09/2026 — xem rule ngay
+     dưới. Phần chiều cao (96 / đặc 56) và màu ĐEN thì giữ. */
+  /* .45 -> .55 (15/09/2026, lệnh user: *"nâng veil lên .55 luôn rồi dựng figma nhé"*).
+     ĐẢO chốt 08/09 (*"opacity nhẹ nhàng và thấp xuống"*), và lý do là chính lượt sửa hôm nay
+     đã rút mất cái cớ của .45: cớ đó là **"chữ ở ô này là wordmark thay logo, tức một
+     logotype nên sàn chỉ 3:1"** (WCAG 1.4.11 miễn trừ logotype). Nhãn nay là chữ THƯỜNG cỡ
+     18/24 Bodoni, đọc ra là một dòng chữ chứ không phải một logotype — hết miễn trừ, sàn trở
+     lại **4,5:1** của chữ thường.
+     SỐ ĐO (điểm SÁNG NHẤT trong đúng vùng nhãn, hợp với veil rồi so với chữ trắng):
+                      veil .45      veil .55
+       Balmain        3,35:1  ✗     **4,76:1**  ✓
+       Versace        4,56:1  ~     **6,26:1**  ✓
+     Balmain là ca chặn: ảnh của nó có điểm cháy sáng 255 ngay sau chữ. Ngưỡng toán học của
+     4,5:1 trên nền trắng tuyệt đối là .51, nên .55 là nấc tròn gần nhất còn đạt — và đúng
+     bằng `.hm-cat-scrim` của ô danh mục, tức 2 mảng nhãn-trên-ảnh của trang chủ về CÙNG MỘT
+     độ đặc. CHIỀU CAO KHÔNG ĐỔI (96 / đặc 56), chỉ đổi độ đặc.
+     ⚠ Bản desktop nhãn 24px = chữ LỚN (sàn 3:1) nên vốn đã đạt ở .45; nâng theo là để 2 khổ
+     cùng một con số, không phải vì desktop thiếu. */
   .hm-spot-brand-veil {
     position: absolute; inset-inline: 0; bottom: 0; height: 96px;
-    background: linear-gradient(to top, rgba(0, 0, 0, .45) 0, rgba(0, 0, 0, .45) 56px, transparent 100%);
+    background: linear-gradient(to top, rgba(0, 0, 0, .55) 0, rgba(0, 0, 0, .55) 56px, transparent 100%);
     pointer-events: none;
   }
 
   .hm-spot-brand-cap {
-    /* RỘNG THEO NỘI DUNG, KHÔNG THEO %. Bản đầu khai `width: calc(33.333% - 16px)` và ĐO
-       RA LỖI ở khổ máy: ô 343 cho cap 98,4 mà `brand-logo-dg.png` ở trần 12 cần 118,9, nên
-       `max-width: 100%` bóp nó lại -> D&G ra cao 9,9 · Zimmermann 11,8 · Versace 12, tức
-       mỗi hãng một chiều cao. Để cap tự co theo nội dung thì trần 12 luôn được tôn trọng. */
+    /* RỘNG THEO NỘI DUNG, KHÔNG THEO %. Lý do gốc là một lỗi đo được hồi còn cắm PNG: ô 343
+       cho cap 98,4 mà `brand-logo-dg.png` ở trần 12 cần 118,9, nên `max-width: 100%` bóp nó
+       lại -> mỗi hãng một chiều cao. Từ 15/09/2026 nội dung là CHỮ nên bẫy đó hết, nhưng
+       `width: auto` vẫn giữ nguyên tác dụng: cap ôm đúng bề ngang tên hãng, để `max-width`
+       cắt đúng chỗ khi tên dài. */
     position: absolute; left: 16px; bottom: 16px; width: auto; max-width: calc(100% - 32px);
     display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
     pointer-events: none;
   }
-  /* TRẦN 12 PHẢI KHAI BẰNG CSS, KHÔNG BẰNG UTILITY. Bản đầu dùng `h-[12px]` và ĐO RA LỖI:
-     lớp đó KHÔNG có trong bản Tailwind build sẵn nên chết âm thầm, rồi ảnh bị flex kéo đầy
-     bề rộng cap -> mỗi hãng một chiều cao (Versace 22,4 · D&G 13,3 · Zimmermann 15,8), tức
-     vỡ đúng cái trục quang học mà trần này tồn tại để giữ.
-     Khuôn giống hệt `.hm-brand-card img` của hàng 5 thẻ — một cách khai, hai chỗ dùng. */
-  .hm-spot-brand-cap img {
-    max-height: 12px; max-width: 100%; width: auto; height: auto; object-fit: contain;
-  }
-  /* TÊN HÃNG BẰNG CHỮ cho hãng không có file logo. Chữ HOA là ngoại lệ đã ghi danh của luật
-     không-dùng-UPPERCASE — nó thay cho một wordmark.
-     ĐÃ VÁ 14/09/2026: bản cũ (Libre Bodoni 18/24 + HOA) phạm luật riêng "Libre không bao giờ
-     hoa" — Bodoni và chữ hoa không đi cùng nhau được ở bộ da này, dù mỗi luật xét riêng đều
-     có vẻ hợp lệ. Đổi hẳn sang **Inter 14/20 · 500 · HOA** — đúng vai NHÃN (T3, §1.1: nhãn
-     là 500+hoa, không phải Bodoni), thoát hẳn hook `text-[18px]`/`--font-head`. MỘT bậc cho
-     cả spotlight và ô nhỏ (trước tách 18/24 vs 24/32) — 14 là T3 có sẵn, không cần bậc riêng
-     cho ô to. Bản vá 11/09 từng chỉ bật ở tab Nữ qua `hm-chuan`; nay đưa thẳng vào đây làm
-     mặc định CẢ 2 TAB + CẢ 2 FILE (trước mobile cũng Bodoni+HOA, xem index.html). */
+  /* ĐÃ GỠ 15/09/2026 — `.hm-spot-brand-cap img { max-height: 12px … }` (trần chiều cao cho
+     logo PNG, dựng để 3 ô đứng chung một trục quang học). Cùng lý do với rule filter ở trên:
+     khối này hết `<img>`.
+     ⚠ Trần 12 CHÍNH LÀ thứ vừa mất khi bỏ PNG: nay tên hãng cao theo cỡ chữ (cap-height
+     Libre 18 ≈ 14 · Libre 24 ≈ 19), tức 3 ô cao bằng nhau vì cùng một bậc chữ, không còn
+     bằng nhau vì cùng một trần. Đó là ĐÁNH ĐỔI có chủ ý của lệnh "dùng font ghi chữ".
+     Cần cắm PNG lại thì chép khuôn `.hm-brand-card img` của hàng 5 thẻ thương hiệu — rule đó
+     vẫn sống và vốn là cùng một cách khai. */
+  /* TÊN HÃNG BẰNG CHỮ, cho hãng không có file logo (08/09/2026 — user không tìm được logo
+     PNG nền trong). `letter-spacing: .5px` là tracking chung của dự án.
+     ĐỔI 15/09/2026 (lệnh user: *"đồng bộ text typo của brand thành dạng text font cùng
+     loại với cate"*). Wordmark nay đi ĐÚNG bậc của nhãn ô danh mục cùng trang —
+     **Libre Bodoni 24/32 · 400 · CHỮ THƯỜNG** — tức giống hệt `.hm-cat-media p.hm-cat-label`. Hai chỗ là CÙNG MỘT VAI:
+     nhãn nằm trên ảnh, và trên trang chúng đứng sát nhau nên lệch mặt chữ là đọc ra ngay.
+     BỎ CHỮ HOA LÀ ĐIỀU KIỆN để dùng được Bodoni, không phải một thay đổi kèm theo: luật
+     riêng "Libre không bao giờ hoa" (13.2 mục 3) chính là lý do bản 14/09 phải rời sang
+     Inter 14/20 · 500 · HOA. Lệnh mới chốt MẶT CHỮ theo cate, nên đường ra là bỏ hoa chứ
+     không phải bỏ Bodoni — và bỏ hoa cũng trả wordmark về luật chung không-dùng-UPPERCASE,
+     hết một ngoại lệ chưa bao giờ ghi danh được vào STYLE-RULES §1.5.
+     CỠ THEO TỪNG FILE, không phải một số chung: `.hm-cat-label` là 18/24 ở bản mobile và
+     24/32 ở bản desktop — lệch CÓ CHỦ Ý sẵn có của khối trang chủ (xem ghi chú ở hook
+     `.hm-cat-media p.hm-cat-label`). Bám theo cate thì bám cả chỗ lệch đó.
+     MỘT bậc cho cả spotlight và ô nhỏ — giữ nguyên chốt 14/09, không quay lại 2 bậc.
+     ⚠ Nét Libre ở bậc này nằm dưới sàn nét F1 (13.8 gọi là "bôi thành xám"); chấp nhận
+     đúng như `.hm-cat-label` đang chấp nhận, vì chữ nằm trên veil tối. */
   .hm-brand-text {
-    font-family: inherit; font-weight: 500;
-    font-size: 14px; line-height: 20px;
-    text-transform: uppercase; letter-spacing: .5px;
+    font-weight: 400;
+    font-size: 24px; line-height: 32px;
+    text-transform: none; letter-spacing: .5px;
   }
-  /* Wordmark là mực ĐEN trên nền trong nên đảo thành trắng để đọc trên veil đen. */
-  .hm-spot-copy img, .hm-spot-brand-cap img { filter: brightness(0) invert(1); }
+  /* MẶT CHỮ tách khỏi rule gốc: chỉ bộ da skin-li mới cấp Bodoni, đúng cách khai của
+     `html.skin-mt.skin-li .pc-brand`. (0,3,2) thắng mọi rule mặt chữ của skin-mt. */
+  html.skin-mt.skin-li p.hm-brand-text { font-family: var(--font-head); }
+  /* ĐÃ GỠ 15/09/2026 — `.hm-spot-copy img, .hm-spot-brand-cap img { filter: brightness(0)
+     invert(1) }` (đảo logo mực đen thành trắng để đọc trên veil). Khối thương hiệu trang chủ
+     THÔI dùng file PNG: cả 3 hãng nay vẽ tên bằng chữ, nên 2 selector này không còn trúng
+     phần tử nào. Cắm PNG lại thì phải trả CẢ rule này lẫn rule trần chiều cao. */
 
   /* ĐÃ GỠ 09/09/2026 — `.hm-spot-brands-3` (bản Nữ: 3 ô thương hiệu chung một hàng, ô ra
      (1377 − 48)/3 = 443). Roster 2 ngành đã trùng nhau từ 08/09 nên rule này chỉ còn tác
@@ -4656,15 +4755,21 @@ window.RESP = (function () {
      LAT TRANG BANG `transform`, khong bang cuon: day la dung cach #promoSlider trong file
      nay dang lam (translateX + transition), va no co mot tinh chat quan trong — `100%` cua
      translateX tinh theo BE RONG CHINH TRACK, ma track o day rong dung bang khung (no la
-     khoi block, con 6 o tran ra ngoai bi wrap cat). Nen mot trang = `100% + 2px`: cong them
-     dung mot khe, de o dau trang sau dung khit mep trai.
+     khoi block, con 6 o tran ra ngoai bi wrap cat). Tu 15/09/2026 khe ve 0 nen mot trang =
+     dung `100%`, khong con phai cong bu mot khe.
      `overflow: hidden` o wrap chu KHONG phai `auto`: het vuot, het keo — dung y lenh. */
   .hm-insta-wrap { position: relative; overflow: hidden; }
+  /* KHE VỀ 0 (15/09/2026, lệnh user: *"Theo dõi chúng tôi thì cho các hình sát nhau ở cả
+     2 phiên bản"*). Trước là 2px. Không còn khe thì 6 ô đọc ra MỘT mảng ảnh liền — đúng
+     lưới của chính Instagram, và cũng là khối DUY NHẤT trên trang chủ cố ý không có khe. */
+  /* BA CHO PHAI DOI CUNG LUC vi chung la mot phep tinh: gap · be rong o (truoc phai tru
+     tong 5 khe = 10px) · buoc lat trang trong wireInsta (truoc la 100% cong mot khe).
+     Het khe thi ca ba ve so tron. */
   .hm-insta {
-    display: flex; gap: 2px;
+    display: flex; gap: 0;
     transition: transform .5s cubic-bezier(.22, 1, .36, 1);
   }
-  .hm-insta-item { flex: 0 0 calc((100% - 10px) / 6); aspect-ratio: 4 / 5; }
+  .hm-insta-item { flex: 0 0 calc(100% / 6); aspect-ratio: 4 / 5; }
   /* 2 nut HIEN SAN, khong cho ho ho moi hien nhu mui ten dai san pham: o day chung la bo
      dieu khien DUY NHAT (da bo vuot), ma nut duy nhat an trong hover thi thiet bi cham
      khong co duong nao. Neo `.dk-rail-arrow` de an nguyen hinh nut cua du an (40x40, nen
@@ -5597,7 +5702,7 @@ function lookRailCards(title, n, selfIdx, w, badgeAt = -1) {
     .map(({ p, i }, k) => productCard(p, i, { w, noColors: true, model: true, badge: badge(k) })).join('');
 }
 
-function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false, noQuick = false, quickPerRow = SIZE_PER_ROW, quickMaxRows = Infinity } = {}) {
+function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false, noQuick = false, noPrice = false, quickPerRow = SIZE_PER_ROW, quickMaxRows = Infinity } = {}) {
   /* 27/08: 'Pre-order' THÔI làm nhãn đè ảnh — nó xuống đứng trước TÊN (xem dưới).
      Chặn ngay tại đây, một chỗ, nên 6 nơi gọi vẫn truyền `badge: 'Pre-order'` như
      cũ mà không phải sửa nơi nào. Nhãn khác (New Season…) vẫn đè ảnh bình thường. */
@@ -5704,6 +5809,12 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
           ${noName ? '' : `<p class="t-multiline text-secondary-foreground truncate min-w-0">${p.name}</p>`}
         </div>` : ''}
       </div>
+      <!-- noPrice (15/09/2026, lệnh user: *"ở danh sách sp new bỏ giá ra"*): dải HÀNG MỚI
+           VỀ ở trang chủ thôi hiện giá, thẻ ở đó còn ảnh + tên thương hiệu. Cờ đi từ CHỖ
+           GỌI (xem hmRail) nên phạm vi hẹp đúng một dải: PLP, PDP, dải Đang giảm giá và
+           mọi chỗ khác vẫn có giá. Bỏ cả cụm chứ không ẩn bằng invisible — hàng giá gạch
+           bên dưới vốn là chỗ giữ nhịp cho thẻ CÓ giá, ở đây không còn nhịp nào để giữ. -->
+      ${noPrice ? '' : `
       <div class="flex flex-col pb-2">
         <!-- whitespace-nowrap: chuỗi giá dùng space thường trước ₫ nên khi
              hàng flex thiếu chỗ, trình duyệt được phép bẻ dòng tại đó — ký
@@ -5714,7 +5825,7 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
           ${p.off ? `<span class="t-single bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${p.off}</span>` : ''}
         </div>
         <p class="t-single whitespace-nowrap text-muted-foreground line-through ${p.was ? '' : 'invisible'}">${p.was || '&nbsp;'}</p>
-      </div>
+      </div>`}
       ${(!noColors && p.colors && p.colors.length) ? `
       <!-- Frame 427319709: gap 8, mỗi ô 20×20 (viền 1px khi chọn) bọc chấm màu 16×16 -->
       <div class="flex gap-2 items-center pt-0.5" data-swatches>
@@ -6799,16 +6910,22 @@ function dkActiveFilters() {
      Hàng giữ nguyên pad 16/24 + gap 10 (đã khớp Figma từ trước) nên chiều cao
      tự về 64 = 16 + 32 + 16. */
   return `
-  <div id="plpActiveFilters" class="max-w-[1440px] mx-auto px-6 py-4 flex items-center gap-2.5 flex-wrap">
+  <!-- MỘT DÒNG, TRƯỢT NGANG (15/09/2026, cùng lệnh với bản mobile). Trước là flex-wrap.
+       Ở 1440 lòng hàng là 1392 nên ~14 chip mới tràn — thực tế roster facet không bao giờ tới
+       đó, nên overflow ở đây là VAN AN TOÀN chứ không phải trạng thái thường gặp. Vẫn phải có:
+       khổ hẹp hơn (và bản dịch tiếng Anh dài hơn) thì hàng này tràn thật.
+       drag-x buộc phải gắn TRONG refreshActiveFilters vì hàm đó XOÁ rồi chèn lại cả khối này
+       mỗi lượt đổi lọc — wire() chỉ chạy một lần khi vào màn nên không với tới. -->
+  <div id="plpActiveFilters" class="max-w-[1440px] mx-auto px-6 py-4 flex items-center gap-2.5 flex-nowrap overflow-x-auto no-scrollbar drag-x">
     ${nhãn.map(f => `
-      <button class="t-multiline af-chip h-8 px-3 rounded-xs bg-secondary flex items-center gap-2 font-medium text-secondary-foreground btn-s press [&_svg]:w-3 [&_svg]:h-3" data-af="${f}">
+      <button class="t-multiline af-chip h-8 px-3 shrink-0 whitespace-nowrap rounded-xs bg-secondary flex items-center gap-2 font-medium text-secondary-foreground btn-s press [&_svg]:w-3 [&_svg]:h-3" data-af="${f}">
         <span>${f}</span>${I.close}
       </button>`).join('')}
     ${giá ? `
-      <button class="t-multiline af-chip h-8 px-3 rounded-xs bg-secondary flex items-center gap-2 font-medium text-secondary-foreground btn-s press [&_svg]:w-3 [&_svg]:h-3" data-afprice="1">
+      <button class="t-multiline af-chip h-8 px-3 shrink-0 whitespace-nowrap rounded-xs bg-secondary flex items-center gap-2 font-medium text-secondary-foreground btn-s press [&_svg]:w-3 [&_svg]:h-3" data-afprice="1">
         <span>${giá}</span>${I.close}
       </button>` : ''}
-    <button id="afClear" class="t-multiline h-8 px-3 rounded-xs flex items-center font-medium text-mid-alt ghost-hover press"><span>Xóa tất cả</span></button>
+    <button id="afClear" class="t-multiline h-8 px-3 shrink-0 whitespace-nowrap rounded-xs flex items-center font-medium text-mid-alt ghost-hover press"><span>Xóa tất cả</span></button>
   </div>`;
 }
 
@@ -8136,11 +8253,15 @@ function hmHero() {
    Hàm này tách riêng phần DẢI (không có tiêu đề) để `hmSec` lo hàng tiêu đề.
    Nút PHẢI mang CẢ class vị trí (`.dk-rail-prev`/`.dk-rail-next`) VÀ attribute
    (`data-rail-prev`/`data-rail-next`): `wireRail()` bám ATTRIBUTE, còn CSS bám CLASS. */
-function hmRail(list) {
+/* `opts` (15/09/2026) = bộ option đi THẲNG vào productCard, ghi đè mặc định của dải.
+   Sinh ra cho `noPrice` của dải Hàng mới về, và cờ đó phải nằm ở CHỖ GỌI chứ không ở
+   trong này: hmRail còn phục vụ dải Đang giảm giá — dải mà bỏ giá đi là mất luôn nghĩa,
+   vì giá gạch và phần trăm giảm chính là nội dung của nó. */
+function hmRail(list, opts = {}) {
   return `
           <div class="dk-rail">
             <div class="dk-rail-track drag-x flex gap-1 overflow-x-auto no-scrollbar">
-              ${list.map(({ p, i }) => productCard(p, i, { noColors: true, noName: true, noQuick: !HM_SHOW.quickAdd, quickPerRow: HM_QUICK_PER_ROW, quickMaxRows: HM_QUICK_MAX_ROWS, w: 'hm-rail-item shrink-0' })).join('')}
+              ${list.map(({ p, i }) => productCard(p, i, { noColors: true, noName: true, noQuick: !HM_SHOW.quickAdd, quickPerRow: HM_QUICK_PER_ROW, quickMaxRows: HM_QUICK_MAX_ROWS, w: 'hm-rail-item shrink-0', ...opts })).join('')}
             </div>
             <button class="dk-rail-arrow dk-rail-prev press" data-rail-prev hidden aria-label="Xem sản phẩm trước">${I.chevL}</button>
             <button class="dk-rail-arrow dk-rail-next press" data-rail-next hidden aria-label="Xem sản phẩm tiếp">${I.chevR()}</button>
@@ -8367,18 +8488,19 @@ const HM_SPOT_BRANDS = ['Balmain', 'Versace'];
    TRẦN WORDMARK 22px là SỐ TUYỆT ĐỐI (chốt khách 27/08) — dùng lại y nguyên của hàng 5 thẻ
    nên 2 hàng thương hiệu trên trang đứng chung một trục quang học.
    Dòng đếm đi luật i18n có sẵn [/^(\d+) sản phẩm$/, '$1 products'] — không thêm khoá. */
-/* HAI BẢNG ĐÈ ảnh + logo cho ô thương hiệu (đồng bộ bản mobile 08/09). Để rỗng một hãng là
-   hãng đó rơi về `BRAND_PAGES`. `brand-spotlight-2` là tấm BALMAIN, `-3` là VERSACE (tấm khắc
-   chữ VERSACE trên món kim khí). Có ảnh/logo Ferragamo thì thêm 2 dòng vào đây. */
+/* BẢNG ĐÈ ẢNH cho ô thương hiệu (đồng bộ bản mobile 08/09). Để rỗng một hãng là hãng đó rơi
+   về `BRAND_PAGES`. `brand-spotlight-2` là tấm BALMAIN, `-3` là VERSACE (tấm khắc chữ VERSACE
+   trên món kim khí). Có ảnh Ferragamo thì thêm MỘT dòng vào đây.
+   (Bảng LOGO đi kèm đã gỡ 15/09 — xem ghi chú ngay dưới.) */
 const HM_SPOT_BRAND_IMG = {
   'Versace': 'brand-spotlight-3.jpg',
   'Balmain': 'brand-spotlight-2.jpg',
 };
 
-const HM_SPOT_BRAND_LOGO = {
-  /* 'Balmain':   'brand-logo-balmain.png',   */
-  /* 'Ferragamo': 'brand-logo-ferragamo.png', */
-};
+/* ĐÃ GỠ 15/09/2026 — `HM_SPOT_BRAND_LOGO` (bảng đè file logo cho ô thương hiệu). Lệnh user:
+   *"k dùng png nữa dùng font ghi chữ như mục cate ở trên của homepage luôn"*. Khối này nay
+   LUÔN vẽ tên hãng bằng chữ, hết nhánh <img>, nên bảng đó là một cửa cắm không dẫn đi đâu.
+   Bảng ẢNH `HM_SPOT_BRAND_IMG` ngay trên VẪN dùng — đó là chỗ cắm ảnh nền của ô. */
 
 function hmSpotBrands(avoidImg) {
   /* MỘT ROSTER CHO CẢ 2 NGÀNH (09/09/2026 — lượt clone bản Nữ từ bản Nam). Trước đây nhánh
@@ -8387,9 +8509,9 @@ function hmSpotBrands(avoidImg) {
      trong lưới 3 cột — hàng bỏ trống đúng một phần ba bề ngang. */
   const tiles = HM_SPOT_BRANDS.map(name => {
     /* Chốt chặn chỉ đòi ẢNH (đồng bộ bản mobile 08/09): hãng chưa có trong `BRAND_PAGES` và
-       chưa có sản phẩm vẫn dựng được ô, tên hãng vẽ bằng chữ nếu không có file logo. */
+       chưa có sản phẩm vẫn dựng được ô. Tên hãng LUÔN vẽ bằng chữ từ 15/09 nên `B.logo`
+       thôi được đọc ở đây. */
     const B = brandPage(name);
-    const logo = HM_SPOT_BRAND_LOGO[name] || B.logo;
     const hero = HM_SPOT_BRAND_IMG[name] || B.hero;
     if (!hero) return '';
     /* Ô KHÔNG ĐƯỢC ĐI ĐÚNG TẤM ẢNH CỦA SPOTLIGHT. Bẫy thật: `BRAND_PAGES['Versace'].hero`
@@ -8406,9 +8528,13 @@ function hmSpotBrands(avoidImg) {
               <!-- Ô CHỈ CÓ WORDMARK (đồng bộ bản mobile 08/09, theo mock user): bỏ dòng
                    "N sản phẩm" — và đó cũng là điều kiện để bày được hãng chưa có dữ liệu SP. -->
               <div class="hm-spot-brand-cap">
-                ${logo
-                  ? `<img src="${A}${logo}" alt="${B.name}" class="lazy">`
-                  : `<p class="hm-brand-text text-primary-foreground">${B.name}</p>`}
+                <!-- LUÔN VẼ TÊN HÃNG BẰNG CHỮ (15/09/2026, lệnh user: k dùng png nữa,
+                     dùng font ghi chữ như mục cate ở trên của trang chủ). Nhánh img đã gỡ
+                     cùng bảng HM_SPOT_BRAND_LOGO, nên ô Versace — hãng DUY NHẤT còn file
+                     logo trong kho — nay cũng đọc ra cùng một hệ chữ với 2 ô kia.
+                     Mặt chữ và cỡ do rule .hm-brand-text lo: Libre Bodoni chữ thường, đúng
+                     bậc nhãn ô danh mục của từng khổ. Lý lẽ đầy đủ ghi ở rule đó. -->
+                <p class="hm-brand-text text-primary-foreground">${B.name}</p>
               </div>
             </a>`;
   }).filter(Boolean);
@@ -8472,9 +8598,9 @@ function hmMaison() {
             <div class="hm-spot-copy">
               <div class="flex flex-col gap-2">
                 <p class="t-single text-primary-foreground">${HM_SPOT_EYEBROW}</p>
-                ${B.logo
-                  ? `<img src="${A}${B.logo}" alt="${B.name}" class="h-7 w-[149px] object-contain object-left lazy">`
-                  : `<p class="hm-brand-text text-primary-foreground">${B.name}</p>`}
+                <!-- Tên hãng LUÔN bằng chữ từ 15/09/2026 (nhánh img h-7 w-[149px] đã gỡ) —
+                     xem ghi chú ở ô thương hiệu nhỏ, hmSpotBrands. -->
+                <p class="hm-brand-text text-primary-foreground">${B.name}</p>
               </div>
               <!-- DONG NAY LA INTER, khong phai Libre (08/09/2026, lenh user: *"subtitle cua
                    brand highlight Ferragamo o ban desktop cho chu inter thoi, hien tai dang
@@ -8972,15 +9098,18 @@ function hmSignup() {
             </div>
             <div class="flex flex-col gap-2">
               <div class="flex gap-2">
-                <input type="email" inputmode="email" autocomplete="email" placeholder="Nhập email"
-                       class="t-lead flex-1 h-12 px-3 rounded-xs border border-border bg-background text-foreground placeholder:text-muted-foreground">
+                <div class="field-float flex-1">
+                  <input id="hmNlEmail" type="email" inputmode="email" autocomplete="email" placeholder=" "
+                         class="t-lead border rounded-xs bg-background px-2 text-foreground outline-none focus:border-primary transition-colors">
+                  <label for="hmNlEmail" class="text-muted-foreground">Nhập email</label>
+                </div>
                 <!-- NUT HUG (10/09/2026, lenh user: *"button dang ky cho hug lai nam chung
                      hang voi field nhap"*), va DEM 20 lay tu Figma 299:28864: instance
                      action o do do duoc 98x48 voi dem ngang 20 — px-8 (32) cua luot truoc
                      cho 122, lech 24 so voi ban ve. px-5 cho dung 98.
                      shrink-0 giu nguyen de nut khong bi bop khi o email doi be rong. -->
                 <button data-toast="Đăng ký nhận tin" class="t-lead h-12 px-5 w-fit shrink-0 rounded-xs bg-primary text-primary-foreground btn-p press">Đăng ký</button>
-              </div>
+                </div>
               <p class="hm-legal t-single text-muted-foreground">Bằng việc đăng ký, bạn đồng ý với Chính sách bảo mật của DAFC.</p>
             </div>
           </div>
@@ -9029,7 +9158,7 @@ function screenHOME() {
 
       ${news.length ? hmSec(HM_NEW_LINE,
         hmLink('Xem tất cả', dkCatAttrs('Sản phẩm mới', [hmFashionDept()])),
-        hmRail(news),
+        hmRail(news, { noPrice: true }),
         'h1', 'Hàng mới về') : ''}
 
       <!-- KHỐI DANH MỤC QUAY LẠI ĐI QUA hmSec (09/09/2026, lệnh user cho tiêu đề
@@ -9095,9 +9224,10 @@ function screenHOME() {
 /* 2 nut lat TRANG cua dai Instagram (07/09/2026, lenh user). Khong dung wireRail():
    cai do lat theo `scrollLeft` cua mot hop cuon, con day het cuon roi — lat bang
    `transform` giong #promoSlider.
-   MOT TRANG = `100% + 2px`. `100%` cua translateX tinh theo BE RONG CHINH TRACK, ma track
-   la khoi block nen rong dung bang khung (6 o cua trang sau tran ra ngoai va bi
-   `overflow: hidden` cat) -> cong dung mot khe 2px thi o dau trang sau dung khit mep trai.
+   MOT TRANG = `100%`. `100%` cua translateX tinh theo BE RONG CHINH TRACK, ma track la
+   khoi block nen rong dung bang khung (6 o cua trang sau tran ra ngoai va bi
+   `overflow: hidden` cat). Truoc 15/09/2026 con phai cong bu mot khe 2px; nay khe ve 0
+   (lenh user: cac hinh sat nhau) nen buoc lat la so tron.
    VONG LAI o hai dau: bam trai o trang dau thi ve trang cuoi. Nho vay CA HAI nut luc nao
    cung co viec — dung luat "khong bay nut khong co viec" cua du an, ma van hien du 2 nut
    nhu lenh yeu cau. Con neu kho anh chi du 1 trang thi an ca hai. */
@@ -9111,7 +9241,7 @@ function wireInsta(root) {
   const pages = Math.max(1, Math.ceil(track.children.length / HM_INSTA.per));
   if (pages < 2) { prev.hidden = true; next.hidden = true; return; }
   let page = 0;
-  const paint = () => { track.style.transform = 'translateX(calc(' + (-page) + ' * (100% + 2px)))'; };
+  const paint = () => { track.style.transform = 'translateX(' + (-page * 100) + '%)'; };
   const step = d => { page = (page + d + pages) % pages; paint(); };
   prev.addEventListener('click', () => step(-1));
   next.addEventListener('click', () => step(1));
@@ -9356,16 +9486,19 @@ const accRow = (label, value) => `
    (lề màn checkout) nên nhét vào cột nội dung Tài khoản là lề chồng lề, và `field()`
    còn ghi thẳng vào state checkout qua `data-ckf`. SỐ ĐO thì giữ nguyên component:
    cao 40 · đệm 8 · viền 1px · r2 · nhãn 12/18 Medium · khe nhãn→ô 8. */
+/* ĐỔI SANG FIELD NỔI (15/09/2026) — xem khối CSS `.field-float`. Nhãn CŨ đứng
+   TĨNH phía trên (`<label>` riêng dòng) nay dời vào TRONG ô, làm luôn việc của
+   placeholder; `for`/`id` giữ nguyên nên bấm nhãn vẫn nhảy vào ô. */
 const accField = (key, label, val, ph, opts = {}) => {
   const { type = '', mode = '', auto = '', hint = '' } = opts;
   const id = 'acc-' + key;
   const pass = type === 'password';
   return `
     <div class="pb-4 flex flex-col gap-2">
-      <label for="${id}" class="t-multiline font-medium text-foreground">${label}</label>
-      <div class="relative flex flex-col">
-        <input id="${id}" data-af="${key}" value="${val}" placeholder="${ph}"${type ? ` type="${type}"` : ''}${mode ? ` inputmode="${mode}"` : ''}${auto ? ` autocomplete="${auto}"` : ''}
-               class="t-multiline h-10 bg-background border border-border rounded-xs px-2 ${pass ? 'pr-9 ' : ''}text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+      <div class="field-float">
+        <input id="${id}" data-af="${key}" value="${val}" placeholder=" "${type ? ` type="${type}"` : ''}${mode ? ` inputmode="${mode}"` : ''}${auto ? ` autocomplete="${auto}"` : ''}
+               class="t-multiline bg-background border border-border rounded-xs px-2 ${pass ? 'pr-9 ' : ''}text-foreground outline-none focus:border-primary transition-colors">
+        <label for="${id}" class="text-muted-foreground">${label}</label>
         ${pass ? eyeBtn() : ''}
       </div>
       ${hint ? `<p class="t-single text-muted-foreground">${hint}</p>` : ''}
@@ -9379,14 +9512,15 @@ const accField = (key, label, val, ph, opts = {}) => {
    của checkout — để nguyên tên là ô giới tính xổ ra danh sách phường.
    `data-pick-dd` + `data-pick-caret` là hook của dropdown desktop; bản mobile mở bottom
    sheet nên không đọc tới, giữ lại để MỘT chuỗi chạy được cả 2 file. */
+/* DOI SANG FIELD NOI (15/09/2026) -- xem khoi CSS .field-float. */
 const accPick = (key, label, val, ph) => `
-    <div class="pb-4 flex flex-col gap-2">
-      <label for="ap-${key}" class="t-multiline font-medium text-foreground">${label}</label>
-      <div class="relative" data-pick-dd>
-        <button type="button" id="ap-${key}" data-apick="${key}" aria-haspopup="listbox" aria-expanded="false"
-                class="t-multiline w-full h-10 bg-background border border-border rounded-xs pl-2 pr-9 text-left flex items-center btn-o press transition-colors focus:border-primary">
-          <span class="pick-label truncate ${val ? 'text-foreground' : 'text-muted-foreground'}">${val || ph}</span>
+    <div class="pb-4">
+      <div class="field-float is-btn${val ? ' is-filled' : ''}" data-pick-dd>
+        <button type="button" id="ap-${key}" data-apick="${key}" aria-haspopup="listbox" aria-expanded="false" aria-label="${ph}"
+                class="t-multiline bg-background border border-border rounded-xs pl-2 pr-9 text-left flex items-center btn-o press transition-colors focus:border-primary">
+          <span class="pick-label truncate text-foreground">${val || ''}</span>
         </button>
+        <label for="ap-${key}" class="text-muted-foreground">${label}</label>
         <span data-pick-caret class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200">${I.chevD('var(--general-primary)')}</span>
       </div>
     </div>`;
@@ -10576,10 +10710,12 @@ function cartPbhTotal() { return cartPbh.reduce((s, p) => s + p.amount, 0); }
 function ckCodeRow() {
   return `
     <div class="flex flex-col gap-2 py-3">
-      <p class="t-single font-medium text-foreground">Mã ưu đãi</p>
       <div class="flex gap-1">
-        <input id="ckCode" placeholder="Nhập mã ưu đãi" class="t-multiline flex-1 min-w-0 h-10 bg-background border border-border rounded-xs px-2 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-        <button id="ckApplyCode" disabled class="t-multiline h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
+        <div class="field-float flex-1 min-w-0">
+          <input id="ckCode" placeholder=" " class="t-multiline bg-background border border-border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+          <label for="ckCode" class="text-muted-foreground">Mã ưu đãi</label>
+        </div>
+        <button id="ckApplyCode" disabled class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
       </div>
       <div id="ckCodeList" class="${cartVouchers.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
     </div>`;
@@ -10844,15 +10980,15 @@ function screenCART() {
                    panel). Hàng chip dưới ô = chỗ GỠ mã, xem renderVoucherUI.
                    Comment này nằm trong template literal: KHÔNG được dùng dấu backtick. -->
               <div class="flex flex-col gap-2">
-                <label for="cartCode" class="t-single text-foreground">Ưu đãi &amp; khuyến mãi</label>
                 <!-- Bọc CỘT quanh ô nhập: setFieldErr chèn dòng lỗi vào afterend của ô,
                      không bọc thì dòng lỗi rơi vào giữa hàng flex, nằm cạnh nút. Lỗi ẩn
                      bằng display:none nên lúc không lỗi khối cao đúng như cũ. -->
                 <div class="flex gap-1 items-start">
-                  <div class="flex-1 min-w-0 flex flex-col">
-                    <input id="cartCode" placeholder="Nhập mã ưu đãi" class="t-multiline w-full h-10 bg-input border border-border rounded-xs px-2 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+                  <div class="field-float flex-1 min-w-0">
+                    <input id="cartCode" placeholder=" " class="t-multiline bg-input border border-border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+                    <label for="cartCode" class="text-muted-foreground">Ưu đãi &amp; khuyến mãi</label>
                   </div>
-                  <button id="applyCode" disabled class="t-multiline h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
+                  <button id="applyCode" disabled class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
                 </div>
                 <div id="cartCodeList" class="${cartVouchers.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
               </div>
@@ -10893,8 +11029,11 @@ function screenCART() {
                   <div class="flex flex-col gap-2 pt-2 pb-2">
                     <p class="t-single text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
                     <div class="flex gap-1">
-                      <input id="pbh" placeholder="DAFC Phiếu mua hàng" class="t-multiline flex-1 min-w-0 h-10 bg-input border border-border rounded-xs px-2 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
-                      <button id="applyPbh" disabled class="t-multiline h-10 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
+                      <div class="field-float flex-1 min-w-0">
+                        <input id="pbh" placeholder=" " class="t-multiline bg-input border border-border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+                        <label for="pbh" class="text-muted-foreground">DAFC Phiếu mua hàng</label>
+                      </div>
+                      <button id="applyPbh" disabled class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
                     </div>
                     <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
                   </div>
@@ -10990,18 +11129,22 @@ const eyeBtn = () => `
    ⚠ ĐỪNG khai thêm hàm cùng tên: mình đã lỡ viết một bản trùng tên ở đây
    (19/08/2026) và nó bị bản gốc phía dưới đè, gây `TypeError` khó lần. */
 
+/* ĐỔI SANG FIELD NỔI (15/09/2026). Hàng nhãn cũ (`labelCls` cho phép đậm/nhạt
+   khác nhau tuỳ màn) MẤT chỗ đứng riêng — `extra` (vd "Quên mật khẩu?") dời xuống
+   một hàng canh phải NGAY DƯỚI ô, vì nó là hành động phụ chứ không phải một phần
+   của nhãn. `labelCls` vẫn nhận, đặt lên chính <label> — nó chỉ đổi màu MỘT nhãn
+   đứng riêng, không đụng gì tới trạng thái nổi/không nổi (luôn do :focus /
+   :placeholder-shown quyết, không do labelCls). */
 const afield = (label, attrs, ph, extra = '', labelCls = 'text-muted-foreground') => {
   const isPass = /type="password"/.test(attrs);
   return `
-  <div class="flex flex-col gap-2">
-    <div class="flex items-center justify-between">
-      <span class="t-multiline font-medium ${labelCls}">${label}</span>
-      ${extra}
-    </div>
-    <div class="relative flex flex-col">
-      <input ${attrs} placeholder="${ph}" class="t-multiline h-9 border border-border rounded-xs px-2 ${isPass ? 'pr-9' : ''} text-foreground outline-none focus:border-primary transition-colors">
+  <div class="flex flex-col gap-1">
+    <div class="field-float">
+      <input ${attrs} placeholder=" " class="t-multiline border border-border rounded-xs px-2 ${isPass ? 'pr-9' : ''} text-foreground outline-none focus:border-primary transition-colors">
+      <label class="${labelCls}">${label}</label>
       ${isPass ? eyeBtn() : ''}
     </div>
+    ${extra ? `<div class="flex justify-end">${extra}</div>` : ''}
   </div>`;
 };
 
@@ -11383,14 +11526,17 @@ let ckOrderEmail = '';   // email nhận xác nhận — chốt lúc đặt, vì
    id sinh bằng bộ đếm chứ không slug hoá nhãn: cùng một nhãn xuất hiện ở
    nhiều khối (pickup và VAT) nên slug sẽ đụng id. */
 let _fldId = 0;
+/* DOI SANG FIELD NOI (15/09/2026) -- xem khoi CSS .field-float. */
 const field = (label, ph, type, opts = {}) => {
   const id = 'fld' + (++_fldId);
   const { val = '', key = '', auto = '' } = opts;
   return `
-    <div class="px-4 py-2 flex flex-col gap-2">
-      <label for="${id}" class="t-multiline font-medium text-foreground">${label}</label>
-      <input id="${id}"${type ? ` type="${type}" inputmode="${type}"` : ''}${auto ? ` autocomplete="${auto}"` : ''}${key ? ` data-ckf="${key}"` : ''} value="${val}" placeholder="${ph}"
-             class="t-multiline h-10 bg-background border border-border rounded-xs px-3 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+    <div class="px-4 py-2">
+      <div class="field-float">
+        <input id="${id}"${type ? ` type="${type}" inputmode="${type}"` : ''}${auto ? ` autocomplete="${auto}"` : ''}${key ? ` data-ckf="${key}"` : ''} value="${val}" placeholder=" "
+               class="t-multiline bg-background border border-border rounded-xs px-3 text-foreground outline-none focus:border-primary transition-colors">
+        <label for="${id}" class="text-muted-foreground">${label}</label>
+      </div>
     </div>`;
 };
 
@@ -11401,13 +11547,14 @@ const field = (label, ph, type, opts = {}) => {
    thay vì nằm nửa cột grid-cols-2.
    label[for] + id trên button: bấm nhãn cũng mở được; aria-haspopup="listbox"
    + aria-expanded do __openPickDD cập nhật. */
+/* DOI SANG FIELD NOI (15/09/2026) -- xem khoi CSS .field-float. */
 const pickField = (label, ph, key, val) => `
-    <div class="px-4 py-2 flex flex-col gap-2">
-      <label for="pk-${key}" class="t-multiline font-medium text-foreground">${label}</label>
-      <div class="relative" data-pick-dd>
-        <button type="button" id="pk-${key}" data-pick="${key}" aria-haspopup="listbox" aria-expanded="false" class="t-multiline w-full h-10 bg-background border border-border rounded-xs pl-3 pr-9 text-left flex items-center btn-o press transition-colors focus:border-primary">
-          <span class="pick-label truncate ${val ? 'text-foreground' : 'text-muted-foreground'}">${val || ph}</span>
+    <div class="px-4 py-2">
+      <div class="field-float is-btn${val ? ' is-filled' : ''}" data-pick-dd>
+        <button type="button" id="pk-${key}" data-pick="${key}" aria-haspopup="listbox" aria-expanded="false" aria-label="${ph}" class="t-multiline bg-background border border-border rounded-xs pl-3 pr-9 text-left flex items-center btn-o press transition-colors focus:border-primary">
+          <span class="pick-label truncate text-foreground">${val || ''}</span>
         </button>
+        <label for="pk-${key}" class="text-muted-foreground">${label}</label>
         <span data-pick-caret class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200">${I.chevD('var(--general-primary)')}</span>
       </div>
     </div>`;
@@ -12366,6 +12513,17 @@ function updatePlpCount(root, n) {
     localizeNew(el);
   });
 }
+/* Cờ ĐIỀU HƯỚNG BÀN PHÍM cho ring của ô nhập (16/09/2026, lệnh user: "ring chỉ hiện
+   khi dùng Tab, bấm thường chỉ đổi màu viền") — xem `html.kbd-nav` ở khối CSS
+   `.field-float`. <button> đã tự đúng nhờ `:focus-visible` của trình duyệt (loại được
+   click chuột); <input>/<textarea> thì trình duyệt KHÔNG loại, nên tự gắn cờ tay: gõ
+   Tab thì bật, bấm chuột thì tắt. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Tab') document.documentElement.classList.add('kbd-nav');
+});
+document.addEventListener('mousedown', () => {
+  document.documentElement.classList.remove('kbd-nav');
+});
 /* Listener UỶ QUYỀN: nút "Xóa tất cả bộ lọc" được vẽ lại liên tục ở nhiều đường
    (template màn, renderPlpGrid) nên bind theo id sau mỗi lần render là bỏ sót. */
 /* Cùng lý do uỷ quyền như nút dưới: `wire(root)` bind [data-nav] một lần lúc
@@ -12985,16 +13143,16 @@ function filterBody(beauty, gender, heel) {
            min-width nội tại (~178px), 2 ô cộng lại rộng hơn panel — mục Khoảng
            giá tràn ngang (lỗi (c) đã ghi trong FIGMA-FILTER.md, index dính rõ
            nhất ở sheet 375). -->
-      <div class="flex items-end gap-3">
-        <label class="flex-1 min-w-0 flex flex-col gap-1">
-          <span class="t-single text-muted-foreground">Từ</span>
-          <input data-price="min" inputmode="numeric" value="${plpPriceMin == null ? '' : plpPriceMin.toLocaleString('en-US')}" placeholder="0" class="t-multiline w-full min-w-0 h-9 bg-input border border-border rounded-xs px-2 outline-none focus:border-primary transition-colors">
-        </label>
-        <span class="w-2.5 h-px bg-border mb-4 shrink-0"></span>
-        <label class="flex-1 min-w-0 flex flex-col gap-1">
-          <span class="t-single text-muted-foreground">Đến</span>
-          <input data-price="max" inputmode="numeric" value="${plpPriceMax == null ? '' : plpPriceMax.toLocaleString('en-US')}" placeholder="50,000,000" class="t-multiline w-full min-w-0 h-9 bg-input border border-border rounded-xs px-2 outline-none focus:border-primary transition-colors">
-        </label>
+      <div class="flex items-center gap-3">
+        <div class="field-float flex-1 min-w-0">
+          <input id="plpPriceMin" data-price="min" inputmode="numeric" value="${plpPriceMin == null ? '' : plpPriceMin.toLocaleString('en-US')}" placeholder=" " class="t-multiline bg-input border border-border rounded-xs px-2 outline-none focus:border-primary transition-colors">
+          <label for="plpPriceMin" class="text-muted-foreground">Từ</label>
+        </div>
+        <span class="w-2.5 h-px bg-border shrink-0"></span>
+        <div class="field-float flex-1 min-w-0">
+          <input id="plpPriceMax" data-price="max" inputmode="numeric" value="${plpPriceMax == null ? '' : plpPriceMax.toLocaleString('en-US')}" placeholder=" " class="t-multiline bg-input border border-border rounded-xs px-2 outline-none focus:border-primary transition-colors">
+          <label for="plpPriceMax" class="text-muted-foreground">Đến</label>
+        </div>
       </div>
       <div class="flex flex-col gap-3">
         <div class="relative h-4 flex items-center">
@@ -14057,7 +14215,11 @@ function refreshActiveFilters(root) {
   if (old) old.remove();
   if (html && bar) bar.insertAdjacentHTML('afterend', html);
   const host = scope.querySelector('#plpActiveFilters');
-  if (host) { localizeNew(host); bindActiveFilterChips(scope); }
+  /* `dragScroll(host)` mỗi lượt là ĐÚNG, không phải gắn chồng: khối này vừa bị `old.remove()`
+     rồi chèn lại nên `host` là phần tử MỚI, chưa có listener nào. Ba listener window mà lượt
+     trước để lại trỏ vào phần tử đã rời DOM — chúng chỉ chạy khi có pointerdown trên chính
+     phần tử đó, tức không bao giờ; và `scrollCleanups` dọn sạch khi đổi màn. */
+  if (host) { localizeNew(host); bindActiveFilterChips(scope); dragScroll(host); }
 }
 /* ckStep = section đang mở · ckMaxStep = section XA NHẤT đã hoàn tất.
    Tách 2 biến để bấm "Thay đổi" ở bước 1 không kéo bước 2-3 về "chưa làm":
@@ -15353,11 +15515,16 @@ function wirePasswordToggles(root) {
 }
 
 /* Đổi nhãn hiển thị của ô chọn địa giới (rỗng -> về màu placeholder) */
+/* Doi nhan hien thi cua o chon dia gioi. TU 15/09/2026: gia tri hien trong nhan
+   NOI (field-float) chu khong con hien TRONG NUT, nen phai toggle them class
+   .is-filled tren khung cha .field-float — day la cho DUY NHAT setPickLabel goi
+   sau khi da render tu template (chon xong trong sheet/dropdown), nen day cung la
+   cho DUY NHAT phai lam viec nay ngoai template. */
 function setPickLabel(btn, value, placeholder) {
   const lbl = btn.querySelector('.pick-label');
-  lbl.textContent = value || placeholder;
-  lbl.classList.toggle('text-foreground', !!value);
-  lbl.classList.toggle('text-muted-foreground', !value);
+  lbl.textContent = value || '';
+  const wrap = btn.closest('.field-float');
+  if (wrap) wrap.classList.toggle('is-filled', !!value);
 }
 
 /* Ô tỉnh/thành và phường/xã: mở sheet chọn. Phường phụ thuộc tỉnh nên đổi
@@ -15380,7 +15547,14 @@ function setFieldErr(inp, msg) {
   inp.setAttribute('aria-invalid', 'true');
   const eid = 'err-' + inp.id;
   inp.setAttribute('aria-describedby', eid);
-  inp.insertAdjacentHTML('afterend', `<p id="${eid}" class="t-single mt-1 text-destructive">${msg}</p>`);
+  /* ĐỔI SANG FIELD NỔI (15/09/2026) -- <label> phải là ANH EM KỀ NGAY của
+     <input> (CSS +); chèn <p> lỗi thẳng afterend của input là chen vào GIỮA input
+     và label, gãy :not(:placeholder-shown) + label nên nhãn rơi về giữa ô, đè
+     lên chữ đã gõ. Neo vào .field-float (trùm cả input lẫn label) thay vì bản
+     thân input: closest() trả về CHÍNH nó khi input không nằm trong field-float
+     (case ô CHọN ở dưới truyền thẳng div làm inp), nên không đổi hành vi cũ. */
+  const anchor = inp.closest('.field-float') || inp;
+  anchor.insertAdjacentHTML('afterend', `<p id="${eid}" class="t-single mt-1 text-destructive">${msg}</p>`);
   const p = document.getElementById(eid);
   if (p) localizeNew(p);
 }
@@ -18542,16 +18716,16 @@ document.body.insertAdjacentHTML('beforeend', `
         <button id="nsClose" class="w-8 h-8 -mr-1 shrink-0 flex items-center justify-center press">${I.close}</button>
       </div>
       <div class="px-4 pt-2 pb-4 flex flex-col gap-4">
-        <label class="flex flex-col gap-2">
-          <span class="t-single text-muted-foreground">Email</span>
-          <input id="nsEmail" type="email" inputmode="email" placeholder="ban@email.com"
-                 class="t-multiline h-11 bg-input border border-border rounded-sm px-3 text-foreground outline-none focus:border-primary transition-colors">
-        </label>
-        <label class="flex flex-col gap-2">
-          <span class="t-single text-muted-foreground">Số điện thoại</span>
-          <input id="nsPhone" type="tel" inputmode="tel" placeholder="09xx xxx xxx"
-                 class="t-multiline h-11 bg-input border border-border rounded-sm px-3 text-foreground outline-none focus:border-primary transition-colors">
-        </label>
+        <div class="field-float">
+          <input id="nsEmail" type="email" inputmode="email" placeholder=" "
+                 class="t-multiline bg-input border border-border rounded-sm px-3 text-foreground outline-none focus:border-primary transition-colors">
+          <label for="nsEmail" class="text-muted-foreground">Email</label>
+        </div>
+        <div class="field-float">
+          <input id="nsPhone" type="tel" inputmode="tel" placeholder=" "
+                 class="t-multiline bg-input border border-border rounded-sm px-3 text-foreground outline-none focus:border-primary transition-colors">
+          <label for="nsPhone" class="text-muted-foreground">Số điện thoại</label>
+        </div>
         <p id="nsErr" class="t-single text-destructive hidden">Vui lòng nhập email hoặc số điện thoại.</p>
         <button id="nsSubmit" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press">Đăng ký nhận thông báo</button>
         <p class="t-multiline text-muted-foreground text-center">Thông tin chỉ dùng để báo hàng về, không dùng cho mục đích khác.</p>
@@ -18679,8 +18853,13 @@ function quickAddBody(p, idx, sel = 0) {
         <p class="pc-brand text-[18px] font-medium leading-7 text-foreground">${p.brand}</p>
         <!-- Hàng tên: nay CHỈ còn tên (link "Xem chi tiết" đã dời xuống dưới CTA
              theo tham chiếu). Cho xuống dòng thay vì truncate — cột phải rộng
-             rãi hơn drawer 560 cũ nên không cần cắt chữ nữa. -->
-        <p class="t-multiline w-full text-foreground-alt">${p.name}</p>
+             rãi hơn drawer 560 cũ nên không cần cắt chữ nữa.
+             Badge Pre-order ĐỨNG TRƯỚC TÊN (16/09/2026, lệnh user) — khớp đúng khuôn
+             PDP/thẻ PLP (.badge-inline). -->
+        <div class="w-full flex items-center gap-1.5 min-w-0">
+          ${p.preorder ? `<span class="t-single badge-inline px-1 font-medium text-foreground shrink-0">Đặt trước</span>` : ''}
+          <p class="t-multiline min-w-0 text-foreground-alt">${p.name}</p>
+        </div>
       </div>
       <div class="flex gap-1.5 items-center">
         <p class="t-single font-medium ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
@@ -18861,16 +19040,16 @@ document.body.insertAdjacentHTML('beforeend', `
               <p class="t-multiline text-secondary-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-medium text-foreground">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng</p>
             </div>
             <div class="flex flex-col gap-4">
-              <div class="flex flex-col gap-1.5">
-                <label for="lpPhone" class="t-multiline font-medium text-foreground">Số điện thoại*</label>
-                <input id="lpPhone" type="tel" inputmode="tel" placeholder="Nhập số điện thoại" autocomplete="tel"
-                       class="t-single w-full h-11 bg-background border border-border rounded-xs px-3 font-light text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+              <div class="field-float">
+                <input id="lpPhone" type="tel" inputmode="tel" placeholder=" " autocomplete="tel"
+                       class="t-single bg-background border border-border rounded-xs px-3 font-light text-foreground outline-none focus:border-primary transition-colors">
+                <label for="lpPhone" class="text-muted-foreground">Số điện thoại*</label>
               </div>
               <div class="flex flex-col gap-1.5">
-                <label for="lpPass" class="t-multiline font-medium text-foreground">Mật khẩu*</label>
-                <div class="relative flex flex-col">
-                  <input id="lpPass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password"
-                         class="t-single w-full h-11 bg-background border border-border rounded-xs px-3 pr-10 font-light text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+                <div class="field-float">
+                  <input id="lpPass" type="password" placeholder=" " autocomplete="current-password"
+                         class="t-single bg-background border border-border rounded-xs px-3 pr-10 font-light text-foreground outline-none focus:border-primary transition-colors">
+                  <label for="lpPass" class="text-muted-foreground">Mật khẩu*</label>
                   ${eyeBtn()}
                 </div>
                 <button id="lpForgot" class="t-single w-full text-right underline text-muted-foreground hover:text-foreground transition-colors press">Quên mật khẩu?</button>
