@@ -1701,7 +1701,7 @@ window.RESP = (function () {
   .field-float { position: relative; display: flex; flex-direction: column; }
   .field-float > input, .field-float > textarea {
     width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px;
-    border-color: transparent;
+    border-color: var(--general-border);
   }
   .field-float > textarea { height: auto; min-height: 72px; padding-top: 22px; resize: none; }
   .field-float > label {
@@ -1710,16 +1710,19 @@ window.RESP = (function () {
     pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     transition: top .15s ease, transform .15s ease, font-size .15s ease;
   }
-  /* 16/09/2026 — user dựng lại bộ field trong Figma, tự đóng góp 2 luật:
-     (1) viền TRONG SUỐT lúc nghỉ (kể cả đã có chữ) — chỉ hiện viền khi FOCUS
-     (primary) hoặc LỖI (destructive, xem .fld-err); nghỉ để trống hẳn cho nhẹ,
-     không mượn #dfdfdf như trước. (2) nhãn nổi 11px là size TỰ CHẾ (phạm luật
-     "cấm 11/13/15/22" của thang chữ) — đổi đúng về .t-micro 10/14 có sẵn. */
+  /* MÀU VIỀN THEO 3 TRẠNG THÁI — chốt theo component "field" trong Figma (user
+     dựng, đọc lại 16/09/2026): nghỉ và đã có chữ = xám --general-border #dfdfdf ·
+     FOCUS = đen --general-primary #0a0a0a (utility focus:border-primary trên từng ô) ·
+     LỖI = đỏ --general-destructive #d62845 (.fld-err, có !important).
+     ⚠ ĐỮNG lặp lại sai lầm 16/09: có lượt tôi để nghỉ = transparent (tưởng user muốn
+     ô không viền) — SAI, user báo ngay vì lệch hẳn component Figma. Ô LUÔN có viền
+     1px; chỉ ĐỔI MÀU theo trạng thái.
+     Nhãn nổi 10/14 = .t-micro có sẵn (11px là size TỰ CHẾ, phạm luật thang chữ). */
   .field-float > input:focus + label, .field-float > input:not(:placeholder-shown) + label,
   .field-float > textarea:focus + label, .field-float > textarea:not(:placeholder-shown) + label {
     top: 8px; transform: translateY(0); font-size: 10px; line-height: 14px;
   }
-  .field-float.is-btn > button { width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px; border-color: transparent; }
+  .field-float.is-btn > button { width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px; border-color: var(--general-border); }
   .field-float.is-btn > label { top: 50%; transform: translateY(-50%); }
   .field-float.is-btn.is-filled > label, .field-float.is-btn:focus-within > label {
     top: 8px; transform: translateY(0); font-size: 10px; line-height: 14px;
@@ -2788,7 +2791,12 @@ window.RESP = (function () {
     --general-primary: #0a0a0a;
     --general-primary-foreground: #ffffff;
     --general-primary-hover: #333333;
-    --general-primary-active: #0a0a0a;
+    /* 16/09/2026 — TRƯỚC #0a0a0a, nay #171717. Nền nghỉ của .btn-p CŨNG là #0a0a0a
+       nên nhấn xuống không đổi gì: phản hồi duy nhất là lúc RỜI hover (#333333 về
+       đen). Trên màn cảm ứng không có hover, tức nhấn hoàn toàn không phản hồi.
+       #171717 lấy từ bảng gốc trong tokens.css, đủ khác để thấy mà không nhảy tông.
+       (Phản hồi nhấn chỉ bằng màu — xem luật cấm hiệu ứng nhún khi nhấn.) */
+    --general-primary-active: #171717;
     --general-secondary-foreground: #0a0a0a;
     --unofficial-foreground-alt: #0a0a0a;
     --unofficial-foreground-alt-2: #333333;
@@ -6135,7 +6143,7 @@ const PROMO_MESSAGES = [
 ];
 
 const FLOW = ['home','plp','search','pdp','pdp2','pdp3','pdp4','pdp5','pdp6','cart','login','account','order','checkout','done','privacy','terms','returns'];
-const LABELS = { home:'Trang chủ', plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login:'Đăng nhập', pdp2:'Sản phẩm', pdp3:'Sản phẩm', pdp4:'Sản phẩm', pdp5:'Sản phẩm', pdp6:'Sản phẩm', account:'Tài khoản', order:'Chi tiết đơn hàng', checkout:'Thanh toán', done:'Hoàn tất', privacy:'Chính sách bảo mật', terms:'Điều khoản dịch vụ', returns:'Chính sách đổi trả' };
+const LABELS = { home:'Trang chủ', plp:'Danh sách', pdp:'Sản phẩm', cart:'Giỏ hàng', login:'Đăng nhập', pdp2:'Sản phẩm', pdp3:'Sản phẩm', pdp4:'Sản phẩm', pdp5:'Sản phẩm', pdp6:'Sản phẩm', account:'Tài khoản', order:'Chi tiết đơn hàng', checkout:'Thanh toán', done:'Hoàn tất', privacy:'Chính sách bảo mật', terms:'Điều khoản dịch vụ', returns:'Chính sách đổi trả', track:'Theo dõi đơn hàng' };
 
 /* ════════════════════════════════════════════════════════════════
    ICONS
@@ -6510,8 +6518,12 @@ function navBar({ logoOnly = false, plp = false } = {}) {
          : (DK_DEPTS.includes(curCrumbs[0]) ? (plpMode.title || '') : curCrumbs[0]))
       : (plpMode.title || '');
 
+  /* px-3 (12), KHÔNG px-4 — 16/09/2026, gộp đệm của vai "Ghost Muted" về một số.
+     Ba chỗ dùng vai này (hàng ngành ở đây · quick filter ở thanh lọc PLP · nút đổi
+     ngôn ngữ) trước đó lệch nhau 16/12/12. Lấy 12 vì đó là đệm bậc `small` của bộ
+     Button, và hai nút đứng cùng thanh lọc (Bộ lọc, Sắp xếp) đều đang 12. */
   const dept = DK_DEPTS.map(d => `
-    <button ${dkCatAttrs(d, [d])} data-dkdept="${d}"${d === dkDept ? ' aria-current="true"' : ''} class="t-single dk-dept ghost-hover h-9 px-4 rounded-xs flex items-center transition-colors press">${d}</button>`).join('');
+    <button ${dkCatAttrs(d, [d])} data-dkdept="${d}"${d === dkDept ? ' aria-current="true"' : ''} class="t-single dk-dept ghost-hover h-9 px-3 rounded-xs flex items-center transition-colors press">${d}</button>`).join('');
 
   return `
   <div class="navbar sticky top-[-32px] z-50">
@@ -6821,7 +6833,12 @@ function plpProducts() {
 }
 /* ── Breadcrumb desktop — component Breadcrumb (135:6239) ──
    Ngăn cách bằng chấm tròn 16×16 (fi-ts-single dot), mỗi đoạn 1 span để i18n
-   dịch được. Hàng cao 40 (`h-10`, đổi 17/08/2026 theo yêu cầu user).
+   dịch được. Cao 48 = đệm dọc 16 + chữ 16 + 16 (16/09/2026, user tự chỉnh trong
+   Figma khung `PLP / desktop · danh mục` rồi bảo áp ngược về demo). Trước đó là
+   `h-10` cao cứng 40 không đệm dọc — đổi sang ĐỆM để cả 3 hàng của cụm đầu trang
+   (breadcrumb · tên danh mục · thanh lọc) cùng một nhịp 16, không còn trộn
+   chiều-cao-cứng với đệm.
+   HÀM DÙNG CHUNG PLP + PDP — sửa ở đây là đổi cả hai, đúng ý đồ (một chỗ, nhiều nơi).
 
    ĐỒNG BỘ NGƯỢC TỪ FIGMA 03/09/2026 — component `Breadcrumb` nay đã được ráp vào
    CẢ PLP lẫn PDP ở khổ 1440, cùng một bộ số: chữ **12/16** · các đoạn TRƯỚC để
@@ -6830,9 +6847,18 @@ function plpProducts() {
    `text-secondary-foreground` #333 quay lại mực mờ — đổi được vì nay đã có đoạn
    cuối màu đậm gánh phần "đang ở đâu", không còn phải nâng tông cả hàng. ── */
 const IcoCrumbDot = `<svg width="16" height="16" viewBox="0 0 16 16" class="shrink-0" aria-hidden="true"><circle cx="8" cy="8" r="1.5" fill="currentColor"/></svg>`;
+/* ĐỆM DỌC: py-4 Ở MỌI NƠI, kể cả khi có hàng tiêu đề ngay dưới (17/09/2026).
+   Sáng 17/09 tôi từng cho hàng này pb-2 khi nằm trong cụm page-head — user chỉnh
+   component rồi ĐẢO LẠI về 16/24/16/24, nên gỡ hẳn nhánh đó đi. Nhịp dọc mà
+   component page-head desktop (445:31169, cao 104) đang khai:
+     đường dẫn  pad 16/24/16/24  cao 48
+     tiêu đề    pad  8/24/16/24  cao 56
+   tức khe giữa chữ-đường-dẫn và chữ-tiêu-đề là 16 + 8 = 24, không phải 16.
+   Cùng con số 24 đó lặp lại giữa tiêu đề và thanh lọc (thanh lọc cũng pt-2).
+   Bản mobile: cả hai hàng 16/16/16/16, không đổi. */
 function dkCrumbs(parts) {
   return `
-  <div class="t-single flex gap-1 items-center px-6 h-10 text-muted-foreground">
+  <div class="t-single flex gap-1 items-center px-6 py-4 text-muted-foreground">
     ${parts.map((t, i) => `${i ? IcoCrumbDot : ''}${
       /* Đoạn 'Trang chủ' là NÚT từ 04/09/2026: trước đây nó là <span> chết ở cả PLP
          lẫn PDP vì trang chủ chưa tồn tại. Chỉ đổi đoạn ĐẦU và chỉ khi nhãn đúng là
@@ -6855,17 +6881,29 @@ function dkFilterBar(count) {
   const sortLabel  = plpSort === 'relevance' ? 'Sắp xếp' : (SORT_OPTIONS.find(([id]) => id === plpSort) || [, 'Sắp xếp'])[1];
   return `
   <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[112px] z-40 backdrop-blur-[7.5px]">
-    <div class="max-w-[1440px] mx-auto py-4 pl-6 pr-4 flex items-center justify-between gap-4">
+    <!-- ĐỆM TRÊN 8, DƯỚI 16 — theo component filter-bar biến thể platform=desktop
+         (447:31801, cao 61 = 60 + gạch chân 1px), user cập nhật 17/09/2026.
+         Hàng trong thanh khai pad 8/16/16/24 gap 16, đúng bằng pt-2 pb-4 pl-6 pr-4
+         gap-4 ở đây. Trước lượt này là py-4 nên thanh cao 68 thay vì 60.
+         8 phía trên ăn khớp với 16 phía dưới của hàng tiêu đề PLP: cộng lại 24,
+         cùng một khe với đường dẫn sang tiêu đề. Ba hàng của đầu trang PLP vì thế
+         cùng một nhịp. -->
+    <div class="max-w-[1440px] mx-auto pt-2 pb-4 pl-6 pr-4 flex items-center justify-between gap-4">
       <div class="flex items-center gap-2 min-w-0">
-        <!-- Size REGULAR (h-9 px-4, chữ 14/20 Medium) — cùng bậc với nút subheader
-             Button/Ghost Muted/Regular của nav và với nút Sắp xếp / density ở
-             đầu bên phải thanh này. Trước 12/08/2026 dùng Large (h-12 px-6, chữ
-             16) nên thanh filter trông nặng hơn cả nav.
+        <!-- Bậc ghost/small của bộ Button: h-9 (36), đệm ngang 12, chữ 12/16 — ĐÚNG
+             bằng nút Sắp xếp ở đầu bên kia thanh này, và bằng component
+             action/variant=ghost/size=small trong thư viện.
+             16/09/2026 — user: "cái quick filter các lựa chọn của nó cũng sẽ là
+             button ghost chứ không phải mấy cái text rời". Chip VỐN ĐÃ là button
+             ghost trong code; cái sai là số đo tự trôi: đệm 16 và chữ 12/18, lệch
+             cả với nút anh em lẫn với thư viện. Kéo về đúng một bậc.
+             Chú thích cũ ở đây ghi "px-4, chữ 14/20 Medium" và bảo là cùng bậc với
+             nút Sắp xếp — CẢ BA VẾ đều đã sai so với trang chạy, nên viết lại.
              (Không dùng dấu backtick trong comment này — cả khối nằm trong
              template literal của filterBar(), backtick sẽ cắt đứt chuỗi.) -->
         <button data-sheet="filter" class="t-multiline h-9 px-3 shrink-0 rounded-xs border border-primary bg-background flex items-center gap-2 text-foreground btn-o press">${I.sliders} <span id="filterBtnLabel">Bộ lọc${plpFilters.length ? ` (${plpFilters.length})` : ''}</span></button>
         <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
-          ${chips.map(c => `<button ${dkCatAttrs(c)} class="t-multiline h-9 px-4 shrink-0 rounded-xs flex items-center font-medium ghost-hover press ${c === activeChip ? 'text-foreground' : 'text-mid-alt'}">${c}</button>`).join('')}
+          ${chips.map(c => `<button ${dkCatAttrs(c)} class="t-single h-9 px-3 shrink-0 rounded-xs flex items-center font-medium ghost-hover press ${c === activeChip ? 'text-foreground' : 'text-mid-alt'}">${c}</button>`).join('')}
         </div>
       </div>
       <div class="flex items-center shrink-0">
@@ -6918,14 +6956,14 @@ function dkActiveFilters() {
        mỗi lượt đổi lọc — wire() chỉ chạy một lần khi vào màn nên không với tới. -->
   <div id="plpActiveFilters" class="max-w-[1440px] mx-auto px-6 py-4 flex items-center gap-2.5 flex-nowrap overflow-x-auto no-scrollbar drag-x">
     ${nhãn.map(f => `
-      <button class="t-multiline af-chip h-8 px-3 shrink-0 whitespace-nowrap rounded-xs bg-secondary flex items-center gap-2 font-medium text-secondary-foreground btn-s press [&_svg]:w-3 [&_svg]:h-3" data-af="${f}">
+      <button class="t-multiline af-chip h-9 px-3 shrink-0 whitespace-nowrap rounded-xs bg-secondary flex items-center gap-2 font-medium text-secondary-foreground btn-s press [&_svg]:w-4 [&_svg]:h-4" data-af="${f}">
         <span>${f}</span>${I.close}
       </button>`).join('')}
     ${giá ? `
-      <button class="t-multiline af-chip h-8 px-3 shrink-0 whitespace-nowrap rounded-xs bg-secondary flex items-center gap-2 font-medium text-secondary-foreground btn-s press [&_svg]:w-3 [&_svg]:h-3" data-afprice="1">
+      <button class="t-multiline af-chip h-9 px-3 shrink-0 whitespace-nowrap rounded-xs bg-secondary flex items-center gap-2 font-medium text-secondary-foreground btn-s press [&_svg]:w-4 [&_svg]:h-4" data-afprice="1">
         <span>${giá}</span>${I.close}
       </button>` : ''}
-    <button id="afClear" class="t-multiline h-8 px-3 shrink-0 whitespace-nowrap rounded-xs flex items-center font-medium text-mid-alt ghost-hover press"><span>Xóa tất cả</span></button>
+    <button id="afClear" class="t-single h-9 px-3 shrink-0 whitespace-nowrap rounded-xs flex items-center font-medium text-mid-alt ghost-hover press"><span>Xóa tất cả</span></button>
   </div>`;
 }
 
@@ -7005,7 +7043,7 @@ function screenPLPList() {
            (KHÔNG gõ backtick và KHÔNG gõ 2 dấu gạch liền trong comment này: cả
            khối nằm trong template literal, và 2 gạch liền cũng sai cú pháp comment
            HTML. Đã dính đúng lỗi này lúc viết.) -->
-      <div class="flex items-end justify-between gap-2 px-6 py-6">
+      <div class="flex items-end justify-between gap-2 px-6 pt-2 pb-4">
         <h1 class="t-display-title min-w-0 font-light text-foreground truncate">${m.title || ''}</h1>
         ${list.length ? `<p data-plp-count class="t-multiline shrink-0 text-muted-foreground">${sortedProducts().length} sản phẩm</p>` : ''}
       </div>
@@ -9497,7 +9535,7 @@ const accField = (key, label, val, ph, opts = {}) => {
     <div class="pb-4 flex flex-col gap-2">
       <div class="field-float">
         <input id="${id}" data-af="${key}" value="${val}" placeholder=" "${type ? ` type="${type}"` : ''}${mode ? ` inputmode="${mode}"` : ''}${auto ? ` autocomplete="${auto}"` : ''}
-               class="t-multiline bg-background border border-border rounded-xs px-2 ${pass ? 'pr-9 ' : ''}text-foreground outline-none focus:border-primary transition-colors">
+               class="t-multiline bg-background border rounded-xs px-2 ${pass ? 'pr-9 ' : ''}text-foreground outline-none focus:border-primary transition-colors">
         <label for="${id}" class="text-muted-foreground">${label}</label>
         ${pass ? eyeBtn() : ''}
       </div>
@@ -9517,7 +9555,7 @@ const accPick = (key, label, val, ph) => `
     <div class="pb-4">
       <div class="field-float is-btn${val ? ' is-filled' : ''}" data-pick-dd>
         <button type="button" id="ap-${key}" data-apick="${key}" aria-haspopup="listbox" aria-expanded="false" aria-label="${ph}"
-                class="t-multiline bg-background border border-border rounded-xs pl-2 pr-9 text-left flex items-center btn-o press transition-colors focus:border-primary">
+                class="t-multiline bg-background border rounded-xs pl-2 pr-9 text-left flex items-center btn-o press transition-colors focus:border-primary">
           <span class="pick-label truncate text-foreground">${val || ''}</span>
         </button>
         <label for="ap-${key}" class="text-muted-foreground">${label}</label>
@@ -10122,7 +10160,7 @@ function screenORDER() {
                 `<button data-toast="Sẽ nhắc bạn khi hàng về" class="t-lead h-12 px-8 bg-primary text-primary-foreground btn-p press">Nhắc tôi khi hàng về</button>
                  <button data-toast="Đã gửi yêu cầu huỷ" class="t-lead h-12 px-8 border border-border bg-background text-foreground btn-o press">Huỷ đơn đặt trước</button>`
               : o.tone==='warning'
-              ? `<button data-toast="Theo dõi đơn TKN284917" class="t-lead h-12 px-8 bg-primary text-primary-foreground btn-p press">Theo dõi đơn hàng</button>
+              ? `<button data-track-open="${o.id}" class="t-lead h-12 px-8 bg-primary text-primary-foreground btn-p press">Theo dõi đơn hàng</button>
                  <button data-toast="Đã gửi yêu cầu huỷ" class="t-lead h-12 px-8 border border-border bg-background text-foreground btn-o press">Huỷ đơn hàng</button>`
               : `<button data-toast="Đã thêm lại vào giỏ" class="t-lead h-12 px-8 bg-primary text-primary-foreground btn-p press">Mua lại</button>
                  <button data-toast="Xuất hoá đơn" class="t-lead h-12 px-8 border border-border bg-background text-foreground btn-o press">Xuất hoá đơn</button>`}
@@ -10710,10 +10748,16 @@ function cartPbhTotal() { return cartPbh.reduce((s, p) => s + p.amount, 0); }
 function ckCodeRow() {
   return `
     <div class="flex flex-col gap-2 py-3">
-      <div class="flex gap-1">
-        <div class="field-float flex-1 min-w-0">
-          <input id="ckCode" placeholder=" " class="t-multiline bg-background border border-border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
-          <label for="ckCode" class="text-muted-foreground">Mã ưu đãi</label>
+      <!-- CỘT bao quanh ô nhập: setFieldErr chèn dòng lỗi ngay SAU .field-float, mà
+           .field-float lại là con trực tiếp của HÀNG NGANG này — thiếu cột thì dòng
+           lỗi rơi vào giữa hàng, nằm CẠNH nút Áp dụng (user báo kèm ảnh 16/09/2026).
+           items-start giữ nút dính mép TRÊN khi cột cao thêm vì dòng lỗi. -->
+      <div class="flex gap-1 items-start">
+        <div class="flex-1 min-w-0 flex flex-col">
+          <div class="field-float">
+            <input id="ckCode" placeholder=" " class="t-multiline bg-background border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+            <label for="ckCode" class="text-muted-foreground">Mã ưu đãi</label>
+          </div>
         </div>
         <button id="ckApplyCode" disabled class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
       </div>
@@ -10984,9 +11028,11 @@ function screenCART() {
                      không bọc thì dòng lỗi rơi vào giữa hàng flex, nằm cạnh nút. Lỗi ẩn
                      bằng display:none nên lúc không lỗi khối cao đúng như cũ. -->
                 <div class="flex gap-1 items-start">
-                  <div class="field-float flex-1 min-w-0">
-                    <input id="cartCode" placeholder=" " class="t-multiline bg-input border border-border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
-                    <label for="cartCode" class="text-muted-foreground">Ưu đãi &amp; khuyến mãi</label>
+                  <div class="flex-1 min-w-0 flex flex-col">
+                    <div class="field-float">
+                      <input id="cartCode" placeholder=" " class="t-multiline bg-input border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+                      <label for="cartCode" class="text-muted-foreground">Ưu đãi &amp; khuyến mãi</label>
+                    </div>
                   </div>
                   <button id="applyCode" disabled class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
                 </div>
@@ -11030,7 +11076,7 @@ function screenCART() {
                     <p class="t-single text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
                     <div class="flex gap-1">
                       <div class="field-float flex-1 min-w-0">
-                        <input id="pbh" placeholder=" " class="t-multiline bg-input border border-border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+                        <input id="pbh" placeholder=" " class="t-multiline bg-input border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
                         <label for="pbh" class="text-muted-foreground">DAFC Phiếu mua hàng</label>
                       </div>
                       <button id="applyPbh" disabled class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
@@ -11140,7 +11186,7 @@ const afield = (label, attrs, ph, extra = '', labelCls = 'text-muted-foreground'
   return `
   <div class="flex flex-col gap-1">
     <div class="field-float">
-      <input ${attrs} placeholder=" " class="t-multiline border border-border rounded-xs px-2 ${isPass ? 'pr-9' : ''} text-foreground outline-none focus:border-primary transition-colors">
+      <input ${attrs} placeholder=" " class="t-multiline border rounded-xs px-2 ${isPass ? 'pr-9' : ''} text-foreground outline-none focus:border-primary transition-colors">
       <label class="${labelCls}">${label}</label>
       ${isPass ? eyeBtn() : ''}
     </div>
@@ -11410,11 +11456,17 @@ const vatFieldSets = {
     ['Email nhận hóa đơn VAT', 'Nhập Email nhận hóa đơn VAT', 'email'],
   ],
 };
+/* DOI SANG FIELD NOI (16/09/2026) -- xem khoi CSS .field-float. Truoc la nhan
+   tinh phia tren + placeholder rieng trong o (2 dong noi cung mot dieu), nay
+   gop lam mot. id sinh theo type+chi so vi 2 bo (personal/company) co nhan
+   trung ten ("Email nhan hoa don VAT"). */
 function vatFieldRows(type) {
-  return vatFieldSets[type].map(([lb, ph, im]) => `
-    <div class="px-3 py-2 flex flex-col gap-2">
-      <label class="t-multiline font-medium text-foreground">${lb}</label>
-      <input ${im ? `inputmode="${im}"` : ''} placeholder="${ph}" class="t-multiline h-10 bg-input border border-border rounded-xs px-2 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+  return vatFieldSets[type].map(([lb, ph, im], i) => `
+    <div class="px-3 py-2">
+      <div class="field-float">
+        <input id="vat-${type}-${i}" ${im ? `inputmode="${im}"` : ''} placeholder=" " class="t-multiline bg-input border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+        <label for="vat-${type}-${i}" class="text-muted-foreground">${lb}</label>
+      </div>
     </div>`).join('');
 }
 
@@ -11523,20 +11575,24 @@ let ckOrderEmail = '';   // email nhận xác nhận — chốt lúc đặt, vì
      val  — giá trị đang giữ trong state, để dựng lại không mất chữ đã gõ
      key  — khoá state (data-ckf), input handler ghi ngược lại vào biến
      auto — autocomplete để trình duyệt gợi ý điền sẵn
+     bare — trả VỪA Ô, bỏ hộp đệm riêng của ô, để chỗ gọi tự xếp 2 ô vào cùng
+            một hàng (xem cặp Tên/Họ ở addrForm). Mặc định vẫn có hộp như cũ
+            nên mọi chỗ gọi field() khác không phải sửa.
    id sinh bằng bộ đếm chứ không slug hoá nhãn: cùng một nhãn xuất hiện ở
    nhiều khối (pickup và VAT) nên slug sẽ đụng id. */
 let _fldId = 0;
 /* DOI SANG FIELD NOI (15/09/2026) -- xem khoi CSS .field-float. */
 const field = (label, ph, type, opts = {}) => {
   const id = 'fld' + (++_fldId);
-  const { val = '', key = '', auto = '' } = opts;
-  return `
-    <div class="px-4 py-2">
+  const { val = '', key = '', auto = '', bare = false } = opts;
+  const oNhap = `
       <div class="field-float">
         <input id="${id}"${type ? ` type="${type}" inputmode="${type}"` : ''}${auto ? ` autocomplete="${auto}"` : ''}${key ? ` data-ckf="${key}"` : ''} value="${val}" placeholder=" "
-               class="t-multiline bg-background border border-border rounded-xs px-3 text-foreground outline-none focus:border-primary transition-colors">
+               class="t-multiline bg-background border rounded-xs px-3 text-foreground outline-none focus:border-primary transition-colors">
         <label for="${id}" class="text-muted-foreground">${label}</label>
-      </div>
+      </div>`;
+  return bare ? oNhap : `
+    <div class="px-4 py-2">${oNhap}
     </div>`;
 };
 
@@ -11548,16 +11604,22 @@ const field = (label, ph, type, opts = {}) => {
    label[for] + id trên button: bấm nhãn cũng mở được; aria-haspopup="listbox"
    + aria-expanded do __openPickDD cập nhật. */
 /* DOI SANG FIELD NOI (15/09/2026) -- xem khoi CSS .field-float. */
-const pickField = (label, ph, key, val) => `
-    <div class="px-4 py-2">
+/* `bare: true` trả VỪA Ô, không kèm hộp `px-4 py-2` — để chỗ gọi tự xếp 2 ô vào
+   cùng một hàng (xem cặp Tỉnh/Phường ở `addrForm`). Mặc định vẫn có hộp như cũ nên
+   3 chỗ gọi khác không phải sửa. */
+const pickField = (label, ph, key, val, o = {}) => {
+  const oNhap = `
       <div class="field-float is-btn${val ? ' is-filled' : ''}" data-pick-dd>
-        <button type="button" id="pk-${key}" data-pick="${key}" aria-haspopup="listbox" aria-expanded="false" aria-label="${ph}" class="t-multiline bg-background border border-border rounded-xs pl-3 pr-9 text-left flex items-center btn-o press transition-colors focus:border-primary">
+        <button type="button" id="pk-${key}" data-pick="${key}" aria-haspopup="listbox" aria-expanded="false" aria-label="${ph}" class="t-multiline bg-background border rounded-xs pl-3 pr-9 text-left flex items-center btn-o press transition-colors focus:border-primary">
           <span class="pick-label truncate text-foreground">${val || ''}</span>
         </button>
         <label for="pk-${key}" class="text-muted-foreground">${label}</label>
         <span data-pick-caret class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200">${I.chevD('var(--general-primary)')}</span>
-      </div>
+      </div>`;
+  return o.bare ? oNhap : `
+    <div class="px-4 py-2">${oNhap}
     </div>`;
+};
 
 /* Thẻ chọn cửa hàng — KHÔNG dùng chung richRadio vì richRadio gộp phần phụ
    thành MỘT dòng: địa chỉ và giờ mở cửa dính nhau ở cùng cỡ chữ với tên cửa
@@ -11720,8 +11782,27 @@ function screenCHECKOUT() {
     <div class="px-4 pt-2 pb-2">
       <p class="t-block-title text-foreground">Thông tin liên hệ</p>
     </div>
-    ${field('Tên','Nhập tên','', { val: ckShipName, key: 'sname', auto: 'given-name' })}
-    ${field('Họ','Nhập họ')}
+    <!-- TÊN + HỌ NẰM CÙNG MỘT HÀNG — chỉ ở bản desktop, theo khung Figma
+         421:7465 mà user tự xếp lại (17/09/2026). Cùng khuôn với cặp Tỉnh/Phường
+         ngay dưới: mỗi ô nửa cột 391, khe 16, hàng tự mang đệm px-4 py-2.
+         Bản mobile GIỮ xếp dọc — khung Figma mobile 420:7137 vẫn vẽ 4 ô liên hệ
+         xếp dọc, và cột form khổ 375 không đủ cho hai ô có nhãn nổi.
+         Số điện thoại và Email ở dưới vẫn FULL một hàng: khung Figma chỉ ghép
+         cặp đúng hai ô tên, mọi ô còn lại của khối liên hệ nằm dọc.
+         (KHÔNG gõ dấu huyền ngược trong chú thích này: cả khối nằm trong
+         template literal, một dấu là cắt đôi chuỗi.) -->
+    <div class="px-4 py-2 grid grid-cols-2 gap-4">
+      <!-- CỘT bao quanh từng ô: setFieldErr chèn dòng lỗi ngay SAU .field-float, mà
+           .field-float lại là con trực tiếp của LƯỚI này — thiếu cột thì dòng lỗi
+           thành một Ô LƯỚI thứ ba, rơi sang cột bên kia (đo 17/09/2026: lỗi của ô
+           trái hiện ở x440, tức dưới ô phải). Đúng cùng một lỗi user đã báo kèm ảnh
+           16/09 ở hàng Mã ưu đãi, và cùng một cách vá — xem ckCodeRow.
+           min-w-0 để nhãn dài không banh cột. -->
+      <div class="flex flex-col min-w-0">${field('Tên','Nhập tên','', { val: ckShipName, key: 'sname', auto: 'given-name', bare: true })}
+      </div>
+      <div class="flex flex-col min-w-0">${field('Họ','Nhập họ','', { bare: true })}
+      </div>
+    </div>
     ${field('Số điện thoại','0 1234 5678','tel', { val: ckShipPhone, key: 'sphone', auto: 'tel' })}
     ${ckAuth ? '' : `
     ${field('Email','Nhập email nhận xác nhận đơn','email', { val: ckEmail, key: 'email', auto: 'email' })}
@@ -11729,8 +11810,27 @@ function screenCHECKOUT() {
     <div class="px-4 pt-6 pb-2">
       <p class="t-block-title text-foreground">Thông tin giao hàng</p>
     </div>
-    ${pickField('Tỉnh / thành phố','Chọn tỉnh / thành phố','province', ckProvince)}
-    ${pickField('Phường / xã','Chọn phường / xã','ward', ckWard)}
+    <!-- TỈNH + PHƯỜNG NẰM CÙNG MỘT HÀNG — chỉ ở bản desktop (lệnh user 16/09/2026).
+         Bản mobile GIỮ xếp dọc: cột form ở khổ 375 không đủ cho hai ô có nhãn nổi.
+         ⚠ ĐẢO MỘT QUYẾT ĐỊNH CŨ: chú thích Section 0 ngay trên dẫn brief PDF trang 29
+         "Tỉnh/Phường/Địa chỉ GIỮ NGUYÊN xếp dọc, không ghép cặp kiểu Street/City/State/Zip
+         của Ralph". User chốt lại 16/09 — nếu khách hỏi thì đây là chỗ để đọc lại lý do cũ.
+         Hai ô truyền cờ bare để bỏ hộp đệm riêng của từng ô; hàng này tự mang đệm
+         px-4 py-2, khe 16 bằng nhịp chung của form.
+         (KHÔNG gõ dấu huyền ngược trong chú thích này: cả khối nằm trong template
+         literal, một dấu là cắt đôi chuỗi.) -->
+    <div class="px-4 py-2 grid grid-cols-2 gap-4">
+      <!-- CỘT bao quanh từng ô: setFieldErr chèn dòng lỗi ngay SAU .field-float, mà
+           .field-float lại là con trực tiếp của LƯỚI này — thiếu cột thì dòng lỗi
+           thành một Ô LƯỚI thứ ba, rơi sang cột bên kia (đo 17/09/2026: lỗi của ô
+           trái hiện ở x440, tức dưới ô phải). Đúng cùng một lỗi user đã báo kèm ảnh
+           16/09 ở hàng Mã ưu đãi, và cùng một cách vá — xem ckCodeRow.
+           min-w-0 để nhãn dài không banh cột. -->
+      <div class="flex flex-col min-w-0">${pickField('Tỉnh / thành phố','Chọn tỉnh / thành phố','province', ckProvince, { bare: true })}
+      </div>
+      <div class="flex flex-col min-w-0">${pickField('Phường / xã','Chọn phường / xã','ward', ckWard, { bare: true })}
+      </div>
+    </div>
     ${field('Địa chỉ','Số nhà, tên đường','', { val: ckShipLine, key: 'saddr', auto: 'street-address' })}
     <div class="px-4 pt-1">
       <label class="flex items-center gap-2 press">
@@ -11748,10 +11848,15 @@ function screenCHECKOUT() {
      thức vận chuyển" (sau khi chọn phương thức giao, trước nút Xác nhận của
      bước đó) — xem chỗ chèn ở s1open. State/id ckNote, data-ckf="note" giữ
      nguyên, chỉ đổi VỊ TRÍ hiển thị. */
+  /* DOI SANG FIELD NOI (16/09/2026) -- gop nhan tinh + placeholder rieng lam
+     mot, khop cac o khac. Chu thich "(khong bat buoc)" nhap thang vao nhan
+     noi thay vi mot <span> rieng -- nhan noi chi con 1 dong chu. */
   const noteField = `
-    <div class="px-4 pt-3 flex flex-col gap-1">
-      <label class="t-single font-medium text-foreground" for="ckNote">Ghi chú đơn hàng <span class="font-normal text-muted-foreground">(không bắt buộc)</span></label>
-      <textarea id="ckNote" data-ckf="note" rows="2" maxlength="200" placeholder="Lời nhắn cho người giao hàng" class="t-multiline w-full bg-background border border-border rounded-xs px-2 py-2 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors resize-none">${ckNote}</textarea>
+    <div class="px-4 pt-3">
+      <div class="field-float">
+        <textarea id="ckNote" data-ckf="note" rows="2" maxlength="200" placeholder=" " class="t-multiline w-full bg-background border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors resize-none">${ckNote}</textarea>
+        <label for="ckNote" class="text-muted-foreground">Ghi chú đơn hàng (không bắt buộc)</label>
+      </div>
     </div>`;
   const ckNextBtn = `
     <div class="px-4 pt-6 pb-8">
@@ -11845,8 +11950,20 @@ function screenCHECKOUT() {
   const preNote = preDate ? `<p class="t-single text-foreground-alt">Riêng hàng pre-order: nhận hàng dự kiến ${preDate}, giao riêng khi hàng về.</p>` : '';
   const s1open = `
     <div id="shipOpts" class="px-4 flex flex-col gap-4">
-      ${richRadio('std','Giao hàng thông thường - Miễn Phí', ETA, true)}
-      ${richRadio('fast','Giao hàng nhanh - 25,000đ', ETA, false)}
+      <!-- HAI THẺ PHƯƠNG THỨC NẰM CÙNG MỘT HÀNG — chỉ ở bản desktop, theo khung
+           Figma 421:7652 mà user tự xếp lại (17/09/2026). Mỗi thẻ nửa cột 391,
+           khe 16 — đúng nhịp của cặp Tên/Họ và Tỉnh/Phường ở bước trên, nên ba
+           cặp này đọc ra cùng một lưới.
+           Hai thẻ cao bằng nhau là do grid tự kéo (align stretch), không phải
+           do khai chiều cao — dòng ETA của thẻ này dài hơn thẻ kia vẫn thẳng đáy.
+           Ghi chú pre-order ngay dưới và ô Ghi chú đơn hàng vẫn nằm DỌC, full
+           bề rộng cột. Bản mobile giữ xếp dọc.
+           Lớp bọc nằm BÊN TRONG shipOpts nên mọi bộ chọn hiện có (shipOpts
+           [data-opt], và rule CSS acc-inner) vẫn trúng vì đều là hậu duệ. -->
+      <div class="grid grid-cols-2 gap-4">
+        ${richRadio('std','Giao hàng thông thường - Miễn Phí', ETA, true)}
+        ${richRadio('fast','Giao hàng nhanh - 25,000đ', ETA, false)}
+      </div>
       ${preNote}
     </div>
     ${noteField}
@@ -12212,7 +12329,7 @@ function screenDONE() {
 
       <div class="w-full flex gap-2.5 rise">
         <button data-nav="plp" data-reset class="t-multiline flex-1 text-primary-foreground font-semibold py-3.5 rounded-xs tracking-wider bg-primary btn-p press">Tiếp tục mua sắm</button>
-        <button data-order="0" class="t-multiline flex-1 font-medium py-3.5 rounded-xs tracking-wider border border-border bg-background text-mid-alt btn-o press transition-colors">Theo dõi đơn hàng</button>
+        <button data-track-open="DAFC103015" class="t-multiline flex-1 font-medium py-3.5 rounded-xs tracking-wider border border-border bg-background text-mid-alt btn-o press transition-colors">Theo dõi đơn hàng</button>
       </div>
     </div>
 
@@ -13145,12 +13262,12 @@ function filterBody(beauty, gender, heel) {
            nhất ở sheet 375). -->
       <div class="flex items-center gap-3">
         <div class="field-float flex-1 min-w-0">
-          <input id="plpPriceMin" data-price="min" inputmode="numeric" value="${plpPriceMin == null ? '' : plpPriceMin.toLocaleString('en-US')}" placeholder=" " class="t-multiline bg-input border border-border rounded-xs px-2 outline-none focus:border-primary transition-colors">
+          <input id="plpPriceMin" data-price="min" inputmode="numeric" value="${plpPriceMin == null ? '' : plpPriceMin.toLocaleString('en-US')}" placeholder=" " class="t-multiline bg-input border rounded-xs px-2 outline-none focus:border-primary transition-colors">
           <label for="plpPriceMin" class="text-muted-foreground">Từ</label>
         </div>
         <span class="w-2.5 h-px bg-border shrink-0"></span>
         <div class="field-float flex-1 min-w-0">
-          <input id="plpPriceMax" data-price="max" inputmode="numeric" value="${plpPriceMax == null ? '' : plpPriceMax.toLocaleString('en-US')}" placeholder=" " class="t-multiline bg-input border border-border rounded-xs px-2 outline-none focus:border-primary transition-colors">
+          <input id="plpPriceMax" data-price="max" inputmode="numeric" value="${plpPriceMax == null ? '' : plpPriceMax.toLocaleString('en-US')}" placeholder=" " class="t-multiline bg-input border rounded-xs px-2 outline-none focus:border-primary transition-colors">
           <label for="plpPriceMax" class="text-muted-foreground">Đến</label>
         </div>
       </div>
@@ -13777,12 +13894,150 @@ function screenPOLICY(key) {
   </div>`;
 }
 
+/* ════════════════════════════════════════════════════════════════
+   THEO DÕI ĐƠN HÀNG — brief "UI UX Feedback - Designer" TRANG 38 (trang cuối)
+
+   Bố cục HAI CỘT đúng bản vẽ: trái "Track your Parcel" (ô mã đơn + chú thích ngay
+   dưới ô), phải "Sign in to Your Account", ngăn nhau bằng MỘT ĐƯỜNG DỌC. Bản mobile
+   (index.html) xếp dọc hai khối vì 375 không đủ cho hai cột có nhãn nổi.
+
+   Brief CHỈ vẽ entry; kết quả tra cứu và các trạng thái hỏng là mình tự dựng.
+   Khách vãng lai thấy BẢN RÚT GỌN — không tiền, không thanh toán, địa chỉ đã che.
+   Lý do và ghi chú về định dạng mã: xem khối cùng tên trong index.html.
+════════════════════════════════════════════════════════════════ */
+let trackQuery = '', trackFound = null, trackErr = '';
+const TRACK_RE = /^DAFC\d{6}$/i;
+
+function trackLookup(raw) {
+  const q = String(raw || '').trim().toUpperCase();
+  if (!q) return { err: 'Vui lòng nhập mã đơn hàng.' };
+  if (!TRACK_RE.test(q)) return { err: 'Mã đơn gồm chữ DAFC và 6 chữ số, ví dụ DAFC103015.' };
+  const o = ORDERS.find(x => x.id.toUpperCase() === q);
+  if (!o) return { err: 'Không tìm thấy đơn hàng này. Kiểm tra lại mã trong email xác nhận.' };
+  return { order: o };
+}
+
+/* Chua DUNG 3 so cuoi — regex phai nhin xuyen dau cach, xem ghi chu ben index.html. */
+const trackMaskPhone = p => String(p || '').replace(/\d(?=(?:\D*\d){3})/g, '*');
+const trackMaskLine = l => {
+  const parts = String(l || '').split(',').map(x => x.trim()).filter(Boolean);
+  return parts.length > 2 ? '…, ' + parts.slice(-2).join(', ') : parts.join(', ');
+};
+
+function trackResultView(o) {
+  const steps = orderHasPre(o) ? ORDER_STEPS_PRE : ORDER_STEPS;
+  const done = o.steps;
+  return `
+  <div class="max-w-[1440px] mx-auto w-full px-6 py-10">
+    <div class="flex items-center justify-between gap-4 pb-2">
+      <h1 class="t-display-title text-foreground">Mã đơn ${o.id}</h1>
+      <span class="t-single shrink-0 px-2 py-1 rounded-xs bg-accent-0 text-foreground">${o.status}</span>
+    </div>
+    <p class="t-multiline pb-8 text-muted-foreground">Đặt ngày ${o.date}</p>
+
+    <div class="py-8 border-y border-border">
+      <div class="flex items-start">
+        ${steps.map((label, i) => {
+          const reached = i < done, isCur = i === done - 1;
+          return `
+          <div class="flex-1 flex flex-col items-center relative">
+            ${i > 0 ? `<span class="absolute top-[11px] right-1/2 w-full h-0.5 ${i < done ? 'bg-primary' : 'bg-border'}"></span>` : ''}
+            <span class="relative z-10 w-6 h-6 rounded-full flex items-center justify-center ${reached ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground border border-border'}">
+              ${reached ? `<span class="w-2.5 h-2.5">${I.tick}</span>` : `<span class="w-1.5 h-1.5 rounded-full bg-current"></span>`}
+            </span>
+            <span class="t-single mt-2 text-center ${isCur ? 'text-foreground font-medium' : 'text-muted-foreground'}">${label}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      ${done >= 3 ? `
+      <div class="mt-6 bg-accent-0 px-4 py-2 flex items-center gap-2 w-fit">
+        <span class="w-4 h-4 text-foreground shrink-0">${I.truck}</span>
+        <span class="t-multiline text-foreground-alt">Mã vận đơn <b class="font-medium">TKN284917</b></span>
+      </div>` : ''}
+    </div>
+
+    <div class="grid grid-cols-2 gap-10 pt-8">
+      <div class="flex flex-col gap-4">
+        <p class="t-block-title text-foreground">Hàng trong đơn</p>
+        ${o.items.map(it => `
+        <div class="flex gap-4">
+          <div class="w-[72px] h-[96px] bg-secondary overflow-hidden shrink-0">
+            <img src="${A}${it.img}" class="w-full h-full object-cover" alt="${it.name}">
+          </div>
+          <div class="flex-1 min-w-0 flex flex-col gap-1">
+            <p class="t-multiline text-foreground">${it.name}</p>
+            <p class="t-single text-muted-foreground">${it.variant}</p>
+            <p class="t-single text-muted-foreground">Số lượng ${it.qty}</p>
+          </div>
+        </div>`).join('')}
+      </div>
+      <div class="flex flex-col gap-4">
+        <p class="t-block-title text-foreground">Giao đến</p>
+        <div class="flex flex-col gap-1">
+          <p class="t-multiline text-foreground">${o.address.name}</p>
+          <p class="t-multiline text-muted-foreground">${trackMaskPhone(o.address.phone)}</p>
+          <p class="t-multiline text-muted-foreground">${trackMaskLine(o.address.line)}</p>
+          <p class="t-single pt-2 text-muted-foreground">Địa chỉ được rút gọn. Đăng nhập để xem đầy đủ đơn hàng.</p>
+        </div>
+        <div class="flex items-center gap-3 pt-4">
+          <button data-nav="login" class="t-lead h-12 px-8 bg-primary text-primary-foreground btn-p press">Đăng nhập để xem đầy đủ</button>
+          <button data-track-reset class="t-lead h-12 px-8 rounded-xs border border-border bg-background text-foreground btn-o press">Tra cứu đơn khác</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function trackEntryView() {
+  return `
+  <div class="max-w-[1440px] mx-auto w-full px-6 py-12">
+    <!-- HAI COT NGAN NHAU BANG MOT DUONG DOC — dung bo cuc brief trang 38.
+         Duong ke la border-l cua cot phai chu khong phai mot the rieng: bot mot
+         node, va no tu cao bang cot cao nhat. -->
+    <div class="grid grid-cols-2 gap-16">
+      <div class="flex flex-col gap-4 pr-16">
+        <h1 class="t-display-title text-foreground">Theo dõi đơn hàng</h1>
+        <p class="t-multiline text-muted-foreground">Nhập mã đơn hàng để theo dõi kiện hàng của bạn.</p>
+        ${afield('Mã đơn hàng', `id="trackInput" value="${trackQuery.replace(/"/g, '&quot;')}"`, 'Nhập mã đơn')}
+        ${trackErr
+          ? `<p class="t-single text-destructive">${trackErr}</p>`
+          : `<p class="t-single text-muted-foreground">Chỉ nhận mã đơn hàng, gồm chữ DAFC và 6 chữ số.</p>`}
+        <div class="pt-2">
+          <button data-track-go class="t-lead h-12 px-8 bg-primary text-primary-foreground btn-p press">Tra cứu</button>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-6 pl-16 border-l border-border">
+        <div class="flex flex-col gap-4">
+          <h2 class="t-section-title text-foreground">Đăng nhập tài khoản</h2>
+          <p class="t-multiline text-muted-foreground">Đăng nhập để xem toàn bộ lịch sử đơn hàng và cập nhật tài khoản.</p>
+        </div>
+        <div class="flex flex-col gap-6">
+          ${afield('Số điện thoại', 'type="tel" inputmode="tel" id="trackLoginId"', 'Nhập số điện thoại')}
+          ${afield('Mật khẩu', 'type="password"', 'Nhập mật khẩu',
+            '<button data-nav="login" class="t-multiline text-muted-foreground press">Quên mật khẩu?</button>')}
+        </div>
+        ${abtn('Đăng nhập', 'data-nav="login"', 'h-12')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function screenTRACK() {
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+    ${trackFound ? trackResultView(trackFound) : trackEntryView()}
+    ${footer()}
+  </div>`;
+}
+
 const RENDER = {
   /* 'home' đứng đầu FLOW từ 04/09/2026 — xem khối SCREEN: HOME. */
   home: screenHOME,
   plp: screenPLP, search: screenSearch, pdp: screenPDP, pdp2: screenPDP2, pdp3: screenPDP3, pdp4: screenPDP4, pdp5: screenPDP5, pdp6: screenPDP6, account: screenACCOUNT, order: screenORDER, cart: screenCART, login: screenLOGIN,
   pdpGone: screenPDPGone,
-  checkout: screenCHECKOUT, done: screenDONE, pay: screenPAY,
+  checkout: screenCHECKOUT, done: screenDONE, pay: screenPAY, track: screenTRACK,
   privacy: () => screenPOLICY('privacy'), terms: () => screenPOLICY('terms'), returns: () => screenPOLICY('returns'),
 };
 
@@ -16299,6 +16554,46 @@ function wire(root) {
   });
 
   // navigation
+  /* THEO DÕI ĐƠN HÀNG — khai giống hệt bản mobile, xem ghi chú bên index.html.
+     Vào từ nút "Theo dõi đơn hàng" của màn đơn thì mở THẲNG kết quả, không bắt gõ
+     lại mã vừa nhìn thấy. */
+  root.querySelectorAll('[data-track-open]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.trackOpen;
+      trackQuery = id;
+      const r = trackLookup(id);
+      trackFound = r.order || null;
+      trackErr = r.err || '';
+      go('track');
+    });
+  });
+  root.querySelectorAll('[data-track-go]').forEach(el => {
+    el.addEventListener('click', () => {
+      const inp = document.getElementById('trackInput');
+      trackQuery = inp ? inp.value : '';
+      const r = trackLookup(trackQuery);
+      trackFound = r.order || null;
+      trackErr = r.err || '';
+      go('track', { force: true });
+    });
+  });
+  root.querySelectorAll('[data-track-reset]').forEach(el => {
+    el.addEventListener('click', () => {
+      trackQuery = ''; trackFound = null; trackErr = '';
+      go('track', { force: true });
+    });
+  });
+  const trackInp = root.querySelector('#trackInput');
+  if (trackInp && !trackInp.dataset.bound) {
+    trackInp.dataset.bound = '1';
+    trackInp.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const b = document.querySelector('[data-track-go]');
+      if (b) b.click();
+    });
+  }
+
   root.querySelectorAll('[data-nav]').forEach(el => {
     el.addEventListener('click', e => {
       e.stopPropagation();
@@ -18718,12 +19013,12 @@ document.body.insertAdjacentHTML('beforeend', `
       <div class="px-4 pt-2 pb-4 flex flex-col gap-4">
         <div class="field-float">
           <input id="nsEmail" type="email" inputmode="email" placeholder=" "
-                 class="t-multiline bg-input border border-border rounded-sm px-3 text-foreground outline-none focus:border-primary transition-colors">
+                 class="t-multiline bg-input border rounded-sm px-3 text-foreground outline-none focus:border-primary transition-colors">
           <label for="nsEmail" class="text-muted-foreground">Email</label>
         </div>
         <div class="field-float">
           <input id="nsPhone" type="tel" inputmode="tel" placeholder=" "
-                 class="t-multiline bg-input border border-border rounded-sm px-3 text-foreground outline-none focus:border-primary transition-colors">
+                 class="t-multiline bg-input border rounded-sm px-3 text-foreground outline-none focus:border-primary transition-colors">
           <label for="nsPhone" class="text-muted-foreground">Số điện thoại</label>
         </div>
         <p id="nsErr" class="t-single text-destructive hidden">Vui lòng nhập email hoặc số điện thoại.</p>
@@ -19042,13 +19337,13 @@ document.body.insertAdjacentHTML('beforeend', `
             <div class="flex flex-col gap-4">
               <div class="field-float">
                 <input id="lpPhone" type="tel" inputmode="tel" placeholder=" " autocomplete="tel"
-                       class="t-single bg-background border border-border rounded-xs px-3 font-light text-foreground outline-none focus:border-primary transition-colors">
+                       class="t-single bg-background border rounded-xs px-3 font-light text-foreground outline-none focus:border-primary transition-colors">
                 <label for="lpPhone" class="text-muted-foreground">Số điện thoại*</label>
               </div>
               <div class="flex flex-col gap-1.5">
                 <div class="field-float">
                   <input id="lpPass" type="password" placeholder=" " autocomplete="current-password"
-                         class="t-single bg-background border border-border rounded-xs px-3 pr-10 font-light text-foreground outline-none focus:border-primary transition-colors">
+                         class="t-single bg-background border rounded-xs px-3 pr-10 font-light text-foreground outline-none focus:border-primary transition-colors">
                   <label for="lpPass" class="text-muted-foreground">Mật khẩu*</label>
                   ${eyeBtn()}
                 </div>
@@ -19474,14 +19769,17 @@ document.body.insertAdjacentHTML('beforeend', `
         <p class="t-overlay font-medium text-foreground">Đăng nhập</p>
         <button id="apRegister" class="t-single underline text-muted-foreground hover:text-foreground transition-colors press">Tạo tài khoản</button>
       </div>
+      <!-- DOI SANG FIELD NOI (16/09/2026) -- panel nay la hover dropdown rieng cua
+           desktop, khong co ban mobile doi chieu, nen truoc do lot khoi lan quet
+           chung. Gop nhan tinh + placeholder rieng lam mot, khop cac o khac. -->
       <div class="px-6 py-6 flex flex-col gap-4">
-        <div class="flex flex-col gap-2">
-          <label for="apPhone" class="t-multiline font-medium text-foreground">Số điện thoại</label>
-          <input id="apPhone" type="tel" inputmode="tel" placeholder="Nhập số điện thoại" autocomplete="tel" class="t-single h-11 bg-background border border-border rounded-xs px-3 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+        <div class="field-float">
+          <input id="apPhone" type="tel" inputmode="tel" placeholder=" " autocomplete="tel" class="t-single border rounded-xs px-3 bg-background text-foreground outline-none focus:border-primary transition-colors">
+          <label for="apPhone" class="text-muted-foreground">Số điện thoại</label>
         </div>
-        <div class="flex flex-col gap-2">
-          <label for="apPass" class="t-multiline font-medium text-foreground">Mật khẩu</label>
-          <input id="apPass" type="password" placeholder="Nhập mật khẩu" autocomplete="current-password" class="t-single h-11 bg-background border border-border rounded-xs px-3 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors">
+        <div class="field-float">
+          <input id="apPass" type="password" placeholder=" " autocomplete="current-password" class="t-single border rounded-xs px-3 bg-background text-foreground outline-none focus:border-primary transition-colors">
+          <label for="apPass" class="text-muted-foreground">Mật khẩu</label>
         </div>
         <button id="apForgot" class="t-single self-end underline text-muted-foreground hover:text-foreground transition-colors press">Quên mật khẩu?</button>
         <button id="apSubmit" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press">Đăng nhập</button>
