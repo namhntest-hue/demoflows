@@ -991,7 +991,32 @@ window.RESP = (function () {
      bên trái luôn hấp thụ phần dư nên mép PHẢI của cột phải luôn dán vào đúng
      mép phải khung chứa BẤT KỂ số cố định là bao nhiêu — chỉ mép TRÁI của nó
      dịch theo. */
-  .dk-cart-summary { width: 480px; }
+  /* 17/09/2026 — Figma 499:29797 hạ cột tóm tắt 480 -> 420. Hàng 2 cột của khung
+     đó rộng 1440 đệm 0/48/0/48, khe 80: 1440-48-48-80-420 = 844 cho cột trái. */
+  .dk-cart-summary { width: 420px; }
+
+  /* ── KHỐI SỐ ĐO GIỎ HÀNG THEO FIGMA 499:29797 (17/09/2026) ────────────────
+     Phải khai CSS THẬT vì bản tailwind.css dựng sẵn KHÔNG có `.px-12` và cũng
+     không có arbitrary `w-[148px]`/`h-[197px]` (đã grep cả ba). Cùng cách làm
+     với `.dk-cart-summary` ngay trên. */
+
+  /* Đệm ngang trang màn giỏ = 48 (khung Figma pad 0/48/0/48), đè `px-6`=24. */
+  .dk-cart-wrap { padding-left: 48px; padding-right: 48px; }
+
+  /* Cột phải tụt xuống 64 để mép trên khối tóm tắt thẳng hàng với mép trên panel
+     danh sách bên trái — bên trái là 16 (đệm) + 32 (tiêu đề) + 16 = 64.
+     `top` phải bù đúng 64 đó: `.dk-sticky-side` đang ghim ở 152, để nguyên thì
+     lúc dính vào header khối xám sẽ nằm ở 152+64=216, hở một mảng trống. Hạ
+     xuống 88 để khi dính, mép khối vẫn đúng 152 như mọi cột dính khác. */
+  .dk-cart-summary { padding-top: 64px; padding-bottom: 12px; }
+
+  /* Ảnh dòng SẢN PHẨM trong giỏ. Dòng QUÀ giữ 100x133 (Figma cũng vậy: dòng quà
+     cao 166 so với dòng sản phẩm 229) nên class này chỉ gắn ở template row(). */
+  .dk-cart-thumb { width: 148px; height: 197px; }
+
+  /* Hộp "Chương trình khuyến mãi": viền nhạt hơn viền chung (Figma #ececec so
+     với #dfdfdf của khối tóm tắt) — đúng bằng --unofficial-border-1 sẵn có. */
+  .dk-promo-box { border-color: var(--unofficial-border-1); }
   /* 14/09/2026 — CHECKOUT ĐI CÙNG HƯỚNG (lệnh user: "dùng kích thước này áp vào
      2 cái block trong checkout luôn", ngay sau lượt hẹp cột giỏ ở trên). Trang
      Thanh toán CÙNG cơ chế: `flex items-start gap-20` + cột trái flex-1 + cột
@@ -1033,7 +1058,7 @@ window.RESP = (function () {
      dòng chữ "Quà tặng miễn phí", không cần badge riêng nhắc lại) */
 
   @media (max-width: 1279px) {
-    .dk-cart-summary            { width: clamp(300px, 39vw, 480px); }   /* tóm tắt GIỎ — hẹp lại 14/09/2026, xem khai 560→480 ở trên */
+    .dk-cart-summary            { width: clamp(300px, 39vw, 420px); }   /* tóm tắt GIỎ — trần 480→420 ngày 17/09/2026 theo Figma 499:29797, xem khai ở trên */
     /* Cột thông tin PDP — CẢ 6 bản từ 04/09: 44vw để tại đúng 1280 nó đang ở
        ~563, tức không nhảy bậc khi kéo qua mốc; sàn giữ 292 như các cột khác
        để dải hẹp không bóp chết ô ảnh. Rule 34vw/451 của 5 PDP cũ đã xoá cùng
@@ -1722,6 +1747,15 @@ window.RESP = (function () {
   .field-float > textarea:focus + label, .field-float > textarea:not(:placeholder-shown) + label {
     top: 8px; transform: translateY(0); font-size: 10px; line-height: 14px;
   }
+  /* Ô NHẬP ĐIỂM (17/09/2026): số tối đa nép sát mép phải BÊN TRONG ô. Phải chừa
+     chỗ cho nó ở cả input lẫn nhãn nổi — nhãn gốc chỉ chừa 36px bên phải, chữ dài
+     như "Số điểm sử dụng" sẽ chạy chồng lên "Tối đa 1.860" nếu không nới. */
+  .dk-points-field > input { padding-right: 104px; }
+  .dk-points-field > label { right: 104px; }
+  .dk-points-field > span {
+    position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
+    pointer-events: none;
+  }
   .field-float.is-btn > button { width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px; border-color: var(--general-border); }
   .field-float.is-btn > label { top: 50%; transform: translateY(-50%); }
   .field-float.is-btn.is-filled > label, .field-float.is-btn:focus-within > label {
@@ -1819,6 +1853,19 @@ window.RESP = (function () {
   html:not(.skin-mp) [data-policy-sec] { scroll-margin-top: 144px; }
   html:not(.skin-mp) .dk-sticky-info,
   html:not(.skin-mp) .dk-sticky-side  { top: 152px; }             /* 156 - 4 */
+  /* ⚠ CỘT TÓM TẮT GIỎ PHẢI BÙ LẠI ĐỆM TRÊN 64 (17/09/2026, user báo: "khi scroll
+     xuống ở bên tóm tắt đơn hàng đang bị thừa 1 khoảng gap lớn bên trên khiến
+     không hiển thị đủ nội dung").
+     Cột này mang padding-top 64 để lúc ĐỨNG YÊN mép trên khối xám thẳng hàng với
+     mép trên panel danh sách bên trái. Nhưng đệm đó DÍNH THEO khi cuộn, nên nếu
+     để top 152 như mọi cột khác thì lúc dính khối xám tụt xuống 152+64 = 216 —
+     hở đúng 64px và mất 64px chiều cao đọc được.
+     Hạ top xuống 88 = 152 - 64 để khi dính, mép khối xám nằm ĐÚNG 152, cùng một
+     đường với mọi cột dính khác trong app.
+     Phải khai Ở ĐÂY chứ không phải cạnh `.dk-cart-summary` phía trên: hai
+     selector cùng đặc trưng (0,2,1), khai trước thì thua theo thứ tự — lần đầu
+     tôi khai ở trên nên nó không có tác dụng. */
+  html:not(.skin-mp) .dk-cart-summary { top: 88px; }              /* 152 - 64 */
 
   /* toast desktop nằm giữa đáy, không đụng FAB */
   #toast { bottom: 48px; }
@@ -2309,6 +2356,21 @@ window.RESP = (function () {
     font-weight: 500;
     letter-spacing: 0.5px;
   }
+  /* 17/09/2026 — Figma 499:29797 đưa "Tóm tắt đơn hàng" về Libre Bodoni 18/24 chữ
+     thường (đo node: style t-section-title, textCase ORIGINAL). Đảo lại đợt 4 và
+     đợt 5 ngày 14/09 (Inter HOA rồi 14/20 + letter-spacing 0.5px) nên phải đè đủ
+     cả ba thuộc tính của rule ngay trên.
+     KHOANH VÙNG [data-screen="cart"]: khung Figma chỉ là trang GIỎ HÀNG. Heading
+     cùng tên bên checkout GIỮ NGUYÊN Inter 14/20 HOA — từ trước tới nay 2 panel
+     vẫn đi cùng nhau, nên đây là chỗ CHỜ USER CHỐT có đồng bộ hay không. */
+  html.skin-mt [data-screen="cart"] .dk-summary-title {
+    font-family: var(--font-head);
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+  }
 
   /* 2c — ĐÃ GỠ 15/09/2026. Rule cũ đẩy tiêu đề BƯỚC của checkout vào tầng NHÃN
      (12/16 · 500 · HOA, theo 13.1 "nhãn nhóm menu/footer/accordion"). Lệnh user
@@ -2629,7 +2691,17 @@ window.RESP = (function () {
      thứ hai của §1.1 STYLE-RULES.md (user xác nhận sau khi hỏi lại) — xem
      `_notes/STYLE-RULES.md`. */
   html.skin-mt.skin-li [data-screen="cart"] .cart-row .cart-brand { font-family: var(--font-head); }
-  html.skin-mt [data-screen="cart"] .cart-row .price { font-weight: 500; }
+  /* 17/09/2026 — GỠ KHOANH VÙNG theo màn: bám vào CHÍNH dòng hàng chứ không vào
+     màn đang đứng. Rule cũ khoá trong màn giỏ nên hễ dòng hàng được dùng lại ở màn
+     khác là giá tụt về 400. Hiện tại dòng hàng chỉ có ở màn giỏ nên đổi này CHƯA
+     đổi pixel nào — nó là hàng rào cho lượt sau.
+     CHỖ THẬT SỰ CHƯA ĐẬM (user báo 17/09) nằm ở markup KHÁC, không phải dòng hàng:
+     giá trong sheet Giỏ hàng của bạn ở checkout, tổng ở thanh đáy checkout, và giá
+     trong mini cart — cả ba khai font-medium mà lớp đó chết dưới skin-mt. Đã gắn
+     hook pc-price cho từng chỗ, xem các chỗ gọi.
+     GIỮ 500, KHÔNG lên 600 — user chốt 17/09 khi được hỏi: chỉ vá chỗ chưa ăn, không
+     nâng bậc. Giá gạch ngang vẫn 400, không đụng. */
+  html.skin-mt .cart-row .price { font-weight: 500; }
 
   /* 14/09/2026 — khách mở rộng tiếp: đồng bộ brand name ở PLP (và mọi thẻ dùng
      chung productCard() — dải PDP, dải trang chủ…) theo mặt chữ Libre của hàng
@@ -3440,8 +3512,20 @@ window.RESP = (function () {
      lề bù trong hộp ĐÃ GỠ theo hướng editorial ở comment trên. Kẻ duy nhất còn
      lại của cụm đầu trang: ngăn hàng "Chọn tất cả" với danh sách món — cùng
      một vị trí kẻ mà skin-mp đặt bằng border-top của #cartList.) */
+  /* 17/09/2026 — Figma 499:29797 ĐÓNG HỘP TRỞ LẠI: khối `Frame 8` bọc [Chọn tất
+     cả] + [danh sách] có viền 1px #dfdfdf, bên trong vẫn kẻ #ececec ngăn hàng
+     chọn với danh sách. Tức là đảo lại hướng "không hộp, chỉ kẻ" chốt 21/08 ở
+     chú thích ngay trên. Hai khối này là ANH EM trong DOM (không có phần tử bọc
+     chung), nên panel được ghép từ nửa viền trên và nửa viền dưới — làm vậy để
+     KHỎI phải thêm div bọc, vì nhiều hook trong file này bám đúng quan hệ
+     `.flex-1 > div:has(...)`, thêm một tầng là gãy hàng loạt. */
   html.skin-mt [data-screen="cart"] .flex-1 > div:has(> #selectAll) {
+    border: 1px solid var(--general-border);
     border-bottom: 1px solid var(--unofficial-border-1);
+  }
+  html.skin-mt [data-screen="cart"] .flex-1 > div:has(> #cartList) {
+    border: 1px solid var(--general-border);
+    border-top: 0;
   }
   /* Thẻ khuyến mãi: khe quanh nó là 24 (từ `py-6` của phần bọc) trong khi khe giữa
      mọi hộp khác là 12 -> nhịp dọc nhảy 12·24·12. Bỏ padding dọc của phần bọc, để
@@ -3454,6 +3538,16 @@ window.RESP = (function () {
     padding-top: 0;
     padding-bottom: 12px;
     margin-top: 12px;
+  }
+  /* ⚠ 17/09/2026 — rule NGAY TRÊN trúng CHÍNH cột tóm tắt, không phải phần bọc thẻ
+     khuyến mãi: `#promoPeek` -> hộp khuyến mãi -> CỘT, nên `div:has(> div >
+     #promoPeek)` là cột. Nó đang ép padding-top:0, đè mất đệm trên 64 khai ở khối
+     số đo cạnh `.dk-cart-summary` (đặc trưng (0,4,1) và nằm sau, nên thắng).
+     Khai đè ở đây, cùng đặc trưng nhưng viết sau. Đệm trên 64 là để mép trên khối
+     tóm tắt thẳng hàng mép trên panel danh sách bên trái (16 + 32 + 16). */
+  html.skin-mt [data-screen="cart"] div:has(> div > #promoPeek) {
+    padding-top: 64px;
+    margin-top: 0;
   }
   /* QUÀ THEO MỐC ĐƠN NỐI LIỀN DANH SÁCH (giữ tinh thần chốt 20/08 "nằm vô trong
      block giỏ hàng"; 21/08 gỡ mặt trắng + viền đáy của hộp — trên nền trắng chỉ
@@ -5877,11 +5971,19 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
              hàng flex thiếu chỗ, trình duyệt được phép bẻ dòng tại đó — ký
              hiệu ₫ rớt xuống dòng riêng (lỗi (b) đã ghi nhận, bản mobile lộ
              rõ; desktop cùng khuôn nên khoá luôn). -->
+        <!-- CHIP % XUỐNG CÙNG HÀNG VỚI GIÁ GẠCH (user chốt 17/09/2026, đi theo
+             component cart-row 65:2122). Chip là nhãn NÓI VỀ giá cũ (giảm bao nhiêu so
+             với nó) nên đứng cạnh giá cũ mới đúng nghĩa.
+             KHÁC hàng giỏ ở một điểm CÓ CHỦ Ý: thẻ giữ giá phải trả ở dòng TRÊN, giỏ thì
+             ở dòng dưới. User chốt vậy khi được hỏi — thẻ đọc từ trên xuống là giá bán
+             rồi mới tới giá cũ.
+             Dòng giá gạch vẫn LUÔN in ra (invisible khi không có giá cũ) để mọi thẻ trong
+             lưới cao bằng nhau — đừng gỡ, gỡ là lưới so le. -->
+        <p class="t-multiline pc-price whitespace-nowrap font-medium ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
         <div class="flex gap-1 items-center">
-          <p class="t-multiline pc-price whitespace-nowrap font-medium ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
+          <p class="t-single whitespace-nowrap text-muted-foreground line-through ${p.was ? '' : 'invisible'}">${p.was || '&nbsp;'}</p>
           ${p.off ? `<span class="t-single bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${p.off}</span>` : ''}
         </div>
-        <p class="t-single whitespace-nowrap text-muted-foreground line-through ${p.was ? '' : 'invisible'}">${p.was || '&nbsp;'}</p>
       </div>`}
       ${(!noColors && p.colors && p.colors.length) ? `
       <!-- Frame 427319709: gap 8, mỗi ô 20×20 (viền 1px khi chọn) bọc chấm màu 16×16 -->
@@ -7158,7 +7260,7 @@ function screenPLP() {
            strip danh mục nằm sau (phải). Chỉ đổi thứ tự DOM, bề rộng 2 cột giữ
            nguyên nên bố cục là bản soi gương của thiết kế gốc. -->
       <div class="px-6">
-        <div class="flex gap-4 py-4 items-start">
+        <div class="flex gap-4 pb-4 items-start">
           ${(B.heroDk || B.hero) ? `
           <div class="dk-brand-hero w-[575px] shrink-0 overflow-hidden bg-secondary">
             <img src="${A}${B.heroDk || B.hero}" alt="${B.name}" class="w-full h-[320px] object-cover lazy" style="object-position:${B.pos || '50% 50%'}">
@@ -7854,16 +7956,31 @@ function dkScreenPDP(kind) {
                    28/08 dời từ ô ảnh đầu gallery xuống đây theo lệnh user. -->
               <div class="flex items-center gap-1.5 min-w-0">
                 ${P.preorder ? `<span class="t-single badge-inline px-1 font-medium text-foreground shrink-0">Đặt trước</span>` : ''}
-                <p class="t-multiline text-foreground-alt">${P.name}</p>
+                <!-- 17/09/2026 — TÊN SP lên 14/20 (.t-multiline 12/18 -> .t-lead), theo khung
+                     Figma user vừa chỉnh (343:54291). CHỈ desktop: khung PDP mobile user để
+                     nguyên 12/18. Xem ghi chú lệch thang chữ 2 file ở cuối khối này. -->
+                <p class="t-lead text-foreground-alt">${P.name}</p>
               </div>
             </div>
             <!-- Khối giá SẠCH: chỉ con số + badge -% + giá gạch. Dòng trả góp đã
                  dời xuống ngay dưới nút Thêm vào giỏ hàng (xem payOfferRow). -->
-            <div class="flex gap-1.5 items-center">
+            <div class="flex flex-col items-start">
               <!-- id để đổi giá tại chỗ khi chọn dung tích khác (11/09/2026) -->
-              <p id="pdpPrice" class="t-single pc-price font-medium ${P.off ? 'text-destructive' : 'text-foreground'}">${pdpPriceNow(P)}</p>
-              ${P.off ? `<span class="t-multiline bg-destructive-subtle rounded-xs px-1 py-0.5 text-destructive">${P.off}</span>` : ''}
-              ${P.was ? `<p class="t-multiline text-muted-foreground line-through">${P.was}</p>` : ''}
+              <!-- 17/09/2026 — GIÁ lên 16/24 (.t-single 12/16 -> .t-overlay), theo khung Figma
+                   user vừa chỉnh. Lớp t-overlay tự mang weight 500 nhờ rule của bộ da nên
+                   font-medium ở đây thành thừa, GIỮ lại vì pc-price vẫn là nguồn
+                   "giá phải đậm" dùng chung với PLP/giỏ, gỡ đi là mất mạch chung.
+                   CHỈ desktop: khung PDP mobile user để nguyên 12/16 Regular. -->
+              <p id="pdpPrice" class="t-overlay pc-price font-medium ${P.off ? 'text-destructive' : 'text-foreground'}">${pdpPriceNow(P)}</p>
+              <!-- Chip % xuống cùng hàng với GIÁ GẠCH, giá phải trả giữ ở dòng TRÊN — cùng luật
+                   với thẻ sản phẩm, user chốt 17/09/2026. Trước đó cả ba nằm một hàng ngang.
+                   Cụm dòng dưới bọc trong điều kiện: hàng không giảm giá thì không in ra một
+                   hàng rỗng. Vỏ đổi từ hàng ngang sang cột, bỏ h-6 vì nay có thể 2 dòng. -->
+              ${(P.was || P.off) ? `
+              <div class="flex items-center gap-1.5">
+                ${P.was ? `<p class="t-multiline text-muted-foreground line-through">${P.was}</p>` : ''}
+                ${P.off ? `<span class="t-multiline bg-destructive-subtle rounded-xs px-1 py-0.5 text-destructive">${P.off}</span>` : ''}
+              </div>` : ''}
             </div>
           </div>
 
@@ -10601,7 +10718,10 @@ function giftRowPlainHTML(pk, attrs = '') {
            quà thẳng cột ảnh của các dòng hàng; bỏ luôn cột này là cả thẻ quà lệch
            trái 24px so với mọi dòng khác. -->
       <span class="w-4 shrink-0" aria-hidden="true"></span>
-      <div class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden">
+      <!-- Ảnh quà DÙNG CHUNG cỡ với dòng sản phẩm (148x197, lệnh user 17/09/2026).
+           Figma 499:29797 để dòng quà nhỏ hơn (100x133) nhưng user chốt đồng bộ —
+           cùng cỡ thì cột chữ của dòng quà thẳng hàng với cột chữ dòng sản phẩm. -->
+      <div class="dk-cart-thumb relative shrink-0 bg-secondary overflow-hidden">
         <img src="${A}${g.img}" class="w-full h-full object-cover lazy" alt="Quà tặng ${g.brand} ${g.name}">
       </div>
       <div class="flex-1 min-w-0 flex flex-col justify-between">
@@ -10693,9 +10813,14 @@ function giftSummaryRow(pk, g, big) {
   const p = GIFT_PROGRAMS[pk];
   g = g || giftOf(pk);
   if (!p || !g) return '';
-  /* Bản big (thumb 100×133, giá 0 ₫ ghim đáy-phải): dùng ở panel Tóm tắt đơn hàng
-     của checkout — cùng khuôn dòng sản phẩm sau khi đồng bộ theo tóm tắt mobile
-     (yêu cầu user 14/08/2026). Màn Hoàn tất vẫn gọi bản 52×60 gọn. */
+  /* Bản big (thumb 100×133): dùng ở panel Tóm tắt đơn hàng của checkout — cùng khuôn
+     dòng sản phẩm sau khi đồng bộ theo tóm tắt mobile (yêu cầu user 14/08/2026).
+     Màn Hoàn tất vẫn gọi bản 52×60 gọn.
+     17/09/2026 — BỎ HẲN DÒNG GIÁ "0 đ" (lệnh user). Quà không có giá, in số 0 vào cột
+     tiền là nói một điều vô nghĩa — và nó đứng cạnh giá hàng thật nên đọc ra như một
+     món giá 0 đồng. Thẻ quà ở màn GIỎ vốn đã không in số, chỉ ghi "Quà tặng miễn phí".
+     Khung justify-between của bản big giữ nguyên: nay chỉ còn một con nên khối thông
+     tin nằm sát mép trên, đúng như dòng hàng không có giá. */
   // 13/09/2026 — rà lại rule typo trang giỏ: xem chú thích đầy đủ ở bản mobile (index.html, cùng hàm).
   const info = `
                   <p class="t-multiline font-medium text-foreground truncate">${g.brand}</p>
@@ -10710,10 +10835,8 @@ function giftSummaryRow(pk, g, big) {
                 ${big ? `
                 <div class="flex-1 min-w-0 flex flex-col justify-between">
                   <div>${info}</div>
-                  <p class="t-multiline font-medium text-foreground self-end">0 ₫</p>
                 </div>` : `
-                <div class="flex-1 min-w-0">${info}</div>
-                <p class="t-multiline font-medium text-foreground shrink-0">0 ₫</p>`}
+                <div class="flex-1 min-w-0">${info}</div>`}
               </div>`;
 }
 
@@ -10750,10 +10873,19 @@ function dafcRewards() {
   const maxPts = maxUsablePoints();
   if (cartPointsUsed > maxPts) cartPointsUsed = maxPts;
   const pointsExtra = `
-    <div id="pointsInputWrap" class="${cartReward === 'points' ? '' : 'hidden'} flex items-center gap-2 pl-8 pr-3 pb-3">
-      <input id="pointsInput" type="number" inputmode="numeric" min="0" max="${maxPts}" value="${cartPointsUsed}"
-             class="t-single w-20 h-9 border border-border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
-      <span class="t-single text-muted-foreground">/ ${maxPts.toLocaleString('vi-VN')} điểm tối đa</span>
+    <div id="pointsInputWrap" class="${cartReward === 'points' ? '' : 'hidden'} pl-8 pr-3 pb-3">
+      <!-- Ô nhập điểm về ĐÚNG KHUÔN field nổi như mọi ô nhập khác của 2 bản demo
+           (lệnh user 17/09/2026), trải hết bề ngang; số tối đa nép góc phải BÊN
+           TRONG ô thay vì đứng thành một chữ riêng cạnh ô. Trước là ô con w-20
+           (80px) cao h-9 — lạc khuôn, cao 36 trong khi field chuẩn cao 48.
+           ⚠ Nhãn nổi ăn theo selector input + label nên label PHẢI là phần tử
+           liền sau input; ô số tối đa đặt SAU label, không chen vào giữa. -->
+      <div class="field-float dk-points-field">
+        <input id="pointsInput" type="number" inputmode="numeric" min="0" max="${maxPts}" value="${cartPointsUsed}" placeholder=" "
+               class="t-multiline bg-input border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+        <label for="pointsInput" class="text-muted-foreground">Số điểm sử dụng</label>
+        <span id="pointsMax" class="t-single text-muted-foreground">Tối đa ${maxPts.toLocaleString('vi-VN')}</span>
+      </div>
     </div>`;
   return `
   <div id="rewardOpts" class="flex flex-col gap-2">
@@ -10946,7 +11078,7 @@ function screenCART() {
       <div class="w-4 shrink-0 flex items-center">
         <button class="chk ${c.sel === false || c.stock === 0 ? '' : 'on'} w-4 h-4 border border-border bg-background-3 rounded-xs shadow-sm flex items-center justify-center btn-o press"${c.stock === 0 ? ' disabled' : ''} data-check>${I.tick}</button>
       </div>
-      <div class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
+      <div class="dk-cart-thumb relative shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
         <!-- alt mang tên hàng: ảnh này là ĐƯỜNG DẪN vào PDP (data-product) và là
              thứ phân biệt các dòng trong giỏ. -->
         <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="${c.brand} ${c.name}">
@@ -10981,12 +11113,22 @@ function screenCART() {
             <span class="t-single qty w-7 min-h-6 flex items-center justify-center font-medium" style="color:var(--unofficial-ghost-foreground)">${String(c.qty).padStart(2,'0')}</span>
             <button class="qty-btn min-h-6 px-2 rounded-xs flex items-center justify-center press"${c.stock === 0 || (c.stock != null && (c.qty || 1) >= c.stock) ? ' disabled' : ''} data-step="1" aria-label="Tăng số lượng"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--unofficial-ghost-foreground)"><path d="M24,12c0,.276-.224,.5-.5,.5H12.5v11c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5V12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H11.5V.5c0-.276,.224-.5,.5-.5s.5,.224,.5,.5V11.5h11c.276,0,.5,.224,.5,.5Z"/></svg></button>
           </div>
+          <!-- THỨ TỰ 2 DÒNG GIÁ — chốt 17/09/2026 theo component cart-row (65:2122),
+               biến thể kind=discount và kind=pre-order:
+                 dòng TRÊN  = giá gạch ngang (12/16, mực mờ) + chip phần trăm giảm
+                 dòng DƯỚI  = giá phải trả (12/18, đậm, mực đỏ khi có giảm)
+               Trước lượt này code làm NGƯỢC: giá phải trả nằm trên cùng chip, giá gạch
+               ở dưới. Đảo lại để con số người ta thật sự trả là con số nằm gần đáy ô
+               nhất, thẳng hàng với bộ đếm số lượng bên trái.
+               Biến thể kind=default không có giá gạch lẫn chip nên chỉ còn MỘT dòng —
+               vì vậy cả cụm dòng trên bọc trong điều kiện, không in ra một hàng rỗng. -->
           <div class="pt-1 flex flex-col justify-end items-end min-w-0">
+            ${(c.was || c.off) ? `
             <div class="flex gap-1 items-center">
-              <p class="t-multiline price font-medium ${c.off ? 'text-destructive' : 'text-foreground'}">${c.now}</p>
+              ${c.was ? `<p class="t-single text-muted-foreground line-through">${c.was}</p>` : ''}
               ${c.off ? `<span class="t-single bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${c.off}</span>` : ''}
-            </div>
-            ${c.was ? `<p class="t-single text-muted-foreground line-through">${c.was}</p>` : ''}
+            </div>` : ''}
+            <p class="t-multiline price font-medium ${c.off ? 'text-destructive' : 'text-foreground'}">${c.now}</p>
           </div>
         </div>
       </div>
@@ -10995,7 +11137,9 @@ function screenCART() {
   return `
   <div class="w-full" data-scroller>
     ${navBar()}
-    <div class="max-w-[1440px] mx-auto w-full px-6 pt-6 pb-20">
+    <!-- dk-cart-wrap: đệm ngang 48 theo Figma 499:29797 (đè px-6=24). Khai CSS
+         thật vì bản build không có .px-12 — xem khối số đo cạnh .dk-cart-summary. -->
+    <div class="dk-cart-wrap max-w-[1440px] mx-auto w-full px-6 pt-6 pb-20">
       <!-- Khe 2 cột 80 (yêu cầu user 14/09/2026: đồng bộ với checkout bên dưới —
            trước là gap-6 = 24, Figma 31/08; trước nữa gap-10 = 40). -->
       <div class="flex items-start gap-20">
@@ -11033,7 +11177,9 @@ function screenCART() {
              Brief PDF trang 25: "giỏ hàng thu nhỏ lại trước chữ Pre-loved" — cột
              trái (flex-1) hẹp lại tương ứng, không cần đổi số ở đó. -->
         <div class="dk-sticky-side dk-cart-summary shrink-0 flex flex-col gap-4">
-          <div class="bg-card border border-border rounded-md rise">
+          <!-- Nền XÁM, KHÔNG bo góc (Figma 499:29797: khối 420x363 fill #f2f2f2,
+               viền #dfdfdf, cornerRadius 0). Trước là bg-card trắng + rounded-md. -->
+          <div class="bg-secondary border border-border rise">
             <!-- Đệm 16 -> 32 ngang / 24 dọc, 14/09/2026 (lệnh user: "giãn 2 cái padding
                  ra luôn, tham khảo Ralph Lauren cart và checkout") — đã mở thật giỏ hàng
                  RL (tài khoản khách, thêm 1 món) đo bằng DevTools: card "ORDER SUMMARY"
@@ -11061,7 +11207,9 @@ function screenCART() {
                    rõ 2 nhãn uppercase 12px bên dưới. -->
               <h2 class="t-lead dk-summary-title text-foreground">Tóm tắt đơn hàng</h2>
             </div>
-            <div class="px-4 pb-4 flex flex-col gap-4">
+            <!-- Đệm đều 16 cả 4 cạnh (Figma: thân khối pad 16/16/16/16, khe 16).
+                 Trước là px-4 pb-4 — thiếu đệm trên. -->
+            <div class="p-4 flex flex-col gap-4">
               <!-- 13/09/2026 — ĐẢO THỨ TỰ theo "Flow trên mobile đoạn dưới Giỏ hàng"
                    của brief (1. Ưu đãi & khuyến mãi + mã · 2. Ưu đãi thành viên): ô mã
                    lên TRƯỚC, khối thành viên xuống SAU — áp cả desktop để 2 bản khớp
@@ -11107,42 +11255,52 @@ function screenCART() {
               <!-- Không kẻ divider quanh khối tổng — đồng bộ discountPanel mobile
                    (3428:55499): khoảng trắng là thứ ngăn cách -->
               <div class="flex flex-col">
+                <!-- Dòng điểm thưởng LÊN TRÊN "Tạm tính" — Figma 499:29797, đọc thứ tự
+                     theo toạ độ y của từng chữ: mã ưu đãi -> điểm thưởng -> Tạm tính ->
+                     Phí vận chuyển -> Tổng cộng -> nút Đặt hàng. Trước nó nằm DƯỚI
+                     "Tổng cộng", tức cuối khối. -->
+                <p class="t-multiline text-secondary-foreground">${ckAuth
+                  ? `Hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`
+                  : `<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`}</p>
                 <div id="discountLines" class="flex flex-col">${discountLinesHTML()}</div>
                 <div class="flex justify-between items-center h-14">
                   <span class="t-lead font-medium text-foreground">Tổng cộng</span>
                   <span id="cartTotal" class="t-lead font-medium text-foreground">${vndCom(cartTotalNow())}</span>
                 </div>
-                <p class="t-multiline text-secondary-foreground">${ckAuth
-                  ? `Hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`
-                  : `<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`}</p>
-              </div>
-
-              <!-- "Bạn có phiếu mua hàng?" — ĐỔI CHỖ 13/09/2026 lên TRƯỚC nút Đặt
-                   hàng (brief PDF trang 25, "Flow trên mobile đoạn dưới Giỏ hàng":
-                   mục 4 "Phiếu mua hàng" đứng SAU mục 3 "Tạm tính" — tức TRƯỚC nút,
-                   không phải sau nút như quyết định cũ 09/09. Brief mới hơn nên theo
-                   brief; áp cả desktop cho khớp mobile.) -->
-              <div class="acc">
-                <button class="acc-trigger w-full h-9 flex items-center justify-between press">
-                  <span class="t-multiline font-medium text-foreground">Bạn có phiếu mua hàng?</span>
-                  ${accIco}
-                </button>
-                <div class="acc-body"><div class="acc-inner">
-                  <div class="flex flex-col gap-2 pt-2 pb-2">
-                    <p class="t-single text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
-                    <div class="flex gap-1">
-                      <div class="field-float flex-1 min-w-0">
-                        <input id="pbh" placeholder=" " class="t-multiline bg-input border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
-                        <label for="pbh" class="text-muted-foreground">DAFC Phiếu mua hàng</label>
-                      </div>
-                      <button id="applyPbh" disabled class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
-                    </div>
-                    <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
-                  </div>
-                </div></div>
               </div>
 
               <button data-checkout class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press flex items-center justify-center">Đặt hàng</button>
+            </div>
+          </div>
+
+          <!-- "Bạn có phiếu mua hàng?" TÁCH THÀNH KHỐI RIÊNG, nằm DƯỚI nút Đặt hàng
+               (Figma 499:29797: cột phải là 3 khối rời — tóm tắt 420x363 xám, phiếu
+               mua hàng 420x48 xám, khuyến mãi 420x143 trắng). Đây là ĐẢO LẠI quyết
+               định 13/09 đưa nó lên TRƯỚC nút theo brief PDF trang 25; Figma mới hơn
+               nên theo Figma. Khối cao 48 = 16 đệm + 16 dòng chữ + 16 đệm, tức đúng
+               trạng thái accordion ĐANG ĐÓNG. -->
+          <div class="bg-secondary border border-border px-4 rise">
+            <div class="acc">
+              <!-- Vỏ chỉ đệm NGANG, chiều cao 48 do chính nút gánh (h-12) — Figma cho
+                   khối này cao đúng 48 khi accordion đóng. Để p-4 bọc nút h-9 thì ra
+                   68, cao hơn thiết kế 20. -->
+              <button class="acc-trigger w-full h-12 flex items-center justify-between press">
+                <span class="t-multiline font-medium text-foreground">Bạn có phiếu mua hàng?</span>
+                ${accIco}
+              </button>
+              <div class="acc-body"><div class="acc-inner">
+                <div class="flex flex-col gap-2 pt-2 pb-2">
+                  <p class="t-single text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
+                  <div class="flex gap-1">
+                    <div class="field-float flex-1 min-w-0">
+                      <input id="pbh" placeholder=" " class="t-multiline bg-input border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+                      <label for="pbh" class="text-muted-foreground">DAFC Phiếu mua hàng</label>
+                    </div>
+                    <button id="applyPbh" disabled class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
+                  </div>
+                  <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
+                </div>
+              </div></div>
             </div>
           </div>
 
@@ -11163,7 +11321,7 @@ function screenCART() {
                "Tóm tắt đơn hàng" phía trên, cả 3 khối trong cột phải nay cùng 1 số đệm
                ngang). Đệm dọc giữ nguyên py-2 (8) — số đo Figma 9 chỉ lệch 1px, không
                đáng kể/không rõ là chủ ý. -->
-          <div class="border border-border rounded-md py-2 px-4 flex flex-col gap-2">
+          <div class="dk-promo-box border border-border py-2 px-4 flex flex-col gap-2">
             <p class="t-single text-foreground">Chương trình khuyến mãi (3)</p>
             <div id="promoPeek" class="promo-peek flex flex-col gap-2">
               ${promoRule(
@@ -12249,7 +12407,7 @@ function screenCHECKOUT() {
                     <p class="text-[12px] text-muted-foreground mt-0.5">${c.variant} · SL ${c.qty}</p>
                     ${c.preorder ? `<p class="text-[12px] text-foreground-alt mt-0.5">Nhận hàng dự kiến <span class="font-medium">${c.preorder}</span></p>` : ''}
                   </div>
-                  <p class="t-multiline font-medium text-foreground self-end">${c.now}</p>
+                  <p class="t-multiline pc-price font-medium text-foreground self-end">${c.now}</p>
                 </div>
               </div>` + (c.gift && GIFT_PROGRAMS[c.gift] ? giftSummaryRow(c.gift, null, true) : '')).join('')}
             ${orderGiftState().earned.map(t => giftSummaryRow(t.program, null, true)).join('')}
@@ -17999,8 +18157,11 @@ function refreshCartSummary(root) {
     if (cartPointsUsed > maxPts) cartPointsUsed = maxPts;
     pointsInput.max = maxPts;
     if (document.activeElement !== pointsInput) pointsInput.value = cartPointsUsed;
-    const maxLabel = pointsInput.nextElementSibling;
-    if (maxLabel) maxLabel.textContent = `/ ${maxPts.toLocaleString('vi-VN')} điểm tối đa`;
+    /* 17/09/2026 — PHẢI lấy bằng id: từ khi ô nhập về khuôn field nổi thì phần tử
+       liền sau input là <label> của nhãn nổi, không phải ô số tối đa. Giữ
+       nextElementSibling là ghi đè mất chữ nhãn. */
+    const maxLabel = root.querySelector('#pointsMax');
+    if (maxLabel) maxLabel.textContent = `Tối đa ${maxPts.toLocaleString('vi-VN')}`;
     const val = root.querySelector('#pointsUsedVal');
     if (val) val.textContent = `${cartPointsUsed.toLocaleString('vi-VN')} điểm`;
   }
@@ -19625,7 +19786,7 @@ document.body.insertAdjacentHTML('beforeend', `
                 <span class="t-single w-7 min-h-6 flex items-center justify-center font-medium" style="color:var(--unofficial-ghost-foreground)">${String(c.qty || 1).padStart(2,'0')}</span>
                 <button class="cc-qty min-h-6 px-2 rounded-xs flex items-center justify-center press"${c.stock != null && (c.qty || 1) >= c.stock ? ' disabled' : ''} data-cc-step="1" aria-label="Tăng số lượng"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--unofficial-ghost-foreground)"><path d="M24,12c0,.276-.224,.5-.5,.5H12.5v11c0,.276-.224,.5-.5,.5s-.5-.224-.5-.5V12.5H.5c-.276,0-.5-.224-.5-.5s.224-.5,.5-.5H11.5V.5c0-.276,.224-.5,.5-.5s.5,.224,.5,.5V11.5h11c.276,0,.5,.224,.5,.5Z"/></svg></button>
               </div>
-              <span class="t-multiline font-medium ${c.off ? 'text-destructive' : 'text-foreground'} whitespace-nowrap">${c.now}</span>
+              <span class="t-multiline pc-price font-medium ${c.off ? 'text-destructive' : 'text-foreground'} whitespace-nowrap">${c.now}</span>
             </div>
           </div>
         </div>`;
