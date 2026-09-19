@@ -940,7 +940,15 @@ window.RESP = (function () {
 
   /* Hộp của khối quà theo đơn (Figma 524:46964): tấm trắng có viền, đệm 16 do
      chính hàng mở gánh. Thẻ quà đã chọn nằm trong cùng hộp, ngay dưới hàng. */
-  .gift-order-card > .gift-group { border: 0; }
+  /* 18/09/2026 — THẺ QUÀ ĐÃ CHỌN nằm trong hộp "Quà tặng theo đơn hàng": thụt vào
+     thêm 8 mỗi bên + 8 dưới (lệnh user "cho padding vào 16 hay 8 cho thụt vô trong
+     xíu"). Trước đó thẻ chạy sát mép trong của hộp, đọc ra như một dòng dính vào
+     viền chứ không phải một món nằm TRONG hộp. Không kẻ viền: hàng mở phía trên đã
+     là ranh giới rồi. */
+  .gift-order-card > .gift-group {
+    border: 0;
+    padding: 0 8px 8px;
+  }
 
   /* ── SỐ TIỀN TRONG GIỎ DÙNG CHỮ SỐ ĐẲNG CHIỀU (20/08/2026) ────────────────────
      Màn giỏ xếp giá theo CỘT ở mép phải (giá từng món, tạm tính, các dòng giảm,
@@ -1689,6 +1697,19 @@ window.RESP = (function () {
   html.skin-mt [data-screen="cart"] #orderGift {
     border-top: 0;
     margin-top: 16px;
+  }
+
+  /* Tiêu đề "Tóm tắt đơn hàng" của panel giỏ (18/09/2026) — PORT NGUYÊN rule đang
+     chạy ở desktop.html để 2 bản cùng một mặt chữ: Libre Bodoni 18/24 chữ thường,
+     letter-spacing 0.5px như mọi text style. Markup mang t-lead (14/20) làm nền,
+     rule này nâng lên bậc 18/24. */
+  html.skin-mt [data-screen="cart"] .dk-summary-title {
+    font-family: var(--font-head);
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0.5px;
   }
   /* Quà theo sản phẩm phải NẰM CHUNG BLOCK với món của nó (20/08/2026, yêu cầu
      user: *"gift đang nằm rời rạc ra khỏi block thẻ sản phẩm hãy làm cho nó nằm
@@ -9865,6 +9886,14 @@ function discountPanel() {
     </div>` : '';
   return `
   <div class="py-6 px-4 bg-secondary flex flex-col gap-4 rise">
+    <!-- TIÊU ĐỀ "Tóm tắt đơn hàng" — THÊM 18/09/2026 (lệnh user: mục tóm tắt ở mobile
+         phải xếp đồng nhất với desktop). Bản này từ trước tới giờ KHÔNG hề có tiêu đề,
+         panel bắt đầu thẳng bằng ô mã — đó là khác biệt lớn nhất so với desktop.
+         Dùng ĐÚNG cặp class của desktop (t-lead + hook dk-summary-title) chứ không
+         mượn class khác, để 2 bản chung một hook; rule CSS của hook khai ngay dưới
+         rule #orderGift trong khối skin-mt. -->
+    <h2 class="t-lead dk-summary-title text-foreground">Tóm tắt đơn hàng</h2>
+
     <!-- THỨ TỰ KHỐI TÓM TẮT — user chốt 18/09/2026, giống hệt bản desktop:
          Tạm tính · Giảm giá (…) · [ô nhập mã ưu đãi] · Tổng cộng · dòng điểm thưởng.
          Trước đó ô mã đứng ĐẦU panel, cụm tiền nằm sau. Nay cụm tiền lên trước, ô mã
@@ -9897,7 +9926,11 @@ function discountPanel() {
           <div class="flex-1 min-w-0 flex flex-col">
             <div class="field-float">
               <input id="cartCode" placeholder=" " class="t-multiline bg-background border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
-              <label for="cartCode" class="text-muted-foreground">Mã giảm giá</label>
+              <!-- 18/09/2026 — nhãn là ĐỘNG TỪ (việc phải làm) chứ không chỉ gọi tên
+                   trường. Câu dài "Vui lòng nhập mã giảm giá của bạn" thử trước đó bị
+                   CẮT ở bản mobile: hộp nhãn chỉ rộng 202 (ô 247 trừ đệm, trừ 36 chừa
+                   cho mũi tên picker) mà câu cần 247 — user chốt rút gọn. -->
+              <label for="cartCode" class="text-muted-foreground">Nhập mã giảm giá</label>
             </div>
           </div>
           <button id="applyCode" disabled class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
@@ -9917,33 +9950,34 @@ function discountPanel() {
         : `<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`}</p>
     </div>
 
-    <!-- "Bạn có phiếu mua hàng?" — CHUYỂN VÀO ĐÂY 13/09/2026, từ chỗ cũ TRƯỚC là
-         SAU nút "Đặt hàng" (quyết định 09/09, coi đây là 1 phương thức mua hàng
-         chứ không phải ưu đãi). Brief PDF trang 25 liệt "Phiếu mua hàng" là mục 4
-         trong luồng, đứng NGAY SAU mục 3 "Tạm tính" — tức TRƯỚC nút, không phải
-         sau. Brief mới hơn nên theo brief; markup/khuôn giữ NGUYÊN, chỉ đổi chỗ.
-         id="pbhAcc" MỚI THÊM: 2 rule CSS trước bám #cartCta .acc-trigger /
-         #cartCta .acc-inner p (nhãn hoa 500 + màu chữ phụ) — dời khối ra khỏi
-         #cartCta thì 2 rule đó trật, phải đổi hook sang id riêng của khối.
-         (LƯU Ý: comment này nằm TRONG template literal — KHÔNG dùng backtick.) -->
-    <div id="pbhAcc" class="acc">
-      <button class="acc-trigger w-full h-9 flex items-center justify-between press">
-        <span class="t-multiline font-medium text-foreground">Bạn có phiếu mua hàng?</span>
-        ${accIco}
-      </button>
-      <div class="acc-body"><div class="acc-inner">
-        <div class="flex flex-col gap-2 pt-2 pb-2">
-          <p class="t-single text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
-          <div class="flex gap-1">
-            <div class="field-float flex-1 min-w-0">
-              <input id="pbh" placeholder=" " class="t-multiline bg-background border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
-              <label for="pbh" class="text-muted-foreground">DAFC Phiếu mua hàng</label>
+    <div id="cartCta" class="flex flex-col gap-4">
+      <button data-checkout class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center">Đặt hàng</button>
+      <!-- "Bạn có phiếu mua hàng?" — VỀ LẠI SAU NÚT ĐẶT HÀNG (18/09/2026, lệnh user
+           "mục tóm tắt đơn hàng ở mobile xếp đồng nhất với desktop"; bản desktop vốn
+           để khối này dưới nút). Trước đó 13/09 nó nằm TRONG panel, TRƯỚC nút, theo
+           brief PDF trang 25 (mục 4 đứng ngay sau mục 3 "Tạm tính") — lệnh user mới
+           hơn nên theo lệnh, ghi lại đây để biết mình đang lệch brief chỗ nào.
+           Hook CSS vẫn là id riêng #pbhAcc nên dời chỗ không làm trật rule nào.
+           (LƯU Ý: comment này nằm TRONG template literal — KHÔNG dùng backtick.) -->
+      <div id="pbhAcc" class="acc">
+        <button class="acc-trigger w-full h-9 flex items-center justify-between press">
+          <span class="t-multiline font-medium text-foreground">Bạn có phiếu mua hàng?</span>
+          ${accIco}
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <div class="flex flex-col gap-2 pt-2 pb-2">
+            <p class="t-single text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
+            <div class="flex gap-1">
+              <div class="field-float flex-1 min-w-0">
+                <input id="pbh" placeholder=" " class="t-multiline bg-background border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+                <label for="pbh" class="text-muted-foreground">DAFC Phiếu mua hàng</label>
+              </div>
+              <button id="applyPbh" disabled class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
             </div>
-            <button id="applyPbh" disabled class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
+            <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
           </div>
-          <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
-        </div>
-      </div></div>
+        </div></div>
+      </div>
     </div>
   </div>`;
 }
@@ -10131,14 +10165,13 @@ function screenCART() {
       </div>
     </div>
 
-    <!-- Ưu đãi Rewards + Mã giảm giá + Phiếu mua hàng + Summary — 1 panel theo
-         Figma 3428:55499, xem discountPanel(). Phiếu mua hàng nay VẼ TRONG panel
-         đó (13/09/2026, brief trang 25) nên #cartCta chỉ còn nút Đặt hàng. -->
+    <!-- Ưu đãi Rewards + Mã giảm giá + Summary + nút Đặt hàng + Phiếu mua hàng —
+         TẤT CẢ trong MỘT panel nền xám (18/09/2026, lệnh user: "cho nút đặt hàng và
+         cái phiếu mua hàng nằm nhúng màu như bản desktop"). Trước đó #cartCta đứng
+         NGOÀI panel nên nút + accordion nằm trên nền trắng, trong khi desktop để cả
+         cụm trong thẻ .dk-cart-block. Xem discountPanel(). -->
     ${discountPanel()}
 
-    <div id="cartCta" class="px-4 py-4 flex flex-col gap-4">
-      <button data-checkout class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center">Đặt hàng</button>
-    </div>
 
     <!-- Dải gợi ý (11/09/2026) — dùng lại đúng khuôn dải của PDP: tiêu đề mục 18,
          thẻ 170 cuộn ngang, khe 4. Nguồn thẻ đi qua lookRailCards() nên thẻ ở đây
@@ -13508,6 +13541,7 @@ const I18N = {
      VALUE nên 2 key trùng bản dịch thì key sau đè key trước, dịch ngược EN→VN
      sẽ trả nhãn ở giỏ về dạng thiếu dấu &. */
   'Mã giảm giá':'Discount code',
+  'Nhập mã giảm giá':'Enter discount code',
   /* 24/08/2026 — 2 chuỗi của đợt đồng bộ 2 khối ưu đãi: title khối thành viên (đổi
      từ "Ưu đãi chương trình DAFC Rewards") + chữ hành động của hàng bấm mở sheet. */
   'Ưu đãi thành viên':'Member offers', 'Chọn mã ưu đãi':'Choose a promo code',
