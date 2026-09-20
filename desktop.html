@@ -536,6 +536,58 @@ window.RESP = (function () {
   .acc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .34s cubic-bezier(.22,1,.36,1); }
   .acc.open .acc-body { grid-template-rows: 1fr; }
   .acc-inner { overflow: hidden; }
+
+  /* ── CHECKOUT — nhịp khối học theo Ralph Lauren (lệnh user 19/09/2026) ───
+     Lệnh: "ở check out kích thước nút, cách phân chia block, nhấn màu, border bạn
+     học theo website này" + ảnh chụp trang Checkout của ralphlauren.com (khổ 1720).
+     Số đo đọc BẰNG MÁY từ chính ảnh đó rồi QUY VỀ khổ 1440 của ta (hệ số 0,837) —
+     tham chiếu là để chỉnh linh kiện SẴN CÓ, không bê nguyên số của họ:
+       kẻ chia bước   1px #e1e1e5 chạy hết bề ngang cột, KHÔNG có khung bao ngoài
+       số thứ tự      huy hiệu TRÒN 40 (ta 32) thay cho chữ "1." dính trước tên bước
+       thân bước      thụt vào thẳng hàng tiêu đề: 56 (ta 44 = huy hiệu 32 + khe 12)
+       thẻ đang chọn  viền đậm + NỀN #f2f3f5 (ta --general-secondary) — trước chỉ đổi viền
+       nút chính      330x64 và KHÔNG chạy hết bề ngang (ta 280x56)
+     ------------------------------------------------------------------------- */
+  .ck-step-no {
+    flex: 0 0 32px; height: 32px; border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--general-secondary); color: var(--general-secondary-foreground);
+    transition: background .3s ease, color .3s ease;
+  }
+  /* Chỉ bước ĐANG MỞ mới lấy nền đậm — đúng cách trang tham chiếu đánh dấu bước
+     hiện tại. Bắt bằng :has() vì trạng thái bước vốn đã nằm sẵn ở .ck-open.is-open
+     (paintCheckout bật/tắt lớp đó), không phải thêm lớp mới nào. */
+  .ck-sec:has(> .ck-open.is-open) .ck-step-no {
+    background: var(--general-primary); color: var(--general-primary-foreground);
+  }
+  /* "Nhấn màu": thẻ đang chọn THÊM nền nhạt. Khoanh trong [data-screen="checkout"]
+     vì .opt còn dùng ở giỏ hàng (thẻ quà, thẻ địa chỉ) — mấy chỗ đó bản vẽ chốt nền
+     trắng cả 2 trạng thái, không kéo theo. */
+  [data-screen="checkout"] .opt.on { background: var(--general-secondary); }
+  /* Thẻ KHÔNG bấm được (COD khi đơn quá 20 triệu) đổi sang MẶT TRẮNG. Trước
+     đây nó lấy nền xám từ rule .btn-o[disabled] — hợp lý khi thẻ đang chọn còn mặt
+     trắng, nhưng từ lượt "nhấn màu" 19/09/2026 thì một mặt xám sẽ mang HAI nghĩa
+     ngược nhau (đang chọn / không dùng được). Giữ opacity .5 sẵn có — mờ đã đủ nói
+     "không dùng được", khỏi phải mượn thêm mặt xám. */
+  [data-screen="checkout"] .opt[disabled] { background: var(--general-background); }
+  /* 20/09/2026 — khối ô nhập VAT có mặt accent, nên khi chọn "Không xuất hoá đơn"
+     (handler ghi innerHTML = '') phải ẨN HẲN, không thì còn lại một ô xám rỗng đứng
+     giữa bước. Cùng cách đã dùng cho #orderGift bên giỏ hàng. */
+  #vatFieldRows:empty { display: none; }
+
+  /* BỎ KHUNG bao quanh các bước (lệnh user 19/09/2026: "ở bản desktop bỏ cái khung
+     ra luôn"): các bước nay chỉ ngăn nhau bằng kẻ mảnh chạy hết bề ngang cột, đúng
+     như trang tham chiếu. Kẻ TRÊN của bước đầu bỏ đi — hết khung rồi thì đường đó
+     thành một gạch lửng ngay dưới tiêu đề màn; kẻ đóng dưới cùng giữ lại để danh
+     sách có điểm dừng. */
+  #ckSections { border-bottom: 1px solid var(--unofficial-border-1); }
+  #ckSections > .ck-sec:first-child { border-top: 0; }
+  /* Thân bước thụt vào cho thẳng hàng tiêu đề: 28 ở đây + px-4 sẵn có của từng khối
+     con = 44 = huy hiệu 32 + khe 12. Đặt ở .acc-inner để khỏi phải sửa px-4 trong
+     hàng chục chuỗi markup con; chọn đường dẫn con TRỰC TIẾP để accordion lồng bên
+     trong thân bước (nếu có) không bị cộng thêm lần nữa. */
+  #ckSections > .ck-sec > .acc-body > .acc-inner { padding-left: 28px; }
+
   .acc.open .acc-chev { transform: rotate(90deg); }
   .acc-chev { transition: transform .3s ease; }
   /* Bullet trong thân accordion (đặc điểm / bảo quản / chính sách đổi hàng ở PDP):
@@ -722,6 +774,19 @@ window.RESP = (function () {
      màn checkout có 2 loại radio: vòng dày 2px đổi đen (vận chuyển / thanh
      toán) cạnh vòng 1px của thẻ cửa hàng và sổ địa chỉ. */
   .radio.on .radio-dot { transform: scale(1); opacity: 1; }
+  /* 19/09/2026 (lệnh user: "radio button chọn thì hiện cái check trong hình tròn"):
+     ruột của .radio-dot đổi từ chấm tròn 8px sang ĐÚNG DẤU CHECK đang dùng cho ô tick
+     (I.tick) — cùng một hình thì hai loại điều khiển đọc ra cùng một nghĩa "đang chọn".
+     Đổi ở MARKUP chứ không vẽ bằng ::after xoay 45°: bộ chuyển DOM sang Figma có đọc
+     pseudo-element nhưng KHÔNG đọc transform, dấu check sẽ ra một ô chữ nhật trong file
+     bàn giao.
+     20/09/2026 (lệnh user đợt 2): vòng tròn đang chọn ĂN NỀN ĐEN, dấu check TRẮNG —
+     đúng khuôn ô tick .chk đã có sẵn (nền primary + viền primary + mực primary-foreground),
+     nên hai loại điều khiển nay giống hệt nhau, chỉ khác bòn tròn / bòn vuông.
+     ⚠ ĐẢO HẲN ghi chú cũ theo Figma 3547:55856 ("vòng radio LUÔN viền 1px #d4d4d4 kể
+     cả khi chọn, chỉ chấm giữa 8px hiện ra") — nay vừa đổi nền vừa đổi viền. */
+  .radio .radio-dot > svg { width: 10px; height: 10px; }
+  .radio.on { background: var(--general-primary); border-color: var(--general-primary); }
   /* Thẻ rich-radio khi chọn: chỉ ĐỔI VIỀN sang #262626, KHÔNG tô nền
      (bản vẽ để nền trắng ở cả 2 trạng thái). */
   .opt.on { border-color: var(--general-secondary-foreground); }
@@ -1033,7 +1098,10 @@ window.RESP = (function () {
   }
   /* Hai khối cột phải (tóm tắt + phiếu mua hàng): Figma cho nền accent-0 và
      KHÔNG viền. Trước đây là bg-secondary + viền. */
-  .dk-cart-block { background: var(--unofficial-accent-0); }
+  /* 20/09/2026 (thiết kế user, Figma 550:25723): mặt panel tóm tắt đậm hơn một bậc
+     — #fafafa (accent) lên #f5f5f5 (secondary). Đủ ấm để khối ưu đãi DAFC nền TRẮNG
+     lồng bên trong đọc ra là một tấm riêng; ở #fafafa thì trắng-trên-gần-trắng không thấy. */
+  .dk-cart-block { background: var(--general-secondary); }
   /* Khe 20 dưới tiêu đề khối tóm tắt. PHẢI khai CSS thật: bản tailwind.css dựng
      sẵn KHÔNG có .pb-5 (đã grep — có pt-5, pb-4, pb-6 nhưng không có pb-5). Lượt
      trước tôi viết pb-5 và nó là CLASS CHẾT, làm tiêu đề dính sát ô nhập mã. */
@@ -1141,16 +1209,20 @@ window.RESP = (function () {
     border: 1px solid var(--general-border);
     box-shadow: none;
   }
-  /* Nhãn nhóm "Đã có tài khoản?" / "Chưa có tài khoản?" của popup đăng nhập giỏ
-     hàng (13/09/2026, brief PDF trang 28) — đúng vai NHÃN của §1.1 STYLE-RULES.md
-     (500 + HOA đi cùng nhau, không phải ngoại lệ) nên khai thẳng, không mượn
-     .font-medium (sẽ bị khối "Mọi độ đậm về 400" quét mất). */
-  #loginPop .lp-label { font-weight: 500; text-transform: uppercase; }
-  /* Cột nội dung của popup đăng nhập giỏ hàng (tràn nguyên trang từ 13/09/2026) —
-     không giãn hết bề ngang 1440+, giữ dễ đọc. Không có utility max-w-[Npx] nào
-     trong bản build (đã kiểm: chỉ đúng 1 dòng "max-w-" toàn file), nên khai class
-     riêng như .dk-cart-summary đã làm, không dùng arbitrary value chết. */
-  #loginPop .lp-2col { width: 100%; max-width: 900px; margin: 0 auto; }
+  /* 19/09/2026 — BỐ CỤC 2 CỘT CỦA #loginPop, đọc thẳng từ Figma 544:23723 (user
+     tự sửa trên Figma rồi yêu cầu áp lại vào code).
+     Nhãn nhóm CŨ là .lp-label (Inter 12/16 HOA 500) nay LÊN .t-section-title
+     (Libre Bodoni 18/24 chữ thường) nên rule .lp-label hết việc, xoá luôn.
+     .lp-2col BỎ kẹp max-width 900 — Figma cho nó tràn hết bề ngang khối (1390 ở
+     khổ 1440); chỗ giữ cho chữ dễ đọc nay là ĐỆM TRONG của từng cột: 120 phía
+     ngoài, 80 phía trong, nên cột chữ vẫn đúng 455.
+     Vạch dọc giữa 2 cột là PHẦN TỬ RIÊNG (.lp-line) chứ không phải border của cột:
+     Figma để nó là một Line đứng giữa, cách mỗi cột 40 — border của cột sẽ dính
+     vào mép cột chứ không nằm giữa. */
+  #loginPop .lp-2col { width: 100%; padding-top: 40px; padding-bottom: 40px; }
+  #loginPop .lp-col-l { padding: 0 80px 0 120px; }
+  #loginPop .lp-col-r { padding: 0 120px 0 80px; }
+  #loginPop .lp-line { width: 1px; background: var(--general-border); }
   /* Option trong menu Sắp xếp có phản hồi rê/focus (bổ sung 28/08 — trước đây
      .sort-opt trần trụi, rê qua không đổi gì, lạc lõng giữa bản desktop nơi
      hover là ngôn ngữ chính): lấy đúng nền ghost-hover đang dùng cho các hàng
@@ -1776,15 +1848,19 @@ window.RESP = (function () {
   .field-float > textarea:focus + label, .field-float > textarea:not(:placeholder-shown) + label {
     top: 8px; transform: translateY(0); font-size: 10px; line-height: 14px;
   }
+  /* 19/09/2026 (lệnh user): ô nhiều dòng (Ghi chú đơn hàng) để nhãn nghỉ ở TRÊN
+     cùng, không canh giữa hộp như ô một dòng. Hộp cao tối thiểu 72 mà nhãn đứng giữa
+     thì nó rơi xuống dòng thứ hai, chệch hẳn chỗ con trỏ sẽ đứng. Số 14 lấy ĐÚNG
+     theo ô một dòng (cao 48, nhãn 20 canh giữa = top 14) nên hai loại ô vẫn cùng
+     một đường dóng chữ. */
+  .field-float > textarea + label { top: 14px; transform: translateY(0); }
   /* Ô NHẬP ĐIỂM (17/09/2026): số tối đa nép sát mép phải BÊN TRONG ô. Phải chừa
      chỗ cho nó ở cả input lẫn nhãn nổi — nhãn gốc chỉ chừa 36px bên phải, chữ dài
      như "Số điểm sử dụng" sẽ chạy chồng lên "Tối đa 1.860" nếu không nới. */
-  .dk-points-field > input { padding-right: 104px; }
-  .dk-points-field > label { right: 104px; }
-  .dk-points-field > span {
-    position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
-    pointer-events: none;
-  }
+  /* ĐÃ GỠ 20/09/2026 — 3 rule của .dk-points-field (chừa 104px bên phải ô cho chữ
+     "Tối đa N" nằm BÊN TRONG). Từ lượt này ô điểm đi kèm nút Áp dụng nên chữ
+     "Tối đa" đã rời xuống thành dòng riêng; không còn phần tử nào mang class này
+     nữa nên để lại là rule chết. */
   .field-float.is-btn > button { width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px; border-color: var(--general-border); }
   .field-float.is-btn > label { top: 50%; transform: translateY(-50%); }
   .field-float.is-btn.is-filled > label, .field-float.is-btn:focus-within > label {
@@ -2424,19 +2500,15 @@ window.RESP = (function () {
      KHOANH VÙNG [data-screen="cart"]: khung Figma chỉ là trang GIỎ HÀNG. Heading
      cùng tên bên checkout GIỮ NGUYÊN Inter 14/20 HOA — từ trước tới nay 2 panel
      vẫn đi cùng nhau, nên đây là chỗ CHỜ USER CHỐT có đồng bộ hay không. */
-  html.skin-mt [data-screen="cart"] .dk-summary-title {
-    font-family: var(--font-head);
-    font-size: 18px;
-    line-height: 24px;
-    font-weight: 400;
-    text-transform: none;
-    /* 18/09/2026 — TRƯỚC ĐÂY LÀ `normal`, SAI. Viết `normal` hôm 17/09 chỉ để gỡ
-       rule HOA cũ, nhưng kéo rơi luôn 0.5px mà MỌI text style Figma đều có
-       (t-display-title · t-section-title · t-block-title · t-card-title · t-body-*
-       · t-label-* · t-button — cả 9 style đều 0.5px). Hệ quả: node "Tóm tắt đơn
-       hàng" dựng sang Figma không bám được style t-section-title 18/24. */
-    letter-spacing: 0.5px;
-  }
+  /* ĐÃ GỠ 20/09/2026 — rule riêng cho tiêu đề panel tóm tắt ở trang GIỎN (đặt
+     17/09 theo Figma 499:29797: Libre Bodoni 18/24 chữ thường, 18/09 vá thêm
+     letter-spacing 0.5px). Thiết kế mới của user (550:25723) đọc ra style
+     t-label-overlay = Inter Medium 16/24 CHỮ HOA — tức quay về đúng rule chung
+     .dk-summary-title ngay trên (hoa + 500 + 0.5px), cỡ chữ do .t-overlay trong
+     markup cấp. GỠ hẳn thay vì sửa: để lại là hai nguồn cho cùng một số đo, và
+     rule này (0,3,1) nặng hơn rule chung nên sẽ thắng ở mọi thuộc tính nó khai.
+     => NAY 2 panel (giỏ + thanh toán) lại đi cùng nhau, chỉ khác cỡ: giỏ 16/24,
+     thanh toán 14/20 (.t-lead) — đúng như hai khung Figma đang ghi. */
 
   /* 2c — ĐÃ GỠ 15/09/2026. Rule cũ đẩy tiêu đề BƯỚC của checkout vào tầng NHÃN
      (12/16 · 500 · HOA, theo 13.1 "nhãn nhóm menu/footer/accordion"). Lệnh user
@@ -2718,7 +2790,16 @@ window.RESP = (function () {
      NHẤT, một id trong đó là kéo cả rule lên (1,3,0) và sẽ đè lung tung lên
      .btn-p/.btn-o. Tách rule riêng cho nó.
      KHAI GIỐNG HỆT ở index.html và desktop.html. */
-  html.skin-mt.skin-li :is(.btn-p, .btn-o:not(.opt, .chip, .chk, .pr-9), .btn-s:not(.af-chip)) {
+  /* 20/09/2026 — THÊM [data-reward] vào danh sách loại trừ. Đây là GỐC RỄ của lỗi
+     "nội dung trong thẻ ưu đãi bị viết hoa": từ 13/09/2026 class .opt dời ra div bọc
+     ngoài (data-reward-card), còn nút bên trong chỉ mang .btn-o — nên chốt chặn
+     :not(.opt) không còn trúng, cả ruột thẻ ăn typo NÚT (12/16 + CHỮ HOA) và truyền
+     xuống mọi dòng chữ con (text-transform là thuộc tính kế thừa). Suốt từ đó đến
+     nay thẻ ưu đãi đọc ra như một cái nhãn nút khổng lồ, không ai bắt được vì
+     nhìn vẫn "đều đẹp".
+     Nút đó KHÔNG phải nút hành động — nó là MẶT THẺ (bấm để chọn), cùng loại
+     với 4 thứ đã loại trừ sẵn (.opt .chip .chk .pr-9). */
+  html.skin-mt.skin-li :is(.btn-p, .btn-o:not(.opt, .chip, .chk, .pr-9, [data-reward]), .btn-s:not(.af-chip)) {
     font-size: 12px; line-height: 16px; text-transform: uppercase;
   }
   html.skin-mt.skin-li #sortBtn { font-size: 12px; line-height: 16px; text-transform: uppercase; }
@@ -3686,6 +3767,12 @@ window.RESP = (function () {
      với ngoại lệ (b) đã ghi danh cho giá hàng giỏ. Cần ghi thành ngoại lệ có tên
      trong STYLE-RULES §1.1, CHƯA làm. */
   html.skin-mt [data-screen="checkout"] .ck-total > span { font-weight: 500; }
+  /* 20/09/2026 — tên lựa chọn trong thẻ ưu đãi DAFC: 14/20 đậm 500 CHỮ THƯỜNG,
+     đúng style t-label-lead của thiết kế. Cùng dạng ngoại lệ có tên như .ck-total
+     ngay trên (bộ da quét mọi utility độ đậm về 400).
+     ⚠ NỢ LUẬT giống hệt .ck-total: 500 + chữ thường phá cặp "500 luôn đi với HOA"
+     (§1.1) — cần ghi thành ngoại lệ có tên trong STYLE-RULES §1.1, CHƯA làm. */
+  html.skin-mt [data-screen="cart"] .dk-reward-name { font-weight: 500; }
   /* ── 2 TITLE CỦA CỤM ƯU ĐÃI = NHÃN NHÓM (24/08/2026, port từ index.html) ────────
      Concept "title + nội dung" cho cả 2 khối ưu đãi: title lên bậc nhãn của bộ da
      (12/16 · 500 · HOA — cùng bậc nhãn footer/menu/bộ lọc), nội dung giữ họ nội dung.
@@ -4816,6 +4903,11 @@ window.RESP = (function () {
      ⚠ Lớp thử `html.hm-chuan` (chỉ bật ở tab Nữ, desktop) vẫn ép dòng này về 12/18 —
      tab Nam giữ 14/20. Mặt chữ thì cả hai tab đều Libre sau lượt này. */
   html.skin-mt.skin-li p.hm-story-title { font-family: var(--font-head); }
+  /* 20/09/2026 — tiêu đề khối ưu đãi DAFC trong panel tóm tắt giỏ: cùng bậc
+     t-card-title (Libre Bodoni 14/20) với tiêu đề thẻ ngay trên. Cỡ chữ do .t-lead
+     trong markup cấp, ở đây CHỈ đổi mặt chữ — không khai lại 14/20 để khỏi hai
+     nguồn cho một số đo. */
+  html.skin-mt.skin-li .dk-reward-title { font-family: var(--font-head); }
   /* ĐÃ GỠ 15/09/2026 — `.hm-spot-copy img, .hm-spot-brand-cap img { filter: brightness(0)
      invert(1) }` (đảo logo mực đen thành trắng để đọc trên veil). Khối thương hiệu trang chủ
      THÔI dùng file PNG: cả 3 hãng nay vẽ tên bằng chữ, nên 2 selector này không còn trúng
@@ -10827,7 +10919,7 @@ function giftOptionsHTML(pk, tieuDe = false) {
       return `
       <button data-gift-opt="${k}" data-gift-prog="${pk}" class="opt ${on ? 'on' : ''} w-full flex gap-3 items-center border ${on ? 'border-border-5' : 'border-border'} rounded-xs p-2 bg-background text-left press">
         <span class="radio ${on ? 'on' : ''} w-4 h-4 rounded-full border border-border-3 flex items-center justify-center shrink-0">
-          <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+          <span class="radio-dot text-primary-foreground flex items-center justify-center">${I.tick}</span>
         </span>
         <!-- 52×60: kích thước thumb CÓ SẮN trong tailwind.css (mini cart dùng chung).
                w-[40px]/h-[46px] KHÔNG được build — dùng là ảnh bụng ra kích thước gốc 1200×1484. -->
@@ -11042,10 +11134,15 @@ function dafcRewards() {
     <div class="opt ${on ? 'on' : ''} border border-border bg-background rounded-xs" data-reward-card="${id}">
       <button class="w-full flex gap-2 items-start px-3 py-2 btn-o press text-left" data-reward="${id}">
         <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
-          <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+          <span class="radio-dot text-primary-foreground flex items-center justify-center">${I.tick}</span>
         </span>
+        <!-- 20/09/2026 (lệnh user: nội dung trong thẻ theo thiết kế, typo THƯỞNG):
+             tên lựa chọn lên bậc t-lead 14/20 + đậm 500 (style Figma t-label-lead),
+             dòng phụ giữ t-single 12/16 thường. Bỏ class font-medium — bộ da quét mọi
+             utility độ đậm về 400 nên nó là class chết; muốn 500 phải khai ngoại lệ
+             có tên, ở đây là hook .dk-reward-name (xem CSS). -->
         <span class="flex-1 min-w-0 flex flex-col gap-1">
-          <span class="t-multiline block font-medium text-foreground-alt">${title}</span>
+          <span class="t-lead block dk-reward-name text-foreground-alt">${title}</span>
           <span class="t-single block text-muted-foreground">${sub}</span>
         </span>
       </button>
@@ -11056,18 +11153,27 @@ function dafcRewards() {
   if (cartPointsUsed > maxPts) cartPointsUsed = maxPts;
   const pointsExtra = `
     <div id="pointsInputWrap" class="${cartReward === 'points' ? '' : 'hidden'} pl-8 pr-3 pb-3">
-      <!-- Ô nhập điểm về ĐÚNG KHUÔN field nổi như mọi ô nhập khác của 2 bản demo
-           (lệnh user 17/09/2026), trải hết bề ngang; số tối đa nép góc phải BÊN
-           TRONG ô thay vì đứng thành một chữ riêng cạnh ô. Trước là ô con w-20
-           (80px) cao h-9 — lạc khuôn, cao 36 trong khi field chuẩn cao 48.
-           ⚠ Nhãn nổi ăn theo selector input + label nên label PHẢI là phần tử
-           liền sau input; ô số tối đa đặt SAU label, không chen vào giữa. -->
-      <div class="field-float dk-points-field">
-        <input id="pointsInput" type="number" inputmode="numeric" min="0" max="${maxPts}" value="${cartPointsUsed}" placeholder=" "
-               class="t-multiline bg-input border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
-        <label for="pointsInput" class="text-muted-foreground">Số điểm sử dụng</label>
-        <span id="pointsMax" class="t-single text-muted-foreground">Tối đa ${maxPts.toLocaleString('vi-VN')}</span>
+      <!-- 20/09/2026 (lệnh user, thiết kế 550:25723): ô điểm đổi sang DẠNG Ô NHẬP +
+           NÚT ÁP DỤNG, và điểm chỉ trừ tiền KHI BẤM ÁP DỤNG (trước đây gõ tới đâu
+           trừ tới đó — tổng tiền nhảy theo từng phím, không có lúc nào là "chưa chốt").
+           Lấy ĐÚNG KHUÔN hàng "Nhập mã giảm giá" ngay trên trong cùng panel: field nổi
+           flex-1 + nút .btn-s cao 48. Thiết kế vẽ 40 cho CẢ BA hàng nhập của panel, còn
+           code đang 48 cả ba — giữ 48 để ba hàng cùng khuôn; hạ xuống 40 là việc của cả
+           ba hàng, chờ user chốt.
+           Số "Tối đa" RờI KHỎ ô xuống thành dòng riêng: ô nay hẹp đi một nút nên nhét
+           thêm chữ vào trong là chồng nhãn. Thiết kế không vẽ dòng này nhưng giữ lại
+           vì nó là con số DUY NHẤT nói được "gõ tối đa bao nhiêu". -->
+      <div class="flex gap-1 items-start">
+        <div class="flex-1 min-w-0 flex flex-col">
+          <div class="field-float">
+            <input id="pointsInput" type="number" inputmode="numeric" min="0" max="${maxPts}" value="${cartPointsUsed}" placeholder=" "
+                   class="t-multiline bg-input border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+            <label for="pointsInput" class="text-muted-foreground">Nhập số điểm</label>
+          </div>
+        </div>
+        <button id="applyPoints" class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
       </div>
+      <p id="pointsMax" class="t-single text-muted-foreground pt-2">Tối đa ${maxPts.toLocaleString('vi-VN')} điểm</p>
     </div>`;
   return `
   <div id="rewardOpts" class="flex flex-col gap-2">
@@ -11396,7 +11502,11 @@ function screenCART() {
                    qua class hook dk-summary-title, xem CSS) — vẫn thấp hơn t-display-title
                    24/32 của "Giỏ hàng", đủ lớn + đủ khác kiểu (hoa + tracking) để thắng
                    rõ 2 nhãn uppercase 12px bên dưới. -->
-              <h2 class="t-lead dk-summary-title text-foreground">Tóm tắt đơn hàng</h2>
+              <!-- 20/09/2026 (thiết kế user 550:25723): bậc chữ về t-overlay (16/24 Inter
+                   500) và CHỮ HOA trở lại. Trong Figma node này bám style t-label-overlay.
+                   Chữ hoa làm bằng CSS text-transform chứ KHÔNG gõ hoa vào markup: applyLang
+                   tra bảng i18n theo chuỗi tiếng Việt chính xác, gõ hoa là mất bản EN. -->
+              <h2 class="t-overlay dk-summary-title text-foreground">Tóm tắt đơn hàng</h2>
             </div>
             <!-- Đệm đều 16 cả 4 cạnh (Figma: thân khối pad 16/16/16/16, khe 16).
                  Trước là px-4 pb-4 — thiếu đệm trên. -->
@@ -11434,7 +11544,17 @@ function screenCART() {
                    thưởng áp sát nút, đúng vai câu mời ngay trước khi bấm.
                    "Phí vận chuyển (ước tính)" KHÔNG nằm trong danh sách user liệt kê;
                    giữ nguyên ở cuối discountLines vì bỏ đi là mất thông tin thật. -->
-              <div id="discountLines" class="flex flex-col">${discountLinesHTML()}</div>
+              <!-- 20/09/2026 (thiết kế user 550:25723) — DÒNG ĐIỂM THƯỞNG nhập chung
+                   nhóm với cụm tiền, đứng NGAY DƯỚI các dòng giảm giá (không khe).
+                   ĐẢO quyết định 18/09 ("dòng điểm thưởng áp sát nút Đặt hàng") — khung
+                   mới của user xếp nó thành dòng cuối của bảng tiền, đọc như một con số
+                   nữa của đơn chứ không phải câu mời cạnh nút. -->
+              <div class="flex flex-col">
+                <div id="discountLines" class="flex flex-col">${discountLinesHTML()}</div>
+                <p class="t-multiline text-secondary-foreground">${ckAuth
+                  ? `Hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`
+                  : `<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`}</p>
+              </div>
 
               <div class="flex flex-col gap-2">
                 <!-- Bọc CỘT quanh ô nhập: setFieldErr chèn dòng lỗi vào afterend của ô,
@@ -11459,9 +11579,15 @@ function screenCART() {
               <!-- Ưu đãi thành viên — ĐỔI CHỖ 13/09/2026 xuống SAU ô mã (trước đứng
                    trước), khớp thứ tự mới "1. mã · 2. thành viên" của brief mobile,
                    áp cả desktop cho 2 bản khớp nhau. -->
+              <!-- 20/09/2026 (lệnh user: "cục ưu đãi dafc được nằm trong 1 block có nền
+                   trắng"): khối ưu đãi thành một TẤM TRẮNG lồng trong panel xám, đệm 16,
+                   khe 16 — đúng Frame 24 của thiết kế. Tiêu đề đổi chữ và lên bậc
+                   t-card-title (Libre Bodoni 14/20): trong code không có lớp riêng cho bậc
+                   này, dùng đúng tiền lệ của tiêu đề thẻ blog trang chủ — .t-lead cấp 14/20
+                   còn mặt chữ do một hook có tên của bộ da skin-li cấp (.dk-reward-title). -->
               ${ckAuth ? `
-              <div class="flex flex-col gap-2">
-                <p class="t-single text-foreground">Ưu đãi thành viên</p>
+              <div class="bg-background p-4 flex flex-col gap-4">
+                <p class="t-lead dk-reward-title text-foreground">Ưu đãi chương trình DAFC REWARD</p>
                 ${dafcRewards()}
               </div>` : ''}
 
@@ -11471,14 +11597,9 @@ function screenCART() {
                 <span id="cartTotal" class="t-lead font-medium text-foreground">${vndCom(cartTotalNow())}</span>
               </div>
 
-              <!-- Dòng điểm thưởng + nút Đặt hàng là MỘT CỤM (khe 12): câu mời đọc xong
-                   là tay đã ở ngay trên nút. -->
-              <div class="flex flex-col gap-3">
-                <p class="t-multiline text-secondary-foreground">${ckAuth
-                  ? `Hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`
-                  : `<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`}</p>
-                <button data-checkout class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press flex items-center justify-center">Đặt hàng</button>
-              </div>
+              <!-- 20/09/2026 — cụm này cũ gồm dòng điểm thưởng + nút; dòng điểm đã dời
+                   lên bảng tiền (xem chú thích ở #discountLines), nên nút đứng một mình. -->
+              <button data-checkout class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press flex items-center justify-center">Đặt hàng</button>
               </div>
 
               <!-- "Bạn có phiếu mua hàng?" VÀO LẠI TRONG khối tóm tắt, nằm DƯỚI nút
@@ -11830,7 +11951,7 @@ function richRadio(id, label, sub, on, icon, off) {
   return `
   <button class="opt ${on && !off ? 'on' : ''} w-full flex ${single ? 'items-center' : 'items-start'} gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-opt="${id}"${off ? ' disabled aria-disabled="true"' : ''}>
     <span class="radio ${on ? 'on' : ''} w-4 h-4 ${single ? '' : 'mt-0.5 '}rounded-full border border-border-3 flex items-center justify-center shrink-0">
-      <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+      <span class="radio-dot text-primary-foreground flex items-center justify-center">${I.tick}</span>
     </span>
     <span class="flex-1 min-w-0">
       <span class="t-multiline block font-medium text-foreground">${label}</span>
@@ -11838,6 +11959,34 @@ function richRadio(id, label, sub, on, icon, off) {
       ${off ? `<span class="t-single block text-muted-foreground">${off}</span>` : ''}
     </span>
     ${icon ? `<img src="${A}${icon[0]}" alt="${icon[2] || ''}" class="shrink-0 self-center h-6 object-contain" style="width:${icon[1]}px">` : ''}
+  </button>`;
+}
+
+/* ── XUẤT HOÁ ĐƠN VAT — 3 LỰA CHỌN (19/09/2026, lệnh user) ───────────────────
+   Trước đây VAT là một hộp đóng/mở nằm TRONG bước Thanh toán, và trạng thái phải
+   đọc từ HAI điều khiển: một ô tick (có/không xuất) cộng một segmented Cá nhân /
+   Công ty. Hai thứ cho một quyết định nên luôn có trạng thái vô nghĩa (tick tắt
+   nhưng vẫn đang chọn "Công ty").
+   Nay gộp thành MỘT nhóm radio 3 lựa chọn, đúng như user mô tả, và nâng thành một
+   BƯỚC RIÊNG của checkout. Ô tick + segmented đã gỡ hẳn.
+   Dùng lại khuôn thẻ của richRadio (viền + nền + nút radio) nhưng móc bằng
+   `data-vat-mode` chứ KHÔNG `data-opt`: mấy handler [data-opt] đang gom theo
+   container (#storeOpts, #shipOpts, nhóm phương thức thanh toán), thêm một nhóm
+   data-opt nữa là dễ bị một trong số đó quét trúng. */
+const VAT_MODES = [
+  ['none', 'Không xuất hoá đơn'],
+  ['personal', 'Xuất hoá đơn cá nhân'],
+  ['company', 'Xuất hoá đơn công ty'],
+];
+const vatLabel = m => (VAT_MODES.find(x => x[0] === m) || VAT_MODES[0])[1];
+function vatRadio(id, label) {
+  const on = vatMode === id;
+  return `
+  <button class="opt ${on ? 'on' : ''} w-full flex items-center gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-vat-mode="${id}">
+    <span class="radio ${on ? 'on' : ''} w-4 h-4 rounded-full border border-border-3 flex items-center justify-center shrink-0">
+      <span class="radio-dot text-primary-foreground flex items-center justify-center">${I.tick}</span>
+    </span>
+    <span class="t-multiline flex-1 min-w-0 font-medium text-foreground">${label}</span>
   </button>`;
 }
 
@@ -11895,11 +12044,24 @@ function ckSection(i, title, openBody, doneBody) {
   return `
   <div class="ck-sec border-t border-border-1" data-sec="${i}">
     <!-- Hàng tiêu đề bước 56 -> 72px: nhịp thoáng kiểu Farfetch (14/08/2026) -->
-    <div class="h-[72px] px-4 flex items-center justify-between">
-      <p class="t-section-title ck-title text-foreground transition-opacity duration-300">${title}</p>
+    <!-- 19/09/2026 (lệnh user, tham chiếu Ralph Lauren): bỏ px-4 bên TRÁI — huy hiệu
+         số bước đứng sát mép cột, đúng chỗ kẻ chia bước bắt đầu; tiêu đề lùi vào 44
+         và thân bước cũng lùi 44 nên cả cột thành MỘT đường dóng. -->
+    <div class="h-[72px] pr-4 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <!-- 19/09/2026 (lệnh user): SỐ THỨ TỰ tách khỏi tên bước, vào huy hiệu tròn.
+             Trước là chuỗi "1. " dính liền tên nên số đọc ra như một phần của tên.
+             Số vẫn lấy từ chỉ số section + 1 chứ không in cứng — luồng "Nhận tại
+             cửa hàng" ít hơn một bước nên in cứng là lệch ngay. -->
+        <span class="ck-step-no t-single">${i + 1}</span>
+        <p class="t-section-title ck-title text-foreground transition-opacity duration-300">${title}</p>
+      </div>
       <!-- 21/08/2026 (yêu cầu user): 16/24 font-light -> 12/16 + underline; bỏ
            font-light vì 300 bị STYLE-RULES cấm (§1.1), link chữ dùng 400. -->
-      <button class="t-single ck-change underline text-foreground press" data-goto="${i}">Thay đổi</button>
+      <!-- 19/09/2026 (lệnh user: desktop áp cách của mobile) — "Thay đổi" hạ xuống
+           màu chữ PHỤ. Nó là lối đi phụ bên cạnh tiêu đề bước, để cùng màu chữ chính
+           thì hai thứ đọc ra ngang vai nhau. -->
+      <button class="t-single ck-change underline text-secondary-foreground press shrink-0" data-goto="${i}">Thay đổi</button>
     </div>
     <div class="ck-open acc-body"><div class="acc-inner">${openBody}</div></div>
     <div class="ck-done acc-body"><div class="acc-inner">${doneBody || ''}</div></div>
@@ -12033,7 +12195,7 @@ function storeOpt(name, addr, hours, on) {
   return `
   <button type="button" role="radio" aria-checked="${on}" class="opt ${on ? 'on' : ''} w-full flex items-start gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-opt="store:${name}">
     <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
-      <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+      <span class="radio-dot text-primary-foreground flex items-center justify-center">${I.tick}</span>
     </span>
     <span class="flex-1 min-w-0">
       <span class="t-multiline block font-medium text-foreground">${name}</span>
@@ -12087,7 +12249,7 @@ function ckPickupOpen() {
         <p class="t-multiline text-secondary-foreground">Đơn hàng được giữ tại cửa hàng trong 3 ngày kể từ khi có thông báo sẵn sàng nhận.</p>
       </div>
       <div class="px-4 pt-6 pb-8">
-        <button class="t-multiline ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="1" data-require="store">Xác nhận</button>
+        <button class="t-multiline ck-next w-[280px] h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="1" data-require="store">Xác nhận</button>
       </div>
     </div>` : ''}`;
 }
@@ -12207,9 +12369,17 @@ function screenCHECKOUT() {
       </div>
     </div>
     ${field('Số điện thoại','0 1234 5678','tel', { val: ckShipPhone, key: 'sphone', auto: 'tel' })}
-    ${ckAuth ? '' : `
-    ${field('Email','Nhập email nhận xác nhận đơn','email', { val: ckEmail, key: 'email', auto: 'email' })}
-    <div id="ckEmailKnown" class="hidden px-4 pt-1"></div>`}
+    <!-- 19/09/2026 (user: "thông tin liên hệ ở check out không có email nhé") — ô
+         Email nay LUÔN hiện. Từ 11/09 nó bị ẩn với khách đã đăng nhập vì email lấy
+         ngầm từ hồ sơ (ckOrderEmail = ckEmail || PROFILE.email), nhưng như vậy khối
+         "Thông tin liên hệ" của người đã đăng nhập chỉ còn Tên/Họ/SĐT — người mua
+         không thấy đơn sẽ gửi xác nhận về đâu, cũng không đổi được sang email khác.
+         Mồi sẵn PROFILE.email nên họ không phải gõ lại, và validateShipping (vốn đã
+         chỉ thêm luật khi TỒN TẠI ô email) tự khắc kiểm luôn.
+         Dòng "Email này đã có tài khoản → Đăng nhập" VẪN chỉ dành cho khách vãng lai:
+         mời người đang đăng nhập đi đăng nhập là vô nghĩa. -->
+    ${field('Email','Nhập email nhận xác nhận đơn','email', { val: ckEmail || (ckAuth ? PROFILE.email : ''), key: 'email', auto: 'email' })}
+    ${ckAuth ? '' : '<div id="ckEmailKnown" class="hidden px-4 pt-1"></div>'}
     <div class="px-4 pt-6 pb-2">
       <p class="t-block-title text-foreground">Thông tin giao hàng</p>
     </div>
@@ -12263,7 +12433,7 @@ function screenCHECKOUT() {
     </div>`;
   const ckNextBtn = `
     <div class="px-4 pt-6 pb-8">
-      <button class="t-multiline ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="1" data-require="ship">Xác nhận</button>
+      <button class="t-multiline ck-next w-[280px] h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="1" data-require="ship">Xác nhận</button>
     </div>`;
   /* Brief PDF trang 31: bỏ danh sách địa chỉ bày HẾT ngay trong thân accordion
      (lưới 2 cột mọi thẻ + "+ Thêm địa chỉ mới" cùng lúc) — đổi thành CHỈ hiện
@@ -12329,7 +12499,12 @@ function screenCHECKOUT() {
       </div>`}
     </div>
     ${ckNextBtn}` : `${addrForm}${ckNextBtn}`;
-  const s0done = `<div id="ckShipDone" class="px-4 pb-6 flex flex-col gap-1">${ckShipDoneHTML()}</div>`;
+  /* 19/09/2026 (lệnh user) — tóm tắt bước đã xong ĐÓNG KHUNG, khe 4 -> 8, giống
+     cách vừa làm ở bản mobile: viền --unofficial-border-1 (cùng sắc kẻ giữa các dòng
+     giỏ), đệm 12, nằm trong lề ngang 16 của thân bước. Trước đây là mấy dòng chữ trần
+     nên đọc ra như phần đuôi của bước chứ không phải một thẻ tóm tắt.
+     id GIỮ trên HỘP TRONG: handler ck-next ghi thẳng innerHTML vào id đó. */
+  const s0done = `<div class="px-4 pb-6"><div id="ckShipDone" class="border border-border-1 rounded-xs p-3 flex flex-col gap-2">${ckShipDoneHTML()}</div></div>`;
 
   /* ── Section 0 bản NHẬN TẠI CỬA HÀNG (port từ index.html 11/08/2026) ──
      Thứ tự thao tác: thành phố -> cửa hàng trong thành phố đó -> người nhận.
@@ -12343,7 +12518,7 @@ function screenCHECKOUT() {
     <p class="t-multiline text-secondary-foreground">${s.addr}</p>
     <p class="t-multiline text-muted-foreground"><span>Mở cửa</span> <span>${s.hours}</span></p>` : '';
   const p0open = `<div id="ckPickupBody">${ckPickupOpen()}</div>`;
-  const p0done = `<div id="ckStoreDone" class="px-4 pb-6 flex flex-col gap-1">${ckStoreDoneHTML()}</div>`;
+  const p0done = `<div class="px-4 pb-6"><div id="ckStoreDone" class="border border-border-1 rounded-xs p-3 flex flex-col gap-2">${ckStoreDoneHTML()}</div></div>`;
 
   /* ── Section 1: Phương thức vận chuyển ── */
   /* Đơn có hàng pre-order: ETA chung của phương thức vận chuyển KHÔNG đúng cho
@@ -12351,6 +12526,12 @@ function screenCHECKOUT() {
      tóm tắt đã xác nhận), đồng bộ bản mobile 14/08/2026. */
   const preDate = (cartSelected().find(c => c.preorder) || {}).preorder;
   const preNote = preDate ? `<p class="t-single text-foreground-alt">Riêng hàng pre-order: nhận hàng dự kiến ${preDate}, giao riêng khi hàng về.</p>` : '';
+  /* 19/09/2026 (lệnh user): bản NỀN ACCENT của chính dòng trên, dùng ở bước ĐANG MỞ —
+     ở đó nó đứng trần dưới hai thẻ chọn nên dễ trôi đi mất. Trong HỘP tóm tắt của bước
+     ĐÃ XONG thì vẫn dùng bản chữ trần: hộp đó đã có viền bao, lồng thêm một mặt màu nữa
+     là thừa. Dựng từ chính chuỗi trên để khỏi chép đôi câu chữ (i18n tra theo chuỗi
+     tiếng Việt chính xác, chép đôi là sớm muộn lệch nhau một dấu). */
+  const preNoteBox = preDate ? preNote.replace('t-single', 't-single bg-accent-0 rounded-xs px-3 py-2') : '';
   const s1open = `
     <div id="shipOpts" class="px-4 flex flex-col gap-4">
       <!-- HAI THẺ PHƯƠNG THỨC NẰM CÙNG MỘT HÀNG — chỉ ở bản desktop, theo khung
@@ -12363,21 +12544,26 @@ function screenCHECKOUT() {
            bề rộng cột. Bản mobile giữ xếp dọc.
            Lớp bọc nằm BÊN TRONG shipOpts nên mọi bộ chọn hiện có (shipOpts
            [data-opt], và rule CSS acc-inner) vẫn trúng vì đều là hậu duệ. -->
+      <!-- 20/09/2026 (lệnh user): ghi chú pre-order đứng TRÊN hai thẻ chọn. Nó là điều
+           kiện đọc TRƯỚC khi chọn (đơn có hàng đặt trước thì giao làm hai đợt), để dưới
+           là đọc được sau khi đã chọn xong. -->
+      ${preNoteBox}
       <div class="grid grid-cols-2 gap-4">
         ${richRadio('std','Giao hàng thông thường - Miễn Phí', ETA, true)}
         ${richRadio('fast','Giao hàng nhanh - 25,000đ', ETA, false)}
       </div>
-      ${preNote}
     </div>
     ${noteField}
     <div class="px-4 pt-6 pb-8">
-      <button class="t-multiline ck-next w-full h-12 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="2">Xác nhận</button>
+      <button class="t-multiline ck-next w-[280px] h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="2">Xác nhận</button>
     </div>`;
   const s1done = `
-    <div class="px-4 pb-6 flex flex-col gap-1">
-      <p id="shipDoneLabel" class="t-multiline font-medium text-foreground">Giao hàng thông thường</p>
-      <p class="t-multiline text-foreground">${ETA}</p>
-      ${preNote}
+    <div class="px-4 pb-6">
+      <div class="border border-border-1 rounded-xs p-3 flex flex-col gap-2">
+        <p id="shipDoneLabel" class="t-multiline font-medium text-foreground">Giao hàng thông thường</p>
+        <p class="t-multiline text-foreground">${ETA}</p>
+        ${preNote}
+      </div>
     </div>`;
   /* ── Section 2: Thanh toán ── */
   /* [id, nhãn, đang chọn, [file logo, bề rộng px, alt]] — logo lấy từ assets,
@@ -12401,44 +12587,42 @@ function screenCHECKOUT() {
       <span class="t-multiline text-foreground">${l}</span>
       <span class="t-multiline text-foreground">${v}</span>
     </div>`;
-  const s2open = `
-    <!-- 15/09/2026 (lệnh user: *"ở mục thanh toán thì cho cái xuất hóa đơn VAT lên
-         trên phần phương thức"*): khối VAT ĐỔI CHỖ lên TRƯỚC danh sách phương thức.
-         Đệm dọc đi theo chỗ đứng chứ không đi theo khối: VAT bỏ pt-6 (nay là phần
-         tử đầu của bước, lề trên do chính hàng tiêu đề bước lo), và nút Đặt hàng
-         nhận pt-6 thay pt-2 — trước đây 24px đó do pb-6 của VAT cấp, VAT đi rồi thì
-         nút phải tự mang, không thì dính sát danh sách phương thức. -->
-    <!-- Xuất hóa đơn VAT -->
+  /* Bước Xuất hoá đơn VAT — 19/09/2026. Chỉ số bước KHÔNG in cứng: luồng
+     "Nhận tại cửa hàng" bỏ bước chọn phương thức vận chuyển nên VAT là bước 1 ở
+     đó và bước 2 ở luồng giao hàng; nút Xác nhận phải trỏ đúng bước kế tiếp. */
+  const sVatOpen = `
+    <div class="px-4 pb-6 flex flex-col gap-4">
+      <p class="t-multiline text-secondary-foreground">Hóa đơn VAT chỉ xuất trong ngày, khách hàng có nhu cầu xuất hóa đơn vui lòng điền đầy đủ thông tin bên dưới.</p>
+      <!-- 20/09/2026 (lệnh user, khung 547:24607): 3 lựa chọn VAT xếp NGANG ở bản
+           desktop. Lưới 3 cột gap-4 để ĐỒNG BỘ với nhóm chọn vận chuyển ngay bước
+           trên (cũng lưới, cũng gap-4) — cùng một loại điều khiển trên cùng một màn
+           thì đừng để hai nhịp khe khác nhau. Bản mobile GIỮ xếp dọc: khổ 375 không
+           đủ chỗ cho 3 thẻ có nhãn dài như "Xuất hoá đơn công ty". -->
+      <div id="vatOpts" class="grid grid-cols-3 gap-4">${VAT_MODES.map(([id, l]) => vatRadio(id, l)).join('')}</div>
+      <!-- 20/09/2026 (lệnh user): chọn "cá nhân" hay "công ty" thì cụm ô nhập hiện ra
+           được KHUNG LẠI bằng mặt accent — để người dùng thấy ngay mấy ô này thuộc về
+           lựa chọn vừa bấm chứ không phải một phần rời của bước.
+           CÓ THÊM VIỀN 1px: mặt accent #fafafa đứng trên nền trắng chên nhau đúng 5/255,
+           đủ ấm nhưng KHÔNG đủ thành một cái "khung" — đo trên trang xong mới thấy.
+           Viền lấy --unofficial-border-1, cùng sắc kẻ của các hộp tóm tắt bước đã xong.
+           Đệm px-1 py-2 cộng với px-3 py-2 sẵn có của từng hàng = 16 đều bốn phía; làm
+           vậy để KHÔNG phải đụng vào vatFieldRows() — hàm đó dùng chung với mobile.
+           Rule #vatFieldRows:empty (khai trong style) ẩn hẳn khi chọn "Không xuất hoá đơn": handler chỉ
+           ghi lại innerHTML nên class vẫn còn, không ẩn thì ra một ô xám rỗng. -->
+      <div id="vatFieldRows" class="bg-accent-0 border border-border-1 rounded-xs px-1 py-2">${vatMode === 'none' ? '' : vatFieldRows(vatMode)}</div>
+      <button class="t-multiline ck-next w-[280px] h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="${ckMode === 'pickup' ? 2 : 3}">Xác nhận</button>
+    </div>`;
+  const sVatDone = `
+    <!-- 19/09/2026 — tóm tắt bước VAT vào CÙNG KHUÔN hộp viền như 3 tóm tắt kia
+         (địa chỉ · cửa hàng · phương thức vận chuyển). Bước VAT sinh sau nên bỏ sót
+         ở lượt đóng khung trước — để nguyên thì 4 bước đã xong có 1 bước đọc khác hẳn.
+         id GIỮ trên thẻ p bên trong: handler ck-next ghi thẳng textContent vào đó. -->
     <div class="px-4 pb-6">
-      <!-- 15/09/2026 (lệnh user: *"cái ô Xuất hóa đơn VAT sẽ cho dạng đóng mở box,
-           bấm vào mở box ra chọn cty hay cá nhân như hiện tại"*): khối VAT từ một
-           hàng tick trần đổi thành HỘP ĐÓNG/MỞ — viền + nền mượn y khuôn thẻ chọn
-           phương thức ngay dưới (richRadio: border border-border bg-background
-           rounded-xs p-3) để 2 thứ đứng cạnh nhau đọc ra cùng một họ.
-           Hộp mang class .acc CHỈ để mượn cặp rule đổi icon +/- có sẵn
-           (.acc.open .acc-ico-plus/minus); KHÔNG đặt .acc-trigger lên nút vì wiring
-           chung của .acc-trigger sẽ toggle lần hai, thành bấm một cái đóng mở hai
-           lần. Cơ chế xổ vẫn là #vatFields.ck-open + .is-open như cũ, handler chỉ
-           thêm một dòng toggle .open cho hộp để icon đổi theo.
-           Ô tick GIỮ LẠI: nó là trạng thái "có xuất VAT hay không", còn +/- là chỉ
-           báo đóng/mở — hai việc khác nhau, bỏ tick là mất nghĩa. -->
-      <div id="vatBox" class="acc border border-border bg-background rounded-xs">
-        <label id="vatToggle" class="flex items-center gap-2 p-3 press cursor-pointer">
-          <span class="chk w-4 h-4 border border-border flex items-center justify-center shrink-0">${I.tick}</span>
-          <span class="t-multiline flex-1 font-medium text-foreground">Xuất hóa đơn VAT</span>
-          ${accIco}
-        </label>
-        <div id="vatFields" class="ck-open"><div class="acc-inner">
-          <div class="px-3 pt-1 pb-1 flex flex-col gap-3">
-          <!-- Bỏ kẹp 360 y như toggle Giao hàng ở trên: hai toggle của cùng màn checkout
-               phải cùng bề rộng, không thì lại là hai luật cho một loại phần tử. -->
-          ${segToggle('data-vat-type', [['personal','Cá nhân'], ['company','Công ty']], vatType, 'h-10')}
-          <p class="t-multiline text-secondary-foreground">Hóa đơn VAT chỉ xuất trong ngày, khách hàng có nhu cầu xuất hóa đơn vui lòng điền đầy đủ thông tin bên dưới.</p>
-        </div>
-          <div id="vatFieldRows">${vatFieldRows(vatType)}</div>
-        </div></div>
+      <div class="border border-border-1 rounded-xs p-3 flex flex-col gap-2">
+        <p id="ckVatDone" class="t-multiline text-foreground">${vatLabel(vatMode)}</p>
       </div>
-    </div>
+    </div>`;
+  const s2open = `
     <div id="payOpts" class="px-4 flex flex-col gap-4">
       ${pays.map(([id, l, on, icon, off]) => richRadio(id, l, '', on, icon, off)).join('')}
     </div>
@@ -12446,8 +12630,12 @@ function screenCHECKOUT() {
          14/08/2026) — trước đây nằm ở panel tóm tắt bên phải nên bấm được từ bước 0,
          nhảy thẳng tới màn hoàn tất mà chưa nhập gì. Khuôn nút theo nút "Xác nhận"
          của các bước desktop (21/08/2026: cả bộ đổi sang w-full theo yêu cầu user). -->
+    <!-- 19/09/2026 (lệnh user: học kích thước nút theo trang tham chiếu) — nút chốt
+         đơn đổi từ 48 cao / chạy hết bề ngang thành 56 cao / rộng 280 đứng sát lề trái.
+         ĐẢO lại quyết định 21/08/2026 ("cả bộ đổi sang w-full"): trang tham chiếu để
+         nút 330x64 không kéo dài, ở khổ 1440 của ta quy ra 280x56. -->
     <div class="px-4 pt-6 pb-8">
-      <button data-nav="done" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press flex items-center justify-center">Đặt hàng</button>
+      <button data-nav="done" class="t-multiline w-[280px] h-14 rounded-xs bg-primary text-primary-foreground font-medium btn-p press flex items-center justify-center">Đặt hàng</button>
     </div>`;
 
   return `
@@ -12487,13 +12675,19 @@ function screenCHECKOUT() {
                này, không phải của cả màn. Đổi tab vẫn dựng lại màn (handler
                [data-ck-mode]); paintCheckout vẫn ẩn toggle khi đã tới bước
                Thanh toán như cũ. -->
-          <div id="ckSections" class="border border-border rounded-md overflow-hidden">
+          <!-- 19/09/2026 (lệnh user): GỠ khung bao (border + rounded + overflow-hidden).
+               Giữ id vì handler paintCheckout/ck-next và 1 rule của skin-li bám vào nó.
+               overflow-hidden gỡ được: phần cần cắt là thân accordion, mà .acc-inner
+               đã tự khai overflow: hidden. -->
+          <div id="ckSections">
             ${ckMode === 'pickup' ? `
             ${ckSection(0, 'Vận chuyển', modeTabs + p0open, p0done)}
-            ${ckSection(1, 'Thanh toán', s2open, '')}` : `
+            ${ckSection(1, 'Xuất hoá đơn VAT', sVatOpen, sVatDone)}
+            ${ckSection(2, 'Thanh toán', s2open, '')}` : `
             ${ckSection(0, 'Vận chuyển', modeTabs + s0open, s0done)}
             ${ckSection(1, 'Phương thức vận chuyển', s1open, s1done)}
-            ${ckSection(2, 'Thanh toán', s2open, '')}`}
+            ${ckSection(2, 'Xuất hoá đơn VAT', sVatOpen, sVatDone)}
+            ${ckSection(3, 'Thanh toán', s2open, '')}`}
           </div>
         </div>
 
@@ -12509,7 +12703,10 @@ function screenCHECKOUT() {
                rộng + sticky (rule .dk-sticky-side chỉ khai width và position, không
                khai viền nên tách an toàn). -->
           <div class="dk-sticky-side w-[427px] shrink-0 flex flex-col gap-4">
-            <div class="border border-border rounded-md bg-card">
+            <!-- 19/09/2026 (lệnh user): mặt panel từ trắng xuống nền accent — cột phải
+                 là chỗ ĐỌC LẠI chứ không phải chỗ thao tác, hạ nền xuống là nó lùi ra sau
+                 cột các bước. Giữ viền 1px theo khuôn chung của mọi tấm trong bộ da. -->
+            <div class="border border-border rounded-md bg-accent-0">
           <!-- Heading hạ 24 light -> 18 medium (yêu cầu user 14/08/2026): panel là khối
                phụ trợ, title 24 to ngang tiêu đề màn làm lệch tầng bậc.
                BỐ CỤC (chốt lần 3, 14/08/2026): KHỐI TIỀN đứng TRÊN — panel trả lời
@@ -12545,7 +12742,13 @@ function screenCHECKOUT() {
             <p class="t-lead dk-summary-title text-foreground">Tóm tắt đơn hàng</p>
           </div>
           <div class="px-4 pt-4 pb-6 flex flex-col">
-            ${ckCodeRow()}
+            <!-- 19/09/2026 (lệnh user: "vô tới check out thì không nhập mã ưu đãi được
+                 nữa") — ĐÃ GỠ hàng nhập mã. Mã chốt ở GIỎ HÀNG; tới đây chỉ còn đọc lại
+                 con số. Khoản đã giảm vẫn hiện nguyên ở dòng "Giảm giá" ngay dưới, nên
+                 không mất thông tin nào.
+                 Hàm ckCodeRow() GIỮ trong file (chưa xoá) phòng khi cần bật lại; mọi
+                 handler của nó đều đã có guard if(ckInp)/if(!list) nên không gọi tới là
+                 tự im, không lỗi. -->
             ${row('Tạm tính', vndCom(cartSubtotal()))}
             ${cartDiscountTotal() > 0 ? row('Giảm giá', '-' + vndCom(cartDiscountTotal())) : ''}
             <!-- Nhận tại cửa hàng thì không có phí nên ghi thẳng, không "tính sau" -->
@@ -12563,7 +12766,9 @@ function screenCHECKOUT() {
                24 -> 32 -> 16 ngang, cùng ngày 14/09/2026: đồng bộ với 2 khối phía trên
                trong CÙNG card, số đo sau cùng theo Figma-sync (xem chú thích đầy đủ ở
                khối heading cùng file) — cả 3 khối trong 1 card phải chung 1 số đệm ngang. -->
-          <div class="px-4 border border-border rounded-md bg-card">
+          <!-- 19/09/2026 (lệnh user): cùng nền accent với panel Tóm tắt ngay trên — hai
+               tấm này là một cụm đọc lại, khác mặt nhau là gãy. -->
+          <div class="px-4 border border-border rounded-md bg-accent-0">
             <div id="ckSumAcc" class="acc">
               <button class="acc-trigger w-full h-14 flex items-center justify-between press">
                 <span class="t-multiline text-foreground">Giỏ hàng của bạn (${cartSelected().length})</span>
@@ -12630,7 +12835,9 @@ function paintCheckout(root) {
      đó cặp nút hiện lại. Bước Thanh toán là section 1 ở luồng nhận tại cửa
      hàng (chỉ 2 section) và section 2 ở luồng giao hàng. */
   const tabs = root.querySelector('#ckModeTabs');
-  if (tabs) tabs.classList.toggle('hidden', ckMaxStep >= (ckMode === 'pickup' ? 1 : 2));
+  /* 19/09/2026 — thêm bước VAT nên bước Thanh toán lùi một nấc: 2 ở luồng nhận
+     tại cửa hàng, 3 ở luồng giao hàng. */
+  if (tabs) tabs.classList.toggle('hidden', ckMaxStep >= (ckMode === 'pickup' ? 2 : 3));
 
   /* Section đang mở mà TRƯỚC ĐÓ đã xong rồi thì đây là lần sửa lại: nút đổi
      nhãn "Lưu thay đổi" và bấm xong nhảy thẳng về bước xa nhất. */
@@ -14887,7 +15094,7 @@ let ckAuth = false, ckStep = 0, ckMaxStep = 0;   // checkout: đã đăng nhập
    không có state nào giữ lại, nên đơn ghi vào lịch sử luôn là "Giao hàng thông thường"
    dù khách chọn giao nhanh. Giữ cờ ở đây để placeOrder ghi đúng phương thức. */
 let ckShipFast = false;
-let vatType = 'personal';         // 'personal' | 'company' — loại xuất hoá đơn VAT (Figma 3028:47246, mặc định "Cá nhân")
+let vatMode = 'none';             // 'none' | 'personal' | 'company' — bước Xuất hoá đơn VAT (19/09/2026, gộp từ cặp ô tick + segmented cũ)
 let loginFrom = null, authGuardTo = '';             // mở login từ màn nào
 let scrollCleanups = [];          // gỡ listener khi đổi màn
 
@@ -15080,7 +15287,7 @@ const I18N = {
   'Nhập mã giảm giá':'Enter discount code',
   /* 24/08/2026 — 2 chuỗi của đợt đồng bộ 2 khối ưu đãi: title khối thành viên (đổi
      từ "Ưu đãi chương trình DAFC Rewards") + chữ trong ô chọn mã. */
-  'Ưu đãi thành viên':'Member offers', 'Chọn mã ưu đãi':'Choose a promo code',
+  'Ưu đãi thành viên':'Member offers', 'Ưu đãi chương trình DAFC REWARD':'DAFC REWARD programme offers', 'Chọn mã ưu đãi':'Choose a promo code',
   'Ưu đãi vận chuyển':'Shipping offers', 'Ưu đãi mua nhiều':'Multi-buy offers', 'Chọn tối đa 1':'Up to 1',
   'Nhập mã ưu đãi':'Enter offer code', 'Dùng mã':'Use code',
   'Chưa chọn ưu đãi nào':'No offers selected', 'Mã không hợp lệ':'Invalid code',
@@ -15124,6 +15331,9 @@ const I18N = {
   'Đăng nhập':'Sign in', 'Đăng ký':'Sign up', 'Đăng ký ngay':'Sign up now', 'Đăng xuất':'Sign out',
   'Đăng nhập tài khoản':'Account sign-in', 'Chào mừng bạn trở lại':'Welcome back',
   'Chưa có tài khoản?':'No account yet?', 'Đã có tài khoản?':'Already have an account?',
+  'Chưa có tài khoản':'No account yet',
+  'Xuất hoá đơn VAT':'VAT invoice', 'Không xuất hoá đơn':'No invoice',
+  'Xuất hoá đơn cá nhân':'Personal invoice', 'Xuất hoá đơn công ty':'Company invoice',
   'Số điện thoại hoặc Email':'Phone number or email', 'Nhập số điện thoại hoặc email':'Enter phone number or email',
   'Nhập số điện thoại đã đăng ký. Chúng tôi sẽ gửi mã OTP để xác thực.':'Enter the phone number you registered with. We’ll send you an OTP to verify.',
   'Mật khẩu':'Password', 'Nhập mật khẩu':'Enter password', 'Quên mật khẩu':'Forgot password',
@@ -17439,34 +17649,22 @@ function wire(root) {
         setTimeout(() => scrollTo(ckStep), 120);
       });
     });
-    // Xuất hóa đơn VAT -> hiện/ẩn field
-    const vatToggle = root.querySelector('#vatToggle');
-    if (vatToggle) {
-      const chk = vatToggle.querySelector('.chk');
-      const fields = root.querySelector('#vatFields');
-      const vatBox = root.querySelector('#vatBox');
-      vatToggle.addEventListener('click', () => {
-        const on = !chk.classList.contains('on');
-        chk.classList.toggle('on', on);
-        fields.classList.toggle('is-open', on);
-        /* 15/09/2026: hộp VAT mượn rule .acc.open để đổi icon + <-> - (xem markup).
-           Toggle ở đây chứ không dùng wiring .acc-trigger chung — nếu gắn class đó
-           lên nút thì một cú bấm sẽ toggle hai lần, mở rồi đóng ngay. */
-        if (vatBox) vatBox.classList.toggle('open', on);
-        if (on) setTimeout(() => fields.querySelector('input')?.focus({ preventScroll: true }), 380);
-      });
-    }
-    // Xuất hóa đơn VAT: đổi tab Cá nhân / Công ty -> đổi luôn bộ field bên dưới
-    root.querySelectorAll('[data-vat-type]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const type = btn.dataset.vatType;
-        if (type === vatType) return;
-        vatType = type;
-        root.querySelectorAll('[data-vat-type]').forEach(b => {
-          b.className = segBtnClass(b.dataset.vatType === vatType, 'h-10');
+    /* Bước Xuất hoá đơn VAT: 3 lựa chọn dạng radio (19/09/2026). Chọn "Không xuất"
+       thì gỡ luôn bộ field bên dưới — không để form trống nằm đó. */
+    root.querySelectorAll('#vatOpts [data-vat-mode]').forEach(o => {
+      o.addEventListener('click', () => {
+        const m = o.dataset.vatMode;
+        if (m === vatMode) return;
+        vatMode = m;
+        root.querySelectorAll('#vatOpts [data-vat-mode]').forEach(x => {
+          const on = x.dataset.vatMode === vatMode;
+          x.classList.toggle('on', on);
+          x.querySelector('.radio').classList.toggle('on', on);
         });
         const rows = root.querySelector('#vatFieldRows');
-        if (rows) { rows.innerHTML = vatFieldRows(vatType); localizeNew(rows); }
+        if (rows) { rows.innerHTML = vatMode === 'none' ? '' : vatFieldRows(vatMode); localizeNew(rows); }
+        const done = root.querySelector('#ckVatDone');
+        if (done) { done.textContent = vatLabel(vatMode); localizeNew(done); }
       });
     });
 
@@ -17685,19 +17883,33 @@ function wire(root) {
       });
     });
 
-    // Xem chú thích đầy đủ ở bản mobile (index.html, cùng hook).
+    /* 20/09/2026 (lệnh user) — ĐIỂM CHỈ TRỪ TIỀN KHI BẤM "ÁP DỤNG".
+       Trước đây nghe sự kiện `input` nên gõ tới đâu tổng tiền nhảy tới đó: gõ "1" là
+       đã trừ 1 điểm, gõ tiếp "2" thành 12… — không có lúc nào là "đang gõ, chưa chốt",
+       và cũng lệch hẳn với hai hàng nhập còn lại của panel (mã giảm giá · phiếu mua
+       hàng) vốn đều phải bấm nút.
+       Enter trong ô = bấm nút, cho người gõ phím không phải rời tay sang chuột.
+       Vẫn kẹp [0, maxUsablePoints()] và ghi lại vào ô sau khi kẹp, để con số trong ô
+       luôn là con số THẬT đang được trừ. */
     const pointsInput = rewardGroup.querySelector('#pointsInput');
-    if (pointsInput) {
-      const recalcPoints = () => {
+    const applyPoints = rewardGroup.querySelector('#applyPoints');
+    if (pointsInput && applyPoints) {
+      const apDungDiem = () => {
         const maxPts = maxUsablePoints();
         const v = Math.round(Number(pointsInput.value) || 0);
         cartPointsUsed = Math.max(0, Math.min(v, maxPts));
+        pointsInput.value = cartPointsUsed;
         const val = rewardGroup.querySelector('#pointsUsedVal');
         if (val) val.textContent = `${cartPointsUsed.toLocaleString('vi-VN')} điểm`;
         refreshCartSummary(root);
+        toast(cartPointsUsed > 0
+          ? `Đã áp dụng ${cartPointsUsed.toLocaleString('vi-VN')} điểm`
+          : 'Đã bỏ dùng điểm thưởng');
       };
-      pointsInput.addEventListener('input', recalcPoints);
-      pointsInput.addEventListener('blur', () => { pointsInput.value = cartPointsUsed; });
+      applyPoints.addEventListener('click', apDungDiem);
+      pointsInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); apDungDiem(); }
+      });
     }
   }
 
@@ -18364,7 +18576,7 @@ function refreshCartSummary(root) {
        liền sau input là <label> của nhãn nổi, không phải ô số tối đa. Giữ
        nextElementSibling là ghi đè mất chữ nhãn. */
     const maxLabel = root.querySelector('#pointsMax');
-    if (maxLabel) maxLabel.textContent = `Tối đa ${maxPts.toLocaleString('vi-VN')}`;
+    if (maxLabel) maxLabel.textContent = `Tối đa ${maxPts.toLocaleString('vi-VN')} điểm`;
     const val = root.querySelector('#pointsUsedVal');
     if (val) val.textContent = `${cartPointsUsed.toLocaleString('vi-VN')} điểm`;
   }
@@ -19733,7 +19945,9 @@ document.body.insertAdjacentHTML('beforeend', `
     <div class="lp-card absolute inset-0 bg-background flex flex-col opacity-0 transition-opacity duration-300"
          role="dialog" aria-modal="true" aria-labelledby="lpTitle">
       <div class="h-[52px] px-6 flex items-center justify-between shrink-0 border-b border-border">
-        <p id="lpTitle" class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">Đăng nhập</p>
+        <!-- 19/09/2026 — tiêu đề lớp về .t-overlay (Inter 500 · 16/24 · HOA) theo
+             Figma 544:23723; trước là utility 18/28 tự chế, không nằm trong thang chữ. -->
+        <p id="lpTitle" class="t-overlay flex-1 min-w-0 text-foreground">Đăng nhập</p>
         <button id="lpClose" class="w-8 h-8 rounded-xs flex items-center justify-center press ghost-hover [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
       </div>
       <!-- 2 khu theo brief PDF trang 28: "ALREADY CUSTOMER?" / "NEW CUSTOMERS?".
@@ -19747,12 +19961,18 @@ document.body.insertAdjacentHTML('beforeend', `
            cầu user 13/09/2026) — trang tràn hết viewport nên nếu không canh
            khối nội dung ngắn sẽ dồn lên sát đầu trang, dư trắng phía dưới. -->
       <div class="flex-1 overflow-y-auto flex items-center justify-center py-12 px-6">
-        <div class="lp-2col grid grid-cols-2 gap-10">
-          <div class="flex flex-col gap-3">
-            <p class="lp-label t-single text-muted-foreground">Đã có tài khoản?</p>
-            <div class="flex items-start gap-2.5 bg-secondary rounded-xs px-3 py-2.5">
-              <span class="shrink-0 mt-0.5 text-foreground [&_svg]:w-4 [&_svg]:h-4">${I.gift}</span>
-              <p class="t-multiline text-secondary-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-medium text-foreground">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng</p>
+        <!-- 19/09/2026 — nhịp khe đọc từ Figma 544:23723: cột 24 · cụm nhãn 16 ·
+             cụm ô nhập 16 · ô mật khẩu với link quên 6 · 2 nút bên phải 12.
+             Trước đây cả cột dùng chung một khe 12 nên nhãn, ô nhập và nút đọc ra
+             cùng một tầng, không phân nhóm được. -->
+        <div class="lp-2col flex gap-10">
+          <div class="lp-col-l flex-1 min-w-0 flex flex-col gap-6">
+            <div class="flex flex-col gap-4">
+              <p class="t-section-title text-foreground">Đã có tài khoản?</p>
+              <div class="flex items-start gap-2.5 bg-secondary rounded-xs px-3 py-2.5">
+                <span class="shrink-0 mt-0.5 text-foreground [&_svg]:w-4 [&_svg]:h-4">${I.gift}</span>
+                <p class="t-multiline text-secondary-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-medium text-foreground">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng</p>
+              </div>
             </div>
             <div class="flex flex-col gap-4">
               <div class="field-float">
@@ -19770,12 +19990,18 @@ document.body.insertAdjacentHTML('beforeend', `
                 <button id="lpForgot" class="t-single w-full text-right underline text-muted-foreground hover:text-foreground transition-colors press">Quên mật khẩu?</button>
               </div>
             </div>
+
             <button id="lpLogin" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press flex items-center justify-center">Đăng nhập</button>
           </div>
 
-          <div class="flex flex-col gap-3">
-            <p class="lp-label t-single text-muted-foreground">Chưa có tài khoản?</p>
-            <p class="t-multiline text-secondary-foreground">Hãy sẵn sàng trải nghiệm những đặc quyền mua sắm tuyệt vời chỉ dành riêng cho bạn!</p>
+          <!-- Vạch dọc ngăn 2 khu — Figma để nó là phần tử đứng giữa, cách mỗi cột 40. -->
+          <div class="lp-line shrink-0 self-stretch" aria-hidden="true"></div>
+
+          <div class="lp-col-r flex-1 min-w-0 flex flex-col gap-6">
+            <div class="flex flex-col gap-4">
+              <p class="t-section-title text-foreground">Chưa có tài khoản</p>
+              <p class="t-multiline text-secondary-foreground">Hãy sẵn sàng trải nghiệm những đặc quyền mua sắm tuyệt vời chỉ dành riêng cho bạn!</p>
+            </div>
             <div class="flex flex-col gap-3">
               <button id="lpRegister" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press flex items-center justify-center">Tạo tài khoản</button>
               <button id="lpGuest" class="t-multiline w-full h-12 rounded-xs border border-border bg-background font-medium text-foreground btn-o press flex items-center justify-center">Mua hàng không đăng nhập</button>
@@ -20638,7 +20864,7 @@ document.body.insertAdjacentHTML('beforeend', `
   const cardHTML = (a, i, on) => `
     <button type="button" class="opt ${on ? 'on' : ''} w-full flex items-start gap-2 border border-border bg-background rounded-xs p-3 text-left btn-o press" data-ab-opt="${i}">
       <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
-        <span class="radio-dot w-2 h-2 rounded-full bg-primary"></span>
+        <span class="radio-dot text-primary-foreground flex items-center justify-center">${I.tick}</span>
       </span>
       <span class="flex-1 min-w-0">
         <span class="t-multiline block font-medium text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="t-single font-normal text-muted-foreground">(Mặc định)</span>' : ''}</span>
