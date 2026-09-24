@@ -248,6 +248,12 @@ window.RESP = (function () {
   .press:active            { opacity: .9; }
   .btn-p:active            { background: var(--general-primary-active); opacity: 1; }
   .btn-s:active            { background: var(--unofficial-secondary-active); opacity: 1; }
+  /* ── GHOST — biến thể thứ 7 của bộ Button (23/09/2026, lệnh user: nút Huỷ ở form
+     địa chỉ "dạng ghost cùng kích thước tương tự cái nút xác nhận").
+     Ghost = KHÔNG nền, KHÔNG viền, chỉ có nhãn. Bản này KHÔNG khai :hover — cả khối
+     nút ở đây cố ý bỏ hover vì là thiết bị cảm ứng; bản desktop có thêm lớp đen 5%.
+     Active mượn `--unofficial-secondary-active` cho cùng một nấc đậm với `.btn-s`. */
+  .btn-g:active            { background: var(--unofficial-secondary-active); opacity: 1; }
   /* Outline: Default nền TRẮNG ĐỤC (#ffffff) -> nút tự khai bg-background.
      Active CHỈ đổi màu viền -> #0a0a0a, GIỮ 1px. Disabled nền #f5f5f5.
      (Không có hover — cảm ứng.)
@@ -615,6 +621,18 @@ window.RESP = (function () {
        thẻ đang chọn  viền đậm + NỀN #f2f3f5 (ta --general-secondary) — trước chỉ đổi viền
        nút chính      330x64 và KHÔNG chạy hết bề ngang (ta 280x56)
      ------------------------------------------------------------------------- */
+  /* ĐÃ GỠ 23/09/2026 (đợt 5) — `.addr-grid` (lưới thẻ địa chỉ: desktop 2 cột khe 16,
+     mobile xếp dọc khe 8). User đảo về MỘT ô địa chỉ đang chọn nên không còn thẻ nào
+     để xếp lưới. Giữ ghi chú để lần sau ai muốn bày nhiều thẻ thì biết đã có tiền lệ
+     và biết luôn vì sao mobile KHÔNG chia 2 cột: ở khổ 375 mỗi ô còn ~166px, một dòng
+     địa chỉ đầy đủ vỡ 4-5 dòng. */
+  /* THẺ ĐỊA CHỈ CÓ LINK "Sửa" Ở GÓC (23/09/2026). Link đặt ABSOLUTE thay vì nằm
+     trong dòng tên: nó phải thẳng hàng với TÊN kể cả khi tên dài xuống 2 dòng, mà
+     nút CHỌN thì cần trải hết bề rộng thẻ để bấm đâu cũng chọn được.
+     Đệm phải 56 = 12 (lề link) + ~32 (bề ngang chữ "Sửa") + 12 khoảng thở. */
+  .addr-card { position: relative; }
+  .addr-card-body { padding-right: 56px; }
+  .addr-card-edit { position: absolute; top: 12px; right: 12px; }
   .ck-step-no {
     flex: 0 0 32px; height: 32px; border-radius: 999px;
     display: inline-flex; align-items: center; justify-content: center;
@@ -929,6 +947,18 @@ window.RESP = (function () {
   }
   .promo-peek.open { max-height: 500px; }
   .promo-peek.open::after { display: none; }
+  /* HỘP KHUYẾN MÃI — class MỚI 23/09/2026. Trước đó hộp ở giỏ mặc utility
+     `border border-border rounded-md`; nay hộp còn mọc ở PDP nên mặt + viền phải về
+     MỘT class dùng chung. Số giữ đúng như cũ ở khổ này: viền `--general-border`
+     (#d3d3d3), KHÁC bản desktop dùng `--general-border-subtle` (#e6e6e6) — hai khổ
+     vốn đã lệch, lượt này không nhân tiện gộp.
+     Dưới skin-mt thì rule `div:has(> :where(#promoPeek))` còn hạ viền hộp Ở GIỎ
+     xuống #ececec; dòng thứ hai đây kéo hộp Ở PDP theo cho hai chỗ không lệch. */
+  .promo-box {
+    background: var(--general-background);
+    border: 1px solid var(--general-border);
+  }
+  html.skin-mt .promo-box { border-color: var(--unofficial-border-1); }
 
   /* ── Toast ── */
   @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px) scale(.96); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
@@ -2038,8 +2068,17 @@ window.RESP = (function () {
     text-underline-offset: 2px;
   }
   /* Thẻ khuyến mãi: sẵn viền 4 cạnh + lề riêng, chỉ thiếu mặt trắng vì trước nay
-     nền trang đã trắng. Kéo viền về cùng sắc gạch với 2 tấm trên. */
-  html.skin-mt [data-screen="cart"] div:has(> #promoPeek) {
+     nền trang đã trắng. Kéo viền về cùng sắc gạch với 2 tấm trên.
+
+     ⚠ ĐÃ BỌC `:where(#promoPeek)` NGÀY 23/09/2026 — ĐỪNG GỠ.
+     `:has()` lấy đặc hiệu của đối số MẠNH NHẤT, mà `#promoPeek` là một ID: viết trần
+     thì rule này là **(1,2,2)**, không rule nào không có ID đè nổi. Bọc `:where()`
+     (đặc hiệu = 0) đưa về **(0,2,2)** — vẫn thắng lớp utility như chủ ý ban đầu,
+     nhưng lớp màu đồng của bộ da (0,3,2) mới đè lên được.
+     Cùng họ bẫy `:is()` đã dính 21/09. KHAI GIỐNG HỆT ở `desktop.html`.
+     ⚠ CÒN `div:has(> div > #promoPeek)` ở khối dưới cũng đang (1,2,2) — chưa hạ vì
+     chưa cần; nếu phải đè nó thì hạ bằng `:where()` y như đây. */
+  html.skin-mt [data-screen="cart"] div:has(> :where(#promoPeek)) {
     background: var(--general-background);
     border-color: var(--unofficial-border-1);
   }
@@ -3065,7 +3104,21 @@ window.RESP = (function () {
      Bản mobile hiện KHÔNG dính (nút thẻ ưu đãi ở đây không mang .btn-o), nhưng để
      hai file cùng MỘT danh sách thì lần sau thêm .btn-o vào nút đó cũng không dính.
      Bên desktop đây là gốc rễ của lỗi "ruột thẻ bị viết hoa" từ 13/09. */
-  html.skin-mt.skin-li :is(.btn-p, .btn-o:not(.opt, .chip, .chk, .pr-9, [data-reward]), .btn-s:not(.af-chip)) {
+  /* 23/09/2026 — THÊM [data-addr]: DÍNH LẠI Y HỆT, chỉ khác chỗ. Thẻ địa chỉ ở bước
+     Vận chuyển vừa bỏ vòng radio để thêm link "Sửa", nên vỏ .opt phải dời ra <div>
+     (không lồng được <button> trong <button>) và nút CHỌN bên trong lại chỉ còn mang
+     .btn-o — đúng kịch bản đã ghi cho [data-reward] ngày 20/09.
+     Triệu chứng giống hệt: cả ruột thẻ (tên, SĐT, địa chỉ) hoá CHỮ HOA vì
+     text-transform là thuộc tính KẾ THỪA.
+     ⚠ LUẬT RÚT RA: mỗi lần dời .opt từ nút ra div bọc, PHẢI thêm hook của nút bên
+     trong vào danh sách loại trừ này. Kiểm nhanh: nhìn thẻ trên trang, chữ hoa là dính.
+     ⚠ HAI BÀI HỌC TỪ LƯỢT ĐÓ, GIỮ LẠI DÙ `.addr-card-pick` ĐÃ GỠ (đợt 5 đưa ô địa
+     chỉ về <div> thuần nên nút bên trong không còn):
+       · loại trừ phải bằng CLASS RIÊNG, KHÔNG bằng thuộc tính dùng chung — lượt đó tôi
+         viết `[data-addr]` và nút "+ Thêm địa chỉ mới" (`data-addr="new"`) bị loại trừ
+         theo, MẤT CHỮ HOA trong khi nó đúng là nút HÀNH ĐỘNG phải hoa;
+       · phép kiểm phải đo `textTransform` của CẢ thẻ LẪN các nút hành động quanh nó. */
+  html.skin-mt.skin-li :is(.btn-p, .btn-o:not(.opt, .chip, .chk, .pr-9, [data-reward]), .btn-g, .btn-s:not(.af-chip)) {
     font-size: 12px; line-height: 16px; text-transform: uppercase;
   }
   html.skin-mt.skin-li #sortBtn { font-size: 12px; line-height: 16px; text-transform: uppercase; }
@@ -4159,6 +4212,172 @@ window.RESP = (function () {
 
 
   /* ══════════════════════════════════════════════════════════════════════════
+     ĐỒNG DAFC VÀO THẲNG BỘ DA — 5 MẢNG NHẤN (23/09/2026)
+
+     Lệnh user 21/09: *"chúng tôi đã chốt lại là thêm màu đồng đó vào skin luôn,
+     nhưng tôi sẽ chỉ định những nơi sử dụng màu đồng đó"*; rồi 22/09:
+     *"trước mắt áp màu của trang chủ vào skin-li luôn"*.
+     Tức mảng kem KHÔNG còn phải bật "Giao diện → Đồng DAFC" mới thấy: nó là một
+     phần của bộ da đã chốt. Theme `theme-cu` bên dưới GIỮ NGUYÊN — vai của nó nay
+     là "ấm HẾT mọi mặt xám của app", còn khối này chỉ ấm 5 mảng khách chấm.
+
+     ── AI CHỌN 5 MẢNG NÀY ── Không phải tôi.
+     Khách tự tô trong Figma "Test agent", page `screens`, section
+     `Trang chủ — mobile 375 + desktop 1440`: ĐÚNG 8 node bind vào token
+     `copper-surface`, là 4 mảng x 2 khổ —
+       `hm-occ-band` (mobile) / `hm-occ` (desktop) · `hm-usp` · `hm-signup-band`
+       · footer (`page-footer-mobile` ở mobile, `box` 1440 ở desktop).
+     Quét lại 23/09 sau khi đổi bảng màu: vẫn đúng 8 node đó, không thêm không bớt.
+     Footer dùng chung hàm `footer()` cho MỌI màn nên mảng kem này có ở mọi trang —
+     đúng lệnh 21/09 *"ở footer sẽ là màu đồng"*, không phải tác dụng phụ.
+
+     ── VÌ SAO KHÔNG RETOKEN `--unofficial-accent-0` Ở ĐÂY ──
+     Vì token đó nuôi 37 chỗ khắp app (ô ảnh sản phẩm, nút phụ, nền chip, khung
+     xương skeleton...). Retoken là ấm HẾT — đó đúng là việc của `theme-cu`, không
+     phải của bộ da. Ở bộ da khách chỉ định ĐÍCH DANH 5 mảng, nên đặt thẳng
+     `background` lên 5 mảng đó và không đụng token chung.
+
+     ── MỰC MỜ PHẢI ĐẬM LÊN TRONG 5 MẢNG, BẮT BUỘC ──
+     `#f5f2ed` đậm hơn `#fafafa` nên mực phụ `#727272` trên nó chỉ còn **4,31:1** —
+     RỚT AA. Và nó trúng thật, không phải lo hão: dòng pháp lý của băng đăng ký
+     ("Bằng việc đăng ký...") và dòng "Đã thông báo Bộ Công Thương" ở footer.
+     `#666666` cho **5,14:1**. Khai token NGAY TRÊN MẢNG nên nó chỉ đậm bên trong
+     mảng, phần còn lại của trang giữ nguyên `#727272`.
+
+     ── TIỀN TỐ ──
+     `html.skin-mt.skin-li` (0,2,1) cộng `:is(...)` — `:is()` lấy điểm của đối số
+     đặc hiệu nhất, ở đây là `.bg-secondary.mt-4` (0,2,0) — nên tổng là (0,4,1),
+     thắng chắc rule gốc `.hm-occ { background: var(--unofficial-accent-0) }` (0,1,0).
+     KHAI GIỐNG HỆT ở index.html và desktop.html: danh sách selector gộp cả 2 khổ,
+     mỗi file chỉ trúng phần của mình (`.hm-occ-band` là của mobile, `.hm-occ` là
+     của desktop), nhờ vậy 2 file giữ byte-identical như khối `theme-cu`.
+     `.bg-secondary.mt-4` là HOOK FOOTER có sẵn của dự án (xem khối nhãn footer ở
+     trên) — nó KHÔNG trúng panel ưu đãi ở giỏ vì panel đó không có `mt-4`.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  /* THANG `pampas` — MỘT NGUỒN DUY NHẤT cho cả bộ da lẫn theme, khớp collection
+     **Primitives** của Figma. Khách gửi cả thang 50–950 ngày 23/09; ở đây chỉ khai
+     4 bậc đang có việc, 7 bậc còn lại nằm sẵn trong Figma chờ được chấm.
+     Thang này THAY thang `cameo` dùng từ 22/09 — cùng hue ~30° nhưng bão hoà thấp
+     hơn (21–29% so với 25–48%), nên cả bộ đọc ra ấm-trầm chứ không ánh kim. */
+  html.skin-mt.skin-li,
+  html.skin-mt.theme-cu {
+    --cu-surface:       #f5f2ed;  /* = pampas/50 = token `copper-surface`. MẶT NỀN.
+                                     1,12 so nền trắng — mảng rất nhẹ, đúng lệnh
+                                     *"đừng nhấn đậm quá"*. Mực đen trên nó 17,73. */
+    --cu-surface-press: #f0ece4;  /* = pampas/100 — nhấn xuống của mặt kem.
+                                     Figma CHƯA có token ngữ nghĩa cho bậc này. */
+    --cu-signature:     #ccbca5;  /* = pampas/300 = token `copper-line`. HAI vai:
+                                       a) chữ / mảng trên MẶT TỐI hoặc trên ẢNH
+                                          (10,66:1 trên #0a0a0a);
+                                       b) VỆT GẠCH CHÂN NAV (khách chọn đích danh
+                                          "cỡ 300").
+                                     ⚠ chỉ 1,86 so nền trắng — ĐỪNG bê bậc này sang
+                                     chỗ nào mà vệt/viền là tín hiệu DUY NHẤT, và
+                                     TUYỆT ĐỐI đừng dùng làm MỰC trên nền sáng. */
+    --cu-ink:           #81604d;  /* = pampas/700 = token `copper-ink`. 5,65 trên
+                                     trắng, và chữ TRẮNG trên nó cũng 5,65 — bậc thấp
+                                     nhất làm được nền nút. HIỆN CHƯA HOOK NÀO DÙNG;
+                                     giữ khai để khách chấm tiếp trong Figma. */
+  }
+
+  /* 23/09/2026 — THÊM dải "Gợi ý mua kèm" ở PDP vào bộ mặt kem (lệnh user: *"nhấn
+     màu ở gợi ý mua kèm cũng chuyển sang màu 50 đồng nhé"*).
+     `.dk-look-band` = băng của khổ desktop · `.look-band` = móc MỚI cho khổ 375
+     (ở đó dải không có class riêng, chỉ mặc utility `bg-accent-0` — xem markup).
+     Giữ `bg-accent-0` trong markup làm nền cho CÁC BỘ DA KHÁC: mặt kem chỉ có ở
+     skin-li, mấy bộ da kia vẫn phải ra xám như cũ.
+
+     ĐỔI NÀY TRẢ LẠI MỘT CẶP ĐÃ CHỐT: 07/09 user bảo *"nhấn màu cái season pick
+     tương tự gợi ý mua hàng luôn"*, tức `.hm-occ` phải cùng mặt với dải này. Lượt
+     đưa đồng vào skin-li (21/09) mới kéo `.hm-occ` sang kem mà bỏ sót dải PDP, nên
+     hai chỗ đang lệch nhau; nay khớp lại.
+
+     MẶT KEM KHÔNG LÀM 3 Ô ẢNH CHÌM ĐI: lý do chọn accent-0 hồi 31/08 là tách khỏi
+     nền ảnh CDN nướng sẵn #f1f1f1. Kem #f5f2ed so #f1f1f1 chênh sáng cũng mỏng như
+     accent-0, nhưng nó tách bằng SẮC (ấm so trung tính) chứ không bằng độ sáng —
+     đọc ra rõ hơn bản cũ chứ không kém.
+
+     ĐẶC HIỆU (0,4,1): `:is()` ở đây toàn class thường nên không dính bẫy "lấy đặc
+     hiệu của đối số mạnh nhất". Thắng `.dk-look-band` (0,1,0) và utility
+     `.bg-accent-0` (0,1,0) thoải mái. */
+  html.skin-mt.skin-li :is(.hm-occ-band, .hm-occ, .hm-usp, .hm-signup-band, .bg-secondary.mt-4, .dk-look-band, .look-band) {
+    background: var(--cu-surface);
+    --general-muted-foreground: #666666;
+  }
+
+  /* ── GIỎ HÀNG — ĐỒNG (23/09/2026) · ĐỒNG BỘ VỚI `desktop.html` ────────────────
+     Lệnh user: *"đồng bộ luôn cho bản mobile đi"*, ngay sau lượt làm cho desktop
+     theo Figma 614:105455.
+
+     ⚠ KHÔNG CÓ PHẦN "GIẢM SIZE" Ở ĐÂY, và đó không phải sót: đo bản mobile thì ảnh
+     dòng giỏ VỐN ĐÃ là 100x133 và dòng cao 165-166 — đúng bằng khung Figma mobile.
+     Lượt desktop (148x197 -> 105x140) thực chất là kéo khổ lớn về gần tỉ lệ của khổ
+     nhỏ, nên bên này không còn gì để giảm.
+
+     HAI CHỖ ĂN ĐỒNG, đúng hai chỗ đã làm bên desktop:
+       · `.gift-order-card`            -> `--cu-surface` (pampas/50)
+       · hộp "Chương trình khuyến mãi" -> `--cu-surface`, băng tiêu đề `--cu-surface-press`
+     Panel TÓM TẮT (`discountPanel`) GIỮ hệ xám — desktop cũng vậy.
+
+     MÓC BẰNG `:has()` CHỨ KHÔNG BẰNG CLASS: hộp khuyến mãi ở khổ này không có class
+     riêng (markup là `border border-border ...`), mà `div:has(> :where(#promoPeek))`
+     thì CẢ HAI FILE đều đã có sẵn và trỏ đúng vào nó. Nhờ vậy 3 rule màu dưới đây
+     khai GIỐNG HỆT ở 2 file; chỉ số ĐỆM là khác (12 so với 16).
+
+     ĐẶC HIỆU: (0,3,2), thắng `html.skin-mt [data-screen="cart"]
+     div:has(> :where(#promoPeek))` (0,2,2) — xem chú thích ở rule đó về lý do phải
+     hạ ID xuống trước. */
+  html.skin-mt.skin-li [data-screen="cart"] .gift-order-card {
+    background: var(--cu-surface);
+  }
+  /* ⚠ TÁCH RA, ĐỔI SANG CLASS VÀ GỠ `[data-screen="cart"]` (23/09/2026): hộp khuyến
+     mãi nay còn mọc ở PDP và phải đọc ra CÙNG MỘT HỘP ở cả hai chỗ. Móc `:has()` cũ
+     chỉ trúng hộp Ở GIỎ (nó bám `#promoPeek`, mà hộp ở PDP KHÔNG mang id) nên phải
+     đổi sang class `.promo-box` vừa thêm. Thẻ quà vẫn chỉ có ở giỏ, giữ tiền tố.
+     ĐẶC HIỆU sau khi gỡ là (0,3,1) — vẫn thắng `html.skin-mt [data-screen="cart"]
+     div:has(> :where(#promoPeek))` (0,2,2, đặt nền TRẮNG) vì hơn một class. */
+  html.skin-mt.skin-li .promo-box {
+    background: var(--cu-surface);
+  }
+  /* Băng tiêu đề đậm hơn thân ĐÚNG MỘT BẬC (pampas 50 -> 100). So nền trắng là 1,12
+     với 1,18 — rất nhẹ, đúng ý *"đừng nhấn đậm quá"*; ranh giới đọc được là nhờ ĐỘ
+     RỘNG của dải chứ không nhờ độ đậm màu. */
+  /* GỠ `[data-screen="cart"]` 23/09/2026 — cùng lý do với rule ngay trên: băng tiêu
+     đề phải giống nhau ở giỏ và ở PDP. `.promo-head` chỉ tồn tại trong hộp khuyến
+     mãi nên gỡ tiền tố không kéo theo chỗ nào khác. */
+  html.skin-mt.skin-li .promo-head {
+    background: var(--cu-surface-press);
+  }
+  /* Đệm ba tầng — SỐ CỦA KHỔ 375: 48 / 89 / 34 (cộng 2 viền = 173).
+     Ngang 12 là lề của chính hộp này; bản desktop dùng 16 và băng cao 56. */
+  .promo-head { padding: 12px; }
+  .promo-body { padding: 8px 12px; }
+  .promo-foot { padding: 8px 12px; }
+  /* BÙ `max-height` CHO ĐỆM: `.promo-peek` kẹp 73px, mà nay chính nó gánh đệm dọc
+     8+8. `box-sizing: border-box` tính đệm VÀO max-height, nên không bù thì phần xem
+     mấp mé tụt còn 57px. 73 + 16 = 89. KHAI GIỐNG HỆT ở `desktop.html`.
+
+     ⚠ `:not(.open)` LÀ BẮT BUỘC, đã dính lỗi khi thiếu nó ở bản desktop:
+     `.promo-peek.open { max-height: 500px }` cũng là (0,2,0), mà rule này khai SAU
+     (khối đồng nằm gần cuối <style>) nên hoà điểm là nó thắng — bấm "Xem tất cả" xổ
+     ra 0px. Thêm `:not(.open)` vừa lên (0,3,0) vừa TỰ RÚT khi có `.open`. */
+  .promo-body.promo-peek:not(.open) { max-height: 89px; }
+
+  /* VỆT MỜ ĐÁY của khối xem mấp mé: rule gốc fade về `--general-background` (TRẮNG).
+     Trên mặt kem nó đọc ra một vệt trắng đè lên kem — phải fade về chính mặt kem.
+     ⚠ HEX GÕ THẲNG là BẮT BUỘC, không thay bằng `var(--cu-surface)` ở điểm 0% được:
+     điểm đó cần ALPHA 0 mà vẫn giữ kênh màu của kem; viết `transparent` là fade qua
+     đen ở một số engine. Rule gốc cũng gõ thẳng `rgba(255,255,255,0)` vì lý do này.
+     ĐỔI `--cu-surface` thì PHẢI đổi 3 số dưới đây cho khớp. */
+  /* GỠ `[data-screen="cart"]` 23/09/2026 — vệt mờ phải fade về mặt kem ở CẢ hộp PDP,
+     không thì nó fade về trắng trên nền kem. `.promo-peek` cũng chỉ sống trong hộp
+     khuyến mãi nên gỡ tiền tố là an toàn. */
+  html.skin-mt.skin-li .promo-peek::after {
+    background: linear-gradient(to bottom, rgba(245, 242, 237, 0) 0%, var(--cu-surface) 90%);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
      MÀU NHẤN "ĐỒNG DAFC" — theme-cu (21/09/2026)
 
      ĐÃ ĐỔI HƯỚNG trong cùng ngày. Bản đầu rải đồng vào chữ link, viền ô đang
@@ -4183,7 +4402,10 @@ window.RESP = (function () {
      dải khuyến mãi hồi trước, từng bị đưa về `accent-0` ngày 18/09 vì nằm ngoài
      bảng token — nay quay lại đúng vai của nó là MẶT NỀN, và lần này có token.
      `#d7b797` đo trên chính dafc.com.vn (dùng 188 lần, luôn nằm trên nền tối
-     hoặc trên ảnh) — chỉ còn dùng cho 4 chỗ ngoại lệ.
+     hoặc trên ảnh) là bậc signature GỐC — chỉ còn dùng cho 4 chỗ ngoại lệ.
+     ⚠ ĐÃ THAY 23/09/2026 bằng `#ccbca5` = `pampas/300`, theo bảng màu khách gửi.
+     Cùng vai, cùng ngưỡng an toàn, nhưng bão hoà 25% so với 43% nên nó đọc ra
+     BE/TAUPE chứ không còn ra ĐỒNG. Đây là lựa chọn của khách, không phải sót.
 
      ── SỐ ĐO, tính thật chứ không ước lượng ──
      `#f5f2ed` H37,5 S28,6% L94,5% — ĐẬM HƠN cả hai mặt xám nó thay
@@ -4197,11 +4419,12 @@ window.RESP = (function () {
        · `#d62845` 4,43 — ĐÂY LÀ CHỖ DUY NHẤT theme kéo qua ngưỡng (4,53 -> 4,43).
          Trúng ĐÚNG 2 dòng: "Dùng 1.240 điểm" và "-1,240,000đ" ở panel giỏ hàng.
          Không đổi mực vì đỏ là màu ngữ nghĩa. Muốn vá thì cho riêng khối
-         `#discountLines` ăn `--cu-surface-soft` (đỏ ở đó là 4,66) — chưa làm vì
-         nó tạo hai sắc kem cạnh nhau trong cùng một panel.
-     Mặt nhạt `--cu-surface-soft #faf8f5` chọn ở L97 CÓ CHỦ Ý: nó giữ đúng
-     tương phản của `#fafafa` cũ (muted 4,54 · đỏ 4,66) nên KHÔNG có hồi quy nào
-     ở nhóm mặt nhạt, mà vẫn ra sắc kem (lệch kênh R-B = 5).
+         `#discountLines` NỀN TRẮNG (đỏ trên trắng 4,83) — chưa làm vì nó tạo hai
+         mặt nền cạnh nhau trong cùng một panel. ĐÂY LÀ CHỖ AA DUY NHẤT CÒN HỞ
+         của cả bộ màu; cần khách chốt vì nó là chuyện thẩm mỹ, không phải kỹ thuật.
+     ĐÃ GỠ 23/09/2026 — `--cu-surface-soft`. Thang `pampas` lấy CHÍNH bậc 50 làm mặt
+     nền, tức không còn bậc nào nhạt hơn để làm "mặt nhạt"; và suốt thời gian tồn tại
+     nó chưa từng có hook nào dùng.
 
      ── TIỀN TỐ ──
      `html.skin-mt.theme-cu` (0,2,1), KHÔNG phải `html.theme-cu`: file có HAI
@@ -4211,27 +4434,14 @@ window.RESP = (function () {
      ══════════════════════════════════════════════════════════════════════════ */
 
   html.skin-mt.theme-cu {
-    /* ── THANG `cameo` — ĐỒNG BỘ VỚI FIGMA (22/09/2026) ──
-       Trước đây 3 bậc mặt nền là hex tự đặt (#f5f2ed / #faf8f5 / #f1ede7). Nay lấy
-       thẳng thang `cameo` trong collection **Primitives** của Figma — tức code và
-       Figma dùng CÙNG MỘT bảng màu, không còn hai nguồn nói khác nhau.
-       Mode `white-gold` trong Figma ánh xạ đúng y các bậc này.
-       Cả thang giữ hue ~30° của signature, bão hoà 34–48%. */
-    --cu-signature:     #d7b797;  /* = cameo/300 — MÀU SIGNATURE đo từ dafc.com.vn.
-                                     1,89:1 trên trắng. HAI vai, cả hai đều hợp lệ:
-                                       a) chữ / mảng trên MẶT TỐI hoặc trên ẢNH (8–10:1);
-                                       b) VỆT GẠCH CHÂN NAV (user chọn đích danh "cỡ 300").
-                                     ⚠ (b) AN TOÀN Ở 3/4 CHỖ, RỚT Ở 1 — xem bảng ở mục nav
-                                     bên dưới. ĐỪNG bê bậc này sang chỗ nào mà vệt/viền
-                                     là tín hiệu DUY NHẤT — 1,89 dưới xa 3:1.
-                                     ⚠ VÀ TUYỆT ĐỐI ĐỪNG DÙNG LÀM MỰC trên nền sáng. */
-    --cu-surface:       #f4ebe0;  /* = cameo/100 — mặt kem CHÍNH, thay #f5f5f5 */
-    --cu-surface-soft:  #faf6f2;  /* = cameo/50  — mặt kem NHẠT, thay #fafafa */
-    --cu-surface-press: #e7d5c1;  /* = cameo/200 — nhấn xuống của mặt kem */
+    /* ── THANG MÀU KHAI Ở KHỐI NGAY TRÊN, KHÔNG KHAI LẠI Ở ĐÂY ──
+       4 token `--cu-*` (thang `pampas`, khớp collection Primitives của Figma) khai
+       CHUNG cho `skin-li` và `theme-cu` ở khối "ĐỒNG DAFC VÀO THẲNG BỘ DA" phía
+       trên. Khai lại ở đây là có hai nguồn nói khác nhau — đừng. */
 
     /* ⚠ MỰC MỜ NÂNG MỘT NẤC, BẮT BUỘC — không phải túy hứng:
-       `cameo/100` đậm hơn `#f5f5f5`, nên mực cũ `#727272` trên nó chỉ còn **4,08:1**
-       — rớt AA. `#535353` cho **6,52:1**. Tiện thể trả luôn một nợ cũ của bảng màu
+       `pampas/50` đậm hơn `#fafafa`, nên mực cũ `#727272` trên nó chỉ còn **4,31:1**
+       — rớt AA. `#535353` cho **6,89:1**. Tiện thể trả luôn một nợ cũ của bảng màu
        gốc: `#727272` trên `#f5f5f5` vốn đã là 4,41 — cũng dưới AA từ trước.
        Tức bật theme đồng là chữ phụ ĐỌC TỐT HƠN bản mặc định, không phải kém đi.
        Mode `white-gold` trong Figma cũng đặt `muted-foreground` = gray/600, khớp. */
@@ -4246,7 +4456,15 @@ window.RESP = (function () {
        vốn đã báo trạng thái bằng NỀN chứ không bằng viền, nay nền đó là kem. */
     --general-secondary: var(--cu-surface);
     --general-muted:     var(--cu-surface);
-    --unofficial-accent-0: var(--cu-surface-soft);
+    /* ⚠ ĐỔI 22/09, CHỐT LẠI 23/09: mọi mặt nhấn về CÙNG MỘT BẬC. Lý do KHÔNG phải
+       thẩm mỹ của tôi — khách chấm thật trong Figma: 4 khối nhấn của trang chủ
+       (`hm-occ-band`/`hm-occ` · `hm-usp` · `hm-signup-band` · footer) đều bind vào
+       token `copper-surface`, ở CẢ mobile lẫn desktop; rồi chính khách hạ token đó
+       xuống bậc 50. Lời họ 21/09 là *"các ô nhấn màu sẽ dùng mã 100 luôn"* — con số
+       100 sau đó do CHÍNH HỌ đổi, nên Figma là trọng tài chứ không phải câu nói cũ.
+       HỆ QUẢ PHẢI BIẾT: phân cấp 2 tầng nền (50 / 100) MẤT — mọi mặt nhấn nay một
+       bậc. Đó là điều khách chọn, không phải sót. */
+    --unofficial-accent-0: var(--cu-surface);
     --unofficial-secondary-active: var(--cu-surface-press);
   }
 
@@ -4318,18 +4536,19 @@ window.RESP = (function () {
        `.dk-dept[aria-current]`             | mực #535353 → #0a0a0a, weight 600| KHÔNG — vệt là phụ
        `.ms-tab` / `.search-tab` đang chọn  | mực #535353 → #0a0a0a           | KHÔNG — vệt là phụ
        `.dk-nav-item:has([aria-current])`   | **KHÔNG CÓ GÌ**                  | **CÓ — vệt là DUY NHẤT**
-     Riêng dòng cuối: 1,89:1 so nền trắng và **1,60:1 so kẻ hairline #ececec mà nó nằm đè
+     Riêng dòng cuối: 1,86:1 so nền trắng và **1,57:1 so kẻ hairline #ececec mà nó nằm đè
      lên** — dưới ngưỡng 3:1 của §1.4.11. Trước lượt đổi bậc là 19,80 / 16,76.
-     **CẦN USER CHỐT**, ba đường:
-       (a) giữ nguyên — chấp nhận mục đang xem rất mờ;
-       (b) vá cú hòa đặc hiệu (thêm `:not(.text-destructive)` vào dòng 1671 → (0,4,0)) để
-           mục đang xem lên mực đen như hệ cũ VỐN ĐỊNH làm → vệt thành phụ, 1,89 hết là vấn đề;
-       (c) riêng `[aria-current]` dùng cameo/600 (4,24 / 3,59) — nhưng lệch lệnh "cỡ 300".
-     cameo/500 KHÔNG cứu được: 3,40 so nền nhưng chỉ 2,88 so kẻ — vẫn rớt.
+     ĐÃ CHỌN ĐƯỜNG (b), user chốt 22/09: *"làm cách b đi"*. Bản vá đang chạy ở
+     `desktop.html`, rule `.navbar .dk-nav-link[aria-current]:not(.text-destructive)`
+     — thêm `:not()` đẩy nó lên (0,4,0) nên mục đang xem lên mực ĐEN đúng như hệ cũ
+     VỐN ĐỊNH làm; vệt gạch chân do đó thành tín hiệu PHỤ và 1,86 hết là vấn đề.
+     Hai đường đã bỏ: (a) giữ nguyên, chấp nhận mục đang xem rất mờ; (c) riêng
+     `[aria-current]` dùng bậc 600 (4,13 / 3,49) — lệch lệnh "cỡ 300".
+     Bậc 500 KHÔNG cứu được: 3,35 so nền nhưng chỉ 2,83 so kẻ — vẫn rớt.
 
      ⚠ GHI LẠI ĐỂ KHỏI TÍNH LẠI: nếu sau này lại muốn nhãn nav màu đồng thì phải
-     dùng cameo/700 `#91553d` (5,88:1) — nhãn là chữ 12px nên cần 4,5; cameo/600
-     (4,24) và cameo/300 (1,89) ĐỀU RỚT. Và nhớ `:not(.text-destructive)` ở cả 3
+     dùng `pampas/700` `#81604d` (5,65:1) — nhãn là chữ 12px nên cần 4,5; bậc 600
+     (4,13) và bậc 300 (1,86) ĐỀU RỚT. Và nhớ `:not(.text-destructive)` ở cả 3
      nhánh (`.on`, `[aria-current]`, `:hover`) kẻo mục KHUYẾN MÃI mất màu đỏ. */
 
   /* ── 4 CHỖ NGOẠI LỆ: đồng trên NỀN TỐI hoặc trên ẢNH ──
@@ -4373,16 +4592,30 @@ window.RESP = (function () {
      Đặt thẳng background ở đây, KHÔNG retoken `--general-border` — token đó đang nuôi
      viền ô nhập + kẻ + vòng radio, retoken là vỡ hết.
 
-     SỐ ĐO: mực `text-foreground` trên chip = **16,79:1** (trước 15,53) — TỐT HƠN.
-     Ranh giới chip so với nền trang trắng: **1,18** (trước 1,50) — chip NHẠT ĐI, đúng
+     SỐ ĐO: mực `text-foreground` trên chip = **17,73:1** (trước 15,53) — TỐT HƠN.
+     Ranh giới chip so với nền trang trắng: **1,12** (trước 1,50) — chip NHẠT ĐI, đúng
      ý "đừng nhấn đậm quá". Chữ vẫn đen nên nhãn không mất. Muốn chip đậm bằng cũ
-     thì dùng cameo/200 (1,43) — nhưng là ra ngoài khoảng 50-100 user chốt. */
+     thì dùng `pampas/100` (1,18) — vẫn trong khoảng 50-100 user chốt, nhưng chênh
+     lệch với bậc 50 chỉ 0,06 nên gần như không thấy bằng mắt. */
   html.skin-mt.theme-cu .badge-inline { background: var(--cu-surface); }
+
+  /* ── GIỮ BĂNG TIÊU ĐỀ PANEL TÓM TẮT KHI BẬT THEME (23/09/2026) ──
+     Ở bộ da, băng và thân panel đi hai token XÁM khác nhau (`--general-secondary`
+     #f5f5f5 trên `--unofficial-accent-0` #fafafa). Nhưng theme đồng trỏ **CẢ HAI**
+     token đó về `--cu-surface` — nghĩa là bật theme lên thì băng và thân BẰNG NHAU
+     và cái băng BIẾN MẤT. Rule này trả lại chênh lệch bằng đúng bậc nhấn, giống hệt
+     cách băng của hộp khuyến mãi đang làm.
+     Đây KHÔNG phải thêm màu đồng vào chỗ mới: nó chỉ giữ nguyên một ranh giới vốn có.
+     `.dk-sum-head` chỉ tồn tại ở `desktop.html` (bản mobile panel tóm tắt full-bleed,
+     tiêu đề là con trực tiếp, KHÔNG có băng — khung Figma mobile cũng chưa vẽ băng),
+     nhưng VẪN khai ở cả 2 file để khối CSS giữ byte-identical — cùng lối `#qaDots`
+     và 2 rule vệt nav đang làm. */
+  html.skin-mt.theme-cu .dk-sum-head { background: var(--cu-surface-press); }
 
   /* 4 — NHÃN CHIẾN DỊCH ĐÈ TRÊN ẢNH THẺ SẢN PHẨM. Chỗ duy nhất trong lưới mà
      đồng được dùng y như dafc.com.vn: mảng đồng trên ảnh. Mực giữ nguyên
-     text-foreground #0a0a0a = 10,47:1 trên nền đồng. Miếng nhãn cũng NỔI HƠN
-     miếng trắng cũ trên ảnh packshot nền #f1f1f1 (1,67 so với 1,13).
+     text-foreground #0a0a0a = 10,66:1 trên nền đồng. Miếng nhãn cũng NỔI HƠN
+     miếng trắng cũ trên ảnh packshot nền #f1f1f1 (1,64 so với 1,13).
      BẮT BUỘC bám #plpGrid: rule gốc .badge-label phủ cả nhãn ở gallery PDP. */
   html.skin-mt.theme-cu #plpGrid .badge-label { background: var(--cu-signature); }
 
@@ -5910,7 +6143,9 @@ function navBar({ logoOnly = false } = {}) {
     </div>
     <img src="${A}logo.png" alt="DAFC" class="h-[20px] w-[93px] object-contain cursor-pointer press" data-nav="home">
     <div class="flex gap-2 items-center justify-end w-[133px]">
-      ${ico(I.user, 'data-nav="login"')}
+      <!-- 22/09/2026: icon theo ckAuth như bản desktop; trước in cứng login nên người đã đăng
+           nhập bấm icon lại thấy form Đăng nhập (đo 22/09). -->
+      ${ico(I.user, 'data-nav="' + (ckAuth ? 'account' : 'login') + '"')}
       <button data-nav="cart" class="w-6 h-6 flex items-center justify-center press relative">
         ${I.bag}
         <!-- 21/08/2026: đã thử số nằm giữa thân túi kiểu mytheresa rồi user chốt
@@ -6516,7 +6751,9 @@ function screenSearch() {
     <!-- Nav — logo giữa + đóng bên phải, không viền dưới (Figma 3376:44047) -->
     <div class="glass-95 sticky top-0 z-50 h-[48px] backdrop-blur-[7.5px] flex items-center justify-between px-4">
       <div class="w-6 h-6 shrink-0"></div>
-      <img src="${A}logo.png" alt="DAFC" class="h-[20px] w-[93px] object-contain cursor-pointer press" data-nav="plp">
+      <!-- 22/09/2026: logo về TRANG CHỦ như header chuẩn; sót data-nav="plp" từ khi 'home'
+           đứng đầu FLOW (04/09). -->
+      <img src="${A}logo.png" alt="DAFC" class="h-[20px] w-[93px] object-contain cursor-pointer press" data-nav="home">
       <button data-nav="plp" aria-label="Đóng tìm kiếm" class="w-6 h-6 flex items-center justify-center shrink-0 press [&_svg]:w-3.5 [&_svg]:h-3.5">${I.close}</button>
     </div>
 
@@ -6793,7 +7030,7 @@ function screenPDP() {
 
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
     ${[['Gợi ý mua kèm', 3], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
-      <div class="flex flex-col gap-4 mt-10 pb-6 reveal${title === 'Gợi ý mua kèm' ? ' pt-6 bg-accent-0' : ''}">
+      <div class="flex flex-col gap-4 mt-10 pb-6 reveal${title === 'Gợi ý mua kèm' ? ' pt-6 bg-accent-0 look-band' : ''}">
         <p class="px-4 text-[18px] font-medium leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
@@ -6925,19 +7162,63 @@ const PDP_PROMOS = {
    lấy `title` làm phần đậm, `line` làm phần mô tả (bỏ khi 2 chuỗi trùng nhau).
    KHAI GIỐNG HỆT ở desktop.html. */
 const PROMO_TAB = 'Ưu đãi khuyến mãi';
-/* Khối XÁM — khuôn chốt, copy đúng số của cục "Ưu đãi khuyến mãi" ở PDP3 bản DESKTOP:
-   thẻ `bg-accent-0` bo `rounded-sm`, pad 16, gap 4; tiêu đề 14/20 Medium mực chính;
-   mỗi chương trình MỘT DÒNG 14/20 mực nội dung, phần đầu dòng Medium. Không bullet,
-   không accordion, không bấm mở chi tiết. */
+/* ══ 23/09/2026 — CỤC "Ưu đãi khuyến mãi" Ở PDP NAY DÙNG HỘP CỦA GIỎ HÀNG ═══════
+   Lệnh user: *"mang cái block chương trình khuyến mãi ở trong cart và replace vào
+   block ưu đãi khuyến mãi ở PDP nhé"*. Chốt thêm khi hỏi lại: làm CẢ 2 BẢN, và
+   **giữ nguyên nội dung ưu đãi riêng của từng sản phẩm** — chỉ mượn KHUÔN hộp.
+   Nên `PDP_PROMOS` / `D.promos` / `promoPairs` vẫn là nguồn nội dung như cũ; thứ
+   đổi là cái vỏ: từ MỘT thẻ xám phẳng thành HỘP BA TẦNG của giỏ —
+     băng tiêu đề (bấm được) · thân xem mấp mé 89px · nút "Xem tất cả" ở đáy.
+   Ba class `.promo-head` / `.promo-body` / `.promo-foot` + `.promo-peek` + hộp
+   `.promo-box` nay là KHUÔN CHUNG, không còn của riêng màn giỏ — xem khối CSS
+   cùng tên (đã gỡ tiền tố `[data-screen="cart"]` khỏi 3 rule màu đồng).
+   Số ĐỆM vẫn là số của khổ 375 (12 ngang, băng cao 48); bản desktop dùng 16/56.
+
+   ⚠ HAI THỨ PHẢI ĐI KÈM, đừng bỏ lẻ:
+     · `wirePromoPeek()` — ẩn nút "Xem tất cả" khi thân KHÔNG bị cắt. Cần vì 5/6
+       PDP chỉ có 2–3 dòng ưu đãi (cao 60–86 < 89) nên không có gì để xổ; để nút
+       đó là nút bấm không ra kết quả. Giỏ có 3 khối nhiều dòng nên luôn bị cắt.
+     · KHÔNG gắn `id` cho hộp ở PDP. Hộp ở giỏ giữ `#promoPeek` vì mấy rule CSS của
+       màn giỏ bám vào đó; PDP mà mang cùng id là TRÙNG ID trong một trang.
+       Vì vậy handler xổ/thu đã đổi từ `#promoToggle` sang `.promo-foot`.
+
+   Khuôn CŨ (đã thay): một thẻ `bg-accent-0` bo `rounded-sm` pad 16 gap 4, tiêu đề
+   14/20 Medium, mỗi chương trình một dòng 14/20 — không bấm được, không xổ. */
 const promoBox = items => `
     <div class="px-4 pb-2 rise">
-      <div class="flex flex-col gap-1 rounded-sm bg-accent-0 p-4">
-        <p class="t-multiline font-medium text-foreground">${PROMO_TAB}</p>
-        ${items.map(it => Array.isArray(it)
-          ? `<p class="t-multiline text-secondary-foreground"><span class="font-medium">${it[0]}</span>${it[1] || ''}</p>`
-          : `<p class="t-multiline text-secondary-foreground">${it}</p>`).join('')}
+      <div class="promo-box flex flex-col">
+        <button data-promo-toggle class="promo-head t-block-title font-medium text-foreground text-left press"><span>${PROMO_TAB}</span> <span>(${items.length})</span></button>
+        <div class="promo-peek promo-body flex flex-col gap-2">
+          ${items.map(it => Array.isArray(it)
+            ? `<p class="t-multiline text-secondary-foreground"><span class="font-medium">${it[0]}</span>${it[1] || ''}</p>`
+            : `<p class="t-multiline text-secondary-foreground">${it}</p>`).join('')}
+        </div>
+        <button data-promo-toggle data-more="Xem tất cả ${items.length} chương trình" class="promo-foot t-multiline w-full flex items-center justify-center font-medium text-foreground underline press">Xem tất cả ${items.length} chương trình</button>
       </div>
     </div>`;
+/* Ẩn nút "Xem tất cả" khi thân hộp khuyến mãi KHÔNG bị cắt (23/09/2026).
+   Vì sao cần: `.promo-peek` kẹp thân ở 89px, nhưng 5/6 PDP chỉ có 2–3 dòng ưu đãi
+   (2 dòng ~60px, 3 dòng ~86px) nên chẳng có gì bị giấu — để nguyên thì nút "Xem tất
+   cả N chương trình" bấm vào không thấy gì đổi, đọc ra như nút hỏng. Hộp ở GIỎ có 3
+   khối nhiều dòng nên luôn vượt 89, nút vẫn hiện như cũ.
+   Cách làm: so `scrollHeight` với `clientHeight` NGAY SAU KHI dựng (đo được vì cả hai
+   đã có layout lúc wire chạy). Vừa khít thì bật sẵn `.open` — dùng lại trạng thái CÓ
+   SẴN thay vì đẻ class mới: `.open` vừa bỏ trần chiều cao vừa tắt vệt mờ đáy, đúng hai
+   thứ cần tắt khi không còn gì để giấu.
+   Cộng 1px dung sai: chiều cao dòng lẻ làm scrollHeight hơn clientHeight đúng 1px ở
+   vài cỡ chữ, không bù thì nút hiện nhầm. */
+function wirePromoPeek(root) {
+  root.querySelectorAll('.promo-box').forEach(hop => {
+    const peek = hop.querySelector('.promo-peek');
+    const nut  = hop.querySelector('.promo-foot');
+    if (!peek || !nut || peek.classList.contains('open')) return;
+    if (peek.scrollHeight <= peek.clientHeight + 1) {
+      peek.classList.add('open');
+      nut.classList.add('hidden');
+    }
+  });
+}
+
 const promoPairs = keys => keys.map(k => {
   const p = PROMOS[k];
   return [p.title, p.line === p.title ? '' : ` — ${p.line}`];
@@ -7106,7 +7387,7 @@ function screenPDP2() {
 
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
     ${[['Gợi ý mua kèm', 3], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
-      <div class="flex flex-col gap-4 mt-10 pb-6 reveal${title === 'Gợi ý mua kèm' ? ' pt-6 bg-accent-0' : ''}">
+      <div class="flex flex-col gap-4 mt-10 pb-6 reveal${title === 'Gợi ý mua kèm' ? ' pt-6 bg-accent-0 look-band' : ''}">
         <p class="px-4 text-[18px] font-medium leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
@@ -7241,7 +7522,7 @@ function screenPDP3() {
 
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 -->
     ${[['Gợi ý mua kèm', 3], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
-      <div class="flex flex-col gap-4 mt-10 pb-6 reveal${title === 'Gợi ý mua kèm' ? ' pt-6 bg-accent-0' : ''}">
+      <div class="flex flex-col gap-4 mt-10 pb-6 reveal${title === 'Gợi ý mua kèm' ? ' pt-6 bg-accent-0 look-band' : ''}">
         <p class="px-4 text-[18px] font-medium leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
@@ -7370,7 +7651,7 @@ function screenPDP4() {
 
     <!-- 3 rail gợi ý — Card-item 254px, gap 4 (đúng Figma) -->
     ${[['Gợi ý mua kèm', 3], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
-      <div class="flex flex-col gap-4 mt-10 pb-6 reveal${title === 'Gợi ý mua kèm' ? ' pt-6 bg-accent-0' : ''}">
+      <div class="flex flex-col gap-4 mt-10 pb-6 reveal${title === 'Gợi ý mua kèm' ? ' pt-6 bg-accent-0 look-band' : ''}">
         <p class="px-4 text-[18px] font-medium leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
@@ -7924,9 +8205,18 @@ function accOrders() {
    bấm Sửa rồi Lưu là mất một thành phần địa chỉ — sửa xong địa chỉ ngắn đi.
    `addrLine()` ghép lại cho mọi chỗ trước đây đọc `a.line` (sổ chọn ở checkout, tóm
    tắt bước giao hàng, và đơn vừa đặt). */
+/* 23/09/2026 — SỔ ĐỊA CHỈ TỪ 2 LÊN 6 MỤC. Không phải trang trí: bước Vận chuyển ở
+   checkout nay chỉ bày TỐI ĐA 4 thẻ rồi mới hiện nút "Xem tất cả địa chỉ" (lệnh user),
+   mà với 2 mục thì nhánh đó KHÔNG BAO GIỜ chạy — demo sẽ không có gì để xem.
+   6 mục cũng thoả luôn cách đọc chặt nhất của lệnh ("nhiều hơn 5").
+   Sổ này dùng chung với trang Tài khoản (accAddress) nên bên đó cũng dài ra theo. */
 const ADDRESSES = [
   { name: 'Nguyễn Văn A', phone: '0909 123 456', street: '123 Đồng Khởi', ward: 'Phường Sài Gòn',   province: 'TP. Hồ Chí Minh', def: true },
   { name: 'Nguyễn Văn A', phone: '0909 123 456', street: '45 Lê Lợi',     ward: 'Phường Bến Thành', province: 'TP. Hồ Chí Minh', def: false },
+  { name: 'Nguyễn Văn A', phone: '0909 123 456', street: '208 Nguyễn Trãi',  ward: 'Phường Cầu Ông Lãnh', province: 'TP. Hồ Chí Minh', def: false },
+  { name: 'Trần Thị B',   phone: '0912 888 777', street: '72 Lê Thánh Tôn',  ward: 'Phường Sài Gòn',      province: 'TP. Hồ Chí Minh', def: false },
+  { name: 'Nguyễn Văn A', phone: '0909 123 456', street: '15 Tràng Tiền',    ward: 'Phường Hoàn Kiếm',    province: 'Hà Nội',          def: false },
+  { name: 'Nguyễn Văn A', phone: '0909 123 456', street: '89 Bạch Đằng',     ward: 'Phường Hải Châu',     province: 'Đà Nẵng',         def: false },
 ];
 const addrLine = a => a ? [a.street, a.ward, a.province].filter(Boolean).join(', ') : '';
 
@@ -8583,7 +8873,7 @@ function screenPDP5() {
 
     <!-- Recently Viewed ×3: Card-item 254px gap 4 -->
     ${[['Gợi ý mua kèm', 3], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
-      <div class="flex flex-col gap-4 mt-10 pb-6 reveal${title === 'Gợi ý mua kèm' ? ' pt-6 bg-accent-0' : ''}">
+      <div class="flex flex-col gap-4 mt-10 pb-6 reveal${title === 'Gợi ý mua kèm' ? ' pt-6 bg-accent-0 look-band' : ''}">
         <p class="px-4 text-[18px] font-medium leading-7 text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0')}
@@ -8720,7 +9010,7 @@ function screenPDP6() {
 
     <!-- Recently Viewed ×3: pad 24,16 · gap 16 · title Regular 20/28 ls .5% căn TRÁI -->
     ${[['Gợi ý mua kèm', 3], ['Sản phẩm tương tự', 4]].map(([title, n]) => `
-      <div class="flex flex-col gap-4 px-4 mt-10 pb-6 reveal${title === 'Gợi ý mua kèm' ? ' pt-6 bg-accent-0' : ''}">
+      <div class="flex flex-col gap-4 px-4 mt-10 pb-6 reveal${title === 'Gợi ý mua kèm' ? ' pt-6 bg-accent-0 look-band' : ''}">
         <p class="text-[18px] font-medium leading-7 tracking-[0.005em] text-foreground">${title}</p>
         <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
           ${lookRailCards(title, n, PRODUCTS.indexOf(P), 'w-[170px] shrink-0', 3)}
@@ -10161,6 +10451,15 @@ const cartSelectedQty = () => cartSelected().reduce((s, c) => s + (c.qty || 1), 
      · đổi giá       -> mực thường + giá cũ gạch ngang, để so được ngay
    Dùng `t-single` 12/16 như dòng phân loại: đây là chú thích của dòng, không
    phải một bậc thông tin mới. */
+/* 22/09/2026 — chỉ số PRODUCTS của một dòng giỏ, để ảnh dòng là ĐƯỜNG DẪN vào đúng PDP.
+   Trước đây template in cứng data-product="7" nên bấm ảnh dòng nào cũng mở "Túi da Lou
+   mini" (đo 22/09: cả 5 dòng seed). Dòng giỏ không lưu chỉ số (CART_BASE lẫn addToCart
+   chỉ có hãng/tên), nên tra ngược theo hãng + tên; không khớp (quà tặng, dữ liệu lạ) thì
+   bỏ hẳn thuộc tính — ảnh thành ảnh tĩnh, còn hơn dẫn sai chỗ. Giống hệt bản desktop. */
+function cartPidAttr(c) {
+  const i = PRODUCTS.findIndex(p => p.name === c.name && (!c.brand || p.brand === c.brand));
+  return i >= 0 ? ` data-product="${i}"` : '';
+}
 function cartRowNote(c) {
   if (!c) return '';
   if (c.stock === 0)
@@ -10234,25 +10533,41 @@ function pruneVouchers() {
   return dropped;
 }
 
-/* ── ƯỚC TÍNH PHÍ VẬN CHUYỂN (11/09/2026, lệnh user "dựng demo luôn") ─────────
-   Trước lượt này giỏ KHÔNG nói gì về phí giao: người mua thấy "Tổng cộng" ở giỏ,
-   sang thanh toán mới biết còn một khoản nữa — đúng chỗ dễ mất đơn nhất.
-   Mốc miễn phí lấy ĐÚNG con số đang quảng cáo ở khối "Chương trình khuyến mãi"
-   (Miễn phí vận chuyển cho đơn hàng từ 8 triệu), không đẻ thêm một mốc thứ hai.
-   Ba đường về 0đ, theo thứ tự đọc:
-     · giỏ chưa chọn món nào  -> không có gì để giao
-     · đang áp mã vận chuyển  -> mã lo phần này
-     · tạm tính đã qua mốc    -> chương trình lo phần này
-   Gọi là "ƯỚC TÍNH" vì phí thật còn phụ thuộc địa chỉ, chốt ở màn thanh toán. */
-const SHIP_FEE = 50000;
-const SHIP_FREE_FROM = 8000000;
-function cartShipFee() {
-  const sub = cartSubtotal();
-  if (sub <= 0) return 0;
+/* ── PHÍ VẬN CHUYỂN: GIỎ KHÔNG CÓ, CHECKOUT CÓ SAU KHI CHỌN (23/09/2026) ──────
+   Lệnh user: *"ở trang cart thì sẽ không có phí vận chuyển nhé, còn ở check out thì
+   khi chọn phương tiện vận chuyển xong thì sẽ hiện chi phí vận chuyển"*.
+
+   ĐÃ GỠ hẳn `cartShipFee()` + `SHIP_FEE` (50.000) + `SHIP_FREE_FROM` (8 triệu) —
+   khối "ước tính phí giao" dựng 11/09. Lý lẽ hồi đó là *"đừng để người mua sang
+   thanh toán mới biết còn một khoản nữa"*, nhưng con số 50.000 là ƯỚC TÍNH KHÔNG CÓ
+   THẬT: phí thật do PHƯƠNG THỨC quyết (thường 0 / nhanh 25.000), mà phương thức thì
+   chỉ chọn được ở checkout. Đưa một con số không bao giờ đúng vào giỏ còn tệ hơn là
+   im lặng, nên nay giỏ im.
+
+   BA ĐƯỜNG VỀ 0đ, theo thứ tự đọc:
+     · nhận tại cửa hàng      -> không giao thì không có phí
+     · chọn giao thông thường -> nhà bán chịu (đúng nhãn "Giao hàng thông thường - Miễn Phí")
+     · đang áp mã vận chuyển  -> mã lo phần này (giữ nguyên ý nghĩa của voucher type 'ship')
+
+   ⚠ `SHIP_FAST_FEE` PHẢI KHỚP con số in trong nhãn `'Giao hàng nhanh - 25,000đ'`.
+   Nhãn đó KHÔNG dựng từ hằng số này vì bảng i18n tra theo CHUỖI TIẾNG VIỆT CHÍNH XÁC —
+   nội suy vào là mất bản EN. Đổi phí thì phải sửa CẢ HAI chỗ (và cả dòng i18n). */
+const SHIP_FAST_FEE = 25000;
+function ckShipFee() {
+  if (ckMode === 'pickup') return 0;
+  if (!ckShipFast) return 0;
   if (activeVouchers().some(v => v.type === 'ship')) return 0;
-  if (sub >= SHIP_FREE_FROM) return 0;
-  return SHIP_FEE;
+  return SHIP_FAST_FEE;
 }
+/* "Đã chọn xong phương thức vận chuyển?" — mốc là bước ĐÃ XÁC NHẬN, không phải
+   `ckShipFast` (biến đó có giá trị mặc định false ngay từ đầu nên không nói được gì).
+   Bước "Phương thức vận chuyển" là section index 1 và nút Xác nhận của nó mang
+   `data-next="2"`, mà `ckMaxStep = Math.max(ckMaxStep, ckStep)` — nên xác nhận xong
+   là `ckMaxStep >= 2`. Quay lại sửa bước đó thì ckMaxStep GIỮ NGUYÊN, phí vẫn hiện,
+   đúng ý (đã biết rồi thì đừng giấu lại).
+   Luồng "Nhận tại cửa hàng" ít hơn một bước nên không bao giờ true — nhánh
+   "Tại cửa hàng" lo phần hiển thị. */
+function ckShipChosen() { return ckMode !== 'pickup' && ckMaxStep >= 2; }
 
 function rewardAmount(kind) {
   const sub = cartSubtotal();
@@ -10733,14 +11048,11 @@ function discountLinesHTML() {
       if (v.type !== 'ship') rows.push(line(`Giảm giá (${v.code})`, voucherValue(v), true));
     });
     cartPbh.forEach(p => rows.push(line(`Giảm giá (${p.code})`, p.amount, true)));
-    /* Phí giao đứng SAU mọi dòng giảm giá: nó là khoản CỘNG vào, đọc xuôi từ trên
-       xuống thì tạm tính → trừ các khoản → cộng phí giao → tổng cộng.
-       Mã vận chuyển không còn dòng riêng nữa — nó đã nói bằng chính chữ "Miễn phí"
-       ở đây, in hai dòng cùng nội dung là thừa. */
-    const ship = cartShipFee();
-    rows.push(ship > 0
-      ? line('Phí vận chuyển (ước tính)', ship, false)
-      : lineText('Phí vận chuyển (ước tính)', 'Miễn phí'));
+    /* ĐÃ GỠ 23/09/2026 — dòng "Phí vận chuyển (ước tính)" (lệnh user: giỏ không có
+       phí vận chuyển). Phí nay chỉ xuất hiện ở checkout, sau khi chọn phương thức —
+       xem ckShipFee()/ckShipChosen().
+       ⚠ Khung Figma 614:105494 VẪN vẽ dòng này; lệnh miệng sau nên thắng. Đổi ý thì
+       nhớ bật lại cả ở đây lẫn ở cartTotalNow(). */
   }
   return rows.join('');
 }
@@ -10754,7 +11066,11 @@ function cartDiscountTotal() {
 }
 /* Phí giao CỘNG SAU khi đã trừ ưu đãi, và chỉ khi còn hàng để giao — giỏ rỗng
    hoặc bỏ tick hết thì tổng phải là 0đ chứ không phải 50.000đ tiền ship suông. */
-function cartTotalNow() { return Math.max(0, cartSubtotal() - cartDiscountTotal()) + cartShipFee(); }
+/* TỔNG Ở GIỎ — KHÔNG cộng phí giao (23/09/2026, xem khối ckShipFee). */
+function cartTotalNow() { return Math.max(0, cartSubtotal() - cartDiscountTotal()); }
+/* TỔNG Ở CHECKOUT — cộng phí giao. Tách hàm riêng thay vì thêm tham số: hai màn có
+   hai con số khác nhau THẬT, gọi nhầm hàm là sai tiền chứ không phải sai chữ. */
+function ckTotalNow() { return cartTotalNow() + ckShipFee(); }
 
 /* Khối hợp nhất theo Figma 3458:56933 (đọc lại lần 4 — user xác nhận "chưa
    đúng thiết kế", bỏ hẳn kiểu "card nổi bo góc" của 2 vòng trước): panel giờ
@@ -10817,7 +11133,24 @@ function discountPanel() {
          t-overlay (16/24 Inter 500) và CHỮ HOA trở lại. Chữ hoa làm bằng CSS
          text-transform chứ KHÔNG gõ hoa vào markup: applyLang tra i18n theo chuỗi
          tiếng Việt chính xác, gõ hoa là mất bản EN. -->
-    <h2 class="t-overlay dk-summary-title text-foreground">Tóm tắt đơn hàng</h2>
+    <!-- 23/09/2026 — .t-overlay -> .t-block-title (lệnh user: *"chữ tóm tắt đơn
+         hàng viết libre và hoa chữ cái đầu y chang thiết kế"*).
+         KHÔNG thêm một rule CSS nào: hệ đã có sẵn đúng bậc này —
+         html.skin-mt.skin-li .t-block-title { font-family: var(--font-head);
+         text-transform: none; font-weight: 400 } (0,3,1), thắng html.skin-mt
+         .dk-summary-title (0,2,1) nên hoa + 500 của hook cũ tự nhường.
+         .dk-summary-title GIỮ TRONG markup: nó còn một việc là letter-spacing 0.5px,
+         đúng số đo node Figma.
+         VÌ SAO LÀ t-block-title CHỨ KHÔNG PHẢI CLASS KHÁC: node Figma 614:105496
+         bám ĐÚNG text style tên t-block-title — Libre Bodoni Regular 16/24, ls 0.5px,
+         textCase ORIGINAL. Tức tên class ở code và tên style ở Figma trùng nhau, không
+         phải tôi chọn bậc gần đúng.
+         ⚠ .t-overlay CÙNG 16/24 nhưng CỐ Ý không bao giờ lên Bodoni (vai "title lớp
+         nổi", luôn Inter 500 + CHỮ HOA — xem chú thích ở thang chữ). Đừng đổi ngược lại.
+         ⚠ KHÔNG đụng .dk-summary-title ở CHECKOUT: bên đó Figma vẫn là Inter Medium
+         14/20 CHỮ HOA (đo 10 khung Thanh toán / desktop · bước *). Hai chỗ nay khác
+         nhau thật, nên mọi thay đổi phải làm ở MARKUP của từng chỗ, KHÔNG ở hook chung. -->
+    <h2 class="t-block-title dk-summary-title text-foreground">Tóm tắt đơn hàng</h2>
 
     <!-- THỨ TỰ KHỐI TÓM TẮT — user chốt 18/09/2026, giống hệt bản desktop:
          Tạm tính · Giảm giá (…) · [ô nhập mã ưu đãi] · Tổng cộng · dòng điểm thưởng.
@@ -10986,7 +11319,7 @@ function screenCART() {
       <div class="w-4 shrink-0 flex items-center">
         <button class="chk ${c.sel === false || c.stock === 0 ? '' : 'on'} w-4 h-4 border border-border bg-background-3 rounded-xs shadow-sm flex items-center justify-center btn-o press"${c.stock === 0 ? ' disabled' : ''} data-check>${I.tick}</button>
       </div>
-      <div class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer" data-product="7">
+      <div class="relative w-[100px] h-[133px] shrink-0 bg-secondary overflow-hidden cursor-pointer"${cartPidAttr(c)}>
         <!-- alt mang tên hàng, không để rỗng: ảnh này là ĐƯỜNG DẪN vào PDP
              (data-product) và là thứ phân biệt các dòng trong giỏ. -->
         <img src="${A}${c.img}" class="w-full h-full object-cover lazy" alt="${c.brand} ${c.name}">
@@ -11105,12 +11438,31 @@ function screenCART() {
            TRONG HỘP (lệnh user 18/09/2026, đồng bộ với bản desktop — trước đó cả hai
            mở sheet trượt từ đáy). Móc bằng thuộc tính chứ không bằng id vì khối này
            dựng lại mỗi lần vào màn. -->
-      <div class="border border-border rounded-md py-2 px-3 flex flex-col gap-2">
-        <button data-promo-toggle class="t-single font-medium text-foreground text-left press">Chương trình khuyến mãi (${PROMO_PROGRAMS.length})</button>
-        <div id="promoPeek" class="promo-peek flex flex-col gap-2">
+      <!-- 23/09/2026 — BA TẦNG, đồng bộ với bản desktop (lệnh user "đồng bộ luôn cho
+           bản mobile đi"). Băng tiêu đề đậm hơn thân một bậc, rồi thân, rồi nút đáy.
+           Đệm chuyển TỪ hộp XUỐNG từng tầng nên hộp bỏ py-2 px-3 và bỏ gap-2 — ba
+           tầng dính nhau, ranh giới do mặt màu lo.
+           ĐỆM NGANG 12 chứ không 16 như desktop: đó là lề của chính hộp này ở khổ 375.
+           Kéo theo băng tiêu đề cao 48 (12 + 24 + 12) thay vì 56.
+           rounded-md GIỮ NGUYÊN dù nó là CLASS CHẾT (đo được border-radius: 0px trong
+           bản tailwind dựng sẵn) — không dọn trong lượt này để diff gọn.
+           ⚠ KHÔNG BỌC THÊM TẦNG DIV NÀO QUANH #promoPeek: rule
+           div:has(> div > #promoPeek) ở khối bộ da đang trỏ qua đúng độ sâu này, thêm
+           một tầng là nó nhảy chỗ. Đệm của tầng thân vì vậy đặt THẲNG lên #promoPeek
+           (xem .promo-body, có kèm bù max-height). -->
+      <!-- 23/09/2026 — hộp nhận class promo-box (thay border border-border
+           rounded-md): hộp này nay còn mọc ở PDP nên mặt + viền phải nằm ở MỘT
+           class dùng chung, không rải utility. rounded-md bỏ luôn — nó vốn là
+           CLASS CHẾT (đo được border-radius 0 ở bản tailwind dựng sẵn).
+           id="promoToggle" ĐÃ BỎ: hai hộp cùng id là trùng id trong một trang;
+           handler xổ/thu nay bám .promo-foot. #promoPeek thì GIỮ vì rule CSS
+           của màn giỏ còn bám vào nó. -->
+      <div class="promo-box flex flex-col">
+        <button data-promo-toggle class="promo-head t-block-title font-medium text-foreground text-left press">Chương trình khuyến mãi (${PROMO_PROGRAMS.length})</button>
+        <div id="promoPeek" class="promo-peek promo-body flex flex-col gap-2">
           ${PROMO_PROGRAMS.map(p => promoRule(p.headline, p.scheme, p.tnc)).join('')}
         </div>
-        <button id="promoToggle" data-promo-toggle class="t-multiline w-full min-h-8 flex items-center justify-center font-medium text-foreground underline press">Xem tất cả ${PROMO_PROGRAMS.length} chương trình</button>
+        <button data-promo-toggle data-more="Xem tất cả ${PROMO_PROGRAMS.length} chương trình" class="promo-foot t-multiline w-full flex items-center justify-center font-medium text-foreground underline press">Xem tất cả ${PROMO_PROGRAMS.length} chương trình</button>
       </div>
     </div>
 
@@ -11636,6 +11988,14 @@ let ckName = '', ckPhone = '', ckEmail = '';
    khách nhập địa chỉ khác. 3 biến ckShip* giữ chữ của form địa chỉ mới để
    phần tóm tắt in đúng tên khách vừa gõ thay cho chuỗi chết cũ. */
 let ckAddr = 0, ckShipName = '', ckShipPhone = '', ckShipLine = '';
+/* 23/09/2026 — ĐANG SỬA địa chỉ nào trong sổ (index), null = không sửa.
+   TÁCH KHỎI `ckAddr` chứ không mượn một giá trị đặc biệt như 'new': lúc sửa thì địa chỉ
+   ĐANG CHỌN vẫn là cái đó, chỉ là đang mở form của nó — gộp vào ckAddr là mất thông tin
+   "đơn này giao tới đâu" trong suốt lúc sửa. */
+let ckAddrEdit = null;
+/* Mục đang chọn TRƯỚC khi bấm "+ Thêm địa chỉ mới" — để nút "Huỷ" có chỗ quay về.
+   Không suy ra được từ đâu khác: lúc đó `ckAddr` đã bị ghi đè thành 'new'. */
+let ckAddrPrev = 0;
 /* Đã đặt hàng xong: khoá không cho đặt lại đơn thứ hai khi bấm back, và giữ
    mã đơn vừa sinh để màn Hoàn tất / Chi tiết đơn cùng đọc một nguồn. */
 /* Trần cho "thanh toán khi nhận hàng" (11/09/2026). Một chỗ khai: thẻ chọn ở
@@ -11913,25 +12273,112 @@ function screenCHECKOUT() {
      trạng thái) cho khớp cả 2 tham chiếu. Không dùng nguyên class `.opt` vì
      đó là khuôn NÚT bấm chọn (có state on/hover/press) — thẻ này chỉ hiển thị
      tĩnh, chỉ nút "Sửa" bên trong mới bấm được. */
+  /* ── SỔ ĐỊA CHỈ Ở BƯỚC VẬN CHUYỂN: TỐI ĐA 4 THẺ + "Xem tất cả địa chỉ" ──────
+     Lệnh user 23/09/2026: *"ở checkout, hiện tối đa 1 lúc 4 sổ địa chỉ, nếu nhiều hơn
+     5 sẽ hiện xem tất cả địa chỉ bấm vào nút đó thì slide in cái sổ địa chỉ cho chọn"*.
+
+     ĐẢO quyết định brief tr.31 (chỉ hiện ĐỊA CHỈ ĐANG CHỌN dạng tóm tắt + nút "Sửa"):
+     nay bày thẳng tối đa 4 thẻ CHỌN ĐƯỢC, chỉ khi dài hơn mới đẩy phần còn lại vào sheet.
+
+     NGƯỠNG: hiện nút khi số địa chỉ **nhiều hơn 4**, tức từ 5 trở lên. Lệnh viết "nhiều
+     hơn 5" nhưng cùng câu đã chốt "tối đa 4" — hai vế chỉ khớp nhau ở cách đọc này, và
+     nó cũng là cách duy nhất không để lọt trường hợp 5 địa chỉ mà không có lối xem nốt
+     cái thứ 5.
+
+     CHỌN 4 CÁI NÀO: 3 cái đầu theo thứ tự sổ, cộng cái ĐANG CHỌN. Nếu cái đang chọn
+     nằm ngoài top 4 thì nó THẾ CHỖ ô thứ 4. Làm vậy vì hai ràng buộc cùng lúc: địa chỉ
+     đang chọn phải LUÔN nhìn thấy, mà 3 ô đầu thì phải ĐỨNG YÊN khi bấm qua lại — xếp
+     lại theo "đang chọn lên đầu" là mỗi lần bấm thẻ lại nhảy chỗ.
+
+     Khuôn thẻ lấy Y HỆT thẻ trong #addrSheet (class `.opt` + radio) để hai danh sách
+     cùng một mặt — người dùng bấm "Xem tất cả" ra sheet không thấy đổi ngôn ngữ.
+
+     ── 23/09 ĐỢT 2 (lệnh user + ảnh tham chiếu) ──
+     Nội dung thẻ tách thành BA dòng: Tên / SĐT / địa chỉ (trước là "Tên · SĐT" chung
+     một dòng rồi địa chỉ xuống dòng). Nhãn (Mặc định) đi theo TÊN. **Ba dòng này GIỮ
+     ĐẾN NAY** — cả ở ô địa chỉ của bước Vận chuyển lẫn ở thẻ trong #addrSheet.
+     Phần LƯỚI 2 CỘT của đợt đó ĐÃ GỠ ở đợt 5, xem khối "BẢN CHỐT" ngay dưới.
+
+     ⚠ ĐOẠN TRÊN (tối đa 4 thẻ, ngưỡng, cách chọn 4 cái nào) LÀ LỊCH SỬ, KHÔNG CÒN HIỆU
+     LỰC — giữ để hiểu vì sao sổ demo có 6 mục và vì sao từng có ngưỡng "nhiều hơn 4".
+     Nút "Xem tất cả địa chỉ" mang `data-open-addrbook`, dùng lại đúng handler sẵn có
+     (mở #addrSheet, trượt lên, chọn xong bấm Áp dụng thì rerender).
+     KHAI GIỐNG HỆT ở index.html và desktop.html. */
+  /* ══ SỔ ĐỊA CHỈ Ở BƯỚC VẬN CHUYỂN — BẢN CHỐT 23/09/2026 (đợt 5) ═══════════════
+     Lệnh user: *"nhìn không thuận mắt lắm, sửa lại block đó như sau: Tittle + sổ địa
+     chỉ (chung 1 hàng) · ô địa chỉ sẽ dùng cái địa chỉ mà đã chọn là mặc định kèm nút
+     thay đổi bên trong · bên dưới là nút thêm địa chỉ mới"*.
+
+     Ba khối, đúng thứ tự đó:
+       1. hàng tiêu đề  — "Sổ địa chỉ" trái, nút mở sổ phải
+       2. MỘT ô địa chỉ — cái ĐANG CHỌN, kèm nút "Thay đổi" bên trong
+       3. nút "+ Thêm địa chỉ mới"
+
+     ĐÃ GỠ: lưới 4 thẻ + class .addr-grid + hàm addrCard + hằng ADDR_SHOW_MAX + phép
+     chọn "3 cái đầu cộng cái đang chọn". Lưới sống đúng hai lượt trong ngày (đợt 1-4),
+     nay user thấy rối nên về lại MỘT ô — tức quay lại tinh thần brief tr.31, chỉ khác
+     là nay có thêm hàng tiêu đề và nút nằm TRONG ô.
+
+     Ô địa chỉ KHÔNG còn là nút: chỉ còn một địa chỉ thì không có gì để chọn, nên nó là
+     <div> thuần. Nhờ vậy cũng thoát hẳn bẫy "chữ hoa" của .btn-o đã dính ở đợt 3.
+     Viền ĐEN (border-primary) + nền TRẮNG: đúng khuôn thẻ tóm tắt của brief tr.31 —
+     viền đen nói "đây là cái đang dùng", nền trắng giữ khối nhẹ.
+
+     HAI NÚT, HAI VIỆC KHÁC HẲN NHAU (chốt 23/09, lệnh user: *"nút thay đổi trong ô
+     địa chỉ là nút chỉnh sửa thông tin của địa chỉ đang chọn nhé"*):
+       · "Xem tất cả địa chỉ" ở hàng tiêu đề -> mở sổ để ĐỔI SANG địa chỉ khác.
+         Chỉ hiện khi sổ có TỪ 2 ĐỊA CHỈ TRỞ LÊN (một cái thì không có gì để đổi sang).
+       · "Thay đổi" trong ô -> SỬA NỘI DUNG chính địa chỉ đang chọn. LUÔN hiện, kể cả
+         khi sổ chỉ có một mục — sửa được thì không phụ thuộc có bao nhiêu mục.
+     Đừng gộp lại: một cái đổi CHỌN CÁI NÀO, một cái đổi CHÍNH CÁI ĐÓ. */
+  const addrHead = `
+    <div class="flex items-center justify-between gap-3">
+      <p class="t-block-title text-foreground">Sổ địa chỉ</p>
+      ${ADDRESSES.length > 1 ? `<button type="button" data-open-addrbook class="t-single shrink-0 text-foreground underline press">Xem tất cả địa chỉ</button>` : ''}
+    </div>`;
   const addrSummary = (() => {
     const a = ADDRESSES[ckAddr] || null;
-    if (!a) return `<p class="t-multiline text-muted-foreground px-4 py-3 border border-border rounded-md bg-background">Sổ địa chỉ của bạn đang trống.</p>`;
-    return `
-    <div class="px-4 py-3 flex items-start justify-between gap-3 border border-primary rounded-md bg-background">
-      <div class="flex-1 min-w-0 flex flex-col gap-1">
-        <p class="t-multiline font-medium text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="t-multiline font-normal text-muted-foreground">(Mặc định)</span>' : ''}</p>
+    if (!a) return addrHead + `<p class="t-multiline text-muted-foreground px-4 py-3 border border-border rounded-md bg-background">Sổ địa chỉ của bạn đang trống.</p>`;
+    return addrHead + `
+    <div class="addr-card border border-primary rounded-md bg-background p-3">
+      <div class="addr-card-body flex flex-col gap-1">
+        <p class="t-multiline font-medium text-foreground">${a.name}${a.def ? ' <span class="t-single font-normal text-muted-foreground">(Mặc định)</span>' : ''}</p>
+        <p class="t-multiline text-secondary-foreground">${a.phone}</p>
         <p class="t-multiline text-secondary-foreground">${addrLine(a)}</p>
       </div>
-      <button type="button" data-open-addrbook class="t-single shrink-0 text-muted-foreground hover:text-foreground underline press">Sửa</button>
+      <button type="button" data-addr-edit class="addr-card-edit t-single text-muted-foreground hover:text-foreground underline press">Thay đổi</button>
     </div>`;
   })();
+  /* 23/09/2026 — BA NHÁNH thay vì hai: địa chỉ mới · ĐANG SỬA một mục có sẵn · danh
+     sách. Nhánh sửa dùng LẠI y nguyên `addrForm` (các ô của nó đọc ckShipName/
+     ckShipPhone/ckShipLine/ckProvince/ckWard) — lúc bấm "Thay đổi" handler đã nạp sẵn
+     5 biến đó từ mục đang chọn, nên form tự hiện đúng dữ liệu cũ.
+     Ghi ngược vào sổ ở lúc bấm Xác nhận của bước, xem handler data-require="ship".
+     "Huỷ" chỉ xoá cờ và dựng lại — 5 biến kia để bẩn cũng vô hại vì khi ckAddr là SỐ
+     thì đơn hàng đọc thẳng ADDRESSES[ckAddr], không đọc mấy biến đó. */
+  /* 23/09/2026 — "Huỷ" xuống nằm CẠNH nút Xác nhận (lệnh user), thay cho chỗ cũ ở
+     hàng nhãn vừa bỏ. ⚠ ĐỔI 23/09 (đợt sau, lệnh user): từ LINK GẠCH CHÂN lên NÚT GHOST cùng kích
+     thước với nút Xác nhận. Lý lẽ cũ của tôi ("link thì tự phân cấp bằng hình dạng")
+     bị bác — cặp nút cùng khổ đọc ra CÂN nhau hơn, và phân cấp đã do MẶT lo: một cái
+     nền đen đặc, một cái không nền. Kéo theo nó VÀO danh sách chữ hoa (mang `.btn-g`),
+     nên "HUỶ" nay viết hoa như "XÁC NHẬN & TIẾP TỤC" bên cạnh.
+     Chỉ hiện khi ĐANG sửa, hoặc đang thêm mới MÀ SỔ KHÔNG RỖNG — sổ rỗng thì huỷ
+     xong không có gì để quay về.
+     ⚠ Nút Xác nhận đổi `w-full` -> `flex-1`: hàng nay là flex nên `w-full` (100% bề
+     ngang CHA) đẩy "Huỷ" tràn ra ngoài. Lúc không có "Huỷ" thì `flex-1` vẫn cho ra
+     đúng full width như cũ. */
+  const ckCancelLink = (ckAddrEdit !== null || (ckAddr === 'new' && ADDRESSES.length))
+    ? `<button type="button" data-addr-cancel class="t-multiline flex-1 h-14 rounded-xs text-foreground btn-g press flex items-center justify-center">Huỷ</button>` : '';
+  /* 23/09/2026 — BỎ HẲN HÀNG NHÃN trên form (lệnh user: *"bỏ cái chữ sửa địa chỉ, và
+     thêm địa chỉ mới khi bấm vào 2 nút cùng tên đi"*). Hai nhãn "Sửa địa chỉ" /
+     "Địa chỉ mới" chỉ lặp lại tên cái nút vừa bấm — người dùng vừa bấm xong nên biết
+     mình đang ở đâu; tiêu đề thật của form ("Thông tin liên hệ") nằm ngay dưới.
+     Kéo theo: hai lối thoát vốn nằm ở hàng đó ("Huỷ" khi sửa, "Chọn địa chỉ đã lưu"
+     khi thêm mới) dồn về MỘT nút "Huỷ" đứng cạnh nút Xác nhận — xem ckCancelLink.
+     Hai nhánh nay chung một thân, chỉ khác nhau ở chỗ form lấy dữ liệu từ đâu. */
   const s0open = ckAuth ? `
     <div id="addrOpts">
-      ${ckAddr === 'new' ? `
-      <div class="px-4 pt-2 pb-1 flex items-center justify-between">
-        <span class="t-multiline text-muted-foreground">Địa chỉ mới</span>
-        ${ADDRESSES.length ? `<button type="button" data-open-addrbook class="t-single text-foreground underline press">Chọn địa chỉ đã lưu</button>` : ''}
-      </div>
+      ${ckAddrEdit !== null || ckAddr === 'new' ? `
       ${addrForm}` : `
       <!-- 15/09/2026, hai lượt liền nhau:
            (1) "+ Thêm địa chỉ mới" từ LINK gạch chân đổi thành NÚT THẬT — lượt
@@ -11959,12 +12406,13 @@ function screenCHECKOUT() {
         <button type="button" data-addr="new" class="t-lead w-full h-12 flex items-center justify-center border border-border bg-background text-foreground btn-o press">+ Thêm địa chỉ mới</button>
       </div>`}
     </div>
-    <div class="px-4 py-4">
-      <button class="t-multiline ck-next w-full h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="1" data-require="ship">Xác nhận</button>
+    <div class="px-4 py-4 flex items-center gap-4">
+      <button class="t-multiline ck-next flex-1 h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="1" data-require="ship">Xác nhận & tiếp tục</button>
+      ${ckCancelLink}
     </div>` : `
     ${addrForm}
-    <div class="px-4 py-4">
-      <button class="t-multiline ck-next w-full h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="1" data-require="ship">Xác nhận</button>
+    <div class="px-4 py-4 flex items-center gap-4">
+      <button class="t-multiline ck-next flex-1 h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="1" data-require="ship">Xác nhận & tiếp tục</button>
     </div>`;
   /* Figma 420:7321 — tóm tắt của bước đã xong là một HỘP CÓ VIỀN (#e6e6e6 =
      --unofficial-border-1, cùng sắc kẻ giữa các dòng giỏ), đệm 12, khe 8, nằm trong
@@ -12011,7 +12459,7 @@ function screenCHECKOUT() {
     </div>
     ${noteField}
     <div class="px-4 py-4">
-      <button class="t-multiline ck-next w-full h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="2">Xác nhận</button>
+      <button class="t-multiline ck-next w-full h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="2">Xác nhận &amp; tiếp tục</button>
     </div>`;
   const s1done = `
     <div class="px-4 pt-2">
@@ -12093,10 +12541,15 @@ function screenCHECKOUT() {
     <div class="px-4 pb-4">
       ${row('Tạm tính', vndCom(cartSubtotal()))}
       ${cartDiscountTotal() > 0 ? row('Giảm giá', '-' + vndCom(cartDiscountTotal())) : ''}
-      ${ckMode === 'pickup' ? row('Nhận hàng','Tại cửa hàng') : row('Giao hàng','Free')}
+      <!-- Dựng thẳng thay vì qua row(): cần id để paintCheckout vẽ lại sau khi
+           chọn xong phương thức vận chuyển. -->
+      <div class="h-9 flex items-center justify-between">
+        <span class="t-multiline text-foreground">${ckMode === 'pickup' ? 'Nhận hàng' : 'Giao hàng'}</span>
+        <span id="ckShipVal2" class="t-multiline ${ckMode === 'pickup' || ckShipChosen() ? 'text-foreground' : 'text-muted-foreground'}">${ckMode === 'pickup' ? 'Tại cửa hàng' : (ckShipChosen() ? (ckShipFee() > 0 ? vndCom(ckShipFee()) : 'Miễn phí') : 'Sẽ được tính sau')}</span>
+      </div>
       <div class="ck-total h-14 flex items-center justify-between">
         <span class="t-lead font-medium text-foreground">Tổng cộng</span>
-        <span class="t-lead font-medium text-foreground">${vndCom(cartTotalNow())}</span>
+        <span id="ckTotalVal" class="t-lead font-medium text-foreground">${vndCom(ckTotalNow())}</span>
       </div>
     </div>`;
 
@@ -12154,9 +12607,14 @@ function screenCHECKOUT() {
           <div class="flex flex-col pb-2">
             ${row('Tạm tính', vndCom(cartSubtotal()))}
             ${cartDiscountTotal() > 0 ? row('Giảm giá', '-' + vndCom(cartDiscountTotal())) : ''}
+            <!-- 23/09/2026 — BA TRẠNG THÁI thay vì hai (lệnh user: chọn phương thức
+                 xong mới hiện chi phí):
+                   nhận tại cửa hàng      -> Tại cửa hàng
+                   chưa xác nhận phương thức -> Sẽ được tính sau (chữ mờ)
+                   đã xác nhận            -> Miễn phí / 25,000đ (chữ chính) -->
             <div class="h-9 flex items-center justify-between">
               <span class="t-multiline text-foreground">${ckMode === 'pickup' ? 'Nhận hàng' : 'Giao hàng'}</span>
-              <span class="t-multiline ${ckMode === 'pickup' ? 'text-foreground' : 'text-muted-foreground'}">${ckMode === 'pickup' ? 'Tại cửa hàng' : 'Sẽ được tính sau'}</span>
+              <span id="ckShipVal" class="t-multiline ${ckMode === 'pickup' || ckShipChosen() ? 'text-foreground' : 'text-muted-foreground'}">${ckMode === 'pickup' ? 'Tại cửa hàng' : (ckShipChosen() ? (ckShipFee() > 0 ? vndCom(ckShipFee()) : 'Miễn phí') : 'Sẽ được tính sau')}</span>
             </div>
           </div>
           <div class="h-px bg-border-1"></div>
@@ -12257,9 +12715,36 @@ function paintCheckout(root) {
      lại từng bước. Đặt ở paintCheckout vì nhãn phụ thuộc trạng thái. */
   const openSec = root.querySelector(`.ck-sec[data-sec="${ckStep}"] .ck-next`);
   if (openSec) {
-    openSec.textContent = ckMaxStep > ckStep ? 'Lưu thay đổi' : 'Xác nhận';
+    /* 23/09/2026 — nhãn mặc định đổi thành "Xác nhận & tiếp tục" (lệnh user). Phải
+       sửa Ở ĐÂY chứ không chỉ ở markup: dòng này GHI ĐÈ textContent mỗi lượt vẽ, sửa
+       mỗi markup là nhãn mới sống đúng một khung hình.
+       Áp cho MỌI bước chứ không riêng bước Vận chuyển: các bước đều làm cùng một việc
+       (xác nhận rồi mở bước sau), để lệch nhau thì đọc ra như lỗi. Nhánh "Lưu thay
+       đổi" giữ nguyên — lúc đó bấm xong KHÔNG đi tiếp mà quay về bước xa nhất. */
+    openSec.textContent = ckMaxStep > ckStep ? 'Lưu thay đổi' : 'Xác nhận & tiếp tục';
     localizeNew(openSec);
   }
+
+  /* ── PHÍ GIAO + TỔNG PHẢI VẼ LẠI Ở ĐÂY (23/09/2026) ──
+     Panel tóm tắt dựng MỘT LẦN trong screenCHECKOUT(), còn paintCheckout() trước nay
+     chỉ đụng các section. Nên khi bấm Xác nhận ở bước "Phương thức vận chuyển",
+     `ckMaxStep` lên 2 và `ckShipFast` đã đúng NHƯNG panel vẫn in "Sẽ được tính sau" và
+     tổng cũ — đã đo được đúng lỗi này ngay khi dựng tính năng.
+     Cập nhật theo id, có guard: bản mobile có THÊM một cặp trong #ckBagSheet
+     (`ckShipVal2` / `ckTotalVal`), bản desktop chỉ có một cặp.
+     `localizeNew` để chuỗi vừa ghi được dịch nếu đang ở bản EN. */
+  const shipTxt = ckMode === 'pickup'
+    ? 'Tại cửa hàng'
+    : (ckShipChosen() ? (ckShipFee() > 0 ? vndCom(ckShipFee()) : 'Miễn phí') : 'Sẽ được tính sau');
+  const shipMuted = !(ckMode === 'pickup' || ckShipChosen());
+  root.querySelectorAll('#ckShipVal, #ckShipVal2').forEach(el => {
+    el.textContent = shipTxt;
+    el.classList.toggle('text-muted-foreground', shipMuted);
+    el.classList.toggle('text-foreground', !shipMuted);
+    localizeNew(el);
+  });
+  const totalEl = root.querySelector('#ckTotalVal');
+  if (totalEl) totalEl.textContent = vndCom(ckTotalNow());
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -12342,12 +12827,15 @@ function screenDONE() {
           <p class="t-single text-muted-foreground">Đơn vừa đặt sẽ được gắn vào tài khoản, và bạn nhận ${points} điểm thưởng.</p>
         </div>
         ${doneEmail ? `<p class="t-single text-secondary-foreground">Email: <span class="font-medium text-foreground">${doneEmail}</span></p>` : ''}
-        <button data-nav="login" data-signup class="t-multiline self-start h-10 px-6 rounded-xs bg-primary text-primary-foreground font-semibold btn-p press">Tạo tài khoản</button>
+        <button data-nav="login" data-auth-view="register" class="t-multiline self-start h-10 px-6 rounded-xs bg-primary text-primary-foreground font-semibold btn-p press">Tạo tài khoản</button>
       </div>`}
 
       <div class="w-full flex flex-col gap-2.5 rise">
         <button data-nav="plp" data-reset class="t-multiline w-full text-primary-foreground font-semibold py-3.5 rounded-xs tracking-wider bg-primary btn-p press">Tiếp tục mua sắm</button>
-        <button data-track-open="DAFC103015" class="t-multiline w-full font-medium py-3.5 rounded-xs tracking-wider border border-border text-mid-alt btn-o press hover:bg-accent-0 transition-colors">Theo dõi đơn hàng</button>
+        <!-- 22/09/2026: theo dõi ĐƠN VỪA ĐẶT (ckOrderId, placeOrder đã unshift vào ORDERS nên
+             trackLookup tìm thấy); trước in cứng DAFC103015 = đơn seed đặt trước 05/09.
+             Rơi về mã seed khi mở màn này mà chưa đặt gì (demo). -->
+        <button data-track-open="${ckOrderId || 'DAFC103015'}" class="t-multiline w-full font-medium py-3.5 rounded-xs tracking-wider border border-border text-mid-alt btn-o press hover:bg-accent-0 transition-colors">Theo dõi đơn hàng</button>
       </div>
     </div>
   </div>`;
@@ -14350,8 +14838,12 @@ const I18N = {
   'Không có sản phẩm nào khớp bộ lọc':'No products match your filters',
   'Thử bỏ một vài điều kiện để xem thêm sản phẩm.':'Try removing a few filters to see more products.',
   'Xóa tất cả bộ lọc':'Clear all filters',
-  'Áp dụng':'Apply', 'Xác nhận':'Confirm', 'Hoàn tất':'Done', 'Chi tiết':'Details',
+  'Áp dụng':'Apply', 'Xác nhận':'Confirm', 'Xác nhận & tiếp tục':'Confirm & continue', 'Hoàn tất':'Done', 'Chi tiết':'Details',
   'Thu gọn':'Show less', 'Xem thêm':'Show more', 'Xem chi tiết':'See details', 'Chọn tất cả':'Select all', 'Mặc định':'Default',
+  /* 23/09/2026 — khoá này bản desktop đã có từ lâu, bản mobile thì THIẾU: tiêu đề cục
+     ưu đãi ở PDP mobile lâu nay không dịch. Lượt này cục đó lên hộp ba tầng, tiêu đề
+     to hơn hẳn nên chỗ thiếu thành lộ. */
+  'Ưu đãi khuyến mãi':'Offers & promotions',
   'Từ':'From', 'Đến':'To', 'Còn':'Only', 'và':'and', 'Khác':'Other', 'Miễn phí':'Free',
   // Nhãn động của nút Xem thêm lúc đổ skeleton (bổ sung 28/08 — trước đây EN mode kẹt tiếng Việt ~900ms)
   'Đang tải':'Loading',
@@ -14602,12 +15094,18 @@ const I18N = {
   'Giảm thêm 10%':'Extra 10% off', 'Giảm thêm 5%':'Extra 5% off',
   'Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","':'You can enter multiple codes separated by commas ","',
   'Chương trình khuyến mãi (3)':'Promotions (3)', 'Xem tất cả 3 chương trình':'See all 3 promotions',
+  /* 23/09/2026 — hộp khuyến mãi nay còn mọc ở PDP, nơi SỐ CHƯƠNG TRÌNH đổi theo sản
+     phẩm (2 ở 4 bản dùng PDP_PROMOS_STD · 3 ở pdp2 · 4 ở pdp). Thêm 2 khoá còn thiếu.
+     TIÊU ĐỀ hộp ở PDP thì KHÔNG cần khoá mới: nó tách "Ưu đãi khuyến mãi" và "(N)"
+     thành 2 span riêng nên chữ đi bằng khoá có sẵn, số đếm đứng ngoài — đúng mẹo đã
+     dùng cho tiêu đề mini cart, khỏi đẻ luật regex cho từng con số. */
+  'Xem tất cả 2 chương trình':'See all 2 promotions', 'Xem tất cả 4 chương trình':'See all 4 promotions',
   'Thông tin giao hàng':'Delivery details',
   'Phương thức vận chuyển':'Shipping method', 'Phương thức thanh toán':'Payment method',
   'Phương thức giao hàng':'Delivery method',
   'Giao hàng thông thường - Miễn Phí':'Standard delivery — Free', 'Giao hàng nhanh - 25,000đ':'Express delivery — 25,000đ',
   'Giao hàng thông thường':'Standard delivery', 'Thay đổi':'Change',
-  'Giao hàng nhanh':'Express delivery', 'Sẽ được tính sau':'Calculated later', 'Thẻ tín dụng/Ghi nợ':'Credit / debit card',
+  'Giao hàng nhanh':'Express delivery', 'Sẽ được tính sau':'Calculated later', 'Xem tất cả địa chỉ':'View all addresses', 'Sổ địa chỉ':'Address book', 'Thẻ tín dụng/Ghi nợ':'Credit / debit card',
   'Chuyển khoản / QR code':'Bank transfer / QR code', 'Thẻ tín dụng · **** 4829':'Credit card · **** 4829',
   'Thanh toán trả góp 0% qua thẻ tín dụng':'0% instalments with credit card',
   'Xuất hóa đơn VAT':'Request VAT invoice', 'Cá nhân':'Individual', 'Công ty':'Company',
@@ -15758,7 +16256,7 @@ function payQR(seed) {
 
 function screenPAY() {
   const oid = ckOrderId || 'DAFC102939';
-  const total = ckOrderTotal || vndCom(cartTotalNow());
+  const total = ckOrderTotal || vndCom(ckTotalNow());
   const shell = (body) => `
   <div class="w-full" data-scroller>
     ${navBar()}
@@ -15853,7 +16351,10 @@ function placeOrder() {
   ckOrderId = 'DAFC1029' + (39 + ORDERS.length - 3);
   /* Chốt tổng NGAY lúc này: ngay dưới đây giỏ bị dọn rỗng nên cartSubtotal()
      sẽ về 0 — màn Hoàn tất phải in con số của đơn vừa đặt, không phải 0đ. */
-  const orderSub = cartSubtotal(), orderDisc = cartDiscountTotal(), orderTotal = cartTotalNow();
+  const orderSub = cartSubtotal(), orderDisc = cartDiscountTotal(), orderTotal = ckTotalNow();
+  /* Phí giao chốt ngay cùng tổng — sau dòng này giỏ bị dọn nên ckShipFee() vẫn đúng
+     (nó không đọc giỏ) nhưng ckMode/ckShipFast thì lượt sau sẽ reset. */
+  const orderShip = ckMode === 'pickup' ? 'Nhận tại cửa hàng' : (ckShipFee() > 0 ? vndDot(ckShipFee()) : 'Miễn phí');
   ckOrderTotal = vndCom(orderTotal);
   ckOrderPoints = rewardPointsEarned().toLocaleString('vi-VN');
   ckOrderGifts = activeGifts().map(pk => ({ pk, key: giftKeyOf(pk), g: giftOf(pk) }));
@@ -15867,7 +16368,7 @@ function placeOrder() {
     items: cartSelected().map(c => ({ img: c.img, name: c.name, variant: c.variant, qty: c.qty, price: c.now, preorder: c.preorder, ship: (!c.preorder && ckShipFast && ckMode !== 'pickup') ? 'fast' : '' })),
     /* Quà chốt lúc đặt hàng nay đi THEO ĐƠN, không chỉ hiện một lần ở màn Hoàn tất. */
     gifts: ckOrderGifts.map(({ pk, key }) => ({ pk, key })),
-    sub: vndDot(orderSub), ship: 'Miễn phí', discount: orderDisc ? '− ' + vndDot(orderDisc) : '', total: vndDot(orderTotal),
+    sub: vndDot(orderSub), ship: orderShip, discount: orderDisc ? '− ' + vndDot(orderDisc) : '', total: vndDot(orderTotal),
     payment: 'Thẻ tín dụng/Ghi nợ',
     method: ckMode === 'pickup' ? 'Nhận tại cửa hàng' : (ckShipFast ? 'Giao hàng nhanh' : 'Giao hàng thông thường'),
     address: ckMode === 'pickup'
@@ -16215,6 +16716,7 @@ function wireAccount(root) {
 function wire(root) {
   /* 21/09/2026 — kiểm định dạng ngay khi rời ô; xem FIELD_RULE. */
   wireBlurCheck(root);
+  wirePromoPeek(root);
   wirePasswordToggles(root);
   root.querySelectorAll('[data-size-chart]').forEach(b =>
     b.addEventListener('click', e => { e.stopPropagation(); openSizeChart(); }));
@@ -16353,13 +16855,17 @@ function wire(root) {
     el.addEventListener('click', e => {
       e.stopPropagation();
       const t = el.dataset.nav;
+      /* 22/09/2026 — data-auth-view trên phần tử MÀN (vd nút "Tạo tài khoản" ở màn Hoàn tất):
+         cùng quy ước với handler của menu sheet, để go('login') mở đúng tab thay vì luôn rơi
+         về tab Đăng nhập (đo 22/09: nút đó mở tab login). */
+      if (el.dataset.authView) { authView = el.dataset.authView; authViewIntent = true; }
       /* Reset để lặp lại demo: KHÔNG đụng ckAuth nữa — trước đây nút "Tiếp tục
          mua sắm" ở màn Hoàn tất âm thầm đăng xuất người đang đăng nhập. */
       if (el.hasAttribute('data-reset')) {
         cartQty = CART_BASE.length; CART.length = 0; CART.push(...CART_BASE.map(c => ({ ...c })));
         history = []; ckStep = 0; ckMaxStep = 0; ckMode = 'ship';
         ckCity = ''; ckStore = ''; ckHome = ''; ckName = ''; ckPhone = ''; ckEmail = '';
-        ckAddr = 0; ckShipName = ''; ckShipPhone = ''; ckShipLine = '';
+        ckAddr = 0; ckAddrEdit = null; ckShipName = ''; ckShipPhone = ''; ckShipLine = '';
         ckPlaced = false; ckOrderId = ''; ckOrderTotal = ''; ckOrderPoints = ''; ckOrderGifts = []; ckOrderPre = '';
         giftPick = {};   // demo chạy lại từ đầu thì quà cũng về mặc định
       }
@@ -16408,7 +16914,10 @@ function wire(root) {
       const body = root.querySelector('#accBody');
       /* localizeNew: bản này trước đây KHÔNG gọi, nên ở LANG='en' đổi tab xong cả h1
          lẫn ruột trở về tiếng Việt. Thêm cho khớp bản desktop. */
-      if (body) { body.innerHTML = accountBody(); wire(root); localizeNew(body); }
+      /* 22/09/2026 — wire(body) chứ KHÔNG wire(root): root là cả màn, nối lại là header/tab/
+         Đăng xuất nhận thêm một listener MỖI lượt đổi tab (đo trên desktop 22/09: 3 lượt ->
+         một click gọi go() 8 lần; mobile cùng code). Chỉ ruột tab là phần tử mới. */
+      if (body) { body.innerHTML = accountBody(); wire(body); localizeNew(body); }
     });
   });
   // Đăng xuất từ trang account
@@ -16627,6 +17136,10 @@ function wire(root) {
   if (root.querySelector('[data-pay-done], [data-pay-retry]')) {
     const clock = root.querySelector('#payClock');
     payStopClock();
+    /* 22/09/2026 — dừng đồng hồ ở MỌI đường ra khỏi màn (logo, header, back...): go() chạy
+       scrollCleanups trước khi dựng màn mới. Trước chỉ 3 nút trong màn gọi payStopClock nên
+       rời bằng header là 15 phút sau bị kéo về màn hết phiên từ bất kỳ đâu (đo 22/09). */
+    scrollCleanups.push(payStopClock);
     if (clock) payTimer = setInterval(() => {
       payLeft--;
       if (payLeft <= 0) { payStopClock(); payStage = 'timeout'; go('pay', { force: true }); return; }
@@ -16727,6 +17240,19 @@ function wire(root) {
           paintStore(root);   // đồng bộ tóm tắt với chữ vừa gõ trước khi thu gọn
         }
         if (btn.dataset.require === 'ship' && !validateShipping(root)) return;
+        /* 23/09/2026 — đang SỬA một mục có sẵn thì GHI NGƯỢC vào sổ rồi mới đóng bước.
+           Sửa TẠI CHỖ (ADDRESSES[i].name = ...) chứ không thay cả object: `ckAddr` và
+           nhiều chỗ khác trỏ theo VỊ TRÍ trong mảng, còn cờ `def` thì không nằm trong
+           form nên phải giữ nguyên — gán object mới là mất nó. */
+        if (ckAddrEdit !== null && btn.dataset.require === 'ship') {
+          const a = ADDRESSES[ckAddrEdit];
+          if (a) {
+            a.name = ckShipName; a.phone = ckShipPhone; a.street = ckShipLine;
+            a.province = ckProvince; a.ward = ckWard;
+          }
+          ckAddr = ckAddrEdit;
+          ckAddrEdit = null;
+        }
         // bước giao hàng: đồng bộ tóm tắt với địa chỉ/chữ vừa nhập
         const shipDone = root.querySelector('#ckShipDone');
         if (shipDone) { shipDone.innerHTML = ckShipDoneHTML(); localizeNew(shipDone); }
@@ -16758,10 +17284,41 @@ function wire(root) {
     root.querySelectorAll('#addrOpts [data-addr="new"]').forEach(o => {
       o.addEventListener('click', () => {
         if (ckAddr === 'new') return;
+        ckAddrEdit = null;
+        if (typeof ckAddr === 'number') ckAddrPrev = ckAddr;   // chỗ để "Huỷ" quay về
         ckAddr = 'new';
         rerenderCheckout(root);
       });
     });
+    /* "Thay đổi" trong ô địa chỉ = SỬA NỘI DUNG mục đang chọn (không phải đổi sang mục
+       khác — việc đó là của "Xem tất cả địa chỉ"). Nạp 5 biến form từ mục đó rồi dựng
+       lại để `addrForm` hiện ra với dữ liệu cũ. */
+    root.querySelectorAll('#addrOpts [data-addr-edit]').forEach(b => {
+      b.addEventListener('click', () => {
+        const a = ADDRESSES[ckAddr];
+        if (!a) return;
+        ckAddrEdit = ckAddr;
+        ckShipName = a.name; ckShipPhone = a.phone; ckShipLine = a.street;
+        ckProvince = a.province; ckWard = a.ward;
+        rerenderCheckout(root);
+      });
+    });
+    /* KHÔNG bám `#addrOpts` nữa: từ 23/09 nút "Huỷ" nằm cạnh nút Xác nhận, tức NGOÀI
+       khối #addrOpts. Một handler lo cả hai đường thoát (đang sửa / đang thêm mới). */
+    root.querySelectorAll('[data-addr-cancel]').forEach(b => {
+      b.addEventListener('click', () => {
+        if (ckAddrEdit !== null) ckAddrEdit = null;
+        else if (ckAddr === 'new') ckAddr = ADDRESSES[ckAddrPrev] ? ckAddrPrev : 0;
+        rerenderCheckout(root);
+      });
+    });
+    /* ĐÃ GỠ 23/09/2026 (đợt 5) — handler bấm chọn thẻ ([data-addr] số) và handler link
+       "Sửa" ([data-addr-edit], nhảy sang Tài khoản). Khối nay chỉ còn MỘT ô địa chỉ
+       đang chọn, đổi bằng sheet qua [data-open-addrbook] — không còn thẻ nào để bấm
+       chọn, cũng không còn link Sửa.
+       ⚠ SỬA ĐỊA CHỈ nay CHỈ vào được từ trang Tài khoản > Sổ địa chỉ. Đó là hệ quả
+       của lệnh (ô chỉ còn nút "Thay đổi" = đổi sang địa chỉ khác, không phải sửa nội
+       dung địa chỉ). Muốn có lối sửa tại checkout thì phải thêm lại link riêng. */
     if (window.__openAddrSheet) {
       root.querySelectorAll('[data-open-addrbook]').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -18763,7 +19320,7 @@ document.body.insertAdjacentHTML('beforeend', `
   const navRoot = () => `
     <div class="glass-95 h-[48px] shrink-0 backdrop-blur-[7.5px] flex items-center justify-between px-4">
       <span class="w-6 shrink-0" aria-hidden="true"></span>
-      <img src="${A}logo.png" alt="DAFC" class="h-[20px] w-[93px] object-contain cursor-pointer press" data-nav="plp">
+      <img src="${A}logo.png" alt="DAFC" class="h-[20px] w-[93px] object-contain cursor-pointer press" data-nav="home">
       <button class="w-6 h-6 flex items-center justify-center shrink-0 press [&_svg]:w-3.5 [&_svg]:h-3.5" data-ms-close aria-label="Đóng menu">${I.close}</button>
     </div>`;
   /* Nav cấp 2 — ĐỔI 04/09/2026 (user chốt thẳng trên Figma node 204:9421).
@@ -19323,8 +19880,9 @@ function quickAddCta(p) {
          chỗ không truyền được card. Xem ghi chú ở openQA. */
       const img = qaSrcImg || body.querySelector('.qa-gallery img') || body.querySelector('img');
       if (img) flyToCart(img);
-      cartQty++;
-      document.querySelectorAll('.cart-badge').forEach(b => { b.textContent = cartQty; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
+      /* 22/09/2026 — KHÔNG tự cartQty++ nữa: món phải vào CART thật (addToCart bên dưới, sau
+         khi có variant/ảnh), badge do syncCartBadge đếm theo CART. Trước chỉ tăng số trên
+         icon nên vào giỏ không thấy món vừa thêm (đo 22/09: CART 5->5, badge 5->6). */
       /* Sheet không còn dòng tên màu (27/08/2026) nên tên đọc từ data-name của ô
          màu ĐANG CHỌN. Giỏ và sheet xác nhận vẫn ghi đủ chuỗi "màu , size". */
       const colorBtn = body.querySelector('[data-qa-colors] .sw.on');
@@ -19335,6 +19893,10 @@ function quickAddCta(p) {
          chọi nhau. (#sizeSheet cũ đã làm đúng chuyện này bằng ctx.img — dồn
          khuôn thì không được rơi mất.) */
       const confirmImg = colorBtn ? colorBtn.querySelector('img')?.getAttribute('src') : '';
+      addToCart({
+        img: confirmImg || `${A}${p.img}`, brand: p.brand, name: p.name, variant,
+        price: p.price, off: p.off, was: p.was, preorder: p.preorder,
+      });
       closeQA();
       // đợi sheet quick-add trượt xuống xong rồi mở sheet xác nhận
       setTimeout(() => window.__openCartConfirm && window.__openCartConfirm({
@@ -19833,9 +20395,13 @@ document.body.insertAdjacentHTML('beforeend', `
     const peek = hop && hop.querySelector('.promo-peek');
     if (!peek) return;
     const mo = peek.classList.toggle('open');
-    const nut = hop.querySelector('#promoToggle');
+    /* 23/09/2026 — bám `.promo-foot` thay cho `#promoToggle`, và nhãn lúc thu gọn
+       lấy từ `data-more` của chính nút thay vì ghép cứng PROMO_PROGRAMS.length:
+       từ lượt này hộp còn mọc ở PDP với SỐ CHƯƠNG TRÌNH KHÁC (2–4 tuỳ sản phẩm),
+       mà hai hộp cùng mang một id là trùng id trong một trang. */
+    const nut = hop.querySelector('.promo-foot');
     if (nut) {
-      nut.textContent = mo ? 'Thu gọn' : 'Xem tất cả ' + PROMO_PROGRAMS.length + ' chương trình';
+      nut.textContent = mo ? 'Thu gọn' : (nut.dataset.more || nut.textContent);
       if (LANG === 'en') applyLang(nut, 'en');
     }
   });
@@ -19976,8 +20542,9 @@ document.body.insertAdjacentHTML('beforeend', `
       <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
         <span class="radio-dot text-primary-foreground flex items-center justify-center">${I.tick}</span>
       </span>
-      <span class="flex-1 min-w-0">
-        <span class="t-multiline block font-medium text-foreground">${a.name} · ${a.phone}${a.def ? ' <span class="t-multiline font-normal text-muted-foreground">(Mặc định)</span>' : ''}</span>
+      <span class="flex-1 min-w-0 flex flex-col gap-1">
+        <span class="t-multiline block font-medium text-foreground">${a.name}${a.def ? ' <span class="t-single font-normal text-muted-foreground">(Mặc định)</span>' : ''}</span>
+        <span class="t-multiline block text-secondary-foreground">${a.phone}</span>
         <span class="t-multiline block text-secondary-foreground">${addrLine(a)}</span>
       </span>
     </button>`;
