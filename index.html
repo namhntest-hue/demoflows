@@ -609,6 +609,13 @@ window.RESP = (function () {
      khung đều ra `p8/0/24/0` và head 56. Class .is-pending GIỮ vì bộ da skin-mp vẫn
      bám vào nó. */
   .ck-sec { padding: 8px 0 24px; border-top: 1px solid var(--general-secondary); }
+  /* BƯỚC CHƯA TỚI (đóng) = ĐỆM 20 TRÊN / 20 DƯỚI — Figma 684:125228, lệnh user 25/09/2026.
+     Khung đó đo ra `ck-sec is-pending` 375x73, pad 20/16/20/16, hàng trong cao 32.
+     Phải hạ luôn chiều cao hàng tiêu đề: nó đang bị ép `h-[56px]` ở markup, giữ nguyên thì
+     ra 20+56+20 = 96 chứ không phải 72. Để `auto` thì hàng cao đúng bằng huy hiệu số (32),
+     cộng đệm ra 72 — khớp 73 của Figma (1px là kẻ trên). */
+  .ck-sec.is-pending { padding: 20px 0; }
+  .ck-sec.is-pending .ck-head { height: auto; }
 
   /* ── CHECKOUT — nhịp khối học theo Ralph Lauren (lệnh user 19/09/2026) ───
      Lệnh: "ở check out kích thước nút, cách phân chia block, nhấn màu, border bạn
@@ -6318,7 +6325,10 @@ function menuSheet() {
 }
 
 function navBar({ logoOnly = false } = {}) {
-  const bar = 'navbar glass-95 sticky top-0 z-50 h-[48px] backdrop-blur-[7.5px] flex items-center px-4';
+  /* 25/09/2026 (lệnh user: "ở checkout không cần sticky header") — BỎ `sticky top-0 z-50`.
+     Header rút gọn này dùng ở màn Thanh toán VÀ màn Hoàn tất; bỏ ghim ở cả hai vì một
+     header chỉ có logo thì ghim lại cũng không đưa thêm lối đi nào, mà còn ăn 48px màn. */
+  const bar = 'navbar glass-95 h-[48px] backdrop-blur-[7.5px] flex items-center px-4';
 
   // Checkout: chỉ còn logo — CANH GIỮA (brief PDF trang 30, "Vị trí logo DAFC ở
   // giữa???" — user chốt thẳng "cho logo DAFC ra giữa" nên bỏ dấu hỏi luôn).
@@ -12170,7 +12180,7 @@ function ckSection(i, title, openBody, doneBody) {
   return `
   <div class="ck-sec" data-sec="${i}">
     <div class="ck-head h-[56px] px-4 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-3 min-w-0">
+      <div class="flex-1 min-w-0 flex items-center gap-3">
         <!-- 19/09/2026 (lệnh user): SỐ THỨ TỰ tách khỏi tên bước, vào huy hiệu tròn
              (tham chiếu Ralph Lauren). Trước là chuỗi "1. " dính liền tên nên số đọc
              ra như một phần của tên. Số vẫn lấy từ chỉ số section + 1 chứ không in
@@ -12178,7 +12188,17 @@ function ckSection(i, title, openBody, doneBody) {
              KHÁC bản desktop một điểm: mobile GIỮ px-4 và KHÔNG thụt thân bước vào
              44 — khổ 375 không đủ chỗ cho một máng lề rộng như khổ 1440. -->
         <span class="ck-step-no t-lead">${i + 1}</span>
-        <p class="t-section-title ck-title text-foreground transition-opacity duration-300">${title}</p>
+        <!-- 25/09/2026 (lệnh user: "cho cái title đó dạng fill chiều ngang thay vì fixed") —
+             HÀNG TIÊU ĐỀ BƯỚC NAY FILL, KHÔNG CÒN ÔM CHỮ.
+             Trước: khối bọc chỉ có min-w-0 nên nó ÔM CHỮ rồi co lại khi chật — tiêu đề
+             gãy dòng dù hàng còn dư chỗ, và khi bóc sang Figma thì ra một hộp khổ CỨNG
+             (đúng thứ "vỡ hoài" khi sửa tay).
+             Nay flex-1 ở CẢ khối bọc lẫn thẻ chữ: huy hiệu số giữ 32 cố định, tiêu đề ăn
+             hết phần dư, nút "Thay đổi" vẫn shrink-0. Sang Figma là FILL, đúng luật
+             thường trực 15/09 (FILL trùm cha).
+             (KHONG go dau huyen nguoc trong chu thich nay: ca khoi nam trong template
+             literal, mot dau la cat doi chuoi.) -->
+        <p class="t-section-title ck-title flex-1 min-w-0 text-foreground transition-opacity duration-300">${title}</p>
       </div>
       <!-- Figma 420:7321: "Thay đổi" là t-body-multiline 12/18 màu #404040 (chữ phụ),
            không phải màu chữ chính — nó là lối phụ bên cạnh tiêu đề bước. -->
@@ -12237,6 +12257,13 @@ const storeInfo = name => {
    ckName/ckPhone/ckEmail: 3 ô người nhận PHẢI có state vì phần này bị dựng lại
    mỗi khi đổi thành phố/cửa hàng — không giữ thì gõ xong đổi cửa hàng là mất
    trắng. Cũng là nguồn để phần tóm tắt nhắc lại người nhận sau khi Xác nhận. */
+/* ⚠ TẠM ẨN LUỒNG "NHẬN TẠI CỬA HÀNG" (25/09/2026, lệnh user) — bật lại bằng ĐÚNG
+   một dòng này. Cố ý KHÔNG xoá code luồng pickup: mọi nhánh `ckMode === 'pickup'`
+   (bước ít hơn một nấc, ô chọn cửa hàng, nhãn "Nhận hàng / Tại cửa hàng"…) vẫn nằm
+   nguyên, chỉ không còn lối vào vì cặp toggle Giao hàng / Nhận tại cửa hàng không
+   được dựng nữa. `ckMode` vốn đã mặc định 'ship' nên tắt toggle là đủ để luồng kia
+   không bao giờ chạy — không phải đụng tới chỗ nào khác. */
+const CK_PICKUP = false;
 let ckMode = 'ship', ckCity = '', ckStore = '', ckHome = '';
 let ckName = '', ckPhone = '', ckEmail = '';
 /* Bước giao hàng: ckAddr = chỉ số địa chỉ đã lưu đang chọn, hoặc 'new' khi
@@ -12443,9 +12470,9 @@ function screenCHECKOUT() {
      nhóm section). px-4 thẳng hàng nội dung section; id giữ nguyên để
      paintCheckout ẩn khi đã tới bước Thanh toán. */
   const modeTabs = `
-    <div id="ckModeTabs" class="px-4 pt-1 pb-4">
+    ${CK_PICKUP ? `<div id="ckModeTabs" class="px-4 pt-1 pb-4">
       ${segToggle('data-ck-mode', [['ship','Giao hàng'], ['pickup','Nhận tại cửa hàng']], ckMode, 'h-10')}
-    </div>`;
+    </div>` : ''}`;
 
   /* ── Section 0: Thông tin giao hàng ──
      Khách ĐÃ ĐĂNG NHẬP thì mở ra là sổ địa chỉ đã lưu (chọn 1 chạm là xong

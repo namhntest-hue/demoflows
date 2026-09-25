@@ -2476,6 +2476,15 @@ window.RESP = (function () {
   /* ── PDP desktop: cột info dính khi cuộn gallery ── */
   .dk-sticky-info { position: sticky; top: 156px; align-self: flex-start; }   /* 136 + 20 */
   .dk-sticky-side { position: sticky; top: 156px; align-self: flex-start; }   /* 136 + 20 */
+  /* ⚠ RIÊNG MÀN THANH TOÁN: cột phải KHÔNG ghim (25/09/2026, lệnh user "cái cục tóm tắt
+     đơn hàng và your bag sẽ không sticky"). Khoanh trong [data-screen="checkout"] vì
+     `.dk-sticky-side` còn dùng ở trang GIỎ và PDP — hai chỗ đó vẫn ghim như cũ.
+     Kèm theo: danh sách trong thẻ "Giỏ hàng" có TRẦN + tự cuộn, để nó không kéo cột phải
+     dài quá khung trang (lệnh user: "your bag sẽ bị limit chiều dài bởi kích thước chung
+     của frame lớn"). 50vh là số tôi chọn — đủ thấy 3-4 món trên màn 900, phần còn lại
+     cuộn trong thẻ; muốn số khác thì đổi đúng một chỗ này. */
+  [data-screen="checkout"] .dk-sticky-side { position: static; top: auto; align-self: flex-start; }
+  [data-screen="checkout"] #ckSumAcc .acc-inner { max-height: 50vh; overflow-y: auto; }
   /* ĐỆM TRÊN CỦA FOOTER = 80 (11/09/2026, lệnh user: *"tăng padding top footer lên 80 luôn
      nhé, mobile 48 như hiện tại"*). Sáng cùng ngày footer vừa về 48/48 ở cả 2 bản; nay khổ
      desktop lấy 80 trên · 48 dưới, khổ máy giữ 48/48 — lệch 2 bản là CHỦ Ý theo lệnh, không
@@ -8004,16 +8013,33 @@ function dkMegaPanel(item, id) {
   </div>`;
 }
 
-function navBar({ logoOnly = false, plp = false } = {}) {
-  // Checkout: header rút gọn — logo + cam kết bảo mật
+function navBar({ logoOnly = false, plp = false, back = false } = {}) {
+  /* Header rút gọn — dùng ở màn Thanh toán và màn Hoàn tất.
+     25/09/2026 (lệnh user): LOGO RA GIỮA "như bên ngoài" + NÚT BACK bên trái.
+     Canh giữa bằng ĐÚNG cơ chế của header đầy đủ (#dkNavRow): hai bên đều flex-1 nên
+     chia đôi phần dư, logo shrink-0 nằm chính giữa — KHÔNG dùng absolute + translate.
+     Ưu điểm: logo giữa thật kể cả khi hai bên lệch bề rộng (nút back ~44 so với dòng
+     bảo mật ~204), mà vẫn không cần class arbitrary nào có thể là class chết.
+     Bỏ `object-left` của logo: dư khi đã canh giữa, để lại dễ hiểu lầm là còn lệch —
+     cùng lý do đã ghi ở bản mobile khi màn đó đưa logo ra giữa.
+     ⚠ NÚT BACK CHỈ Ở MÀN THANH TOÁN (cờ `back`), KHÔNG ở màn Hoàn tất: đặt hàng xong
+     mà quay lại trang thanh toán là vô nghĩa. Đích là màn GIỎ — checkout chỉ vào được
+     từ đó; không dùng history vì router/lịch sử vẫn đang là việc chờ chốt.
+     Dòng "Thanh toán an toàn & bảo mật" GIỮ NGUYÊN (user chốt "để dòng bảo mật đi"). */
   if (logoOnly) {
     return `
-    <div class="navbar glass-95 sticky top-0 z-50 backdrop-blur-[7.5px]">
-      <div class="max-w-[1440px] mx-auto h-[64px] px-6 flex items-center justify-between">
+    <!-- 25/09/2026 (lệnh user: "ở checkout không cần sticky header") — BỎ sticky top-0 z-50.
+         Header rút gọn này dùng ở màn Thanh toán VÀ màn Hoàn tất; bỏ ghim ở cả hai vì một
+         header chỉ có logo thì ghim lại cũng không đưa thêm lối đi nào. -->
+    <div class="navbar glass-95 backdrop-blur-[7.5px]">
+      <div class="max-w-[1440px] mx-auto h-[64px] px-6 flex items-center">
+        <div class="flex-1 flex items-center justify-start">${back
+          ? `<button data-nav="cart" class="ghost-hover -ml-3 w-11 h-11 rounded-xs flex items-center justify-center press [&_svg]:w-4 [&_svg]:h-4" aria-label="Quay lại giỏ hàng">${I.chevL}</button>`
+          : ''}</div>
         <!-- 22/09/2026: logo về TRANG CHỦ như header đầy đủ; sót data-nav="plp" từ khi
              'home' đứng đầu FLOW (04/09). -->
-        <img src="${A}logo.png" alt="DAFC" class="h-[22px] w-[102px] object-contain object-left cursor-pointer press" data-nav="home">
-        <div class="flex items-center gap-1.5 text-muted-foreground">${I.shield}<span class="t-single">Thanh toán an toàn &amp; bảo mật</span></div>
+        <img src="${A}logo.png" alt="DAFC" class="h-[22px] w-[102px] object-contain cursor-pointer press shrink-0" data-nav="home">
+        <div class="flex-1 flex items-center justify-end gap-1.5 text-muted-foreground">${I.shield}<span class="t-single">Thanh toán an toàn &amp; bảo mật</span></div>
       </div>
     </div>`;
   }
@@ -13820,7 +13846,7 @@ function ckSection(i, title, openBody, doneBody) {
          số bước đứng sát mép cột, đúng chỗ kẻ chia bước bắt đầu; tiêu đề lùi vào 44
          và thân bước cũng lùi 44 nên cả cột thành MỘT đường dóng. -->
     <div class="h-[72px] pr-4 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-3 min-w-0">
+      <div class="flex-1 min-w-0 flex items-center gap-3">
         <!-- 19/09/2026 (lệnh user): SỐ THỨ TỰ tách khỏi tên bước, vào huy hiệu tròn.
              Trước là chuỗi "1. " dính liền tên nên số đọc ra như một phần của tên.
              Số vẫn lấy từ chỉ số section + 1 chứ không in cứng — luồng "Nhận tại
@@ -13830,7 +13856,17 @@ function ckSection(i, title, openBody, doneBody) {
              rieng o CSS vi trong code KHONG CO SAN bac Libre 14/20 — xem rule
              html.skin-mt.skin-li .ck-step-no. -->
         <span class="ck-step-no t-lead">${i + 1}</span>
-        <p class="t-section-title ck-title text-foreground transition-opacity duration-300">${title}</p>
+        <!-- 25/09/2026 (lệnh user: "cho cái title đó dạng fill chiều ngang thay vì fixed") —
+             HÀNG TIÊU ĐỀ BƯỚC NAY FILL, KHÔNG CÒN ÔM CHỮ.
+             Trước: khối bọc chỉ có min-w-0 nên nó ÔM CHỮ rồi co lại khi chật — tiêu đề
+             gãy dòng dù hàng còn dư chỗ, và khi bóc sang Figma thì ra một hộp khổ CỨNG
+             (đúng thứ "vỡ hoài" khi sửa tay).
+             Nay flex-1 ở CẢ khối bọc lẫn thẻ chữ: huy hiệu số giữ 32 cố định, tiêu đề ăn
+             hết phần dư, nút "Thay đổi" vẫn shrink-0. Sang Figma là FILL, đúng luật
+             thường trực 15/09 (FILL trùm cha).
+             (KHONG go dau huyen nguoc trong chu thich nay: ca khoi nam trong template
+             literal, mot dau la cat doi chuoi.) -->
+        <p class="t-section-title ck-title flex-1 min-w-0 text-foreground transition-opacity duration-300">${title}</p>
       </div>
       <!-- 21/08/2026 (yêu cầu user): 16/24 font-light -> 12/16 + underline; bỏ
            font-light vì 300 bị STYLE-RULES cấm (§1.1), link chữ dùng 400. -->
@@ -13892,6 +13928,13 @@ const storeInfo = name => {
    ckName/ckPhone/ckEmail: 3 ô người nhận PHẢI có state vì phần này bị dựng lại
    mỗi khi đổi thành phố/cửa hàng — không giữ thì gõ xong đổi cửa hàng là mất
    trắng. Cũng là nguồn để phần tóm tắt nhắc lại người nhận sau khi Xác nhận. */
+/* ⚠ TẠM ẨN LUỒNG "NHẬN TẠI CỬA HÀNG" (25/09/2026, lệnh user) — bật lại bằng ĐÚNG
+   một dòng này. Cố ý KHÔNG xoá code luồng pickup: mọi nhánh `ckMode === 'pickup'`
+   (bước ít hơn một nấc, ô chọn cửa hàng, nhãn "Nhận hàng / Tại cửa hàng"…) vẫn nằm
+   nguyên, chỉ không còn lối vào vì cặp toggle Giao hàng / Nhận tại cửa hàng không
+   được dựng nữa. `ckMode` vốn đã mặc định 'ship' nên tắt toggle là đủ để luồng kia
+   không bao giờ chạy — không phải đụng tới chỗ nào khác. */
+const CK_PICKUP = false;
 let ckMode = 'ship', ckCity = '', ckStore = '', ckHome = '';
 let ckName = '', ckPhone = '', ckEmail = '';
 /* Bước giao hàng: ckAddr = chỉ số địa chỉ đã lưu đang chọn, hoặc 'new' khi
@@ -14056,7 +14099,7 @@ function screenCHECKOUT() {
      đây bấm "Đặt hàng" lần nữa là ra đơn thứ hai, không cảnh báo gì. */
   if (ckPlaced) return `
   <div class="w-full" data-scroller>
-    ${navBar({ logoOnly: true })}
+    ${navBar({ logoOnly: true, back: true })}
     <div class="max-w-[1240px] mx-auto w-full px-6 pt-16 pb-24 flex flex-col items-center text-center gap-3">
       <div class="w-12 h-12 rounded-full border border-primary text-primary flex items-center justify-center">${I.tick}</div>
       <p class="t-display-title font-light text-foreground">Đơn ${ckOrderId} đã được đặt</p>
@@ -14101,13 +14144,13 @@ function screenCHECKOUT() {
      px-4 thẳng hàng nội dung section; id giữ nguyên để paintCheckout ẩn khi đã
      tới bước Thanh toán. */
   const modeTabs = `
-    <div id="ckModeTabs" class="px-4 pt-1 pb-4">
+    ${CK_PICKUP ? `<div id="ckModeTabs" class="px-4 pt-1 pb-4">
       <!-- 06/09/2026 — bỏ khung kẹp max-w-[360px]: toggle nay rộng bằng cột form (699 ở
            khổ 1440) như mọi ô nhập cùng cột, và như chính nó ở bản mobile. Kẹp 360 làm
            nó ngắn hơn mọi thứ dưới nó, trông như một mẩu rơi lạc chứ không phải bước
            đầu của form. Hai nút vẫn chia đôi vì segBtnClass đã có flex-1. -->
       ${segToggle('data-ck-mode', [['ship','Giao hàng'], ['pickup','Nhận tại cửa hàng']], ckMode, 'h-10')}
-    </div>`;
+    </div>` : ''}`;
   /* ── Section 0: Thông tin giao hàng ──
      Khách ĐÃ ĐĂNG NHẬP thì mở ra là sổ địa chỉ đã lưu (chọn 1 chạm là xong
      bước này), cuối danh sách mới là "Thêm địa chỉ mới" xổ form. Khách vãng
@@ -14556,7 +14599,7 @@ function screenCHECKOUT() {
 
   return `
   <div class="w-full" data-scroller>
-    ${navBar({ logoOnly: true })}
+    ${navBar({ logoOnly: true, back: true })}
 
     <!-- Nhịp thoáng kiểu checkout Farfetch (yêu cầu user 14/08/2026): trang thở
          nhiều hơn ở 4 nấc — lề trên/dưới trang (pt-12/pb-24), title cách nội dung
