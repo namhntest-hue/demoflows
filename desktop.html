@@ -5464,8 +5464,26 @@ window.RESP = (function () {
        ⚠ CÁI GIÁ: dốc đều thì tại mép TRÊN của khối chữ độ đen chỉ còn một phần của .45
        chứ không phải đủ .45 như vệt đặc cũ. Đã đo lại tương phản sau khi áp — xem báo
        cáo `_notes/HOMEPAGE-2026-09-24.md`. */
+    /* ── TRẢ LẠI VỆT ĐẶC 25/09/2026 (user chốt phương án 2 sau khi tôi đo tương phản) ──
+       Dốc đều của 24/09 làm chữ trắng RỚT AA: đo composite thật (pixel ảnh theo đúng phép
+       object-cover, ghép alpha veil THEO TỪNG HÀNG) ra 2,52 / 3,38 / 3,41 trên ba dòng chữ
+       nhỏ, ngưỡng 4,5. ⚠ KHÔNG PHẢI do ảnh mới: đo lại chính ảnh CŨ cũng ra 3,37 / 3,46 /
+       3,82 / 4,40 — rớt cả bốn. Gốc rễ là HÌNH gradient, không phải bức ảnh.
+       Hình mới = hình TRƯỚC 24/09: đặc .45 phủ trọn khối chữ rồi mới dốc lên trong suốt.
+       Chọn 224px vì khối chữ đo được 212 (mobile) / 216 (desktop) — phủ trọn cả hai còn dư
+       8px; 196px còn lại là đoạn dốc để mép veil không thành một đường kẻ.
+       ⚠ PX CHỨ KHÔNG PHẢI %, đúng lệ đã ghi ngay trên: khối chữ cao CỐ ĐỊNH còn ô ảnh thì
+       co giãn, khai % là vệt hụt ở panel cao. Đây chính là lỗi đã sửa một lần ở rule này.
+       Giữ nguyên chiều cao veil 420px của Figma — chỉ đổi HÌNH bên trong, không đổi khổ. */
     position: absolute; inset-inline: 0; bottom: 0; height: 420px;
-    background: linear-gradient(to top, rgba(0, 0, 0, .45) 0%, transparent 100%);
+    /* ⚠ .45 -> .46: sau khi trả lại vệt đặc, desktop đạt cả 4 dòng nhưng MOBILE còn
+       nhãn nhỏ "Bộ sưu tập chính" ra 4,42 — hụt đúng 0,08 so với ngưỡng 4,5. Dòng đó
+       đã nằm TRỌN trong vệt đặc (khối chữ 212 < 224) nên kéo dài vệt không cứu được;
+       chỉ còn cách nhích độ đặc. Tính ngược từ ngưỡng: cần alpha 0,4552 -> lấy .46.
+       ⚠ .45 là số LẤY TỪ FIGMA của user (491:19560); đây là chỗ DUY NHẤT tôi lệch khỏi
+       khung, đổi 1 phần trăm để dòng đó qua AA. Mắt thường không phân biệt được; muốn
+       đúng khung tuyệt đối thì trả về .45 và chấp nhận 4,42. */
+    background: linear-gradient(to top, rgba(0, 0, 0, .46) 0, rgba(0, 0, 0, .46) 224px, transparent 420px);
     pointer-events: none;
   }
 
@@ -6032,6 +6050,36 @@ window.RESP = (function () {
      nó TỰ RÚT khi có `.open`, trả sân cho rule mở. */
   .promo-body.promo-peek:not(.open) { max-height: 89px; }
 
+  /* ── BIẾN THỂ PHẲNG `.promo-flat` — CHỈ HỘP Ở PDP ─────────────────────────────
+     Port từ index.html (lệnh user 25/09/2026 "cho bản desktop luôn nhé", nối tiếp
+     Figma 641:76759 vốn là khung PDP MOBILE).
+     Là BIẾN THỂ, không sửa khuôn chung: hộp ở màn GIỎ giữ nguyên băng tiêu đề đậm hơn
+     một bậc và mặt kem.
+     ⚠ SỐ NGANG GIỮ 16 CỦA DESKTOP, không bê 12 của mobile sang. Khuôn chung hai bản vốn
+     đã lệch ngang có chủ ý (mobile 12 / desktop 16, băng 48 / 56); biến thể chỉ hạ nhịp
+     DỌC đúng như mobile đã hạ: băng 16 -> 8, thân 8 trên -> 0.
+     ⚠ MÀU XÁM `--unofficial-accent-0` (#fafafa) — "như cũ", tra từ bản commit 17/09.
+     Đo trên chính trang desktop để chắc biến đó cũng ra #fafafa dưới skin-mt skin-li
+     (nó khai HAI lần, chỗ khác là #f7f7f7). */
+  .promo-box.promo-flat .promo-head { padding: 8px 16px; }
+  .promo-box.promo-flat .promo-body { padding: 0 16px 8px; }
+  .promo-box.promo-flat .promo-foot { padding: 0 16px 8px; }
+  /* Bù max-height theo đệm MỚI: phần xem mấp mé vẫn phải 73px, thân nay gánh 8 (0 trên
+     + 8 dưới) thay vì 16 -> 73 + 8 = 81. Cùng lý do đã ghi ở rule 89 ngay trên. */
+  .promo-box.promo-flat .promo-body.promo-peek:not(.open) { max-height: 81px; }
+  html.skin-mt.skin-li .promo-box.promo-flat { background: var(--unofficial-accent-0); }
+  html.skin-mt.skin-li .promo-box.promo-flat .promo-head {
+    background: var(--unofficial-accent-0);
+    font-family: var(--font-head); text-transform: none; font-weight: 400;
+  }
+  /* ⚠ VỆT MỜ ĐÁY PHẢI ĐỔI THEO NỀN, không thì lộ một vệt KEM trên nền xám. Đã đo: phần
+     xem mấp mé ở PDP desktop CÓ bị cắt nên vệt này hiện thật.
+     Hex gõ thẳng ở điểm 0% là BẮT BUỘC: cần ALPHA 0 mà vẫn giữ kênh màu của nền;
+     `transparent` fade qua đen ở một số engine. #fafafa = rgb(250,250,250). */
+  html.skin-mt.skin-li .promo-box.promo-flat .promo-peek::after {
+    background: linear-gradient(to bottom, rgba(250, 250, 250, 0) 0%, var(--unofficial-accent-0) 90%);
+  }
+
   /* VỆT MỜ ĐÁY của khối xem mấp mé: rule gốc fade về `--general-background` (TRẮNG).
      Trên mặt kem nó đọc ra một vệt trắng đè lên kem — phải fade về chính mặt kem.
      ⚠ HEX GÕ THẲNG là BẮT BUỘC, không thay bằng `var(--cu-surface)` ở điểm 0% được:
@@ -6228,7 +6276,7 @@ window.RESP = (function () {
   /* 1 — DẢI PROMO TRÊN CÙNG. Mặt tối duy nhất nằm trong dòng chảy của MỌI màn:
      một dòng chữ đồng ở đỉnh trang là đủ nói cả site có màu hãng.
      10,47:1 trên #0a0a0a; markup mobile còn opacity-90 nên thực tế 8,58:1. */
-  html.skin-mt.theme-cu #promoSlider [data-promo-open] { color: var(--cu-signature); }
+  html.skin-mt.theme-cu #promoSlider .promo-msg { color: var(--cu-signature); }
 
   /* 2 — TÊN HẠNG THÀNH VIÊN. `.tier-card` là --surface-dark #0a0a0a. Libre Bodoni
      32/40 mực đồng trên đen = 10,47:1 — phần tử duy nhất trong app mang nghĩa
@@ -8090,7 +8138,7 @@ function navBar({ logoOnly = false, plp = false, back = false } = {}) {
       <div id="promoSlider" class="flex h-full transition-transform ease-in-out" style="transition-duration:.5s">
         ${PROMO_MESSAGES.map(msg => `
           <div class="w-full h-full shrink-0 flex items-center justify-center px-4">
-            <button data-promo-open class="t-multiline font-medium text-primary-foreground text-center truncate press">${msg}</button>
+            <span class="promo-msg t-multiline font-medium text-primary-foreground text-center truncate">${msg}</span>
           </div>`).join('')}
       </div>
     </div>
@@ -8921,8 +8969,8 @@ const PDP_PROMOS = {
 const PROMO_TAB = 'Ưu đãi khuyến mãi';
 const promoBox = (items, wrap = 'px-4 pb-2') => `
     <div class="${wrap} rise">
-      <div class="promo-box flex flex-col">
-        <button data-promo-toggle class="promo-head t-block-title text-foreground text-left press"><span>${PROMO_TAB}</span> <span>(${items.length})</span></button>
+      <div class="promo-box promo-flat flex flex-col">
+        <button data-promo-toggle class="promo-head t-lead text-foreground text-left press"><span>${PROMO_TAB}</span> <span>(${items.length})</span></button>
         <div class="promo-peek promo-body flex flex-col gap-2">
           ${items.map(it => Array.isArray(it)
             ? `<p class="t-multiline text-secondary-foreground"><span class="font-medium">${it[0]}</span>${it[1] || ''}</p>`
@@ -9414,7 +9462,7 @@ function dkScreenPDP(kind) {
             </div>
             <!-- Khối giá SẠCH: chỉ con số + badge -% + giá gạch. Dòng trả góp đã
                  dời xuống ngay dưới nút Thêm vào giỏ hàng (xem payOfferRow). -->
-            <div class="flex flex-col items-start">
+            <div class="flex items-center gap-2">
               <!-- id để đổi giá tại chỗ khi chọn dung tích khác (11/09/2026) -->
               <!-- 17/09/2026 — GIÁ lên 16/24 (.t-single 12/16 -> .t-overlay), theo khung Figma
                    user vừa chỉnh. Lớp t-overlay tự mang weight 500 nhờ rule của bộ da nên
@@ -9422,10 +9470,14 @@ function dkScreenPDP(kind) {
                    "giá phải đậm" dùng chung với PLP/giỏ, gỡ đi là mất mạch chung.
                    CHỈ desktop: khung PDP mobile user để nguyên 12/16 Regular. -->
               <p id="pdpPrice" class="t-overlay pc-price font-medium ${P.off ? 'text-destructive' : 'text-foreground'}">${pdpPriceNow(P)}</p>
-              <!-- Chip % xuống cùng hàng với GIÁ GẠCH, giá phải trả giữ ở dòng TRÊN — cùng luật
-                   với thẻ sản phẩm, user chốt 17/09/2026. Trước đó cả ba nằm một hàng ngang.
-                   Cụm dòng dưới bọc trong điều kiện: hàng không giảm giá thì không in ra một
-                   hàng rỗng. Vỏ đổi từ hàng ngang sang cột, bỏ h-6 vì nay có thể 2 dòng. -->
+              <!-- MỘT HÀNG NGANG, KHÔNG XUỐNG DÒNG — Figma 639:62117, lệnh user 25/09/2026
+                   ("cái giá ở pdp desktop và mobile sẽ nằm ngang hàng nhau, không xuống dòng ở pdp").
+                   Khung đo ra: hàng ngoài khe 8 NO_WRAP, cụm giá gạch + chip khe 6 NO_WRAP.
+                   ⚠ ĐẢO CHỐT 17/09/2026 — hôm đó chính user cho chip % xuống dòng dưới cùng giá gạch,
+                   lý do ghi là "cùng luật với thẻ sản phẩm". Nay CHỈ RIÊNG PDP quay lại một hàng;
+                   THẺ SẢN PHẨM ở PLP và các dải gợi ý GIỮ NGUYÊN hai dòng — đừng đồng bộ theo.
+                   Cụm giá gạch + chip vẫn bọc trong điều kiện: hàng không giảm giá thì không in ra
+                   một hàng rỗng. -->
               ${(P.was || P.off) ? `
               <div class="flex items-center gap-1.5">
                 ${P.was ? `<p class="t-multiline text-muted-foreground line-through">${P.was}</p>` : ''}
@@ -10054,7 +10106,14 @@ const HM_MAISON = 'Ferragamo';
 const HM_MAISON_COPY = '';
 
 /* Ảnh khối spotlight khi hãng chưa có sản phẩm trong kho; rỗng = rơi về ảnh model của SP đầu. */
-const HM_SPOT_IMG = 'shop-by-1-clean.jpg';
+/* 25/09/2026 (lệnh user, ảnh gửi kèm) — ẢNH SPOTLIGHT LỚN đổi sang tấm khách gửi.
+   Tấm cũ `shop-by-1-clean.jpg` là một ảnh DƯ của bộ khách giao, chỉ cắm tạm cho khối
+   dựng được (xem chú thích HM_MAISON ngay trên). Nay có ảnh chỉ định nên thay hẳn.
+   File `.webp` 1080x1240 (tỉ lệ 0,871) — khung `.hm-spot-photo` là 3/4 = 0,75 nên
+   `object-cover` sẽ cắt bớt HAI MÉP TRÁI/PHẢI, không cắt trên/dưới: người mẫu nằm giữa
+   khung nên không mất mặt. Đây là ảnh WEBP ĐẦU TIÊN trong assets (trước đó toàn jpg/png);
+   giữ nguyên định dạng vì nhẹ hơn và mọi trình duyệt đích đều đọc được. */
+const HM_SPOT_IMG = 'hm-spot-maison.webp';
 
 /* ── THƯƠNG HIỆU NỔI BẬT — "Featured brands" ─────────────────────────────
    Feedback khách 06/09: *"1 spotlight blocks (new in brand / key collection hoặc brand có
@@ -14205,8 +14264,12 @@ function screenCHECKOUT() {
          ngầm từ hồ sơ (ckOrderEmail = ckEmail || PROFILE.email), nhưng như vậy khối
          "Thông tin liên hệ" của người đã đăng nhập chỉ còn Tên/Họ/SĐT — người mua
          không thấy đơn sẽ gửi xác nhận về đâu, cũng không đổi được sang email khác.
-         Mồi sẵn PROFILE.email nên họ không phải gõ lại, và validateShipping (vốn đã
-         chỉ thêm luật khi TỒN TẠI ô email) tự khắc kiểm luôn.
+         25/09/2026 (lệnh user "bỏ lưu sẵn cái email của tôi"): ô này KHÔNG mồi sẵn
+         PROFILE.email nữa — người mua tự gõ, kể cả khi đã đăng nhập. validateShipping
+         (vốn chỉ thêm luật khi TỒN TẠI ô email) tự khắc bắt buộc nhập.
+         GIỮ NGUYÊN fallback ở ckOrderEmail (ckEmail || PROFILE.email): đó là email GỬI
+         XÁC NHẬN ĐƠN, một việc khác — nó chỉ kích hoạt khi ô trống, tức là lưới an toàn
+         chứ không phải chỗ mồi sẵn.
          Dòng "Email này đã có tài khoản → Đăng nhập" VẪN chỉ dành cho khách vãng lai:
          mời người đang đăng nhập đi đăng nhập là vô nghĩa. -->
     <!-- SĐT + EMAIL CÙNG MỘT HÀNG (25/09/2026, lệnh user) — cùng khuôn với cặp Tên/Họ
@@ -14223,7 +14286,7 @@ function screenCHECKOUT() {
     <div class="px-4 py-2 grid grid-cols-2 gap-4">
       <div class="flex flex-col min-w-0">${field('Số điện thoại','0 1234 5678','tel', { val: ckShipPhone, key: 'sphone', auto: 'tel', bare: true })}
       </div>
-      <div class="flex flex-col min-w-0">${field('Email','Nhập email nhận xác nhận đơn','email', { val: ckEmail || (ckAuth ? PROFILE.email : ''), key: 'email', auto: 'email', bare: true })}
+      <div class="flex flex-col min-w-0">${field('Email','Nhập email nhận xác nhận đơn','email', { val: ckEmail, key: 'email', auto: 'email', bare: true })}
       </div>
     </div>
     ${ckAuth ? '' : '<div id="ckEmailKnown" class="hidden px-4 pt-1"></div>'}
@@ -20866,10 +20929,12 @@ function wire(root) {
     });
   });
 
-  /* Cart: "Chương trình khuyến mãi" — 18/09/2026 nút này THÔI xổ tại chỗ, nay mở
-     drawer trượt phải (lệnh user). Nó mang data-promo-open, việc mở do listener uỷ
-     quyền ở khối #promoSheet lo. Handler cũ phải GỠ chứ không để lại: nút mang cả
-     hai đường thì một cú bấm chạy cả hai, vừa xổ chữ tại chỗ vừa trượt drawer.
+  /* Cart: "Chương trình khuyến mãi" — LỊCH SỬ: 18/09/2026 nút này thôi xổ tại chỗ để mở
+     drawer trượt phải, nên handler cũ phải gỡ khỏi đây (nút mang cả hai đường thì một cú bấm
+     chạy cả hai, vừa xổ chữ vừa trượt drawer).
+     ⚠ 25/09/2026 — drawer ĐÃ XOÁ HẲN, nút quay lại xổ TẠI CHỖ qua listener
+     [data-promo-toggle] ở cuối file. Chỗ này vẫn KHÔNG có handler riêng, nhưng lý do nay
+     khác: đường duy nhất nằm ở listener chung.
      Khối .promo-peek vẫn giữ nguyên vai trò xem mấp mé trong hộp. */
 
   // Cart: qty steppers — số lượng là STATE (CART[i].qty), không chỉ chữ trong DOM
@@ -23682,68 +23747,25 @@ document.body.insertAdjacentHTML('beforeend', `
    width riêng) — JS mở/đóng KHÔNG đổi gì vì cả 2 khuôn dùng chung cờ
    `translate-y-full`, chỉ khác CSS vẽ cờ đó ra sao (xem comment tại
    `.dk-drawer` trong khối `<style>`). */
-/* ══ DRAWER "Chương trình khuyến mãi" (18/09/2026, lệnh user) ══════════════
-   Bấm dải khuyến mãi trên cùng, hoặc tiêu đề / nút "Xem tất cả" trong hộp ở cột
-   phải giỏ hàng -> trượt vào từ mép phải, liệt kê đủ chương trình.
-   Dùng NGUYÊN khuôn .dk-drawer + cấu trúc của #giftSheet ngay dưới (backdrop mờ,
-   panel 440 cao hết màn, cờ translate-y-full) — không đẻ khuôn mới.
-   Trước đây nút "Xem tất cả" chỉ xổ thêm chữ tại chỗ, làm hộp cao lên; nay hộp
-   giữ đúng chiều cao thiết kế trong Figma 499:29797.
-   Nghe bằng UỶ QUYỀN ở document theo data-promo-open, vì cả dải trên cùng lẫn
-   hộp trong giỏ đều được dựng lại mỗi lần đổi màn. */
-document.body.insertAdjacentHTML('beforeend', `
-  <div id="promoSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
-    <div class="ps-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
-    <div class="ps-panel dk-drawer absolute bg-background translate-y-full flex flex-col"
-         role="dialog" aria-label="Chương trình khuyến mãi">
-      <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
-        <p class="flex-1 min-w-0 t-section-title text-foreground">Chương trình khuyến mãi</p>
-        <button id="psClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
-      </div>
-      <div id="psList" class="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 pb-4 flex flex-col gap-4"></div>
-      <div class="safe-b"></div>
-    </div>
-  </div>`);
-
+/* ĐÃ XOÁ 25/09/2026 — LỚP TRƯỢT "Chương trình khuyến mãi" (#promoSheet).
+   Lệnh user: *"cái promotion dạng slide in này hãy bỏ luôn xóa khỏi code nhé, nó bị lỗi"*.
+   Xoá TRỌN: markup #promoSheet (backdrop + panel + danh sách #psList) và toàn bộ JS mở/đóng
+   — openPS/closePS, globalThis.__openPromoSheet, listener phím Escape, listener uỷ quyền
+   [data-promo-open].
+   Ba nút gọi nó ở dải khuyến mãi đầu trang đổi thành <span class="promo-msg">: chữ tĩnh, chứ
+   để lại nút bấm không ra gì thì tệ hơn cả lỗi cũ. Rule màu trong khối <style> đổi neo sang
+   chính class đó.
+   ⚠ GIỮ LẠI, đừng dọn nhầm: PROMO_PROGRAMS, promoRule(), và listener [data-promo-toggle]
+   ngay dưới — hộp khuyến mãi XỔ TẠI CHỖ (ở PDP và ở giỏ) là việc KHÁC, không dính lớp trượt.
+   Hai thứ này từng nằm chung một IIFE nên rất dễ cắt lẹm. */
 (() => {
-  const ps = document.getElementById('promoSheet');
-  const panel = ps.querySelector('.ps-panel');
-  const closePS = () => {
-    ps.querySelector('.ps-backdrop').classList.add('opacity-0');
-    panel.classList.add('translate-y-full');
-    ps.classList.add('pointer-events-none');
-    unlockBodyScroll();
-    setTimeout(() => ps.setAttribute('aria-hidden', 'true'), 300);
-  };
-  const openPS = () => {
-    ps.querySelector('#psList').innerHTML =
-      PROMO_PROGRAMS.map(p => promoRule(p.headline, p.scheme, p.tnc)).join('');
-    ps.setAttribute('aria-hidden', 'false');
-    ps.classList.remove('pointer-events-none');
-    localizeNew(panel);
-    lockBodyScroll();
-    requestAnimationFrame(() => {
-      ps.querySelector('.ps-backdrop').classList.remove('opacity-0');
-      panel.classList.remove('translate-y-full');
-    });
-  };
-  globalThis.__openPromoSheet = openPS;
-  ps.querySelector('#psClose').addEventListener('click', closePS);
-  ps.querySelector('.ps-backdrop').addEventListener('click', closePS);
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && ps.getAttribute('aria-hidden') === 'false') closePS();
-  });
-  /* Uỷ quyền: mọi phần tử mang data-promo-open, dựng lúc nào cũng chạy. */
-  document.addEventListener('click', e => {
-    const t = e.target.closest && e.target.closest('[data-promo-open]');
-    if (t) { e.preventDefault(); openPS(); }
-  });
   /* 18/09/2026 — KHỐI KHUYẾN MÃI Ở GIỎ nay XỔ TẠI CHỖ (lệnh user: "cho bấm nó
      extend ra luôn, tạm off cái mở từ bên hông").
      Dùng lại đúng lớp .promo-peek.open CÓ SẴN: khối kẹp chiều cao + fade đáy vốn
      dựng cho việc này từ đầu, chỉ chưa có ai bật nó — không phải thêm CSS mới.
-     Lớp trượt #promoSheet GIỮ NGUYÊN trong file vì user nói "TẠM"; nay chỉ còn dải
-     khuyến mãi đầu trang gọi tới nó. */
+     ⚠ 25/09/2026 — LỚP TRƯỢT ĐÃ XOÁ HẲN (user: "nó bị lỗi"), xem chú thích ngay trên
+     khối này. Listener dưới đây là đường DUY NHẤT còn lại để mở hộp khuyến mãi, và nó
+     chỉ xổ TẠI CHỖ. Câu cũ ở đây ghi "giữ nguyên vì user nói TẠM" — không còn đúng. */
   document.addEventListener('click', e => {
     const t = e.target.closest && e.target.closest('[data-promo-toggle]');
     if (!t) return;
