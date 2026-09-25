@@ -761,6 +761,20 @@ window.RESP = (function () {
   /* Khối tóm tắt đơn hàng và hộp thông báo: kẻ dưới đúng 2 sắc độ của bản vẽ */
   .ck-sum { border-bottom: 1px solid var(--general-border); }
   .ck-notice { border-bottom: 1px solid var(--general-secondary); }
+  /* 25/09/2026 (Figma 684:125524, user tự sửa) — NHẤN SỐ ĐIỂM Ở KHỐI NHẮC ĐĂNG NHẬP.
+     ⚠ Trước đó số điểm bọc trong <b class="font-medium"> mà ĐO RA 400, tức không nhấn gì.
+     Hai lớp cùng dìm: `font-medium` là class chết, và skin-mt có rule quét cả <b>/<strong>
+     về 400 — xem [font-medium là class chết dưới skin-mt]. Nên phải khai ngoại lệ CÓ TÊN.
+     Đặc hiệu: `html.skin-mt .ck-pts` là (0,2,1), thắng `html.skin-mt b` (0,1,2) vì số CLASS
+     được so trước — thắng bất kể thứ tự viết. Đã đo lại sau khi vá: ra đúng 500 ở cả 2 bản.
+     ⚠ ĐỪNG DÙNG PHÉP QUÉT `document.styleSheets` ĐỂ KẾT LUẬN "không rule nào khớp": file này
+     có 1 stylesheet KHÔNG đọc được từ JS (cssRules ném lỗi), nên vòng quét lặng lẽ bỏ qua nó
+     và trả về mảng rỗng rất thuyết phục. Tôi đã suýt ghi "0 rule" thành kết luận. Muốn chắc
+     thì đo getComputedStyle, đừng suy từ danh sách rule quét được.
+     Thiết kế nhấn RIÊNG con số, còn chữ "điểm thưởng" giữ Regular — vì vậy markup tách đôi
+     thay vì bọc cả cụm. Tách được nhờ từ điển i18n đã có sẵn khoá rời 'điểm thưởng'. */
+  .ck-pts { font-weight: 500; }
+  html.skin-mt .ck-pts { font-weight: 500; }
   /* Thẻ thanh toán: Figma cho 4 thẻ CAO BẰNG NHAU 64 (thẻ "trả góp 0%" xuống
      2 dòng kéo cả nhóm lên 64). Đặt sàn ở đây thay vì trong richRadio để thẻ
      vận chuyển vẫn ôm sát nội dung như cũ. */
@@ -4304,13 +4318,23 @@ window.RESP = (function () {
      tách 4 mục chứ không phải một đường kẻ mạnh. Có giá trị lùi `#f5f2ed` vì biến này
      chỉ khai ở skin-li/theme-cu, còn rule này nằm ở CSS nền dùng chung mọi bộ da.
      ⚠ KHỐI KHÔNG CÒN NỀN KEM (xem ghi chú ở `hmUsp`). */
-  /* KHỔ 375 GIỮ LƯỚI 2 CỘT, KHÔNG có vạch ngăn: component Figma chỉ có bản 1440, khung
-     Figma của trang chủ mobile CHƯA được cập nhật (ở đó `hm-usp` vẫn là FRAME chứ không
-     phải instance). Nên ở đây chỉ áp phần CHẮC CHẮN đúng — icon 40 + nhãn mới — còn cách
-     xếp giữ nguyên lưới 2 cột đã chốt 08/09. Khe dọc 24 cho icon 40 thở. */
+  /* KHỔ 375 — LƯỚI 2 CỘT, KHÔNG vạch ngăn. Số đo nay đọc từ biến thể `Property 1=mobile`
+     của component `hm-usp` (bộ 665:124172), user giao 25/09/2026 để thay hẳn bộ cũ
+     `service-promises`. Trước đó component CHỈ có bản 1440 nên phần mobile là phỏng đoán
+     (đệm 32/0, khe 24/8, khối tràn hết 375) — nay bỏ phỏng đoán, lấy đúng số của bạn:
+       đệm 24/16 · khe 16 cả hai chiều · 4 ô 164 rộng
+       375 − 16×2 − 16 = 343 → cột 163,5 ✓ đúng ô 164 của component
+       24 + 88 + 16 + 88 + 24 = 240      ✓ đúng chiều cao component (trước là 264)
+     ⚠ ĐỆM NGANG ĐẶT NGAY Ở ĐÂY, không nhờ khung bọc. Đã đo trong trình duyệt: cả 4 tầng
+     cha (`w-full` → `screen` → `w-full bg-background` → `body`) đều đệm ngang 0, tức khối
+     đang tràn hết mép. Ghi chú cũ ở `.hm-usp-band` nói `px-4` "đã chuyển ra khung bọc" là
+     KHÔNG đúng với màn này — đừng tin, đo lại nếu cần đụng tới.
+     ⚠ Cách xuống dòng KHÔNG đổi khi cột hẹp lại 20px: đo bằng `Range.getClientRects()`
+     ra 2/1/2/2 dòng ở cả cột 183,5 lẫn 163,5 — khớp đúng 4 ô 88/68/88/88 của component.
+     (Đừng đo bằng `getClientRects()` trên chính thẻ `<p>`: nó trả hộp VIỀN, luôn ra 1.) */
   .hm-usp {
     display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px 8px; padding: 32px 0;
+    gap: 16px; padding: 24px 16px;
   }
   .hm-usp-item {
     display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
@@ -6477,7 +6501,7 @@ function miniCart() {
   return `
   <div class="acc bg-background border border-border rounded-xs">
     <button class="acc-trigger w-full h-[52px] flex items-center justify-between px-3 press">
-      <span class="t-multiline flex items-center gap-2 font-medium text-foreground">${I.gift} Giỏ hàng của bạn (${cartSelected().length})</span>
+      <span class="t-multiline flex items-center gap-2 font-medium text-foreground">${I.gift} Giỏ hàng (${cartSelected().length})</span>
       <span class="flex items-center gap-2"><span class="t-multiline font-semibold text-foreground">${vndCom(cartSubtotal())}</span>${accIco}</span>
     </button>
     <div class="acc-body"><div class="acc-inner">
@@ -11628,7 +11652,7 @@ function screenCART() {
              được cả câu bằng luật regex I18N_RE -->
         <span id="selAllLabel" class="t-multiline font-medium text-foreground">${ckAuth ? `Chọn tất cả ( ${cartItems().length} sản phẩm )` : 'Chọn tất cả'}</span>
       </button>
-      ${ckAuth ? '' : '<button id="delSelected" class="t-multiline font-medium text-muted-foreground press">Xóa sản phẩm đã chọn</button>'}
+      ${ckAuth ? '' : '<button id="delSelected" class="t-multiline font-medium text-muted-foreground press">Xoá</button>'}
     </div>
 
     <!-- Giỏ rỗng (sau khi đặt hàng xong) dùng lại đúng khối trạng thái rỗng mà
@@ -12411,7 +12435,7 @@ function screenCHECKOUT() {
   const notice = ckAuth
     ? ''
     : `<p class="t-multiline font-medium text-foreground">Bạn đang thanh toán không đăng nhập</p>
-       <p class="t-multiline text-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="font-medium">${rewardPointsEarned().toLocaleString('vi-VN')} điểm thưởng</b></p>
+       <p class="t-multiline text-foreground">Đăng nhập và hoàn tất đơn hàng để nhận ngay <b class="ck-pts">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng</p>
        <button data-nav="login" class="t-multiline self-start font-medium text-foreground underline press">Đăng nhập</button>`;
 
   /* Cặp nút Giao hàng / Nhận tại cửa hàng — nằm ĐẦU thân section "Vận chuyển"
@@ -12811,7 +12835,7 @@ function screenCHECKOUT() {
       <button id="ckBagTrigger" class="w-full h-14 px-4 flex items-center justify-between press">
         <!-- Figma 420:7321: nhãn là t-body-single 12/16 (số tiền bên phải mới là
              12/18). Trước đây cả hai cùng 12/18. -->
-        <span class="t-single text-foreground">Giỏ hàng của bạn</span>
+        <span class="t-single text-foreground">Giỏ hàng</span>
         <span class="flex items-center gap-2">
           <span class="t-multiline pc-price font-medium text-foreground">${vndCom(cartSubtotal())}</span>
           ${I.chevR()}
@@ -12836,10 +12860,10 @@ function screenCHECKOUT() {
          tính chi phí lên đầu khi bấm vào Giỏ hàng của bạn"). -->
     <div id="ckBagSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
       <div class="cb-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
-      <div class="cb-panel absolute inset-x-0 bottom-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col" style="border-radius:0; max-height:85vh" role="dialog" aria-label="Giỏ hàng của bạn">
+      <div class="cb-panel absolute inset-x-0 bottom-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col" style="border-radius:0; max-height:85vh" role="dialog" aria-label="Giỏ hàng">
         <span class="absolute left-1/2 -translate-x-1/2 top-2 w-[50px] h-[3px] rounded-full bg-border"></span>
         <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
-          <p class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">Giỏ hàng của bạn</p>
+          <p class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">Giỏ hàng</p>
           <button id="ckBagClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
         </div>
         <div class="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 pb-4 flex flex-col gap-3">
@@ -12902,7 +12926,7 @@ function screenCHECKOUT() {
          khung màu — để trống khung mà không có nội dung là một ô xám vô cớ. -->
     ${notice ? `
     <div class="ck-notice px-4 py-2">
-      <div class="bg-accent-0 rounded-md px-2 py-2 flex flex-col gap-2">${notice}</div>
+      <div class="rounded-md px-2 py-2 flex flex-col gap-2" style="background:var(--cu-surface, #f5f2ed)">${notice}</div>
     </div>` : ''}
 
     <!-- Giao tận nơi: 3 section · Nhận tại cửa hàng: 2 (không có bước chọn
@@ -15951,7 +15975,13 @@ const I18N = {
   'Nước hoa Crystal Noir EDP 5 ml':'Crystal Noir EDP 5 ml',
   'Phí vận chuyển':'Shipping fee', 'Vận chuyển':'Shipping', 'Giao hàng':'Delivery',
   'Mã giảm giá':'Promo code', 'Nhập voucher':'Enter voucher', 'Bạn có phiếu mua hàng?':'Have a gift voucher?',
-  'DAFC Phiếu mua hàng':'DAFC Gift Voucher', 'Xóa sản phẩm đã chọn':'Remove selected',
+  'DAFC Phiếu mua hàng':'DAFC Gift Voucher',
+  /* 25/09/2026 — GỠ khoá 'Xóa sản phẩm đã chọn' (lệnh user rút nhãn nút về "Xoá").
+     Nhãn mới đi bằng khoá SẴN CÓ 'Xoá':'Delete'.
+     ⚠ PHẢI viết "Xoá" chứ KHÔNG phải "Xóa": hai lối bỏ dấu là HAI KHOÁ KHÁC NHAU trong
+     từ điển này — 'Xoá' ra 'Delete' (hành vi xoá), còn 'Xóa' ra 'Clear' (nút dọn ô tìm
+     kiếm / dọn bộ lọc). Gõ nhầm một dấu là bản EN đổi nghĩa. Mã sẵn có đã theo đúng quy
+     ước đó rồi, đừng "sửa chính tả" cho thống nhất. */
   'Hoàn tác':'Undo', 'Đã khôi phục sản phẩm':'Item restored', 'Chưa chọn sản phẩm nào':'No items selected',
   'Phí vận chuyển (ước tính)':'Shipping (estimated)', 'Sản phẩm đã hết hàng':'Out of stock',
   'Gợi ý cho bạn':'Recommended for you', 'Mã ưu đãi':'Promo code',
@@ -16664,7 +16694,7 @@ const I18N_RE = [
   // giỏ hàng: số món thay đổi được (xoá / đặt hàng xong) nên phải là luật động
   [/^Thanh toán \((\d+)\)$/,          'Payment ($1)'],
   [/^([\d.]+) điểm thưởng$/,          '$1 points'],
-  [/^Giỏ hàng của bạn \((\d+)\)$/,    'Your cart ($1)'],
+  [/^Giỏ hàng \((\d+)\)$/,            'Cart ($1)'],
   [/^Chọn tất cả \( (\d+) sản phẩm \)$/, 'Select all ( $1 products )'],
   [/^1 quà$/,                         '1 gift'],      // số ít: đặt TRƯỚC luật chung (tr trả về luật khớp đầu tiên)
   [/^(\d+) quà$/,                     '$1 gifts'],
@@ -16728,7 +16758,7 @@ const I18N_REV_RE = [
   [/^Cookie preferences saved · (\d+)\/(\d+) groups$/, 'Đã lưu lựa chọn Cookie · $1/$2 nhóm'],
   [/^Payment \((\d+)\)$/,             'Thanh toán ($1)'],
   [/^([\d.]+) points$/,        '$1 điểm thưởng'],
-  [/^Your cart \((\d+)\)$/,            'Giỏ hàng của bạn ($1)'],
+  [/^Cart \((\d+)\)$/,                 'Giỏ hàng ($1)'],
   [/^Select all \( (\d+) products \)$/, 'Chọn tất cả ( $1 sản phẩm )'],
   [/^1 gift$/,                        '1 quà'],
   [/^(\d+) gifts$/,                   '$1 quà'],
@@ -18765,7 +18795,10 @@ function wire(root) {
     cartBusy(root);
     refreshCartAll(root);
   });
-  /* "Xóa sản phẩm đã chọn" (11/09/2026) — KHÔNG còn bấm hộ từng nút xoá nữa.
+  /* Nút #delSelected — nhãn nay chỉ còn "Xoá" (rút gọn 25/09/2026); trước là
+     "Xóa sản phẩm đã chọn". Hành vi KHÔNG đổi: nó vẫn xoá đúng các món ĐANG TÍCH,
+     chứ không phải xoá cả giỏ — nhãn ngắn đi nhưng phạm vi thì không.
+     (11/09/2026) — KHÔNG còn bấm hộ từng nút xoá nữa.
      Cách cũ đẻ ra N toast chồng nhau, mà cái cuối cùng chỉ hoàn tác được đúng
      một món. Nay: dọn cả nhóm trong một lượt, vẽ lại màn, và MỘT toast hoàn tác
      trả về nguyên nhóm kèm đúng trạng thái tick của từng món. */
