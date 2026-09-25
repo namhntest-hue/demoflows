@@ -1298,17 +1298,43 @@ window.RESP = (function () {
     --look-pad-y: 32px;      /* đệm dọc băng — cũng là khoảng thẻ cách mép đáy */
     --look-pad-x: 24px;      /* đệm ngang băng = đúng MỘT máng lưới */
     --look-h: 352px;         /* chiều cao băng (số Figma) */
+    --look-inner: 1344px;    /* bề ngang TRONG băng = 282 + 24 + 330×3 + 24×2 (xem lưới) */
+    --look-bleed-pad: 48px;  /* 24 của px-6 (khối cha) + 24 đệm băng — giữ nội dung đúng chỗ */
     --look-rise: 221px;      /* phần ảnh TRỒI LÊN khỏi mép trên băng
                                 = chiều cao thẻ (541) − (--look-h − --look-pad-y) */
     --look-clear: 56px;      /* hở giữa ĐỈNH ẢNH trồi lên và khối phía trên.
                                 Đo ra 52 (273 − 221) — số duy nhất trong cả dải
                                 rơi ngoài nấc 8; kéo lên 56 cho đồng nhịp với
                                 32/24/16 còn lại. Lệch 4px, không đổi bố cục. */
+    /* ── NỀN TRÀN HẾT MÀN (25/09/2026, lệnh user: "cái gợi ý mua kèm có màu nền phía
+       sau cho nó full-w luôn trải dài theo màn hình") ────────────────────────────────
+       Trước: băng bị kẹp hai lần — `px-6` của khối cha (24 mỗi bên) và trần
+       `max-w-[1440px]`. Đo ở viewport 1440 ra băng rộng 1377 bắt đầu ở x=24, và ở màn
+       rộng hơn thì nó đứng yên ở 1440 chứ không giãn.
+       Cách thoát CẢ HAI lớp kẹp: kéo mép ra tới mép viewport bằng `margin-inline` âm,
+       rồi ép `width: 100vw`. Negative margin thường chỉ gỡ được `px-6`, KHÔNG gỡ được
+       trần max-w — nên buộc phải đi qua `vw`.
+       ⚠ CHỈ NỀN TRÀN, NỘI DUNG KHÔNG ĐƯỢC XÊ DỊCH. User nói rõ "màu nền phía sau", mà
+       lưới bên trong băng dựng theo khung 1392 (12 cột) — kéo nội dung ra theo là vỡ
+       toàn bộ phép chia cột đã ghi ngay trên. Vì vậy đệm ngang thành ĐỘNG:
+         max(48px, (100vw − 1344px) / 2)
+       · 48 = 24 của `px-6` + 24 đệm băng — giữ đúng chỗ nội dung đang đứng;
+       · 1344 = bề ngang TRONG băng (282 + 24 + 330×3 + 24×2, xem phép tính lưới ở trên).
+       Kiểm bằng số: vp 1200 -> đệm 48, nội dung 1104 (y như trước); vp 1440 -> đệm 48,
+       nội dung 1344; vp 1920 -> đệm 288, nội dung VẪN 1344 và đứng giữa màn. */
     position: relative;
     height: var(--look-h);
     /* Chỗ chừa = phần ảnh trồi lên CỘNG khoảng hở muốn thấy (= 277). */
     margin-top: calc(var(--look-rise) + var(--look-clear));
-    padding: var(--look-pad-y) var(--look-pad-x);
+    /* ⚠ PHẢI TRỪ BỀ RỘNG THANH CUỘN. `100vw` tính CẢ thanh cuộn, còn vùng nhìn thấy
+       thì không — dùng vw trơn là băng thừa ra ~15px, đẻ thanh cuộn NGANG và lệch trái
+       8px. Đã đo đúng lỗi đó trước khi vá: ở cả 1200/1440/1920 đều tràn ngang và băng
+       bắt đầu ở x = −8.
+       `--sbw` do một đoạn JS ở cuối file đo và ghi lên <html> (có giá trị lùi 0px nên
+       CSS vẫn hợp lệ nếu JS chưa chạy). */
+    margin-inline: calc(50% - 50vw + var(--sbw, 0px) / 2);
+    width: calc(100vw - var(--sbw, 0px));
+    padding: var(--look-pad-y) max(var(--look-bleed-pad), calc((100vw - var(--sbw, 0px) - var(--look-inner)) / 2));
     /* 31/08/2026 (lệnh user): nấc màu XUỐNG accent-0 (#f7f7f7 ở skin-mt) —
        nhạt hơn secondary #f2f2f2 đúng 1 nấc, tách hẳn khỏi nền ảnh CDN nướng
        sẵn #f1f1f1 nên 3 ô ảnh nổi lên thay vì chìm vào băng. Kẻ mảnh mép trên
@@ -6012,8 +6038,18 @@ window.RESP = (function () {
      ĐẶC HIỆU: phải là (0,5,1) vì `html.skin-mt [data-screen="cart"]
      div:has(> :where(#promoPeek))` là (0,2,2) sau khi đã hạ ID (xem chú thích ở
      rule đó). Trước khi hạ nó là (1,2,2) và khối này KHÔNG đè nổi. */
+  /* ⚠ ĐẢO 25/09/2026 (lệnh user: *"cục chọn quà sẽ về màu xám accent lại, cả 2 phiên bản"*)
+     — thẻ quà THÔI ăn kem, quay về XÁM ACCENT `--unofficial-accent-0` (#fafafa).
+     Chọn #fafafa chứ không phải #f5f5f5 của chính class `bg-secondary` trên markup: user nói
+     "xám ACCENT", mà trong file này accent = `--unofficial-accent-0`; đo trên màn giỏ thì
+     #fafafa đúng là màu của panel tóm tắt `.dk-cart-block` — thẻ quà cũng là một khối panel
+     nên đi cùng hệ với nó. (#f5f5f5 là màu ô ẢNH sản phẩm, đếm được 15 chỗ trong màn.)
+     ⚠ GIỮ KEM, đừng dọn nhầm: hộp `.promo-box` ở cột tóm tắt và footer vẫn `--cu-surface` —
+     đo ra đúng ba khối kem trong màn giỏ, user chỉ đổi MỘT.
+     Giữ nguyên rule thay vì xoá: xoá thì thẻ rơi về `bg-secondary` (#f5f5f5) của markup,
+     tức một màu THỨ BA, không phải thứ user yêu cầu. */
   html.skin-mt.skin-li [data-screen="cart"] .gift-order-card {
-    background: var(--cu-surface);
+    background: var(--unofficial-accent-0);
   }
   /* ⚠ TÁCH RA VÀ GỠ `[data-screen="cart"]` (23/09/2026): hộp khuyến mãi nay còn mọc
      ở PDP và phải đọc ra CÙNG MỘT HỘP ở cả hai chỗ. Thẻ quà thì vẫn chỉ có ở giỏ nên
@@ -13205,7 +13241,16 @@ function screenCART() {
                 <span class="chk ${(() => { const a = cartItems().filter(c => c.stock !== 0); return a.length && a.every(c => c.sel !== false); })() ? 'on' : ''} w-4 h-4 border border-border-3 rounded-xs shadow-sm flex items-center justify-center">${I.tick}</span>
                 <span id="selAllLabel" class="t-multiline font-medium text-foreground">${ckAuth ? `Chọn tất cả ( ${cartItems().length} sản phẩm )` : 'Chọn tất cả'}</span>
               </button>
-              ${ckAuth ? '' : '<button id="delSelected" class="t-multiline font-medium text-muted-foreground press">Xoá</button>'}
+              <!-- 25/09/2026 (lệnh user: "đừng bỏ luôn nút") — NÚT XOÁ NAY LUÔN HIỆN.
+                   Trước đó nó bọc trong một điều kiện theo ckAuth, tức KHÁCH ĐÃ ĐĂNG NHẬP KHÔNG CÓ nút
+                   xoá các món đang tích — một chỗ khuyết có từ trước, không ai ghi lý do.
+                   Suy đoán hợp lý nhất cho điều kiện cũ là CHỖ HẸP: nhãn bên trái ở bản đã đăng
+                   nhập dài hơn ("Chọn tất cả ( N sản phẩm )"), mà nhãn nút hồi đó còn là "Xóa sản
+                   phẩm đã chọn" (~150px). Lý do ấy nay hết: nhãn rút còn "Xoá" (23px), đo ở khổ
+                   375 vẫn dư chỗ.
+                   (KHONG go dau huyen nguoc trong chu thich nay: ca khoi nam trong template
+                   literal, mot dau la cat doi chuoi.) -->
+              <button id="delSelected" class="t-multiline font-medium text-muted-foreground press">Xoá</button>
             </div>
             <!-- Bỏ qua món đã xoá NHƯNG GIỮ NGUYÊN chỉ số i (data-row trỏ vào CART) -->
             <div id="cartList">${cartItems().length ? CART.map((c, i) => c.removed ? '' : row(c, i) + productGiftHTML(c, i)).join('') : cartEmptyHTML()}</div>
@@ -24459,6 +24504,18 @@ if (!RESP.swapped) {
 
   /* Thu cửa sổ hẹp < 768 -> sang bản mobile, mang theo màn + cài đặt */
   RESP.watch(() => [current, LANG, currentFont, currentTheme]);
+
+  /* BỀ RỘNG THANH CUỘN -> biến `--sbw` (25/09/2026).
+     Sinh ra cho dải "Gợi ý mua kèm" tràn mép: CSS ở đó cần `100vw` để thoát trần
+     `max-w-[1440px]`, mà `100vw` lại tính cả thanh cuộn nên thừa ra và đẻ thanh cuộn
+     NGANG. Không có cách thuần CSS nào đọc được con số này.
+     Đo bằng hiệu innerWidth − clientWidth: ra 0 trên máy dùng thanh cuộn phủ (macOS,
+     mobile) và ~15 trên Windows. Cập nhật lại khi đổi khổ vì thanh cuộn có thể xuất
+     hiện/biến mất theo chiều cao nội dung. */
+  const capNhatSbw = () => document.documentElement.style.setProperty(
+    '--sbw', (window.innerWidth - document.documentElement.clientWidth) + 'px');
+  capNhatSbw();
+  window.addEventListener('resize', capNhatSbw);
 }
 </script>
 </body>
