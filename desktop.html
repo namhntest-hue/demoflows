@@ -592,6 +592,9 @@ window.RESP = (function () {
      để cùng 16 cả hai chiều thì khoảng cách trong một mục bằng khoảng cách giữa hai
      mục, mắt không gom được thành từng cặp. */
   .acc-card-cols { row-gap: 24px; column-gap: 16px; }
+  /* 25/09/2026 — mục thẻ nay là MỘT DÒNG "Nhãn: giá trị" (xem accCardItem): về MỘT
+     cột, khe 8. Khe 24 cũ dành cho mục 2 dòng (nhãn + giá trị) cần tách cặp. */
+  .acc-card-cols { grid-template-columns: minmax(0, 1fr); row-gap: 8px; }
   /* Câu chú cuối thẻ là META ("bốn mục này không tự đổi được"), không phải dữ liệu
      — tách bằng kẻ V3 như mọi chỗ ngăn hàng khác, không phải bằng viền hộp V2. */
   .acc-card-note { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--unofficial-border-1); }
@@ -684,24 +687,89 @@ window.RESP = (function () {
      nằm chung một thuộc tính background-image với ảnh — không cần phần tử giả.
      4 rule này phải ĐỨNG SAU .tier / .tier.is-open / .tier-card vì mấy rule kia
      dùng shorthand `background` (shorthand xóa background-image nếu đứng sau). */
+  /* ===== MEMBERSHIP THEO FIGMA 756:108020 (26/09/2026, lệnh user) ================
+     Thay trọn bộ mặt 4 hạng cũ (ảnh trần + chữ MỰC/TRẮNG + lớp phủ đo tay 22/09).
+     Thiết kế của user tự mang MÀU CHỮ theo từng hạng, nên mỗi hạng khai 6 biến:
+       --tl  mực phụ (nhãn, diễn giải)     --ts  mực chính (giá trị, tên thẻ)
+       --ta  mực nhấn (tên hạng lớn + vạch 74)   --tline  kẻ   --tbar  rãnh thanh tiến độ
+       --twm chữ chìm cỡ lớn ở góc phải panel
+     Nền = gradient chéo của Figma ĐÈ lên ảnh chất liệu cũ (assets/tier-*.png) — Figma
+     cũng xếp đúng thứ tự đó (ảnh dưới, gradient 85–98% trên), nên ảnh chỉ còn là vân.
+     Diamond trong Figma KHÔNG có ảnh: nền #e7e7e7 + 2 lớp gradient mận.
+     ⚠ Cỡ chữ 8/9/10/56/112 là số của thiết kế, NGOÀI thang chữ chuẩn — giữ vì đây là
+     khối trang trí user tự vẽ; riêng 23/22 → 24 và 11 → 12 (lệch dưới 1px, về thang).
+     Dùng longhand background-color/-image: .tier.is-open và .tier-card đứng trước. */
   .tier-face-member,
   .tier-face-gold,
   .tier-face-platinum,
-  .tier-face-diamond { background-size: cover; background-position: center; background-repeat: no-repeat; }
+  .tier-face-diamond { background-size: cover; background-position: center; background-repeat: no-repeat; color: var(--ts); }
+  .tier-face-member {
+    --tl: #4f574d; --ts: #242721; --ta: #6f765f; --tline: rgba(78,87,69,.29); --tbar: rgba(78,87,69,.29); --twm: rgba(36,39,33,.055);
+    background-color: #e9e6dc;
+    background-image: linear-gradient(to bottom right, rgba(240,236,227,.96), rgba(220,226,217,.93) 62%, rgba(185,197,185,.90)), url(assets/tier-member.png);
+  }
+  .tier-face-gold {
+    --tl: rgba(255,255,255,.72); --ts: #fffdf8; --ta: #d7be91; --tline: rgba(255,255,255,.22); --tbar: rgba(255,255,255,.25); --twm: rgba(255,255,255,.04);
+    background-color: #2a180f;
+    background-image: linear-gradient(to bottom right, rgba(44,24,15,.96), rgba(102,67,38,.91) 58%, rgba(154,124,86,.85)), url(assets/tier-gold.png);
+  }
+  .tier-face-platinum {
+    --tl: #d2dade; --ts: #f3f6f7; --ta: #dde7eb; --tline: rgba(229,238,240,.29); --tbar: rgba(229,238,240,.29); --twm: rgba(243,246,247,.055);
+    background-color: #101820;
+    background-image: linear-gradient(to bottom right, rgba(16,24,32,.98), rgba(38,59,73,.94) 58%, rgba(119,138,148,.85)), url(assets/tier-platinum.png);
+  }
+  .tier-face-diamond {
+    --tl: #e9cedc; --ts: #fff8fb; --ta: #f2c9da; --tline: rgba(247,216,226,.32); --tbar: rgba(247,216,226,.32); --twm: rgba(255,248,251,.04);
+    background-color: #e7e7e7;
+    background-image: linear-gradient(200deg, rgba(20,3,10,.62), rgba(80,8,30,0) 50%, rgba(15,2,8,.55)), linear-gradient(98deg, rgba(10,2,6,.55), rgba(60,5,22,.38) 48%, rgba(10,2,6,.72));
+  }
 
-  .tier-face-member   { background-image: url(assets/tier-member.png);   color: var(--general-primary); }
-  .tier-face-platinum { background-image: url(assets/tier-platinum.png); color: var(--general-primary); }
-  .tier-face-diamond  { background-image: linear-gradient(rgba(255,255,255,.14), rgba(255,255,255,.14)), url(assets/tier-diamond.png); color: var(--general-primary); }
-  .tier-face-gold     { background-image: linear-gradient(rgba(0,0,0,.32), rgba(0,0,0,.32)), url(assets/tier-gold.png); color: var(--general-primary-foreground); }
+  /* THẺ HẠNG (Figma "Thẻ thành viên" 343x218): bo 8, bóng mềm, 2 bậc mực. */
+  .tier-card { border-radius: 8px; box-shadow: 0 10px 28px rgba(23,18,12,.125); }
+  .tier-lbl { color: var(--tl); letter-spacing: .5px; }
+  .tier-name   { font-family: var(--font-head); font-size: 24px; line-height: 32px; letter-spacing: .5px; color: var(--ts); }
+  .tier-points { font-size: 24px; line-height: 32px; letter-spacing: .5px; color: var(--ts); }
+  .tier-bar      { background: var(--tbar); }
+  .tier-bar-fill { background: var(--ts); }
 
-  /* Thanh tiến độ trên thẻ hạng vốn vẽ cho mặt TỐI (rãnh trắng 25% + ruột trắng).
-     Ba hạng mặt SÁNG phải đảo lại, không thì thanh biến mất trên nền sáng. */
-  .tier-face-member .tier-bar,
-  .tier-face-platinum .tier-bar,
-  .tier-face-diamond .tier-bar { background: rgba(10,10,10,.25); }
-  .tier-face-member .tier-bar-fill,
-  .tier-face-platinum .tier-bar-fill,
-  .tier-face-diamond .tier-bar-fill { background: var(--general-primary); }
+  /* PANEL HẠNG ĐANG MỞ (Figma "Chân dung · Editorial bất đối xứng" 802x420):
+     cột danh xưng 250 | kẻ dọc | lưới quyền lợi, đệm 32, khe 28. */
+  .tier-tab-txt { color: var(--ts); }
+  /* Figma có HAI bộ số: khung GOLD (hạng hiện tại) cột 250 · khe 28 · tên 56/60 · chữ chìm
+     112; ba khung còn lại cột 290 · khe 22 · tên 38/52 · chữ chìm 92. Khai bộ chung trước,
+     GOLD đè sau. */
+  .tier.is-open .tier-body { flex-direction: row; gap: 22px; padding: 32px; position: relative; }
+  .tier-face-gold.is-open .tier-body { gap: 28px; }
+  .tier-wm {
+    position: absolute; right: -18px; bottom: -21px; pointer-events: none; white-space: nowrap;
+    font-family: var(--font-head); font-weight: 600; font-size: 92px; line-height: 92px; color: var(--twm);
+  }
+  .tier-face-gold .tier-wm { right: -20px; bottom: -41px; font-size: 112px; line-height: 112px; }
+  .tier-id { flex: 0 0 290px; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+  .tier-id-top { display: flex; flex-direction: column; gap: 12px; }
+  .tier-name-grp { display: flex; flex-direction: column; gap: 2px; }
+  .tier-cap { font-size: 10px; line-height: 14px; letter-spacing: .5px; text-transform: uppercase; color: var(--tl); }
+  .tier-hero { font-family: var(--font-head); font-size: 38px; line-height: 52px; letter-spacing: .6px; color: var(--ta); }
+  .tier-face-gold .tier-id { flex-basis: 250px; }
+  .tier-face-gold .tier-hero { font-size: 56px; line-height: 60px; }
+  .tier-accent { display: block; width: 74px; height: 1px; background: var(--ta); }
+  .tier-cond-box { display: flex; flex-direction: column; gap: 8px; }
+  .tier-cond-ps { display: flex; flex-direction: column; gap: 4px; }
+  .tier-cond-p { font-size: 10px; line-height: 15px; letter-spacing: .2px; color: var(--ts); }
+  .tier-sign { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+  .tier-sign-brand { font-size: 10px; line-height: 14px; letter-spacing: 4px; color: var(--tl); }
+  .tier-sign-file { font-size: 8px; line-height: 12px; letter-spacing: 1.3px; text-transform: uppercase; color: var(--tl); opacity: .72; }
+  .tier-vline { flex: 0 0 1px; align-self: stretch; background: var(--tline); }
+  .tier-perks { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 40px; position: relative; }
+  .tier-perk-row { display: flex; gap: 24px; }
+  .tier-perk { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .tier-perk + .tier-perk { flex: 0 0 177px; }
+  .tier-sep { height: 1px; background: var(--tline); }
+  .tier-perk-lb { font-size: 9px; line-height: 12px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--tl); }
+  .tier-perk-val { font-family: var(--font-head); font-size: 24px; line-height: 32px; letter-spacing: .2px; color: var(--ts); }
+  .tier-perk-sub { font-size: 10px; line-height: 14px; letter-spacing: .35px; color: var(--tl); }
+  /* Desktop riêng: tên GOLD lớn đi gradient vàng của Figma (mobile để màu phẳng #d7be91). */
+  .tier-face-gold .tier-hero { background-image: linear-gradient(150deg, #e1cfb8, #c7a67f); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
 
   /* ── CHECKOUT — nhịp khối học theo Ralph Lauren (lệnh user 19/09/2026) ───
@@ -1898,6 +1966,17 @@ window.RESP = (function () {
      panel này CHỈ có một chế độ (rê chuột), nên bỏ hẳn lớp nền chặn + cờ
      `-peek`: `#accPeek` tự nó `pointer-events:none` cố định, chỉ tấm
      `.acc-drop` mở `pointer-events:auto` lại (xem IIFE gần cuối file). */
+  /* 25/09/2026 — chữ nhấn của khối DAFC Rewards trong tấm hover. Khai riêng thay vì
+     gắn utility: màu đồng chỉ có ở skin-li, để utility thì bộ da khác đè mất. */
+  .ap-rewards-title { color: var(--cu-accent, #b79d80); }
+  /* 25/09/2026 (user) — hover hàng menu trong tấm Tài khoản: MẶT ĐỒNG thay mặt xám của
+     .ghost-hover. Khoanh skin-li như .pol-nav-on vì `--cu-surface` chỉ khai ở đó; bộ da
+     khác giữ xám. Đặc hiệu (1,4,1) thắng `.ghost-hover:hover` (0,2,0). */
+  html.skin-mt.skin-li #apBody .ghost-hover:hover { background: var(--cu-surface); }
+  /* NỀN TRẮNG CHỈ Ở TRẠNG THÁI ĐÃ ĐĂNG NHẬP (25/09/2026, user chốt khi tôi hỏi lại).
+     ⚠ ĐẢO một phần chốt 18/09 vốn ghi "nền xám áp cho CẢ HAI trạng thái" — nay chỉ tấm
+     chưa đăng nhập giữ xám. Lớp do renderAP bật/tắt nên KHÔNG đụng markup vỏ. */
+  .acc-drop.acc-drop-light { background: var(--general-background); }
   .acc-drop {
     /* 340 (từ 320) + đệm trong rộng hơn (đợt sau, yêu cầu user: "cho nó thêm
        padding đồ cho đẹp") — 320 làm nhãn/ô nhập/nút bên trong sát mép, đọc chật.
@@ -5789,8 +5868,20 @@ window.RESP = (function () {
      tách 4 mục chứ không phải một đường kẻ mạnh. Có giá trị lùi `#f5f2ed` vì biến này
      chỉ khai ở skin-li/theme-cu, còn rule này nằm ở CSS nền dùng chung mọi bộ da.
      ⚠ KHỐI KHÔNG CÒN NỀN KEM (xem ghi chú ở `hmUsp`). */
+  /* ⚠ TRẦN 1440, KHÔNG GIÃN THEO MÀN (25/09/2026, lệnh user: "cái USP không có giãn
+     theo screen nhé, nó fixed").
+     Đo trước khi sửa ở viewport 1920 (client 1905) thì khối này KHÔNG NHẤT QUÁN giữa các
+     màn — đúng thứ user nhìn thấy:
+       · trang chủ  -> rộng 1905, mỗi ô 464   (giãn hết màn)
+       · giỏ hàng   -> rộng 1905, mỗi ô 464   (giãn hết màn)
+       · PDP        -> rộng 1440, mỗi ô 347   (đứng yên)
+     Lý do lệch: ở PDP khối nằm TRONG vỏ `max-w-[1440px]`, còn ở trang chủ và giỏ nó nằm
+     NGOÀI vỏ đó nên ăn hết bề ngang. Đặt trần ngay trên chính class thì cả ba màn về một
+     số mà không phải đụng markup của từng chỗ (khối này được gọi ở 21 chỗ).
+     `margin-inline: auto` để nó đứng GIỮA màn ở khổ rộng hơn 1440. */
   .hm-usp {
     display: flex; align-items: center; justify-content: center; padding: 40px 24px;
+    max-width: 1440px; margin-inline: auto;
   }
   .hm-usp-item {
     flex: 1; min-width: 0; padding: 0 16px;
@@ -5985,6 +6076,11 @@ window.RESP = (function () {
                                      ⚠ chỉ 1,86 so nền trắng — ĐỪNG bê bậc này sang
                                      chỗ nào mà vệt/viền là tín hiệu DUY NHẤT, và
                                      TUYỆT ĐỐI đừng dùng làm MỰC trên nền sáng. */
+    /* 25/09/2026 — BẬC THỨ NĂM, thêm khi đọc lại khung hover user tự sửa: chữ
+       "DAFC Rewards" buộc thẳng vào `pampas/400`. Đã tra Figma: KHÔNG có token ngữ
+       nghĩa nào alias tới bậc này, user gán trực tiếp primitive — nên đặt tên ở đây
+       theo đúng lối 4 biến còn lại (tên theo VAI, không theo số). */
+    --cu-accent:        #b79d80;  /* = pampas/400. Vai: chữ nhấn màu đồng. */
     --cu-ink:           #81604d;  /* = pampas/700 = token `copper-ink`. 5,65 trên
                                      trắng, và chữ TRẮNG trên nó cũng 5,65 — bậc thấp
                                      nhất làm được nền nút. HIỆN CHƯA HOOK NÀO DÙNG;
@@ -11244,10 +11340,12 @@ function screenACCOUNT() {
           <!-- 20/09/2026 (brief trang 46): 2 mục đầu nằm trong nhóm "Tài khoản của
                tôi" (thụt vào 12), các mục còn lại đứng ngang hàng nhóm. "Theo dõi đơn
                hàng" đi sang màn track nên dùng data-nav chứ không data-atab. -->
+          <!-- 25/09/2026 (user): BỎ nhãn nhóm "Tài khoản của tôi" + thụt lề + vách
+               nhóm — 5 mục đứng NGANG HÀNG nhau. ACC_GROUP giữ lại nhưng không còn
+               dùng ở mục lục. -->
           <div id="accTabs" class="flex flex-col">
-            <p class="t-single acc-nav-group">Tài khoản của tôi</p>
             ${ACCOUNT_TABS.map(([id, label], i) => `
-              <button data-atab="${id}"${id===accountTab ? ' aria-current="true"' : ''} class="t-lead acc-tab h-11 flex items-center text-left press${i < ACC_GROUP ? ' pl-3' : ''}">${label}</button>${i === ACC_GROUP - 1 ? '<div class="acc-nav-sep" aria-hidden="true"></div>' : ''}`).join('')}
+              <button data-atab="${id}"${id===accountTab ? ' aria-current="true"' : ''} class="t-lead acc-tab h-11 flex items-center text-left press">${label}</button>`).join('')}
             <button data-nav="track" class="t-lead acc-tab h-11 flex items-center text-left press">Theo dõi đơn hàng</button>
           </div>
           <!-- Đăng xuất mượn ĐÚNG khuôn hàng tab: cùng cao 44, cùng 3 bậc mực, cùng
@@ -11425,11 +11523,14 @@ const accFormBtns = (saveAct, saveLabel) => `
 
 /* Một mục dữ liệu trong thẻ đóng: nhãn 14 trên, giá trị 12 dưới. Giá trị rỗng in dấu
    gạch chứ không để trắng — chỗ trắng đọc ra là "lỗi dựng", gạch đọc ra là "chưa có". */
+/* 25/09/2026 (user: "rút gọn hơn") — MỘT DÒNG mỗi mục: "Nhãn: giá trị", xếp dọc.
+   Trước là nhãn 14 trên + giá trị 12 dưới, chia 2 cột; cả khung cao gấp đôi. Nay cả
+   dòng cùng bậc .t-lead 14/20, nhãn mực chính, giá trị mực phụ; dài quá thì cắt đuôi.
+   value === null = CHỈ nhãn, không ":" (thẻ Mật khẩu, 25/09 user bỏ dãy chấm).
+   ⚠ Nhãn phải là NÚT CHỮ RIÊNG, dấu ":" nằm ngoài: applyLang tra I18N khớp NGUYÊN
+   chuỗi, dính "Họ và tên:" là bản EN hết dịch. */
 const accCardItem = (label, value) => `
-        <div class="flex flex-col gap-1 min-w-0">
-          <span class="t-lead text-foreground">${label}</span>
-          <span class="t-multiline text-secondary-foreground truncate">${value || '—'}</span>
-        </div>`;
+        <p class="t-lead min-w-0 truncate">${value === null ? `<span class="text-foreground">${label}</span>` : `<span class="text-foreground"><span>${label}</span>:</span> <span class="text-secondary-foreground">${value || '—'}</span>`}</p>`;
 
 /* Thẻ ĐÓNG. editAct rỗng = thẻ chỉ để đọc, không vẽ đường "Sửa". */
 const accCard = (items, editAct = '', note = '') => `
@@ -11494,15 +11595,14 @@ function accInfo() {
         ${accField('new',  'Mật khẩu mới',          '', '', { type: 'password', auto: 'new-password', hint: 'Tối thiểu 8 ký tự, gồm cả chữ và số' })}
         ${accField('new2', 'Nhập lại mật khẩu mới', '', '', { type: 'password', auto: 'new-password' })}`,
         'save-pass', 'Đổi mật khẩu')
-      : accCard([['Mật khẩu', '••••••••••']], 'edit-pass')}
+      : accCard([['Mật khẩu', null]], 'edit-pass')}
 
       <!-- 21/09/2026 — THÊM TIÊU ĐỀ. Trước đó thẻ này là một hộp viền chỉ chứa
            đúng một ô tích, không nhãn — đứng cạnh 2 thẻ có nhãn rõ ràng thì nó đọc ra
            là một mảnh còn sót. Nhãn đi .t-lead, cùng bậc với nhãn mục trong 2 thẻ kia. -->
-      <div class="acc-card flex flex-col gap-4">
-        <p class="t-lead text-foreground">Nhận tin</p>
-        ${accCheck('news', PROFILE.news, 'Nhận email về bộ sưu tập mới và ưu đãi dành riêng cho thành viên')}
-      </div>
+      <!-- 25/09/2026 (user) — BỎ KHUNG + BỎ tiêu đề "Nhận tin": chỉ còn ô tích và câu
+           của nó đứng trần dưới 2 thẻ. ĐẢO lượt 21/09 ghi ngay trên. -->
+      ${accCheck('news', PROFILE.news, 'Nhận email về bộ sưu tập mới và ưu đãi dành riêng cho thành viên')}
     </div>`;
 }
 
@@ -11702,26 +11802,29 @@ function accAddress() {
   if (addrEdit !== null) return accAddressForm();
   const the = (a, i, luu) => `
       <div class="border border-border rounded-xs p-4 flex flex-col gap-1">
-        <div class="flex items-start justify-between gap-4">
-          <p class="t-lead text-foreground">${a.name}</p>
+        <p class="t-lead text-foreground">${a.name}</p>
+        <p class="t-multiline text-foreground-alt">${addrLine(a)}</p>
+        <p class="t-multiline text-foreground-alt">${a.phone}</p>
+        <!-- 25/09/2026 (user): MỌI nút về CHUNG MỘT HÀNG ở đáy thẻ — "Đặt mặc định"
+             sát trái, cụm "Sửa | Xoá" sát phải. Trước đó "Sửa | Xoá" đứng cùng hàng
+             TÊN ở trên, "Đặt mặc định" đứng riêng một hàng dưới canh phải. Thẻ mặc
+             định không có nút trái nên cụm phải vẫn bám phải nhờ ml-auto. -->
+        <div class="flex items-center gap-4 pt-1">
+          ${luu ? `
+          <button type="button" data-acc="addr-def" data-i="${i}" class="t-single text-muted-foreground hover:text-foreground underline press">Đặt mặc định</button>` : `
+          <span class="t-single text-foreground">Địa chỉ mặc định</span>`}
           ${addrDel === i ? `
-          <div class="flex items-center gap-3 shrink-0">
+          <div class="flex items-center gap-3 shrink-0 ml-auto">
             <span class="t-single text-foreground-alt">Xoá địa chỉ này?</span>
             <button type="button" data-acc="addr-del-yes" data-i="${i}" class="t-single text-destructive underline press">Xoá</button>
             <button type="button" data-acc="addr-del-no" class="t-single text-muted-foreground hover:text-foreground underline press">Giữ lại</button>
           </div>` : `
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex items-center gap-2 shrink-0 ml-auto">
             <button type="button" data-acc="addr-edit" data-i="${i}" class="t-single text-muted-foreground hover:text-foreground underline press">Sửa</button>
             <span class="t-single text-border-3" aria-hidden="true">|</span>
             <button type="button" data-acc="addr-del" data-i="${i}" class="t-single text-muted-foreground hover:text-foreground underline press">Xoá</button>
           </div>`}
         </div>
-        <p class="t-multiline text-foreground-alt">${addrLine(a)}</p>
-        <p class="t-multiline text-foreground-alt">${a.phone}</p>
-        ${luu ? `
-        <div class="flex justify-end pt-1">
-          <button type="button" data-acc="addr-def" data-i="${i}" class="t-single text-muted-foreground hover:text-foreground underline press">Đặt mặc định</button>
-        </div>` : ''}
       </div>`;
   return `
     <!-- 05/09/2026 — BỎ HỘP và BỎ PILL. Cờ mặc định đi bằng CHỮ "(Mặc định)", sao y
@@ -11743,25 +11846,14 @@ function accAddress() {
            21/09/2026 — hàng tiêu đề "Địa chỉ" + nút "Thêm địa chỉ mới" ĐÃ DỜI lên đầu
            tab (accHead), vì nay cả 4 tab đều có đầu tab chung — để lại là hai dòng tiêu
            đề nói cùng một việc đứng liền nhau. -->
+      <!-- 25/09/2026 (user) — GỘP 2 nhóm "Địa chỉ mặc định" / "Địa chỉ đã lưu" về MỘT
+           lưới; thẻ mặc định LUÔN đứng đầu, ô nút trái của nó là chữ đen "Địa chỉ mặc
+           định" (không bấm được) thay cho nút "Đặt mặc định". Chỉ SẮP lúc vẽ — mảng
+           ADDRESSES giữ nguyên thứ tự vì data-i và checkout đọc theo chỉ số gốc. -->
       ${ADDRESSES.length ? `
-      ${ADDRESSES.some(a => a.def) ? `
-      <div class="flex flex-col gap-2">
-        <p class="t-single acc-addr-lb">Địa chỉ mặc định</p>
-        <div class="acc-addr-grid">
-          ${ADDRESSES.map((a, i) => a.def ? the(a, i, false) : '').join('')}
-        </div>
-      </div>` : ''}
-      ${ADDRESSES.some(a => !a.def) ? `
-      <div class="flex flex-col gap-2">
-        <p class="t-single acc-addr-lb">Địa chỉ đã lưu</p>
-        <!-- 21/09/2026 — LƯIỚI thay vì cột đơn. Cột nội dung nay rộng 1097 (bỏ trần
-             720) nên mỗi thẻ địa chỉ trải hết bề ngang: tên nằm sát mép trái, cụm
-             "Sửa | Xoá" sát mép phải, giữa là một khoảng trống dài. auto-fill 420 cho
-             desktop 2 thẻ một hàng, khổ 375 tự về 1 cột — không phải khai riêng 2 bản. -->
-        <div class="acc-addr-grid">
-          ${ADDRESSES.map((a, i) => a.def ? '' : the(a, i, true)).join('')}
-        </div>
-      </div>` : ''}` : `
+      <div class="acc-addr-grid">
+        ${ADDRESSES.map((a, i) => [a, i]).sort((x, y) => (y[0].def ? 1 : 0) - (x[0].def ? 1 : 0)).map(([a, i]) => the(a, i, !a.def)).join('')}
+      </div>` : `
       <p class="t-multiline text-foreground-alt">Sổ địa chỉ đang trống. Thêm một địa chỉ để lần đặt hàng sau không phải nhập lại.</p>`}
     </div>`;
 }
@@ -11814,6 +11906,20 @@ const TIERS = [
 const MEMBER_TIER = 'gold';
 const MEMBER_SPEND = 142500000;
 let tierOpen = MEMBER_TIER;
+/* 26/09/2026 — dữ liệu cho panel hạng dựng theo Figma 756:108020.
+   tierPerks: quyền lợi xếp HÀNG như khung (2 · 2 · 1), mục "—" bị bỏ và hàng rỗng bị
+   bỏ luôn — hạng Member chỉ còn 2 hàng, đúng như khung Member trong Figma.
+   tierCond: câu điều kiện theo lời khung GOLD ("Nâng hạng khi…" / "Duy trì hạng…"),
+   mỗi câu một đoạn. Member không có ngưỡng chi tiêu nên có câu riêng. */
+const tierPerks = x => [
+  [['TÍCH ĐIỂM', x.tich, '100.000 VND = 1 điểm'], ['ƯU ĐÃI SINH NHẬT', x.sinhNhat, '']],
+  [['ĐỔI ĐIỂM NHẬN ƯU ĐÃI', 'Giảm đến 10%', '1 điểm = 1.000 VND'], ['TẶNG THÊM', x.gioiThieu, 'Khi giới thiệu khách hàng mới']],
+  [['GIẢM GIÁ TRỰC TIẾP', x.giam, 'Trên hàng nguyên giá']],
+].map(r => r.filter(p => p[1] !== '—')).filter(r => r.length);
+const tierCond = x => /^Từ /.test(x.nang)
+  ? [`Nâng hạng khi tích luỹ chi tiêu ${x.nang.replace(/^Từ/, 'từ')} trong 365 ngày gần nhất.`]
+      .concat(x.duyTri === '—' ? [] : [`Duy trì hạng với chi tiêu ${x.duyTri.replace(/^Từ/, 'từ')} trong kỳ 01/01-31/12.`])
+  : ['Áp dụng ngay khi đăng ký thành viên DAFC.'];
 
 /* Brief trang 52: khối Hỏi đáp nằm CÙNG trang Hạng thành viên & Ưu đãi, "show dạng
    toggle như các trang policy" — nên dùng ĐÚNG khuôn accordion .acc của trang Chính
@@ -11862,26 +11968,26 @@ function accMember() {
       <div class="tier-card tier-face-${MEMBER_TIER} flex flex-col gap-6">
         <div class="flex items-start justify-between gap-6">
           <div class="flex flex-col gap-1">
-            <span class="t-single">DAFC</span>
+            <span class="t-single tier-lbl">DAFC</span>
             <p class="tier-name">${t.ten}</p>
           </div>
           <div class="flex flex-col items-end gap-1">
-            <span class="t-single">Điểm tích luỹ</span>
+            <span class="t-single tier-lbl">Điểm tích luỹ</span>
             <p class="tier-points">${vnd(REWARD_POINTS)}</p>
-            <span class="t-single">Hết hạn vào 28/02/2027</span>
-            <button data-member-view="points" class="t-single underline press">Xem lịch sử điểm</button>
+            <span class="t-single tier-lbl">Hết hạn vào 28/02/2027</span>
+            <button data-member-view="points" class="t-single tier-lbl press">Xem lịch sử điểm</button>
           </div>
         </div>
         <div class="flex flex-col gap-3">
           <div class="tier-bar"><div class="tier-bar-fill" style="width:${pct}%"></div></div>
           <div class="flex items-start justify-between gap-6">
             <div class="flex flex-col">
-              <span class="t-lead">${vnd(MEMBER_SPEND)} / ${t.duyTri.replace(/[^0-9.]/g, '')} đ</span>
-              <span class="t-single">Duy trì hạng thành viên</span>
+              <span class="t-lead tier-val">${vnd(MEMBER_SPEND)} / ${t.duyTri.replace(/[^0-9.]/g, '')} đ</span>
+              <span class="t-single tier-lbl">Duy trì hạng thành viên</span>
             </div>
             ${ke ? `<div class="flex flex-col items-end">
-              <span class="t-lead">${vnd(conThieu)} đ</span>
-              <span class="t-single">Thăng hạng ${ke.ten}</span>
+              <span class="t-lead tier-val">${vnd(conThieu)} đ</span>
+              <span class="t-single tier-lbl">Thăng hạng ${ke.ten}</span>
             </div>` : ''}
           </div>
         </div>
@@ -11900,20 +12006,37 @@ function accMember() {
           ${TIERS.map(x => `
           <div class="tier tier-face-${x.id}${x.id === tierOpen ? ' is-open' : ''}" data-tier="${x.id}">
             <button class="tier-tab press" data-tier-pick="${x.id}"><span class="tier-tab-txt">${x.ten}</span></button>
+            <!-- 26/09/2026 — dựng lại theo Figma 756:108020 (khung "Chân dung · Editorial
+                 bất đối xứng"): cột danh xưng | kẻ dọc | quyền lợi, chữ chìm góc phải. -->
             <div class="tier-body">
-              <p class="tier-body-name">${x.ten}</p>
-              <p class="t-multiline tier-cond">Đủ điều kiện nâng hạng khi tích luỹ chi tiêu ${x.nang} trong 365 ngày gần nhất.${x.duyTri === '—' ? '' : ` Duy trì hạng với chi tiêu ${x.duyTri} (1/1 – 31/12).`}</p>
-              <div class="tier-grid">
-                ${[['TÍCH ĐIỂM', x.tich, '100.000 VND = 1 điểm'],
-                   ['ƯU ĐÃI SINH NHẬT', x.sinhNhat, ''],
-                   ['ĐỔI ĐIỂM NHẬN ƯU ĐÃI', 'Giảm đến 10%', '1 điểm = 1.000 VND'],
-                   ['TẶNG THÊM', x.gioiThieu, 'Khi giới thiệu khách hàng mới'],
-                   ['GIẢM GIÁ TRỰC TIẾP', x.giam, 'Trên hàng nguyên giá']].map(([nhan, so, phu]) => `
-                <div class="flex flex-col gap-1">
-                  <span class="t-micro tier-lb">${nhan}</span>
-                  <span class="t-lead">${so}</span>
-                  ${phu ? `<span class="t-single tier-sub">${phu}</span>` : ''}
-                </div>`).join('')}
+              <p class="tier-wm" aria-hidden="true">${x.ten}</p>
+              <div class="tier-id">
+                <div class="tier-id-top">
+                  <div class="tier-name-grp">
+                    <span class="tier-cap">${x.id === MEMBER_TIER ? 'HẠNG THÀNH VIÊN HIỆN TẠI' : 'HẠNG THÀNH VIÊN'}</span>
+                    <p class="tier-hero">${x.ten}</p>
+                  </div>
+                  <span class="tier-accent" aria-hidden="true"></span>
+                  <div class="tier-cond-box">
+                    <span class="tier-cap">ĐIỀU KIỆN HẠNG</span>
+                    <div class="tier-cond-ps">${tierCond(x).map(c => `<p class="tier-cond-p">${c}</p>`).join('')}</div>
+                  </div>
+                </div>
+                <div class="tier-sign">
+                  <span class="tier-sign-brand">DAFC</span>
+                  <span class="tier-sign-file">MEMBERSHIP / ${x.ten}</span>
+                </div>
+              </div>
+              <span class="tier-vline" aria-hidden="true"></span>
+              <div class="tier-perks">
+                ${tierPerks(x).map(row => `
+                <div class="tier-perk-row">${row.map(([nhan, so, phu]) => `
+                  <div class="tier-perk">
+                    <span class="tier-perk-lb">${nhan}</span>
+                    <span class="tier-perk-val">${so}</span>
+                    ${phu ? `<span class="tier-perk-sub">${phu}</span>` : ''}
+                  </div>`).join('')}
+                </div>`).join('<div class="tier-sep" aria-hidden="true"></div>')}
               </div>
             </div>
           </div>`).join('')}
@@ -13263,7 +13386,13 @@ function screenCART() {
         <!-- ── CỘT PHẢI: tóm tắt đơn hàng — Figma 31/08, RỘNG THÊM 13/09/2026 ──
              Brief PDF trang 25: "giỏ hàng thu nhỏ lại trước chữ Pre-loved" — cột
              trái (flex-1) hẹp lại tương ứng, không cần đổi số ở đó. -->
-        <div class="dk-sticky-side dk-cart-summary shrink-0 flex flex-col gap-4">
+        <!-- 26/09/2026 — KHE DỌC 16 → 24 (gap-4 → gap-6), theo component side-panel user
+             vừa cập nhật: biến thể "kind=summary, size=desktop" nay GÓI LUÔN tấm khuyến mãi
+             làm con thứ hai và khai itemSpacing 24.
+             ⚠ CHỈ đổi cột GIỎ. Cột tóm tắt bên CHECKOUT (.dk-sticky-side.w-[427px]) vẫn
+             giữ gap-4 — component không nói gì về nó, đổi theo là suy diễn.
+             ⚠ KHÔNG dùng backtick trong chú thích HTML — khối này nằm trong template literal. -->
+        <div class="dk-sticky-side dk-cart-summary shrink-0 flex flex-col gap-6">
           <!-- Nền XÁM, KHÔNG bo góc (Figma 499:29797: khối 420x363 fill #f2f2f2,
                viền #dfdfdf, cornerRadius 0). Trước là bg-card trắng + rounded-md. -->
           <!-- AN KHI GIO RONG — 24/09/2026, lenh user (*"an ca tom tat don hang khi gio
@@ -18268,7 +18397,7 @@ const I18N = {
   'Mật khẩu cần tối thiểu 8 ký tự, gồm cả chữ và số':'Password needs at least 8 characters, with letters and numbers',
   'Hai lần nhập chưa khớp':'The two entries do not match',
   'Mật khẩu mới phải khác mật khẩu hiện tại':'New password must differ from the current one',
-  'Sửa':'Edit', 'Xoá':'Delete', 'Giữ lại':'Keep', 'Đặt mặc định':'Set as default',
+  'Sửa':'Edit', 'Xoá':'Delete', 'Giữ lại':'Keep', 'Đặt mặc định':'Set as default', 'HẠNG THÀNH VIÊN HIỆN TẠI':'CURRENT MEMBERSHIP TIER', 'HẠNG THÀNH VIÊN':'MEMBERSHIP TIER', 'ĐIỀU KIỆN HẠNG':'TIER REQUIREMENTS', 'Địa chỉ mặc định':'Default address',
   'Xoá địa chỉ này?':'Delete this address?', 'Sửa địa chỉ':'Edit address',
   'Đặt làm địa chỉ mặc định':'Set as default address',
   'Đây là địa chỉ mặc định của sổ.':'This is the default address in your book.',
@@ -20120,7 +20249,10 @@ function wire(root) {
      (handler [data-nav] ngay dưới) — chỉ thêm việc đóng tấm để nó không đứng đè
      lên màn giỏ vừa mở. */
   root.querySelectorAll('[data-nav="cart"]').forEach(btn => {
-    btn.addEventListener('mouseenter', () => window.__openCartPeek && window.__openCartPeek(btn));
+    /* 25/09/2026 — rê từ icon Tài khoản sang là đóng NGAY tấm Tài khoản (lỗi user báo:
+       sang icon giỏ mà tấm kia "vẫn còn hiện" — nó chờ 350ms mới đóng nên hai tấm chồng
+       nhau). Không chờ nhịp trễ vì con trỏ đã chọn icon khác, không còn đang bắc cầu. */
+    btn.addEventListener('mouseenter', () => { window.__closeAP && window.__closeAP(); window.__openCartPeek && window.__openCartPeek(btn); });
     btn.addEventListener('mouseleave', () => window.__closeCartPeek && window.__closeCartPeek());
     btn.addEventListener('click', () => window.__closeCartConfirm && window.__closeCartConfirm());
   });
@@ -20135,9 +20267,19 @@ function wire(root) {
      đang xem là thừa/rối. `current === 'login'` gộp cả 2 vì đăng nhập lẫn
      đăng ký đều chung MỘT tên màn (`authView` mới là cái phân biệt 2 tab). */
   root.querySelectorAll('[data-acc-icon]').forEach(btn => {
-    btn.addEventListener('mouseenter', () => { if (current !== 'login') window.__openAccPeek && window.__openAccPeek(btn); });
+    /* Chiều ngược của ghi chú ở icon giỏ ngay trên (25/09/2026): đóng NGAY tấm giỏ. */
+    btn.addEventListener('mouseenter', () => { window.__closeCartConfirm && window.__closeCartConfirm(); if (current !== 'login') window.__openAccPeek && window.__openAccPeek(btn); });
     btn.addEventListener('mouseleave', () => window.__closeAccPeek && window.__closeAccPeek());
-    btn.addEventListener('click', () => window.__closeAP && window.__closeAP());
+    /* 25/09/2026 (user): hover vẫn xổ panel như cũ, còn BẤM icon (đã đăng nhập) là
+       vào thẳng tab "Thông tin cá nhân" — không giữ tab đứng lần trước. Chạy TRƯỚC
+       handler [data-nav] bên dưới (đăng ký trước) nên go('account') đọc đúng tab;
+       đang đứng sẵn ở màn account thì go thường sẽ nuốt lệnh nên phải force. */
+    btn.addEventListener('click', () => {
+      window.__closeAP && window.__closeAP();
+      if (!ckAuth) return;
+      accountTab = 'info'; memberView = ''; accResetForms();
+      if (current === 'account') go('account', { force: true });
+    });
   });
 
   // navigation
@@ -23472,7 +23614,10 @@ document.body.insertAdjacentHTML('beforeend', `
     if (!btn) { panel.style.top = '72px'; panel.style.left = (innerWidth - w - 16) + 'px'; return; }
     const r = btn.getBoundingClientRect();
     const left = Math.min(Math.max(16, r.right - w), innerWidth - w - 16);
-    panel.style.top = r.bottom + 'px';
+    /* 25/09/2026 (user: "sát quá, phải cùng khoảng cách với cart") — trả khe 8px như
+       tấm giỏ. ĐẢO lượt bỏ khe ghi ở chú thích trên; khe này vẫn qua được vì AP_MS
+       (350) còn dài hơn CC_PEEK_MS (220) của giỏ vốn bắc cầu đúng khe 8 đó. */
+    panel.style.top = (r.bottom + 8) + 'px';
     panel.style.left = left + 'px';
   };
   addEventListener('scroll', () => { if (!panel.classList.contains('translate-y-full')) place(); }, { passive: true });
@@ -23508,6 +23653,13 @@ document.body.insertAdjacentHTML('beforeend', `
      nhưng KHÔNG sửa ở đây (ngoài phạm vi yêu cầu, chỉ đang chỉnh panel hover
      tài khoản) — cờ lại trong memory. */
   const renderAP = () => {
+    /* Nền tấm: TRẮNG khi đã đăng nhập, XÁM khi chưa (25/09/2026 — user chốt sau khi tôi
+       đọc lại khung Figma họ tự sửa và hỏi lại cho chắc).
+       Đặt ở đây chứ không ở markup vỏ: vỏ dựng MỘT LẦN lúc nạp trang, còn trạng thái
+       đăng nhập đổi được trong phiên — để ở vỏ thì đăng nhập/đăng xuất xong nền không
+       đổi theo. Đây đúng là lý do lượt 18/09 từng gỡ nhánh theo ckAuth ra khỏi renderAP;
+       nay cần lại thì đặt bằng CLASS (rẻ, không dựng lại DOM) thay vì đổi markup. */
+    panel.classList.toggle('acc-drop-light', !!ckAuth);
     body.innerHTML = ckAuth ? `
       <!-- 21/09/2026 (brief PDF trang 44) — 3 điểm đổi:
              · lời chào lên LIBRE (.t-block-title, cùng bậc với tiêu đề của nhánh chưa
@@ -23523,13 +23675,23 @@ document.body.insertAdjacentHTML('beforeend', `
       </div>
       <div class="flex flex-col py-2">
         <button data-ap-tab="info" class="t-multiline h-12 px-6 flex items-center text-left text-foreground ghost-hover press">Tài khoản của tôi</button>
+        <!-- 25/09/2026 — "Sổ địa chỉ" TÁCH LẠI THÀNH DÒNG RIÊNG (đọc từ khung hover user tự
+             sửa: menu có 5 dòng, khung cao 443 thay vì 395 — chênh đúng 48 = một dòng).
+             ⚠ ĐẢO chốt brief tr.44 ngày 21/09 vốn GỘP "Thông tin cá nhân" + "Sổ địa chỉ"
+             thành một dòng "Tài khoản của tôi". Nay tách lại nhưng GIỮ tên dòng đầu là
+             "Tài khoản của tôi" — đúng như khung vẽ, không quay về tên cũ.
+             Khoá tab lấy từ ACCOUNT_TABS: address. -->
+        <button data-ap-tab="address" class="t-multiline h-12 px-6 flex items-center text-left text-foreground ghost-hover press">Sổ địa chỉ</button>
         <button data-ap-tab="member" class="t-multiline h-12 px-6 flex items-center text-left text-foreground ghost-hover press">Hạng thành viên & Ưu đãi</button>
         <button data-ap-tab="orders" class="t-multiline h-12 px-6 flex items-center text-left text-foreground ghost-hover press">Đơn hàng</button>
         <button data-nav="track" class="t-multiline h-12 px-6 flex items-center text-left text-foreground ghost-hover press">Theo dõi đơn hàng</button>
       </div>
       <div class="px-6 py-6 flex flex-col gap-2 items-center text-center border-t border-border">
-        <p class="t-block-title text-foreground">DAFC Rewards</p>
-        <p class="t-single text-secondary-foreground">Đặc quyền mua sắm dành riêng cho thành viên DAFC.</p>
+        <!-- 25/09/2026, đọc từ khung hover user tự sửa: tiêu đề sang MÀU ĐỒNG (biến
+             pampas/400, khai thành --cu-accent) và dòng mô tả đổi chữ. User xác nhận giữ
+             nguyên văn như khung, kể cả 3 chữ đầu trùng với link ngay dưới. -->
+        <p class="t-block-title ap-rewards-title">DAFC Rewards</p>
+        <p class="t-single text-secondary-foreground">Tìm hiểu ngay Đặc quyền mua sắm tại DAFC</p>
         <button data-ap-tab="member" class="t-single underline text-foreground press">Tìm hiểu ngay</button>
       </div>` : `
       <!-- DỰNG THEO KHUNG FIGMA 524:46382 — user tự chỉnh trên Figma 18/09/2026,
@@ -23540,7 +23702,12 @@ document.body.insertAdjacentHTML('beforeend', `
              · "Quên mật khẩu?" canh PHẢI và nằm ngay dưới ô Mật khẩu (khe 8),
                không còn đứng chung hàng với ghi chú nào
            Đệm giữ nguyên px-6 py-5 / px-6 py-6 vì đã khớp Figma (24 · 20 · 24). -->
-      <div class="px-6 py-5 flex items-center justify-between gap-3">
+      <!-- 25/09/2026 (lệnh user kèm ảnh) — TRẢ LẠI VẠCH NGĂN DƯỚI TIÊU ĐỀ, cho giống
+           tấm đã đăng nhập. ⚠ ĐẢO chốt 18/09 vốn ghi rõ "BỎ vạch ngăn dưới tiêu đề"
+           (chú thích ngay dưới vẫn giữ nguyên câu đó làm lịch sử — đừng đọc nhầm thành
+           hiện trạng). Dùng ĐÚNG cặp class của tấm đã đăng nhập để hai trạng thái ra
+           cùng một đường kẻ, không đẻ màu kẻ thứ hai. -->
+      <div class="px-6 py-5 flex items-center justify-between gap-3 border-b border-border">
         <!-- Icon người đứng TRƯỚC tiêu đề. Chữ dùng .t-block-title = Libre Bodoni
              16/24 (lệnh user 18/09). Trước là .t-overlay — cùng 16/24 nhưng là
              Inter 500 VIẾT HOA, cố ý không bao giờ lên Bodoni, nên phải đổi class
@@ -23587,7 +23754,11 @@ document.body.insertAdjacentHTML('beforeend', `
 
   const openAP = (anchor) => {
     renderAP();
-    ap.classList.remove('pointer-events-none');
+    /* 25/09/2026 — KHÔNG gỡ pointer-events-none của #accPeek nữa (lỗi user báo: "bấm
+       icon account không được"). #accPeek là lớp fixed inset-0 z-220: gỡ nó ra là cả
+       màn hình — kể cả chính icon Tài khoản nằm dưới — bị lớp trong suốt này nuốt click,
+       mà hover thì LUÔN mở tấm trước khi bấm. Đúng ý đồ ghi ở khối CSS .acc-drop: vỏ
+       luôn none, chỉ tấm .acc-drop tự pointer-events:auto. */
     ap.setAttribute('aria-hidden', 'false');
     place(anchor);
     panel.classList.remove('translate-y-full');
@@ -23595,7 +23766,6 @@ document.body.insertAdjacentHTML('beforeend', `
   const closeAP = () => {
     disarmAP();
     panel.classList.add('translate-y-full');
-    ap.classList.add('pointer-events-none');
     setTimeout(() => ap.setAttribute('aria-hidden', 'true'), 300);
   };
   window.__openAP = openAP;
