@@ -805,6 +805,11 @@ window.RESP = (function () {
   .tc-file { font-size: 8px; line-height: 12px; letter-spacing: 1.35px; text-transform: uppercase; color: var(--tc-file, rgba(255,255,255,.46)); }
   /* Member là mặt SÁNG: vạch/ruột/rãnh/chân đổi sang ô-liu của khung Member. */
   .tier-face-member { --tc-rule: #6f765f; --tc-track: rgba(79,87,77,.25); --tc-fill: #6f765f; --tc-file: #4f574d; --tcard-line: rgba(78,87,69,.2); }
+  /* FAQ trang Hạng thành viên (27/09/2026): câu trả lời có đoạn + gạch đầu dòng. Chấm tròn
+     thụt treo để dòng 2 thẳng dòng 1; đoạn/danh sách cách nhau 8. */
+  .faq-body > * + * { margin-top: 8px; }
+  .faq-list { list-style: disc; padding-left: 18px; }
+  .faq-list li + li { margin-top: 4px; }
   /* Desktop riêng: tên GOLD lớn đi gradient vàng của Figma (mobile để màu phẳng #d7be91). */
   .tier-face-gold .tier-hero { background-image: linear-gradient(150deg, #e1cfb8, #c7a67f); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
@@ -11620,16 +11625,17 @@ function accInfo() {
           ${accLocked('Số điện thoại', PROFILE.phone)}
           ${accLocked('Email', PROFILE.email)}
         </div>
-        <p class="t-single text-muted-foreground pb-4">Bốn mục tô xám không tự đổi được. Cần cập nhật, vui lòng liên hệ chăm sóc khách hàng.</p>`,
+        `,
         'save-info', 'Cập nhật')
       : accCard([
-          ['Họ và tên',     PROFILE.name],
+          /* 27/09/2026 (user) — tách "Họ và tên" thành 2 dòng Họ / Tên, khớp 2 ô của form sửa. */
+          ['Họ',            PROFILE.last],
+          ['Tên',           PROFILE.first],
           ['Ngày sinh',     PROFILE.dob],
           ['Giới tính',     PROFILE.gender],
           ['Số điện thoại', PROFILE.phone],
           ['Email',         PROFILE.email],
-        ], 'edit-info',
-        'Ngày sinh, giới tính, số điện thoại và email không tự đổi được. Cần cập nhật, vui lòng liên hệ chăm sóc khách hàng.')}
+        ], 'edit-info')}
 
       ${accEdit === 'pass' ? accCardOpen('Đổi mật khẩu', `
         ${accField('cur',  'Mật khẩu hiện tại',     '', '', { type: 'password', auto: 'current-password' })}
@@ -11643,7 +11649,8 @@ function accInfo() {
            là một mảnh còn sót. Nhãn đi .t-lead, cùng bậc với nhãn mục trong 2 thẻ kia. -->
       <!-- 25/09/2026 (user) — BỎ KHUNG + BỎ tiêu đề "Nhận tin": chỉ còn ô tích và câu
            của nó đứng trần dưới 2 thẻ. ĐẢO lượt 21/09 ghi ngay trên. -->
-      ${accCheck('news', PROFILE.news, 'Nhận email về bộ sưu tập mới và ưu đãi dành riêng cho thành viên')}
+      <!-- 27/09/2026 (user) — BỎ HẲN ô tích nhận email khỏi tab Thông tin. PROFILE.news và
+           handler data-acc="news" để nguyên (không còn nút nào gọi tới). -->
     </div>`;
 }
 
@@ -11965,18 +11972,38 @@ const tierCond = x => /^Từ /.test(x.nang)
 /* Brief trang 52: khối Hỏi đáp nằm CÙNG trang Hạng thành viên & Ưu đãi, "show dạng
    toggle như các trang policy" — nên dùng ĐÚNG khuôn accordion .acc của trang Chính
    sách, không dựng kiểu đóng mở thứ hai. */
+/* 27/09/2026 — NỘI DUNG FAQ THAY TRỌN theo văn bản user gửi (5 câu). Câu trả lời nay
+   là MẢNG KHỐI: chuỗi = một đoạn, mảng con = danh sách gạch đầu dòng (faqBody vẽ ra).
+   Chỉ sửa 2 lỗi gõ rõ ràng của bản gốc: "Plantinum" → "Platinum", "diểm" → "điểm". */
 const MEMBER_FAQ = [
-  ['Điểm thưởng DAFC Points là gì?',
-   'Điểm thưởng DAFC Points là điểm tích luỹ từ mọi giao dịch tại cửa hàng DAFC và DAFC Online. Cứ 100.000 VND chi tiêu được quy đổi thành 1 điểm, nhân theo hệ số của hạng thành viên bạn đang có.'],
-  ['Điểm thưởng dùng để làm gì?',
-   '1 điểm tương đương 1.000 VND. Bạn có thể dùng điểm để giảm tối đa 10% giá trị đơn hàng, áp dụng cho cả sản phẩm đang giảm giá.'],
-  ['Điểm thưởng có hạn sử dụng không?',
-   'Điểm có hạn sử dụng ghi ngay trên thẻ hạng thành viên. Hết hạn mà chưa dùng thì điểm sẽ hết hiệu lực.'],
-  ['Làm sao để nâng hạng thành viên?',
-   'Hạng được xét theo tổng chi tiêu tích luỹ trong 365 ngày gần nhất. Mốc của từng hạng xem ở phần Chi tiết hạng thành viên ngay trên.'],
-  ['Giới thiệu khách hàng mới được gì?',
-   'Mỗi khách hàng mới bạn giới thiệu thành công được cộng thêm điểm thưởng theo hạng của bạn — từ +1.000 điểm hạng Vàng đến +1.500 điểm hạng Bạch Kim và Kim Cương.'],
+  ['Điểm thưởng DAFC Points là gì?', [
+    'Điểm thưởng DAFC Points là quyền lợi dành cho thành viên DAFC tại đó khách hàng có thể sử dụng điểm thưởng như một loại giảm giá dành cho các sản phẩm trên toàn bộ hệ thống DAFC (ngoại trừ Rolex, Cartier…).',
+    'Điểm thưởng có thể được thu thập từ hoạt động: hoàn thành đơn hàng, giới thiệu bạn bè, điểm thưởng dịp sinh nhật hoặc tại các sự kiện Member Events định kỳ.',
+  ]],
+  ['Cách sử dụng điểm thưởng DAFC Points', [[
+    'Điểm thưởng DAFC Points được sử dụng trực tiếp khi thanh toán đơn hàng khi mua sắm tại hệ thống DAFC và các sự kiện bán hàng khác được tổ chức bởi DAFC (không bao gồm Travel Gallery by DAFC tại nhà ga T3 sân bay Tân Sơn Nhất).',
+    'Điểm thưởng được sử dụng để giảm giá lên đến 10% trên đơn hàng. Số điểm khả dụng để khách hàng sử dụng được hiển thị tại Giỏ hàng khi khách hàng có đăng nhập mua sắm.',
+  ]]],
+  ['Cách tích luỹ điểm thưởng DAFC Points', [
+    '(100.000 VNĐ = 1 điểm)',
+    [
+      'Khi khách hàng hoàn thành giao dịch tại hệ thống cửa hàng DAFC và DAFC Online (không bao gồm Travel Gallery by DAFC tại nhà ga T3 sân bay Tân Sơn Nhất). Với hạng Member (x1), hạng Gold (x2), hạng Platinum (x3) và hạng Diamond (x4).',
+      'Khi giới thiệu bạn bè mua sắm tại hệ thống cửa hàng DAFC: hạng Gold tặng thêm 1000 điểm, hạng Platinum & Diamond tặng thêm 1500 điểm.',
+      'Nhân dịp sinh nhật: hạng Member tặng 500 điểm, hạng Gold tặng 1000 điểm, hạng Platinum & Diamond tặng 1500 điểm.',
+      'Tích luỹ điểm thưởng vào các Member Events (Ngày hội thành viên) sẽ được tổ chức ngẫu nhiên dựa trên quyết định của DAFC.',
+    ],
+  ]],
+  ['Tích điểm đối với các đơn đổi trả hàng', [[
+    'Không áp dụng tích điểm cho đơn đổi hàng.',
+    'Điểm thưởng DAFC Points sẽ được hoàn lại dựa trên tỷ lệ giá tiền của sản phẩm được chấp nhận hoàn tiền trên tổng giá trị đơn hàng.',
+  ]]],
+  ['Cách kiểm tra Điểm thưởng và ưu đãi theo hạng thành viên', [
+    'Đăng nhập vào mục My Account và chọn mục Hạng thành viên và Ưu đãi tại DAFC Online.',
+  ]],
 ];
+const faqBody = blocks => blocks.map(b => Array.isArray(b)
+  ? `<ul class="faq-list">${b.map(li => `<li>${li}</li>`).join('')}</ul>`
+  : `<p>${b}</p>`).join('');
 
 function accMember() {
   const t = TIERS.find(x => x.id === MEMBER_TIER);
@@ -12095,7 +12122,7 @@ function accMember() {
             ${accIco}
           </button>
           <div class="acc-body"><div class="acc-inner">
-            <p class="t-multiline text-secondary-foreground pb-4">${b}</p>
+            <div class="t-multiline text-secondary-foreground pb-4 faq-body">${faqBody(b)}</div>
           </div></div>
         </div>`).join('')}
       </div>
@@ -13158,14 +13185,14 @@ function ckCodeRow() {
            .field-float lại là con trực tiếp của HÀNG NGANG này — thiếu cột thì dòng
            lỗi rơi vào giữa hàng, nằm CẠNH nút Áp dụng (user báo kèm ảnh 16/09/2026).
            items-start giữ nút dính mép TRÊN khi cột cao thêm vì dòng lỗi. -->
-      <div class="flex gap-1 items-start">
+      <div class="flex items-start">
         <div class="flex-1 min-w-0 flex flex-col">
           <div class="field-float">
             <input id="ckCode" placeholder=" " class="t-multiline bg-background border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
             <label for="ckCode" class="text-muted-foreground">Mã ưu đãi</label>
           </div>
         </div>
-        <button id="ckApplyCode" disabled class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
+        <button id="ckApplyCode" disabled class="t-multiline h-12 px-4 shrink-0 bg-primary text-primary-foreground rounded-xs font-medium btn-p press">Áp dụng</button>
       </div>
       <div id="ckCodeList" class="${cartVouchers.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
     </div>`;
@@ -13656,12 +13683,12 @@ function screenCART() {
                 <div class="acc-body"><div class="acc-inner">
                   <div class="flex flex-col gap-2 pt-2 pb-2">
                     <p class="t-single text-secondary-foreground">Bạn có thể dùng nhiều mã và cách nhau bằng dấu phẩy ","</p>
-                    <div class="flex gap-1">
+                    <div class="flex">
                       <div class="field-float flex-1 min-w-0">
                         <input id="pbh" placeholder=" " class="t-multiline bg-input border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
                         <label for="pbh" class="text-muted-foreground">DAFC Phiếu mua hàng</label>
                       </div>
-                      <button id="applyPbh" disabled class="t-multiline h-12 px-4 shrink-0 bg-secondary border border-border rounded-xs font-medium text-foreground btn-s press">Áp dụng</button>
+                      <button id="applyPbh" disabled class="t-multiline h-12 px-4 shrink-0 bg-primary text-primary-foreground rounded-xs font-medium btn-p press">Áp dụng</button>
                     </div>
                     <div id="pbhList" class="${cartPbh.length ? 'flex gap-2 flex-wrap' : 'hidden'}"></div>
                   </div>
@@ -18439,7 +18466,26 @@ const I18N = {
   'Mật khẩu cần tối thiểu 8 ký tự, gồm cả chữ và số':'Password needs at least 8 characters, with letters and numbers',
   'Hai lần nhập chưa khớp':'The two entries do not match',
   'Mật khẩu mới phải khác mật khẩu hiện tại':'New password must differ from the current one',
-  'Sửa':'Edit', 'Xoá':'Delete', 'Giữ lại':'Keep', 'Đặt mặc định':'Set as default', 'HẠNG THÀNH VIÊN HIỆN TẠI':'CURRENT MEMBERSHIP TIER', 'ĐIỂM HIỆN TẠI':'CURRENT POINTS', 'Mua sắm thêm':'Spend another', 'để thăng hạng':'to reach', 'Bạn đã đạt đến hạng cao nhất':'You have reached the highest tier', 'HẠNG THÀNH VIÊN':'MEMBERSHIP TIER', 'ĐIỀU KIỆN HẠNG':'TIER REQUIREMENTS', 'Địa chỉ mặc định':'Default address',
+  'Sửa':'Edit', 'Xoá':'Delete', 'Giữ lại':'Keep', 'Đặt mặc định':'Set as default', 'HẠNG THÀNH VIÊN HIỆN TẠI':'CURRENT MEMBERSHIP TIER', 'ĐIỂM HIỆN TẠI':'CURRENT POINTS', 'Mua sắm thêm':'Spend another', 'Hạng thành viên & Ưu đãi':'Membership & Benefits',
+  /* 27/09/2026 — bản EN cho 5 câu FAQ trang Hạng thành viên (khớp NGUYÊN VĂN mảng MEMBER_FAQ). */
+  'Điểm thưởng DAFC Points là gì?': 'What are DAFC Points?',
+  'Điểm thưởng DAFC Points là quyền lợi dành cho thành viên DAFC tại đó khách hàng có thể sử dụng điểm thưởng như một loại giảm giá dành cho các sản phẩm trên toàn bộ hệ thống DAFC (ngoại trừ Rolex, Cartier…).': 'DAFC Points are a benefit for DAFC members: you can use your points as a discount on products across the entire DAFC network (excluding Rolex, Cartier…).',
+  'Điểm thưởng có thể được thu thập từ hoạt động: hoàn thành đơn hàng, giới thiệu bạn bè, điểm thưởng dịp sinh nhật hoặc tại các sự kiện Member Events định kỳ.': 'Points can be earned by completing orders, referring friends, as a birthday reward, or at our regular Member Events.',
+  'Cách sử dụng điểm thưởng DAFC Points': 'How to use DAFC Points',
+  'Điểm thưởng DAFC Points được sử dụng trực tiếp khi thanh toán đơn hàng khi mua sắm tại hệ thống DAFC và các sự kiện bán hàng khác được tổ chức bởi DAFC (không bao gồm Travel Gallery by DAFC tại nhà ga T3 sân bay Tân Sơn Nhất).': 'DAFC Points can be applied directly at checkout when you shop across the DAFC network and at other sales events organized by DAFC (excluding Travel Gallery by DAFC at Tan Son Nhat Airport Terminal 3).',
+  'Điểm thưởng được sử dụng để giảm giá lên đến 10% trên đơn hàng. Số điểm khả dụng để khách hàng sử dụng được hiển thị tại Giỏ hàng khi khách hàng có đăng nhập mua sắm.': 'Points can be used for a discount of up to 10% on your order. Your available points are shown in your Cart when you are signed in.',
+  'Cách tích luỹ điểm thưởng DAFC Points': 'How to earn DAFC Points',
+  '(100.000 VNĐ = 1 điểm)': '(100,000 VND = 1 point)',
+  'Khi khách hàng hoàn thành giao dịch tại hệ thống cửa hàng DAFC và DAFC Online (không bao gồm Travel Gallery by DAFC tại nhà ga T3 sân bay Tân Sơn Nhất). Với hạng Member (x1), hạng Gold (x2), hạng Platinum (x3) và hạng Diamond (x4).': 'When you complete a purchase at DAFC stores or on DAFC Online (excluding Travel Gallery by DAFC at Tan Son Nhat Airport Terminal 3). Member tier earns x1, Gold x2, Platinum x3 and Diamond x4.',
+  'Khi giới thiệu bạn bè mua sắm tại hệ thống cửa hàng DAFC: hạng Gold tặng thêm 1000 điểm, hạng Platinum & Diamond tặng thêm 1500 điểm.': 'When you refer a friend who shops at DAFC stores: Gold members receive an extra 1,000 points, Platinum & Diamond members an extra 1,500 points.',
+  'Nhân dịp sinh nhật: hạng Member tặng 500 điểm, hạng Gold tặng 1000 điểm, hạng Platinum & Diamond tặng 1500 điểm.': 'On your birthday: Member receives 500 points, Gold 1,000 points, Platinum & Diamond 1,500 points.',
+  'Tích luỹ điểm thưởng vào các Member Events (Ngày hội thành viên) sẽ được tổ chức ngẫu nhiên dựa trên quyết định của DAFC.': 'Earn points at Member Events, which are held from time to time at DAFC’s discretion.',
+  'Tích điểm đối với các đơn đổi trả hàng': 'Points on exchanges and returns',
+  'Không áp dụng tích điểm cho đơn đổi hàng.': 'Exchange orders do not earn points.',
+  'Điểm thưởng DAFC Points sẽ được hoàn lại dựa trên tỷ lệ giá tiền của sản phẩm được chấp nhận hoàn tiền trên tổng giá trị đơn hàng.': 'DAFC Points are refunded in proportion to the value of the refunded items relative to the total order value.',
+  'Cách kiểm tra Điểm thưởng và ưu đãi theo hạng thành viên': 'How to check your points and tier benefits',
+  'Đăng nhập vào mục My Account và chọn mục Hạng thành viên và Ưu đãi tại DAFC Online.': 'Sign in to My Account on DAFC Online and select Membership & Benefits.',
+  'để thăng hạng':'to reach', 'Bạn đã đạt đến hạng cao nhất':'You have reached the highest tier', 'HẠNG THÀNH VIÊN':'MEMBERSHIP TIER', 'ĐIỀU KIỆN HẠNG':'TIER REQUIREMENTS', 'Địa chỉ mặc định':'Default address',
   'Xoá địa chỉ này?':'Delete this address?', 'Sửa địa chỉ':'Edit address',
   'Đặt làm địa chỉ mặc định':'Set as default address',
   'Đây là địa chỉ mặc định của sổ.':'This is the default address in your book.',
@@ -23517,7 +23563,9 @@ document.body.insertAdjacentHTML('beforeend', `
           <div class="shrink-0 bg-secondary overflow-hidden" style="width:79px;height:106px;align-self:flex-start">
             <img src="${A}${c.img}" class="w-full h-full object-cover" alt="${c.name}">
           </div>
-          <div class="flex-1 min-w-0 flex flex-col">
+          <!-- 27/09/2026 (Figma 639:64885): cột chữ cao TỐI THIỂU bằng ảnh (106) để hàng
+               "x1 · giá" luôn nằm ở đáy, ngang đáy ảnh — kể cả món chỉ có 3 dòng chữ. -->
+          <div class="flex-1 min-w-0 flex flex-col" style="min-height:106px">
             <p class="pc-brand text-foreground truncate">${c.brand}</p>
             <!-- 03/09/2026: hàng mini cart cũng mang badge "Đặt trước" ĐỨNG TRƯỚC
                  TÊN — trước đó chỉ có dòng ngày ở dưới, nên tấm này là chỗ DUY
@@ -23531,8 +23579,10 @@ document.body.insertAdjacentHTML('beforeend', `
                  nguyên trong text node thì chuỗi thành "Nhận hàng dự kiến 30/09/2026",
                  không khớp khoá i18n 'Nhận hàng dự kiến' và phải đẻ luật regex. -->
             ${c.preorder ? `<p class="t-single text-foreground-alt pt-0.5">Nhận hàng dự kiến <span class="font-medium">${c.preorder}</span></p>` : ''}
-            <div class="flex items-center justify-end gap-2 pt-1 mt-auto">
-              <span class="t-single text-muted-foreground shrink-0">× ${c.qty || 1}</span>
+            <!-- 27/09/2026 (user + Figma 639:64885): số lượng SÁT TRÁI, giá SÁT PHẢI — trước
+                 cả cụm dồn phải. Chữ "x1" viết như khung (x thường, liền số). -->
+            <div class="flex items-center justify-between gap-2 pt-1 mt-auto">
+              <span class="t-single text-muted-foreground shrink-0">x${c.qty || 1}</span>
               <span class="t-multiline pc-price font-medium ${c.off ? 'text-destructive' : 'text-foreground'} whitespace-nowrap">${c.now}</span>
             </div>
           </div>
@@ -23726,7 +23776,8 @@ document.body.insertAdjacentHTML('beforeend', `
         <button data-ap-tab="address" class="t-multiline h-12 px-6 flex items-center text-left text-foreground ghost-hover press">Sổ địa chỉ</button>
         <button data-ap-tab="member" class="t-multiline h-12 px-6 flex items-center text-left text-foreground ghost-hover press">Hạng thành viên & Ưu đãi</button>
         <button data-ap-tab="orders" class="t-multiline h-12 px-6 flex items-center text-left text-foreground ghost-hover press">Đơn hàng</button>
-        <button data-nav="track" class="t-multiline h-12 px-6 flex items-center text-left text-foreground ghost-hover press">Theo dõi đơn hàng</button>
+        <!-- 27/09/2026 (user) — ẨN mục "Theo dõi đơn hàng" khỏi tấm hover. Màn track vẫn còn:
+             vào từ mục lục trang Tài khoản và từ nút trong màn Đơn hàng. -->
       </div>
       <div class="px-6 py-6 flex flex-col gap-2 items-center text-center border-t border-border">
         <!-- 25/09/2026, đọc từ khung hover user tự sửa: tiêu đề sang MÀU ĐỒNG (biến
