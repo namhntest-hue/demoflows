@@ -2509,7 +2509,11 @@ window.RESP = (function () {
     text-transform: none;
   }
   html.skin-mt [data-screen="cart"] #pbhAcc .acc-trigger > span:first-child {
-    font-weight: 400;
+    /* 27/09/2026 (lệnh user: *"bạn có phiếu mua hàng thì cho 14 medium"*): 12/16 · 400 →
+       Inter 14/20 · 500 · chữ thường = đúng nhãn accordion PDP. Hàng vẫn h-14 = 56. */
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
     text-transform: none;
   }
   /* 15/09/2026 (lệnh user: *"cái tổng cộng tiền cho nâng font weight và lên font
@@ -3316,6 +3320,17 @@ window.RESP = (function () {
   html.skin-mt.skin-li [data-pdp-acc] .acc-inner :is(div, p, span),
   html.skin-mt.skin-li [data-screen="pdp3"] [data-pdp-acc] .acc-inner :is(div, p, span) {
     font-size: 12px; line-height: 18px; font-weight: 400; text-transform: none;
+  }
+  /* 27/09/2026 — CÙNG NHÃN ACCORDION VỚI PDP (lệnh user: *"bạn có phiếu mua hàng thì cho 14
+     medium, faq cũng 14 medium inter, giỏ hàng 5 cũng v"*): FAQ trang Hạng thành viên và
+     "Giỏ hàng (N)" ở tóm tắt checkout desktop (#ckSumAcc) dùng đúng Inter 14/20 · 500 · chữ
+     thường của [data-pdp-acc] ngay trên. Hộp phiếu mua hàng ở giỏ đổi NGAY TẠI rule riêng
+     của nó (#pbhAcc mobile / .acc:has(#pbh) desktop) vì rule đó mang cấp id.
+     Ghi danh: STYLE-RULES §1.1 ngoại lệ thứ ba (500 chữ thường). Figma: bộ
+     `collapsible-title`, typo=inter-14. KHAI GIỐNG HỆT ở index.html và desktop.html. */
+  html.skin-mt.skin-li [data-member-faq] .acc-trigger > span:first-child,
+  html.skin-mt.skin-li #ckSumAcc .acc-trigger > span:first-child {
+    font-size: 14px; line-height: 20px; font-weight: 500; text-transform: none;
   }
 
   /* 8 — NÚT HÀNH ĐỘNG LÊN 14/20, GIỮ 400 · CHỮ THƯỜNG (25/08/2026).
@@ -4452,6 +4467,9 @@ window.RESP = (function () {
      hết canh giữa thì con của flex-col tự trải hết bề rộng, không còn bẫy sụp ô email. */
   .hm-signup-card { padding: 16px; }
   .hm-signup-photo { display: block; width: 100%; aspect-ratio: 358 / 140; overflow: hidden; }
+  /* 27/09/2026 — ĐỒNG BỘ NGƯỢC TỪ FIGMA (khung `hm-signup-band` 726:50225 user sửa trong
+     `Home / mobile 375 · Men`): băng TRÀN MÉP 375 (bỏ px-4 ở markup), ảnh 375×134. */
+  .hm-signup-photo { aspect-ratio: 375 / 134; }
 
   .hm-occ-band { background: var(--unofficial-accent-0); }
   .hm-occ { display: flex; gap: 4px; }
@@ -4510,7 +4528,15 @@ window.RESP = (function () {
      KHÔNG đúng với màn này — đừng tin, đo lại nếu cần đụng tới.
      ⚠ Cách xuống dòng KHÔNG đổi khi cột hẹp lại 20px: đo bằng `Range.getClientRects()`
      ra 2/1/2/2 dòng ở cả cột 183,5 lẫn 163,5 — khớp đúng 4 ô 88/68/88/88 của component.
-     (Đừng đo bằng `getClientRects()` trên chính thẻ `<p>`: nó trả hộp VIỀN, luôn ra 1.) */
+     (Đừng đo bằng `getClientRects()` trên chính thẻ `<p>`: nó trả hộp VIỀN, luôn ra 1.)
+     ══ 27/09/2026 — component đổi lần nữa: biến thể `Property 1=mobile` (665:124173) nay nhãn
+     `t-label-single` 12/16 (trước 14/20), ô 80/64/80/80, khối 375×224. Code bám theo (lệnh
+     25/09 "bám 100%" component này): nhãn mobile `t-lead` → `t-single` ở `hmUsp()`.
+       24 + 80 + 16 + 80 + 24 = 224 ✓ — đo trong trình duyệt: xuống dòng 2/1/2/2 như component.
+     Độ đậm giữ 400 như cũ (500 chữ thường nằm ngoài danh sách đóng STYLE-RULES §1.1). Bản
+     desktop giữ 14/20 — biến thể `Default` không đổi.
+     ✓ USER CHỐT 27/09/2026: *"12 ở mobile 14 ở desktop đúng rồi nhé"* — lệch thang theo file
+     CÓ GHI DANH ở STYLE-RULES §1.2 (ngoại lệ thứ hai, sau `.hm-cat-label`). Đừng "sửa cho đều". */
   .hm-usp {
     display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px; padding: 24px 16px;
@@ -6281,6 +6307,16 @@ const PRODUCT_CATS = [
   ['Quần áo','Chân váy','Váy midi'],                     // 47 Chân váy midi tulle
 ];
 PRODUCTS.forEach((p, i) => { if (PRODUCT_CATS[i]) p.cat = PRODUCT_CATS[i]; });
+/* ── GIỚI TÍNH CỦA SẢN PHẨM (27/09/2026, user chốt phương án A) ─────────────────
+   Rule hệ thống: vào qua MENU thì chia Nam · Nữ · Làm đẹp; TÌM KIẾM thì tìm chung cả
+   3, rồi bộ lọc ở trang kết quả có nhóm "Giới tính" để khách tự tách.
+   PRODUCTS (cào từ site) không mang giới tính — gán theo CHỈ SỐ như PRODUCT_CATS.
+   Nam = 9 món suy theo tên/loại (loafer, sneaker, thắt lưng, áo thun Versace, áo khoác
+   da / ví / nón D&G). Hàng làm đẹp tự vào "Làm đẹp"; còn lại là Nữ.
+   ⚠ Bản SUY — khách duyệt lại khi có dữ liệu giới tính chính thức. */
+const PRODUCT_MEN = new Set([4, 5, 9, 22, 27, 28, 29, 34, 35]);
+PRODUCTS.forEach((p, i) => { p.gender = p.dept === 'beauty' ? 'Làm đẹp' : PRODUCT_MEN.has(i) ? 'Nam' : 'Nữ'; });
+const FILTER_GENDERS = ['Nam', 'Nữ', 'Làm đẹp'];
 
 /* ── ĐIỀN SIZE CHO 10 SẢN PHẨM CÒN TRỐNG (12/09/2026) ────────────────────────
    32/48 sản phẩm đã có `sizes` thật từ đợt dữ liệu D&G + Zimmermann (02/09):
@@ -6565,6 +6601,11 @@ function navBar({ logoOnly = false } = {}) {
      Header rút gọn này dùng ở màn Thanh toán VÀ màn Hoàn tất; bỏ ghim ở cả hai vì một
      header chỉ có logo thì ghim lại cũng không đưa thêm lối đi nào, mà còn ăn 48px màn. */
   const bar = 'navbar glass-95 h-[48px] backdrop-blur-[7.5px] flex items-center px-4';
+  /* 27/09/2026 — VÁ LỖI "header mobile không sticky" (user báo). Lượt 25/09 gỡ sticky khỏi
+     `bar` — mà `bar` DÙNG CHUNG cho cả header đầy đủ ở MỌI màn, nên cả site mất ghim chứ
+     không riêng checkout. Nay ghim trả về cho header đầy đủ (nhánh dưới), header rút gọn
+     của checkout/hoàn tất vẫn KHÔNG ghim — đúng cách desktop.html đang làm. */
+  const pin = 'sticky top-0 z-50';
 
   // Checkout: chỉ còn logo — CANH GIỮA (brief PDF trang 30, "Vị trí logo DAFC ở
   // giữa???" — user chốt thẳng "cho logo DAFC ra giữa" nên bỏ dấu hỏi luôn).
@@ -6582,7 +6623,7 @@ function navBar({ logoOnly = false } = {}) {
     `<button class="w-6 h-6 flex items-center justify-center press" ${attrs}>${inner}</button>`;
 
   return `
-  <div class="${bar} justify-between">
+  <div class="${bar} ${pin} justify-between">
     <div class="flex gap-2 items-center w-[133px]">
       ${ico(I.burger, 'data-menu-open')}
       ${ico(I.search, 'data-nav="search"')}
@@ -6631,7 +6672,7 @@ const FOOTER_LINKS = [
     'Thông tin về DAFC', 'Tuyển dụng', 'Liên hệ', 'Danh sách cửa hàng',
   ]],
   ['Chăm sóc khách hàng', [
-    'Chương trình thành viên', 'Câu hỏi thường gặp', 'Chính sách vận chuyển',
+    'Chương trình thành viên', 'Câu hỏi thường gặp', 'Tra cứu đơn hàng', 'Chính sách vận chuyển',
     'Chính sách đổi trả', 'Chính sách trả góp', 'Chính sách thanh toán',
     'Hướng dẫn bảo quản sản phẩm',
   ]],
@@ -6659,6 +6700,9 @@ const FOOTER_ROUTES = {
   'Quyền và nghĩa vụ các bên': 'rights',
   'Chính sách bảo hành':     'warranty',
   'Quy trình tiếp nhận và xử lý khiếu nại': 'complaint',
+  /* 27/09/2026 (user) — lối vào màn Tra cứu đơn hàng CHUYỂN từ trang Tài khoản xuống
+     footer (cột Chăm sóc khách hàng). Trỏ vào màn `track` sẵn có. */
+  'Tra cứu đơn hàng':        'track',
 };
 
 function footer() {
@@ -6834,6 +6878,20 @@ const plpGender = () => {
   const d = plpMode.type === 'category' ? (plpMode.crumbs || [])[0] : null;
   return d === 'Nam' || d === 'Nữ' ? d : null;
 };
+/* HÌNH DẠNG PANEL LỌC (27/09/2026). Ngoài trang tìm kiếm: theo ngành/giới tính của PLP
+   như cũ. Ở trang tìm kiếm: theo nhóm "Giới tính" — tick ĐÚNG MỘT mục thì panel mang
+   cây + facet của ngành đó (Làm đẹp → cây nước hoa + Dung tích; Nữ → cây nữ + Độ cao
+   giày); không tick hoặc tick nhiều mục thì cây đủ.
+   fsGenders = các mục đang tick TRONG panel (chưa Áp dụng); null = theo bộ lọc đã áp. */
+let fsGenders = null;
+const searchGenders = () => (fsGenders || plpFilters).filter(l => FILTER_GENDERS.includes(l));
+function filterShape() {
+  if (plpMode.type !== 'search') return { beauty: isBeautyPlp(), gender: plpGender(), heel: heelSection(), search: false, key: '' };
+  const g = searchGenders();
+  const one = g.length === 1 ? g[0] : null;
+  const gender = one === 'Nam' || one === 'Nữ' ? one : null;
+  return { beauty: one === 'Làm đẹp', gender, heel: gender === 'Nữ', search: true, key: g.join('+') };
+}
 /* Mục "Độ cao giày" — CHỐT CUỐI 26/08 chiều (user: "nó sẽ áp dụng luôn khi user
    chuyển qua Trang chủ nữ chứ không phải khi bấm vào Nữ > Giày mới hiện"): điều kiện
    duy nhất là NGỮ CẢNH GIỚI TÍNH NỮ. Bảng của khách ghi "chỉ áp dụng vs GIÀY NỮ" nên
@@ -8251,10 +8309,9 @@ function screenACCOUNT() {
     <div id="accTabs" class="drag-x flex gap-6 overflow-x-auto no-scrollbar border-b border-border px-4 sticky top-12 bg-background z-10">
       ${ACCOUNT_TABS.map(([id, label]) => `
         <button data-atab="${id}"${id===accountTab ? ' aria-current="true"' : ''} class="t-single acc-tab shrink-0 h-11 press" style="min-width:44px">${label}</button>`).join('')}
-      <!-- 21/09/2026 (brief trang 46) — "Theo dõi đơn hàng" là chip cuối dải nhưng
-           đi sang màn track, nên dùng data-nav chứ không data-atab (không bao giờ
-           mang aria-current nên không có vạch đang-chọn). -->
-      <button data-nav="track" class="t-single acc-tab shrink-0 h-11 press" style="min-width:44px">Theo dõi đơn hàng</button>
+      <!-- 27/09/2026 (user) — BỎ chip "Theo dõi đơn hàng" khỏi dải tab Tài khoản: lối vào
+           màn tra cứu nay ở footer (cột Chăm sóc khách hàng, xem FOOTER_ROUTES). Nút
+           "Theo dõi đơn hàng" theo TỪNG ĐƠN (chi tiết đơn, màn đặt hàng thành công) giữ nguyên. -->
     </div>
 
     <!-- nội dung tab -->
@@ -8952,8 +9009,10 @@ function accMember() {
         </div>
       </div>
 
-      <!-- FAQ (brief trang 52) — cùng khuôn accordion với trang Chính sách. -->
-      <div class="flex flex-col gap-2">
+      <!-- FAQ (brief trang 52) — cùng khuôn accordion với trang Chính sách.
+           27/09/2026: móc data-member-faq cho nhãn câu hỏi Inter 14/20 · 500 (cùng nhãn
+           accordion PDP, lệnh user). -->
+      <div class="flex flex-col gap-2" data-member-faq>
         <p class="t-section-title text-foreground pb-2">Hỏi đáp về chương trình Ưu đãi điểm thưởng DAFC Points</p>
         ${MEMBER_FAQ.map(([h, b], i) => `
         <div class="acc${i ? ' border-t border-border-1' : ''}">
@@ -9511,17 +9570,23 @@ function screenPDP6() {
     <!-- KHUYẾN MÃI — khối xám theo khuôn PDP3 (thay hộp bg-secondary p-2 + bullet 12px cũ) -->
     ${promoBox(promos)}
 
-    <!-- Info Tabs: pad 8 · Accordion Trigger 52px pad 16,8 r2 · Label Medium 14/20 -->
-    <div class="p-2" data-pdp-acc>
+    <!-- Info Tabs — VỀ KHUÔN CHUNG 56px (28/09/2026, user chốt phương án a: "sửa code cả 2
+         chỗ luôn đi, P6 theo phương án a"). Trước đây P6 giữ khuôn riêng theo Figma cũ của màn
+         này: hàng 52px (class h-13 không tồn tại, chiều cao đến từ height:52px cứng) và bọc p-2
+         (dư đệm đáy 8), trong khi 5 PDP còn lại đều hàng 56px, bọc pt-2 px-2 — cụm tab P6 thấp
+         hơn 8px, khung Figma dùng component collapsible chung không khớp được. Nay y hệt PDP5:
+         pad 8,8,0,8 · Trigger 56px pad 16,8 rounded-2. Bỏ luôn 2 utility tracking 0.002em /
+         0.004em riêng của P6 (5 bản kia không có). -->
+    <div class="px-2 pt-2" data-pdp-acc>
       ${tabs.map(([t, body]) => `
         <div class="acc border-b border-border-1">
-          <button class="acc-trigger w-full h-13 flex items-center justify-between gap-2 px-2 rounded-xs press" style="height:52px">
-            <span class="t-multiline tracking-[0.002em] text-foreground">${t}</span>
+          <button class="acc-trigger w-full h-14 flex items-center justify-between gap-2 px-2 rounded-xs press">
+            <span class="t-multiline text-foreground">${t}</span>
             <span class="w-3.5 h-3.5 flex items-center justify-center [&_svg]:w-3.5 [&_svg]:h-3.5">${accIco}</span>
           </button>
           <div class="acc-body"><div class="acc-inner">
             <!-- div, KHÔNG p: xem ghi chú cùng chỗ ở PDP5. -->
-            <div class="t-single pb-4 px-2 tracking-[0.004em] text-foreground-alt">${body}</div>
+            <div class="t-single pb-4 px-2 text-foreground-alt">${body}</div>
           </div></div>
         </div>`).join('')}
     </div>
@@ -10376,7 +10441,7 @@ function hmUsp() {
 ${'            '}${HM_USP.map(([ico, label]) => `
         <div class="hm-usp-item">
           <span class="hm-usp-ico shrink-0 flex items-center justify-center">${USP_ICO[ico]}</span>
-          <p class="t-lead font-medium text-foreground">${label}</p>
+          <p class="t-single font-medium text-foreground">${label}</p>
         </div>`).join('')}
       </div>`;
 }
@@ -10583,11 +10648,18 @@ function hmSignup() {
          duoi, mot cho.
          LOI RA: anh thoi bi keo 1,09x — o 358 no dung be ngang art (358x140) nen khit
          1,00x, dung nhu truoc luot tran mep. -->
-    <div class="px-4 reveal">
+    <!-- 27/09/2026 — ĐỒNG BỘ NGƯỢC TỪ FIGMA 726:50225 (lệnh user, chốt trang chủ): băng TRÀN MÉP
+         (bỏ px-4 — đảo lượt 10/09 chiều), tấm chữ gom HAI CỤM như bản desktop: (tiêu đề + mô tả)
+         và (hàng nhập + dòng pháp lý), khe trong cụm 8, giữa 2 cụm 16 → tấm chữ 375×212 như khung.
+         Hàng nhập: ô + nút DÍNH LIỀN (khe 0). -->
+    <div class="reveal">
       <div class="hm-signup-band">
       <div class="hm-signup-card flex flex-col gap-4">
+      <div class="flex flex-col gap-2">
       <h2 class="text-[18px] font-medium leading-7 text-foreground">Đăng ký nhận tin</h2>
       <p class="t-multiline text-secondary-foreground">Nhận thông tin bộ sưu tập mới và ưu đãi dành riêng cho thành viên DAFC.</p>
+      </div>
+      <div class="flex flex-col gap-2">
       <!-- O EMAIL + NUT VE MOT HANG, NUT HUG (10/09/2026, lenh user: *"button dang ky cho
            hug lai nam chung hang voi field nhap"*). Truoc day 2 mon XEP DOC, moi mon w-full.
            Nut: t-multiline w-full -> t-lead px-6 w-fit. Doi ca co chu la co chu dich:
@@ -10597,7 +10669,7 @@ function hmSignup() {
            min-w-0 tren o email la BAT BUOC: the <input> co be rong noi tai theo attribute
            size (~177) va trong flex thi min-width: auto khong cho no co nho hon — thieu
            dong nay la hang bi tran o kho hep. -->
-      <div class="flex gap-2">
+      <div class="flex">
         <div class="field-float flex-1 min-w-0">
           <input id="hmNlEmail" type="email" inputmode="email" data-rule="email" autocomplete="email" placeholder=" "
                  class="t-lead border rounded-xs bg-background px-2 text-foreground outline-none focus:border-primary transition-colors">
@@ -10606,6 +10678,7 @@ function hmSignup() {
         <button data-toast="Đăng ký nhận tin" class="t-lead h-12 px-5 w-fit shrink-0 rounded-xs bg-primary text-primary-foreground btn-p press">Đăng ký</button>
       </div>
       <p class="t-single text-muted-foreground">Bằng việc đăng ký, bạn đồng ý với Chính sách bảo mật của DAFC.</p>
+      </div>
       </div>
       <!-- KHOI DAC QUYEN THANH VIEN LA MOT TAM ANH, khong con tieu de + dong phu + nut
            (10/09/2026, lenh user kem 2 anh: mot anh chup khoanh do tron khoi cu, mot anh la
@@ -13930,6 +14003,7 @@ function matchProducts(list, labels, price) {
   const flags  = labels.filter(l => FILTER_FLAGS.includes(l));
   const sizes  = labels.filter(l => FILTER_VOLUMES.includes(l));
   const promos = labels.filter(l => FILTER_PROMOS.includes(l));
+  const genders = labels.filter(l => FILTER_GENDERS.includes(l));   // nhóm Giới tính — chỉ có ở trang tìm kiếm
   const heels  = labels.filter(l => FILTER_HEELS.some(([n]) => n === l));
   /* DANH MỤC (12/09/2026) — khớp ở BẤT KỲ cấp nào trong đường dẫn của sản phẩm:
      chọn "Quần áo" ra cả nhánh, chọn "Đầm ngắn" ra đúng lá. Tick nhiều ô là HỢP
@@ -13957,6 +14031,7 @@ function matchProducts(list, labels, price) {
       if (pMin != null && v < pMin) return false;
       if (pMax != null && v > pMax) return false;
     }
+    if (genders.length && !genders.includes(p.gender)) return false;
     if (brands.length && !brands.includes(p.brand)) return false;
     if (colors.length || multi) {
       const buckets = (p.colors || []).map(c => colorBucketOf(c.hex));
@@ -14233,7 +14308,7 @@ function fSection(title, body, open = false, pad = 24) {
    (điểm 3 — chỉ ngữ cảnh NỮ, xem heelSection()). Cả 2 do renderFilterBody tính từ
    breadcrumb PLP, và cùng nằm trong khoá `filterMode`: dựng là hiện luôn, không còn
    trạng thái ẩn nào. */
-function filterBody(beauty, gender, heel) {
+function filterBody(beauty, gender, heel, search = false) {
   /* ── Danh mục: cha + con (con mặc định ĐÓNG) ── */
   const catSrc = beauty ? beautyCatTree() : catTreeFor(gender);
   const cats = catSrc.map(([cat, subs], i) => `
@@ -14385,6 +14460,8 @@ function filterBody(beauty, gender, heel) {
     </div>`;
 
   return `
+    ${search ? fSection('Giới tính', `<div class="px-4 pb-6 flex flex-col gap-1">${FILTER_GENDERS.map(t => `
+      <button class="w-full flex items-center gap-2 py-2 pr-4 press text-left" data-other="${t}" data-fgender>${fchk(false)}<span class="t-multiline text-foreground-alt">${t}</span></button>`).join('')}</div>`) : ''}
     ${fSection('Danh mục', `<div class="px-4 pb-4">${cats}</div>`)}
     ${fSection('Thương hiệu', `<div class="px-4 pb-6">${brandSearch}<div id="fBrandList">${brands}</div><p id="fBrandEmpty" class="t-multiline hidden pt-2 text-muted-foreground">Không tìm thấy thương hiệu</p></div>`)}
     ${beauty ? '' : fSection('Màu sắc', `<div class="pt-2 px-4 pb-4 grid gap-2" style="grid-template-columns:repeat(4,1fr)">${colors}</div>`)}
@@ -14468,10 +14545,10 @@ let filterMode = null;
 function renderFilterBody() {
   const sh = document.getElementById('filterSheet');
   if (!sh) return;
-  const beauty = isBeautyPlp(), gender = plpGender();
-  const mode = `${beauty ? 'beauty' : 'fashion'}:${gender || 'all'}`;
+  const { beauty, gender, heel, search, key } = filterShape();
+  const mode = `${beauty ? 'beauty' : 'fashion'}:${gender || 'all'}${search ? ':search:' + key : ''}`;
   if (filterMode === mode) return;
-  sh.querySelector('#filterBody').innerHTML = filterBody(beauty, gender, heelSection());
+  sh.querySelector('#filterBody').innerHTML = filterBody(beauty, gender, heel, search);
   filterMode = mode;
   wireFilterBody(sh);
   localizeNew(sh);
@@ -14520,7 +14597,12 @@ function facetLabelsFor(beauty, gender, heel) {
 function pruneFilters() {
   if (!plpFilters.length) return false;
   /* Nhãn Độ cao giày hợp lệ ở đúng chỗ mục đó được dựng: mọi PLP ngữ cảnh NỮ. */
-  const ok = facetLabelsFor(isBeautyPlp(), plpGender(), heelSection());
+  /* Trang tìm kiếm: nhãn hợp lệ là HỢP của mọi ngành + nhóm Giới tính — panel ở đây đổi
+     hình theo mục Giới tính đang tick, không được rụng bộ lọc đã áp chỉ vì đổi hình. */
+  const ok = plpMode.type === 'search'
+    ? new Set([...facetLabelsFor(false, null, false), ...facetLabelsFor(false, 'Nam', false),
+               ...facetLabelsFor(false, 'Nữ', true), ...facetLabelsFor(true, null, false), ...FILTER_GENDERS])
+    : facetLabelsFor(isBeautyPlp(), plpGender(), heelSection());
   const kept = plpFilters.filter(l => ok.has(l));
   if (kept.length === plpFilters.length) return false;
   plpFilters = kept;
@@ -14622,6 +14704,7 @@ function openSizeChart() {
 /* ── mở / đóng ── */
 function openFilter() {
   const sh = document.getElementById('filterSheet');
+  fsGenders = null;            // mở lại = theo bộ lọc ĐÃ ÁP, bỏ mục Giới tính tick dở lần trước
   renderFilterBody();          // PLP nào thì facet nấy
   sh.classList.add('open');
   /* Mở ra luôn phản ánh trạng thái ĐÃ ÁP: tick nào không nằm trong plpFilters bị
@@ -14685,6 +14768,7 @@ function wireFilter() {
      này không đụng tới chúng. Muốn cây danh mục cũng co theo thì phải thêm
      trường phân loại cho PRODUCTS trước, đó là việc DATA. */
   const facetOf = lbl => {
+    if (FILTER_GENDERS.includes(lbl)) return 'gender';
     if (FILTER_BRANDS.includes(lbl)) return 'brand';
     if (lbl === 'Nhiều màu' || FILTER_COLORS.some(([n]) => n === lbl)) return 'color';
     if (FILTER_FLAGS.includes(lbl)) return 'flag';
@@ -14701,6 +14785,19 @@ function wireFilter() {
   const syncBrandEmptyLine = () => {
     const bb = sh.querySelector('#fBrandSearch');
     if (bb && bb.value.trim()) bb.dispatchEvent(new Event('input'));
+  };
+  /* Tick/bỏ một mục Giới tính (trang tìm kiếm): panel đổi hình theo ngành vừa chọn —
+     dựng lại thân, GIỮ các mục đang mở (theo data-facc) và tick lại mọi lựa chọn chưa
+     áp. Cây danh mục của ngành khác thì tự rụng vì ô đó không còn trong DOM. */
+  window.onFilterGender = () => {
+    const picked = pickedLabels();
+    fsGenders = picked.filter(l => FILTER_GENDERS.includes(l));
+    const before = filterMode;
+    const openAcc = [...sh.querySelectorAll('.facc.open')].map(a => a.dataset.facc);
+    renderFilterBody();
+    if (filterMode === before) return;
+    sh.querySelectorAll('.facc').forEach(a => a.classList.toggle('open', openAcc.includes(a.dataset.facc)));
+    syncFilterToDom(picked);
   };
   window.pruneEmptyFacets = () => {
     const picked = pickedLabels();
@@ -14756,8 +14853,9 @@ function wireFilter() {
   /* Đẩy plpFilters NGƯỢC vào DOM. Cần vì nút "Xóa tất cả bộ lọc" ở empty state nằm
      NGOÀI sheet: nó xoá plpFilters nhưng các ô trong sheet vẫn còn tick, mở lại là
      thấy tick không còn hiệu lực và số kết quả lệch hẳn với lưới. */
-  window.syncFilterToDom = () => {
-    const has = t => plpFilters.includes((t || '').trim());
+  window.syncFilterToDom = (arr) => {
+    /* arr = tick lại theo danh sách CHƯA ÁP (đổi Giới tính dựng lại panel); bỏ trống = theo plpFilters. */
+    const has = t => (arr || plpFilters).includes((t || '').trim());
     sh.querySelectorAll('[data-sub], [data-brand], [data-other], .fcat-check').forEach(btn => {
       const lbl = btn.dataset.sub || btn.dataset.brand || btn.dataset.other || btn.dataset.flabel
                   || btn.querySelector('span:not(.chk)')?.textContent;
@@ -14767,7 +14865,7 @@ function wireFilter() {
     /* 2 ô khoảng giá đi cùng luật với facet tick: mọi đường đổi state từ ngoài
        (chip ✕, "Xoá tất cả") đều kéo ô về đúng số, không thì bỏ chip giá xong
        mở lại drawer vẫn thấy con số cũ nằm đó (12/09/2026). */
-    plpPricePend = { min: plpPriceMin, max: plpPriceMax };
+    if (!arr) plpPricePend = { min: plpPriceMin, max: plpPriceMax };
     sh.querySelectorAll('[data-price]').forEach(i => {
       const v = plpPricePend[i.dataset.price];
       i.value = v == null ? '' : v.toLocaleString('en-US');
@@ -14808,6 +14906,7 @@ function wireFilter() {
     plpFilters = [];
     renderPlpGrid(document);
     syncFilterFooter();
+    if (plpMode.type === 'search') { fsGenders = []; renderFilterBody(); syncFilterToDom(); }   // bỏ Giới tính → panel về cây đủ
     toast('Đã đặt lại bộ lọc');
   });
   sh.addEventListener('click', () => setTimeout(() => { if (window.syncFilterFooter) syncFilterFooter(); if (window.pruneEmptyFacets) pruneEmptyFacets(); }, 0));
@@ -14842,6 +14941,7 @@ function wireFilterBody(sh) {
   sh.querySelectorAll('[data-sub], [data-brand], [data-other]').forEach(btn => {
     btn.addEventListener('click', () => {
       btn.querySelector('.chk').classList.toggle('on');
+      if (btn.hasAttribute('data-fgender') && window.onFilterGender) { onFilterGender(); return; }
       const cat = btn.closest('.fcat');
       if (cat) {   // đồng bộ trạng thái cha
         const subs = [...cat.querySelectorAll('[data-sub] .chk')];
