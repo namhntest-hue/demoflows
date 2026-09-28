@@ -879,7 +879,11 @@ window.RESP = (function () {
   /* Tiêu đề KHỐI trong trang Tài khoản (brief 47-49: "My Profile (Libre Font)" có
      một đường kẻ ngay dưới). Cỡ chữ do .t-section-title trong markup cấp (18/24
      Libre), class này chỉ lo đường kẻ — không khai lại cỡ. */
-  .acc-sec-title { padding-bottom: 8px; border-bottom: 1px solid var(--general-primary); }
+  /* 28/09/2026 — BỎ HẲN đường kẻ dưới tiêu đề (lệnh user: "bỏ cái line dài ở 2 phiên bản
+     luôn đi"), cùng ngày sau lượt hạ nó từ đen xuống xám. ⚠ ĐẢO chốt 21/09 "tiêu đề + gạch
+     chân" cho cả 4 tab. GIỮ padding-bottom 8 để khoảng tiêu đề → nội dung không đổi.
+     Class vẫn để lại trên markup làm móc tên cho hàng tiêu đề. */
+  .acc-sec-title { padding-bottom: 8px; }
   /* Vạch dọc giữa 2 khối màn Tra cứu đơn. KHÔNG mượn .lp-line được: rule của nó
      khoanh trong #loginPop nên ở đây sẽ ra một thẻ rỗng không bề rộng. */
   .tr-line { width: 1px; background: var(--general-border); }
@@ -3908,10 +3912,19 @@ window.RESP = (function () {
      ca be ngang 343. */
   .hm-hero-copy {
     position: absolute; z-index: 2; left: 16px; right: 16px; bottom: 48px;
-    display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 16px;
     pointer-events: none;
   }
   .hm-hero-copy button { pointer-events: auto; }
+  /* 28/09/2026 — LOGO HÃNG TRÊN HERO: file logo trang danh sách (BRAND_PAGES.logo); đổi sang TRẮNG bằng
+     brightness(0) + invert(1). CAO 16 (tối 28/09, hai lệnh user liền nhau: 26 -> 20 -> *"logo giảm xuống
+     size 16"*). Hết margin-bottom (*"giảm logo cách title xuống 8"*): khe dưới logo = gap 8 của cụm — cùng số
+     với bản desktop. */
+  .hm-hero-logo { display: block; height: 16px; width: auto; max-width: 100%; filter: brightness(0) invert(1); }
+  /* CỤM CHỮ (tối 28/09/2026, lệnh user: *"cụm Logo, title, subtitle sẽ cách cái nút 16px"*): logo + tiêu đề +
+     dòng phụ bọc trong .hm-hero-text — MỌI khe trong cụm 8 (logo -> tiêu đề cũng 8 từ lệnh kế tiếp); cụm và nút
+     cách nhau 16 do gap của .hm-hero-copy. Bọc riêng để khe 16 là khe của CỤM chứ không của từng dòng. */
+  .hm-hero-text { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
   .hm-hero-dots {
     position: absolute; inset-inline: 0; bottom: 16px; z-index: 2;
     display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -6018,7 +6031,7 @@ function lookRailCards(title, n, selfIdx, w, badgeAt = -1) {
     .map(({ p, i }, k) => productCard(p, i, { w, noColors: true, model: true, badge: badge(k) })).join('');
 }
 
-function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false, noQuick = false, noPrice = false } = {}) {
+function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false, noQuick = false, noPrice = false, noBrand = false } = {}) {
   /* 27/08: 'Pre-order' THÔI làm nhãn đè ảnh — nó xuống đứng trước TÊN (xem dưới).
      Chặn ngay tại đây, một chỗ, nên 6 nơi gọi vẫn truyền `badge: 'Pre-order'` như
      cũ mà không phải sửa nơi nào. Nhãn khác (New Season…) vẫn đè ảnh bình thường. */
@@ -6051,7 +6064,11 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
     </div>
     <div class="flex flex-col px-1 py-2">
       <div class="flex flex-col gap-0.5 pb-2">
-        <p class="t-lead pc-brand font-medium text-foreground truncate">${p.brand}</p>
+        <!-- noBrand (28/09/2026, lệnh user: *"ở bộ sưu tập mới bỏ brand, hiện tên sản phẩm
+             và giá lại"*): dải Bộ sưu tập ở TRANG CHỦ thôi in tên hãng, thẻ còn ảnh + tên SP +
+             giá. Cờ đi từ CHỖ GỌI như noName / noPrice nên PLP, PDP và mọi dải khác vẫn có
+             dòng hãng. -->
+        ${noBrand ? '' : `<p class="t-lead pc-brand font-medium text-foreground truncate">${p.brand}</p>`}
         <!-- BADGE PRE-ORDER ĐỨNG TRƯỚC TÊN (27/08/2026, lệnh user + ảnh đính kèm).
              Trước đây nó là nhãn ĐÈ LÊN ẢNH, chung chồng với New Season / La Vacanza.
              Tách ra vì hai thứ nói hai chuyện: nhãn chiến dịch thuộc về ẢNH, còn
@@ -6085,7 +6102,10 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
            VỀ ở trang chủ thôi hiện giá, thẻ ở đó còn ảnh + tên thương hiệu. Cờ đi từ CHỖ
            GỌI (xem hmRail) nên phạm vi hẹp đúng một dải: PLP, PDP, dải Đang giảm giá và
            mọi chỗ khác vẫn có giá. Bỏ cả cụm chứ không ẩn bằng invisible — hàng giá gạch
-           bên dưới vốn là chỗ giữ nhịp cho thẻ CÓ giá, ở đây không còn nhịp nào để giữ. -->
+           bên dưới vốn là chỗ giữ nhịp cho thẻ CÓ giá, ở đây không còn nhịp nào để giữ.
+           ĐẢO 28/09/2026 (lệnh user): dải đó hiện LẠI giá, chỉ lấy SP nguyên giá, và bỏ dòng
+           hãng thay vì bỏ giá (xem noBrand). Từ lượt này KHÔNG chỗ gọi nào còn truyền noPrice;
+           GIỮ cờ để bật lại, như các công tắc khác của trang chủ. -->
       ${noPrice ? '' : `
       <div class="flex flex-col pb-2">
         <!-- whitespace-nowrap: chuỗi giá dùng space thường trước ₫ nên khi
@@ -8266,11 +8286,20 @@ const initialOf = n => (String(n).trim().split(/\s+/).pop() || '?').charAt(0).to
    nút Đăng xuất cùng hàng, desktop để nút đó ở cuối cột điều hướng). Tách hàm vì
    cụm này nằm NGOÀI `#accBody` nên không được vẽ lại theo tab — lưu thông tin xong
    phải sơn lại nó tại chỗ (`paintAccUser`). */
+/* 28/09/2026 (lệnh user: "trong account bỏ cái avatar đi, bỏ cái sđt, tên người dùng sẽ đổi
+   lại thành chào, {tên} dùng font libre") — BỎ avatar chữ cái và số điện thoại che; dòng tên
+   thành lời chào "Chào, {tên}" ở .t-block-title (Libre Bodoni 16/24 dưới skin-li — cùng bậc
+   với "Xin chào, …!" của tấm hover desktop). Dòng dưới giữ "Hạng Vàng" (user chỉ bảo bỏ số
+   điện thoại). initialOf() nay không còn chỗ gọi, giữ lại phòng khi avatar quay lại.
+   Bản EN: "Chào, {tên}" đi bằng luật trong I18N_RE; "Hạng Vàng" đã có khoá tĩnh.
+   28/09/2026 (lệnh user: "cho hạng đổi theo MEMBER_TIER luôn") — dòng hạng THÔI viết cứng
+   "Hạng Vàng": đọc TIER_VI[MEMBER_TIER] (khai cạnh MEMBER_TIER). Trước đây đổi hạng khách
+   thì thẻ hạng ở tab Thành viên đổi mà dòng này vẫn ghi Vàng. Giữ tên TIẾNG VIỆT như chữ
+   "Hạng Vàng" đang có; 3 tên mới có khoá EN riêng trong I18N. */
 const accUserHTML = () => `
-    <span class="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center t-lead shrink-0">${initialOf(PROFILE.name)}</span>
     <div class="flex-1 min-w-0">
-      <p class="t-lead text-foreground truncate">${PROFILE.name}</p>
-      <p class="t-single text-muted-foreground">${maskPhone(PROFILE.phone)} · Hạng Vàng</p>
+      <p class="t-block-title text-foreground truncate">Chào, ${PROFILE.name}</p>
+      <p class="t-single text-muted-foreground">Hạng ${TIER_VI[MEMBER_TIER] || TIER_VI.gold}</p>
     </div>`;
 
 /* Form đang mở trong tab Thông tin: '' | 'info' | 'pass'.
@@ -8288,11 +8317,12 @@ function accResetForms() { accEdit = ''; addrEdit = null; addrDel = null; accDra
 function screenACCOUNT() {
   return `
   <div class="w-full min-h-screen bg-background">
-    <!-- nav -->
-    <div class="h-12 flex items-center px-2 sticky top-0 bg-background z-20">
-      <button data-nav="plp" class="w-9 h-9 flex items-center justify-center press">${I.chevL}</button>
-      <p class="t-multiline flex-1 text-center font-medium text-foreground pr-9">Tài khoản</p>
-    </div>
+    <!-- HEADER CHUNG (28/09/2026, lệnh user: "vào account thì vẫn giữ cái header như mặc
+         định, không cần ẩn hết"). Trước đây màn này thay header bằng một thanh riêng: nút
+         lùi về PLP + chữ "Tài khoản" ở giữa — mất logo, tìm kiếm, giỏ hàng và menu. Nay dùng
+         lại navBar() như mọi màn khác: cao 48 và dính đầu trang, nên dải tab bên dưới
+         (sticky top-12 = 48) vẫn nằm sát ngay dưới header, không phải chỉnh gì thêm. -->
+    ${navBar()}
 
     <!-- user tóm tắt — 05/09/2026: lề về 16 (cả app chạy px-4; px-5 là 20, ngoài thang).
          Avatar 36 = đúng bậc control; ký tự về .t-lead 14/20 thay cho text-[18px] vốn
@@ -8305,8 +8335,13 @@ function screenACCOUNT() {
     </div>
 
     <!-- TABS ngang trên đầu (cuộn ngang) — lề 16, khe 24, kẻ về viền V2 #dfdfdf.
-         Vạch đang-chọn nay do .acc-tab::after vẽ, không còn span riêng. -->
-    <div id="accTabs" class="drag-x flex gap-6 overflow-x-auto no-scrollbar border-b border-border px-4 sticky top-12 bg-background z-10">
+         Vạch đang-chọn nay do .acc-tab::after vẽ, không còn span riêng.
+         28/09/2026 (lệnh user: "cái thanh bar ở account dùng background surface sticky nhé")
+         — nền từ trắng ĐẶC (bg-background) về token surface-sticky của Figma = white-alpha/95,
+         tức trắng 95% + mờ nền 7.5px: đúng cặp class của header navBar ngay phía trên, nên hai
+         thanh dính chồng nhau đọc ra CÙNG một mặt kính khi nội dung cuộn qua bên dưới. Vẫn
+         ghim sticky top-12, sát đáy header 48. -->
+    <div id="accTabs" data-tabs-center="acc" class="drag-x flex gap-6 overflow-x-auto no-scrollbar border-b border-border px-4 sticky top-12 glass-95 backdrop-blur-[7.5px] z-10">
       ${ACCOUNT_TABS.map(([id, label]) => `
         <button data-atab="${id}"${id===accountTab ? ' aria-current="true"' : ''} class="t-single acc-tab shrink-0 h-11 press" style="min-width:44px">${label}</button>`).join('')}
       <!-- 27/09/2026 (user) — BỎ chip "Theo dõi đơn hàng" khỏi dải tab Tài khoản: lối vào
@@ -8347,11 +8382,12 @@ function accountBody() {
      kiểu khác nhau, và tab `info` vào thẳng một thẻ viền không có gì neo ở trên.
      Tiêu đề khối "Địa chỉ" cũ đã gỡ khỏi accAddress(), nút "Thêm địa chỉ mới" dời
      lên đây — chỉ hiện khi ĐANG XEM SỔ, không hiện lúc form thêm/sửa đang mở. */
-  const themNut = accountTab === 'address' && addrEdit === null
-    ? '<button type="button" data-acc="addr-new" class="t-multiline h-12 px-8 shrink-0 bg-primary text-primary-foreground btn-p press">Thêm địa chỉ mới</button>'
-    : '';
+  /* 28/09/2026 (lệnh user: "ở bản mobile cái thêm địa chỉ mới nằm trên cùng danh sách địa
+     chỉ nhé") — nút THÔI đứng cùng hàng tiêu đề; nay là DÒNG ĐẦU của danh sách, rộng hết
+     cột (xem accAddress). Hàng tiêu đề của cả 4 tab về lại một khuôn chỉ có chữ.
+     Cùng ngày trước đó: nút đã đổi từ primary sang VIỀN (lệnh user). */
   return `
-    ${accHead(label, themNut)}
+    ${accHead(label)}
     ${body}`;
 }
 
@@ -8783,7 +8819,13 @@ function accAddress() {
          Câu hỏi xác nhận xoá nằm NGAY TRONG HÀNG, không mở thêm một lớp nổi: xoá một
          địa chỉ trong sổ không đáng để chặn cả màn hình, và app chưa có khuôn hộp
          thoại xác nhận nào — đẻ ra ở đây là đẻ một kiểu UI mới cho đúng một việc. -->
-    <div class="px-4 flex flex-col gap-6">
+    <div class="px-4 flex flex-col gap-4">
+      <!-- 28/09/2026 (lệnh user) — "Thêm địa chỉ mới" là DÒNG ĐẦU của danh sách, rộng hết cột,
+           nút VIỀN cùng khuôn nút thêm địa chỉ ở bước giao hàng (w-full h-12). Khe tới thẻ
+           đầu 16 (gap-4, trước là gap-6 = 24 từ thời sổ còn chia 2 nhóm): nút thuộc về danh
+           sách nên đứng sát nó hơn khoảng cách giữa các khối. Sổ trống thì nút vẫn ở trên
+           dòng nhắc. Chỉ vẽ khi đang XEM sổ — lúc form thêm/sửa mở, accAddress trả form. -->
+      <button type="button" data-acc="addr-new" class="t-multiline w-full h-12 border border-border bg-background text-foreground btn-o press">Thêm địa chỉ mới</button>
       <!-- 20/09/2026 (brief trang 48-49): sổ chia hai nhóm có nhãn riêng: Địa chỉ mặc
            định / Địa chỉ đã lưu. Mỗi địa chỉ là MỘT THẺ CÓ VIỀN (trước là hàng ngăn
            bằng kẻ) — brief vẽ vậy, và thẻ giúp cụm "Sửa | Xoá" bám đúng địa chỉ của nó.
@@ -8850,6 +8892,9 @@ const TIERS = [
    viên current của khách". */
 const MEMBER_TIER = 'gold';
 const MEMBER_SPEND = 142500000;
+/* 28/09/2026 — tên hạng tiếng Việt cho dòng "Hạng …" dưới lời chào (accUserHTML). Thẻ hạng
+   và bảng quyền lợi vẫn dùng TIERS[].ten (MEMBER/GOLD/…) như brief. */
+const TIER_VI = { member: 'Thành viên', gold: 'Vàng', platinum: 'Bạch kim', diamond: 'Kim cương' };
 let tierOpen = MEMBER_TIER;
 /* 26/09/2026 — dữ liệu cho panel hạng dựng theo Figma 756:108020.
    tierPerks: quyền lợi xếp HÀNG như khung (2 · 2 · 1), mục "—" bị bỏ và hàng rỗng bị
@@ -9732,7 +9777,15 @@ const HM_SHOW = { sale: false, stories: true, quickAdd: true, brandCards: false 
    chữ nướng nằm ở y 45..275 nên **cả 4 dòng + nút SHOP NOW còn nguyên**.
    Không cần `object-position` riêng: vùng chữ chỉ chiếm 231 hàng trong cửa sổ 295 hàng, nên
    mọi giá trị canh dọc đều giữ đủ chữ — để mặc định 50% 50%. */
-const HM_PROMO = { img: 'kv-sale.jpg', ratio: '375/150', alt: 'Final Clearance — giảm thêm 20%', cat: 'Khuyến mãi' };
+/* 3:1 TỪ 28/09/2026 (lệnh user: *"promo banner mobile xuống 3:1 nhé"*), thay 375/150 (5:2) ở trên — cùng lượt
+   đưa bản desktop về 8:1 cho tỉ lệ tròn số. Ở khổ 390 ô là 390x130 (375 -> 125), thấp đi 26px. File giao mới:
+   1200x400 (≈ ×3, ảnh có chữ nướng).
+   Ảnh đang có 736x314 (2,344) vào ô 3:1 chỉ giữ 245/314 hàng = 78%. Đo bằng PIL (L > 200): khối chữ chính
+   y 102..226, dòng "(*)T&CS" dọc ở mép phải y 274..296 — canh giữa (50% 50%) là CẮT dòng T&CS (thiếu 17
+   hàng). Canh ĐÁY (`pos: '50% 100%'`) giữ đủ cả hai: lề trên 33 hàng, lề dưới 17 hàng. Ảnh giao mới đúng
+   3:1 thì trả `pos` về '50% 50%'. */
+/* 28/09 chiều: ĐÃ THAY ảnh mới của khách 780x260 = đúng 3:1, không còn gì để cắt -> pos về 50% 50%. */
+const HM_PROMO = { img: 'home-promo-mobile.jpg', ratio: '3/1', pos: '50% 50%', alt: 'Final Clearance — giảm thêm 20%', cat: 'Khuyến mãi' };
 
 /* HERO — 4 SLIDE CÓ VAI (06/09/2026, feedback khách: 1 ecom camp + 3 brand day).
    Ô ĐỔI TỪ 4/3 SANG 1/1 và đây là quyết định về NGUỒN chứ không phải thẩm mỹ: 4 slide cần
@@ -9769,9 +9822,14 @@ const HM_PROMO = { img: 'kv-sale.jpg', ratio: '375/150', alt: 'Final Clearance �
    xuat lai anh, va CO CHO DAT NUT — anh nuong cua khach khong co nut nao.
    Cot thu 6 la DONG PHU; tam nao khach khong nuong dong phu thi de rong.
    POS de '50% 50%': anh 1080x1440 = 3/4 dung bang khung nen KHONG cat pixel nao. */
+/* 28/09/2026 (lệnh user, kèm 6 ảnh) — HERO THÀNH 2 KV SẠCH CỦA HÃNG, chữ vẽ bằng code (khai giống bản desktop):
+   slide 1 Versace · FALL WINTER 2026 · Photographed by Steven Meisel · [Shop now]
+   slide 2 Dolce&Gabbana · Spring / Summer 2027 · [Discover now]
+   3 cột thêm: HÃNG (logo = BRAND_PAGES.logo, đích bấm = trang của hãng qua data-hm-brand) · TIÊU ĐỀ · NHÃN NÚT.
+   Cột 3 nay là alt của ảnh + nhãn chấm chuyển slide. */
 const HM_HERO = [
-  ['top-kv-2.jpg', '50% 50%', 'The Parisian Colleagues', 'Quần áo',      'Brand day', ''],
-  ['top-kv-1.jpg', '50% 50%', 'New season loading',      'Sản phẩm mới', 'Ecom camp', "Fall's incredible fashion has arrived"],
+  ['home-{nganh}-hero-01-mobile.jpg', '50% 50%', 'Versace — Fall Winter 2026',           'Quần áo', 'Brand day', 'Photographed by Steven Meisel', 'Versace',       'FALL WINTER 2026',     'Shop now'],
+  ['home-{nganh}-hero-02-mobile.jpg', '50% 50%', 'Dolce&Gabbana — Spring / Summer 2027', 'Quần áo', 'Brand day', '',                              'Dolce&Gabbana', 'Spring / Summer 2027', 'Discover now'],
 ];
 
 /* NHAN NUT TREN HERO (08/09/2026, lenh user: *"o banner desktop va mobile hay cho title kem
@@ -9793,7 +9851,7 @@ function hmPromo() {
   if (!HM_PROMO) return '';
   return `
     <a data-hm-cat="${HM_PROMO.cat}" class="block w-full overflow-hidden bg-secondary cursor-pointer press" style="aspect-ratio:${HM_PROMO.ratio}">
-      <img src="${A}${HM_PROMO.img}" alt="${HM_PROMO.alt}" class="w-full h-full object-cover lazy">
+      <img src="${A}${HM_PROMO.img}" alt="${HM_PROMO.alt}" class="w-full h-full object-cover lazy" style="object-position:${HM_PROMO.pos || '50% 50%'}">
     </a>`;
 }
 
@@ -9811,27 +9869,32 @@ function hmHero() {
                menuTab = "Ecom camp", tuc tab menu va moi thu doc theo nganh deu chay tren mot
                gia tri khong ton tai. Bo thuoc tinh di la handler roi ve dung nhanh du phong
                hmFashionDept(). Doi ten bien thanh role cho khoi ai lai tuong no la nganh. -->
-          ${HM_HERO.map(([img, pos, alt, cat, role, sub]) => `
+          ${HM_HERO.map(([img, pos, alt, cat, role, sub, brand, title, cta]) => `
           <!-- TAM HERO GIO LA MOT KHUNG, KHONG CON LA MOT THE <a> (08/09/2026): trong tam
                co mot NUT rieng, ma nut long trong <a> la markup sai (nested interactive).
                <a> chi boc ANH, nut dung song song, ca hai tro cung mot danh muc. -->
           <div class="hm-hero-slide">
-            <a class="block cursor-pointer press" data-hm-cat="${cat}">
+            <a class="block cursor-pointer press" ${brand ? `data-hm-brand="${brand}"` : `data-hm-cat="${cat}"`}>
             <!-- KHUNG 3/4 (08/09/2026): anh khach giao la 1080x1440 = 3/4. Truoc la 1/1 —
                  con so do chot 06/09 bang bang do 4 tam kv-* cu, nay bo anh khac nen so cu
                  het hieu luc: de 1/1 la cat mat 25% chieu cao tam anh khach dung, ma phan
                  duoi chinh la cho khach nuong chu. Ti le 3/4 = 0 pixel bi cat. -->
             <div class="w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
-              <img src="${A}${img}" alt="${alt}" class="w-full h-full object-cover lazy" style="object-position:${pos}">
+              <img src="${A}${hmFile(img)}" alt="${alt}" class="w-full h-full object-cover lazy" style="object-position:${pos}">
               </div>
             </a>
             <!-- MANG PHU DI THEO TUNG TAM (xem chu thich ban desktop). Chu la chu ANH cua
                  khach nen deo data-i18n-skip. -->
             <span class="hm-hero-veil" aria-hidden="true"></span>
             <div class="hm-hero-copy">
-              <p class="text-[18px] font-medium leading-7 text-primary-foreground" data-i18n-skip>${alt}</p>
-              ${sub ? `<p class="t-multiline text-primary-foreground" data-i18n-skip>${sub}</p>` : ''}
-              <button data-hm-cat="${cat}" class="t-lead h-12 px-8 w-fit rounded-xs border border-border bg-background text-foreground btn-o btn-oi press">${HM_HERO_CTA}</button>
+              <!-- CỤM LOGO + TIÊU ĐỀ + DÒNG PHỤ bọc riêng (tối 28/09/2026, lệnh user): cụm cách nút 16,
+                   mọi khe trong cụm 8 — xem rule .hm-hero-text. -->
+              <div class="hm-hero-text">
+                ${brand && brandPage(brand).logo ? `<img src="${A}${brandPage(brand).logo}" alt="${brandPage(brand).name}" class="hm-hero-logo">` : ''}
+                <p class="text-[18px] font-medium leading-7 text-primary-foreground" data-i18n-skip>${title || alt}</p>
+                ${sub ? `<p class="t-multiline text-primary-foreground" data-i18n-skip>${sub}</p>` : ''}
+              </div>
+              <button ${brand ? `data-hm-brand="${brand}"` : `data-hm-cat="${cat}"`} class="t-lead h-12 px-8 w-fit rounded-xs border border-border bg-background text-foreground btn-o btn-oi press"${cta ? ' data-i18n-skip' : ''}>${cta || HM_HERO_CTA}</button>
             </div>
           </div>`).join('')}
         </div>
@@ -9905,10 +9968,10 @@ const HM_CAT_TITLE  = 'Đi trước một bước';
 const HM_SPOT_TITLE = 'Nhà mốt của mùa này';
 
 const HM_CATS = [
-  ['cat-rtw.jpg',     '50% 50%', 'Quần áo',  ''],
-  ['cat-bag.jpg',     '50% 50%', 'Túi xách', ''],
-  ['cat-shoes.jpg',   '50% 50%', 'Giày dép', ''],
-  ['cat-acc.jpg',     '50% 50%', 'Phụ kiện', ''],
+  ['home-{nganh}-category-01.jpg', '50% 50%', 'Quần áo',  ''],
+  ['home-{nganh}-category-02.jpg', '50% 50%', 'Túi xách', ''],
+  ['home-{nganh}-category-03.jpg', '50% 50%', 'Giày dép', ''],
+  ['home-{nganh}-category-04.jpg', '50% 50%', 'Phụ kiện', ''],
   ['b1.jpg',          '50% 45%', 'Làm đẹp',  'Làm đẹp'],
   ['hero-holiday.jpg','50% 50%', 'Quà tặng', ''],
 ];
@@ -9925,6 +9988,15 @@ const hmFashionDept = () => (menuTab === 'Làm đẹp' ? 'Nam' : menuTab);
    khác nhau (`dkDept` ở bản desktop vì có hàng nav ngành hàng; `menuTab` ở bản mobile vì
    ngành nằm ở hàng tab trong drawer) — bọc lại để phần trang chủ khai GIỐNG HỆT 2 file. */
 const hmDeptNow = () => menuTab;
+
+/* TÊN FILE ẢNH THEO VỊ TRÍ Ô (28/09/2026, lệnh user: *"đặt chung chung vị trí được rồi, để replace thay vì
+   gắn lại link"* + *"rename luôn cái thực tế của mình"*). Mỗi ô ảnh trang chủ có MỘT tên cố định — đổi chiến
+   dịch thì thay file cùng tên, không sửa code. Quy tắc + bảng tên: sheet "Kích thước hình ảnh" (Bảng 4) và
+   _notes/KICH-THUOC-HINH-ANH-2026-09-28.md (có bảng tên cũ -> tên mới).
+   '{nganh}' trong tên = men / women theo ngành đang xem (Làm đẹp rơi về men, như hmFashionDept), nên khối
+   riêng từng ngành có 2 bộ file — hiện hai bộ là bản sao nhau, khách giao ảnh riêng thì thay từng bộ. */
+const hmNganh = () => (hmFashionDept() === 'Nữ' ? 'women' : 'men');
+const hmFile = f => f.replace('{nganh}', hmNganh());
 
 /* ĐÃ GỠ 09/09/2026 — `hmLabelUp()`, công tắc "ngành Nữ đi hệ chữ riêng".
    Lệnh user: *"bản nữ tôi đang demo lung tung, giờ clone từ bản Nam ra rồi demo"*.
@@ -9944,7 +10016,7 @@ function hmCatTiles() {
           <!-- KHUNG 3/4 thay aspect-square (08/09/2026): anh khach giao 1080x1440. Giu
                vuong la cat 25% chieu cao anh cua khach. -->
           <div class="hm-cat-media w-full overflow-hidden ${img === 'b1.jpg' ? 'bg-accent-0' : 'bg-secondary'}" style="aspect-ratio:3/4">
-            <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]" style="object-position:${pos}">
+            <img src="${A}${hmFile(img)}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]" style="object-position:${pos}">
             <span class="hm-cat-scrim" aria-hidden="true"></span>
             <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>
           </div>
@@ -9994,7 +10066,7 @@ const HM_MAISON_COPY = '';
    `object-cover` sẽ cắt bớt HAI MÉP TRÁI/PHẢI, không cắt trên/dưới: người mẫu nằm giữa
    khung nên không mất mặt. Đây là ảnh WEBP ĐẦU TIÊN trong assets (trước đó toàn jpg/png);
    giữ nguyên định dạng vì nhẹ hơn và mọi trình duyệt đích đều đọc được. */
-const HM_SPOT_IMG = 'hm-spot-maison.webp';
+const HM_SPOT_IMG = 'home-{nganh}-spotlight.webp';
 
 /* ── THƯƠNG HIỆU NỔI BẬT — "Featured brands" ─────────────────────────────
    Feedback khách 06/09: 1 spotlight block + 1 block dưới là sản phẩm của chính bộ đó.
@@ -10073,12 +10145,12 @@ const HM_SPOT_BRANDS = ['Balmain', 'Versace'];
    `brand-spotlight-2` GỠ khỏi ô Dolce&Gabbana: mock của user cho biết tấm đó là **Balmain**,
    nên gán cho D&G là dán sai hãng. Nó nằm chờ ở `assets/` tới khi có logo Balmain.
    `brand-spotlight-3` giữ cho Versace — tấm đó khắc chữ VERSACE trên món kim khí. */
-const HM_SPOT_BRAND_IMG = {
-  'Versace': 'brand-spotlight-3.jpg',
-  'Balmain': 'brand-spotlight-2.jpg',
-  /* 'Ferragamo': '<ảnh khách sẽ gửi>' — khi có thì thêm vào đây VÀ cho Ferragamo lên
-     spotlight theo mock; lúc đó roster ô nhỏ gọn lại đúng 2 ô Balmain + Versace. */
-};
+/* 28/09/2026 — THEO VỊ TRÍ Ô, không theo tên hãng: ô 1 (đang là Balmain) = ...-brand-01, ô 2 (Versace) =
+   ...-brand-02. Đổi hãng trong HM_SPOT_BRANDS thì chỉ thay file, không sửa bảng này. */
+const HM_SPOT_BRAND_IMG = [
+  'home-{nganh}-spotlight-brand-01.jpg',
+  'home-{nganh}-spotlight-brand-02.jpg',
+];
 
 /* ĐÃ GỠ 15/09/2026 — `HM_SPOT_BRAND_LOGO` (bảng đè file logo cho ô thương hiệu). Lệnh user:
    *"k dùng png nữa dùng font ghi chữ như mục cate ở trên của homepage luôn"*. Khối này nay
@@ -10090,7 +10162,7 @@ function hmSpotBrands(avoidImg) {
      Nữ đọc `HM_SPOT_BRANDS_NU` và thêm class lưới 3 cột; cả hai đã hết việc: 2 bảng hãng
      TRÙNG NHAU từ 08/09 (cùng `['Balmain', 'Versace']`), nên trên bản Nữ desktop đo được
      2 ô nằm trong lưới 3 cột — hàng bỏ trống đúng một phần ba bề ngang. */
-  const tiles = HM_SPOT_BRANDS.map(name => {
+  const tiles = HM_SPOT_BRANDS.map((name, i) => {
     /* `|| { name }` để một hãng CHƯA có trong `BRAND_PAGES` vẫn dựng được ô — cần cho
        Ferragamo/Balmain của mock, hai hãng demo chưa có dữ liệu. Chốt chặn nay chỉ hỏi
        ĐỦ ẢNH VÀ ĐỦ LOGO, không hỏi số sản phẩm nữa: ô theo mock không in số sản phẩm, nên
@@ -10103,7 +10175,7 @@ function hmSpotBrands(avoidImg) {
        luôn"*, nối tiếp chốt 08/09 *"versace cho demo bằng text cũng được"*). Số sản phẩm
        cũng không đòi (ô không in số). */
     const B = brandPage(name);
-    const hero = HM_SPOT_BRAND_IMG[name] || B.hero;
+    const hero = HM_SPOT_BRAND_IMG[i] ? hmFile(HM_SPOT_BRAND_IMG[i]) : B.hero;
     if (!hero) return '';
     /* Ô KHÔNG ĐƯỢC ĐI ĐÚNG TẤM ẢNH CỦA SPOTLIGHT. Bẫy thật: `BRAND_PAGES['Versace'].hero`
        là `p1-1.jpg`, đúng tấm mà spotlight đang dùng — nên ở bản Nữ (có ô Versace) hai tầng
@@ -10151,7 +10223,7 @@ function hmMaison() {
   const spot = all[0], list = all.slice(1, 4);
   /* Ảnh spotlight: ưu tiên `HM_SPOT_IMG`. Không có thì rơi về ảnh người mẫu của SP đầu —
      nhưng lúc đó hãng BUỘC phải có SP, đúng cái bẫy ngủ ghi ngay dưới. */
-  const spotImg = HM_SPOT_IMG || (spot && spot.p.model);
+  const spotImg = HM_SPOT_IMG ? hmFile(HM_SPOT_IMG) : (spot && spot.p.model);
   const spotAlt = HM_SPOT_IMG ? HM_MAISON : (spot && spot.p.name);
   /* Điều kiện dựng phải THEO NHÁNH đang bật. Trước đây luôn đòi 3 sản phẩm, kể cả khi tầng 2
      là 2 ô thương hiệu — bẫy ngủ: đổi HM_MAISON sang một hãng chỉ có 1-2 ảnh người mẫu là cả
@@ -10273,8 +10345,8 @@ const HM_OCCASIONS = [
      denim, ma nhan o day dang la 'Denim'. */
   /* 'Mua ngay' và 2 nhãn ô KHÔNG cần khoá i18n mới: 'Mua ngay' -> 'Shop now' đã có sẵn
      (chính nút của khối spotlight đang dùng), 'Dạo phố' và 'Điểm nhấn' cũng đã có. */
-  ['shop-by-2-clean.jpg', 'Trở lại công việc', 'Một góc nhìn mới cho trang phục công sở', 'Mua ngay',       'Quần áo'],
-  ['shop-by-3-clean.jpg', 'Tâm điểm: Denim',   'Món đồ căn bản cho mọi tủ áo',            'Xem tuyển chọn', 'Quần áo'],
+  ['home-{nganh}-occasion-01.jpg', 'Trở lại công việc', 'Một góc nhìn mới cho trang phục công sở', 'Mua ngay',       'Quần áo'],
+  ['home-{nganh}-occasion-02.jpg', 'Tâm điểm: Denim',   'Món đồ căn bản cho mọi tủ áo',            'Xem tuyển chọn', 'Quần áo'],
   /* Ô THỨ BA (09/09/2026, lệnh user kèm ảnh: *"time for a trech thêm 1 thẻ nữa nhé, nội dung
      là Spotlight / the chicest way to stay cool this season with satin and more."*).
      ẢNH LÀ TẤM CỦA CHÍNH ĐOẠN CHỮ ĐÓ: user gửi kèm `shop-by-1.jpg` — bản khách NƯỚNG CHỮ của
@@ -10293,7 +10365,7 @@ const HM_OCCASIONS = [
      nên từ lượt này trang chủ bày tấm đó HAI LẦN (ô này 1/1, khối spotlight cắt băng ngang
      canh trên). Không tự đổi ảnh khối spotlight vì user vừa duyệt khối đó lượt trước — đã báo
      và chờ chốt. Đây là chỗ dùng ĐÚNG của tấm: nó là ô thứ 3 của chính bộ occasion khách giao. */
-  ['shop-by-1-clean.jpg', 'Tâm điểm',          'Nét thanh lịch mát mẻ nhất cho mùa này, cùng chất satin và hơn thế nữa.', 'Khám phá thêm', 'Quần áo'],
+  ['home-{nganh}-occasion-03.jpg', 'Tâm điểm',          'Nét thanh lịch mát mẻ nhất cho mùa này, cùng chất satin và hơn thế nữa.', 'Khám phá thêm', 'Quần áo'],
   ['p3-1.jpg',  'Dạo phố',             '', '', 'Túi xách'],
   ['p10-1.jpg', 'Điểm nhấn',           '', '', 'Phụ kiện'],
 ];
@@ -10363,7 +10435,7 @@ function hmOccasions() {
         ${HM_OCCASIONS.slice(0, HM_OCC_COUNT).map(([img, label, sub, cta, cat]) => `
         <button data-hm-cat="${cat}" class="hm-occ-item flex flex-col press group text-left">
           <div class="hm-cat-media w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
-            <img src="${A}${img}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
+            <img src="${A}${hmFile(img)}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
             <span class="${sub ? 'hm-occ-scrim' : 'hm-cat-scrim'}" aria-hidden="true"></span>
             ${sub ? `
             <div class="hm-occ-copy">
@@ -10452,9 +10524,9 @@ ${'            '}${HM_USP.map(([ico, label]) => `
    chụp, và cái thứ nhất lấy nguyên văn một dòng trong PROMO_MESSAGES của chính demo. Khách
    cấp bài thật thì thay cả 3 (ảnh + nhãn + tiêu đề + đích bấm). KHAI GIỐNG HỆT bản desktop. */
 const HM_STORIES = [
-  ['kv-men-9.jpg',   '42% 50%', 'Thương hiệu', 'Stefano Ricci đã có mặt tại DAFC Online', 'Phụ kiện'],
-  ['kv-women-6.jpg', '50% 42%', 'Bộ sưu tập',  'Bộ sưu tập AW26',                         'Sản phẩm mới'],
-  ['kv-women-5.jpg', '50% 50%', 'Thương hiệu', 'Bộ sưu tập denim MCM',                    'Quần áo'],
+  ['home-story-01.jpg',   '42% 50%', 'Thương hiệu', 'Stefano Ricci đã có mặt tại DAFC Online', 'Phụ kiện'],
+  ['home-story-02.jpg', '50% 42%', 'Bộ sưu tập',  'Bộ sưu tập AW26',                         'Sản phẩm mới'],
+  ['home-story-03.jpg', '50% 50%', 'Thương hiệu', 'Bộ sưu tập denim MCM',                    'Quần áo'],
   /* HAI MẨU THÊM 07/09/2026 để đủ 5 bài một hàng (lệnh user). Vẫn KHÔNG bịa tiêu đề bài:
      cả hai lấy nguyên chuỗi của `MENU_NEW_COLLECTIONS` — bộ 3 tên bộ sưu tập đến từ menu
      THẬT của shop.dafc.com.vn, tức đúng vai "tiêu đề bài" hơn mọi chuỗi khác trong kho.
@@ -10466,8 +10538,8 @@ const HM_STORIES = [
      (kv-women-1 là 1,11 -> giữ 83% chiều cao; kv-men-8 là 1,78 -> giữ 75% bề ngang). Xem
      mắt rồi canh lại nếu lệch chủ thể.
      Có bài thật thì thay data, không phải sửa khối. */
-  ['kv-women-1.jpg', '50% 50%', 'Bộ sưu tập', 'Dolce&Gabbana: Maiolica 2026',            'Quần áo'],
-  ['kv-men-8.jpg',   '50% 50%', 'Bộ sưu tập', 'Stefano Ricci: The Lifestyle Sartorial',  'Phụ kiện'],
+  ['home-story-04.jpg', '50% 50%', 'Bộ sưu tập', 'Dolce&Gabbana: Maiolica 2026',            'Quần áo'],
+  ['home-story-05.jpg',   '50% 50%', 'Bộ sưu tập', 'Stefano Ricci: The Lifestyle Sartorial',  'Phụ kiện'],
 ];
 
 function hmStories() {
@@ -10476,10 +10548,15 @@ function hmStories() {
      `hmSec` đã mở cho khối "Hàng mới về", nên 0 CSS mới.
      KHÔNG CÓ CTA: chỗ `right` của `hmSec` vốn đã là chuỗi rỗng từ lúc dựng khối 06/09, nên
      yêu cầu này không phải sửa gì — ghi ra để lượt sau đừng thêm nút vào.
+     ⚠ ĐẢO 28/09/2026 (lệnh user: *"ở section blog thì cho nút xem tất cả tương tự các section
+     trên"*): nay CÓ CTA, dùng lại hmLink như 3 mục trên (khuôn canh giữa tự đặt nó dưới dòng
+     trưng bày). Demo CHƯA CÓ trang danh sách Blog nên nút bắn data-toast, đúng khuôn "chỗ
+     chưa có trang" của demo: nút vẫn phản hồi, không phải nút chết. Có trang thật thì đổi
+     attribute thành đích điều hướng, không phải sửa khuôn.
      NHÃN NHỎ = 'Blog' (chính chữ user gọi), DÒNG TRƯNG BÀY = tiêu đề khối đã có. Không đẻ
      chuỗi mới, và 'Blog' viết y nhau ở 2 ngôn ngữ nên KHÔNG cần khoá i18n. */
   return hmSec('Câu chuyện tại DAFC',
-    '',
+    hmLink('Xem tất cả', 'data-toast="Xem tất cả bài viết"'),
     `<div class="hm-stories drag-x overflow-x-auto no-scrollbar px-4">
         ${HM_STORIES.map(([img, pos, eyebrow, title, cat]) => `
         <button data-hm-cat="${cat}" class="hm-story flex flex-col gap-2 press group text-left">
@@ -10587,7 +10664,7 @@ const HM_INSTA = {
   per: 6,
   imgs: [
     /* Trang 1 — ảnh KV chiến dịch (xem ghi chú chọn ảnh bằng aHash ở trên). */
-    'kv-women-3.jpg', 'kv-men-5.jpg', 'kv-men-1.jpg', 'kv-gift.jpg', 'kv-men-3.jpg', 'kv-men-6.jpg',
+    'home-instagram-01.jpg', 'home-instagram-02.jpg', 'home-instagram-03.jpg', 'home-instagram-04.jpg', 'home-instagram-05.jpg', 'home-instagram-06.jpg',
     /* Trang 2 (07/09/2026) — SINH RA TỪ CHÍNH LỆNH "hiện 2 nút trái phải để chuyển": 6 ô lấp
        kín bề ngang rồi thì 2 nút chỉ có việc nếu có trang thứ hai. Kho KV đã hết chỗ (17 tấm
        cho 17 ô, xem báo cáo §8.26 E), nên trang 2 lấy từ kho ảnh SẢN PHẨM — và nó vừa khít:
@@ -10598,7 +10675,7 @@ const HM_INSTA = {
        model của khối Gợi ý mua kèm (đuôi -1/-2 trong bảng), nên không lặp gì trên trang chủ.
        Xếp theo nền màu để 2 ô cạnh nhau không cùng tông: tối · sáng · đỏ sẫm · hồng · đất · tối.
        ⚠ Vẫn là ảnh MƯỢN, không phải bài Instagram thật — có nội dung thật thì thay mảng này. */
-    'z1-3.jpg', 'z3-4.jpg', 'p8-3.jpg', 'z8-3.jpg', 'z10-4.jpg', 'd4-2.jpg',
+    'home-instagram-07.jpg', 'home-instagram-08.jpg', 'home-instagram-09.jpg', 'home-instagram-10.jpg', 'home-instagram-11.jpg', 'home-instagram-12.jpg',
   ],
 };
 
@@ -10675,7 +10752,9 @@ function hmSignup() {
                  class="t-lead border rounded-xs bg-background px-2 text-foreground outline-none focus:border-primary transition-colors">
           <label for="hmNlEmail" class="text-muted-foreground">Nhập email</label>
         </div>
-        <button data-toast="Đăng ký nhận tin" class="t-lead h-12 px-5 w-fit shrink-0 rounded-xs bg-primary text-primary-foreground btn-p press">Đăng ký</button>
+        <!-- 28/09/2026 — nút THÔI hiện toast: bấm là kiểm email rồi mở màn xác nhận đăng ký
+             (lớp phủ nlDoneSheet, xem khối cùng tên gần cuối file). -->
+        <button data-nl-submit class="t-lead h-12 px-5 w-fit shrink-0 rounded-xs bg-primary text-primary-foreground btn-p press">Đăng ký</button>
       </div>
       <p class="t-single text-muted-foreground">Bằng việc đăng ký, bạn đồng ý với Chính sách bảo mật của DAFC.</p>
       </div>
@@ -10691,14 +10770,22 @@ function hmSignup() {
            Khung 358/140 = ti le anh -> cat 0 pixel. Tu 10/09 anh cham 2 mep ben (bang thoi
            co dem) nen o kho 390 no rong dung 358 = KHIT 1,00x, truoc la 326 / thu 0,91x. -->
       <a data-nav="login" class="hm-signup-photo bg-secondary cursor-pointer press" aria-label="Đặc quyền thành viên DAFC">
-        <img src="${A}subscription-banner.jpg" alt="" class="w-full h-full object-cover lazy">
+        <img src="${A}home-newsletter-mobile.jpg" alt="" class="w-full h-full object-cover lazy">
       </a>
       </div>
     </div>`;
 }
 
 function screenHOME() {
-  const news  = hmNew();
+  /* 28/09/2026 (lệnh user: *"hiện tên sản phẩm và giá lại (ở đây k có giá giảm) chỉ có sản
+     phẩm nguyên giá"*): dải Bộ sưu tập ở trang chủ CHỈ lấy SP NGUYÊN GIÁ. Lọc ở CHỖ GỌI, không
+     sửa hmNew(): nút "Xem tất cả" vẫn mở PLP Sản phẩm mới đủ mọi món, kể cả món đang giảm.
+     Kho hiện có 8 SP New arrival, 1 món giảm 20% (d3-0 chân váy Carretto) nên dải còn 7 thẻ.
+     Dải gọi hmRail(news, { noBrand: true, noName: false, noQuick: true }) — noName: false ghi đè
+     mặc định noName: true của hmRail để dòng tên SP hiện lại; noQuick: true (tối 28/09, lệnh user:
+     *"ở bst mới thì không có quick add luôn"*) tắt nút giỏ tròn và lớp size rê chuột của RIÊNG dải
+     này — công tắc chung HM_SHOW.quickAdd vẫn bật cho các dải khác của trang chủ. */
+  const news  = hmNew().filter(({ p }) => !p.off && !p.was);
   const sales = hmSale();
   return `
   <div class="w-full" data-scroller>
@@ -10726,7 +10813,7 @@ function screenHOME() {
 
     ${news.length ? hmSec(HM_NEW_LINE,
       hmLink('Xem tất cả', 'data-hm-cat="Sản phẩm mới"'),
-      hmRail(news, { noPrice: true }),
+      hmRail(news, { noBrand: true, noName: false, noQuick: true }),
       'h1', 'Hàng mới về') : ''}
 
     <!-- KHỐI DANH MỤC THÔI CÓ TIÊU ĐỀ VÀ CTA (07/09/2026, lệnh user) — xem ghi chú cùng
@@ -15752,7 +15839,7 @@ function screenPOLICY(key) {
            khong con gi bi cat — giu lai la hai loi cung lam mot viec.
            Bo luon "relative z-30": lop do dung RIENG de dropdown khong bi cac
            block .rise phia sau ve de len, nay khong con gi de de. -->
-      <div class="pol-tabs drag-x flex gap-6 overflow-x-auto no-scrollbar border-b border-border px-4 rise">
+      <div data-tabs-center="pol" class="pol-tabs drag-x flex gap-6 overflow-x-auto no-scrollbar border-b border-border px-4 rise">
         ${POLICY_TABS.map(([k, label]) => k === key
           ? `<span aria-current="true" class="t-single acc-tab h-11 shrink-0 whitespace-nowrap flex items-center">${label}</span>`
           /* ⚠ text-left gan kem cho DONG BO voi cot muc luc ban desktop (cung ngay).
@@ -16629,6 +16716,8 @@ const I18N = {
   'Giới tính':'Gender', 'Ngày sinh':'Date of birth', 'Chỉnh sửa thông tin':'Edit profile',
   'Thêm địa chỉ mới':'Add new address', '+ Thêm địa chỉ mới':'+ Add new address',
   'Địa chỉ nhận hàng':'Delivery address', 'Hạng Vàng':'Gold tier', 'Chi tiêu tích lũy':'Lifetime spend',
+  /* 28/09/2026 — 3 hạng còn lại của dòng "Hạng …" dưới lời chào (TIER_VI). */
+  'Hạng Thành viên':'Member tier', 'Hạng Bạch kim':'Platinum tier', 'Hạng Kim cương':'Diamond tier',
   'Đặc quyền hạng Vàng':'Gold tier benefits', 'Giảm 4% cho mọi đơn hàng':'4% off every order',
   'Miễn phí giao hàng nội thành':'Free inner-city delivery',
   'Ưu tiên tiếp cận bộ sưu tập mới':'Early access to new collections',
@@ -17127,7 +17216,13 @@ const I18N = {
   'Mua theo danh mục':'Shop by category', 'Tất cả danh mục':'All categories',
   'Nhà mốt trong ngày':'Maison of the day', 'Thương hiệu tại DAFC':'Brands at DAFC',
   'Đăng ký nhận tin':'Newsletter sign-up',
-  'Xem tất cả':'See all', 'Xem tất cả sản phẩm':'View all products',
+  /* 28/09/2026 — màn xác nhận đăng ký nhận tin (nlDoneSheet). */
+  'Cảm ơn bạn đã đăng ký nhận tin':'Thank you for signing up to our newsletter',
+  'Chúng tôi đã gửi email kèm đường dẫn xác nhận đến':'We have sent an email with a confirmation link to',
+  'Để hoàn tất đăng ký, vui lòng bấm vào đường dẫn xác nhận trong email. Nếu không nhận được email, bạn hãy kiểm tra thư mục thư rác (Spam).':'To complete the sign-up, please click the confirmation link in the email. If you do not receive it, please check your spam folder.',
+  'Cảm ơn bạn và chúc bạn mua sắm vui vẻ cùng DAFC.':'Thank you and enjoy shopping with DAFC.',
+  'Vui lòng nhập email':'Please enter your email',
+  'Xem tất cả':'See all', 'Xem tất cả sản phẩm':'View all products', 'Xem tất cả bài viết':'See all stories',
   'Bộ sưu tập dành cho nam':'The menswear collection',
   'Bộ sưu tập dành cho nữ':'The womenswear collection',
   'Ưu đãi mùa hè':'Summer offers',
@@ -17190,6 +17285,8 @@ const I18N_RE = [
      tĩnh: in số vào khoá thì đổi số một cái là chết dịch. */
   [/^(\S+ \*\*\* \d+) · Hạng Vàng$/, '$1 · Gold tier'],
   [/^≈ (.+) giá trị quy đổi$/, '≈ $1 in value'],
+  /* 28/09/2026 — lời chào ở menu mobile khi đã đăng nhập ("Chào, {tên}"). */
+  [/^Chào, (.+)$/,                   'Hi, $1'],
   [/^(\d+) cửa hàng$/,                '$1 stores'],
   [/^(\d+) sản phẩm$/,                '$1 products'],
   /* Tiêu đề mục hàng ở chi tiết đơn: trước 06/09 chỉ có khoá tĩnh cho (1) và (2) nên
@@ -17264,6 +17361,7 @@ const I18N_REV_RE = [
   /* Màn Tài khoản (05/09/2026) — chiều ngược của 2 luật cùng tên bên I18N_RE. */
   [/^(\S+ \*\*\* \d+) · Gold tier$/, '$1 · Hạng Vàng'],
   [/^≈ (.+) in value$/, '≈ $1 giá trị quy đổi'],
+  [/^Hi, (.+)$/,                     'Chào, $1'],
   [/^(\d+) stores$/,                  '$1 cửa hàng'],
   [/^(\d+) products$/,                '$1 sản phẩm'],
   [/^Items \((\d+)\)$/,               'Sản phẩm ($1)'],
@@ -17406,6 +17504,46 @@ function restoreScrollY(y) {
   setTimeout(put, 80); setTimeout(put, 250);
 }
 
+/* ── ĐƯA TAB ĐANG CHỌN VÀO GIỮA DẢI TAB CUỘN NGANG (28/09/2026) ──
+   Lệnh user, phương án B: "làm theo phương án B, áp luôn cho trang Chính sách". Áp cho các
+   dải gắn data-tabs-center: tab trang Tài khoản (#accTabs, "acc") và tab trang Chính sách
+   (.pol-tabs, "pol"). Đo trước khi vá, khổ 375, dải Tài khoản dài 489: bấm "Hạng thành viên
+   & Ưu đãi" thì dải đứng im, tab đang chọn vẫn bị cắt mép phải; mở một đơn rồi Back thì dải
+   dựng lại ở vị trí 0 và tab "Đơn hàng" đang chọn khuất 100%.
+   Căn GIỮA chứ không kéo vừa đủ (kiểu 'nearest' cũ của trang Chính sách): kéo vừa đủ tới tab
+   3 là đẩy tab 4 ra khỏi màn, khách mất dấu hiệu còn tab. Căn giữa luôn chừa chỗ cho tab bên
+   cạnh ló ra; về hai đầu dải thì kẹp lại (tab đầu/cuối không ra giữa được).
+   Chỉ cuộn NGANG chính dải, KHÔNG dùng scrollIntoView: hàm đó kéo cả trang theo chiều dọc.
+   smooth = true khi khách bấm; lúc dựng màn thì đặt thẳng, không hoạt ảnh. */
+function centerActiveTab(bar, smooth) {
+  const t = bar && bar.querySelector('[aria-current]');
+  if (!t) return;
+  const max = bar.scrollWidth - bar.clientWidth;
+  if (max <= 0) return;
+  const br = bar.getBoundingClientRect(), tr = t.getBoundingClientRect();
+  const mid = br.left + bar.clientLeft + bar.clientWidth / 2;
+  const left = Math.round(Math.max(0, Math.min(max, bar.scrollLeft + (tr.left + tr.right) / 2 - mid)));
+  if (Math.abs(left - bar.scrollLeft) < 1) return;
+  if (smooth) bar.scrollTo({ left, behavior: 'smooth' });
+  else bar.scrollLeft = left;
+}
+/* Mỗi tab Chính sách là một MÀN riêng: bấm là go() dựng lại cả dải, dải mới nằm ở 0. Handler
+   bấm (wire, khối .pol-tabs) ghi độ cuộn của dải CŨ vào đây; màn mới đặt dải về đúng chỗ đó
+   rồi mới TRƯỢT tab vừa bấm vào giữa, cùng cảm giác với dải Tài khoản (dải đó không bị dựng
+   lại nên trượt thẳng). Hạn 1,5 giây: cú bấm bị bộ kéo chuột nuốt (vừa kéo xong) thì giá trị
+   không bị dùng oan cho một lần vào trang về sau. go() gọi centerTabBars SAU localizeNew vì
+   nhãn tiếng Anh dài ngắn khác, tâm của tab đổi theo. */
+let TAB_BAR_FROM = null;
+function centerTabBars(el) {
+  const from = TAB_BAR_FROM; TAB_BAR_FROM = null;
+  el.querySelectorAll('[data-tabs-center]').forEach(bar => {
+    if (from && from.key === bar.dataset.tabsCenter && Date.now() - from.t < 1500) {
+      bar.scrollLeft = from.left;
+      centerActiveTab(bar, true);
+    } else centerActiveTab(bar, false);
+  });
+}
+
 function go(name, opts = {}) {
   /* `opts.force` (07/09/2026): dựng LẠI đúng màn đang đứng. Cần cho trang chủ theo
      ngành hàng — đứng ở `home` bấm "Nữ" thì tên màn không đổi nên chốt chặn dưới đây
@@ -17446,6 +17584,7 @@ function go(name, opts = {}) {
   current = name;
   wire(el);
   localizeNew(el);
+  centerTabBars(el);   // dải tab cuộn ngang: tab đang chọn vào giữa (xem centerActiveTab)
   if (name === 'done') confetti();
 
   // Đồng bộ với History API của trình duyệt: mỗi lần đi TỚI một màn mới
@@ -18442,6 +18581,8 @@ function wire(root) {
         if (x.dataset.atab === accountTab) x.setAttribute('aria-current', 'true');
         else x.removeAttribute('aria-current');
       });
+      /* 28/09/2026 (phương án B) — tab vừa bấm TRƯỢT vào giữa dải, xem centerActiveTab. */
+      centerActiveTab(btn.closest('[data-tabs-center]'), true);
       const body = root.querySelector('#accBody');
       /* localizeNew: bản này trước đây KHÔNG gọi, nên ở LANG='en' đổi tab xong cả h1
          lẫn ruột trở về tiếng Việt. Thêm cho khớp bản desktop. */
@@ -18449,6 +18590,12 @@ function wire(root) {
          Đăng xuất nhận thêm một listener MỖI lượt đổi tab (đo trên desktop 22/09: 3 lượt ->
          một click gọi go() 8 lần; mobile cùng code). Chỉ ruột tab là phần tử mới. */
       if (body) { body.innerHTML = accountBody(); wire(body); localizeNew(body); }
+      /* 28/09/2026 (lệnh user: "làm theo phương án A cả 2 bản luôn đi") — đổi tab là cuộn về
+         ĐẦU TRANG, y như go() lúc mới vào màn, nên tiêu đề tab mới luôn đứng đúng một chỗ.
+         Trước đó trang giữ nguyên độ cuộn của tab cũ: cuộn dở ở "Đơn hàng" rồi bấm "Sổ địa
+         chỉ" là tiêu đề khuất phía trên, khách rơi thẳng vào giữa danh sách. Bấm lại chính
+         tab đang mở cũng về đầu trang. Cuộn TỨC THÌ: html không khai scroll-behavior. */
+      window.scrollTo(0, 0);
     });
   });
   // Đăng xuất từ trang account
@@ -18620,7 +18767,12 @@ function wire(root) {
       if (btnBusy(btn)) return;
       const html = btn.innerHTML;
       btn.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-opacity=".25" stroke-width="2"/><path d="M14.5 8A6.5 6.5 0 0 0 8 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-      const back = loginFrom || 'checkout'; // luôn trả về đúng màn đã mở đăng nhập, không ép về checkout
+      /* 28/09/2026 (lệnh user: "bản mobile sau khi đăng nhập xong thì cho vô trang account luôn")
+         — đăng nhập xong vào THẲNG màn Tài khoản, không trả về màn đã mở đăng nhập nữa.
+         NGOẠI LỆ giữ nguyên đường về cũ: đăng nhập mở ra từ LUỒNG MUA (giỏ · thanh toán) hoặc
+         từ một ĐƠN HÀNG bị chặn vì chưa đăng nhập — đẩy sang Tài khoản lúc đó là bẻ ngang việc
+         khách đang làm dở. Nhánh đăng ký (màn Đăng ký thành công → "Tiếp tục mua sắm") không đổi. */
+      const back = ['checkout', 'cart', 'order'].includes(loginFrom) ? loginFrom : 'account';
       setTimeout(() => { btn.innerHTML = html; btnDone(btn); authView = 'login'; go(back); toast(back === 'checkout' ? 'Đăng nhập thành công' : 'Đã đăng nhập · UserOne'); }, 700);
     });
   });
@@ -18944,10 +19096,16 @@ function wire(root) {
   // 'privacy' thi tab dang chon hien 0% — nam han ngoai man, khach khong thay
   // minh dang o dau. Voi 3 tab thi cai te nhat con hien 64% nen tam bo qua duoc,
   // 11 tab thi khong.
-  // `inline: 'nearest'` de no chi keo vua du, khong giat ca trang; `block: 'nearest'`
-  // de KHONG cuon doc — day la dai cuon NGANG, dung block khac la trang nhay len.
-  const polTab = root.querySelector('.pol-tabs [aria-current]');
-  if (polTab) { try { polTab.scrollIntoView({ inline: 'nearest', block: 'nearest' }); } catch (e) {} }
+  // 28/09/2026 (lệnh user, phương án B: "áp luôn cho trang Chính sách") — THÔI kéo vừa đủ
+  // bằng scrollIntoView 'nearest': nay tab đang chọn vào GIỮA dải, và việc đó do go() làm
+  // SAU khi dịch (centerTabBars; dải mang data-tabs-center="pol"). Kéo vừa đủ tới một tab
+  // gần cuối là đẩy các tab sau nó ra khỏi màn. Ở đây chỉ còn GHI độ cuộn của dải lúc bấm
+  // (pha capture, chạy trước handler data-nav gọi go() xoá dải), để màn mới trượt tab từ
+  // đúng chỗ cũ vào giữa thay vì nhảy từ đầu dải.
+  const polBar = root.querySelector('.pol-tabs');
+  if (polBar) polBar.addEventListener('click', e => {
+    if (e.target.closest('[data-nav]')) TAB_BAR_FROM = { key: 'pol', left: polBar.scrollLeft, t: Date.now() };
+  }, true);
 
   root.querySelectorAll('[data-policy-toc]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -20704,6 +20862,8 @@ document.body.insertAdjacentHTML('beforeend', `
       if (to === LANG) { closeP(); return; }
       applyLang(document.body, to);      // dịch mọi thứ đang có trong DOM
       LANG = to;
+      /* 28/09/2026 — nhãn tab vừa đổi dài ngắn: căn lại tab đang chọn vào giữa dải. */
+      document.querySelectorAll('[data-tabs-center]').forEach(b => centerActiveTab(b));
       panel.querySelectorAll('[data-lang]').forEach(x => {
         const on = x.dataset.lang === to;
         x.className = 'langopt flex-1 h-8 rounded-full text-[13px] leading-5 transition-colors press '
@@ -20829,8 +20989,12 @@ document.body.insertAdjacentHTML('beforeend', `
        kia lúc đó vô nghĩa.
      `data-auth-view` quyết định mở màn đăng nhập ở view nào (handler [data-nav]
      của panel đọc thuộc tính này rồi mới closeM + go). */
+  /* 28/09/2026 (lệnh user) — ĐÃ đăng nhập thì hàng này là LỜI CHÀO "Chào, {tên}" thay cho
+     chữ "Tài khoản"; vẫn dẫn vào màn tài khoản như cũ. Tên đọc từ PROFILE mỗi lần menu vẽ
+     lại, nên khách sửa tên ở tab Thông tin thì lời chào đổi theo. Bản EN đi bằng luật
+     trong I18N_RE (chuỗi có tên người nên không làm khoá tĩnh được). */
   const loginRow = () => ckAuth
-    ? utilRow(I.user, 'Tài khoản', 'data-nav="account"')
+    ? utilRow(I.user, 'Chào, ' + PROFILE.name, 'data-nav="account"')
     : `
     <!-- 21/09/2026 (brief PDF trang 45: "Sign In / Register chung 1 CTA => Drive về
          cùng cái màn log in account") — gộp CẶP nút Đăng ký / Đăng nhập thành MỘT.
@@ -21164,6 +21328,83 @@ document.body.insertAdjacentHTML('beforeend', `
     toast('Đã đăng ký · sẽ báo bạn khi có hàng');
   });
   window.__openNotify = openN;
+})();
+
+/* ── MÀN XÁC NHẬN ĐĂNG KÝ NHẬN TIN (28/09/2026) ──────────────────────────────────────
+   Lệnh user kèm ảnh tham chiếu dunhill.com: *"sau khi đăng ký sẽ hiện màn hình có nội dung
+   này, bạn kéo lại cho phù hợp style của chúng ta nhé"*. Mở khi bấm "Đăng ký" ở băng nhận
+   tin trang chủ (hmSignup) và email hợp lệ.
+   Giữ bố cục tham chiếu: chữ ở trên, MỘT nút "Tiếp tục mua sắm" ghim đáy. Đổi sang style DAFC:
+   · lớp phủ TOÀN MÀN trượt lên, cùng họ #notifySheet (không bóng, bo 0); đầu có tiêu đề
+     Libre 16/24 chữ thường + nút đóng — khuôn tiêu đề drawer chốt 27/09;
+   · lời cảm ơn Libre 24/32 (cùng hook tiêu đề của chính băng nhận tin), thân Inter 12;
+   · email khách vừa nhập in lại bằng MỰC ĐẬM (không dùng 500 — STYLE-RULES §1.1) để khách
+     soát được chỗ gõ nhầm; tham chiếu chỉ nói chung chung "địa chỉ bạn đã cung cấp";
+   · nút VIỀN (khuôn action outline, như nút "Thêm địa chỉ mới"), bấm là đóng lớp phủ —
+     khách ở lại đúng trang đang xem, y như "Continue shopping" của tham chiếu.
+   Bản EN: các câu có khoá tĩnh trong I18N; email nằm trong span riêng nên không bị dịch. */
+document.body.insertAdjacentHTML('beforeend', `
+  <div id="nlDoneSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
+    <div class="nd-panel absolute inset-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col"
+         role="dialog" aria-label="Đăng ký nhận tin">
+      <div class="h-12 px-4 flex items-center justify-between gap-3 shrink-0">
+        <p class="t-block-title text-foreground">Đăng ký nhận tin</p>
+        <button id="ndClose" class="w-8 h-8 -mr-1 shrink-0 flex items-center justify-center press" aria-label="Đóng">${I.close}</button>
+      </div>
+      <div class="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 pt-6 pb-6 flex flex-col gap-4">
+        <h2 class="text-[18px] font-medium leading-7 text-foreground" style="text-wrap:balance">Cảm ơn bạn đã đăng ký nhận tin</h2>
+        <p class="t-multiline text-secondary-foreground"><span>Chúng tôi đã gửi email kèm đường dẫn xác nhận đến</span> <span id="ndEmail" class="text-foreground"></span>.</p>
+        <p class="t-multiline text-secondary-foreground">Để hoàn tất đăng ký, vui lòng bấm vào đường dẫn xác nhận trong email. Nếu không nhận được email, bạn hãy kiểm tra thư mục thư rác (Spam).</p>
+        <p class="t-multiline text-secondary-foreground">Cảm ơn bạn và chúc bạn mua sắm vui vẻ cùng DAFC.</p>
+      </div>
+      <div class="shrink-0 px-4 pt-4 pb-4">
+        <button id="ndContinue" class="t-multiline w-full h-12 border border-border bg-background text-foreground btn-o press">Tiếp tục mua sắm</button>
+      </div>
+      <div class="safe-b"></div>
+    </div>
+  </div>`);
+
+(() => {
+  const sh = document.getElementById('nlDoneSheet');
+  const panel = sh.querySelector('.nd-panel');
+  const openD = email => {
+    sh.querySelector('#ndEmail').textContent = email;
+    /* lớp phủ dựng một lần lúc tải — dịch lại theo ngôn ngữ đang chọn mỗi lần mở */
+    localizeNew(sh);
+    sh.classList.remove('pointer-events-none'); sh.setAttribute('aria-hidden', 'false');
+    panel.classList.remove('translate-y-full');
+    lockBodyScroll();
+  };
+  const closeD = () => {
+    panel.classList.add('translate-y-full');
+    sh.classList.add('pointer-events-none');
+    unlockBodyScroll();
+    setTimeout(() => sh.setAttribute('aria-hidden', 'true'), 300);
+  };
+  sh.querySelector('#ndClose').addEventListener('click', closeD);
+  sh.querySelector('#ndContinue').addEventListener('click', closeD);
+  /* Nút "Đăng ký" của băng nhận tin. Trang chủ dựng lại mỗi lần vào nên bắt ở document.
+     Luật "bắt buộc nhập" thuộc về lúc bấm CTA (xem FIELD_RULE): trống → nhắc nhập, sai
+     định dạng → đúng câu lỗi của luật email; hợp lệ thì xoá ô rồi mới mở màn xác nhận. */
+  const submit = b => {
+    const box = b.closest('.hm-signup-card') || document;
+    const inp = box.querySelector('#hmNlEmail'); if (!inp) return;
+    const v = inp.value.trim();
+    if (!v) { setFieldErr(inp, 'Vui lòng nhập email'); inp.focus(); return; }
+    if (!FIELD_RULE.email[0](v)) { setFieldErr(inp, FIELD_RULE.email[1]); inp.focus(); return; }
+    clearFieldErr(inp);
+    inp.value = '';
+    inp.blur();
+    openD(v);
+  };
+  document.addEventListener('click', e => { const b = e.target.closest('[data-nl-submit]'); if (b) submit(b); });
+  /* Enter trong ô email = bấm Đăng ký (ô không nằm trong <form>) */
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || !e.target.matches || !e.target.matches('#hmNlEmail')) return;
+    const b = (e.target.closest('.hm-signup-card') || document).querySelector('[data-nl-submit]');
+    if (b) { e.preventDefault(); submit(b); }
+  });
+  window.__openNlDone = openD;
 })();
 
 /* ── Quick Add sheet (PLP) — 2.5 ảnh peek + thuộc tính giống PDP ── */
