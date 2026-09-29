@@ -55,12 +55,13 @@ window.RESP = (function () {
     fits: function () { return mq.matches === IS_DESKTOP; },
 
     /* gói trạng thái thành hash; giá trị mặc định thì bỏ qua cho URL gọn */
-    hash: function (screen, lang, font, theme) {
+    hash: function (screen, lang, font, theme, hm) {
       var p = [];
       if (screen && screen !== 'home') p.push('screen=' + encodeURIComponent(screen));
       if (lang && lang !== 'vi')      p.push('lang=' + encodeURIComponent(lang));
       if (font && font !== 'montserrat') p.push('font=' + encodeURIComponent(font));
       if (theme && theme !== 'd')     p.push('theme=' + encodeURIComponent(theme));
+      if (hm && hm !== 'new')         p.push('hm=' + encodeURIComponent(hm));
       return p.length ? '#' + p.join('&') : '';
     },
 
@@ -77,20 +78,20 @@ window.RESP = (function () {
 
     /* chuyển sang bản kia; ẩn trang trong lúc chuyển để không nháy bản sai,
        kèm hẹn giờ mở lại phòng khi điều hướng thất bại (thiếu file) */
-    swap: function (screen, lang, font, theme) {
+    swap: function (screen, lang, font, theme, hm) {
       if (R.swapped) return;
       R.swapped = true;
       document.documentElement.style.visibility = 'hidden';
       setTimeout(function () { document.documentElement.style.visibility = ''; }, 2000);
-      location.replace(OTHER + R.hash(screen, lang, font, theme));
+      location.replace(OTHER + R.hash(screen, lang, font, theme, hm));
     },
 
-    /* Theo dõi kéo giãn cửa sổ qua mốc; state() trả [screen, lang, font, theme].
+    /* Theo dõi kéo giãn cửa sổ qua mốc; state() trả [screen, lang, font, theme, hm].
        Nghe CẢ hai nguồn: matchMedia('change') là đường chính, còn 'resize'
        (gộp nhịp bằng timer) là lưới an toàn — vài môi trường đổi kích thước
        bằng emulation/devtools không bắn 'change'. Cờ swapped chặn gọi trùng. */
     watch: function (state) {
-      var fire = function () { if (!R.fits()) { var s = state ? state() : []; R.swap(s[0], s[1], s[2], s[3]); } };
+      var fire = function () { if (!R.fits()) { var s = state ? state() : []; R.swap(s[0], s[1], s[2], s[3], s[4]); } };
       if (mq.addEventListener) mq.addEventListener('change', fire); else mq.addListener(fire);
       var t = 0;
       window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(fire, 150); });
@@ -6109,7 +6110,13 @@ function lookRailCards(title, n, selfIdx, w, badgeAt = -1) {
     .map(({ p, i }, k) => productCard(p, i, { w, noColors: true, model: true, badge: badge(k) })).join('');
 }
 
-function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false, noQuick = false, noPrice = false, noBrand = false } = {}) {
+/* `tight` (29/09/2026, Figma 847:44310 — lệnh user: dải Hàng mới về "ôm sát hơn vì sẽ không có màu
+   và giá sale"): thẻ KHÔNG có giá cũ / chip % thì bỏ luôn hàng giá gạch VÔ HÌNH và đệm dưới của khối
+   giá. Phần thông tin của thẻ trang chủ 106 -> 82 (bớt đúng 16 + 8), khớp thẻ 275x449 của Figma
+   (ảnh 367 + thông tin 82). Chỉ ăn khi thẻ THẬT SỰ không giảm giá (!p.was && !p.off): thẻ đang giảm
+   vẫn giữ nguyên hàng giá gạch + chip + đệm, nên dải Khuyến mãi dùng chung cờ này mà không mất nội
+   dung. Mặc định false: PLP / PDP / mọi dải khác vẫn giữ hàng giá gạch vô hình để lưới cao bằng nhau. */
+function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false, noQuick = false, noPrice = false, noBrand = false, tight = false } = {}) {
   /* 27/08: 'Pre-order' THÔI làm nhãn đè ảnh — nó xuống đứng trước TÊN (xem dưới).
      Chặn ngay tại đây, một chỗ, nên 6 nơi gọi vẫn truyền `badge: 'Pre-order'` như
      cũ mà không phải sửa nơi nào. Nhãn khác (New Season…) vẫn đè ảnh bình thường. */
@@ -6186,7 +6193,7 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
            hãng thay vì bỏ giá (xem noBrand). Từ lượt này KHÔNG chỗ gọi nào còn truyền noPrice;
            GIỮ cờ để bật lại, như các công tắc khác của trang chủ. -->
       ${noPrice ? '' : `
-      <div class="flex flex-col pb-2">
+      <div class="flex flex-col${(tight && !p.was && !p.off) ? '' : ' pb-2'}">
         <!-- whitespace-nowrap: chuỗi giá dùng space thường trước ₫ nên khi
              hàng flex thiếu chỗ, trình duyệt được phép bẻ dòng tại đó — ký
              hiệu ₫ rớt xuống dòng riêng (lỗi (b) đã ghi nhận). Khoá tại phần
@@ -6200,10 +6207,10 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
              Dòng giá gạch vẫn LUÔN in ra (invisible khi không có giá cũ) để mọi thẻ trong
              lưới cao bằng nhau — đừng gỡ, gỡ là lưới so le. -->
         <p class="t-multiline pc-price whitespace-nowrap font-medium ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
-        <div class="flex gap-1 items-center">
+        ${(tight && !p.was && !p.off) ? '' : `<div class="flex gap-1 items-center">
           <p class="t-single whitespace-nowrap text-muted-foreground line-through ${p.was ? '' : 'invisible'}">${p.was || '&nbsp;'}</p>
           ${p.off ? `<span class="t-single bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${p.off}</span>` : ''}
-        </div>
+        </div>`}
       </div>`}
       ${(!noColors && p.colors && p.colors.length) ? `
       <div class="flex gap-3 items-center pt-0.5" data-swatches>
@@ -10102,6 +10109,36 @@ function hmSec(title, right, body, tag = 'h2', eyebrow = '', center = false) {
    chỉnh 2 lần (ô 259x128 -> 132x48, trần logo 22 -> 12) — công sức đó nằm trong công tắc,
    bật lại là có ngay, không phải dựng lại. */
 const HM_SHOW = { sale: false, stories: true, quickAdd: true, brandCards: false };
+/* DẢI SẢN PHẨM ĐẦU TRANG CHỦ — MỘT CHỖ, HAI NỘI DUNG (29/09/2026, lệnh user kèm Figma 847:44310:
+   *"trong cái setting răng cưa ở góc, khi ở homepage sẽ có toggle tuỳ chọn cái hàng mới về đó hay là
+   khuyến mãi với title là Khuyến mãi / End of season (Libre) / CTA Xem tất cả. các card sẽ là các
+   thẻ khuyến mãi"*).
+   `hmBlock` là công tắc của người xem demo, nằm ở popover Cài đặt (nhóm "Dải sản phẩm trang chủ",
+   CHỈ hiện khi đang đứng ở trang chủ): 'new' = Hàng mới về (mặc định) · 'sale' = Khuyến mãi. Nó thay
+   NỘI DUNG của dải chứ không thêm dải: hàm hmFeatured() dựng cùng một khung hmSec (nhãn nhỏ Inter /
+   dòng trưng bày Libre / link "Xem tất cả") nên hai bản đọc ra cùng một hạng.
+   Công tắc `HM_SHOW.sale` bên trên là của khối "Đang giảm giá" CŨ (không nhãn nhỏ, tiêu đề 18) —
+   vẫn TẮT và không liên quan lượt này.
+   ⚠ Figma chỉ có khung "Hàng mới về" (847:44310); KHÔNG có khung bản Khuyến mãi. Bản Khuyến mãi
+   dựng theo ĐÚNG khuôn khung đó: đổi chữ đầu mục, đổi danh sách thẻ, thẻ giữ nguyên hãng · tên ·
+   giá và có thêm hàng giá gạch + chip % (không màu, không quick add).
+   Trạng thái đi qua hash RESP như ngôn ngữ / giao diện (khoá `hm`) để kéo cửa sổ qua mốc 768 vẫn
+   giữ lựa chọn. */
+let hmBlock = 'new';
+const HM_SALE_TITLE = 'End of season';
+/* Vẽ lại đúng 2 nút của nhóm trong popover theo `hmBlock` — dùng ở handler bấm VÀ lúc boot khôi phục
+   từ hash (panel dựng lúc hmBlock còn mặc định). */
+function paintHmBlockUI() {
+  document.querySelectorAll('#settingsPanel [data-hm-block]').forEach(x => {
+    const on = x.dataset.hmBlock === hmBlock;
+    x.classList.toggle('bg-background', on);
+    x.classList.toggle('text-foreground', on);
+    x.classList.toggle('font-medium', on);
+    x.classList.toggle('shadow-sm', on);
+    x.classList.toggle('text-muted-foreground', !on);
+  });
+}
+
 
 /* PROMO BANNER — CÓ CÔNG TẮC (06/09/2026, feedback khách). Đặt `null` là TẮT, cả khối
    biến mất, không để lại khoảng trống. Ảnh kv-sale.jpg (1600x600) khớp tỉ lệ tuyệt đối,
@@ -10258,6 +10295,22 @@ function hmRail(list, opts = {}) {
       <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
         ${list.map(({ p, i }) => productCard(p, i, { noColors: true, noName: true, noQuick: !HM_SHOW.quickAdd, w: 'w-[170px] shrink-0', ...opts })).join('')}
       </div>`;
+}
+
+/* Dải sản phẩm đầu trang chủ theo công tắc `hmBlock` (xem chú thích ở HM_SHOW). Hai nhánh cùng khuôn:
+     new  : nhãn "Hàng mới về"  · dòng trưng bày HM_NEW_LINE   · thẻ = SP nguyên giá
+     sale : nhãn "Khuyến mãi"   · dòng trưng bày HM_SALE_TITLE · thẻ = SP đang giảm
+   Cả hai gọi hmRail với { noName: false, noQuick: true, tight: true }: hãng · tên · giá, không màu, không
+   quick add, thẻ ôm sát (cờ tight chỉ bỏ hàng giá gạch khi thẻ KHÔNG giảm giá nên thẻ Khuyến mãi vẫn đủ
+   giá gạch + chip %). Tag 'h1' giữ nguyên cho cả hai vì đây vẫn là tiêu đề chính của trang. */
+function hmFeatured(news, sales) {
+  const sale = hmBlock === 'sale';
+  const list = sale ? sales : news;
+  if (!list.length) return '';
+  return hmSec(sale ? HM_SALE_TITLE : HM_NEW_LINE,
+    hmLink('Xem tất cả', sale ? 'data-hm-cat="Khuyến mãi"' : 'data-hm-cat="Sản phẩm mới"'),
+    hmRail(list, { noName: false, noQuick: true, tight: true }),
+    'h1', sale ? 'Khuyến mãi' : 'Hàng mới về');
 }
 
 /* ── 6 Ô DANH MỤC ──────────────────────────────────────────────────────────────
@@ -11168,10 +11221,7 @@ function screenHOME() {
 
     ${hmHero()}
 
-    ${news.length ? hmSec(HM_NEW_LINE,
-      hmLink('Xem tất cả', 'data-hm-cat="Sản phẩm mới"'),
-      hmRail(news, { noName: false, noQuick: true }),
-      'h1', 'Hàng mới về') : ''}
+    ${hmFeatured(news, sales)}
 
     <!-- KHỐI DANH MỤC THÔI CÓ TIÊU ĐỀ VÀ CTA (07/09/2026, lệnh user) — xem ghi chú cùng
          tên ở bản desktop. Giữ nhịp dọc của hmSec (mt-10 + pb-6). -->
@@ -21176,6 +21226,21 @@ document.body.insertAdjacentHTML('beforeend', `
   <div id="settingsPanel" aria-hidden="true">
     <div class="sp-backdrop"></div>
     <div class="sp-card" role="dialog" aria-label="Cài đặt phông chữ">
+      <!-- DẢI SẢN PHẨM TRANG CHỦ (29/09/2026) — công tắc của người xem demo, cùng kiểu nhóm "Tình huống
+           thanh toán" ở dưới nhưng CHỈ hiện khi đang đứng ở trang chủ (openP bật/tắt class hidden mỗi lần
+           mở panel). Đặt Ở ĐẦU panel vì panel neo đáy: thêm nhóm ở đầu thì các nhóm cũ không nhích. -->
+      <div id="spHomeGroup" class="hidden">
+        <div class="px-3 pt-3 pb-2">
+          <p class="t-multiline tracking-[0.12em] text-muted-foreground">Dải sản phẩm trang chủ</p>
+        </div>
+        <div class="px-3 pb-3">
+          <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Dải sản phẩm trang chủ">
+            ${[['new','Hàng mới về'],['sale','Khuyến mãi']].map(([id, label]) => `
+              <button data-hm-block="${id}" class="t-multiline hmblockopt flex-1 h-8 rounded-full transition-colors press ${id === hmBlock ? 'bg-background text-foreground font-medium shadow-sm' : 'text-muted-foreground'}">${label}</button>`).join('')}
+          </div>
+        </div>
+        <div class="h-px bg-border mx-3"></div>
+      </div>
       <div class="px-3 pt-3 pb-2">
         <p class="t-multiline tracking-[0.12em] text-muted-foreground">Ngôn ngữ</p>
       </div>
@@ -21271,7 +21336,10 @@ document.body.insertAdjacentHTML('beforeend', `
   const panel = document.getElementById('settingsPanel');
   /* html.sp-open: nhường chỗ cho popover — thẻ #topFab nằm đúng vị trí popover
      sổ ra (bottom 144), xem CSS */
-  const openP  = () => { panel.classList.add('open'); panel.setAttribute('aria-hidden', 'false'); document.documentElement.classList.add('sp-open'); };
+  /* Nhóm "Dải sản phẩm trang chủ" chỉ có nghĩa ở trang chủ: đọc `current` MỖI LẦN mở panel (panel dựng
+     một lần lúc boot, không biết màn nào đang đứng) nên khỏi phải móc vào go(). */
+  const homeGroup = panel.querySelector('#spHomeGroup');
+  const openP  = () => { homeGroup.classList.toggle('hidden', current !== 'home'); panel.classList.add('open'); panel.setAttribute('aria-hidden', 'false'); document.documentElement.classList.add('sp-open'); };
   const closeP = () => { panel.classList.remove('open'); panel.setAttribute('aria-hidden', 'true'); document.documentElement.classList.remove('sp-open'); };
   fab.addEventListener('click', e => { e.stopPropagation(); panel.classList.contains('open') ? closeP() : openP(); });
   panel.querySelector('.sp-backdrop').addEventListener('click', closeP);
@@ -21289,6 +21357,22 @@ document.body.insertAdjacentHTML('beforeend', `
         x.classList.toggle('shadow-sm', on);
         x.classList.toggle('text-muted-foreground', !on);
       });
+    });
+  });
+
+  /* Công tắc dải sản phẩm trang chủ (29/09/2026): đổi `hmBlock` rồi dựng LẠI đúng màn home.
+     go(..., { force: true, back: true }) — force để chốt chặn "name === current" không nuốt lệnh, back để
+     go() KHÔI PHỤC vị trí cuộn vừa lưu vào SCROLL_MEM (khách đang cuộn giữa trang thì không bị ném về
+     đầu) và không đẩy thêm entry history. Đóng panel + toast như các công tắc nhìn thấy được khác. */
+  panel.querySelectorAll('[data-hm-block]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const to = btn.dataset.hmBlock;
+      if (to === hmBlock) { closeP(); return; }
+      hmBlock = to;
+      paintHmBlockUI();
+      closeP();
+      if (current === 'home') go('home', { force: true, back: true });
+      toast(to === 'sale' ? 'Trang chủ: Khuyến mãi' : 'Trang chủ: Hàng mới về');
     });
   });
 
@@ -23126,6 +23210,10 @@ if (!RESP.swapped) {
 
   if (st.theme) applyTheme(st.theme);
 
+  /* 29/09/2026 — dải sản phẩm trang chủ (Hàng mới về / Khuyến mãi) đi qua hash như ngôn ngữ và giao
+     diện: kéo cửa sổ qua mốc 768 sang file kia mà lựa chọn không mất. Mặc định 'new' không ghi hash. */
+  if (st.hm === 'sale') { hmBlock = 'sale'; paintHmBlockUI(); }
+
   const f = FONTS.find(x => x[0] === st.font);
   if (f) {
     currentFont = f[0];
@@ -23159,7 +23247,7 @@ if (!RESP.swapped) {
   }
 
   /* Kéo cửa sổ rộng ≥ 768 -> sang bản desktop, mang theo màn + cài đặt */
-  RESP.watch(() => [current, LANG, currentFont, currentTheme]);
+  RESP.watch(() => [current, LANG, currentFont, currentTheme, hmBlock]);
 }
 </script>
 </body>
