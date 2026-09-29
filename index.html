@@ -10077,9 +10077,12 @@ function hmSecHead(title, right = '', tag = 'h2', eyebrow = '', center = false) 
         </div>`;
 }
 
-function hmSec(title, right, body, tag = 'h2', eyebrow = '', center = false) {
+/* `flush` (29/09/2026, lệnh user kèm Figma 847:44376: *"update lại cái spacing bottom của block này theo
+   thiết kế tôi"*): khối KHÔNG đệm dưới (bỏ pb-6 = 24). Chỉ dải Hàng mới về / Khuyến mãi truyền true;
+   mọi khối khác giữ pb-6. Bỏ hẳn class chứ không thêm pb-0 — pb-0 không có trong tailwind.css dựng sẵn. */
+function hmSec(title, right, body, tag = 'h2', eyebrow = '', center = false, flush = false) {
   return `
-    <div class="flex flex-col gap-4 mt-10 pb-6 reveal">
+    <div class="flex flex-col gap-4 mt-10${flush ? '' : ' pb-6'} reveal">
       ${hmSecHead(title, right, tag, eyebrow, center)}
       ${body}
     </div>`;
@@ -10290,9 +10293,11 @@ function hmHero() {
    Sinh ra cho `noPrice` của dải Hàng mới về, và cờ đó phải nằm ở CHỖ GỌI chứ không ở
    trong này: hmRail còn phục vụ dải Đang giảm giá — dải mà bỏ giá đi là mất luôn nghĩa,
    vì giá gạch và phần trăm giảm chính là nội dung của nó. */
-function hmRail(list, opts = {}) {
+/* `flush` (29/09/2026): dải KHÔNG đệm dưới (bỏ pb-1 = 4) — cùng lệnh với hmSec flush, Figma 847:44376
+   đặt track đệm 0/16/0/16. Mặc định false nên dải Đang giảm giá và dải thương hiệu giữ nguyên. */
+function hmRail(list, opts = {}, flush = false) {
   return `
-      <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4 pb-1">
+      <div class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4${flush ? '' : ' pb-1'}">
         ${list.map(({ p, i }) => productCard(p, i, { noColors: true, noName: true, noQuick: !HM_SHOW.quickAdd, w: 'w-[170px] shrink-0', ...opts })).join('')}
       </div>`;
 }
@@ -10302,15 +10307,17 @@ function hmRail(list, opts = {}) {
      sale : nhãn "Khuyến mãi"   · dòng trưng bày HM_SALE_TITLE · thẻ = SP đang giảm
    Cả hai gọi hmRail với { noName: false, noQuick: true, tight: true }: hãng · tên · giá, không màu, không
    quick add, thẻ ôm sát (cờ tight chỉ bỏ hàng giá gạch khi thẻ KHÔNG giảm giá nên thẻ Khuyến mãi vẫn đủ
-   giá gạch + chip %). Tag 'h1' giữ nguyên cho cả hai vì đây vẫn là tiêu đề chính của trang. */
+   giá gạch + chip %). Tag 'h1' giữ nguyên cho cả hai vì đây vẫn là tiêu đề chính của trang.
+   ĐỆM DƯỚI = 0 (29/09/2026, theo Figma 847:44376): khối bỏ pb-6 (24) và dải bỏ pb-1 (4), từ đáy thẻ tới
+   khối kế tiếp còn đúng khe 40 của mt-10 (trước là 68). Khối cao 404,7 = đầu mục 80 + khe 16 + thẻ 308,7. */
 function hmFeatured(news, sales) {
   const sale = hmBlock === 'sale';
   const list = sale ? sales : news;
   if (!list.length) return '';
   return hmSec(sale ? HM_SALE_TITLE : HM_NEW_LINE,
     hmLink('Xem tất cả', sale ? 'data-hm-cat="Khuyến mãi"' : 'data-hm-cat="Sản phẩm mới"'),
-    hmRail(list, { noName: false, noQuick: true, tight: true }),
-    'h1', sale ? 'Khuyến mãi' : 'Hàng mới về');
+    hmRail(list, { noName: false, noQuick: true, tight: true }, true),
+    'h1', sale ? 'Khuyến mãi' : 'Hàng mới về', false, true);
 }
 
 /* ── 6 Ô DANH MỤC ──────────────────────────────────────────────────────────────
