@@ -1239,6 +1239,11 @@ window.RESP = (function () {
   }
   .promo-peek.open { max-height: 500px; }
   .promo-peek.open::after { display: none; }
+  /* DOT ĐẦU DÒNG của hộp Ưu đãi ở PDP (29/09/2026, user: "dùng dot đầu hàng"). Class ngữ nghĩa vì
+     tailwind.css build sẵn KHÔNG có w-1 lẫn w-[4px] (utility thiếu là class chết). Chữ trong hộp
+     là 12/18 nên dot 4px đặt cách đỉnh dòng 8px = tâm dot ở 10px, trùng tâm chiều cao chữ thường
+     (đo: baseline 13,4 · x-height 6,55 -> tâm 10,1). Màu = mực của chính dòng chữ. */
+  .promo-dot { flex-shrink: 0; width: 4px; height: 4px; margin-top: 8px; border-radius: 9999px; background: var(--general-secondary-foreground); }
   /* HỘP KHUYẾN MÃI — class MỚI 23/09/2026. Trước đó hộp ở giỏ mặc utility
      `border border-border rounded-md`; nay hộp còn mọc ở PDP nên mặt + viền phải về
      MỘT class dùng chung. Số giữ đúng như cũ ở khổ này: viền `--general-border`
@@ -4859,12 +4864,31 @@ window.RESP = (function () {
      Libre 14/20 nên phải khai ngoại lệ có tên, y như đã làm cho `.ck-step-no`.
      `font-medium` còn trên markup là class chết dưới skin-mt nên chữ ra 400, đúng
      Regular của khung — không phải gỡ. */
-  .promo-box.promo-flat .promo-head { padding: 8px 12px; }
-  .promo-box.promo-flat .promo-body { padding: 0 12px 8px; }
+  .promo-box.promo-flat .promo-head { padding: 8px 12px; }   /* HẾT markup từ 29/09 (bỏ tiêu đề) — giữ rule để khôi phục được */
   .promo-box.promo-flat .promo-foot { padding: 0 12px 8px; }
-  /* Bù max-height theo đệm MỚI: phần xem mấp mé vẫn phải là 73px, mà thân nay chỉ
-     gánh 8 (0 trên + 8 dưới) thay vì 16 -> 73 + 8 = 81. Cùng lý do đã ghi ở rule 89. */
-  .promo-box.promo-flat .promo-body.promo-peek:not(.open) { max-height: 81px; }
+  /* ══ 29/09/2026 — HỘP Ở PDP KHÔNG CÒN TIÊU ĐỀ, KHÔNG CÒN "XEM MẤP MÉ" (lệnh user: "bỏ luôn chữ
+     ưu đãi ở block đó tại pdp nhé, minimum hiện 5 dòng, dài hơn 5 dòng km thì hiện nút xem thêm
+     và thu gọn như hiện tại") ═══════════════════════════════════════════════════════════════
+     · "Dòng" = MỘT CHƯƠNG TRÌNH (một hàng có dot), đúng nghĩa user vẫn dùng ("mỗi dòng dùng dấu
+       check", "dot đầu hàng") chứ không phải một dòng chữ đã xuống hàng. Nên thay cắt-theo-pixel
+       (81px, cắt ngang chữ + vệt mờ) bằng cắt-theo-SỐ HÀNG: promoBox in sẵn 5 hàng đầu, hàng thứ
+       6 trở đi mang `.promo-more` và ẩn cho tới khi hộp `.open`. Không còn gì bị cắt ngang chữ nên
+       tắt luôn vệt mờ đáy `::after` (rule màu vệt mờ của biến thể phía dưới còn lại nhưng ngủ).
+     · Không có băng tiêu đề nữa nên thân phải tự gánh đệm TRÊN (12) — trước đó băng lo phần này.
+       Đệm dưới 12 khi hộp chỉ có thân; có nút "Xem tất cả" ngay dưới thì rút còn 8 để khe giữa
+       hàng cuối và nút vẫn là 8 như cũ. `:has(+ .promo-foot)` chỉ đọc anh em kế tiếp nên đặc hiệu
+       chỉ cộng đúng một class.
+     · Nút chỉ được in ra khi CÓ hơn 5 chương trình (xem promoBox) nên wirePromoPeek bỏ qua hộp
+       phẳng — nó đo scrollHeight so clientHeight, mà thân giờ không còn trần chiều cao. */
+  .promo-box.promo-flat .promo-body { padding: 12px 12px; }
+  .promo-box.promo-flat .promo-body:has(+ .promo-foot) { padding-bottom: 8px; }
+  .promo-box.promo-flat .promo-body.promo-peek:not(.open) { max-height: none; }
+  .promo-box.promo-flat .promo-peek::after { display: none; }
+  .promo-box.promo-flat .promo-peek:not(.open) .promo-more { display: none; }
+  /* Hàng xổ ra mờ dần vào chứ không bật cái vèo: hộp cũ xổ bằng max-height .3s, đổi sang ẩn/hiện
+     theo hàng thì mất nhịp đó, keyframe nhỏ này trả lại một nửa. Thu gọn thì tắt tức thì. */
+  @keyframes promoIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  .promo-box.promo-flat .promo-peek.open .promo-more { animation: promoIn .25s ease both; }
   /* MÀU: XÁM `--unofficial-accent-0` (#fafafa) — lệnh user 25/09/2026 *"cục ưu đãi ở pdp
      cho về màu xám như cũ đi"*. Tra bản commit 17/09 (trước lượt đổi màu đồng 23/09) thì
      khuôn cũ của hộp này đúng là một thẻ `bg-accent-0` — nên "như cũ" = chính biến đó,
@@ -7744,7 +7768,10 @@ const PDP_PROMOS = {
    `promoPairs(keys)` quy đổi danh sách key của catalogue PROMOS (pdp, pdp2) về dạng cặp —
    lấy `title` làm phần đậm, `line` làm phần mô tả (bỏ khi 2 chuỗi trùng nhau).
    KHAI GIỐNG HỆT ở desktop.html. */
-const PROMO_TAB = 'Ưu đãi khuyến mãi';
+/* Số HÀNG ưu đãi hiện sẵn ở hộp PDP (29/09/2026, user: "minimum hiện 5 dòng, dài hơn 5 dòng km thì
+   hiện nút xem thêm và thu gọn"). "Dòng" = một chương trình; hàng thứ 6 trở đi ẩn cho tới khi bấm nút.
+   (Hằng PROMO_TAB = "Ưu đãi" của lượt trước cùng ngày đã gỡ cùng tiêu đề hộp.) */
+const PROMO_ROWS_SHOWN = 5;
 /* ══ 23/09/2026 — CỤC "Ưu đãi khuyến mãi" Ở PDP NAY DÙNG HỘP CỦA GIỎ HÀNG ═══════
    Lệnh user: *"mang cái block chương trình khuyến mãi ở trong cart và replace vào
    block ưu đãi khuyến mãi ở PDP nhé"*. Chốt thêm khi hỏi lại: làm CẢ 2 BẢN, và
@@ -7767,18 +7794,42 @@ const PROMO_TAB = 'Ưu đãi khuyến mãi';
 
    Khuôn CŨ (đã thay): một thẻ `bg-accent-0` bo `rounded-sm` pad 16 gap 4, tiêu đề
    14/20 Medium, mỗi chương trình một dòng 14/20 — không bấm được, không xổ. */
-const promoBox = items => `
+/* 29/09/2026 — HỘP Ở PDP: ba lượt trong ngày, HIỆN HÀNH là lượt 3. Lượt 1: đổi tiêu đề thành
+   "Ưu đãi" + dấu check; lượt 2: check -> dot, port sang desktop; lượt 3 (lệnh user: "bỏ luôn chữ ưu
+   đãi ở block đó tại pdp nhé, minimum hiện 5 dòng, dài hơn 5 dòng km thì hiện nút xem thêm và thu
+   gọn như hiện tại").
+   ⚠ Khối chú thích 23/09 ngay trên nói về băng tiêu đề + thân xem mấp mé 89px: với hộp Ở PDP cả hai
+   đã BỎ, còn nguyên ở hộp Ở GIỎ (đường khác, không đi qua promoBox).
+     · BỎ HẲN băng tiêu đề ("Ưu đãi (N)" và nút bấm của nó): hộp chỉ còn danh sách + nút đáy. Kéo
+       theo hằng PROMO_TAB và cặp luật dịch "Ưu đãi (N)" <-> "Offers (N)" hết chỗ dùng nên đã gỡ.
+     · "Dòng" = MỘT CHƯƠNG TRÌNH (một hàng có dot), đúng nghĩa user vẫn dùng ("mỗi dòng dùng dấu
+       check", "dot đầu hàng") chứ không phải một dòng chữ đã xuống hàng. In sẵn PROMO_ROWS_SHOWN = 5
+       hàng đầu; hàng thứ 6 trở đi mang `.promo-more`, ẩn cho tới khi hộp `.open`. Nút "Xem tất cả N
+       chương trình" / "Thu gọn" CHỈ được in khi có hơn 5 chương trình, nên hộp này không còn đo
+       pixel bằng wirePromoPeek. Nút vẫn là `.promo-foot`, con trực tiếp của `.promo-box`, nên
+       listener [data-promo-toggle] dùng chung với hộp ở giỏ chạy y như cũ (bật `.open` trên
+       `.promo-peek`, đổi nhãn qua `data-more`).
+     · Mỗi hàng: dot tròn 4px (.promo-dot) + chữ. Dot + khe 8 = chữ thụt 12, đúng nếp thụt treo 12
+       của .acc-bullet; dot là phần tử flex nên dòng chữ thứ hai tự thẳng hàng với dòng đầu.
+     · DATA HIỆN CHỈ CÓ TỐI ĐA 4 CHƯƠNG TRÌNH / PDP (pdp 4 · pdp2 3 · 4 bản còn lại 2) nên chưa PDP
+       nào hiện nút; nhánh hơn 5 đã kiểm bằng dữ liệu giả 6–7 hàng. */
+const promoBox = items => {
+  const hang = (it, i) => `
+          <div class="promo-row${i >= PROMO_ROWS_SHOWN ? ' promo-more' : ''} flex items-start gap-2">
+            <span aria-hidden="true" class="promo-dot"></span>
+            ${Array.isArray(it)
+              ? `<p class="t-multiline min-w-0 flex-1 text-secondary-foreground"><span class="font-medium">${it[0]}</span>${it[1] || ''}</p>`
+              : `<p class="t-multiline min-w-0 flex-1 text-secondary-foreground">${it}</p>`}
+          </div>`;
+  return `
     <div class="px-4 pb-2 rise">
       <div class="promo-box promo-flat flex flex-col">
-        <button data-promo-toggle class="promo-head t-lead font-medium text-foreground text-left press"><span>${PROMO_TAB}</span> <span>(${items.length})</span></button>
-        <div class="promo-peek promo-body flex flex-col gap-2">
-          ${items.map(it => Array.isArray(it)
-            ? `<p class="t-multiline text-secondary-foreground"><span class="font-medium">${it[0]}</span>${it[1] || ''}</p>`
-            : `<p class="t-multiline text-secondary-foreground">${it}</p>`).join('')}
-        </div>
-        <button data-promo-toggle data-more="Xem tất cả ${items.length} chương trình" class="promo-foot t-multiline w-full flex items-center justify-center font-medium text-foreground underline press">Xem tất cả ${items.length} chương trình</button>
+        <div class="promo-peek promo-body flex flex-col gap-2">${items.map(hang).join('')}
+        </div>${items.length > PROMO_ROWS_SHOWN ? `
+        <button data-promo-toggle data-more="Xem tất cả ${items.length} chương trình" class="promo-foot t-multiline w-full flex items-center justify-center font-medium text-foreground underline press">Xem tất cả ${items.length} chương trình</button>` : ''}
       </div>
     </div>`;
+};
 /* Ẩn nút "Xem tất cả" khi thân hộp khuyến mãi KHÔNG bị cắt (23/09/2026).
    Vì sao cần: `.promo-peek` kẹp thân ở 89px, nhưng 5/6 PDP chỉ có 2–3 dòng ưu đãi
    (2 dòng ~60px, 3 dòng ~86px) nên chẳng có gì bị giấu — để nguyên thì nút "Xem tất
@@ -7792,6 +7843,10 @@ const promoBox = items => `
    vài cỡ chữ, không bù thì nút hiện nhầm. */
 function wirePromoPeek(root) {
   root.querySelectorAll('.promo-box').forEach(hop => {
+    /* 29/09/2026 — hộp PHẲNG (PDP) cắt theo SỐ HÀNG và tự in nút khi cần, thân không còn trần
+       chiều cao nên scrollHeight luôn bằng clientHeight: để đo tiếp là bật `.open` và ẩn nhầm
+       cái nút vừa được in cho trường hợp hơn 5 chương trình. Chỉ hộp ở giỏ còn dùng phép đo này. */
+    if (hop.classList.contains('promo-flat')) return;
     const peek = hop.querySelector('.promo-peek');
     const nut  = hop.querySelector('.promo-foot');
     if (!peek || !nut || peek.classList.contains('open')) return;
@@ -16950,7 +17005,11 @@ const I18N = {
      phẩm (2 ở 4 bản dùng PDP_PROMOS_STD · 3 ở pdp2 · 4 ở pdp). Thêm 2 khoá còn thiếu.
      TIÊU ĐỀ hộp ở PDP thì KHÔNG cần khoá mới: nó tách "Ưu đãi khuyến mãi" và "(N)"
      thành 2 span riêng nên chữ đi bằng khoá có sẵn, số đếm đứng ngoài — đúng mẹo đã
-     dùng cho tiêu đề mini cart, khỏi đẻ luật regex cho từng con số. */
+     dùng cho tiêu đề mini cart, khỏi đẻ luật regex cho từng con số.
+     ⚠ ĐÃ ĐỔI 29/09/2026: hộp ở PDP KHÔNG còn tiêu đề (user bỏ chữ "Ưu đãi") nên mẹo tách 2 span
+     ở trên hết chỗ dùng; khoá "Ưu đãi khuyến mãi" còn lại nhưng không chỗ nào dùng nữa. Nút
+     "Xem tất cả N chương trình" của PDP chỉ hiện khi N > 5 (6, 7…) — không có khoá tĩnh, đi bằng
+     luật regex trong I18N_RE / I18N_REV_RE. */
   'Xem tất cả 2 chương trình':'See all 2 promotions', 'Xem tất cả 4 chương trình':'See all 4 promotions',
   'Thông tin giao hàng':'Shipping information',
   'Phương thức vận chuyển':'Shipping method', 'Phương thức thanh toán':'Payment method',
@@ -17625,6 +17684,10 @@ const I18N_RE = [
   /* Tiêu đề mục hàng ở chi tiết đơn: trước 06/09 chỉ có khoá tĩnh cho (1) và (2) nên
      đơn 3–4 món là lòi tiếng Việt trong bản Anh. */
   [/^Sản phẩm \((\d+)\)$/,            'Items ($1)'],
+  /* 29/09/2026 — nút của hộp ưu đãi ở PDP. Hộp chỉ in nút khi có HƠN 5 chương trình nên số N
+     trên nút nay là 6, 7…; ba khoá tĩnh 2/3/4 ở từ điển không còn khớp ca nào, luật này mới là
+     thứ chạy. Khoá tĩnh vẫn ưu tiên trước luật (cả hộp ở giỏ vẫn dùng khoá "…3 chương trình"). */
+  [/^Xem tất cả (\d+) chương trình$/, 'See all $1 promotions'],
   [/^SL: (\d+)$/,                     'Qty: $1'],   // dòng số lượng ở chi tiết đơn, trước nay chưa dịch
   [/^Áp dụng (\d+) bộ lọc$/,          'Applied $1 filters'],
   [/^(\d+) sản phẩm · (.+)$/,         '$1 items · $2'],
@@ -17698,6 +17761,7 @@ const I18N_REV_RE = [
   [/^(\d+) stores$/,                  '$1 cửa hàng'],
   [/^(\d+) products$/,                '$1 sản phẩm'],
   [/^Items \((\d+)\)$/,               'Sản phẩm ($1)'],
+  [/^See all (\d+) promotions$/,      'Xem tất cả $1 chương trình'],   // chiều ngược của luật cùng tên bên I18N_RE (29/09/2026)
   [/^Qty: (\d+)$/,                    'SL: $1'],
   [/^(\d+) items · (.+)$/,            '$1 sản phẩm · $2'],
   [/^\+ ([\d.]+) points$/,            '+ $1 điểm'],
