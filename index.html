@@ -426,7 +426,7 @@ window.RESP = (function () {
      gom về 1 rồi bỏ luôn.
      28/09/2026 — thêm `.shp-panel` (sheet "Thông tin giao hàng" của chi tiết đơn, brief
      trang 56). 29/09/2026 — thêm `.cx-panel` (hộp xác nhận huỷ đơn). */
-  .is-panel, .cg-panel, .ns-panel, .qa-panel, .cc-panel,
+  .ins-panel, .is-panel, .cg-panel, .ns-panel, .qa-panel, .cc-panel,
   .sz-panel, .gf-panel, .pk-panel, .shp-panel, .cx-panel,
   #settingsPanel .sp-card, #sortMenu {
     border: 1px solid var(--general-border);
@@ -472,6 +472,23 @@ window.RESP = (function () {
   /* full trang = một trang thật, không phải lớp nổi -> gỡ cả viền lẫn bóng */
   #infoSheet.full .is-panel { top: 0; max-height: none; box-shadow: none; border: 0; }
   #infoSheet.full .is-grab { display: none; }
+
+  /* ── Popup trả góp (#instSheet) — bottom sheet vuông góc như mọi sheet mobile ── */
+  #instSheet { position: fixed; inset: 0; z-index: 300; pointer-events: none; }
+  #instSheet .ins-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.45); opacity: 0; transition: opacity .4s ease; }
+  #instSheet.open { pointer-events: auto; }
+  #instSheet.open .ins-backdrop { opacity: 1; }
+  #instSheet .ins-bank { min-height: 40px; display: flex; align-items: center; justify-content: center; text-align: center;
+    border: 1px solid var(--general-border); border-radius: 2px; padding: 4px; gap: 4px; }
+  #instSheet .ins-plan:hover { border-color: var(--general-primary); }
+  #instSheet .ins-panel {
+    position: absolute; left: 0; right: 0; bottom: 0; max-height: 90vh;
+    background: var(--general-background); border-radius: 0;
+    transform: translateY(100%); transition: transform .4s ease-in-out;
+    display: flex; flex-direction: column;
+  }
+  #instSheet.open .ins-panel { transform: translateY(0); }
+  #instSheet .ins-banks { grid-template-columns: repeat(3, 1fr); }
 
   /* ── Cookie consent gate ──
      Cùng khuôn bottom-sheet với #infoSheet (bo 24 góc trên, trượt .4s) nhưng
@@ -972,6 +989,51 @@ window.RESP = (function () {
      tràn 10px trên/dưới, hình vẽ đứng yên. */
   .ord-status.is-pay { position: relative; }
   .ord-status.is-pay::after { content: ''; position: absolute; left: 0; right: 0; top: -10px; bottom: -10px; }
+  /* 30/09/2026 (user, Figma 975:82500) — nhãn trạng thái ở DANH SÁCH ĐƠN đổi sang MẶT NHẠT: nền kem `--cu-surface`
+     (copper-surface #f5f2ed) + chữ `--cu-ink` (copper-ink #81604d, 5,65:1 trên trắng), đệm 4 đều 4 phía như instance trong
+     khung Figma. Chỉ danh sách dùng (statusTag(o, false, true)): màn CHI TIẾT giữ mặt tối + chữ đồng của brief trang 55, và
+     "Đã huỷ" luôn giữ mặt đỏ ở mọi nơi nên không nhận is-soft. Hai token chỉ khai dưới skin-li nên có màu dự phòng. */
+  .ord-status.is-soft { padding: 4px; background: var(--cu-surface, var(--general-secondary)); color: var(--cu-ink, var(--general-secondary-foreground)); }
+
+  /* 30/09/2026 (user, Figma 975:82500 — thẻ trên) — DANH SÁCH ĐƠN = THẺ, thay hàng phẳng 3 dòng "Nhãn: giá trị" của 29/09.
+       dòng 1  Mã đơn #DAFC… (500)                   ngày ›
+       dòng 2  [nhãn trạng thái]
+       thân    hàng ảnh (trái) · cột tiền (phải: "Tổng tiền:" trên, số tiền dưới, canh giữa theo chiều cao ảnh)
+     Số đo bê từ khung: đệm 16 trên/dưới · khe 16 giữa 3 khối · khe 8 giữa dòng mã và nhãn · ảnh 75×100 khe 8 · cột tiền khe 4 ·
+     mũi tên 12 · khối đầu thẻ (mã, ngày, mũi tên, nhãn) mờ 80% (meta opacity .8). Vạch đáy 1px `border` NẰM TRONG đệm đáy 16 (stroke
+     trong của Figma không cộng vào chiều cao) nên đệm đáy khai 15 + viền 1 → thẻ cao đúng 200. Thẻ cách nhau 24 (khe của #accBody);
+     từ tiêu đề tới thẻ đầu cũng 24 — accHead đã cho đúng khoảng đó (đo: đáy tiêu đề 217, thẻ đầu 241).
+     ẢNH: tối đa ORD_THUMB_SLOTS ô (xem orderThumbs), ô cuối là "+N" khi đơn nhiều món hơn. Ảnh 75 co ĐỀU (tới ~65) khi cột tiền
+     chiếm chỗ — 3 ảnh + khe = 241 mà phần còn lại chỉ ~225 — chứ không cắt mép ảnh cuối như khung nháp. Dưới 344px cột tiền rớt
+     xuống hàng riêng (nhãn và số tiền cùng một dòng, canh phải) để ảnh giữ đủ 75.
+     CHỮ 500: `font-medium` là class chết dưới skin-mt (0,2,1) nên khai ngoại lệ có tên. Cả thẻ là MỘT <button>. */
+  .ord-list { display: flex; flex-direction: column; gap: 24px; padding: 0 16px; }
+  .ord-card {
+    display: flex; flex-direction: column; gap: 16px; width: 100%; padding: 16px 0 15px;
+    border-bottom: 1px solid var(--general-border); background: transparent; text-align: left;
+  }
+  .ord-card-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; opacity: .8; }
+  .ord-card-top { display: flex; align-items: center; gap: 4px; width: 100%; }
+  .ord-card-ids { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+  .ord-card-code { display: inline-flex; gap: 4px; white-space: nowrap; color: var(--general-foreground); }
+  .ord-card-date { white-space: nowrap; color: var(--general-foreground); }
+  .ord-card-go { display: flex; flex-shrink: 0; color: var(--general-foreground); }
+  .ord-card-go svg { width: 12px; height: 12px; }
+  .ord-card-body { display: flex; align-items: center; gap: 16px; width: 100%; }
+  .ord-thumbs { flex: 1 1 0; min-width: 0; display: flex; gap: 8px; overflow: hidden; }
+  .ord-thumb { flex: 0 1 75px; min-width: 0; height: 100px; overflow: hidden; background: var(--general-secondary); }
+  .ord-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .ord-thumb-more { display: flex; align-items: center; justify-content: center; background: var(--general-primary); color: var(--general-primary-foreground); }
+  .ord-card-total { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; white-space: nowrap; text-align: right; }
+  .ord-card-total-l { color: var(--general-muted-foreground); }
+  .ord-card-total-v { color: var(--general-foreground); }
+  .ord-card-code, .ord-card-total-v, .ord-thumb-more,
+  html.skin-mt .ord-card-code, html.skin-mt .ord-card-total-v, html.skin-mt .ord-thumb-more { font-weight: 500; }
+  @media (max-width: 343px) {
+    .ord-card-body { flex-wrap: wrap; row-gap: 16px; }
+    .ord-thumbs { flex-basis: 100%; }
+    .ord-card-total { flex-direction: row; gap: 4px; margin-left: auto; }
+  }
 
   /* TIMELINE DỌC của sheet "Thông tin giao hàng" (brief trang 56, 28/09/2026 — "ở Mobile
      trạng thái pop-up từ dưới lên giống chọn size", tham chiếu Front Row khách gửi).
@@ -4108,7 +4170,8 @@ window.RESP = (function () {
      ⚠ Đánh đổi có thật: nếu khách giao KV Ferragamo theo khổ 1200x1484 của kho ảnh sản
      phẩm thì khung 3/4 sẽ tỉa **3,6% mỗi bên** bề ngang. Đó là lý do bản đặt hàng ảnh phải
      ghi rõ 3/4 — xem báo cáo. */
-  .hm-spot-photo { display: block; aspect-ratio: 3 / 4; }
+  /* 30/09/2026 (lệnh user): ảnh lớn của brand highlight về VUÔNG 1/1; 2 ô nhỏ bên dưới 5/2 (chốt 30/09: cả khối vừa 1 khung 375x812 = 763/764), full bề ngang, XẾP DỌC (trước: dải ngang trượt). */
+  .hm-spot-photo { display: block; aspect-ratio: 1 / 1; }
   .hm-spot-veil {
     /* HINH HOC TINH BANG PX, KHONG BANG %, va day la loi da sua: ban cu khai 58% + vet dac
        toi 42%, nen o panel 464 thi vet dac chi cao 113 trong khi khoi chu chiem 276 tinh tu
@@ -4182,14 +4245,13 @@ window.RESP = (function () {
      CSS; 2 class trong markup (`drag-x` · `no-scrollbar`) đều là class CỦA FILE NÀY, không
      phải lớp Tailwind build sẵn, nên không có rủi ro class chết. */
   .hm-spot-brands {
-    display: flex; gap: 4px;
-    overflow-x: auto; overscroll-behavior-x: contain;
+    display: flex; flex-direction: column; gap: 4px;
   }
   /* TỈ LỆ THAY CHIỀU CAO CỨNG (10/09/2026). 211 = 375/1,778 chỉ đúng ở ĐÚNG khổ 375; ở 390
      nó cho 1,848 tức cắt 3,8% chiều cao art. `16 / 9` là đúng tỉ lệ art khách giao
      (736x414 = 1,7778) nên ô cắt 0 pixel ở mọi khổ máy — và là CÙNG MỘT DÒNG KHAI với bản
      desktop, thay vì hai con số px khác nhau cho cùng một ô. */
-  .hm-spot-brand-photo { aspect-ratio: 16 / 9; }
+  .hm-spot-brand-photo { aspect-ratio: 5 / 2; }
   /* NHÃN THƯƠNG HIỆU VÀO TRONG HÌNH (07/09/2026, lệnh user: *"nội dung text trong hình
      luôn nhé"*, ảnh Ounass Block 2). Trước đó wordmark + dòng đếm nằm DƯỚI ảnh.
      GÓC DƯỚI-TRÁI VÀ MỰC TỐI — đo bằng PIL trên đúng phép cắt của ô 443x160:
@@ -4209,7 +4271,7 @@ window.RESP = (function () {
   /* `flex: 0 0 264px` (15/09/2026) — ô KHÔNG co theo lòng dải, đúng khuôn mọi dải trượt khác
      của bản mobile: bề rộng ô là HẰNG SỐ, số ô thấy được mới là thứ đổi theo khổ máy. Xem
      phép tính ở `.hm-spot-brands`. */
-  .hm-spot-brand { position: relative; flex: 0 0 264px; }
+  .hm-spot-brand { position: relative; flex: none; width: 100%; }
   /* VEIL SÁNG CHO Ô THƯƠNG HIỆU — chỉ bật ở khổ HẸP, và đó là số đo bắt phải thế.
      Dải phẳng của ảnh rộng 300 pixel NGUỒN. Nhãn ở trần 12 rộng 118,9 + lề 16 nên mép phải
      của nó nằm ở 134,9 pixel HIỆN; quy về nguồn thì phụ thuộc zoom của ô:
@@ -7489,14 +7551,25 @@ function screenSearch() {
    Số tiền là data demo — giữ ĐÚNG bộ số của bản desktop (PDP_DATA.installment)
    để 2 bản không lệch nhau; sản phẩm không có key thì không hiện khối này.
    `cls` dành cho màn có letter-spacing riêng (PDP6). */
-const INSTALLMENT = { 1: '1.301.000 ₫', 2: '742.000 ₫', 3: '742.000 ₫', 4: '742.000 ₫', 5: '742.000 ₫' };
+
+/* ── TRẢ GÓP: ngưỡng + công thức (brief khách 30/09) ──
+   Hàng "Trả góp từ …/tháng" chỉ hiện khi giá hiện hành > 3.000.000 ₫ và SP không
+   pre-order. Số tiền = giá / kỳ hạn (làm tròn nghìn) — nguồn DUY NHẤT là PRODUCTS.price,
+   không còn bộ số demo cứng. Popup chi tiết: #instSheet (bottom sheet mobile · drawer phải desktop). */
+const INST_MIN = 3000000;
+const INST_TERMS = [[3, false], [6, false], [9, true], [12, true]];   // [số tháng, có thể phát sinh phí]
+const instPriceOf = p => parseInt(String(p.price).replace(/\D/g, ''), 10) || 0;
+const instMonthly = (price, n) => Math.round(price / n / 1000) * 1000;
+const instFmt = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' ₫';
 const payOfferRow = (idx, cls = '') => {
-  const amount = INSTALLMENT[idx];
-  if (!amount || PRODUCTS[idx].preorder) return '';
+  const p = PRODUCTS[idx];
+  if (!p || p.preorder) return '';
+  const price = instPriceOf(p);
+  if (price <= INST_MIN) return '';
   return `
       <div class="t-single flex items-center justify-center gap-1 ${cls}">
-        <span class="text-foreground-alt">Trả trước từ <b class="font-medium">${amount}</b>/tháng</span>
-        <button data-toast="Xem chính sách trả góp" class="text-foreground underline press">Xem chi tiết</button>
+        <span class="text-foreground-alt">Trả góp từ <b class="font-medium">${instFmt(instMonthly(price, 12))}</b>/tháng</span>
+        <button data-inst="${idx}" class="text-foreground underline press">Xem chi tiết</button>
       </div>`;
 };
 
@@ -8970,8 +9043,9 @@ const orderGifts = o => (o.gifts || []).map(x => ({ pk: x.pk, g: GIFT_CATALOG[x.
    10,7:1; đơn huỷ mặt đỏ chữ trắng 4,9:1 (chữ đỏ trên mặt tối chỉ 4,0 — rớt AA). Chữ
    thường 12/16 như mọi nhãn nội dung. Chỉ màn CHI TIẾT truyền interactive=true: hàng danh
    sách đơn cả hàng đã là <button>, lồng nút là HTML sai. */
-const statusTag = (o, interactive = false) => {
-  const cls = 'ord-status' + (o.tone === 'cancel' ? ' is-cancel' : '');
+const statusTag = (o, interactive = false, soft = false) => {
+  /* `soft` (30/09/2026, Figma 975:82500): mặt nhạt kem + chữ đồng đậm cho DANH SÁCH ĐƠN; đơn huỷ luôn giữ mặt đỏ. */
+  const cls = 'ord-status' + (o.tone === 'cancel' ? ' is-cancel' : soft ? ' is-soft' : '');
   if (o.tone === 'pay' && interactive)
     return `<button data-repay="${o.id}" class="t-single ${cls} is-pay press">${o.status}<span class="ord-status-cta">Thanh toán ngay</span>${I.chevR('currentColor')}</button>`;
   /* 29/09/2026 — đơn đã gửi YÊU CẦU huỷ nhưng chưa được duyệt chưa phải "Đã huỷ" (mặt đỏ): nhãn nói đúng
@@ -9003,35 +9077,44 @@ document.addEventListener('click', e => {
    đơn 28/08) trở thành lỗi nhìn thấy được. Sắp khi VẼ, không đụng mảng ORDERS: index 0 vẫn là đơn
    vừa đặt (data-order="0" ở màn Hoàn tất) và đơn mới đã mang ngày thật (xem vnStamp). */
 const ordersNewestFirst = () => ORDERS.slice().sort((a, b) => dmyKey(a.date) < dmyKey(b.date) ? 1 : dmyKey(a.date) > dmyKey(b.date) ? -1 : 0);
-/* LAYOUT MOBILE = HÀNG PHẲNG KẺ NGĂN, 3 DÒNG "Nhãn: giá trị" (cùng khuôn nhãn/giá trị của thẻ Thông
-   tin cá nhân; nhãn mực chính, giá trị mực phụ, nhãn là span riêng để luật i18n khớp nguyên chuỗi).
-     dòng 1  Mã đơn hàng: …            [nhãn trạng thái]
-     dòng 2  Ngày đặt hàng: …
-     dòng 3  Tổng tiền: …                       Xem chi tiết
-   Vì sao 3 dòng xếp chồng: 5 thông tin ở 343px không xếp được thành cột như bảng desktop, mà nhãn
-   "Nhãn:" cần chỗ nên ngày và tiền không thể là hai con số trần như bản 05/09.
-   Vì sao HÀNG PHẲNG chứ không phải thẻ viền (đã thử 29/09 rồi bỏ): khung thẻ ăn 34px ngang, dòng đầu
-   ("Mã đơn hàng: DAFC…" 190px + nhãn "Đang giao hàng" 112px + khe 12 = 318) chỉ còn 294px ở khổ 360
-   → nhãn bị đẩy xuống dòng, 4/9 thẻ cao 134 thay vì 114. Không khung thì dòng đầu có 328px, vừa ở 360.
-   Hàng phẳng còn cùng ngôn ngữ với bảng kẻ hairline của desktop và danh sách giỏ ("chỉ kẻ giữa hàng").
-   CẢ HÀNG là MỘT <button> (mục tiêu chạm lớn) nên "Xem chi tiết" là <span> gạch chân — button lồng
-   button là HTML sai. Hai hàng còn lại vẫn cho XUỐNG DÒNG (flex-wrap) để khổ 320 không cắt chữ. */
+/* 30/09/2026 (user, Figma 975:82500 — thẻ trên) — LAYOUT MOBILE = THẺ KẺ ĐÁY. Thay hàng phẳng 3 dòng "Nhãn: giá trị" của 29/09.
+     dòng 1  Mã đơn #DAFC…                      ngày ›
+     dòng 2  [nhãn trạng thái]
+     thân    [ảnh][ảnh][ảnh]                    Tổng tiền:
+                                                90.132.000 ₫
+   Vẫn ĐỦ 5 thông tin của lệnh 29/09 (ngày đặt · mã đơn · tổng tiền · trạng thái · vào chi tiết). Khác hôm 29/09: "Xem chi tiết" chữ
+   gạch chân nhường chỗ cho mũi tên › (cả thẻ đã là một nút), và có thêm hàng ẢNH sản phẩm để nhận ra đơn không cần đọc mã.
+   Thẻ KHÔNG viền hai bên (chỉ kẻ đáy) nên không mất 34px ngang như thẻ viền đã thử rồi bỏ hôm 29/09 — dòng đầu có nguyên 343px.
+   Số đo và lý do từng con số nằm ở khối CSS `.ord-card` (cạnh `.ord-status`). Cả thẻ là MỘT <button>; nhãn là <span> riêng để luật
+   i18n khớp nguyên chuỗi ("Mã đơn", "Tổng tiền"), dấu ":" đứng ngoài span. */
+/* Hàng ảnh của thẻ đơn — tối đa ORD_THUMB_SLOTS ô. Đơn nhiều món hơn số ô thì ô cuối là "+N" (N = số món bị ẩn; mặt đen chữ trắng như
+   ô '+2' trong khung desktop nháp của user), các ô còn lại là ảnh món theo thứ tự đơn. 3 ô = số ảnh nhét vừa cạnh cột tiền ở 375. */
+const ORD_THUMB_SLOTS = 3;
+const orderThumbs = o => {
+  const its = o.items || [], many = its.length > ORD_THUMB_SLOTS, shown = many ? its.slice(0, ORD_THUMB_SLOTS - 1) : its;
+  return shown.map(it => `<span class="ord-thumb"><img src="${A}${it.img}" alt=""></span>`).join('')
+    + (many ? `<span class="ord-thumb ord-thumb-more t-single">+${its.length - shown.length}</span>` : '');
+};
 function accOrders() {
-  const dong = (nhan, giaTri) => `<span class="t-lead block min-w-0"><span class="text-foreground"><span>${nhan}</span>:</span> <span class="text-secondary-foreground">${giaTri}</span></span>`;
   return `
-    <div class="px-4">
+    <div class="ord-list">
       ${ordersNewestFirst().map(o => `
-        <button data-order="${o.id}" class="w-full text-left flex flex-col gap-2 py-4 border-b border-border hover:bg-accent-0 press">
-          <span class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-            ${dong('Mã đơn hàng', o.id)}
-            ${statusTag(o)}
+      <button type="button" data-order="${o.id}" class="ord-card press">
+        <span class="ord-card-meta">
+          <span class="ord-card-top">
+            <span class="ord-card-ids">
+              <span class="ord-card-code t-lead"><span>Mã đơn</span> <span>#${o.id}</span></span>
+              <span class="ord-card-date t-lead">${o.date}</span>
+            </span>
+            <span class="ord-card-go" aria-hidden="true">${I.chevR('currentColor')}</span>
           </span>
-          ${dong('Ngày đặt hàng', o.date)}
-          <span class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-            ${dong('Tổng tiền', o.total)}
-            <span class="t-lead shrink-0 text-foreground underline">Xem chi tiết</span>
-          </span>
-        </button>`).join('')}
+          ${statusTag(o, false, true)}
+        </span>
+        <span class="ord-card-body">
+          <span class="ord-thumbs">${orderThumbs(o)}</span>
+          <span class="ord-card-total t-lead"><span class="ord-card-total-l"><span>Tổng tiền</span>:</span><span class="ord-card-total-v">${o.total}</span></span>
+        </span>
+      </button>`).join('')}
     </div>`;
 }
 
@@ -10966,7 +11049,7 @@ function hmMaison() {
       <div class="flex flex-col gap-1">
       <div class="hm-spot">
         <a data-hm-brand="${hmMaisonName()}" class="hm-spot-photo w-full overflow-hidden bg-secondary cursor-pointer press">
-          <img src="${A}${spotImg}" alt="${spotAlt}" class="w-full h-full object-cover lazy">
+          <img src="${A}${spotImg}" alt="${spotAlt}" class="w-full h-full object-cover lazy"${hmBeauty() ? ' style="object-position:50% 25%"' : ''}>
         </a>
         <span class="hm-spot-veil" aria-hidden="true"></span>
         <div class="hm-spot-copy">
@@ -17191,6 +17274,13 @@ const I18N = {
   // Trả góp: markup tách số tiền vào <b> nên phần chữ thành 2 text node riêng
   // ("Trả trước từ" và "/tháng") -> phải có 2 key, không gộp 1 câu.
   'Trả trước từ':'From', '/tháng':'/month', 'Xem chính sách trả góp':'View installment policy',
+  'Trả góp từ':'Installments from', 'Các kỳ hạn trả góp':'Installment plans', 'Chọn kỳ hạn':'Select a plan', 'Ngân hàng áp dụng':'Participating banks', 'Lãi suất 0%':'0% interest', 'Có thể phát sinh phí':'Fee may apply', 'ngân hàng':'banks', 'tháng':'months',
+  'Không cần trả trước. Số tiền được chia đều theo kỳ hạn bạn chọn.':'No down payment required. Monthly installments are divided equally based on your selected plan.',
+  'Kỳ hạn 9 và 12 tháng có thể phát sinh phí dịch vụ, thu một lần khi mua và đã tính trong tổng thanh toán.':'A service fee may apply for 9 and 12-month plans, charged at purchase and included in the total amount.',
+  'Đơn trả góp không áp dụng hủy hoặc hoàn tiền. Sản phẩm lỗi được hỗ trợ theo':'Orders paid by installment cannot be canceled or refunded. Defective items are supported under our', 'chính sách đổi trả':'return policy',
+  'Điều kiện trả góp theo quy định của ngân hàng phát hành thẻ. DAFC có quyền từ chối đơn không đủ điều kiện.':'Installment eligibility is subject to your bank’s terms. DAFC reserves the right to decline requests that do not qualify.',
+  'Phí không được hoàn lại sau khi giao dịch thành công. Kỳ hạn áp dụng tùy ngân hàng và loại thẻ phát hành.':'Fees are non-refundable once the transaction is completed. Plans available depend on your issuing bank and card type.',
+  'Xem điều khoản trả góp đầy đủ':'View full installment terms',
 
   // ── Mô tả / bảo quản / thông số: nguyên văn từ shop.dafc.com.vn ──
   'Đầm mini không tay bằng lụa twill, nổi bật với họa tiết "Broken Jewels" và chi tiết thắt nút ở vai lấy cảm hứng từ cách tạo kiểu khăn lụa.':'A sleeveless mini dress in silk twill with the "Broken Jewels" print and a knotted shoulder detail inspired by the way a silk scarf is styled.',
@@ -18033,6 +18123,9 @@ const I18N = {
      EN không trùng giá trị của khoá nào — 'Total' đã là của 'Thành tiền' nên Tổng tiền ra 'Order total'
      (trùng là I18N_REV đảo sai). */
   'Ngày đặt hàng':'Order date', 'Tổng tiền':'Order total', 'Trạng thái':'Status',
+  /* 30/09/2026 — thẻ đơn (Figma 975:82500) đọc "Mã đơn #DAFC…": nhãn ngắn MỚI 'Mã đơn' → 'Order' (chưa khoá nào mang EN 'Order'
+     nên I18N_REV không đảo sai; ra "Order #DAFC…"). 'Tổng tiền' đã có ở dòng trên. */
+  'Mã đơn':'Order',
   /* 29/09/2026 — rà UX chi tiết đơn (trạng thái từng đợt, hộp huỷ đơn, hạn thanh toán, đơn huỷ vì sao). Đã soát
      từng khoá (chưa có) và từng giá trị EN (không trùng giá trị của khoá khác — trùng là I18N_REV đảo sai). */
   'Trạng thái đơn hàng':'Order status',
@@ -20781,7 +20874,7 @@ function wire(root) {
     const mainBtn  = cta ? cta.querySelector('button[data-add]') : null;
     // Khối trả góp nằm ngay dưới nút (payOfferRow) — ẩn khi size chọn đang hết
     // hàng, giống bản desktop: không còn mua được thì đừng chào trả góp.
-    const payOffer = cta ? [...cta.children].find(c => c.textContent.includes('Trả trước')) : null;
+    const payOffer = cta ? [...cta.children].find(c => c.textContent.includes('Trả góp')) : null;
     const stickyBtn = document.querySelector('#pdpStickyCta button[data-add]');
     const NORMAL = mainBtn ? mainBtn.innerHTML : '';
     const stickyNormal = stickyBtn ? stickyBtn.innerHTML : '';
@@ -21854,26 +21947,11 @@ function pdpPriceNow(p, root) {
    PDP của bản mobile — sửa một chỗ, cả sáu màn có.
    Khoá so sánh = TÊN + BIẾN THỂ đang chọn, đúng khoá addToCart() dùng để gộp
    dòng; nhờ vậy đổi size là dòng nhắc tự đổi theo. */
+/* 30/09/2026 — user yêu cầu BỎ dòng "Đã có trong giỏ · N sản phẩm — Xem giỏ hàng" ở PDP.
+   Giữ hàm (các chỗ gọi vẫn còn) nhưng chỉ dọn dòng nếu còn sót, không dựng lại. */
 function pdpInCartSync(root) {
   root = root || document.querySelector('[data-screen^="pdp"]') || document;
-  const cta = root.querySelector('#pdpCta');
-  if (!cta) return;
-  let el = cta.querySelector('#pdpInCart');
-  if (!el) {
-    cta.insertAdjacentHTML('beforeend', '<p id="pdpInCart" class="t-single hidden text-secondary-foreground"></p>');
-    el = cta.querySelector('#pdpInCart');
-  }
-  const p = PRODUCTS[screenProductIdx()];
-  if (!p) { el.classList.add('hidden'); return; }
-  const colorEl = root.querySelector('#colorName');
-  const sizeChip = root.querySelector('.chip.on');
-  const size = sizeChip ? (sizeChip.dataset.sizeLabel || sizeChip.dataset.size || '') : '';
-  const variant = [colorEl ? colorEl.textContent.trim() : '', size].filter(Boolean).join(' , ');
-  const hit = CART.find(c => !c.removed && c.name === p.name && (c.variant || '') === variant);
-  if (!hit) { el.classList.add('hidden'); el.textContent = ''; return; }
-  el.classList.remove('hidden');
-  el.innerHTML = `Đã có trong giỏ · <span class="font-medium">${hit.qty}</span> sản phẩm — <button data-nav="cart" class="underline font-medium text-foreground press">Xem giỏ hàng</button>`;
-  wire(el);
+  root.querySelectorAll('#pdpInCart').forEach(e => e.remove());
 }
 
 function toast(msg, act) {
@@ -22892,6 +22970,94 @@ document.body.insertAdjacentHTML('beforeend', `
   sh.querySelector('.is-backdrop').addEventListener('click', closeS);
   sh.querySelector('#isClose').addEventListener('click', closeS);
   window.__openInfoSheet = openS;
+})();
+
+/* ── POPUP TRẢ GÓP (#instSheet) ─────────────────────────────────────────────
+   Mở từ nút "Xem chi tiết" dưới CTA PDP ([data-inst]=idx SP). Nội dung rút gọn từ
+   trang chính sách trả góp của khách: chọn kỳ hạn (giá/3/6/9/12) · ngân hàng áp dụng ·
+   điều khoản. ⚠ Danh sách 11 ngân hàng "xem thêm" là DATA TẠM — trang khách chỉ có ảnh
+   bảng ngân hàng, chưa có chữ; thay bằng danh sách thật khi khách gửi. */
+const INST_BANKS = ['Vietcombank','VietinBank','BIDV','Sacombank','ACB','Techcombank','MB','MSB','VPBank','OCB','TPBank','VIB','SHB','HDBank','SCB','SeABank','Nam A Bank','PVcomBank','HSBC'];
+const INST_BANKS_MORE = ['Eximbank','Shinhan Bank','Standard Chartered','LPBank','Bac A Bank','ABBank','Kienlongbank','Saigonbank','VietABank','BaoViet Bank','Woori Bank'];
+const INST_ICO = {
+  ok:   '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/>',
+  fee:  '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  back: '<path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.5"/><path d="M4 4v4.5h4.5M12 8v4l2.5 1.5"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+};
+const instIco = k => `<svg class="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-top:1px">${INST_ICO[k]}</svg>`;
+function instSheetHTML(price, sel) {
+  const plans = INST_TERMS.map(([n, fee]) => `
+    <button data-ins-plan="${n}" aria-pressed="${n === sel}" class="ins-plan press text-left rounded-xs border ${n === sel ? 'border-primary' : 'border-border'} p-3 flex flex-col gap-1">
+      <span class="t-single text-muted-foreground">${n} <span>tháng</span></span>
+      <span><span class="t-overlay font-medium text-foreground whitespace-nowrap" data-i18n-skip>${instFmt(instMonthly(price, n))}</span> <span class="t-single text-muted-foreground whitespace-nowrap">/ <span>tháng</span></span></span>
+      <span class="t-single ${fee ? 'text-muted-foreground' : 'text-success'}">${fee ? 'Có thể phát sinh phí' : 'Lãi suất 0%'}</span>
+    </button>`).join('');
+  const bank = b => `<div class="ins-bank t-single text-foreground-alt" data-i18n-skip>${b}</div>`;
+  return `
+    <div class="flex flex-col gap-3">
+      <p class="t-multiline font-medium text-muted-foreground">Chọn kỳ hạn</p>
+      <div class="grid grid-cols-2 gap-2">${plans}</div>
+    </div>
+    <div class="flex flex-col gap-3">
+      <p class="t-multiline font-medium text-muted-foreground">Ngân hàng áp dụng</p>
+      <div class="ins-banks grid gap-2">
+        ${INST_BANKS.map(bank).join('')}
+        <button data-ins-more class="ins-bank t-single font-medium text-foreground press" style="background:var(--general-secondary)">+${INST_BANKS_MORE.length} <span>ngân hàng</span></button>
+      </div>
+    </div>
+    <div class="flex flex-col gap-3 pt-4 border-t border-border">
+      ${[['ok','Không cần trả trước. Số tiền được chia đều theo kỳ hạn bạn chọn.'],
+         ['fee','Kỳ hạn 9 và 12 tháng có thể phát sinh phí dịch vụ, thu một lần khi mua và đã tính trong tổng thanh toán.'],
+         ['back','Đơn trả góp không áp dụng hủy hoặc hoàn tiền. Sản phẩm lỗi được hỗ trợ theo <button data-ins-link="returns" class="underline text-foreground press">chính sách đổi trả</button>.'],
+         ['info','Điều kiện trả góp theo quy định của ngân hàng phát hành thẻ. DAFC có quyền từ chối đơn không đủ điều kiện.']]
+        .map(([k, t]) => `<div class="flex gap-2 text-foreground-alt">${instIco(k)}<p class="t-multiline">${t}</p></div>`).join('')}
+    </div>
+    <div class="rounded-xs p-3 t-multiline text-muted-foreground" style="background:var(--general-secondary)">
+      <p>Phí không được hoàn lại sau khi giao dịch thành công. Kỳ hạn áp dụng tùy ngân hàng và loại thẻ phát hành.</p>
+      <button data-ins-link="installment" class="underline text-foreground press mt-1">Xem điều khoản trả góp đầy đủ</button>
+    </div>`;
+}
+document.body.insertAdjacentHTML('beforeend', `
+  <div id="instSheet" aria-hidden="true">
+    <div class="ins-backdrop"></div>
+    <div class="ins-panel" role="dialog" aria-label="Các kỳ hạn trả góp">
+      <div class="ins-grab h-6 flex items-center justify-center shrink-0"><span class="w-10 h-1 rounded-full bg-border"></span></div>
+      <div class="h-12 px-4 flex items-center justify-between shrink-0 border-b border-border">
+        <p class="t-section-title text-foreground">Các kỳ hạn trả góp</p>
+        <button id="insClose" class="w-8 h-8 -mr-2 flex items-center justify-center press" aria-label="Đóng">${I.close}</button>
+      </div>
+      <div id="insBody" class="flex-1 overflow-y-auto overscroll-contain px-4 py-4 flex flex-col gap-6"></div>
+    </div>
+  </div>`);
+(() => {
+  const sh = document.getElementById('instSheet');
+  const body = document.getElementById('insBody');
+  let price = 0, open = false;
+  const render = sel => { body.innerHTML = instSheetHTML(price, sel); localizeNew(sh); };
+  const openI = idx => {
+    price = instPriceOf(PRODUCTS[idx]);
+    render(3); body.scrollTop = 0;
+    sh.classList.add('open'); sh.setAttribute('aria-hidden', 'false');
+    if (!open) { open = true; lockBodyScroll(); }
+  };
+  const closeI = () => {
+    sh.classList.remove('open'); sh.setAttribute('aria-hidden', 'true');
+    if (open) { open = false; unlockBodyScroll(); }
+  };
+  sh.querySelector('.ins-backdrop').addEventListener('click', closeI);
+  document.getElementById('insClose').addEventListener('click', closeI);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && open) closeI(); });
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-inst],[data-ins-plan],[data-ins-more],[data-ins-link]');
+    if (!t) return;
+    if (t.dataset.inst != null) { e.stopPropagation(); openI(+t.dataset.inst); return; }
+    if (!sh.contains(t)) return;
+    if (t.dataset.insPlan) render(+t.dataset.insPlan);
+    else if (t.dataset.insMore != null) {
+      t.outerHTML = INST_BANKS_MORE.map(b => `<div class="ins-bank t-single text-foreground-alt" data-i18n-skip>${b}</div>`).join('');
+    } else if (t.dataset.insLink) { closeI(); go(t.dataset.insLink); }
+  }, true);
 })();
 
 document.body.insertAdjacentHTML('beforeend', `
