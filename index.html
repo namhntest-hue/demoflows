@@ -917,8 +917,19 @@ window.RESP = (function () {
      Viền: thẻ đóng viền nhạt, thẻ ĐANG MỞ đổi sang mực chính để mắt biết đang đứng
      ở đâu — khác nhau bằng SẮC ĐỘ chứ không dày thêm px, vì thêm px là cả khối nhảy
      1px mỗi lần mở. */
-  .acc-card { border: 1px solid var(--general-border); padding: 16px; }
+  /* 30/09/2026 (khách qua user: "account-yourprofile … các nội dung theo style line khung thôi chứ không đóng nguyên cái khung"; user chọn PHƯƠNG ÁN A trong 3 kiểu
+     dựng thử — ảnh _notes/ref-profile-line-options-2026-09-30.png; áp CẢ mobile và desktop) — KHỐI THÔNG TIN KHÔNG CÒN ĐÓNG KHUNG: mỗi khối chỉ còn vạch kẻ mảnh
+     phía TRÊN và phía DƯỚI (`--general-border`, cùng kẻ hairline của mọi danh sách khác), bỏ viền hai bên và bỏ đệm ngang nên chữ thẳng lề với tiêu đề trang.
+     ĐẢO phần "thẻ có viền" của ghi chú 21/09 ngay trên. Hai khối liền nhau DÙNG CHUNG một vạch ở giữa: khối sau bỏ border-top, và cụm bọc trong accInfo() bỏ khe 24
+     (kẻ đã làm việc ngăn). Đệm dọc 16 trên/dưới.
+
+     THẺ ĐANG MỞ vẫn đổi sang mực chính, nay là HAI VẠCH ĐEN quanh khối (không dày thêm px, tổng chiều cao không đổi khi mở/đóng): khối mở là khối TRÊN → vạch đáy của
+     nó là vạch chung; khối mở là khối DƯỚI → vạch trên của nó đen và khối trước bỏ vạch đáy (:has) để khỏi thành hai vạch chồng. */
+  .acc-card { border-top: 1px solid var(--general-border); border-bottom: 1px solid var(--general-border); padding: 16px 0; }
+  .acc-card + .acc-card { border-top: 0; }
   .acc-card.is-open { border-color: var(--general-primary); }
+  .acc-card + .acc-card.is-open { border-top: 1px solid var(--general-primary); }
+  .acc-card:has(+ .acc-card.is-open) { border-bottom: 0; }
   .acc-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
   /* Cột dữ liệu tự chia theo chỗ trống, nên thẻ 2 mục ra 2 cột còn thẻ 3 mục ra 3
      cột mà không phải khai riêng từng thẻ; khổ hẹp tự rớt về 1 cột. */
@@ -989,68 +1000,145 @@ window.RESP = (function () {
      tràn 10px trên/dưới, hình vẽ đứng yên. */
   .ord-status.is-pay { position: relative; }
   .ord-status.is-pay::after { content: ''; position: absolute; left: 0; right: 0; top: -10px; bottom: -10px; }
-  /* 30/09/2026 (user, Figma 975:82500) — nhãn trạng thái ở DANH SÁCH ĐƠN đổi sang MẶT NHẠT: nền kem `--cu-surface`
-     (copper-surface #f5f2ed) + chữ `--cu-ink` (copper-ink #81604d, 5,65:1 trên trắng), đệm 4 đều 4 phía như instance trong
-     khung Figma. Chỉ danh sách dùng (statusTag(o, false, true)): màn CHI TIẾT giữ mặt tối + chữ đồng của brief trang 55, và
-     "Đã huỷ" luôn giữ mặt đỏ ở mọi nơi nên không nhận is-soft. Hai token chỉ khai dưới skin-li nên có màu dự phòng. */
-  .ord-status.is-soft { padding: 4px; background: var(--cu-surface, var(--general-secondary)); color: var(--cu-ink, var(--general-secondary-foreground)); }
+  /* 30/09/2026 chiều muộn (user, dán ảnh badge "Chờ thanh toán": "cái trạng thái đổi thành dạng badge với nền là màu 50 và chữ 600-700 gì đó") — NHÃN TRẠNG THÁI Ở
+     DANH SÁCH ĐƠN = BADGE: nền nhạt bậc 50 + chữ đậm bậc 700 CÙNG HỌ MÀU, theo trạng thái. ĐẢO chấm màu + chữ mực cùng ngày (hai khung Figma 984:84749 / 987:84835 vẽ chấm) và
+     là ngoại lệ ghi danh của chốt "không nền tô" (STYLE-RULES §2.2), riêng cho nhãn này — cùng kiểu chip giảm giá skin-li 25/08. Số đo: chữ 14/20 · 500 (`.t-lead` + ngoại lệ có
+     tên ở khối `.ord-card`), đệm 2 / 8 ⇒ cao 24 (đúng bậc cao nhãn của brief trang 55), bo 0 (§3.2). Ảnh user dán đo được nền #fffbeb + chữ #b45309 = amber-50 / amber-700.
+     Danh sách đơn dùng statusTag(o, false, true), màn CHI TIẾT dùng statusTag(o, true, true) (tối 30/09, user: "đồng bộ cái thẻ trạng thái đơn hàng cho trang chi tiết đơn hàng luôn") và
+     màn Theo dõi đơn (trackResultView) dùng statusTag(o, false, true) (tối muộn 30/09, user: "đổi luôn màn theo dõi đơn nhé") — chip mặt tối của brief trang 55 (đơn huỷ mặt đỏ) không còn
+     chỗ nào dùng. Nền lấy token `*-subtle` (= bậc 50) sẵn có; chữ bậc 700:
+       Chờ thanh toán                                nền --general-warning-subtle #fffbeb · chữ #b45309 (amber-700, đo từ ảnh)                       4,8:1   .is-wait  (tone pay)
+       Đang xử lý · Chờ hàng về · Đang giao hàng     nền --general-info-subtle #eff6ff · chữ #1d4ed8 (blue-700)                                      6,2:1   (mặc định; tone info / warning)
+       Hoàn tất                                      nền --general-success-subtle #effaf5 · chữ --general-success #1a7a5c (≈ emerald-700)             4,9:1   .is-ok
+       Đã huỷ · Chờ xác nhận huỷ                     nền --general-secondary #f5f5f5 · chữ --general-secondary-foreground #404040 (= neutral-700)     9,5:1   .is-off
+       Lỗi thanh toán (demo chưa có trạng thái này)  nền --unofficial-destructive-subtle #fef2f2 · chữ --unofficial-destructive-active #b91c3a         5,8:1   .is-err   (tone 'fail')
+     Nhãn tô màu nên KHÔNG được nằm trong khối `opacity .8` (amber mờ 80% còn 3,4:1, rớt AA). KHAI GIỐNG HỆT ở file kia. */
+  .ord-status.is-badge { --ord-bg: var(--general-info-subtle); --ord-ink: #1d4ed8; padding: 2px 8px; border-radius: 0; background: var(--ord-bg); color: var(--ord-ink); }
+  .ord-status.is-badge.is-wait { --ord-bg: var(--general-warning-subtle); --ord-ink: #b45309; }
+  .ord-status.is-badge.is-ok { --ord-bg: var(--general-success-subtle); --ord-ink: var(--general-success); }
+  .ord-status.is-badge.is-off { --ord-bg: var(--general-secondary); --ord-ink: var(--general-secondary-foreground); }
+  .ord-status.is-badge.is-err { --ord-bg: var(--unofficial-destructive-subtle); --ord-ink: var(--unofficial-destructive-active); }
+  /* Tối 30/09 — badge "Chờ thanh toán" ở màn CHI TIẾT là NÚT (bấm để thanh toán lại): hover đậm nền một bậc, hổ phách 50 → 100 (`--general-warning-border` #fef3c7), chữ #b45309 vẫn
+     4,5:1. Phải đứng SAU `.ord-status.is-pay:hover` (hover mặt tối của chip cũ, 0,3,0) và nặng hơn nó (0,4,0) — không thì nền thành đen, chữ hổ phách chìm. KHAI GIỐNG HỆT file kia. */
+  .ord-status.is-badge.is-pay:hover { background: var(--general-warning-border); }
 
-  /* 30/09/2026 (user, Figma 975:82500 — thẻ trên) — DANH SÁCH ĐƠN = THẺ, thay hàng phẳng 3 dòng "Nhãn: giá trị" của 29/09.
-       dòng 1  Mã đơn #DAFC… (500)                   ngày ›
-       dòng 2  [nhãn trạng thái]
+  /* ── CHI TIẾT ĐƠN HÀNG — LAYOUT "v4" CỦA USER (01/10/2026) · MOBILE ──
+     Khung Figma `Order detail / mobile · v4 (shipping)` 1036:57924 (trang screens, file Test agent). Bốn THẺ TRÀN MÉP (375) kẻ ĐÁY 1px `--general-border`, không bo, nền `--card-card`, đệm 16, khe 12:
+       MÃ ĐƠN (nhãn "Mã đơn hàng" + mã + nút sao chép · nhãn trạng thái · ngày đặt · thanh toán) → THÔNG TIN GIAO HÀNG → THÔNG TIN NGƯỜI NHẬN → SẢN PHẨM + TỔNG.
+     Khung KHÔNG vẽ timeline trong thẻ — user chọn phương án C: tiến trình mở bằng SHEET từ một hàng ở thẻ MÃ ĐƠN (xem `.ov-prog` / `.ov-vt` bên dưới); KHÔNG chia đợt, KHÔNG khúc liên hệ CSKH (user "note lại" cùng ngày). Số đo đọc bằng figma_execute từ khung:
+       back-link: cao 38 = đệm trên 22 + chữ 16, lề trái 16 · `content`: đệm 8 trên / 32 dưới · tiêu đề "Chi tiết đơn hàng" 18/24 (.t-section-title) lề 16, SÁT thẻ đầu (khe 0)
+       hàng nhãn–giá trị: nhãn 12/16 mờ | giá trị 12/16 · 500 canh phải, khe 12 · hàng mã đơn: nhãn + mã 14/20 · 500 + nút sao chép 16, khe 8
+       tổng: kẻ ngăn `--general-border-subtle` · hàng 14/20 (Giảm giá: nhãn + số đỏ) · "Tổng thanh toán" 14/20 · 500 · "Đã bao gồm VAT" 12/16 mờ · điểm tích luỹ 12/16 màu thành công.
+     NGOẠI LỆ 500 ghi danh thứ NĂM (STYLE-RULES §1.1): giá trị trong hàng nhãn–giá trị (`.ov-v`), mã đơn (`.ov-code`), tên người nhận (`.ov-name`), tổng thanh toán (`.ov-total`), tên chặng xong / đang ở của timeline dọc (`.ov-step-name.is-on`) — text style
+     `t-label-single` / `t-label-lead` của khung. Cùng bậc với ngoại lệ thứ ba/tư (14/20 · 500 · chữ thường). KHAI GIỐNG HỆT bản desktop về tên lớp; số đo hai bản khác nhau theo khung. */
+  .ov-back { padding: 22px 16px 0; }
+  .ov-page { padding: 8px 0 32px; }
+  .ov-title { padding: 0 16px; }
+  .ov-card { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--card-card); border-bottom: 1px solid var(--general-border); }
+  .ov-codes { display: flex; align-items: center; gap: 8px; }
+  .ov-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .ov-row.is-top { align-items: flex-start; }
+  .ov-k { flex: none; color: var(--general-muted-foreground); }
+  .ov-v { min-width: 0; text-align: right; color: var(--general-foreground); }
+  .ov-code { color: var(--general-foreground); }
+  .ov-name { color: var(--general-foreground); }
+  .ov-v, .ov-name, .ov-code, .ov-total, .ov-step-name.is-on, html.skin-mt .ov-v, html.skin-mt .ov-name, html.skin-mt .ov-code, html.skin-mt .ov-total, html.skin-mt .ov-step-name.is-on { font-weight: 500; }
+  .ov-copy { position: relative; display: inline-flex; flex: none; width: 16px; height: 16px; color: var(--general-muted-foreground); }
+  .ov-copy::after { content: ''; position: absolute; inset: -14px; }
+  .ov-copy:hover { color: var(--general-foreground); }
+  .ov-copy svg rect:last-child { fill: var(--card-card); }
+  .ov-awbs { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .ov-awb { display: flex; align-items: center; gap: 6px; }
+  .ov-underline { text-decoration: underline; text-underline-offset: 2px; }
+  .ov-addr { display: flex; flex-direction: column; gap: 4px; }
+  .ov-addr .ov-sub { color: var(--general-secondary-foreground); }
+  .ov-divider { height: 1px; background: var(--general-border-subtle); }
+  .ov-sum { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+  .ov-sum-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--general-foreground); }
+  .ov-sum-row.is-neg { color: var(--general-destructive); }
+  .ov-sum-total { padding-top: 8px; }
+  .ov-vat { color: var(--general-muted-foreground); }
+  .ov-points { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 4px; color: var(--general-success); }
+  /* MỤC "THÔNG TIN VAT" (01/10/2026) — thẻ ACCORDION (`.acc` / `.acc-trigger` / `.acc-body` của app, icon +/−), MẶC ĐỊNH ĐÓNG: chỉ còn hàng tiêu đề Libre 16/24 + dấu +. Đệm thẻ chuyển vào NÚT tiêu đề (cả hàng
+     bấm được) và phần thân; thẻ đóng cao 16 + 24 + 16 + viền đáy 1 = 57. Mở ra thì đệm dưới của tiêu đề co 16 → 12 (khe tiêu đề → hàng = khe thẻ 12) cùng nhịp với `.acc-body` rồi thân trượt mở.
+     Tên lớp `.ov-inv` (không phải `.ov-vat` — lớp đó là dòng "Đã bao gồm VAT" của khối tổng). */
+  .ov-inv { gap: 0; padding: 0; }
+  .ov-inv-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; text-align: left; transition: padding-bottom .34s cubic-bezier(.22, 1, .36, 1); }
+  .ov-inv.open .ov-inv-head { padding-bottom: 12px; }
+  .ov-inv-body { display: flex; flex-direction: column; gap: 12px; padding: 0 16px 16px; }
+
+  /* HÀNG "TIẾN TRÌNH ĐƠN HÀNG" ở thẻ MÃ ĐƠN (user chọn phương án C 01/10/2026: "mở bằng bottom sheet từ một hàng Tiến trình") — một hàng nhãn–giá trị như Ngày đặt / Thanh toán nhưng là NÚT mở #shipSheet: giá trị = giờ
+     mốc MỚI NHẤT, chevron báo còn nữa. Vùng chạm tràn 14px trên/dưới bằng phần tử ảo (chữ chỉ cao 16) — hộp của nút vẫn cao 16 nên khung không đổi chiều cao thêm. */
+  .ov-prog { position: relative; width: 100%; text-align: left; }
+  .ov-prog::after { content: ''; position: absolute; left: 0; right: 0; top: -14px; bottom: -14px; }
+  .ov-prog-end { display: flex; align-items: center; gap: 4px; min-width: 0; }
+  .ov-prog-end svg { flex: none; width: 12px; height: 12px; color: var(--general-muted-foreground); }
+  /* TIMELINE DỌC trong sheet "Tiến trình đơn hàng" — khung `timeline` 1034:57747 của user (309×188): mỗi chặng một hàng [nút 24 · khe 12 · tên + giờ xếp dọc khe 2], khe giữa các chặng 16, đệm trên 4.
+     Nút Y HỆT nút timeline ngang của desktop: XONG = nền đen + tick trắng · ĐANG Ở = nền thẻ + vòng đen 2 + chấm 8 · CHƯA TỚI = nền mờ + viền 1 + chấm 6 mờ (KHAI GIỐNG HỆT file kia). Vạch nối 2px đi từ đáy nút
+     xuống đỉnh nút kế (đen khi chặng kế đã tới, xám khi chưa): khung vẽ vạch 2×18 chừa 8px hở trước nút kế, code kéo liền. Tên 12/16: xong / đang ở 500 mực chính (ngoại lệ 500 thứ năm), chưa tới 400 mờ; giờ 12/16 mờ. */
+  .ov-vt { display: flex; flex-direction: column; gap: 16px; padding: 4px 0 16px; }
+  .ov-vstep { position: relative; display: flex; align-items: flex-start; gap: 12px; }
+  .ov-vline { position: absolute; left: 11px; top: 24px; bottom: -16px; width: 2px; background: var(--general-foreground); }
+  .ov-vline.is-todo { background: var(--general-border); }
+  .ov-vtxt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .ov-dot { position: relative; z-index: 1; flex: none; box-sizing: border-box; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 9999px; }
+  .ov-dot.is-done { background: var(--general-foreground); color: var(--card-card); }
+  .ov-dot.is-now { background: var(--card-card); border: 2px solid var(--general-foreground); }
+  .ov-dot-in { display: block; flex: none; border-radius: 9999px; }
+  .ov-dot.is-now > .ov-dot-in { width: 8px; height: 8px; background: var(--general-foreground); }
+  .ov-dot.is-todo { background: var(--general-muted); border: 1px solid var(--general-border); }
+  .ov-dot.is-todo > .ov-dot-in { width: 6px; height: 6px; background: var(--general-muted-foreground); }
+  .ord-step-x { background: var(--general-destructive); color: var(--general-primary-foreground); }
+  .ord-step-x svg { width: 10px; height: 10px; fill: currentColor; }
+  .ov-step-name { color: var(--general-muted-foreground); }
+  .ov-step-name.is-on { color: var(--general-foreground); }
+  .ov-step-time { color: var(--general-muted-foreground); }
+
+  /* 30/09/2026 (user, Figma 975:82500 — thẻ trên; chiều muộn cập nhật theo khung Figma 984:84749, rồi nhãn đổi sang BADGE theo ảnh user dán) — DANH SÁCH ĐƠN = THẺ KẺ ĐÁY,
+     thay hàng phẳng 3 dòng "Nhãn: giá trị" của 29/09.
+       dòng 1  Mã đơn #DAFC… (400)                   ngày ›      (ngày + mũi tên mờ 80%, mã đơn KHÔNG mờ)
+       dòng 2  [nhãn trạng thái]                                (BADGE nền 50 + chữ 700, cao 24 — xem `.ord-status.is-badge`)
        thân    hàng ảnh (trái) · cột tiền (phải: "Tổng tiền:" trên, số tiền dưới, canh giữa theo chiều cao ảnh)
-     Số đo bê từ khung: đệm 16 trên/dưới · khe 16 giữa 3 khối · khe 8 giữa dòng mã và nhãn · ảnh 75×100 khe 8 · cột tiền khe 4 ·
-     mũi tên 12 · khối đầu thẻ (mã, ngày, mũi tên, nhãn) mờ 80% (meta opacity .8). Vạch đáy 1px `border` NẰM TRONG đệm đáy 16 (stroke
-     trong của Figma không cộng vào chiều cao) nên đệm đáy khai 15 + viền 1 → thẻ cao đúng 200. Thẻ cách nhau 24 (khe của #accBody);
-     từ tiêu đề tới thẻ đầu cũng 24 — accHead đã cho đúng khoảng đó (đo: đáy tiêu đề 217, thẻ đầu 241).
-     ẢNH: tối đa ORD_THUMB_SLOTS ô (xem orderThumbs), ô cuối là "+N" khi đơn nhiều món hơn. Ảnh 75 co ĐỀU (tới ~65) khi cột tiền
+     Số đo bê từ khung: đệm 16 trên/dưới · khe 16 giữa đầu thẻ và thân · khe 4 giữa hai hàng đầu thẻ (20 + 4 + badge 24 = 48; khung vẽ chấm 20 ⇒ 44) · ảnh 75×100 khe 8 · cột tiền khe 4 ·
+     mũi tên 12. Vạch đáy 1px `border` NẰM TRONG đệm đáy 16 (stroke trong của Figma không cộng vào chiều cao) nên đệm đáy khai 15 + viền 1 → thẻ cao 196 (khung vẽ chấm: 192; bản chip kem: 200).
+     Mã đơn chữ THƯỜNG 400 — khung mới đổi từ 500 sang Regular (desktop vẫn 500). Các thẻ KHÔNG cách nhau (khe 0) và thẻ đầu sát tiêu đề — đúng #accBody của khung (user 30/09: "theo khung
+     của tôi hết"; trước đó giữ 24 vì tưởng là khe cấp danh sách). Vạch đáy mỗi thẻ + đệm 16 hai phía là khoảng ngăn; thẻ đầu sát tiêu đề nhờ `acc-head-flush` (xem accHead).
+     ẢNH: tối đa ORD_THUMB_SLOTS ô (xem orderThumbs), đơn nhiều món hơn thì chỉ hiện ảnh các món đầu, KHÔNG có ô "+N" (user 30/09). Ảnh 75 co ĐỀU (tới ~65) khi cột tiền
      chiếm chỗ — 3 ảnh + khe = 241 mà phần còn lại chỉ ~225 — chứ không cắt mép ảnh cuối như khung nháp. Dưới 344px cột tiền rớt
      xuống hàng riêng (nhãn và số tiền cùng một dòng, canh phải) để ảnh giữ đủ 75.
-     CHỮ 500: `font-medium` là class chết dưới skin-mt (0,2,1) nên khai ngoại lệ có tên. Cả thẻ là MỘT <button>. */
-  .ord-list { display: flex; flex-direction: column; gap: 24px; padding: 0 16px; }
+     CHỮ 500: `font-medium` là class chết dưới skin-mt (0,2,1) nên khai ngoại lệ có tên (số tiền, nhãn trạng thái). Cả thẻ là MỘT <button>. */
+  .ord-list { display: flex; flex-direction: column; gap: 0; padding: 0 16px; }
+  .acc-head-flush, .acc-head-flush .acc-sec-title { padding-bottom: 0; }
   .ord-card {
     display: flex; flex-direction: column; gap: 16px; width: 100%; padding: 16px 0 15px;
     border-bottom: 1px solid var(--general-border); background: transparent; text-align: left;
   }
-  .ord-card-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; opacity: .8; }
+  .ord-card-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; }
   .ord-card-top { display: flex; align-items: center; gap: 4px; width: 100%; }
   .ord-card-ids { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
   .ord-card-code { display: inline-flex; gap: 4px; white-space: nowrap; color: var(--general-foreground); }
-  .ord-card-date { white-space: nowrap; color: var(--general-foreground); }
-  .ord-card-go { display: flex; flex-shrink: 0; color: var(--general-foreground); }
+  .ord-card-date { white-space: nowrap; color: var(--general-foreground); opacity: .8; }
+  .ord-card-go { display: flex; flex-shrink: 0; color: var(--general-foreground); opacity: .8; }
   .ord-card-go svg { width: 12px; height: 12px; }
   .ord-card-body { display: flex; align-items: center; gap: 16px; width: 100%; }
   .ord-thumbs { flex: 1 1 0; min-width: 0; display: flex; gap: 8px; overflow: hidden; }
   .ord-thumb { flex: 0 1 75px; min-width: 0; height: 100px; overflow: hidden; background: var(--general-secondary); }
   .ord-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
-  .ord-thumb-more { display: flex; align-items: center; justify-content: center; background: var(--general-primary); color: var(--general-primary-foreground); }
   .ord-card-total { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; white-space: nowrap; text-align: right; }
   .ord-card-total-l { color: var(--general-muted-foreground); }
   .ord-card-total-v { color: var(--general-foreground); }
-  .ord-card-code, .ord-card-total-v, .ord-thumb-more,
-  html.skin-mt .ord-card-code, html.skin-mt .ord-card-total-v, html.skin-mt .ord-thumb-more { font-weight: 500; }
+  .ord-card-total-v, .ord-status.is-badge,
+  html.skin-mt .ord-card-total-v, html.skin-mt .ord-status.is-badge { font-weight: 500; }
   @media (max-width: 343px) {
     .ord-card-body { flex-wrap: wrap; row-gap: 16px; }
     .ord-thumbs { flex-basis: 100%; }
     .ord-card-total { flex-direction: row; gap: 4px; margin-left: auto; }
   }
 
-  /* TIMELINE DỌC của sheet "Thông tin giao hàng" (brief trang 56, 28/09/2026 — "ở Mobile
-     trạng thái pop-up từ dưới lên giống chọn size", tham chiếu Front Row khách gửi).
-     Lưới 3 cột: ngày giờ 72 canh phải | ray 24 (nút tròn của stepper + vạch nối) | tên chặng.
-     Vạch nối là con của ô RAY, chạy từ đáy nút xuống hết dòng nên chạm đúng đỉnh nút của
-     dòng dưới — các dòng xếp sát nhau, khoảng thở nằm ở đệm dưới của 2 ô chữ (20) chứ
-     không phải khe lưới, để vạch không đứt. Đệm trên 4 / 3 canh tâm dòng chữ đầu (16 /
-     18) vào tâm nút 24. Dòng cao tối thiểu 56.
-     .ship-tl-node còn được stepper ngang của màn tra cứu (trackResultView) mượn cho nút ✕
-     "Đã huỷ" — cùng hình học nút 24, cùng cỡ biểu tượng 10. */
-  .ship-tl-row { display: grid; grid-template-columns: 72px 24px minmax(0, 1fr); column-gap: 12px; min-height: 56px; }
-  .ship-tl-when { display: flex; flex-direction: column; align-items: flex-end; text-align: right; padding: 4px 0 20px; }
-  .ship-tl-rail { position: relative; display: flex; justify-content: center; }
+  /* Nút ✕ "Đã huỷ" của stepper ngang ở màn tra cứu (trackResultView) mượn hình học nút 24 + cỡ biểu tượng 10 của `.ship-tl-node`. (Bản 28/09 của sheet từng có lưới 3 cột `.ship-tl-row` — ngày giờ | ray | tên —
+     gỡ 01/10/2026 khi sheet đổi sang timeline dọc theo khung `timeline` của user, xem khối `.ov-vt`.) */
   .ship-tl-node { position: relative; z-index: 1; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
   .ship-tl-node svg { display: block; width: 10px; height: 10px; fill: currentColor; }
-  .ship-tl-line { position: absolute; top: 24px; bottom: 0; left: 11px; width: 2px; }
-  .ship-tl-name { padding: 3px 0 20px; }
 
   /* 29/09/2026 (rà UX chi tiết đơn + rà UI, phương án A) — TRẠNG THÁI TỪNG ĐỢT · THANH NÚT CHÍNH DÍNH ĐÁY · VÙNG CHẠM · HÀNG QUÀ GỌN.
      .ord-ship-top: tên đợt (trái) và trạng thái đợt (phải) cùng dòng, xuống dòng khi hẹp (khổ 320).
@@ -8498,9 +8586,11 @@ const ACC_H1 = 'text-[18px] font-medium leading-7 text-foreground';
    Cỡ chữ GIỮ 24/32 Libre (hook `text-[18px] font-medium leading-7`, xem ACC_H1)
    chứ KHÔNG hạ về .t-section-title 18/24: 18/24 đang là bậc của tiêu đề TRONG thẻ
    ("Cập nhật thông tin" · "Đổi mật khẩu"), hạ xuống là tiêu đề trang bằng tiêu đề thẻ.
-   `extra` để chỗ cho nút bên phải (tab Sổ địa chỉ có "Thêm địa chỉ mới"). */
-const accHead = (label, extra = '') => `
-    <div class="px-4 pt-4 pb-4">
+   `extra` để chỗ cho nút bên phải (tab Sổ địa chỉ có "Thêm địa chỉ mới").
+   `pb` (30/09/2026, user: "theo khung của tôi hết"): lớp đệm đáy hàng tiêu đề. Tab Đơn hàng truyền `acc-head-flush` (0, kể cả đệm 8 của .acc-sec-title) vì khung Figma
+   984:84749 đặt thẻ đầu SÁT tiêu đề (y 48 = 16 + tiêu đề 32; đệm đầu thẻ 16 đã là khoảng thở); các tab khác giữ pb-4. */
+const accHead = (label, extra = '', pb = 'pb-4') => `
+    <div class="px-4 pt-4 ${pb}">
       <div class="acc-sec-title flex items-end justify-between gap-4">
         <h1 class="${ACC_H1} flex-1 min-w-0">${label}</h1>
         ${extra}
@@ -8667,7 +8757,7 @@ function accountBody() {
     ${accHead('Lịch sử điểm thưởng')}
     ${body}`;
   return `
-    ${accHead(label)}
+    ${accHead(label, '', accountTab === 'orders' ? 'acc-head-flush' : 'pb-4')}
     ${body}`;
 }
 
@@ -8824,13 +8914,16 @@ const accCardOpen = (title, bodyHtml, saveAct, saveLabel) => `
     </div>`;
 function accInfo() {
   return `
-    <div class="px-4 flex flex-col gap-6">
+    <div class="px-4 flex flex-col">
       ${/* 21/09/2026 (lệnh 2 của user) — MỘT KHUNG cho cả 5 mục. Trước đó tách làm 2
            thẻ: thẻ trên "Họ và tên + Ngày sinh" có đường Sửa, thẻ dưới 3 mục khoá
            không có — chia theo "sửa được / không sửa được". Nay chia theo VIỆC: tất
            cả là thông tin định danh của một người nên đi chung một khung, phần nào
            khoá thì câu chú dưới khung nói rõ. */''}
       ${accEdit === 'info' ? accCardOpen('Cập nhật thông tin', `
+        ${/* 30/09/2026 (user: "đổi nút Cập nhật thành Lưu luôn nhé", sau khi nút form Đổi mật khẩu đã đổi "Lưu") — CHỈ nhãn nút;
+             tiêu đề thẻ vẫn "Cập nhật thông tin". Hai nút lưu trong thẻ nay cùng một nhãn. EN cũ của nút là "Updated" (khoá
+             'Cập nhật' thuộc dòng "Cập nhật <ngày>" ở trang chính sách), nay thành "Save". */''}
         <div class="acc-grid2">
           ${accField('first', 'Tên', PROFILE.first, '', { auto: 'given-name' })}
           ${accField('last',  'Họ',  PROFILE.last,  '', { auto: 'family-name' })}
@@ -8840,7 +8933,7 @@ function accInfo() {
           ${accLocked('Email', PROFILE.email)}
         </div>
         `,
-        'save-info', 'Cập nhật')
+        'save-info', 'Lưu')
       : accCard([
           /* 27/09/2026 (user) — tách "Họ và tên" thành 2 dòng Họ / Tên, khớp 2 ô của form sửa. */
           ['Họ',            PROFILE.last],
@@ -8852,10 +8945,12 @@ function accInfo() {
         ], 'edit-info')}
 
       ${accEdit === 'pass' ? accCardOpen('Đổi mật khẩu', `
+        ${/* 30/09/2026 (user: "đổi nút đổi mật khẩu thành nút Lưu") — CHỈ nhãn nút; tiêu đề thẻ vẫn "Đổi mật khẩu",
+             toast vẫn "Đã đổi mật khẩu". */''}
         ${accField('cur',  'Mật khẩu hiện tại',     '', '', { type: 'password', auto: 'current-password' })}
         ${accField('new',  'Mật khẩu mới',          '', '', { type: 'password', auto: 'new-password', hint: 'Tối thiểu 8 ký tự, gồm cả chữ và số' })}
         ${accField('new2', 'Nhập lại mật khẩu mới', '', '', { type: 'password', auto: 'new-password' })}`,
-        'save-pass', 'Đổi mật khẩu')
+        'save-pass', 'Lưu')
       : accCard([['Mật khẩu', null]], 'edit-pass')}
 
       <!-- 21/09/2026 — THÊM TIÊU ĐỀ. Trước đó thẻ này là một hộp viền chỉ chứa
@@ -8875,7 +8970,7 @@ function accInfo() {
    Chi tiết đơn chưa bao giờ hiện được case này (SITEMAP-KIEMTRA-2026-09-05 ghi ô
    đó là "chỉ đúng khi tự đặt đơn"). Hai đơn mới phủ đủ hai dáng:
      - DAFC103015: TOÀN BỘ là hàng đặt trước, đang ở chặng Chờ hàng về;
-     - DAFC102990: HỖN HỢP, hàng sẵn giao đợt 1 và hàng đặt trước giao đợt 2.
+     - DAFC102990: HỖN HỢP, một hàng sẵn + một hàng đặt trước. Từ 01/10 (khách chốt) đơn đi như đơn thường: 4 chặng, mã vận đơn + ngày giao là của hàng sẵn, hàng đặt trước chỉ hiện dòng ngày nhận.
    Ngày nhận dự kiến đọc từ PRODUCTS[0].preorder — một nguồn duy nhất, đổi ngày ở
    data là mọi màn đổi theo. Theo luật 03/09 (đặt trước KHÔNG có sale) nên hai đơn
    này không có dòng giảm giá. */
@@ -8924,16 +9019,16 @@ const ORDERS = [
       { img: 'p1-0.jpg', name: 'Đầm lụa mini Broken Jewels', variant: '38 · Broken Jewels', qty: 1, price: '72.557.000 ₫', preorder: PRODUCTS[0].preorder, sku: '190101' },
     ],
     sub: '88.168.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '88.168.000 ₫',
-    payment: 'Chuyển khoản / QR code', method: 'Giao 2 đợt',
+    payment: 'Chuyển khoản / QR code', method: 'Giao hàng thông thường',
     address: { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
-    steps: 4, log: ['28/08/2026 20:05', '28/08/2026 20:40', '29/08/2026 09:30', '30/08/2026 14:12'],
-    ships: { std: { awb: 'TKN284951' } },
+    steps: 3, log: ['28/08/2026 20:05', '28/08/2026 20:40', '30/08/2026 14:12'],
+    ships: { std: { awb: 'TKN284951', eta: '04/09/2026' } },
   },
   /* Case NẶNG NHẤT của luồng hiện tại, gộp cả 3 thứ vào một đơn: hàng giao nhanh
      (it.ship = 'fast'), hàng có sẵn giao thường, hàng đặt trước, cộng 3 quà tặng
      từ 2 nguồn khác nhau (quà kèm sản phẩm và quà theo mốc đơn 150 triệu — tạm
      tính 168.482.000 nên mốc này đạt thật, không phải quà bịa).
-     Ba dòng hàng rơi vào 3 đợt giao khác nhau nên màn chi tiết chia 3 khối. */
+     Màn chi tiết KHÔNG chia đợt (01/10): hai mã vận đơn gom một hàng, hàng đặt trước chỉ hiện dòng ngày nhận. */
   {
     id: 'DAFC103042', status: 'Đang giao hàng', tone: 'warning', date: '06/09/2026',
     items: [
@@ -8948,10 +9043,11 @@ const ORDERS = [
       { pk: 'tier150', key: 'scarf' },
     ],
     sub: '168.482.000 ₫', ship: '25.000 ₫', discount: '0 ₫', total: '168.507.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao 3 đợt',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng nhanh',
     address: { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
-    steps: 4, log: ['06/09/2026 15:26', '06/09/2026 15:58', '07/09/2026 08:40', '07/09/2026 17:21'],
-    ships: { fast: { awb: 'TKN284960', done: '08/09/2026' }, std: { awb: 'TKN284972' } },
+    steps: 3, log: ['06/09/2026 15:26', '06/09/2026 15:58', '07/09/2026 17:21'],
+    ships: { fast: { awb: 'TKN284960', done: '08/09/2026' }, std: { awb: 'TKN284972', eta: '12/09/2026' } },
+    vat: { type: 'company', company: 'Công ty TNHH Thời Trang ABC', address: '25 Nguyễn Huệ, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh', tax: '0312345678', email: 'ketoan@abcfashion.vn' },
   },
   {
     id: 'DAFC102938', status: 'Đang giao hàng', tone: 'warning', date: '02/08/2026',
@@ -8964,6 +9060,7 @@ const ORDERS = [
     address: { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 3, log: ['02/08/2026 10:22', '02/08/2026 11:38', '03/08/2026 17:21'],
     ships: { std: { awb: 'TKN284917', eta: '12/08/2026' } },
+    vat: { type: 'company', company: 'Công ty TNHH Thời Trang ABC', address: '25 Nguyễn Huệ, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh', tax: '0312345678', email: 'ketoan@abcfashion.vn' },
   },
   {
     id: 'DAFC102801', status: 'Hoàn tất', tone: 'muted', date: '10/07/2026',
@@ -8973,6 +9070,7 @@ const ORDERS = [
     address: { name: 'Nguyễn Văn A', phone: '0909 123 456', line: '45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh' },
     steps: 4, log: ['10/07/2026 09:02', '10/07/2026 09:40', '11/07/2026 08:15', '12/07/2026 17:55'],
     ships: { std: { awb: 'TKN284790' } },
+    vat: { type: 'personal', name: PROFILE.name, address: '45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh', email: PROFILE.email },
   },
   {
     id: 'DAFC102720', status: 'Đã huỷ', tone: 'cancel', date: '01/07/2026',
@@ -9043,15 +9141,29 @@ const orderGifts = o => (o.gifts || []).map(x => ({ pk: x.pk, g: GIFT_CATALOG[x.
    10,7:1; đơn huỷ mặt đỏ chữ trắng 4,9:1 (chữ đỏ trên mặt tối chỉ 4,0 — rớt AA). Chữ
    thường 12/16 như mọi nhãn nội dung. Chỉ màn CHI TIẾT truyền interactive=true: hàng danh
    sách đơn cả hàng đã là <button>, lồng nút là HTML sai. */
-const statusTag = (o, interactive = false, soft = false) => {
-  /* `soft` (30/09/2026, Figma 975:82500): mặt nhạt kem + chữ đồng đậm cho DANH SÁCH ĐƠN; đơn huỷ luôn giữ mặt đỏ. */
-  const cls = 'ord-status' + (o.tone === 'cancel' ? ' is-cancel' : soft ? ' is-soft' : '');
+const statusTag = (o, interactive = false, badge = false) => {
+  /* `badge` (30/09/2026, user: "cái trạng thái đổi thành dạng badge với nền là màu 50 và chữ 600-700"): DANH SÁCH ĐƠN hiện nhãn = BADGE nền nhạt (bậc 50) + chữ đậm (bậc 700)
+     cùng họ màu theo trạng thái — thay chấm màu + chữ mực cùng ngày. Tối 30/09 (user: "đồng bộ cái thẻ trạng thái đơn hàng cho trang chi tiết đơn hàng luôn") màn CHI TIẾT
+     cũng dùng badge: statusTag(o, true, true) — đơn Chờ thanh toán vẫn là NÚT (badge hổ phách + "Thanh toán ngay ›", chữ t-lead như mọi badge). Tối muộn 30/09 (user: "đổi luôn
+     màn theo dõi đơn nhé") màn Theo dõi đơn (trackResultView) cũng vậy: statusTag(o, false, true). Từ đó MỌI nơi gọi đều badge; nhánh chip tối (badge = false) không còn ai gọi —
+     giữ lại để hoàn tác, đừng xoá khi chưa hỏi. KHAI GIỐNG HỆT file kia. */
+  const cls = 'ord-status' + (badge ? ' is-badge' + orderToneMod(o) : o.tone === 'cancel' ? ' is-cancel' : '');
   if (o.tone === 'pay' && interactive)
-    return `<button data-repay="${o.id}" class="t-single ${cls} is-pay press">${o.status}<span class="ord-status-cta">Thanh toán ngay</span>${I.chevR('currentColor')}</button>`;
+    return `<button data-repay="${o.id}" class="${badge ? 't-lead' : 't-single'} ${cls} is-pay press">${o.status}<span class="ord-status-cta">Thanh toán ngay</span>${I.chevR('currentColor')}</button>`;
   /* 29/09/2026 — đơn đã gửi YÊU CẦU huỷ nhưng chưa được duyệt chưa phải "Đã huỷ" (mặt đỏ): nhãn nói đúng
      việc đang chờ. Danh sách đơn cũng đi qua hàm này nên đổi theo. */
-  return `<span class="t-single ${cls}">${o.cancelReq && o.tone !== 'cancel' ? 'Chờ xác nhận huỷ' : o.status}</span>`;
+  const label = o.cancelReq && o.tone !== 'cancel' ? 'Chờ xác nhận huỷ' : o.status;
+  return badge
+    ? `<span class="t-lead ${cls}">${label}</span>`
+    : `<span class="t-single ${cls}">${label}</span>`;
 };
+
+/* 30/09/2026 (user) — lớp MÀU của BADGE nhãn ở danh sách đơn, màn chi tiết đơn và màn theo dõi đơn; bảng màu ở khối CSS `.ord-status.is-badge`. Khoá theo `tone` chứ KHÔNG theo chữ: `status` là chuỗi
+   tiếng Việt để hiển thị, đổi nhãn hay dịch là hỏng. Tone 'muted' của dữ liệu mẫu chính là "Hoàn tất" (hai đơn) → xanh. 'pay' (Chờ thanh toán) là tone DUY NHẤT hổ phách — đúng
+   màu trong khung/ảnh của user; hổ phách = "khách cần làm gì". 'warning' (Đang giao hàng) đi cùng info → xanh dương (research 30/09: đang trên đường = xanh dương). Yêu cầu huỷ chưa
+   duyệt (`cancelReq`) mang màu xám như "Đã huỷ": đơn đang trên đường về trạng thái đó. 'fail' = lỗi thanh toán → đỏ (dữ liệu mẫu chưa có đơn nào như vậy; thêm trạng thái này chỉ
+   cần đặt tone 'fail'). Tone info / warning (đang xử lý · chờ hàng về · đang giao) không thêm lớp → xanh dương. KHAI GIỐNG HỆT file kia. */
+const orderToneMod = o => o.tone === 'cancel' || o.cancelReq ? ' is-off' : o.tone === 'muted' ? ' is-ok' : o.tone === 'pay' ? ' is-wait' : o.tone === 'fail' ? ' is-err' : '';
 
 /* THANH TOÁN LẠI (brief trang 55). Demo không có cổng Payoo thật nên giả lập lượt thanh
    toán thành công: đơn sang Đang xử lý, ghi giờ chặng 2 (15 phút sau giờ đặt), vẽ lại màn.
@@ -9087,14 +9199,10 @@ const ordersNewestFirst = () => ORDERS.slice().sort((a, b) => dmyKey(a.date) < d
    Thẻ KHÔNG viền hai bên (chỉ kẻ đáy) nên không mất 34px ngang như thẻ viền đã thử rồi bỏ hôm 29/09 — dòng đầu có nguyên 343px.
    Số đo và lý do từng con số nằm ở khối CSS `.ord-card` (cạnh `.ord-status`). Cả thẻ là MỘT <button>; nhãn là <span> riêng để luật
    i18n khớp nguyên chuỗi ("Mã đơn", "Tổng tiền"), dấu ":" đứng ngoài span. */
-/* Hàng ảnh của thẻ đơn — tối đa ORD_THUMB_SLOTS ô. Đơn nhiều món hơn số ô thì ô cuối là "+N" (N = số món bị ẩn; mặt đen chữ trắng như
-   ô '+2' trong khung desktop nháp của user), các ô còn lại là ảnh món theo thứ tự đơn. 3 ô = số ảnh nhét vừa cạnh cột tiền ở 375. */
+/* Hàng ảnh của thẻ đơn — tối đa ORD_THUMB_SLOTS ảnh, theo thứ tự món trong đơn. Đơn nhiều món hơn số ô thì CHỈ hiện ảnh các món đầu, KHÔNG có ô "+N"
+   (user 30/09: "nhiều món hơn cứ để vậy được rồi, không cần +N"; khung Figma cũng vẽ đơn 5 món với 4 ảnh và không có ô nào khác). 3 ô = số ảnh nhét vừa cạnh cột tiền ở 375. */
 const ORD_THUMB_SLOTS = 3;
-const orderThumbs = o => {
-  const its = o.items || [], many = its.length > ORD_THUMB_SLOTS, shown = many ? its.slice(0, ORD_THUMB_SLOTS - 1) : its;
-  return shown.map(it => `<span class="ord-thumb"><img src="${A}${it.img}" alt=""></span>`).join('')
-    + (many ? `<span class="ord-thumb ord-thumb-more t-single">+${its.length - shown.length}</span>` : '');
-};
+const orderThumbs = o => (o.items || []).slice(0, ORD_THUMB_SLOTS).map(it => `<span class="ord-thumb"><img src="${A}${it.img}" alt=""></span>`).join('');
 function accOrders() {
   return `
     <div class="ord-list">
@@ -9552,7 +9660,9 @@ function accPoints() {
    "Chờ thanh toán" (không còn "Đã đặt hàng"): đơn qua cổng Payoo có thể dừng ở đây. */
 const ORDER_STEPS = ['Chờ thanh toán', 'Đang xử lý', 'Đang giao hàng', 'Đơn hàng hoàn tất'];
 const ORDER_STEPS_PRE = ['Chờ thanh toán', 'Đang xử lý', 'Chờ hàng về', 'Đang giao hàng', 'Đơn hàng hoàn tất'];
-const orderSteps = o => orderHasPre(o) ? ORDER_STEPS_PRE : ORDER_STEPS;
+/* 01/10/2026 — KHÁCH CHỐT (xem khối "QUY TẮC ĐƠN CÓ HÀNG ĐẶT TRƯỚC" bên dưới): đơn HỖN HỢP đi 4 chặng chuẩn, chặng "Chờ hàng về" chỉ còn ở đơn TOÀN hàng đặt trước — nơi không có hàng giao nhanh nào để làm
+   chuẩn. Trước đó mọi đơn có một dòng đặt trước đều đi bộ 5 chặng và timeline hiện hai chặng "đang ở" cùng lúc. */
+const orderSteps = o => orderAllPre(o) ? ORDER_STEPS_PRE : ORDER_STEPS;
 
 /* Timeline của đơn: mỗi chặng một dòng { label, time, state }. state: 'done' đã qua ·
    'cur' chặng hiện tại · 'todo' chưa tới · 'cancel'. Đơn huỷ giữ các chặng ĐÃ qua rồi
@@ -9563,18 +9673,11 @@ const orderTimeline = o => {
   if (o.tone === 'cancel') return orderSteps(o).slice(0, o.steps)
     .map((label, i) => ({ label, time: log[i] || '', state: 'done' }))
     .concat({ label: 'Đã huỷ', time: o.cancelAt || '', state: 'cancel' });
-  const tl = orderSteps(o).map((label, i) => ({
+  /* 29/09 từng có nhánh "đơn giao MỘT PHẦN" làm chặng "Chờ hàng về" mang chấm chạy song song với "Đang giao hàng"; gỡ 01/10/2026 — đơn hỗn hợp không còn chặng đó (xem orderSteps). */
+  return orderSteps(o).map((label, i) => ({
     label, time: i < o.steps ? (log[i] || '') : '',
     state: i < o.steps - 1 ? 'done' : (i === o.steps - 1 ? 'cur' : 'todo'),
   }));
-  /* 29/09/2026 — đơn giao MỘT PHẦN (còn đợt chờ hàng về trong khi các đợt khác đã đi giao): chặng "Chờ hàng
-     về" chưa xong — nó chạy song song với "Đang giao hàng" — nên mang CHẤM (đang diễn ra), không tick. Trước
-     đó timeline tick "Chờ hàng về" trong khi băng ngay dưới hẹn hàng đặt trước về 30/09. */
-  if (orderPartial(o)) {
-    const w = tl.findIndex(x => x.label === 'Chờ hàng về');
-    if (w >= 0 && tl[w].state === 'done') tl[w].state = 'cur';
-  }
-  return tl;
 };
 /* Đơn đã tới chặng "Đang giao hàng" chưa — điều kiện hiện link "Xem chi tiết vận chuyển"
    (chưa giao thì chưa có mã vận đơn, màn tra cứu không có gì để mở). */
@@ -9640,11 +9743,100 @@ const shipHeadHTML = (o, g, i) => {
             ${detail ? `<span class="t-single text-muted-foreground">${detail}</span>` : ''}
           </div>`;
 };
-/* Các dòng mã vận đơn của màn Theo dõi: đơn nhiều đợt mỗi đợt một dòng kèm tên đợt, đơn một đợt một dòng trần. */
-const orderAwbRows = o => {
-  const gs = orderGroups(o), split = gs.length > 1;
-  return gs.map((g, i) => ({ title: split ? shipTitle(o, g, i) : '', awb: shipInfo(o, g.key).awb })).filter(r => r.awb);
+/* Các dòng mã vận đơn của màn Theo dõi: mỗi mã MỘT dòng trần "Mã vận đơn …", KHÔNG tên đợt (01/10/2026 — khách chốt đơn có hàng đặt trước không đẻ đợt riêng, user "không chia đợt"; trước đó đơn nhiều
+   đợt ghi "Đợt 1 · Hàng có sẵn · Mã vận đơn …"). Cùng nguồn orderAwbs() với thẻ giao hàng ở màn chi tiết; giữ dạng { title, awb } cho khuôn màn tra cứu — title luôn rỗng. */
+const orderAwbRows = o => orderAwbs(o).map(awb => ({ title: '', awb }));
+/* ── CHI TIẾT ĐƠN — LAYOUT "v4" CỦA USER (01/10/2026) ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   User gửi trang `screens` của file Figma Test agent (node 72:5742) và nói "dùng cái layout demo của tôi mà áp vào": khung `Order detail / mobile · v4 (shipping)` 1036:57924 và
+   `Order detail / desktop · v4 upgraded` 1034:57298. Bốn THẺ: MÃ ĐƠN · THÔNG TIN GIAO HÀNG · THÔNG TIN NGƯỜI NHẬN · SẢN PHẨM + TỔNG, KHÔNG chia đợt, KHÔNG khúc liên hệ CSKH (user "note lại"
+   cùng ngày).
+   QUY TẮC ĐƠN CÓ HÀNG ĐẶT TRƯỚC — KHÁCH CHỐT (user chuyển lời 01/10/2026, trả lời phương án B "tách shipment" còn để ngỏ trong PREORDER.md từ 14/08): "chỉ dựa vào sản phẩm giao nhanh mà làm chuẩn,
+   hàng đặt trước chỉ cần hiện dòng như ở giỏ và checkout". Nghĩa là đơn HỖN HỢP đi như đơn thường: 4 chặng chuẩn, Phương thức · Dự kiến giao · Mã vận đơn đều là của hàng CÓ SẴN; hàng đặt trước chỉ có
+   badge "Đặt trước" + dòng "Nhận hàng dự kiến …" ở dòng hàng (đã có từ 03/09) — không chặng "Chờ hàng về", không đợt riêng, không ngày giao riêng. Chỉ đơn TOÀN hàng đặt trước (không có hàng nào để
+   làm chuẩn) còn luồng riêng: bộ 5 chặng, hàng "Hàng dự kiến về", nút Nhắc tôi khi hàng về — user chưa nói gì về trường hợp này nên giữ nguyên, chờ chốt.
+   Các hàm dưới đây lo DỮ LIỆU cho thẻ giao hàng + timeline theo quy tắc đó:
+     · orderPlaced  — ngày + giờ đặt (mốc đầu của `log`), khung ghi "29/09/2026 · 14:32";
+     · orderAwbs    — mã vận đơn của hàng CÓ SẴN (bỏ ship 'pre') gom về MỘT hàng (đơn hai kiện có hai mã, mỗi mã một nút sao chép);
+     · orderShipEta — ngày giao dự kiến MUỘN NHẤT của các kiện hàng có sẵn (`ships.*.eta`, bỏ 'pre');
+     · orderDeliverRow — hàng ngày: "Dự kiến giao" (đang giao), "Hàng dự kiến về" (đơn TOÀN đặt trước, chưa giao — ngày hàng về), "Đã giao" (hoàn tất, lấy ngày mốc cuối); đơn huỷ / chưa có ngày không có hàng này;
+     · orderTlSteps — chặng timeline đã chuẩn hoá cho MÀN CHI TIẾT (desktop: stepper ngang trong thẻ mã đơn · mobile: timeline dọc trong sheet "Tiến trình đơn hàng"): { label, st, when };
+     · orderDiscPct — "Giảm giá (7%)" như khung: % = giảm / tạm tính, làm tròn.
+   Đơn vị vận chuyển là hằng ORDER_CARRIER (khung ghi TIKINOW) — chỉ hiện từ khi đơn đã tới chặng giao. */
+const ORDER_CARRIER = 'TIKINOW';
+const orderPlaced = o => String((o.log || [])[0] || o.date).replace(' ', ' · ');
+const orderAwbs = o => Object.entries(o.ships || {}).filter(([k]) => k !== 'pre').map(([, x]) => x.awb).filter(Boolean);
+const orderShipEta = o => Object.entries(o.ships || {}).filter(([k, x]) => k !== 'pre' && x.eta).map(([, x]) => x.eta).sort((a, b) => dmyKey(a) < dmyKey(b) ? -1 : 1).pop() || '';
+const orderDeliverRow = o => {
+  if (o.tone === 'cancel') return null;
+  if (o.status === 'Hoàn tất') { const done = ((o.log || []).slice(-1)[0] || '').split(' ')[0]; return done ? { k: 'Đã giao', v: done } : null; }
+  const allPre = orderAllPre(o), eta = allPre ? orderEta(o) : orderShipEta(o);
+  if (!eta) return null;
+  return { k: allPre && !orderShipped(o) ? 'Hàng dự kiến về' : 'Dự kiến giao', v: eta };
 };
+/* Chặng timeline cho màn chi tiết. st: 'done' xong (nút đen + tick) · 'now' đang ở (vòng đen + chấm) · 'todo' chưa tới (nền mờ + chấm nhỏ) · 'cancel' (✕ đỏ). Chặng CUỐI của đơn đã hoàn tất là tick chứ không phải
+   "đang ở" (28/09: tick ở chặng "Chờ thanh toán" đang chờ đọc ra "đã thanh toán xong"). when: "dd/mm · hh:mm" của chặng đã tới; chặng cuối chưa tới ghi "Dự kiến dd/mm" khi có ngày giao. */
+const orderTlSteps = o => {
+  const tl = orderTimeline(o), deliver = orderDeliverRow(o);
+  return tl.map((s, i) => {
+    const last = i === tl.length - 1;
+    const st = s.state === 'cancel' ? 'cancel' : s.state === 'todo' ? 'todo' : (s.state === 'cur' && !last) ? 'now' : 'done';
+    const [d, h] = (s.time || '').split(' ');
+    const when = s.time ? `${d.slice(0, 5)} · ${h || ''}`
+      : st === 'todo' && last && deliver && deliver.k === 'Dự kiến giao' ? `<span>Dự kiến</span> <span>${deliver.v.slice(0, 5)}</span>` : '';
+    return { label: s.label, st, when };
+  });
+};
+/* Nút tròn của timeline (stepper ngang desktop + timeline dọc trong sheet mobile). CHẤM TRONG là phần tử THẬT `.ov-dot-in`, không dùng ::after — bộ bóc sang Figma chỉ nhận pseudo-element `position:absolute`, mà
+   left/top của absolute tính từ mép TRONG viền nên chấm lệch 1–2px; phần tử thật thì bóc ra đúng như khung của user (khung `dot/now` có một Ellipse 8×8). */
+const orderDotHTML = st => st === 'cancel'
+  ? `<span class="ov-dot ord-step-x">${I.close}</span>`
+  : `<span class="ov-dot is-${st}">${st === 'done' ? `<span class="w-2.5 h-2.5">${I.tick}</span>` : '<span class="ov-dot-in"></span>'}</span>`;
+const orderDiscPct = o => { const d = Math.abs(vndNum(o.discount || '')), s = vndNum(o.sub || ''); return d && s ? Math.round(d / s * 100) : 0; };
+/* ── THÔNG TIN VAT CỦA ĐƠN (01/10/2026, lệnh user: "Thêm mục thông tin VAT nữa nhé, nhưng dạng đóng mở, cần xem chi tiết thì bấm vô mở ra xem") ──────────────────────────────────────
+   Thẻ ACCORDION ở màn CHI TIẾT ĐƠN (cơ chế `.acc` / `.acc-trigger` / `.acc-body` sẵn có của app, icon +/− như mọi accordion), MẶC ĐỊNH ĐÓNG — đứng giữa thẻ người nhận / giao hàng và thẻ sản phẩm.
+   Dữ liệu: `o.vat` = null (không xuất hoá đơn) | { type: 'company', company, address, tax, email } | { type: 'personal', name, address, email } — CÙNG bộ ô và CÙNG nhãn với bước "Xuất hoá đơn VAT"
+   của checkout (vatFieldSets) nên mọi nhãn đã có khoá i18n. Đơn đặt qua checkout chép từ `vatMode` + `vatVals` (orderVatSnapshot): `vatVals` nhớ chữ khách gõ ở bước VAT, khoá theo id ô — trước đó
+   ô là uncontrolled nên qua bước khác / màn dựng lại là mất, và đơn không còn gì để ghi. Ô để trống hiện "—".
+   Đơn không xuất hoá đơn vẫn có mục (đóng) — mở ra là một câu nói rõ; để mục luôn ở một chỗ cho khách khỏi tìm. */
+/* Chữ khách gõ đi thẳng vào HTML (thuộc tính value ở checkout, giá trị ở màn Chi tiết đơn) nên phải thoát & " < >. */
+const vatEsc = s => String(s).replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]));
+const vatVal = (type, i) => vatEsc(vatVals[`vat-${type}-${i}`] || '');
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t && t.id && /^vat-(personal|company)-\d+$/.test(t.id)) vatVals[t.id] = t.value;
+});
+const orderVatSnapshot = () => {
+  if (vatMode === 'none') return null;
+  const v = i => String(vatVals[`vat-${vatMode}-${i}`] || '').trim();
+  return vatMode === 'company'
+    ? { type: 'company', company: v(0), address: v(1), tax: v(2), email: v(3) }
+    : { type: 'personal', name: v(0), address: v(1), email: v(2) };
+};
+const orderVatRows = o => {
+  const v = o.vat, d = x => x ? vatEsc(x) : '—';
+  if (!v) return [];
+  return v.type === 'company'
+    ? [['Loại hoá đơn', 'Công ty'], ['Tên công ty', d(v.company)], ['Địa chỉ công ty', d(v.address)], ['Mã số thuế', d(v.tax)], ['Email nhận hóa đơn VAT', d(v.email)]]
+    : [['Loại hoá đơn', 'Cá nhân'], ['Họ và tên', d(v.name)], ['Địa chỉ', d(v.address)], ['Email nhận hóa đơn VAT', d(v.email)]];
+};
+/* Thân mục: các hàng nhãn–giá trị đúng khuôn thẻ giao hàng (`.ov-row.is-top`: nhãn canh theo dòng ĐẦU vì địa chỉ có thể xuống dòng). `cls` = cỡ chữ của màn: mobile 't-single' 12/16, desktop 't-lead' 14/20. */
+const orderVatBodyHTML = (o, cls) => {
+  const rows = orderVatRows(o);
+  return rows.length
+    ? rows.map(([k, v]) => `<div class="ov-row is-top"><span class="${cls} ov-k">${k}</span><span class="${cls} ov-v">${v}</span></div>`).join('')
+    : `<span class="${cls} ov-k">Đơn hàng này không xuất hoá đơn VAT.</span>`;
+};
+/* Nút sao chép cạnh mã đơn / mã vận đơn (icon `icon/copy` của khung: hai ô vuông 8×8 chồng nhau, nét 1,2, bo 1,5; ô sau tô màu thẻ). Ủy quyền ở document vì màn vẽ lại mỗi lần go(). */
+const COPY_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="2" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/><rect x="6" y="6" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/></svg>';
+const copyBtn = (v, label) => `<button type="button" data-copy="${v}" aria-label="${label}" class="ov-copy press">${COPY_ICON}</button>`;
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-copy]');
+  if (!b) return;
+  const v = b.dataset.copy, done = () => toast('Đã sao chép');
+  const fallback = () => { const t = document.createElement('textarea'); t.value = v; t.setAttribute('readonly', ''); t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch (err) {} t.remove(); done(); };
+  try { navigator.clipboard.writeText(v).then(done, fallback); } catch (err) { fallback(); }
+});
+
 /* Dải thông báo dưới hàng trạng thái — trả về các DÒNG (chuỗi HTML), mỗi màn tự bọc. Chỉ có khi đơn có gì cần
    nói: hạn thanh toán · đã gửi yêu cầu huỷ · đơn đã huỷ vì sao + tiền đi đâu. */
 const orderNoteLines = o => {
@@ -9756,55 +9948,38 @@ const orderPointsFinal = o => o.status === 'Hoàn tất';
 const orderItemP = it => PRODUCTS.find(p => p.img === it.img) || {};
 const orderLineTotal = it => vndNum(it.price) * (it.qty || 1);
 
-/* TIMELINE DỌC của sheet "Thông tin giao hàng" — chỉ bản mobile (brief trang 56,
-   28/09/2026: "ở Mobile trạng thái pop-up từ dưới lên giống chọn size"). Cùng dữ liệu
-   orderTimeline() với stepper ngang của desktop, xoay 90°: cũ trên → mới dưới → chặng
-   chưa tới mờ ở cuối. Nút tròn GIỮ khuôn stepper cũ (đã qua / hiện tại = mặt primary +
-   tick · chưa tới = viền + chấm) — brief cho chọn "ngày giờ hoặc icon", chọn ngày giờ nên
-   không vẽ icon mới. Đơn huỷ: nút cuối mặt đỏ + dấu ✕. Vạch nối xuống dòng dưới tô
-   primary khi dòng dưới đã tới, xám viền khi chưa. CSS: khối "TIMELINE DỌC". */
+/* TIMELINE DỌC của sheet "Tiến trình đơn hàng" — chỉ bản mobile (brief trang 56, 28/09/2026: "ở Mobile trạng thái pop-up từ dưới lên giống chọn size"). 01/10/2026: nội dung theo khung `timeline` 1034:57747
+   của user — mỗi chặng một hàng [nút 24 · tên 12/16 + giờ "dd/mm · hh:mm" xếp dọc], KHÔNG còn cột ngày bên trái như bản 28/09; dữ liệu từ orderTlSteps() (DÙNG CHUNG với stepper ngang của desktop) nên đơn có
+   hàng đặt trước cũng chỉ có 4 chặng chuẩn (xem khối "QUY TẮC ĐƠN CÓ HÀNG ĐẶT TRƯỚC"). Nút + vạch nối: CSS khối ".ov-vt". Đơn huỷ: các chặng đã qua + nút ✕ đỏ "Đã huỷ". */
 const orderShipTimelineHTML = o => {
-  const tl = orderTimeline(o);
-  const nameCls = { cur: 'text-foreground', done: 'text-foreground-alt', todo: 'text-muted-foreground', cancel: 'text-destructive' };
-  return tl.map((s, i) => {
-    const [d, h] = (s.time || '').split(' ');
-    const next = tl[i + 1];
-    const node = s.state === 'cancel'
-      ? `<span class="ship-tl-node bg-destructive text-primary-foreground">${I.close}</span>`
-      : s.state === 'todo'
-      ? `<span class="ship-tl-node bg-secondary text-muted-foreground border border-border"><span class="w-1.5 h-1.5 rounded-full bg-current"></span></span>`
-      /* 28/09/2026 — chặng HIỆN TẠI (trừ chặng cuối) mang CHẤM, không mang tick: chặng đầu
-         nay là "Chờ thanh toán", tick ở đó đọc ra "đã thanh toán xong". Tick chỉ cho chặng
-         đã qua và chặng cuối (đơn hoàn tất) — cùng luật với stepper desktop. */
-      : s.state === 'cur' && i < tl.length - 1
-      ? `<span class="ship-tl-node bg-primary text-primary-foreground"><span class="w-1.5 h-1.5 rounded-full bg-current"></span></span>`
-      : `<span class="ship-tl-node bg-primary text-primary-foreground">${I.tick}</span>`;
-    return `
-      <div class="ship-tl-row">
-        <div class="ship-tl-when">
-          ${d ? `<span class="t-single text-foreground">${d}</span>` : ''}
-          ${h ? `<span class="t-single text-muted-foreground">${h}</span>` : ''}
-        </div>
-        <div class="ship-tl-rail">
-          ${node}
-          ${next ? `<span class="ship-tl-line ${next.state === 'todo' ? 'bg-border' : 'bg-primary'}"></span>` : ''}
-        </div>
-        <p class="t-multiline ship-tl-name ${nameCls[s.state] || 'text-foreground'}">${s.label}</p>
+  const ts = orderTlSteps(o);
+  return `
+    <div class="ov-vt">${ts.map((s, i) => {
+      const node = orderDotHTML(s.st);
+      const next = ts[i + 1];
+      return `
+      <div class="ov-vstep">
+        ${next ? `<span class="ov-vline${next.st === 'todo' ? ' is-todo' : ''}"></span>` : ''}
+        ${node}
+        <span class="ov-vtxt">
+          <span class="t-single ov-step-name${s.st === 'cancel' ? ' text-destructive' : s.st === 'todo' ? '' : ' is-on'}">${s.label}</span>
+          ${s.when ? `<span class="t-single ov-step-time">${s.when}</span>` : ''}
+        </span>
       </div>`;
-  }).join('');
+    }).join('')}
+    </div>`;
 };
 
 function screenORDER() {
   const o = ORDERS.find(x => x.id === currentOrder) || ORDERS[0];
-  const hasPre = orderHasPre(o), allPre = orderAllPre(o);
-  /* 28/09/2026 (brief trang 56) — bản mobile không có stepper ngang, trạng thái mở bằng sheet đáy (#shipSheet).
-     29/09/2026 (rà UX chi tiết đơn) — hàng mở sheet KHÔNG còn nhắc lại tên chặng (chip trạng thái ngay trên đã
-     nói, hai chỗ cách nhau ~300px cùng một chữ): chỉ ghi GIỜ của mốc mới nhất. Đơn giao một phần có 2 chặng 'cur'
-     cùng lúc nên lấy mốc CUỐI có giờ, không phải chặng cur đầu tiên. */
-  const tl = orderTimeline(o);
-  const upd = (tl.filter(s => s.time && s.state !== 'todo').pop() || {}).time || '';
   const act = orderActions(o), noteLines = orderNoteLines(o);
-  const shipRef = Object.values(o.ships || {}).find(x => x.awb) || null;
+  /* 01/10/2026 — LAYOUT "v4" của user (xem khối ORDER_CARRIER ở trên): bốn thẻ, KHÔNG chia đợt, KHÔNG khúc liên hệ CSKH. Nút Theo dõi đơn hàng không còn là nút chính của màn — thẻ giao hàng
+     có nút riêng "Theo dõi vận đơn ↗" — nên thanh dính đáy chỉ còn cho Thanh toán ngay · Mua lại · Nhắc tôi khi hàng về. Khung mobile KHÔNG vẽ timeline; user chọn phương án C (01/10): hàng "Tiến trình đơn hàng" ở thẻ MÃ ĐƠN mở
+     #shipSheet với timeline dọc theo khung `timeline` 1034:57747 (orderShipTimelineHTML → orderTlSteps, chung dữ liệu với stepper ngang của desktop). */
+  const mainAct = act.primary && !/data-track-open/.test(act.primary.attr) ? act.primary : null;
+  const shipped = orderShipped(o), awbs = orderAwbs(o), deliver = orderDeliverRow(o);
+  /* Giờ của mốc MỚI NHẤT (đơn huỷ: giờ huỷ) — giá trị của hàng "Tiến trình đơn hàng", cùng khuôn "dd/mm/yyyy · hh:mm" với hàng Ngày đặt. */
+  const progAt = String((o.tone === 'cancel' ? o.cancelAt : (o.log || []).slice(-1)[0]) || '').replace(' ', ' · ');
   /* Giá của một dòng — ĐÚNG khuôn giá hàng giỏ (cart-row, chốt 17/09 + 21/09): dòng trên
      chip % rồi giá gạch, dòng dưới giá phải trả mực đỏ khi có giảm. Số là THÀNH TIỀN dòng
      (đơn giá × SL, brief cột "Thành tiền"); giá gạch cũng nhân SL để chip % vẫn đúng tỉ lệ.
@@ -9822,9 +9997,8 @@ function screenORDER() {
                 <p class="t-multiline pc-price whitespace-nowrap ${sale ? 'text-destructive' : 'text-foreground'}">${vndDot(orderLineTotal(it))}</p>
               </div>`;
   };
-  /* Một dòng hàng dùng lại 2 chỗ: danh sách phẳng (đơn thường / đơn toàn đặt trước)
-     và danh sách chia đợt (đơn hỗn hợp). Trước đây khuôn này viết thẳng trong map
-     nên không tách nhóm được mà không chép đôi markup.
+  /* Một dòng hàng của thẻ SẢN PHẨM — danh sách PHẲNG (hàng rồi quà), không chia đợt (layout v4,
+     01/10/2026). Khuôn tách riêng từ trước khi màn còn chia đợt.
      28/09/2026 (brief trang 56): HÃNG tra từ PRODUCTS (thôi in cứng "Versace" cho mọi
      món), thêm dòng "Mã sản phẩm" (brief "Itemno"), giá theo khuôn giỏ ở priceHTML. */
   const itemRow = it => {
@@ -9882,183 +10056,107 @@ function screenORDER() {
           </div>
         </div>`;
 
-  /* Khối tổng — hàng nhãn–giá trị. Đơn do checkout sinh (placeOrder) ghi discount = ''
-     khi không giảm, nên quy về '0 ₫' trước khi so, kẻo in ô trống màu đỏ. */
-  const disc = o.discount || '0 ₫';
-  const totRow = (label, value, cls = 'text-foreground') => `
-      <div class="flex items-center justify-between gap-4">
-        <span class="t-multiline text-muted-foreground">${label}</span>
-        <span class="t-multiline ${cls}">${value}</span>
-      </div>`;
+  /* Khối tổng (khung v4): hàng 14/20 nhãn + số cùng màu mực (Giảm giá đỏ cả nhãn lẫn số), kẻ ngăn nhạt, Tổng thanh toán 14/20 · 500, "Đã bao gồm VAT" mờ, rồi hàng điểm màu thành công.
+     Đơn do checkout sinh (placeOrder) ghi discount = '' khi không giảm, nên quy về '0 ₫' trước khi so, kẻo in ô trống màu đỏ. Nhãn "Giảm giá" và "(7%)" là hai span riêng để luật i18n
+     khớp nguyên chuỗi; "Dùng N điểm" giữ như trước (chỉ khi đơn có đổi điểm, trừ như giảm giá). Hàng điểm: "Điểm tích luỹ sau khi hoàn tất" khi đơn chưa Hoàn tất (điểm DỰ KIẾN), "Điểm tích luỹ" khi đã
+     xong; đơn huỷ không có hàng này; cùng luật giỏ (100.000 ₫ = 1 điểm); số trần "+1.195" như khung (không chữ "điểm"). */
+  const disc = o.discount || '0 ₫', pct = orderDiscPct(o), neg = disc !== '0 ₫';
+  const sumRow = (label, value, cls = '') => `
+          <div class="ov-sum-row t-lead ${cls}"><span>${label}</span><span>${value}</span></div>`;
   /* HÀNG NÚT theo trạng thái (28/09/2026, brief trang 55–56).
      29/09/2026 (rà UX chi tiết đơn) — luật chọn nút nay nằm ở orderActions (DÙNG CHUNG với desktop):
-       · nút CHÍNH lên THANH DÍNH ĐÁY (.ord-bar) — trước đó nằm cuối trang, cách đỉnh 925–1868px;
-       · nút phụ (Huỷ / Xuất hoá đơn) + ghi chú + CSKH giữ ở cuối trang;
-       · Huỷ chỉ còn ở đơn chưa rời kho (đang giao thì có ghi chú thay thế). */
+       · nút CHÍNH lên THANH DÍNH ĐÁY (.ord-bar) — trước đó nằm cuối trang, cách đỉnh 925–1868px. TRỪ nút Theo dõi đơn hàng: từ 01/10 là nút "Theo dõi vận đơn ↗" trong thẻ giao hàng;
+       · nút phụ (Huỷ / Xuất hoá đơn) giữ ở cuối trang; 01/10 bỏ ghi chú "đơn đã rời kho…" và nút CSKH (khung v4 không có);
+       · Huỷ chỉ còn ở đơn chưa rời kho. */
   const btnP = (attr, label) => `<button ${attr} class="t-lead w-full h-12 bg-primary text-primary-foreground btn-p press">${label}</button>`;
   const btnO = (attr, label) => `<button ${attr} class="t-lead w-full h-12 border border-border bg-background text-foreground btn-o press">${label}</button>`;
   const secHTML = act.second.map(x => btnO(x.attr, x.label)).join('');
 
   return `
-  <div class="w-full min-h-screen bg-background pb-10${act.primary ? ' ord-has-bar' : ''}">
-    <!-- 28/09/2026 (lượt "improve UI") — HEADER CHUNG thay thanh app bar riêng "‹ Chi tiết
-         đơn hàng", cùng lý do màn Tài khoản đổi sáng nay (lệnh user: "vào account thì vẫn giữ
-         cái header như mặc định"): chi tiết đơn là trang con của Tài khoản — vào đây mà mất
-         logo, tìm kiếm, giỏ là lạc khỏi site. Lối lùi thành link "‹ Đơn hàng" cùng khuôn
-         link lùi của trang Lịch sử điểm, về đúng tab Đơn hàng. -->
+  <div class="w-full min-h-screen bg-background pb-10${mainAct ? ' ord-has-bar' : ''}">
+    <!-- 28/09/2026 (lượt "improve UI") — HEADER CHUNG thay thanh app bar riêng, cùng lý do màn Tài khoản (lệnh user: "vào account thì vẫn giữ cái header như mặc định"): chi tiết đơn là trang con của
+         Tài khoản — vào đây mà mất logo, tìm kiếm, giỏ là lạc khỏi site. Lối lùi là link "‹ Đơn hàng" cùng khuôn link lùi của Lịch sử điểm, về đúng tab Đơn hàng. 01/10: đệm trên 22 theo khung v4. -->
     ${navBar()}
-    <div class="px-4 pt-4"><button data-atab="orders" class="t-single underline text-secondary-foreground press ord-back"><span aria-hidden="true">‹ </span>Đơn hàng</button></div>
+    <div class="ov-back"><button data-atab="orders" class="t-single underline text-secondary-foreground press ord-back"><span aria-hidden="true">‹ </span>Đơn hàng</button></div>
 
-    <!-- 05/09/2026 — màn được cấp một bậc trưng bày: chủ thể của trang là MÃ ĐƠN, mà
-         trước đây nó nằm ở bậc chữ nhỏ nhất. Và 6 vùng vốn chồng lên nhau không một
-         ranh giới nào (bản desktop thì ngược lại: kẻ 8 lần) — nay cả hai bản cùng 5 kẻ.
-         Lề về 16 như cả app; 20 là ngoài thang. -->
-    <!-- 28/09/2026 — DỰNG LẠI theo brief trang 56 (mobile). Mã đơn lên .t-display-title
-         (Libre 24/32 dưới skin-li — brief ghi "LIBER FONT"), được phép xuống dòng; mã tách
-         span riêng để "Mã đơn hàng:" là khoá i18n tĩnh. Hàng dưới: nhãn trạng thái (bấm
-         được khi Chờ thanh toán) bên trái, điểm thưởng của đơn bên phải — brief vẽ điểm
-         cùng tầng với nhãn. Đơn huỷ không tích điểm nên bỏ hẳn khối điểm. Số điểm là
-         Inter (.t-lead); chuỗi "+ N điểm" đi bằng luật I18N_RE sẵn có. -->
-    <div class="px-4 pt-4 pb-6 flex flex-col gap-4 border-b border-border">
-      <div class="flex flex-col gap-1">
-        <h1 class="t-display-title text-foreground">Mã đơn hàng: <span>${o.id}</span></h1>
-        <span class="t-single text-muted-foreground">Đặt ngày ${o.date}</span>
-      </div>
-      <!-- 29/09/2026 (rà UI, phương án A) — khối ĐIỂM đã chuyển xuống hàng cuối của "Thông tin đặt hàng". Ở đơn Chờ
-           thanh toán nhãn bấm được rộng 241 + khối điểm 127 + khe 16 = 384 > 343 nên khối điểm rớt xuống dòng riêng, canh
-           phải, header cao 76 thay vì 36 ở mọi trạng thái khác. Nay header đơn nào cũng chỉ có tiêu đề + nhãn trạng thái. -->
-      <div class="flex">${statusTag(o, true)}</div>
-    </div>
+    <!-- LAYOUT v4 của user (01/10/2026, khung Figma 1036:57924): tiêu đề "Chi tiết đơn hàng" rồi BỐN THẺ tràn mép kẻ đáy — xem khối CSS ".ov-card". Mã đơn không còn là tiêu đề trang (trước đó
+         .t-display-title "Mã đơn hàng: …") mà là một hàng nhãn + mã + nút sao chép trong thẻ đầu. -->
+    <div class="ov-page">
+      <h1 class="t-section-title text-foreground ov-title">Chi tiết đơn hàng</h1>
 
-    <!-- TRẠNG THÁI ĐƠN HÀNG — brief trang 56: "ở Mobile trạng thái pop-up từ dưới lên giống chọn
-         size". Một HÀNG BẤM (cao tối thiểu 52) ghi giờ của mốc mới nhất; chevron báo còn nữa. Bấm
-         mở #shipSheet với timeline đủ chặng.
-         29/09/2026 (rà UX chi tiết đơn) — khối này LÊN TRƯỚC "Thông tin đặt hàng": người mở trang
-         này để biết đơn đang ở đâu, không phải để đọc lại địa chỉ mình vừa nhập (trước đó nó nằm ở
-         y468, dưới 5 hàng thông tin tĩnh). Nhãn "Trạng thái giao hàng" đổi thành "Tiến trình đơn
-         hàng" — đơn Chờ thanh toán / Đã huỷ chưa hề có giao hàng — và hàng thôi in lại tên chặng:
-         chip trạng thái ngay trên đã nói, hai chỗ cách nhau 300px cùng một chữ. -->
-    <div class="px-4 py-6 border-b border-border flex flex-col gap-4">
-      <button data-ship-sheet="${o.id}" aria-haspopup="dialog" class="w-full min-h-[52px] flex items-center gap-3 text-left press">
-        <span class="flex-1 min-w-0 flex flex-col gap-1">
-          <span class="t-single text-muted-foreground">Tiến trình đơn hàng</span>
-          ${upd ? `<span class="t-lead text-foreground"><span>Cập nhật</span> <span>${upd}</span></span>` : ''}
-        </span>
-        <span class="shrink-0 flex items-center">${I.chevR()}</span>
-      </button>
-      <!-- 29/09/2026 — dải thông báo theo trạng thái: hạn thanh toán · đã gửi yêu cầu huỷ · đơn đã
-           huỷ vì sao + tiền đi đâu (xem orderNoteLines). -->
-      ${noteLines.length ? `
+      <div class="ov-card">
+        <div class="ov-codes">
+          <span class="t-single ov-k">Mã đơn hàng</span>
+          <span class="t-lead ov-code">${o.id}</span>
+          ${copyBtn(o.id, 'Sao chép mã đơn hàng')}
+        </div>
+        <div class="flex">${statusTag(o, true, true)}</div>
+        <div class="ov-row"><span class="t-single ov-k">Ngày đặt</span><span class="t-single ov-v">${orderPlaced(o)}</span></div>
+        <div class="ov-row"><span class="t-single ov-k">Thanh toán</span><span class="t-single ov-v">${o.payment}</span></div>
+        <button type="button" data-ship-sheet="${o.id}" aria-haspopup="dialog" class="ov-row ov-prog press">
+          <span class="t-single ov-k">Tiến trình đơn hàng</span>
+          <span class="ov-prog-end"><span class="t-single ov-v">${progAt}</span>${I.chevR('currentColor')}</span>
+        </button>
+        <!-- dải thông báo theo trạng thái (hạn thanh toán · đã gửi yêu cầu huỷ · lý do huỷ + tiền hoàn, xem orderNoteLines) — khung v4 chỉ vẽ đơn Đang giao nên không có dải này; giữ trong thẻ đầu -->
+        ${noteLines.length ? `
         <div class="bg-accent-0 px-4 py-2 flex flex-col gap-1">
           ${noteLines.map(l => `<span class="t-multiline text-foreground-alt">${l}</span>`).join('')}
         </div>` : ''}
-      <!-- 06/09/2026 — băng ghi chú dưới timeline: đơn có hàng đặt trước nói ngày hàng
-           về, đơn thường nói ngày giao + mã vận đơn. Hai băng LOẠI TRỪ nhau: đơn hỗn hợp
-           mang cả tone warning lẫn hàng đặt trước, in cả hai là hai băng chồng nhau nói
-           hai ngày khác nhau, người đọc không biết tin cái nào.
-           28/09/2026 — băng nay đứng dưới HÀNG trạng thái (stepper đã gỡ); bỏ mt-4 vì khối
-           cha đã có khe 16.
-           29/09/2026 — đơn huỷ không in băng nào (đơn không đi tiếp; desktop vốn đã vậy); ngày
-           giao + mã vận đơn đọc từ o.ships thay vì in cứng một mã cho mọi đơn. -->
-      ${o.tone === 'cancel' ? '' : hasPre ? `
-        <div class="bg-accent-0 px-4 py-2 flex items-start gap-2">
-          <span class="w-4 h-4 text-foreground shrink-0 mt-0.5">${I.truck}</span>
-          <span class="t-multiline text-foreground-alt">${allPre
-            ? `Đơn hàng đặt trước · hàng dự kiến về ngày <b class="font-medium">${orderEta(o)}</b>`
-            : `Đơn giao ${orderGroups(o).length} đợt · hàng có sẵn giao trước, hàng đặt trước dự kiến <b class="font-medium">${orderEta(o)}</b>`}</span>
-        </div>`
-      : o.tone==='warning' && shipRef ? `
-        <div class="bg-accent-0 px-4 py-2 flex items-center gap-2">
-          <span class="w-4 h-4 text-foreground shrink-0">${I.truck}</span>
-          <span class="t-single text-foreground-alt">${shipRef.eta ? `<span>Dự kiến giao ngày</span> <b class="font-medium">${shipRef.eta}</b> · ` : ''}<span>Mã vận đơn</span> <b class="font-medium">${shipRef.awb}</b></span>
-        </div>` : ''}
-    </div>
-
-    <!-- THÔNG TIN ĐẶT HÀNG (brief: tiêu đề Libre) — người nhận xếp dọc tên / SĐT / địa
-         chỉ, rồi 2 hàng nhãn–giá trị phương thức. Thay 2 khối "Địa chỉ nhận hàng" và
-         "phương thức" rời nhau của bản 05/09. -->
-    <div class="px-4 py-6 border-b border-border flex flex-col gap-4">
-      <div class="flex flex-col gap-1">
-        <p class="t-block-title text-foreground pb-1">Thông tin đặt hàng</p>
-        <span class="t-lead text-foreground">${o.address.name}</span>
-        ${o.address.phone ? `<span class="t-multiline text-foreground-alt">${o.address.phone}</span>` : ''}
-        <span class="t-multiline text-foreground-alt">${o.address.line}</span>
       </div>
-      <div class="flex flex-col gap-2">
-        <div class="flex items-baseline justify-between gap-4">
-          <span class="t-multiline text-muted-foreground shrink-0">Phương thức thanh toán</span>
-          <span class="t-multiline text-foreground text-right">${o.payment}</span>
+
+      <div class="ov-card">
+        <p class="t-block-title text-foreground">Thông tin giao hàng</p>
+        <div class="ov-row"><span class="t-single ov-k">Phương thức</span><span class="t-single ov-v">${o.method}</span></div>
+        ${shipped ? `<div class="ov-row"><span class="t-single ov-k">Đơn vị vận chuyển</span><span class="t-single ov-v">${ORDER_CARRIER}</span></div>` : ''}
+        ${deliver ? `<div class="ov-row"><span class="t-single ov-k">${deliver.k}</span><span class="t-single ov-v">${deliver.v}</span></div>` : ''}
+        ${awbs.length ? `
+        <div class="ov-row is-top"><span class="t-single ov-k">Mã vận đơn</span>
+          <span class="ov-awbs">${awbs.map(a => `<span class="ov-awb"><span class="t-single ov-v">${a}</span>${copyBtn(a, 'Sao chép mã vận đơn')}</span>`).join('')}</span>
         </div>
-        <div class="flex items-baseline justify-between gap-4">
-          <span class="t-multiline text-muted-foreground shrink-0">Phương thức vận chuyển</span>
-          <span class="t-multiline text-foreground text-right">${o.method}</span>
+        <button data-track-open="${o.id}" class="t-lead w-full h-10 border border-border bg-background text-foreground btn-o press"><span class="ov-underline">Theo dõi vận đơn</span><span aria-hidden="true"> ↗</span></button>` : ''}
+      </div>
+
+      <div class="ov-card">
+        <p class="t-block-title text-foreground">Thông tin người nhận</p>
+        <div class="ov-addr">
+          <span class="t-single ov-name">${o.address.name}</span>
+          ${o.address.phone ? `<span class="t-single ov-sub">${o.address.phone}</span>` : ''}
+          <span class="t-single ov-sub">${o.address.line}</span>
         </div>
-        ${o.tone !== 'cancel' ? `
-        <!-- 29/09/2026 — điểm của đơn: cùng luật giỏ (100.000 ₫ = 1 điểm), đơn chưa Hoàn tất là DỰ KIẾN, đơn huỷ không có hàng này.
-             Chuỗi "+ N điểm" CÓ dấu cách sau dấu + để đi luật I18N_RE sẵn có. -->
-        <div class="flex items-baseline justify-between gap-4">
-          <span class="t-multiline text-muted-foreground shrink-0">${orderPointsFinal(o) ? 'Điểm thưởng' : 'Điểm thưởng dự kiến'}</span>
-          <span class="t-multiline text-foreground text-right">+ ${orderPoints(o).toLocaleString('vi-VN')} điểm</span>
-        </div>` : ''}
       </div>
-    </div>
 
-    <!-- danh sách sản phẩm — 28/09/2026: nhãn "Sản phẩm (N)" thành tiêu đề khối Libre
-         "Chi tiết đơn hàng" (brief trang 56). -->
-    <div class="px-4 py-6 border-b border-border flex flex-col gap-4">
-      <p class="t-block-title text-foreground">Chi tiết đơn hàng</p>
-      <!-- 06/09/2026 — đơn HỖN HỢP tách làm 2 đợt giao. Không tách thì hai dòng hàng
-           nằm cạnh nhau mà một dòng có ngày nhận còn dòng kia không, người đọc phải tự
-           đoán là cả đơn chờ hay chỉ một món chờ. Đơn toàn hàng đặt trước thì KHÔNG
-           tách: mọi dòng đã mang badge và ngày, thêm tiêu đề đợt chỉ là chữ thừa. -->
-      ${(() => {
-        const groups = orderGroups(o), gifts = orderGifts(o);
-        /* Một đợt thì in phẳng: mọi dòng đã mang badge và ngày của chính nó, thêm
-           tiêu đề "Đợt 1" chỉ là chữ thừa. Quà đi kèm ĐỢT ĐẦU vì đó là kiện rời
-           kho trước; đơn một đợt thì quà xuống cuối danh sách. */
-        if (groups.length < 2) return o.items.map(itemRow).join('') + gifts.map(giftRow).join('');
-        return groups.map((g, i) => `
-        <div class="flex flex-col gap-4 pt-4 border-t border-border">
-          ${shipHeadHTML(o, g, i)}
-          ${g.items.map(itemRow).join('')}
-          ${i === 0 ? gifts.map(giftRow).join('') : ''}
-        </div>`).join('');
-      })()}
-    </div>
-
-    <!-- tổng kết — 28/09/2026 (brief trang 56): thứ tự Tạm tính · Giảm giá · Phí vận
-         chuyển · Dùng N điểm (chỉ khi đơn có đổi điểm, trừ như giảm giá; 29/09 đổi tên từ "Điểm thưởng" để không trùng "Điểm thưởng dự kiến" ở đầu trang) · Tổng thanh toán
-         + dòng phụ "Đã bao gồm VAT". Giữ "Tạm tính" chứ không theo chữ "Thành tiền" của
-         brief — trùng tên cột giá của dòng hàng, và giỏ/checkout đều gọi là Tạm tính.
-         Khối "phương thức" cũ đã gộp lên Thông tin đặt hàng. -->
-    <div class="px-4 py-6 border-b border-border flex flex-col gap-2">
-      ${totRow('Tạm tính', o.sub)}
-      ${totRow('Giảm giá', disc, disc !== '0 ₫' ? 'text-destructive' : 'text-foreground')}
-      ${totRow('Phí vận chuyển', o.ship)}
-      ${o.pointsUsed ? totRow(`Dùng ${Math.round(o.pointsUsed).toLocaleString('vi-VN')} điểm`, '− ' + vndDot(o.pointsUsed * REWARD_POINT_VALUE), 'text-destructive') : ''}
-      <div class="flex items-start justify-between gap-4 pt-2 mt-1 border-t border-border">
-        <span class="flex flex-col">
-          <span class="t-lead text-foreground">Tổng thanh toán</span>
-          <span class="t-single text-muted-foreground">Đã bao gồm VAT</span>
-        </span>
-        <span class="t-lead text-foreground">${o.total}</span>
+      <div class="ov-card ov-inv acc">
+        <button type="button" class="acc-trigger ov-inv-head press">
+          <span class="t-block-title text-foreground">Thông tin VAT</span>
+          ${accIco}
+        </button>
+        <div class="acc-body"><div class="acc-inner">
+          <div class="ov-inv-body">${orderVatBodyHTML(o, 't-single')}</div>
+        </div></div>
       </div>
-    </div>
 
-    <!-- hành động — 05/09/2026: 3 nút cùng một hàng việc nay cùng MỘT bậc chiều cao 48
-         (trước là 12/11/11, trong khi bản desktop cả 3 đều 12). Bỏ bo góc; nhãn về 14/20
-         vì bộ da kéo mọi .btn-p / .btn-o lên 14/20 ngay khi gắn class, khai 12/18 là
-         khai báo nói dối. Huỷ đơn hàng trả về mực chính. Nút CSKH nhận .btn-s để có
-         state — rule bộ da ép .btn-s về 12/16 nên khai đúng 12/16. -->
-    <!-- 28/09/2026 (brief trang 55–56) — hàng nút rẽ theo 6 trạng thái, xem actionsHTML. -->
-    <div class="px-4 pt-8 flex flex-col gap-2">
-      ${secHTML}
-      ${act.note ? `<p class="t-multiline text-muted-foreground text-center px-2 pb-1">${act.note}</p>` : ''}
-      <button data-toast="Liên hệ CSKH 1900 2666" class="t-single w-full h-12 text-muted-foreground btn-s press">Cần hỗ trợ? Liên hệ CSKH</button>
+      <div class="ov-card">
+        <p class="t-block-title text-foreground">Sản phẩm (${o.items.length})</p>
+        ${o.items.map(itemRow).join('')}${orderGifts(o).map(giftRow).join('')}
+        <div class="ov-divider"></div>
+        <div class="ov-sum">
+          ${sumRow('Tạm tính', o.sub)}
+          ${sumRow(pct ? `<span>Giảm giá</span> <span>(${pct}%)</span>` : 'Giảm giá', disc, neg ? 'is-neg' : '')}
+          ${sumRow('Phí vận chuyển', o.ship)}
+          ${o.pointsUsed ? sumRow(`Dùng ${Math.round(o.pointsUsed).toLocaleString('vi-VN')} điểm`, '− ' + vndDot(o.pointsUsed * REWARD_POINT_VALUE), 'is-neg') : ''}
+          <div class="ov-divider"></div>
+          <div class="ov-sum-row t-lead ov-sum-total ov-total"><span>Tổng thanh toán</span><span>${o.total}</span></div>
+          <span class="t-single ov-vat">Đã bao gồm VAT</span>
+          ${o.tone === 'cancel' ? '' : `
+          <div class="ov-divider"></div>
+          <div class="ov-points t-single"><span>${orderPointsFinal(o) ? 'Điểm tích luỹ' : 'Điểm tích luỹ sau khi hoàn tất'}</span><span>+${orderPoints(o).toLocaleString('vi-VN')}</span></div>`}
+        </div>
+      </div>
+
+      ${secHTML ? `<div class="px-4 pt-8 flex flex-col gap-2">${secHTML}</div>` : ''}
     </div>
-    <!-- 29/09/2026 — THANH NÚT CHÍNH dính đáy (nền kính như navbar, xem .ord-bar). Cùng khuôn thanh CTA
-         của PDP. Đơn không có nút chính (Đang xử lý, chờ duyệt huỷ) thì không có thanh. -->
-    ${act.primary ? `<div class="ord-bar glass-95 backdrop-blur-[7.5px]">${btnP(act.primary.attr, act.primary.label)}</div>` : ''}
+    <!-- 29/09/2026 — THANH NÚT CHÍNH dính đáy (nền kính như navbar, xem .ord-bar). Cùng khuôn thanh CTA của PDP. Đơn không có nút chính (Đang xử lý, chờ duyệt huỷ, Đang giao) thì không có thanh. -->
+    ${mainAct ? `<div class="ord-bar glass-95 backdrop-blur-[7.5px]">${btnP(mainAct.attr, mainAct.label)}</div>` : ''}
   </div>`;
 }
 
@@ -13493,7 +13591,7 @@ function vatFieldRows(type) {
   return vatFieldSets[type].map(([lb, ph, im], i) => `
     <div class="px-3 py-2">
       <div class="field-float">
-        <input id="vat-${type}-${i}" ${im ? `inputmode="${im}"` : ''} placeholder=" " class="t-multiline bg-background border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+        <input id="vat-${type}-${i}" ${im ? `inputmode="${im}"` : ''} value="${vatVal(type, i)}" placeholder=" " class="t-multiline bg-background border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
         <label for="vat-${type}-${i}" class="text-muted-foreground">${lb}</label>
       </div>
     </div>`).join('');
@@ -16772,7 +16870,11 @@ const trackMaskLine = l => {
 function trackResultView(o) {
   /* 28/09/2026 (brief trang 55) — bộ chặng + nhãn trạng thái dùng CHUNG với màn chi tiết
      đơn (orderSteps · statusTag): một bộ từ vựng cho cả hai màn. Nhãn ở đây KHÔNG bấm được
-     (interactive mặc định false) — thanh toán lại là việc của màn chi tiết đơn.
+     (interactive mặc định false) — thanh toán lại là việc của màn chi tiết đơn. Tối muộn 30/09:
+     nhãn = BADGE nền 50 + chữ 700 như danh sách và chi tiết đơn (`statusTag(o, false, true)`);
+     chữ 14 rộng hơn chip tối 12 nên ở 375 tiêu đề "Mã đơn …" xuống 2 dòng thêm ở đơn Đang xử lý,
+     Chờ hàng về, Chờ xác nhận huỷ (trước đó chỉ Chờ thanh toán và 3 đơn Đang giao); ở 320 nhãn
+     nào hết chỗ thì rớt xuống dưới tiêu đề (xem hàng đầu bên dưới).
      Rà soát 28/09: stepper đọc orderTimeline(o) như sheet "Thông tin giao hàng" và stepper
      desktop — đơn huỷ giữ các chặng đã qua rồi thêm nút ✕ "Đã huỷ" đỏ, thay vì đứng ở
      "Chờ thanh toán" như đơn còn chờ. Nhãn chặng 12/18 (.t-multiline): nhãn mới dài hơn cột
@@ -16780,9 +16882,12 @@ function trackResultView(o) {
      dòng (STYLE-RULES). Chặng hiện tại nhấn bằng mực chính, không font-medium (skin-mt dập). */
   const tl = orderTimeline(o);
   return `
-    <div class="px-4 pt-6 pb-2 flex items-center justify-between gap-2">
-      <h1 class="t-display-title text-foreground">Mã đơn ${o.id}</h1>
-      ${statusTag(o)}
+    <!-- Tối muộn 30/09 — nhãn thành BADGE 14px nên rộng hơn chip cũ 12–18px; ở 320 nhãn "Chờ xác nhận huỷ" (144) cạnh mã đơn (từ dài nhất 155) cần 307 > 288 và
+         kéo trang rộng 323 (cuộn ngang). Hàng có flex-wrap và h1 có flex-1 (cơ sở 0 ⇒ so khít theo TỪ DÀI NHẤT, không theo cả dòng) nên nhãn rớt xuống dòng dưới CHỈ khi
+         hết chỗ; từ 343 trở lên mọi nhãn vẫn nằm cùng hàng, h1 vẫn tự xuống 2 dòng như trước. -->
+    <div class="px-4 pt-6 pb-2 flex flex-wrap items-center justify-between gap-2">
+      <h1 class="t-display-title text-foreground flex-1">Mã đơn ${o.id}</h1>
+      ${statusTag(o, false, true)}
     </div>
     <div class="px-4 pb-4">
       <p class="t-multiline text-muted-foreground">Đặt ngày ${o.date}</p>
@@ -17169,6 +17274,7 @@ let ckAuth = false, ckStep = 0, ckMaxStep = 0;
    dù khách chọn giao nhanh. Giữ cờ ở đây để placeOrder ghi đúng phương thức. */
 let ckShipFast = false;
 let vatMode = 'none';             // 'none' | 'personal' | 'company' — bước Xuất hoá đơn VAT (19/09/2026, gộp từ cặp ô tick + segmented cũ)
+let vatVals = {};                 // chữ khách đã gõ ở bước VAT, khoá theo id ô (`vat-company-0`…) — xem khối "THÔNG TIN VAT CỦA ĐƠN"
 let loginFrom = null, authGuardTo = '';             // mở login từ màn nào
 let scrollCleanups = [];          // gỡ listener khi đổi màn
 
@@ -17480,6 +17586,7 @@ const I18N = {
   'Nhập Họ và tên':'Enter full name', 'Nhập Địa chỉ':'Enter address',
   'Tên công ty':'Company name', 'Địa chỉ công ty':'Company address',
   'Mã số thuế':'Tax code', 'Email nhận hóa đơn VAT':'Email for VAT invoice',
+  'Thông tin VAT':'VAT information', 'Loại hoá đơn':'Invoice type', 'Đơn hàng này không xuất hoá đơn VAT.':'No VAT invoice was requested for this order.',
   'Nhập Tên công ty':'Enter company name', 'Nhập Địa chỉ công ty':'Enter company address',
   'Nhập Mã số thuế':'Enter tax code', 'Nhập Email nhận hóa đơn VAT':'Enter email for VAT invoice',
   'Hóa đơn VAT chỉ xuất trong ngày, khách hàng có nhu cầu xuất hóa đơn vui lòng điền đầy đủ thông tin bên dưới.':'VAT invoices are issued same-day only. Please complete all fields below if you need one.',
@@ -17573,6 +17680,9 @@ const I18N = {
   'Mật khẩu cần tối thiểu 8 ký tự, gồm cả chữ và số':'Password needs at least 8 characters, with letters and numbers',
   'Hai lần nhập chưa khớp':'The two entries do not match',
   'Mật khẩu mới phải khác mật khẩu hiện tại':'New password must differ from the current one',
+  /* 30/09/2026 (user) — nút của form Đổi mật khẩu đổi nhãn thành "Lưu" (tiêu đề thẻ vẫn là "Đổi mật khẩu").
+     EN 'Save' chưa khoá nào khác dùng (đã soát cả bảng), nên I18N_REV đảo về 'Lưu' không đụng ai. */
+  'Lưu':'Save',
   'Sửa':'Edit', 'Xoá':'Delete', 'Giữ lại':'Keep', 'Đặt mặc định':'Set as default', 'HẠNG THÀNH VIÊN HIỆN TẠI':'CURRENT MEMBERSHIP TIER', 'ĐIỂM HIỆN TẠI':'CURRENT POINTS', 'Mua sắm thêm':'Spend another', 'Hạng thành viên & Ưu đãi':'Membership & Benefits',
   /* 27/09/2026 — bản EN cho 5 câu FAQ trang Hạng thành viên (khớp NGUYÊN VĂN mảng MEMBER_FAQ). */
   'Điểm thưởng DAFC Points là gì?': 'What are DAFC Points?',
@@ -18135,6 +18245,8 @@ const I18N = {
   'Đợt 1 · Hàng có sẵn · Giao nhanh':'Shipment 1 · In stock · Express',
   'Đợt 2 · Hàng có sẵn · Giao thường':'Shipment 2 · In stock · Standard',
   'Mã vận đơn':'Tracking number',
+  'Ngày đặt':'Date placed', 'Đơn vị vận chuyển':'Shipping carrier', 'Phương thức':'Method', 'Theo dõi vận đơn':'Track shipment', 'Hàng dự kiến về':'Stock expected',
+  'Dự kiến':'Expected', 'Đã sao chép':'Copied', 'Điểm tích luỹ sau khi hoàn tất':'Points earned after completion',
   'Giao ngày':'Delivered on',
   'Dự kiến giao ngày':'Estimated delivery on',
   'Đơn đã rời kho nên không huỷ trực tiếp được. Cần thay đổi, vui lòng liên hệ CSKH.':'This order has left our warehouse, so it can no longer be cancelled online. To change it, please contact customer care.',
@@ -18942,6 +19054,7 @@ const I18N_RE = [
   [/^Còn (\d+) sản phẩm$/,            'Only $1 left'],
   [/^Giỏ hàng hiện có (\d+) sản phẩm$/, 'Your cart now has $1 items'],
   [/^Đặt ngày (.+)$/,                 'Ordered on $1'],
+  [/^Sản phẩm \((\d+)\)$/,            'Items ($1)'],
   [/^Đơn hàng (#\S+)$/,               'Order $1'],
   [/^Mục: (.+)$/,                     'Section: $1'],
   [/^Phông chữ: (.+)$/,               'Font: $1'],
@@ -19727,6 +19840,8 @@ function placeOrder() {
       : { name: a ? a.name : ckShipName, phone: a ? a.phone : ckShipPhone,
           line: a ? addrLine(a) : [ckShipLine, ckWard, ckProvince].filter(Boolean).join(', ') },
     steps: 2, log: [vnStamp(), vnStamp(2)],
+    /* 01/10/2026 — VAT khách chọn ở checkout đi THEO ĐƠN (null = không xuất): màn Chi tiết đơn có mục "Thông tin VAT". */
+    vat: orderVatSnapshot(),
   });
   // dọn giỏ: badge về 0 và màn Giỏ hàng hiện trạng thái rỗng
   CART.length = 0;
@@ -22975,10 +23090,8 @@ document.body.insertAdjacentHTML('beforeend', `
 /* ── POPUP TRẢ GÓP (#instSheet) ─────────────────────────────────────────────
    Mở từ nút "Xem chi tiết" dưới CTA PDP ([data-inst]=idx SP). Nội dung rút gọn từ
    trang chính sách trả góp của khách: chọn kỳ hạn (giá/3/6/9/12) · ngân hàng áp dụng ·
-   điều khoản. ⚠ Danh sách 11 ngân hàng "xem thêm" là DATA TẠM — trang khách chỉ có ảnh
-   bảng ngân hàng, chưa có chữ; thay bằng danh sách thật khi khách gửi. */
-const INST_BANKS = ['Vietcombank','VietinBank','BIDV','Sacombank','ACB','Techcombank','MB','MSB','VPBank','OCB','TPBank','VIB','SHB','HDBank','SCB','SeABank','Nam A Bank','PVcomBank','HSBC'];
-const INST_BANKS_MORE = ['Eximbank','Shinhan Bank','Standard Chartered','LPBank','Bac A Bank','ABBank','Kienlongbank','Saigonbank','VietABank','BaoViet Bank','Woori Bank'];
+   điều khoản. Ngân hàng = ẢNH GỘP của khách (assets/installment-banks.png, lấy từ trang chính sách
+   trả góp, đã cắt bỏ dòng tiêu đề xanh của ảnh). Khách đổi danh sách thì thay ảnh này. */
 const INST_ICO = {
   ok:   '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/>',
   fee:  '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
@@ -23001,10 +23114,7 @@ function instSheetHTML(price, sel) {
     </div>
     <div class="flex flex-col gap-3">
       <p class="t-multiline font-medium text-muted-foreground">Ngân hàng áp dụng</p>
-      <div class="ins-banks grid gap-2">
-        ${INST_BANKS.map(bank).join('')}
-        <button data-ins-more class="ins-bank t-single font-medium text-foreground press" style="background:var(--general-secondary)">+${INST_BANKS_MORE.length} <span>ngân hàng</span></button>
-      </div>
+      <img src="assets/installment-banks.png" alt="Ngân hàng áp dụng" class="w-full h-auto block" loading="lazy">
     </div>
     <div class="flex flex-col gap-3 pt-4 border-t border-border">
       ${[['ok','Không cần trả trước. Số tiền được chia đều theo kỳ hạn bạn chọn.'],
@@ -23049,14 +23159,12 @@ document.body.insertAdjacentHTML('beforeend', `
   document.getElementById('insClose').addEventListener('click', closeI);
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && open) closeI(); });
   document.addEventListener('click', e => {
-    const t = e.target.closest('[data-inst],[data-ins-plan],[data-ins-more],[data-ins-link]');
+    const t = e.target.closest('[data-inst],[data-ins-plan],[data-ins-link]');
     if (!t) return;
     if (t.dataset.inst != null) { e.stopPropagation(); openI(+t.dataset.inst); return; }
     if (!sh.contains(t)) return;
     if (t.dataset.insPlan) render(+t.dataset.insPlan);
-    else if (t.dataset.insMore != null) {
-      t.outerHTML = INST_BANKS_MORE.map(b => `<div class="ins-bank t-single text-foreground-alt" data-i18n-skip>${b}</div>`).join('');
-    } else if (t.dataset.insLink) { closeI(); go(t.dataset.insLink); }
+    else if (t.dataset.insLink) { closeI(); go(t.dataset.insLink); }
   }, true);
 })();
 
@@ -24042,22 +24150,22 @@ document.body.insertAdjacentHTML('beforeend', `
   window.__openGiftSheet = openGF;
 })();
 
-/* ── Sheet "Thông tin giao hàng" (brief PDF trang 56, 28/09/2026) ──
+/* ── Sheet "Tiến trình đơn hàng" (brief PDF trang 56, 28/09/2026; tên cũ "Thông tin giao hàng" — đổi 01/10/2026 vì thẻ giao hàng của khung v4 đã mang tên đó) ──
    Brief: "ở Mobile trạng thái pop-up từ dưới lên giống chọn size" + ảnh Front Row.
    KHUÔN chép từ #sizeSheet / #giftSheet (vỏ z-210 pointer-events-none · backdrop đen 60%
    như sheet chọn size · panel trượt đáy .4s, bo 0, cao tối đa 80vh · grabber 50×3 ·
    header 52 với <p> tiêu đề mang đúng chuỗi class hook tiêu đề lớp nổi của bộ da).
    Viền panel: khối "KHUÔN CHUNG CHO MỌI LỚP NỔI" (.shp-panel). Thân = timeline dọc của
-   orderShipTimelineHTML(); đáy = link "Chi tiết vận chuyển" sang màn tra cứu, chỉ khi đơn
-   đã tới chặng Đang giao hàng (orderShipped). Desktop KHÔNG có sheet này (stepper ngang). */
+   orderShipTimelineHTML() (khung `timeline` của user); đáy = link "Theo dõi vận đơn" sang màn tra cứu, chỉ khi đơn
+   có mã vận đơn (cùng điều kiện nút "Theo dõi vận đơn ↗" ở thẻ giao hàng). Mở từ hàng .ov-prog (thẻ MÃ ĐƠN). Desktop KHÔNG có sheet này (stepper ngang trong thẻ MÃ ĐƠN). */
 document.body.insertAdjacentHTML('beforeend', `
   <div id="shipSheet" class="fixed inset-0 z-[210] pointer-events-none" aria-hidden="true">
     <div class="shp-backdrop absolute inset-0 bg-black/60 opacity-0 transition-opacity duration-300"></div>
     <div class="shp-panel absolute inset-x-0 bottom-0 bg-background translate-y-full transition-transform duration-[400ms] ease-in-out flex flex-col"
-         style="border-radius:0; max-height:80vh" role="dialog" aria-label="Thông tin giao hàng">
+         style="border-radius:0; max-height:80vh" role="dialog" aria-label="Tiến trình đơn hàng">
       <span class="absolute left-1/2 -translate-x-1/2 top-2 w-[50px] h-[3px] rounded-full bg-border"></span>
       <div class="h-[52px] px-4 flex items-center justify-between shrink-0">
-        <p class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">Thông tin giao hàng</p>
+        <p class="flex-1 min-w-0 text-[18px] font-medium leading-7 text-foreground">Tiến trình đơn hàng</p>
         <button id="shpClose" class="w-8 h-8 -mr-2 flex items-center justify-center press [&_svg]:w-3 [&_svg]:h-3" aria-label="Đóng">${I.close}</button>
       </div>
       <div id="shpBody" class="flex-1 min-h-0 overflow-y-auto no-scrollbar px-4 pt-2"></div>
@@ -24094,8 +24202,8 @@ document.body.insertAdjacentHTML('beforeend', `
     if (window.__closeLoginPop) window.__closeLoginPop();
     curId = id;
     body.innerHTML = orderShipTimelineHTML(o);
-    foot.innerHTML = orderShipped(o)
-      ? `<button data-shp-track class="t-single min-h-[52px] flex items-center underline text-foreground press">${o.tone === 'warning' ? 'Theo dõi đơn hàng' : 'Xem chi tiết vận chuyển'}</button>` : '';
+    foot.innerHTML = orderAwbs(o).length
+      ? `<button data-shp-track class="t-single min-h-[52px] flex items-center underline text-foreground press">Theo dõi vận đơn</button>` : '';
     localizeNew(panel);
     body.scrollTop = 0;
     clearTimeout(hideT);
