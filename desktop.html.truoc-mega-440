@@ -8622,9 +8622,9 @@ const MENU_DATA = {
     ['Khuyến mãi', null],
   ]},
 };
-let menuTab = 'Nữ';   // 02/10/2026: trang chủ mặc định là NỮ (lệnh user)
+let menuTab = 'Nam';
 let menuSub = null; // null = cấp 1, object = danh mục cấp 2 đang mở
-let dkDept  = 'Nữ';  // dept đang chọn ở hàng nav trên — 02/10/2026 mặc định NỮ (lệnh user; trước là Nam)
+let dkDept  = 'Nam'; // dept đang chọn ở hàng nav trên (Figma Header: "Nam" = State Active)
 
 /* Vỏ menu — nội dung render động trong IIFE wiring (cuối file) */
 function menuSheet() {
@@ -8725,7 +8725,7 @@ function dkMegaCol(title, allLabel, allAttrs, items, itemAttrs) {
      `.dk-mega-grid > div button:hover` lo, không khai ở đây. */
   const link = 'text-left text-[14px] font-normal leading-5 text-foreground-alt hover:text-foreground transition-colors press';
   return `
-  <div class="flex flex-col gap-3 min-w-0" style="padding:24px 0">
+  <div class="flex flex-col gap-3 min-w-0">
     ${title
       /* Tiêu đề nhóm: 14 MEDIUM uppercase, màu secondary-foreground #262626
          (chốt 18/08/2026, yêu cầu user — trước là regular + muted #737373).
@@ -8760,59 +8760,48 @@ function splitByHeader(items) {
 /* Panel mega menu cho 1 mục subheader — cột nội dung + teaser ảnh phải.
    `id` khớp với data-mega của nút tương ứng: panel render tách khỏi thanh cuộn
    nên không còn quan hệ cha-con để CSS :hover bắt được, phải nối bằng id. */
-/* ẢNH CỦA MEGA PANEL — 02/10/2026, theo Figma "Section 2" (1078:59576) của user.
-   Panel CỐ ĐỊNH 440 cao, lưới 4 cột đều 330 khe 24, đệm ngang 24; ảnh chạy suốt chiều cao panel, không CTA.
-     3 cột chữ        -> 1 hình DỌC 3:4 (330x440) ở cột 4
-     2 cột chữ        -> 2 hình dọc ở cột 3 và 4
-     ≤1 cột chữ       -> NGẪU NHIÊN: 1 hình ngang lớn (684x440, cột 3-4) hoặc 2 hình dọc
-     ≥4 cột chữ       -> không ảnh (Chăm sóc cơ thể & tóc: 5 cột 259)
-   Ảnh lấy NGẪU NHIÊN từ bộ ảnh trang chủ cho đỡ lặp; chọn một lần rồi nhớ (DK_MEGA_PICK) để panel không đổi ảnh mỗi lần mở. */
-const DK_MEGA_POOL_PORT = [];
-const DK_MEGA_POOL_LAND = [];
-['men', 'women', 'beauty'].forEach(n => {
-  [1, 2, 3].forEach(k => DK_MEGA_POOL_PORT.push(`home-${n}-occasion-0${k}.jpg`));
-  [1, 2, 3, 4].forEach(k => DK_MEGA_POOL_PORT.push(`home-${n}-category-0${k}.jpg`));
-  [1, 2].forEach(k => { DK_MEGA_POOL_LAND.push(`home-${n}-hero-0${k}-desktop.jpg`); DK_MEGA_POOL_LAND.push(`home-${n}-spotlight-brand-0${k}.jpg`); });
-});
-const DK_MEGA_PICK = {};
-function dkMegaPick(key, pool, avoid) {
-  if (!DK_MEGA_PICK[key]) {
-    const rest = pool.filter(f => f !== avoid);
-    DK_MEGA_PICK[key] = rest[Math.floor(Math.random() * rest.length)];
-  }
-  return DK_MEGA_PICK[key];
-}
-function dkMegaTile(item, file, col) {
-  return `
-      <button ${dkCatAttrs(item.label)} class="dk-mega-hero block text-left press group h-full" style="grid-column:${col}">
-        <span class="block w-full h-full overflow-hidden bg-secondary">
-          <img src="${A}${file}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" alt="${item.label}">
+/* KHỐI ẢNH LỚN của mega panel có đúng 2 cột nội dung (01/10/2026, Figma 981:84578 · 983:84658).
+   Lưới 4 cột đều nhau, khe 24 -> cột 330 ở khổ 1440. Hai kiểu, đổi bằng DK_MEGA_BIG:
+     'two' = 2 hình 3:4 (330x440) ở cột 3 và 4 — mặc định (user chọn)
+     'one' = 1 hình 5:3 (684x410) trải qua cột 3-4 (chốt 01/10: 4:3 to quá)
+   Ảnh theo VỊ TRÍ như ảnh teaser: megamenu-{ngành}-{số thứ tự}.jpg; hình thứ hai là `...-{số}-b.jpg`.
+   Không có caption dưới ảnh (khung Figma chỉ có ảnh); cả hai đều dẫn về PLP của mục. */
+const DK_MEGA_BIG = 'two';
+/* Ngoại lệ theo mục (01/10, lệnh user): 'Bộ sưu tập' của Làm đẹp demo 1 hình ngang 4:3 dù mặc định là 2 hình. */
+const DK_MEGA_BIG_ONE = ['Bộ sưu tập'];
+function dkMegaBig(item, id) {
+  const n = `${A}megamenu-${dkMegaNganh()}-${String(id + 1).padStart(2, '0')}`;
+  const tile = (src, ratio, col) => `
+      <button ${dkCatAttrs(item.label)} class="dk-mega-hero block text-left press group" style="grid-column:${col}">
+        <span class="block w-full overflow-hidden bg-secondary" style="aspect-ratio:${ratio}">
+          <img src="${src}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" alt="${item.label}">
         </span>
       </button>`;
+  return (DK_MEGA_BIG === 'one' || (dkDept === 'Làm đẹp' && DK_MEGA_BIG_ONE.includes(item.label)))
+    ? tile(`${n}.jpg`, '5/3', '3 / span 2')
+    : tile(`${n}.jpg`, '3/4', '3') + tile(`${n}-b.jpg`, '3/4', '4');
 }
-function dkMegaImages(item, ncols) {
-  const k = `${dkDept}|${item.label}`;
-  const port = (slot, avoid) => dkMegaPick(`${k}|p${slot}`, DK_MEGA_POOL_PORT, avoid);
-  if (ncols >= 3) return dkMegaTile(item, port(1), '4');
-  let mode = '2';
-  if (ncols <= 1) {
-    if (!DK_MEGA_PICK[`${k}|mode`]) DK_MEGA_PICK[`${k}|mode`] = Math.random() < 0.5 ? '1' : '2';
-    mode = DK_MEGA_PICK[`${k}|mode`];
-  }
-  if (mode === '1') return dkMegaTile(item, dkMegaPick(`${k}|l`, DK_MEGA_POOL_LAND), '3 / span 2');
-  const a = port(1);
-  return dkMegaTile(item, a, '3') + dkMegaTile(item, port(2, a), '4');
+
+/* ẢNH TEASER CỦA MEGA PANEL 3 CỘT (+ Body 5 cột) — 02/10/2026, theo khung Figma 981:84511: ảnh KHÔNG CTA (bỏ nhãn "Bộ sưu tập mới" + gạch chân),
+   KHÔNG kẻ dọc / đệm trái 40, tỉ lệ 5:3, chiếm phần còn lại của hàng (420 ở khổ 1440 sau 3 cột 300 + khe 24). Padding quanh 24, khe giữa cột 24. */
+function dkMegaTeaser(item, id) {
+  return `
+      <button ${dkCatAttrs(item.label)} class="dk-mega-hero block text-left press group">
+        <span class="block w-full overflow-hidden bg-secondary" style="aspect-ratio:5/3">
+          <img src="${A}megamenu-${dkMegaNganh()}-${String(id + 1).padStart(2, '0')}.jpg" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" alt="${item.label}">
+        </span>
+      </button>`;
 }
 
 function dkMegaPanel(item, id) {
   let cols = '';
   let nc = 0;   // số cột nội dung của panel này (>3 thì lưới nới ra, xem style ở dk-mega-grid)
-  let ncols = 3;   // số cột CHỮ của panel (quyết định cách đặt ảnh, xem dkMegaImages)
+  let big = false;   // panel 2 cột nội dung -> khối ảnh lớn (DK_MEGA_BIG) thay ảnh vuông ở cột 4
   if (item.newIn) {
     /* 01/10/2026 (lệnh user): "Sản phẩm mới" chỉ vẽ cột của NGÀNH ĐANG SÁNG (Nam hoặc Nữ), bỏ cột giới tính kia —
        hàng ngành ở trên đã chọn giới tính, giống 5 danh mục thời trang. Còn 2 cột nội dung (Bộ sưu tập mới + ngành)
        nên panel này dùng khối ảnh lớn theo khung Figma 981:84578 (2 hình 3:4) / 983:84658 (1 hình 4:3). */
-    ncols = 2;
+    big = true;
     /* Sản phẩm mới — theo menu thật shop.dafc.com.vn: [Bộ sưu tập mới] + cột
        NAM + cột NỮ. Mobile bỏ tầng giới tính vì tab đã là giới tính; desktop
        GIỮ vì subheader không gắn giới tính và mọi mục khác cũng dựng 2 cột
@@ -8857,7 +8846,7 @@ function dkMegaPanel(item, id) {
     if (!sub) return '';
     const groups = splitByHeader(sub.items);
     nc = groups.length;
-    ncols = nc;   // 01/10/2026: panel ít cột (Làm đẹp: Dành cho nam · Bộ sưu tập · Hương thơm không gian = 1 cột) cũng dùng khối ảnh lớn, ảnh vẫn ở cột 3-4
+    big = nc <= 2;   // 01/10/2026: panel ít cột (Làm đẹp: Dành cho nam · Bộ sưu tập · Hương thơm không gian = 1 cột) cũng dùng khối ảnh lớn, ảnh vẫn ở cột 3-4
     const attrs = it => it && it.brand
       ? `data-nav="plp" data-plp-brand="${it.brand}"`
       : dkCatAttrs(it, [dept, sub.title]);
@@ -8876,9 +8865,9 @@ function dkMegaPanel(item, id) {
     <!-- 4 cột đều nhau: tối đa 3 cột nội dung + ảnh ghim ở cột 4 (.dk-mega-grid).
          Mục nào ít nhóm hơn (vd Túi xách chỉ Nam/Nữ) thì bỏ trống cột 3, KHÔNG
          kéo giãn cột — mọi panel phải cùng một lưới. -->
-    <div class="max-w-[1440px] mx-auto px-6 pt-8 pb-10 dk-mega-grid" style="height:440px;padding:0 24px;align-items:stretch;grid-template-columns:repeat(${nc > 3 ? nc : 4},minmax(0,1fr));gap:24px">
+    <div class="max-w-[1440px] mx-auto px-6 pt-8 pb-10 dk-mega-grid"${big ? ' style="gap:24px"' : ` style="grid-template-columns:repeat(${nc},minmax(0,${nc > 3 ? 200 : 300}px)) minmax(0,1fr);gap:24px"`}>
       ${cols}
-${nc > 3 ? '' : dkMegaImages(item, ncols)}
+${big ? dkMegaBig(item, id) : dkMegaTeaser(item, id)}
     </div>
   </div>`;
 }
