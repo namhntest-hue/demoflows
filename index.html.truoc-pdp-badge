@@ -6311,13 +6311,6 @@ function lookRailCards(title, n, selfIdx, w, badgeAt = -1) {
    (ảnh 367 + thông tin 82). Chỉ ăn khi thẻ THẬT SỰ không giảm giá (!p.was && !p.off): thẻ đang giảm
    vẫn giữ nguyên hàng giá gạch + chip + đệm, nên dải Khuyến mãi dùng chung cờ này mà không mất nội
    dung. Mặc định false: PLP / PDP / mọi dải khác vẫn giữ hàng giá gạch vô hình để lưới cao bằng nhau. */
-/* NHÃN BỘ SƯU TẬP của sản phẩm i (demo: chỉ SP#3 mang 'New Season' + 'La Vacanza'). MỘT nguồn cho thẻ PLP/trang chủ VÀ cho ảnh đầu PDP mobile
-   (02/10/2026, lệnh user: thẻ ngoài PLP có badge bộ sưu tập nào thì PDP hiện đúng badge đó) — thay 3 khối nhãn gõ cứng theo idx ở PDP1/2/4. */
-const pcCollectionBadges = i => (i === 3 ? ['New Season', 'La Vacanza'] : null);
-const pdpCollectionBadges = i => { const t = pcCollectionBadges(i); return t ? `
-      <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
-        ${t.map(x => `<span class="t-single badge-label px-2 py-1 font-medium text-foreground">${x}</span>`).join('')}
-      </div>` : ''; };
 function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = null, model = false, noName = false, noQuick = false, noPrice = false, noBrand = false, tight = false } = {}) {
   /* 27/08: 'Pre-order' THÔI làm nhãn đè ảnh — nó xuống đứng trước TÊN (xem dưới).
      Chặn ngay tại đây, một chỗ, nên 6 nơi gọi vẫn truyền `badge: 'Pre-order'` như
@@ -7296,7 +7289,7 @@ function screenPLPList() {
   /* Badge thẻ đầu: đọc từ DATA (`p.preorder`) chứ không phải "thẻ số 0 thì New"
      — SP#1 là hàng pre-order, để "New" ở PLP thì bấm vào PDP lại thấy
      "Pre-order", 2 nơi nói 2 chuyện (yêu cầu user 17/08/2026). */
-  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: pcCollectionBadges(i) });
+  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
   /* Breadcrumb tối thiểu 2 đoạn như desktop (4261-4264 bên đó): thiếu crumbs
      (vào từ thẻ danh mục -> crumbs rỗng, hoặc mode search) thì lấy tiêu đề /
      nhãn "Kết quả tìm kiếm" — trước đây hàng breadcrumb chỉ còn chữ "Trang chủ"
@@ -7444,7 +7437,7 @@ function screenPLP() {
   /* Badge thẻ đầu: đọc từ DATA (`p.preorder`) chứ không phải "thẻ số 0 thì New"
      — SP#1 là hàng pre-order, để "New" ở PLP thì bấm vào PDP lại thấy
      "Pre-order", 2 nơi nói 2 chuyện (yêu cầu user 17/08/2026). */
-  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: pcCollectionBadges(i) });
+  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
 
   return `
   <div class="w-full" data-scroller>
@@ -7795,7 +7788,11 @@ function screenPDP() {
            Versace) — từ khi màn này mở được mọi sản phẩm thì để chạy vô điều
            kiện là dán nhãn Versace lên đầm Zimmermann. PRODUCTS chưa có field
            nhãn chiến dịch nên khoá theo idx, không bịa thêm data. -->
-      ${pdpCollectionBadges(idx)}
+      ${idx === 0 ? `
+      <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
+        <span class="t-single badge-label px-2 py-1 font-medium text-foreground">New Season</span>
+        <span class="t-single badge-label px-2 py-1 font-medium text-foreground">La Vacanza</span>
+      </div>` : ''}
       <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
         ${gallery.map((_, i) => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
       </div>
@@ -8217,7 +8214,10 @@ function screenPDP2() {
             <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
           </button>`).join('')}
       </div>
-      ${pdpCollectionBadges(1)}
+      <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
+        <span class="t-single badge-label px-2 py-1 font-medium text-foreground">New Season</span>
+        <span class="t-single badge-label px-2 py-1 font-medium text-foreground">La Vacanza</span>
+      </div>
       <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-0.5">
         ${gallery.map((_, i) => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
       </div>
@@ -8354,7 +8354,9 @@ function screenPDP3() {
             <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
           </button>`).join('')}
       </div>
-      ${pdpCollectionBadges(2)}
+      <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
+        <span class="t-single badge-label px-2 py-1 font-medium text-foreground">New Season</span>
+      </div>
       <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
         ${gallery.map((_, i) => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
       </div>
@@ -8484,7 +8486,10 @@ function screenPDP4() {
             <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}" onload="this.parentElement.classList.add('loaded')">
           </button>`).join('')}
       </div>
-      ${pdpCollectionBadges(3)}
+      <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
+        <span class="t-single badge-label px-2 py-1 font-medium text-foreground">New Season</span>
+        <span class="t-single badge-label px-2 py-1 font-medium text-foreground">La Vacanza</span>
+      </div>
       <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
         ${gallery.map((_, i) => `<span class="h-1 rounded-full transition-all duration-300 ${i===0 ? 'w-6 bg-primary' : 'w-4 bg-border-3'}"></span>`).join('')}
       </div>
@@ -10095,7 +10100,9 @@ function screenPDP5() {
             <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
           </button>`).join('')}
       </div>
-      ${pdpCollectionBadges(4)}
+      <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
+        <span class="t-single badge-label px-2 py-1 font-medium text-foreground">New Season</span>
+      </div>
       <!-- Slick dash: active 24x4 foreground r2 · inactive 16x4 neutral-300 r2 · gap 2 -->
       <div id="pdpDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
         ${gallery.map((_, i) => `<span class="h-1 rounded-xs transition-all duration-300 ${i===0 ? 'w-6 bg-foreground' : 'w-4 bg-border-3'}"></span>`).join('')}
@@ -10246,7 +10253,9 @@ function screenPDP6() {
             <img src="${A}${s}" class="w-full h-full object-cover lazy" alt="${P.name}">
           </button>`).join('')}
       </div>
-      ${pdpCollectionBadges(5)}
+      <div class="absolute top-3 left-0 flex flex-col items-start gap-1.5">
+        <span class="t-single badge-label px-2 py-1 font-medium tracking-[0.004em] text-foreground">New Season</span>
+      </div>
       <!-- Slick dash: 24x4 #0a0a0a r2 · 16x4 #d4d4d4 r2 · gap 2 · bottom 8 -->
       <div id="pdpDots" class="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
         ${gallery.map((_, i) => `<span class="h-1 rounded-xs transition-all duration-300 ${i===0 ? 'w-6 bg-foreground' : 'w-4 bg-border-3'}"></span>`).join('')}
@@ -17154,7 +17163,7 @@ function renderPlpGrid(root) {
   /* Badge thẻ đầu: đọc từ DATA (`p.preorder`) chứ không phải "thẻ số 0 thì New"
      — SP#1 là hàng pre-order, để "New" ở PLP thì bấm vào PDP lại thấy
      "Pre-order", 2 nơi nói 2 chuyện (yêu cầu user 17/08/2026). */
-  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: pcCollectionBadges(i) });
+  const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null });
   const list = sortedProducts();
   grid.innerHTML = plpGridInner(list, card);
   if (list.length) wireProductCards(grid);
@@ -21399,7 +21408,7 @@ function wire(root) {
          bản trước chỉ truyền {w:'reveal'} nên SP#4 xuất hiện lần 2 mất nhãn
          New Season/La Vacanza — cùng một SP hai kiểu thẻ trên một lưới. */
       more.forEach(({ p, i }) => {
-        grid.insertAdjacentHTML('beforeend', productCard(p, i, { w: 'reveal', badge: p.preorder ? 'Pre-order' : '', pillBadges: pcCollectionBadges(i) }));
+        grid.insertAdjacentHTML('beforeend', productCard(p, i, { w: 'reveal', badge: p.preorder ? 'Pre-order' : '', pillBadges: i === 3 ? ['New Season', 'La Vacanza'] : null }));
       });
       sm.innerHTML = 'Xem thêm';
       localizeNew(sm);
