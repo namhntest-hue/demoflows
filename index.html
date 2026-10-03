@@ -354,7 +354,7 @@ window.RESP = (function () {
     background: var(--general-background);
     border: 1px solid var(--general-border);
     box-shadow: 0 2px 12px rgba(0,0,0,.10);
-    transition: box-shadow .2s ease;
+    transition: box-shadow .2s ease, bottom .24s ease;
   }
   #settingsFab svg { width: 24px; height: 24px; }
 
@@ -392,11 +392,22 @@ window.RESP = (function () {
     border: 1px solid var(--general-border);
     box-shadow: 0 2px 12px rgba(0,0,0,.10);
     opacity: 0; transform: translateY(8px); pointer-events: none;
-    transition: opacity .22s ease, transform .22s ease;
+    transition: opacity .22s ease, transform .22s ease, bottom .24s ease;
   }
   #topFab.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
   #topFab svg { width: 20px; height: 20px; }
   html.sp-open #topFab { opacity: 0; pointer-events: none; }
+  /* 02/10/2026 — THANH DÍNH ĐÁY CỦA CHECKOUT (#ckStickyCta: câu đồng ý + nút Đặt hàng, cao ~160) cao gấp đôi thanh dính của giỏ
+     (~72) mà hai FAB neo cố định ở 96 / 144 tính theo thanh giỏ — để nguyên thì FAB đè lên câu đồng ý. Khi thanh hiện, JS gắn
+     html.ck-sticky + --ck-sticky-h (chiều cao thật của thanh, gồm safe-area) và FAB / popover Cài đặt dời lên đúng khoảng đó,
+     giữ nguyên khoảng cách giữa chúng (48) và trần cao của popover. Thanh ẩn thì quay về 96 / 144 như cũ (có transition bottom). */
+  /* Nền thanh: khác giỏ ở chỗ ĐẶC (nền trang) cả thân, chỉ 24px trên cùng (= pt-6) mờ dần. Giỏ dùng gradient trắng 95% suốt chiều cao
+     vì trên đó chỉ có MỘT nút; ở đây có 3 dòng chữ mờ đứng trên nút — để nền trong thì chữ đè lên thẻ phương thức / hàng tiền phía sau
+     (đã thấy ở bản đầu), đọc không ra. */
+  #ckStickyCta { background-image: linear-gradient(to top, var(--general-background) 0, var(--general-background) calc(100% - 24px), transparent 100%); }
+  html.ck-sticky #settingsFab { bottom: calc(var(--ck-sticky-h, 0px) + 12px); }
+  html.ck-sticky #topFab { bottom: calc(var(--ck-sticky-h, 0px) + 60px); }
+  html.ck-sticky #settingsPanel .sp-card { bottom: calc(var(--ck-sticky-h, 0px) + 60px); max-height: calc(100vh - var(--ck-sticky-h, 0px) - 76px); }
 
   /* ── Shimmer lazy-load (versace images-shimmer) ── */
   .shimmer { position: relative; overflow: hidden; }
@@ -489,6 +500,11 @@ window.RESP = (function () {
   }
   #instSheet.open .ins-panel { transform: translateY(0); }
   #instSheet .ins-banks { grid-template-columns: repeat(3, 1fr); }
+  /* 02/10/2026 (lệnh user: "block Phí không được hoàn lại nền màu vàng nhạt") — khối lưu ý phí cuối
+     popup từ nền xám `--general-secondary` sang VÀNG NHẠT `--general-warning-subtle` (#fffbeb, amber 50 —
+     cùng token nền của nhãn "Chờ thanh toán" ở đơn hàng; khai ở tokens.css nên dùng được ở mọi bộ da).
+     Chữ giữ `text-muted-foreground` #727272: trên #fffbeb vẫn 4,6:1 (đạt AA 4,5). KHAI GIỐNG desktop.html. */
+  #instSheet .ins-fee { background: var(--general-warning-subtle); }
 
   /* ── Cookie consent gate ──
      Cùng khuôn bottom-sheet với #infoSheet (bo 24 góc trên, trượt .4s) nhưng
@@ -734,6 +750,20 @@ window.RESP = (function () {
   .ck-ship-row > .ck-ship-name { flex: 1 1 auto; min-width: 0; }
   .ck-ship-row > .ck-ship-fee  { flex: 0 0 auto; }
   .ck-ship-row > span { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--general-foreground); }
+  /* 02/10/2026 (lệnh user: "bổ sung dòng … bên dưới nút đặt hàng") — câu đồng ý điều khoản dưới nút Đặt hàng.
+     "ĐẶT HÀNG" hoa đúng như user gõ và đúng như nhãn nút; chữ gõ trong mã vẫn là "Đặt hàng" (cũng là khoá i18n của
+     nút) nên hoa bằng class có tên này, KHÔNG gõ hoa vào chuỗi. Ngoại lệ chữ hoa có chủ đích: câu nhắc lại nhãn
+     của một NÚT hành động (luật chữ hoa chỉ ở nút). Khai giống desktop.html. */
+  .ck-terms-cta { text-transform: uppercase; }
+  /* Câu đồng ý xuống 2–3 dòng ở khổ mobile: `pretty` để dòng cuối không mồ côi một chữ ("tôi."). Trình duyệt chưa hỗ trợ thì
+     bỏ qua, câu vẫn xuống dòng bình thường. */
+  .ck-terms { text-wrap: pretty; }
+  /* 02/10/2026 (lệnh user: "bổ sung (đã bao gồm VAT)") — hàng Tổng cộng của tóm tắt checkout: nhãn + ghi chú VAT cạnh
+     nhau (khe 4), baseline thẳng hàng vì hai cỡ chữ khác nhau (14 và 12). Khổ hẹp quá thì ghi chú rớt xuống dưới nhãn
+     cả cụm chứ không tự gãy giữa chữ (nowrap). Weight 400 khai THẲNG ở .ck-vat: nhãn Tổng cộng đậm 500 qua hook
+     skin-mt của .ck-total, ghi chú phải mảnh hơn. Khai giống desktop.html. */
+  .ck-total-l { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 4px; min-width: 0; }
+  .ck-vat { font-weight: 400; color: var(--general-muted-foreground); white-space: nowrap; }
 
   .ck-step-no {
     flex: 0 0 32px; height: 32px; border-radius: 999px;
@@ -771,7 +801,8 @@ window.RESP = (function () {
      vì .opt còn dùng ở giỏ hàng (thẻ quà, thẻ địa chỉ) — mấy chỗ đó bản vẽ chốt nền
      trắng cả 2 trạng thái, không kéo theo. */
   [data-screen="checkout"] .opt.on { background: var(--general-secondary); }
-  /* Thẻ KHÔNG bấm được (COD khi đơn quá 20 triệu) đổi sang MẶT TRẮNG. Trước
+  /* Thẻ KHÔNG bấm được (trước 02/10/2026 là COD khi đơn quá 20 triệu; nay COD ẩn hẳn nên
+     hiện chưa thẻ nào bị khoá — rule giữ cho tham số off của richRadio) đổi sang MẶT TRẮNG. Trước
      đây nó lấy nền xám từ rule .btn-o[disabled] — hợp lý khi thẻ đang chọn còn mặt
      trắng, nhưng từ lượt "nhấn màu" 19/09/2026 thì một mặt xám sẽ mang HAI nghĩa
      ngược nhau (đang chọn / không dùng được). Giữ opacity .5 sẵn có — mờ đã đủ nói
@@ -1661,7 +1692,10 @@ window.RESP = (function () {
      nên hai loại điều khiển nay giống hệt nhau, chỉ khác bòn tròn / bòn vuông.
      ⚠ ĐẢO HẲN ghi chú cũ theo Figma 3547:55856 ("vòng radio LUÔN viền 1px #d4d4d4 kể
      cả khi chọn, chỉ chấm giữa 8px hiện ra") — nay vừa đổi nền vừa đổi viền. */
-  .radio .radio-dot > svg { width: 10px; height: 10px; }
+  /* 02/10/2026 (lệnh user: "cái mũi tên check trong mấy cái radio đang khá bé") — dấu check trong radio ĐANG CHỌN 10 → 12px (hộp 12×12,
+     nét check ra 12 × 7,7 thay 10 × 6,4; vòng radio 16 trừ viền còn 14 nên 12 là cỡ lớn nhất còn chừa mép — 13 là mũi check chạm viền).
+     CHỈ radio: ô tick vuông .chk vẫn dùng cùng I.tick ở 10px (user chỉ nhắc radio). Bên Figma là component `radio-check`. Khai giống ở 2 file. */
+  .radio .radio-dot > svg { width: 12px; height: 12px; }
   .radio.on { background: var(--general-primary); border-color: var(--general-primary); }
   /* Thẻ rich-radio khi chọn: chỉ ĐỔI VIỀN sang #262626, KHÔNG tô nền
      (bản vẽ để nền trắng ở cả 2 trạng thái). */
@@ -2791,6 +2825,9 @@ window.RESP = (function () {
      lệ (b) đã ghi danh cho giá hàng giỏ ("giá không viết hoa được"). Cần ghi thành
      ngoại lệ có tên trong STYLE-RULES §1.1, CHƯA làm. */
   html.skin-mt [data-screen="checkout"] .ck-total > span { font-weight: 500; }
+  /* 02/10/2026 — nhãn Tổng cộng nay nằm trong cụm .ck-total-l (cùng ghi chú VAT): `font-medium` trên chính nhãn
+     bị quét về 400 (0,2,1) nên khai lại 500 cho nhãn (0,4,2); ghi chú VAT thì giữ 400 ở .ck-vat. */
+  html.skin-mt [data-screen="checkout"] .ck-total-l > span:first-child { font-weight: 500; }
   /* 20/09/2026 — tên lựa chọn trong thẻ ưu đãi DAFC: 14/20 đậm 500 CHỮ THƯỜNG,
      đúng style t-label-lead của thiết kế. Cùng dạng ngoại lệ có tên như .ck-total
      ngay trên (bộ da quét mọi utility độ đậm về 400).
@@ -9030,7 +9067,7 @@ const ORDERS = [
       { img: 'p8-0.jpg', name: 'Túi da Lou mini', variant: 'Onesize · Black', qty: 2, price: '45.066.000 ₫', sku: '190348' },
     ],
     sub: '90.132.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '90.132.000 ₫',
-    payment: 'Thanh toán qua cổng Payoo', method: 'Giao hàng thông thường',
+    payment: 'Thanh toán qua cổng Payoo', method: 'Giao hàng tiêu chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 1, log: ['27/09/2026 15:26'],
   },
@@ -9040,7 +9077,7 @@ const ORDERS = [
       { img: 'p3-0.jpg', name: 'Túi đeo vai da Emblème', variant: 'Onesize · Verde Menta', qty: 1, price: '50.957.000 ₫', sku: '190215' },
     ],
     sub: '50.957.000 ₫', ship: 'Miễn phí', discount: '0 ₫', pointsUsed: 500, total: '50.457.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng thông thường',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 2, log: ['20/09/2026 10:22', '20/09/2026 11:39'],
   },
@@ -9050,7 +9087,7 @@ const ORDERS = [
       { img: 'p1-0.jpg', name: 'Đầm lụa mini Broken Jewels', variant: '38 · Broken Jewels', qty: 1, price: '72.557.000 ₫', preorder: PRODUCTS[0].preorder, sku: '190101' },
     ],
     sub: '72.557.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '72.557.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng thông thường',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 2, log: ['05/09/2026 10:22', '05/09/2026 10:41'],
   },
@@ -9060,7 +9097,7 @@ const ORDERS = [
       { img: 'p2-0.jpg', name: 'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant: 'Onesize', qty: 1, price: '15.611.000 ₫', sku: '190162' },
     ],
     sub: '15.611.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '15.611.000 ₫',
-    payment: 'Chuyển khoản / QR code', method: 'Giao hàng thông thường',
+    payment: 'Chuyển khoản / QR code', method: 'Giao hàng tiêu chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 3, log: ['28/08/2026 20:05', '28/08/2026 20:40', '30/08/2026 14:12'],
     ships: { std: { awb: 'TKN284951', eta: '04/09/2026' } },
@@ -9071,7 +9108,7 @@ const ORDERS = [
       { img: 'p1-0.jpg', name: 'Đầm lụa mini Broken Jewels', variant: '38 · Broken Jewels', qty: 1, price: '72.557.000 ₫', preorder: PRODUCTS[0].preorder, sku: '190101' },
     ],
     sub: '72.557.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '72.557.000 ₫',
-    payment: 'Chuyển khoản / QR code', method: 'Giao hàng thông thường',
+    payment: 'Chuyển khoản / QR code', method: 'Giao hàng tiêu chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 2, log: ['28/08/2026 20:05', '28/08/2026 20:40'],
   },
@@ -9090,7 +9127,7 @@ const ORDERS = [
       { pk: 'tier150', key: 'scarf' },
     ],
     sub: '95.925.000 ₫', ship: '25.000 ₫', discount: '0 ₫', total: '95.950.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng nhanh',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng hỏa tốc',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 3, log: ['06/09/2026 15:26', '06/09/2026 15:58', '07/09/2026 17:21'],
     ships: { fast: { awb: 'TKN284960', done: '08/09/2026' }, std: { awb: 'TKN284972', eta: '12/09/2026' } },
@@ -9105,7 +9142,7 @@ const ORDERS = [
       { pk: 'dressBundle', key: 'edt' },
     ],
     sub: '72.557.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '72.557.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng thông thường',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 2, log: ['06/09/2026 15:26', '06/09/2026 15:58'],
     vat: { type: 'company', company: 'Công ty TNHH Thời Trang ABC', address: '25 Nguyễn Huệ, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh', tax: '0312345678', email: 'ketoan@abcfashion.vn' },
@@ -9117,7 +9154,7 @@ const ORDERS = [
       { img: 'p10-0.jpg', name: 'Thắt lưng da mặt khóa tròn 3.5 cm', variant: '95 · Black', qty: 1, price: '17.575.000 ₫', sku: '190530' },
     ],
     sub: '52.823.000 ₫', ship: 'Miễn phí', discount: '− 2.113.000 ₫', total: '50.710.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng thông thường',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 3, log: ['02/08/2026 10:22', '02/08/2026 11:38', '03/08/2026 17:21'],
     ships: { std: { awb: 'TKN284917', eta: '12/08/2026' } },
@@ -9127,7 +9164,7 @@ const ORDERS = [
     id: 'DAFC102801', status: 'Hoàn tất', tone: 'muted', date: '10/07/2026',
     items: [ { img: 'p8-0.jpg', name: 'Túi da Lou mini', variant: 'Onesize · Black', qty: 1, price: '45.066.000 ₫', sku: '190348' } ],
     sub: '45.066.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '45.066.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng nhanh',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng hỏa tốc',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh' },
     steps: 4, log: ['10/07/2026 09:02', '10/07/2026 09:40', '11/07/2026 08:15', '12/07/2026 17:55'],
     ships: { std: { awb: 'TKN284790' } },
@@ -9137,7 +9174,7 @@ const ORDERS = [
     id: 'DAFC102720', status: 'Đã huỷ', tone: 'cancel', date: '01/07/2026',
     items: [ { img: 'p6-0.jpg', name: 'Giày thể thao da lộn Greca Court', variant: '41 · Bianco', qty: 1, price: '27.393.000 ₫', sku: '190309' } ],
     sub: '27.393.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '27.393.000 ₫',
-    payment: 'Thanh toán qua cổng Payoo', method: 'Giao hàng thông thường',
+    payment: 'Thanh toán qua cổng Payoo', method: 'Giao hàng tiêu chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 1, log: ['01/07/2026 14:03'], cancelAt: '01/07/2026 14:33', cancelWhy: 'expired',
   },
@@ -9146,7 +9183,7 @@ const ORDERS = [
     id: 'DAFC102580', status: 'Đã huỷ', tone: 'cancel', date: '28/06/2026',
     items: [ { img: 'p10-0.jpg', name: 'Thắt lưng da mặt khóa tròn 3.5 cm', variant: '95 · Black', qty: 1, price: '17.575.000 ₫', sku: '190530' } ],
     sub: '17.575.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '17.575.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng thông thường',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 2, log: ['28/06/2026 10:12', '28/06/2026 10:13'], cancelAt: '29/06/2026 09:45', cancelWhy: 'dafc', cancelReason: 'Sản phẩm đã hết hàng',
   },
@@ -9154,7 +9191,7 @@ const ORDERS = [
     id: 'DAFC102455', status: 'Hoàn tất', tone: 'muted', date: '22/06/2026',
     items: [ { img: 'p2-0.jpg', name: 'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant: 'Onesize', qty: 1, price: '15.611.000 ₫', sku: '190162' } ],
     sub: '15.611.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '15.611.000 ₫',
-    payment: 'Ví MoMo', method: 'Giao hàng thông thường',
+    payment: 'Ví MoMo', method: 'Giao hàng tiêu chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 4, log: ['22/06/2026 21:14', '22/06/2026 21:30', '23/06/2026 10:05', '25/06/2026 16:48'],
     ships: { std: { awb: 'TKN284655' } },
@@ -13429,7 +13466,19 @@ function screenLOGIN() {
    section kế tiếp tự mở. Không chuyển trang.
 ════════════════════════════════════════════════════════════════ */
 
-const ETA = 'Thời gian nhận hàng dự kiến từ ngày 14/07 đến ngày 18/07';
+/* 02/10/2026 (lệnh user: "phần Phương thức giao hàng sửa nội dung subtext lại là…") — hai phương thức
+   vận chuyển có TÊN và DÒNG DỰ KIẾN RIÊNG; trước đây cả hai dùng chung một chuỗi ETA ("Thời gian nhận hàng
+   dự kiến từ ngày 14/07 đến ngày 18/07") và mang tên "Giao hàng thông thường" / "Giao hàng nhanh". Tên mới
+   theo đúng chữ của user: "Giao hàng tiêu chuẩn" / "Giao hàng hỏa tốc". DỮ LIỆU DEMO: ngày cố định, không
+   tính theo ngày hôm nay. Tên đi vào 4 chỗ — thẻ chọn, tóm tắt bước đã xong, bản ghi đơn (placeOrder) và các
+   đơn mẫu trong ORDERS — nên đổi tên là đổi cả 4. KHAI GIỐNG desktop.html. */
+const SHIP_NAME_STD = 'Giao hàng tiêu chuẩn', SHIP_NAME_FAST = 'Giao hàng hỏa tốc';
+const SHIP_ETA_STD = 'Dự kiến giao hàng từ 14/07 - 18/07', SHIP_ETA_FAST = 'Dự kiến giao hàng trước 18:00 ngày 14/07';
+/* 02/10/2026 (lệnh user: "sửa luôn ngày dự kiến ở màn hoàn tất") — GIÁ TRỊ của dòng "Dự kiến giao" (và "Sẵn sàng nhận" ở luồng nhận
+   tại cửa hàng) trên màn Hoàn tất, CÙNG mốc ngày với hai SHIP_ETA_* ở trên. Trước đây màn Hoàn tất cứng "12 – 16/08" / "Từ 12/08" —
+   lệch hẳn 14/07 – 18/07 mà checkout vừa hứa. Giao hàng thì theo ĐÚNG phương thức của đơn vừa đặt (tiêu chuẩn: khoảng ngày; hỏa
+   tốc: trước 18:00 ngày đầu). Nhận tại cửa hàng lấy mốc đầu của khoảng giao. Đổi ngày demo = sửa hai SHIP_ETA_* ở trên VÀ ba hằng này (5 chuỗi). KHAI GIỐNG desktop.html. */
+const SHIP_DONE_STD = '14/07 - 18/07', SHIP_DONE_FAST = 'Trước 18:00 ngày 14/07', PICKUP_READY = 'Từ 14/07';
 
 /* Rich radio: label + mô tả phụ */
 /* Figma "Rich Radio Group": thẻ p12 r2 viền 1px — #e5e5e5 thường, #262626 khi
@@ -14131,8 +14180,8 @@ function screenCHECKOUT() {
       <!-- 20/09/2026 (lệnh user): ghi chú pre-order đứng TRÊN hai thẻ chọn — nó là điều
            kiện đọc TRƯỚC khi chọn, để dưới là đọc được sau khi đã chọn xong. -->
       ${preNoteBox}
-      ${richRadio('std', 'Giao hàng thông thường', ETA, true,  null, '', 'Miễn phí')}
-      ${richRadio('fast','Giao hàng nhanh',           ETA, false, null, '', vndCom(SHIP_FAST_FEE))}
+      ${richRadio('std',  SHIP_NAME_STD,  SHIP_ETA_STD,  true,  null, '', 'Miễn phí')}
+      ${richRadio('fast', SHIP_NAME_FAST, SHIP_ETA_FAST, false, null, '', vndCom(SHIP_FAST_FEE))}
     </div>
     ${noteField}
     <div class="px-4 py-5">
@@ -14143,8 +14192,10 @@ function screenCHECKOUT() {
       <div class="border border-border-1 rounded-xs p-3 flex flex-col gap-2">
         <!-- 24/09/2026 — tach ten / gia y nhu the chon o tren (khung Figma 550:26287
              ve o day cung la mot hang hai o). Hai id rieng de handler cap nhat tung o. -->
-        <span class="ck-ship-row"><span id="shipDoneLabel" class="ck-ship-name">Giao hàng thông thường</span><span id="shipDoneFee" class="ck-ship-fee">Miễn phí</span></span>
-        <p class="t-multiline text-foreground">${ETA}</p>
+        <span class="ck-ship-row"><span id="shipDoneLabel" class="ck-ship-name">${SHIP_NAME_STD}</span><span id="shipDoneFee" class="ck-ship-fee">Miễn phí</span></span>
+        <!-- 02/10/2026 — id mới: dòng dự kiến nay ĐỔI THEO phương thức (tiêu chuẩn / hỏa tốc có hai câu khác nhau),
+             handler chọn phương thức ghi lại textContent của nó cùng với tên và phí. -->
+        <p id="shipDoneEta" class="t-multiline text-foreground">${SHIP_ETA_STD}</p>
         ${preNote}
       </div>
     </div>`;
@@ -14152,13 +14203,14 @@ function screenCHECKOUT() {
   /* ── Section 2: Thanh toán ── */
   /* [id, nhãn, đang chọn, [file logo, bề rộng px, alt]] — logo lấy từ assets,
      bề rộng theo Figma 3028:47246 (76 cho cặp Visa+Mastercard, 38 cho logo đơn) */
-  /* COD thêm 11/09/2026 (user chốt: BÀY RA nhưng KHOÁ với đơn lớn). Hàng xa xỉ
-     giá trăm triệu thì không sàn nào cho trả khi nhận; để trống mục này thì người
-     mua tưởng sàn quên, bày ra kèm lý do thì họ hiểu ngay. Mốc đọc từ COD_MAX —
-     một chỗ khai, chỗ nào cần cũng lấy đúng con số đó. */
-  const codOff = cartSubtotal() > COD_MAX
-    ? `Không áp dụng cho đơn trên ${COD_MAX.toLocaleString('en-US')}đ`
-    : '';
+  /* COD thêm 11/09/2026 (user chốt khi đó: BÀY RA nhưng KHOÁ với đơn lớn, kèm dòng lý do).
+     ĐẢO 02/10/2026 (lệnh user: "cái COD cho active đi nhé, khi nào k sử dụng được thì nó ẩn
+     luôn"): COD là thẻ BÌNH THƯỜNG, bấm chọn được như bốn thẻ kia, và chỉ được VẼ khi dùng
+     được — đơn quá mốc thì thẻ không có mặt (hết thẻ mờ + dòng "Không áp dụng cho đơn
+     trên …"). Hàng xa xỉ giá trăm triệu thì không sàn nào cho trả khi nhận. Mốc đọc từ
+     COD_MAX — một chỗ khai, chỗ nào cần cũng lấy đúng con số đó. Điều kiện duy nhất hiện
+     có là trần tạm tính; chưa có luật theo hàng đặt trước (đặt cọc user để SAU). */
+  const codOk = cartSubtotal() <= COD_MAX;
   /* 02/10/2026 (lệnh user: "demo thêm CTKM dưới chỗ Thẻ tín dụng") — phần tử thứ 6 = DÒNG KHUYẾN MÃI của
      phương thức, in thành dòng phụ ngay dưới nhãn (tham số `promo` của richRadio). DỮ LIỆU DEMO: một
      chương trình ngân hàng giả định; dấu * là chữ của câu quảng cáo (điều kiện áp dụng), không phải
@@ -14168,7 +14220,7 @@ function screenCHECKOUT() {
     ['qr','Chuyển khoản / QR code', false, ['pay-3.png', 38, 'QR code']],
     ['atm','ATM', false, ['pay-4.png', 38, 'Napas']],
     ['inst','Thanh toán trả góp 0% qua thẻ tín dụng', false, ['pay-2.png', 38, 'Payoo']],
-    ['cod','Thanh toán khi nhận hàng', false, null, codOff],
+    ...(codOk ? [['cod','Thanh toán khi nhận hàng', false, null]] : []),
   ];
   const row = (l, v) => `
     <div class="h-9 flex items-center justify-between">
@@ -14207,6 +14259,11 @@ function screenCHECKOUT() {
         <p id="ckVatDone" class="t-multiline text-foreground">${vatLabel(vatMode)}</p>
       </div>
     </div>`;
+  /* 02/10/2026 — câu đồng ý điều khoản dưới dạng MỘT chuỗi dùng ở HAI chỗ: trong thân bước Thanh toán (#ckCta) và trên thanh dính đáy
+     màn (#ckStickyCta). "ĐẶT HÀNG" hoa đúng như user gõ và như nhãn nút: chữ gõ trong mã vẫn là "Đặt hàng" (cũng là khoá i18n của
+     nút), hoa nhờ class .ck-terms-cta. Hai cụm chính sách là liên kết gạch chân mở trang Điều khoản / Chính sách bảo mật (mực chính
+     trên câu chữ mờ — cùng khuôn dòng đồng ý ở màn Hoàn tất). pb-3 = khe 12 giữa câu và nút bên dưới. */
+  const termsP = `<p class="ck-terms t-multiline text-muted-foreground pb-3">Bằng cách bấm vào nút <span class="ck-terms-cta">Đặt hàng</span>, bạn đã đồng ý với <button type="button" data-nav="terms" class="text-foreground underline press">Điều khoản sử dụng</button> và <button type="button" data-nav="privacy" class="text-foreground underline press">Chính sách bảo mật</button> của chúng tôi.</p>`;
   const s2open = `
     <div id="payOpts" class="px-4 pb-2 flex flex-col gap-3">
       ${pays.map(([id, l, on, icon, off, promo]) => richRadio(id, l, '', on, icon, off, null, promo)).join('')}
@@ -14215,17 +14272,16 @@ function screenCHECKOUT() {
          khối tóm tắt tiền. Trước đây nút nằm cuối cùng nên phải cuộn qua hết bảng
          tiền mới bấm được; nay bấm ngay sau khi chọn xong phương thức, bảng tiền
          nằm dưới làm phần đọc lại.
+         ⚠ ĐÃ ĐẢO NGƯỢC LẠI 02/10/2026 (lệnh user: "ở màn check out của mobile swap lại vị trí của nút
+         đặt hàng và tổng tiền, cho nút đặt hàng xuống dưới cùng lại"): khối tiền LÊN TRÊN, nút "Đặt hàng"
+         (kèm câu đồng ý điều khoản ngay dưới nó) xuống CUỐI bước Thanh toán — cũng là cuối trang. Chỉ MOBILE:
+         ở desktop nút nằm cột trái, tiền nằm cột phải nên không có gì để đảo. Đệm: khối tiền pt-3 (cùng 8 đệm
+         đáy của #payOpts ra 20 đến hàng đầu), nút pt-2 sau hàng Tổng cộng (hàng cao 56, chữ cách đáy hàng 18).
          Hàng nhập mã ưu đãi ĐÃ GỠ ("vô tới check out thì không nhập mã ưu đãi được
          nữa") — mã chốt ở giỏ hàng, tới đây chỉ còn đọc con số; khoản đã giảm vẫn
          hiện ở dòng "Giảm giá". Hàm ckCodeRow() giữ trong file phòng khi bật lại,
          handler của nó đều có guard nên không gọi tới là tự im. -->
-    <div class="px-4 pt-4 pb-2">
-      <!-- 19/09/2026 (lệnh user: học kích thước nút theo trang tham chiếu) — 48 -> 56.
-           GIỮ chạy hết bề ngang: khổ 375 thì nút 280 đứng lẻ bên trái là lãng phí,
-           chỉ bản desktop mới bỏ w-full. -->
-      <button data-nav="done" class="t-multiline w-full h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center">Đặt hàng</button>
-    </div>
-    <div class="px-4 pb-4">
+    <div class="px-4 pt-3">
       ${row('Tạm tính', vndCom(cartSubtotal()))}
       ${cartDiscountTotal() > 0 ? row('Giảm giá', '-' + vndCom(cartDiscountTotal())) : ''}
       <!-- Dựng thẳng thay vì qua row(): cần id để paintCheckout vẽ lại sau khi
@@ -14235,9 +14291,21 @@ function screenCHECKOUT() {
         <span id="ckShipVal2" class="t-multiline ${ckMode === 'pickup' || ckShipChosen() ? 'text-foreground' : 'text-muted-foreground'}">${ckMode === 'pickup' ? 'Tại cửa hàng' : (ckShipChosen() ? (ckShipFee() > 0 ? vndCom(ckShipFee()) : 'Miễn phí') : 'Sẽ được tính sau')}</span>
       </div>
       <div class="ck-total h-14 flex items-center justify-between">
-        <span class="t-lead font-medium text-foreground">Tổng cộng</span>
+        <!-- 02/10/2026 (lệnh user: "trong cái tóm tắt đơn hàng ở check out bổ sung (đã bao gồm VAT)") — ghi chú VAT
+             12/16 mờ nằm CẠNH nhãn, khe 4; cùng khuôn "(Bao gồm VAT)" cạnh "Tổng thanh toán" ở Chi tiết đơn. -->
+        <span class="ck-total-l"><span class="t-lead font-medium text-foreground">Tổng cộng</span><span class="t-single ck-vat">(đã bao gồm VAT)</span></span>
         <span id="ckTotalVal" class="t-lead font-medium text-foreground">${vndCom(ckTotalNow())}</span>
       </div>
+    </div>
+    <!-- 02/10/2026 (lệnh user: "cho nội dung bằng việc bấm đặt hàng … lên trên nút đặt hàng") — câu đồng ý điều khoản nay nằm
+         TRÊN nút (trước: dưới nút). Id ckCta là mốc của thanh dính #ckStickyCta ở cuối màn: thanh dính CHỈ hiện khi khối này
+         ra khỏi khung nhìn, xem wire() — cùng cách #cartCta / #cartStickyCta ở giỏ. -->
+    <div id="ckCta" class="px-4 pt-2 pb-2">
+      ${termsP}
+      <!-- 19/09/2026 (lệnh user: học kích thước nút theo trang tham chiếu) — 48 -> 56.
+           GIỮ chạy hết bề ngang: khổ 375 thì nút 280 đứng lẻ bên trái là lãng phí,
+           chỉ bản desktop mới bỏ w-full (02/10/2026 desktop cũng đã về w-full). -->
+      <button data-nav="done" class="t-multiline w-full h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center">Đặt hàng</button>
     </div>`;
 
   return `
@@ -14378,8 +14446,23 @@ function screenCHECKOUT() {
       ${ckSection(3, 'Thanh toán', s2open, '')}`}
     </div>
     <!-- 19/09/2026 — đệm đáy 96 -> 24 trở lại: #ckBagBar đã lên trên cùng nên không
-         còn thanh cố định nào che nút "Đặt hàng" ở cuối bước Thanh toán. -->
+         còn thanh cố định nào che nút "Đặt hàng" ở cuối bước Thanh toán.
+         02/10/2026: thanh dính #ckStickyCta (bên dưới) chỉ hiện khi khối nút gốc #ckCta ra khỏi khung nhìn, và ẩn đi
+         khi tới nó, nên đệm 24 này vẫn đủ — không cần chừa chỗ cho thanh. -->
     <div class="h-6"></div>
+  </div>
+
+  <!-- 02/10/2026 (lệnh user: "ở bản mobile thì cho sticky nút đặt hàng đó tương tự ở cart, và đồng thời cho sticky luôn cái dòng
+       bằng việc đặt hàng … đó") — THANH DÍNH ĐÁY của checkout, cùng khuôn #cartStickyCta ở giỏ (fixed đáy, mờ dần ở mép trên,
+       safe-b, hiện / ẩn bằng opacity + translateY, pointer-events none khi ẩn; nền xem CSS #ckStickyCta). Khác giỏ ở 2 điểm: (1) có
+       thêm CÂU ĐỒNG Ý ĐIỀU KHOẢN nằm TRÊN nút, dính cùng nút (lệnh user) nên nền ĐẶC thay vì gradient trong suốt;
+       (2) chỉ hiện khi bước Thanh toán đang MỞ (ở các bước trước không có
+       nút Đặt hàng — xem ghi chú 14/08: nút chốt đơn chỉ có ở cuối luồng) VÀ khối nút gốc #ckCta đã ra khỏi khung nhìn. Nút gốc +
+       câu đồng ý trong thân bước vẫn ở đó cho lúc cuộn tới cuối. Nút ở đây cũng mang data-nav="done" nên đi chung handler / ckGuard /
+       startPayment (startPayment khoá CẢ HAI nút). Logic hiện / ẩn ở wire(), khối checkout. -->
+  <div id="ckStickyCta" class="sticky-el fixed inset-x-0 bottom-0 z-50 px-4 safe-b pt-6" style="opacity:0;transform:translateY(10px);pointer-events:none" inert>
+    ${termsP}
+    <button data-nav="done" class="t-multiline w-full h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center">Đặt hàng</button>
   </div>`;
 }
 
@@ -14445,6 +14528,13 @@ function paintCheckout(root) {
   });
   const totalEl = root.querySelector('#ckTotalVal');
   if (totalEl) totalEl.textContent = vndCom(ckTotalNow());
+  /* 02/10/2026 — đổi bước thì thanh dính đáy của checkout (#ckStickyCta) phải hiện / ẩn theo, mà đổi bước không bắn sự kiện cuộn
+     nào. Gọi lại lần nữa sau khi accordion trượt xong vì khối nút gốc #ckCta đang đổi chiều cao / vị trí. Hàm do wire() gắn
+     (chưa có ở lần paintCheckout đầu tiên — đúng, lúc đó wire() tự gọi sau 60ms). */
+  if (window.__ckStickyRefresh) {
+    window.__ckStickyRefresh();
+    setTimeout(() => window.__ckStickyRefresh && window.__ckStickyRefresh(), 420);
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -14467,9 +14557,15 @@ function screenDONE() {
   /* Email hiện trên màn hoàn tất: ưu tiên cái đã chốt lúc đặt, rồi tới ô đang
      gõ, rồi tới email tài khoản. Vào thẳng màn này để xem (demo) thì vẫn có chữ. */
   const doneEmail = ckOrderEmail || ckEmail || (ckAuth ? PROFILE.email : '');
+  /* 02/10/2026 — phương thức + phí giao đọc từ ĐƠN VỪA ĐẶT (đơn đầu, ORDERS đã unshift ở placeOrder) chứ không từ cờ ckShipFast: cờ đó
+     không được reset khi "Tiếp tục mua sắm". Chưa đặt gì (vào thẳng màn này để xem demo) thì rơi về cờ + "Miễn phí" như cũ. Trước lượt
+     này dòng "Vận chuyển" cứng "Miễn phí" nên đơn giao hỏa tốc (25.000đ) vẫn ghi miễn phí dù Tổng cộng đã cộng phí. */
+  const o0 = ORDERS.find(x => x.id === (ckOrderIds[0] || ckOrderId));
+  const fastShip = o0 ? o0.method === SHIP_NAME_FAST : ckShipFast;
+  const shipVal = o0 && o0.ship && o0.ship !== 'Miễn phí' ? vndCom(vndNum(o0.ship)) : 'Miễn phí';
   const rows = ckMode === 'pickup'
-    ? [['Mã đơn hàng', oidCell],['Tổng cộng', total],['Nhận tại', st ? st.name : 'Cửa hàng DAFC'],['Sẵn sàng nhận','Từ 12/08']]
-    : [['Mã đơn hàng', oidCell],['Tổng cộng', total],['Vận chuyển','Miễn phí'],['Dự kiến giao','12 – 16/08']];
+    ? [['Mã đơn hàng', oidCell],['Tổng cộng', total],['Nhận tại', st ? st.name : 'Cửa hàng DAFC'],['Sẵn sàng nhận', PICKUP_READY]]
+    : [['Mã đơn hàng', oidCell],['Tổng cộng', total],['Vận chuyển', shipVal],['Dự kiến giao', fastShip ? SHIP_DONE_FAST : SHIP_DONE_STD]];
   if (pre) rows.push(['Hàng pre-order', `Nhận dự kiến ${pre}`]);
   return `
   <div class="w-full relative" data-scroller>
@@ -17540,8 +17636,11 @@ const I18N = {
   'Phương thức vận chuyển':'Shipping method', 'Phương thức thanh toán':'Payment method',
   'Phương thức giao hàng':'Delivery method',
   'Giao hàng thông thường - Miễn Phí':'Standard delivery — Free', 'Giao hàng nhanh - 25,000đ':'Express delivery — 25,000đ',
-  'Giao hàng thông thường':'Standard delivery', 'Thay đổi':'Change',
-  'Giao hàng nhanh':'Express delivery', 'Sẽ được tính sau':'Calculated later', 'Xem tất cả địa chỉ':'View all addresses', 'Sổ địa chỉ':'Address book', 'Thẻ tín dụng/Ghi nợ':'Credit / debit card',
+  /* 02/10/2026 — tên phương thức vận chuyển đổi: "Giao hàng thông thường" / "Giao hàng nhanh" → "Giao hàng tiêu chuẩn"
+     (khoá đã có ở trang Chính sách vận chuyển) / "Giao hàng hỏa tốc" (khoá mới, viết hoa chữ đầu mỗi từ như khoá
+     "Giao hàng hỏa tốc trong ngày" — EN theo site chính thức). Hai khoá cũ gỡ vì không còn chỗ dùng. */
+  'Thay đổi':'Change', 'Giao hàng hỏa tốc':'Express Delivery',
+  'Sẽ được tính sau':'Calculated later', 'Xem tất cả địa chỉ':'View all addresses', 'Sổ địa chỉ':'Address book', 'Thẻ tín dụng/Ghi nợ':'Credit / debit card',
   'Chuyển khoản / QR code':'Bank transfer / QR code', 'Thẻ tín dụng · **** 4829':'Credit card · **** 4829', 'Thẻ tín dụng':'Credit card',
   /* 02/10/2026 — dòng CTKM DEMO dưới "Thẻ tín dụng/Ghi nợ" ở bước Thanh toán; dấu * là của câu quảng cáo. */
   'Giảm 5% tối đa 2.000.000 với VISA Techcombank*':'5% off, up to 2,000,000 with VISA Techcombank*',
@@ -17557,7 +17656,21 @@ const I18N = {
   'Họ':'Last name', 'Tên':'First name', 'Nhập họ':'Enter last name', 'Nhập tên':'Enter first name',
   'Số nhà, tên đường':'House number, street',
   'Chọn tỉnh / thành phố':'Select province / city', 'Chọn phường / xã':'Select ward',
-  'Lưu địa chỉ':'Save address', 'Thời gian nhận hàng dự kiến từ ngày 14/07 đến ngày 18/07':'Estimated delivery between 14/07 and 18/07',
+  'Lưu địa chỉ':'Save address',
+  /* 02/10/2026 — hai dòng dự kiến giao hàng RIÊNG cho từng phương thức (thay chuỗi chung "Thời gian nhận hàng dự kiến
+     từ ngày 14/07 đến ngày 18/07"). */
+  'Dự kiến giao hàng từ 14/07 - 18/07':'Estimated delivery from 14/07 - 18/07',
+  'Dự kiến giao hàng trước 18:00 ngày 14/07':'Estimated delivery before 18:00 on 14/07',
+  /* 02/10/2026 — dòng đồng ý điều khoản dưới nút Đặt hàng + ghi chú VAT cạnh "Tổng cộng". Câu đồng ý tách thành
+     các mảnh chữ để hai cụm "Điều khoản sử dụng" / "Chính sách bảo mật" vẫn là liên kết; mảnh nào cũng giữ khoảng
+     trắng đầu/cuối GIỐNG bản Việt (applyLang giữ nguyên khoảng trắng của nút chữ), nên bản EN viết là
+     "By clicking CHECKOUT, you agree to the … of DAFC." thay vì "…button…" — chữ "button" sẽ cần một dấu cách
+     không có ở bản Việt (sau nhãn nút là dấu phẩy liền). */
+  'Bằng cách bấm vào nút':'By clicking', ', bạn đã đồng ý với':', you agree to the', 'của chúng tôi.':'of DAFC.',
+  /* EN của ghi chú VAT ở checkout KHÁC chữ với '(Bao gồm VAT)':'(VAT included)' của Chi tiết đơn — hai khoá cùng một giá trị EN thì
+     bảng dịch ngược (I18N_REV, khoá cuối thắng) trả CẢ HAI về một chuỗi Việt: đã đo, đổi EN→VI làm ghi chú ở checkout
+     thành '(Bao gồm VAT)'. */
+  '(đã bao gồm VAT)':'(incl. VAT)',
   'Đăng nhập và hoàn tất đơn hàng để nhận ngay':'Sign in and complete this purchase to earn up to',
   'Đặt hàng thành công':'Order placed',
   'Hoàn tất đơn hàng để nhận ngay':'Complete this purchase to earn up to',
@@ -17890,7 +18003,8 @@ const I18N = {
   'Chưa chọn cửa hàng':'No store selected',
   'Đơn hàng được giữ tại cửa hàng trong 3 ngày kể từ khi có thông báo sẵn sàng nhận.':'We hold your order at the store for 3 days from the ready-for-pickup notice.',
   'Nhận hàng':'Collection', 'Tại cửa hàng':'In store',
-  'Nhận tại':'Pick up at', 'Sẵn sàng nhận':'Ready from', 'Từ 12/08':'From 12/08',
+  /* 02/10/2026 — màn Hoàn tất theo mốc ngày của checkout: "Từ 12/08" → "Từ 14/07" (nhận tại cửa hàng); thêm giá trị hỏa tốc. Khoảng ngày tiêu chuẩn "14/07 - 18/07" chỉ có số nên không cần khoá. */
+  'Nhận tại':'Pick up at', 'Sẵn sàng nhận':'Ready from', 'Từ 14/07':'From 14/07', 'Trước 18:00 ngày 14/07':'Before 18:00 on 14/07',
   'Hàng pre-order':'Pre-order items',
   'Cửa hàng DAFC':'DAFC store',
 
@@ -19034,8 +19148,6 @@ const I18N_RE = [
      in số vào khoá tĩnh là đổi số một cái chết dịch. */
   [/^Đơn vừa đặt sẽ được gắn vào tài khoản, và bạn nhận ([\d.,]+) điểm thưởng\.$/,
    'The order you just placed will be linked to your account, and you earn $1 points.'],
-  /* 24/09/2026 — dòng trần COD ở checkout: số lấy từ COD_MAX nên phải đi bằng luật. */
-  [/^Không áp dụng cho đơn trên ([\d,]+)đ$/, 'Not available on orders over $1đ'],
   /* 30/09/2026 — dot ra soat i18n: cac chuoi CO SO / CO TEN RIENG nen phai di bang luat. */
   [/^Chỉ còn (\d+) sản phẩm$/,        'Just $1 left'],
   [/^([\d.,]+) điểm$/,                '$1 points'],
@@ -19105,8 +19217,6 @@ const I18N_REV_RE = [
   /* 24/09/2026 — chiều ngược của luật cùng tên bên I18N_RE. */
   [/^The order you just placed will be linked to your account, and you earn ([\d.,]+) points\.$/,
    'Đơn vừa đặt sẽ được gắn vào tài khoản, và bạn nhận $1 điểm thưởng.'],
-  /* 24/09/2026 — chiều ngược của luật trần COD bên I18N_RE. */
-  [/^Not available on orders over ([\d,]+)đ$/, 'Không áp dụng cho đơn trên $1đ'],
   /* 30/09/2026 — chieu nguoc cua 8 luat cung ten ben I18N_RE. */
   [/^Just (\d+) left$/,               'Chỉ còn $1 sản phẩm'],
   [/^([\d.,]+) points$/,              '$1 điểm'],
@@ -19724,8 +19834,8 @@ function startPayment(btn) {
   });
   ckOrderEmail = ckEmail || (ckAuth ? PROFILE.email : '');
   setTimeout(() => {
-    /* COD không đi qua cổng: đơn ra ngay ở "Đang xử lý", tiền thu lúc giao. */
-    if (method === 'cod') { placeOrder(); go('done'); return; }
+    /* COD không đi qua cổng: đơn ra ngay ở "Đang xử lý", tiền thu lúc giao. 02/10/2026: đơn ghi đúng phương thức "Thanh toán khi nhận hàng" (trước đây mọi đơn mới ghi cứng thẻ tín dụng, nên đơn COD ra chi tiết đơn lại hiện "Thẻ tín dụng/Ghi nợ"). */
+    if (method === 'cod') { placeOrder(false, 'Thanh toán khi nhận hàng'); go('done'); return; }
     /* Thanh toán online: đơn ra NGAY ở "Chờ thanh toán" rồi mới sang cổng (khách chốt 01/10/2026) — bỏ ngang / thất bại / hết phiên thì đơn vẫn nằm đó chờ "Thanh toán lại". */
     placeOrder(true);
     payEnter(ckOrderIds, 'checkout');
@@ -19755,11 +19865,11 @@ function ckPlacedUnpaid() {
   return ckOrderIds.some(id => { const o = ORDERS.find(x => x.id === id); return !!o && o.tone === 'pay'; });
 }
 
-/* Chốt đơn từ giỏ. `unpaid` = true: thanh toán online, đơn ra ở "Chờ thanh toán" (chặng 1) và còn phải qua cổng (startPayment → payEnter); mặc định (COD) ra thẳng "Đang xử lý" (chặng 2).
+/* Chốt đơn từ giỏ. `unpaid` = true: thanh toán online, đơn ra ở "Chờ thanh toán" (chặng 1) và còn phải qua cổng (startPayment → payEnter); mặc định (COD) ra thẳng "Đang xử lý" (chặng 2). `payName` (THÊM 02/10/2026, tuỳ chọn) = tên phương thức ghi vào đơn: COD truyền "Thanh toán khi nhận hàng", bỏ trống thì vẫn ghi "Thẻ tín dụng/Ghi nợ" như trước.
    01/10/2026 — KHÁCH CHỐT: giỏ có CẢ hàng có sẵn lẫn hàng đặt trước thì hệ thống TỰ TÁCH thành hai ĐƠN CON, một lần thanh toán: "<mã>-01" hàng có sẵn (nhận phí giao nhanh nếu chọn giao nhanh, quà kèm hàng có sẵn
    + quà theo mốc đơn / thương hiệu) và "<mã>-02" hàng đặt trước (giao thường miễn phí, quà kèm hàng đặt trước). Ưu đãi (điểm + giảm giá) chia theo tỉ lệ tạm tính (điểm chia theo điểm nguyên), phần dư dồn về đơn -02, nên tổng hai đơn con
    luôn bằng tổng giỏ. Giỏ chỉ có một loại hàng thì ra MỘT đơn, mã không hậu tố. Mã gốc ở ckOrderId (màn cổng thanh toán dùng làm "nội dung"), các mã đơn con ở ckOrderIds. */
-function placeOrder(unpaid) {
+function placeOrder(unpaid, payName) {
   ckPlaced = true;
   const baseId = 'DAFC1029' + (39 + ORDERS.length - 3);
   /* Chốt tổng NGAY lúc này: ngay dưới đây giỏ bị dọn rỗng nên cartSubtotal()
@@ -19816,8 +19926,8 @@ function placeOrder(unpaid) {
       gifts: ckOrderGifts.filter(({ pk }) => !split || preGifts.has(pk) !== first).map(({ pk, key }) => ({ pk, key })),
       sub: vndDot(subs[i]), ship: first ? orderShip : (pickup ? 'Nhận tại cửa hàng' : 'Miễn phí'),
       discount: rest[i] ? '− ' + vndDot(rest[i]) : '', pointsUsed: pts[i] / REWARD_POINT_VALUE, total: vndDot(subs[i] - dsc + fee),
-      payment: 'Thẻ tín dụng/Ghi nợ',
-      method: pickup ? 'Nhận tại cửa hàng' : (first ? (ckShipFast ? 'Giao hàng nhanh' : 'Giao hàng thông thường') : 'Giao hàng thông thường'),
+      payment: payName || 'Thẻ tín dụng/Ghi nợ',
+      method: pickup ? 'Nhận tại cửa hàng' : (first ? (ckShipFast ? SHIP_NAME_FAST : SHIP_NAME_STD) : SHIP_NAME_STD),
       address: { ...addr },
       steps: unpaid ? 1 : 2, log: unpaid ? [stamp] : [stamp, vnStamp(2)],
       /* 01/10/2026 — VAT khách chọn ở checkout đi THEO ĐƠN (null = không xuất): màn Chi tiết đơn có mục "Thông tin VAT". */
@@ -19905,10 +20015,14 @@ function wireAddressPickers(root) {
       }
       if (!ckProvince) { toast('Chọn tỉnh / thành phố trước'); return; }
       const wards = (VN_LOCATIONS.find(([pv]) => pv === ckProvince) || ['', []])[1];
+      /* 02/10/2026 (lệnh user: "thêm box Search ở Phường Xã tương tự thành phố") — { search: true }: ô Phường / xã LUÔN có
+         ô Tìm kiếm như ô Tỉnh / thành phố. Bottom sheet mobile vốn luôn hiện ô tìm (chỉ tắt khi cfg.search === false) nên
+         ở đây tham số chỉ để hai file khai giống nhau; bản desktop mới cần nó (dropdown mặc định chỉ có ô tìm khi
+         danh sách dài hơn 8 mục, phường chỉ 4–7). */
       window.__openPicker('Chọn phường / xã', wards, ckWard, picked => {
         ckWard = picked;
         setPickLabel(btn, picked, 'Chọn phường / xã');
-      });
+      }, { search: true });
     });
   });
 }
@@ -19949,8 +20063,8 @@ function paintAccUser(root) {
    này khác nhau giữa 2 file: mobile trượt bottom sheet #pickSheet lên (`__openPicker`),
    desktop xổ dropdown neo ngay dưới ô (`__openPickDD`) — đúng 2 khuôn mà ô địa giới
    của checkout đang dùng ở từng khổ, không phát sinh kiểu UI mới. */
-function accOpenPick(btn, title, opts, cur, cb) {
-  window.__openPicker(title, opts, cur, cb);
+function accOpenPick(btn, title, opts, cur, cb, cfg) {
+  window.__openPicker(title, opts, cur, cb, cfg);
 }
 
 /* MỘT handler UỶ QUYỀN gắn MỘT LẦN lên `#accBody`, không phải một listener cho mỗi
@@ -20155,10 +20269,11 @@ function wireAccount(root) {
     if (k === 'award') {
       if (!accDraft.province) { toast('Chọn tỉnh / thành phố trước'); return; }
       const wards = (VN_LOCATIONS.find(([pv]) => pv === accDraft.province) || ['', []])[1];
+      /* 02/10/2026 — { search: true }: như ô phường của checkout, xem wireAddressPickers. */
       accOpenPick(btn, 'Chọn phường / xã', wards, accDraft.ward || '', v => {
         accDraft.ward = v;
         setPickLabel(btn, v, 'Chọn phường / xã');
-      });
+      }, { search: true });
     }
   });
 }
@@ -20643,6 +20758,41 @@ function wire(root) {
   // checkout: chuyển section (không chuyển trang)
   if (root.querySelector('#ckSections')) {
     paintCheckout(root);
+    /* 02/10/2026 (lệnh user: "ở bản mobile thì cho sticky nút đặt hàng … tương tự ở cart, và đồng thời cho sticky luôn cái dòng
+       bằng việc đặt hàng …") — THANH DÍNH ĐÁY của checkout (#ckStickyCta = câu đồng ý + nút Đặt hàng), cùng cách chạy của
+       #cartStickyCta ở giỏ: thanh là một phần tử fixed riêng, hiện khi khối nút GỐC (#ckCta, nằm ở cuối thân bước Thanh toán)
+       ra khỏi khung nhìn, ẩn khi tới nó — nên không bao giờ thấy hai nút cùng lúc. Khác giỏ: chỉ hiện khi bước Thanh toán
+       đang MỞ (các bước trước không có nút Đặt hàng; bấm "Thay đổi" quay về bước trước là ẩn ngay) — bước Thanh toán là
+       section 3 ở luồng giao hàng, section 2 ở luồng nhận tại cửa hàng. Thanh cao ~160 (có câu đồng ý) nên khi hiện, hai FAB
+       cố định ở đáy (cài đặt · về đầu trang, 96 / 144) bị đẩy lên khỏi thanh: gắn html.ck-sticky + --ck-sticky-h, xem CSS #topFab.
+       `inert` khi ẩn để Tab không rơi vào nút / link vô hình. paintCheckout() gọi lại __ckStickyRefresh vì đổi bước không bắn sự
+       kiện cuộn nào. Dọn sạch qua scrollCleanups (đổi màn / dựng lại màn). */
+    const ckSticky = root.querySelector('#ckStickyCta');
+    const ckCta = root.querySelector('#ckCta');
+    if (ckSticky && ckCta) {
+      const htmlEl = document.documentElement;
+      const refreshSticky = () => {
+        if (!ckSticky.isConnected) return;
+        const r = ckCta.getBoundingClientRect();
+        const show = ckStep === (ckMode === 'pickup' ? 2 : 3) && (r.bottom < 0 || r.top > window.innerHeight);
+        ckSticky.style.opacity = show ? '1' : '0';
+        ckSticky.style.transform = `translateY(${show ? 0 : 10}px)`;
+        ckSticky.style.pointerEvents = show ? 'auto' : 'none';
+        ckSticky.inert = !show;
+        htmlEl.classList.toggle('ck-sticky', show);
+        if (show) htmlEl.style.setProperty('--ck-sticky-h', ckSticky.offsetHeight + 'px');
+      };
+      window.__ckStickyRefresh = refreshSticky;
+      window.addEventListener('scroll', refreshSticky, { passive: true });
+      window.addEventListener('resize', refreshSticky, { passive: true });
+      scrollCleanups.push(() => {
+        window.removeEventListener('scroll', refreshSticky);
+        window.removeEventListener('resize', refreshSticky);
+        htmlEl.classList.remove('ck-sticky');
+        if (window.__ckStickyRefresh === refreshSticky) window.__ckStickyRefresh = null;
+      });
+      setTimeout(refreshSticky, 60);
+    }
     /* Brief PDF trang 30 (14/09/2026) — thanh "Giỏ hàng của bạn" nay fixed đáy
        màn + bấm mở sheet nổi riêng (thay accordion sticky-đỉnh cũ), nên bug cũ
        (mở giỏ lúc đang ghim đỉnh làm trigger bay khỏi màn, phải cuộn về đầu
@@ -20862,11 +21012,15 @@ function wire(root) {
       o.addEventListener('click', () => {
         ckShipFast = o.dataset.opt === 'fast';
         const lbl = root.querySelector('#shipDoneLabel');
-        if (lbl) lbl.textContent = ckShipFast ? 'Giao hàng nhanh' : 'Giao hàng thông thường';
+        if (lbl) { lbl.textContent = ckShipFast ? SHIP_NAME_FAST : SHIP_NAME_STD; localizeNew(lbl); }
+        /* 02/10/2026 — dòng dự kiến đổi theo phương thức (hai câu khác nhau). localizeNew để chuỗi vừa ghi
+           vẫn được dịch khi đang ở bản EN. */
+        const eta = root.querySelector('#shipDoneEta');
+        if (eta) { eta.textContent = ckShipFast ? SHIP_ETA_FAST : SHIP_ETA_STD; localizeNew(eta); }
         /* Gia doc tu CHINH `SHIP_FAST_FEE` chu khong go tay: chu thich cua hang so do
            tung phai canh bao "PHAI KHOP con so in trong nhan" — nay khong con duong lech. */
         const fee = root.querySelector('#shipDoneFee');
-        if (fee) fee.textContent = ckShipFast ? vndCom(SHIP_FAST_FEE) : 'Miễn phí';
+        if (fee) { fee.textContent = ckShipFast ? vndCom(SHIP_FAST_FEE) : 'Miễn phí'; localizeNew(fee); }
       });
     });
   }
@@ -23097,13 +23251,20 @@ function instSheetHTML(price, sel) {
       <span class="t-single ${fee ? 'text-muted-foreground' : 'text-success'}">${fee ? 'Có thể phát sinh phí' : 'Lãi suất 0%'}</span>
     </button>`).join('');
   const bank = b => `<div class="ins-bank t-single text-foreground-alt" data-i18n-skip>${b}</div>`;
+  /* 02/10/2026 (lệnh user: "pop-up Installment bold lên chỗ Chọn kỳ hạn và Ngân hàng áp dụng vì là thông
+     tin quan trọng (chữ đen, nền xám) như cái Tóm tắt đơn hàng") — hai tiêu đề mục từ nhãn xám nhỏ
+     (12/18 · #727272, không nền) thành BĂNG TIÊU ĐỀ y hệt khối "Tóm tắt đơn hàng": dùng ĐÚNG khuôn
+     `.dk-sum-head` (đệm 16, nền xám `--general-secondary`) + chữ `.t-block-title.dk-summary-title`
+     (Libre Bodoni 16/24, mực chính) — nên băng và chữ đi theo khuôn chung của tóm tắt đơn hàng, đổi một
+     chỗ là hai nơi cùng đổi. Băng rộng bằng nội dung mục, không tràn mép bottom sheet. KHAI GIỐNG desktop.html. */
+  const head = t => `<div class="dk-sum-head"><p class="t-block-title dk-summary-title text-foreground">${t}</p></div>`;
   return `
     <div class="flex flex-col gap-3">
-      <p class="t-multiline font-medium text-muted-foreground">Chọn kỳ hạn</p>
+      ${head('Chọn kỳ hạn')}
       <div class="grid grid-cols-2 gap-2">${plans}</div>
     </div>
     <div class="flex flex-col gap-3">
-      <p class="t-multiline font-medium text-muted-foreground">Ngân hàng áp dụng</p>
+      ${head('Ngân hàng áp dụng')}
       <img src="assets/installment-banks.png" alt="Ngân hàng áp dụng" class="w-full h-auto block" loading="lazy">
     </div>
     <div class="flex flex-col gap-3 pt-4 border-t border-border">
@@ -23113,7 +23274,7 @@ function instSheetHTML(price, sel) {
          ['info','Điều kiện trả góp theo quy định của ngân hàng phát hành thẻ. DAFC có quyền từ chối đơn không đủ điều kiện.']]
         .map(([k, t]) => `<div class="flex gap-2 text-foreground-alt">${instIco(k)}<p class="t-multiline">${t}</p></div>`).join('')}
     </div>
-    <div class="rounded-xs p-3 t-multiline text-muted-foreground" style="background:var(--general-secondary)">
+    <div class="ins-fee rounded-xs p-3 t-multiline text-muted-foreground">
       <p>Phí không được hoàn lại sau khi giao dịch thành công. Kỳ hạn áp dụng tùy ngân hàng và loại thẻ phát hành.</p>
       <button data-ins-link="installment" class="underline text-foreground press mt-1">Xem điều khoản trả góp đầy đủ</button>
     </div>`;
