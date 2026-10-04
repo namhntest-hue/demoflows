@@ -6613,8 +6613,9 @@ const BRAND_PAGES = {
    tự nội dung của website tôi đính kèm"* (lookfantastic.com/c/brands/molton-brown). Trang gốc là một TRANG BIÊN TẬP chứ không
    phải danh sách sản phẩm: tiêu đề → 5 ô danh mục → banner → đoạn giới thiệu → 4 chip → dải Bán chạy nhất (3 tab) → 6 bộ
    sưu tập → 3 ô Khám phá thêm → 4 đánh giá → đoạn giới thiệu cuối. Thứ tự đó giữ nguyên TRỪ HAI CHỖ THEO LỆNH USER cùng ngày 04/10:
-   (1) khối "Về thương hiệu" (đoạn giới thiệu cuối trang) LÊN ĐẦU, ngay dưới tiêu đề trang, canh TRÁI; (2) khối 4 đánh giá BỎ, thay bằng
-   khối Instagram của trang chủ ở cuối trang. Mỗi khối dựng bằng linh kiện DAFC
+   (1) khối "Về thương hiệu" (đoạn giới thiệu cuối trang) LÊN ĐẦU, ngay dưới tiêu đề trang (lúc đầu canh TRÁI, nay canh GIỮA theo khung Figma user sửa); (2) khối 4
+   đánh giá BỎ, thay bằng khối Instagram của trang chủ ở cuối trang. Sau cùng, theo khung Figma user sửa tay: `hide` ẩn vài khối (xem mảng ở đầu mục dữ liệu).
+   Mỗi khối dựng bằng linh kiện DAFC
    (dải danh mục 150, đầu mục nhãn nhỏ + dòng Libre, hàng tab .acc-tab, thẻ productCard, nút btn-o…).
    CHỮ là CHỮ VIẾT LẠI (tiếng Việt, đoạn ngắn hơn bản gốc), không chép nguyên văn của lookfantastic; tên SP / tên dòng hương
    giữ đúng tên gốc.
@@ -6625,6 +6626,12 @@ const MB_BASE = PRODUCTS.findIndex(p => p.brand === 'Molton Brown');
 const mbi = n => MB_BASE + n - 1;   // mbi(7) = chỉ số PRODUCTS của SP Molton Brown thứ 7
 const BRAND_HUBS = {
   'Molton Brown': {
+    /* ẨN THEO KHUNG FIGMA CỦA USER (04/10/2026, lệnh: "áp dụng lại theo layout tôi sửa nhé, ẩn đi mấy cái tôi ẩn luôn", rồi "áp dụng cho cả mobile nhé"):
+       4 khối bị ẩn — `title` (h1 tên hãng), `intro` (đoạn giới thiệu dưới banner), `chips` (4 chip lối tắt), `tabs` (hàng 3 tab của dải Bán chạy nhất: dải chỉ còn tab
+       đầu "Quà tặng"). Khung mobile Figma của user (1129:88714) chỉ ẩn 3 khối đầu trừ `intro`; `intro` được ẨN THÊM theo lệnh "áp dụng cho cả mobile" (bản desktop user ẩn
+       nó) — nên khung Figma mobile LỆCH code ở chỗ này và ở thứ tự banner / dải danh mục (xem screenBrandHub). ẨN chứ không XOÁ: markup + dữ liệu còn nguyên, muốn hiện
+       lại thì bỏ khoá khỏi mảng. */
+    hide: ['title', 'intro', 'chips', 'tabs'],
     cats: [
       { img:'brand-molton-brown-category-01.jpg', label:'Tất cả sản phẩm', go:'all' },
       { img:'brand-molton-brown-category-02.jpg', label:'Nước hoa', go:'cate:Nước hoa' },
@@ -7687,6 +7694,8 @@ function screenBrandHub(B, H) {
           </div>
         </button>`;
   const tabs = H.rail.tabs;
+  /* Khối nào nằm trong `H.hide` thì KHÔNG dựng (ẩn theo khung Figma của user, xem chú thích ở BRAND_HUBS). */
+  const off = k => (H.hide || []).includes(k);
   return `
   <div class="w-full" data-scroller data-brand-hub="${B.name}">
     <!-- promo banner slider — cùng khuôn màn brand -->
@@ -7709,22 +7718,30 @@ function screenBrandHub(B, H) {
       </span>
     </div>
 
-    <!-- 1. TIÊU ĐỀ TRANG — chữ thay cho logo (hãng chưa có wordmark), cùng bậc .t-display-title như tiêu đề PLP -->
+    <!-- 1. TIÊU ĐỀ TRANG — chữ thay cho logo (hãng chưa có wordmark), cùng bậc .t-display-title như tiêu đề PLP. ẨN (hide: title) -->
+    ${off('title') ? '' : `
     <div class="flex items-center px-4 py-2">
       <h1 class="t-display-title flex-1 min-w-0 text-foreground truncate">${B.name}</h1>
-    </div>
+    </div>`}
 
-    <!-- 1b. VỀ THƯƠNG HIỆU — LÊN ĐẦU TRANG, canh TRÁI (lệnh user 04/10; trước là khối cuối trang, canh giữa). Đầu mục dùng chung hmSecHead (nhánh canh trái),
-         đoạn chữ bỏ text-center. Không reveal: nằm ngay dưới tiêu đề trang, trong màn hình đầu. -->
-    <div class="flex flex-col gap-4 pt-4 pb-4">
-      ${hmSecHead(H.about.title, '', 'h2', H.about.eyebrow, false, true)}
+    <!-- 1b. VỀ THƯƠNG HIỆU — đầu trang, CANH GIỮA (khung Figma user 04/10: đầu mục + 2 đoạn canh giữa; bản trước canh trái). Đầu mục dùng chung hmSecHead
+         (nhánh canh giữa mặc định). Không reveal: nằm ngay dưới đường dẫn, trong màn hình đầu. Tiêu đề trang ẩn thì đệm trên 16 thành 24: khung Figma còn 26
+         (10 của khối + 16 của hộp, phần 10 là đệm đáy của h1 đã ẩn) — lấy 24 cho đúng thang 8, lệch 2px. -->
+    <div class="flex flex-col gap-4 ${off('title') ? 'pt-6' : 'pt-4'} pb-4">
+      ${hmSecHead(H.about.title, '', 'h2', H.about.eyebrow)}
       <div class="flex flex-col gap-4 px-4">
-        ${H.about.paras.map(t => `<p class="t-multiline text-foreground">${t}</p>`).join('')}
+        ${H.about.paras.map(t => `<p class="t-multiline text-foreground text-center">${t}</p>`).join('')}
       </div>
     </div>
 
-    <!-- 2. DẢI DANH MỤC — khuôn dải 150x150 của trang thương hiệu (brandCatStrip), đích là lưới PLP của hãng -->
-    <div class="py-2 reveal">
+    <!-- 3. BANNER — ĐỨNG TRƯỚC dải danh mục (lệnh user "áp dụng cho cả mobile": theo thứ tự khung desktop Figma của user) — ảnh của hãng, chữ nằm TRONG ảnh (đúng
+         như trang gốc); tỉ lệ theo ảnh để không cắt chữ. mt-4 + đệm dưới 16 của khối Về thương hiệu = 32 từ chữ tới ảnh (cùng số với khung desktop). -->
+    <a data-bh-go="${H.banner.go}" class="block w-full overflow-hidden bg-secondary cursor-pointer press reveal mt-4" style="aspect-ratio:${H.banner.rm}">
+      <img src="${A}${H.banner.m}" alt="${H.banner.alt}" class="w-full h-full object-cover lazy">
+    </a>
+
+    <!-- 2. DẢI DANH MỤC — khuôn dải 150x150 của trang thương hiệu (brandCatStrip), đích là lưới PLP của hãng. Nay nằm DƯỚI banner; đệm trên 24 (desktop cũng 24) -->
+    <div class="pt-6 pb-2 reveal">
       <div class="drag-x flex gap-2 overflow-x-auto no-scrollbar px-4 pb-1">
         ${H.cats.map(c => `
           <button class="shrink-0 w-[150px] flex flex-col press group text-left" data-bh-go="${c.go}">
@@ -7738,27 +7755,23 @@ function screenBrandHub(B, H) {
       </div>
     </div>
 
-    <!-- 3. BANNER — ảnh của hãng, chữ nằm TRONG ảnh (đúng như trang gốc); tỉ lệ theo ảnh để không cắt chữ -->
-    <a data-bh-go="${H.banner.go}" class="block w-full overflow-hidden bg-secondary cursor-pointer press reveal mt-4" style="aspect-ratio:${H.banner.rm}">
-      <img src="${A}${H.banner.m}" alt="${H.banner.alt}" class="w-full h-full object-cover lazy">
-    </a>
+    <!-- 4. ĐOẠN GIỚI THIỆU. ẨN (hide: intro) — lúc đầu mobile còn hiện theo khung Figma mobile của user, ẩn thêm theo lệnh "áp dụng cho cả mobile" -->
+    ${off('intro') ? '' : `<p class="t-multiline text-foreground text-center px-4 pt-6 reveal">${H.intro}</p>`}
 
-    <!-- 4. ĐOẠN GIỚI THIỆU -->
-    <p class="t-multiline text-foreground text-center px-4 pt-6 reveal">${H.intro}</p>
-
-    <!-- 5. CHIP LỐI TẮT — lưới 2 cột như bản gốc ở khổ nhỏ -->
+    <!-- 5. CHIP LỐI TẮT — lưới 2 cột như bản gốc ở khổ nhỏ. ẨN (hide: chips) -->
+    ${off('chips') ? '' : `
     <div class="grid grid-cols-2 gap-2 px-4 pt-6 reveal">
       ${H.chips.map(([label, go]) => `
         <button data-bh-go="${go}" class="t-multiline h-11 px-2 border border-border bg-background text-foreground btn-o press flex items-center justify-center text-center">${label}</button>`).join('')}
-    </div>
+    </div>`}
 
-    <!-- 6. BÁN CHẠY NHẤT — 3 tab (hàng tab .acc-tab của trang Tài khoản) + dải thẻ PLP -->
+    <!-- 6. BÁN CHẠY NHẤT — 3 tab (hàng tab .acc-tab của trang Tài khoản; ẨN theo hide: tabs — dải chỉ còn tab đầu) + dải thẻ PLP -->
     ${hmSec(H.rail.title, hmLink('Xem tất cả', 'data-bh-go="all"'), `
       <div class="flex flex-col gap-4">
-        <div id="bhTabs" role="tablist" class="drag-x flex gap-6 overflow-x-auto no-scrollbar border-b border-border px-4">
+        ${off('tabs') ? '' : `<div id="bhTabs" role="tablist" class="drag-x flex gap-6 overflow-x-auto no-scrollbar border-b border-border px-4">
           ${tabs.map((t, i) => `
           <button role="tab" data-bh-tab="${i}"${i === 0 ? ' aria-current="true"' : ''} class="t-single acc-tab shrink-0 h-11 press" style="min-width:44px">${t.label}</button>`).join('')}
-        </div>
+        </div>`}
         <div id="bhRail" class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4">${bhRailHTML(tabs[0].ids)}</div>
       </div>`, 'h2', H.rail.eyebrow, false, true)}
 
@@ -10793,7 +10806,9 @@ const hmLink = (label, attrs) =>
    lượt — gỡ rồi thêm lại là công cốc. Chốt chặn `${eyebrow ? … : ''}` thì GIỮ BẰNG MỌI GIÁ:
    nó là thứ chặn cái `<p>` rỗng nếu ai đó gọi `center` lần nữa.
    THAM SỐ `left` (04/10/2026, lệnh user: khối "Về thương hiệu" của trang Molton Brown lên đầu trang và canh TRÁI): cùng khuôn nhãn nhỏ / dòng
-   Libre nhưng canh trái, thay vì canh giữa. Chỉ có nghĩa khi khuôn đó đang bật (có eyebrow hoặc `center`); mặc định false nên mọi chỗ gọi cũ không đổi. */
+   Libre nhưng canh trái, thay vì canh giữa. Chỉ có nghĩa khi khuôn đó đang bật (có eyebrow hoặc `center`); mặc định false nên mọi chỗ gọi cũ không đổi.
+   ⚠ HIỆN KHÔNG CHỖ NÀO TRUYỀN `left`: cùng ngày user sửa khung Figma và khối "Về thương hiệu" về canh GIỮA. GIỮ tham số như `center` ở trên —
+   biến thể có thật, gỡ rồi thêm lại là công cốc. */
 function hmSecHead(title, right = '', tag = 'h2', eyebrow = '', center = false, left = false) {
   return (eyebrow || center) ? `
         <div class="flex flex-col ${left ? 'items-start' : 'items-center text-center'} gap-2 px-4">
