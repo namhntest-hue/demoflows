@@ -55,13 +55,14 @@ window.RESP = (function () {
     fits: function () { return mq.matches === IS_DESKTOP; },
 
     /* gói trạng thái thành hash; giá trị mặc định thì bỏ qua cho URL gọn */
-    hash: function (screen, lang, font, theme, hm) {
+    hash: function (screen, lang, font, theme, hm, ctx) {
       var p = [];
       if (screen && screen !== 'home') p.push('screen=' + encodeURIComponent(screen));
       if (lang && lang !== 'vi')      p.push('lang=' + encodeURIComponent(lang));
       if (font && font !== 'montserrat') p.push('font=' + encodeURIComponent(font));
       if (theme && theme !== 'd')     p.push('theme=' + encodeURIComponent(theme));
       if (hm && hm !== 'new')         p.push('hm=' + encodeURIComponent(hm));
+      if (ctx)                        p.push('ctx=' + encodeURIComponent(ctx));   // 04/10/2026: ngữ cảnh màn (hãng / hub / lọc ở PLP, chỉ số SP ở PDP) — xem navCarry()
       return p.length ? '#' + p.join('&') : '';
     },
 
@@ -78,12 +79,12 @@ window.RESP = (function () {
 
     /* chuyển sang bản kia; ẩn trang trong lúc chuyển để không nháy bản sai,
        kèm hẹn giờ mở lại phòng khi điều hướng thất bại (thiếu file) */
-    swap: function (screen, lang, font, theme, hm) {
+    swap: function (screen, lang, font, theme, hm, ctx) {
       if (R.swapped) return;
       R.swapped = true;
       document.documentElement.style.visibility = 'hidden';
       setTimeout(function () { document.documentElement.style.visibility = ''; }, 2000);
-      location.replace(OTHER + R.hash(screen, lang, font, theme, hm));
+      location.replace(OTHER + R.hash(screen, lang, font, theme, hm, ctx));
     },
 
     /* Theo dõi kéo giãn cửa sổ qua mốc; state() trả [screen, lang, font, theme, hm].
@@ -91,7 +92,7 @@ window.RESP = (function () {
        (gộp nhịp bằng timer) là lưới an toàn — vài môi trường đổi kích thước
        bằng emulation/devtools không bắn 'change'. Cờ swapped chặn gọi trùng. */
     watch: function (state) {
-      var fire = function () { if (!R.fits()) { var s = state ? state() : []; R.swap(s[0], s[1], s[2], s[3], s[4]); } };
+      var fire = function () { if (!R.fits()) { var s = state ? state() : []; R.swap(s[0], s[1], s[2], s[3], s[4], s[5]); } };
       if (mq.addEventListener) mq.addEventListener('change', fire); else mq.addListener(fire);
       var t = 0;
       window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(fire, 150); });
@@ -1643,6 +1644,21 @@ window.RESP = (function () {
      dùng `-bottom-px` kéo vạch xuống DƯỚI đáy nên nó đè nửa pixel lên kẻ. */
   .acc-tab::after { left: 0; right: 0; bottom: 0; height: 2px; }
 
+  /* ── HUB THƯƠNG HIỆU (04/10/2026) — dải ô bộ sưu tập / khám phá của trang Molton Brown ────────────────
+     Dải trượt như mọi dải của bản mobile (lề 16).
+     BỘ SƯU TẬP + KHÁM PHÁ THÊM — chữ và CTA NẰM TRONG ẢNH (lệnh user 04/10: "chữ và cta trong hình giống homepage nam nữ"). Đúng khuôn ô
+     occasion của trang chủ: `.hm-cat-media` + mảng phủ `.hm-occ-scrim` (cao 200, đặc 136, alpha .55) + khối chữ `.hm-occ-copy` (lề 16, khe 8)
+     = tiêu đề Libre 18/24 · mô tả 12/18 · CTA 12/16 gạch chân; cả ô là MỘT nút. Ô rộng 264, khe 4 — cùng số với dải occasion.
+     TỈ LỆ 3/4 = ô occasion trang chủ (264x352) nên hai dải cùng một nhịp dọc. Ảnh nguồn nằm ngang 507x417: ô 3/4 giữ 62% bề ngang ảnh
+     (4/5 cũng chỉ giữ 66%, vuông giữ 82%) — phần xén rơi vào hai mép, đã xem đủ 9 ảnh, không ô nào cần chỉnh object-position.
+     Mô tả viết <= 2 dòng ở lòng 232 để khối chữ cao <= 116 (+16 lề = 132) nằm trọn trong đoạn đặc 136 của mảng phủ; đo tương phản chữ
+     trắng trên 9 ảnh ở khung 264x352, ô sáng nhất 8x8 trong vùng chữ: thấp nhất 6,19:1 (ngưỡng chữ thường 4,5), cao nhất 13,6:1.
+     ĐÃ GỠ 04/10/2026 — `.bh-rev` · `.bh-rev-media` · `.bh-rev-copy` · `.bh-stars` (khối "Khách hàng nói gì", lệnh user: bỏ, thay bằng khối Instagram
+     dùng LẠI `.hm-insta` của trang chủ nên không khai class mới), và `.bh-tiles-ovl` (khe 4 nay khai thẳng ở `.bh-tiles`: không còn dải nào khe 8). */
+  .bh-tiles { display: flex; gap: 4px; overflow-x: auto; padding: 0 16px; }
+  .bh-tile { flex: 0 0 264px; display: flex; flex-direction: column; min-width: 0; }
+  .bh-tile-media { aspect-ratio: 3 / 4; width: 100%; }
+
 
   /* ── Cart badge pop ── */
   @keyframes pop { 0% { transform: scale(1) } 40% { transform: scale(1.45) } 100% { transform: scale(1) } }
@@ -2583,7 +2599,7 @@ window.RESP = (function () {
   .dk-sum-head    { padding: 16px; background: var(--general-secondary); }
   .dk-sum-total   { border-top: 1px solid var(--general-border-subtle); padding: 16px 0; }
   .dk-sum-rewards { border-top: 1px solid var(--general-border); }
-  .dk-sum-acc     { border-top: 1px solid var(--general-border); padding-top: 12px; }
+  .dk-sum-acc     { border-top: 1px solid var(--general-border); padding-top: 0; }   /* 03/10/2026: 12 → 0 theo khung Figma 808:146543 của user (chỉ bản mobile; desktop.html có rule riêng, giữ 12) */
   /* ĐÃ GỠ 20/09/2026 — rule riêng cho tiêu đề panel tóm tắt ở trang GIỎN (port từ
      desktop 18/09: Libre Bodoni 18/24 chữ thường). Thiết kế mới của user
      (550:25723) đọc ra style t-label-overlay = Inter Medium 16/24 CHỮ HOA — tức quay
@@ -2832,7 +2848,8 @@ window.RESP = (function () {
      đúng style t-label-lead của thiết kế. Cùng dạng ngoại lệ có tên như .ck-total
      ngay trên (bộ da quét mọi utility độ đậm về 400).
      ⚠ NỢ LUẬT giống .ck-total: 500 + chữ thường phá cặp "500 luôn đi với HOA"
-     (§1.1) — cần ghi thành ngoại lệ có tên trong STYLE-RULES, CHƯA làm. */
+     (§1.1) — cần ghi thành ngoại lệ có tên trong STYLE-RULES, CHƯA làm.
+     03/10/2026: cỡ chữ nay 12/16 (class t-single trong markup, theo khung Figma 808:146543 của user) — rule này vẫn chỉ cấp 500. */
   html.skin-mt [data-screen="cart"] .dk-reward-name { font-weight: 500; }
   /* Brand trong hàng giỏ đi theo chốt 24/08 "brand không uppercase": họ nội dung
      400 chữ thường, nổi hơn tên sp bằng BẬC CỠ 14/20 — khớp `.pc-brand` ở mục 5c.
@@ -5576,6 +5593,40 @@ const PRODUCTS = [
   { img:'z10-0.jpg', brand:'Zimmermann', name:'Quần jeans ống loe Roselight', price:'20.520.000 ₫', off:'-15%', was:'24.141.000 ₫', sizes:['25','26','27'], model:'z10-1.jpg', colors:[{name:'Vintage Cream',hex:'#e6dccd'}] },
   { img:'z11-0.jpg', brand:'Zimmermann', name:'Áo khoác Rebellion túi hộp', price:'48.011.000 ₫', sizes:['0','1','2','3','4'], model:'z11-1.jpg', colors:[{name:'Xanh oliu',hex:'#b2b59a'}] },
   { img:'z12-0.jpg', brand:'Zimmermann', name:'Chân váy midi vải tulle chấm bi', price:'24.448.000 ₫', sizes:['0','1','2','3','4'], model:'z12-2.jpg', colors:[{name:'Kem',hex:'#e6d2ae'}] },
+
+  /* ── MOLTON BROWN (04/10/2026, lệnh user: *"tạo một brand page cho brand molton brown … dùng nội dung và thứ tự nội dung của website"*) ──
+     27 SKU làm đẹp đặt CUỐI mảng (index 48–74) như mọi lượt thêm hàng trước, để router PDP + quick add không lệch chỉ số.
+     Tên SP + tên dòng hương lấy từ trang lookfantastic.com/c/brands/molton-brown (24 món ở dải Bán chạy nhất, cả 3 tab) + 3 món
+     của khối đánh giá. GIÁ KHÔNG PHẢI GIÁ DAFC: quy từ £ sang ₫ theo 1 £ = 34.000 ₫ rồi làm tròn 10.000 (giá giảm tính ngược từ
+     giá gốc £); khách cấp bảng giá thật thì thay. `noHome` = SKU chỉ sống ở trang thương hiệu / PLP / tìm kiếm, KHÔNG lên các dải
+     trang chủ (trang chủ đã chốt 27/09). `sizes: ['Set']` = bộ quà / bộ chăm sóc (không có dung tích). */
+  { img:'mb1-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Bộ du lịch tắm gội The Revived Voyager', price:'2.110.000 ₫', sizes:['Set'], noHome:true },
+  { img:'mb2-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Cracker quà tặng The Woody Opulent', price:'680.000 ₫', tag:'New arrival', sizes:['Set'], noHome:true },
+  { img:'mb3-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Cracker quà tặng The Woody Citrus', price:'680.000 ₫', tag:'New arrival', sizes:['Set'], noHome:true },
+  { img:'mb4-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Bộ chăm sóc tay Orange & Bergamot', price:'1.467.000 ₫', off:'-10%', was:'1.630.000 ₫', sizes:['Set'], noHome:true },
+  { img:'mb5-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Bộ layering hương Delicious Rhubarb & Rose', price:'1.190.000 ₫', tag:'New arrival', sizes:['Set'], noHome:true },
+  { img:'mb6-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Bộ quà Stocking Filler', price:'1.530.000 ₫', tag:'New arrival', sizes:['Set'], noHome:true },
+  { img:'mb7-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Sữa tắm Neon Amber 300ml', price:'880.000 ₫', tag:'Best seller', sizes:['300 ml'], noHome:true },
+  { img:'mb8-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Bộ đôi Re-charge Black Pepper', price:'1.470.000 ₫', tag:'Best seller', sizes:['Set'], noHome:true },
+  { img:'mb9-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Bộ chăm sóc cơ thể Floral & Green', price:'2.380.000 ₫', sizes:['Set'], noHome:true },
+  { img:'mb10-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Bộ layering hương Coastal Cypress & Sea Fennel', price:'1.190.000 ₫', tag:'New arrival', sizes:['Set'], noHome:true },
+  { img:'mb11-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Nước rửa tay refill Delicious Rhubarb & Rose 400ml', price:'855.000 ₫', off:'-10%', was:'950.000 ₫', sizes:['400 ml'], noHome:true },
+  { img:'mb12-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Sữa tắm Fiery Pink Pepper 300ml', price:'920.000 ₫', sizes:['300 ml'], noHome:true },
+  { img:'mb13-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Sữa tắm Infusing Eucalyptus 300ml', price:'736.000 ₫', off:'-20%', was:'920.000 ₫', sizes:['300 ml'], noHome:true },
+  { img:'mb14-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Kem dưỡng tay Fiery Pink Pepper 40ml', price:'352.000 ₫', off:'-20%', was:'440.000 ₫', sizes:['40 ml'], noHome:true },
+  { img:'mb15-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Bộ nước hoa khám phá Woody & Aromatic EDP', price:'1.190.000 ₫', sizes:['Set'], noHome:true },
+  { img:'mb16-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Nước hoa Mesmerising Oudh Accord & Gold EDP 7,5ml', price:'540.000 ₫', sizes:['7,5 ml'], noHome:true },
+  { img:'mb17-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Nước hoa Re-Charge Black Pepper EDP', price:'2.380.000 ₫', tag:'New arrival', sizes:['100 ml'], noHome:true },
+  { img:'mb18-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Tinh dầu khuếch tán refill Re-Charge Black Pepper 150ml', price:'1.330.000 ₫', sizes:['150 ml'], noHome:true },
+  { img:'mb19-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Nước hoa Tobacco Absolute EDP 7,5ml', price:'540.000 ₫', sizes:['7,5 ml'], noHome:true },
+  { img:'mb20-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Nước hoa Delicious Rhubarb & Rose EDP 7,5ml', price:'540.000 ₫', sizes:['7,5 ml'], noHome:true },
+  { img:'mb21-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Nước hoa Mesmerising Oudh Accord & Gold EDP', price:'2.380.000 ₫', tag:'New arrival', sizes:['100 ml'], noHome:true },
+  { img:'mb22-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Nước hoa Fiery Pink Pepper EDP', price:'2.380.000 ₫', tag:'New arrival', sizes:['100 ml'], noHome:true },
+  { img:'mb23-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Nước hoa Sunlit Clementine & Vetiver EDP', price:'2.380.000 ₫', tag:'New arrival', sizes:['100 ml'], noHome:true },
+  { img:'mb24-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Nước hoa Delicious Rhubarb & Rose EDP', price:'2.380.000 ₫', tag:'New arrival', sizes:['100 ml'], noHome:true },
+  { img:'mb25-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Nước rửa tay Heavenly Gingerlily 300ml', price:'850.000 ₫', sizes:['300 ml'], noHome:true },
+  { img:'mb26-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Nước rửa tay Coastal Cypress & Sea Fennel 300ml', price:'850.000 ₫', sizes:['300 ml'], noHome:true },
+  { img:'mb27-0.jpg', dept:'beauty', brand:'Molton Brown', name:'Bộ chăm sóc tay Coastal Cypress & Sea Fennel', price:'680.000 ₫', sizes:['Set'], noHome:true },
 ];
 
 /* ── Ảnh gallery từng sản phẩm — dùng CHUNG cho PDP và quick add ──
@@ -6548,6 +6599,70 @@ const BRAND_PAGES = {
       { img:'z11-0.jpg', label:'Áo khoác ngoài'       },
     ],
   },
+  /* 04/10/2026 — Molton Brown: hãng LÀM ĐẸP có HUB riêng (xem BRAND_HUBS). `dept:'beauty'` để PLP của hãng dùng cây
+     danh mục + facet làm đẹp (isBeautyPlp). `desc` còn là đoạn "Về thương hiệu" ở PDP. Không logo wordmark: tiêu đề trang vẽ bằng chữ. */
+  'Molton Brown': {
+    dept:'beauty', logo:'', hero:'brand-molton-brown-hero-mobile.jpg', heroDk:'brand-molton-brown-hero-desktop.jpg', pos:'50% 50%',
+    desc:'Molton Brown là nhà hương thơm và chăm sóc cơ thể cao cấp đến từ nước Anh. Mỗi dòng sản phẩm được dựng quanh một câu chuyện mùi hương — từ gỗ, hoa cỏ đến gia vị — để việc tắm gội, dưỡng tay hay xịt nước hoa trở thành khoảnh khắc đáng nhớ trong ngày.',
+    cats:[],
+  },
+};
+
+/* ── TRANG THƯƠNG HIỆU DẠNG "HUB" (04/10/2026) ──────────────────────────────────────────────
+   Lệnh user: *"tạo một brand page cho brand molton brown sử dụng toàn bộ style và layout của DAFC, nhưng dùng nội dung và thứ
+   tự nội dung của website tôi đính kèm"* (lookfantastic.com/c/brands/molton-brown). Trang gốc là một TRANG BIÊN TẬP chứ không
+   phải danh sách sản phẩm: tiêu đề → 5 ô danh mục → banner → đoạn giới thiệu → 4 chip → dải Bán chạy nhất (3 tab) → 6 bộ
+   sưu tập → 3 ô Khám phá thêm → 4 đánh giá → đoạn giới thiệu cuối. Thứ tự đó giữ nguyên TRỪ HAI CHỖ THEO LỆNH USER cùng ngày 04/10:
+   (1) khối "Về thương hiệu" (đoạn giới thiệu cuối trang) LÊN ĐẦU, ngay dưới tiêu đề trang, canh TRÁI; (2) khối 4 đánh giá BỎ, thay bằng
+   khối Instagram của trang chủ ở cuối trang. Mỗi khối dựng bằng linh kiện DAFC
+   (dải danh mục 150, đầu mục nhãn nhỏ + dòng Libre, hàng tab .acc-tab, thẻ productCard, nút btn-o…).
+   CHỮ là CHỮ VIẾT LẠI (tiếng Việt, đoạn ngắn hơn bản gốc), không chép nguyên văn của lookfantastic; tên SP / tên dòng hương
+   giữ đúng tên gốc.
+   `go` của mỗi ô: 'all' (cả lưới) · 'cate:<nhãn danh mục>' · 'scent:<từ trong tên SP>' · 'flag:<nhãn cờ lọc>' — đọc ở brandHubGo().
+   Hãng có mục trong BRAND_HUBS thì màn `brand` mở HUB; bấm vào ô nào đó (hoặc "Xem tất cả") mới sang lưới PLP của hãng
+   (plpMode.all = true), đúng 2 tầng của trang gốc (trang hub → trang view-all). */
+const MB_BASE = PRODUCTS.findIndex(p => p.brand === 'Molton Brown');
+const mbi = n => MB_BASE + n - 1;   // mbi(7) = chỉ số PRODUCTS của SP Molton Brown thứ 7
+const BRAND_HUBS = {
+  'Molton Brown': {
+    cats: [
+      { img:'brand-molton-brown-category-01.jpg', label:'Tất cả sản phẩm', go:'all' },
+      { img:'brand-molton-brown-category-02.jpg', label:'Nước hoa', go:'cate:Nước hoa' },
+      { img:'brand-molton-brown-category-03.jpg', label:'Tắm & dưỡng thể', go:'cate:Tắm & dưỡng thể' },
+      { img:'brand-molton-brown-category-04.jpg', label:'Chăm sóc tay', go:'cate:Chăm sóc tay' },
+      { img:'brand-molton-brown-category-05.jpg', label:'Bộ quà tặng', go:'cate:Quà tặng' },
+    ],
+    banner: { m:'brand-molton-brown-hero-mobile.jpg', d:'brand-molton-brown-hero-desktop.jpg', rm:'600/460', rd:'1920/600', alt:'Molton Brown — nước hoa 30ml mới', go:'cate:Nước hoa' },
+    intro: 'Molton Brown là nhà hương thơm và chăm sóc cơ thể cao cấp đến từ nước Anh. Mỗi dòng sản phẩm được dựng quanh một câu chuyện mùi hương — từ gỗ, hoa cỏ đến gia vị — để việc tắm gội, dưỡng tay hay xịt nước hoa trở thành khoảnh khắc đáng nhớ trong ngày.',
+    chips: [['Bộ quà tặng','cate:Quà tặng'], ['Black Pepper','scent:Black Pepper'], ['Orange & Bergamot','scent:Orange & Bergamot'], ['Fiery Pink Pepper','scent:Fiery Pink Pepper']],
+    rail: { eyebrow:'Molton Brown', title:'Bán chạy nhất', tabs: [
+      { label:'Quà tặng',        ids:[1,2,3,4,5,6,7,8,9,10].map(mbi) },
+      { label:'Tắm & dưỡng thể', ids:[11,12,13,14].map(mbi) },
+      { label:'Nước hoa',        ids:[15,16,17,18,19,20,21,22,23,24].map(mbi) },
+    ] },
+    collections: { eyebrow:'Molton Brown', title:'Các bộ sưu tập', items: [
+      { img:'brand-molton-brown-collection-01.jpg', title:'Re-charge Black Pepper', text:'Gỗ ấm hòa cam chanh tươi — dòng hương biểu tượng của hãng.', cta:'Mua ngay', go:'scent:Black Pepper' },
+      { img:'brand-molton-brown-collection-02.jpg', title:'Fiery Pink Pepper', text:'Tiêu hồng rực rỡ quyện gia vị nồng ấm, cuốn hút và đầy cá tính.', cta:'Mua ngay', go:'scent:Fiery Pink Pepper' },
+      { img:'brand-molton-brown-collection-03.jpg', title:'Coastal Cypress & Sea Fennel', text:'Cây bách, thì là biển và chút hơi muối — sảng khoái, mát nhẹ.', cta:'Mua ngay', go:'scent:Coastal Cypress' },
+      { img:'brand-molton-brown-collection-04.jpg', title:'Mesmerising Oudh Accord & Gold', text:'Trầm hương ấm cùng ánh vàng lấp lánh — dày dặn và sang trọng.', cta:'Mua ngay', go:'scent:Oudh' },
+      { img:'brand-molton-brown-collection-05.jpg', title:'Rose Dunes', text:'Hồng mịn như nhung hòa gia vị ấm, gợi những đồi cát trải dài.', cta:'Mua ngay', go:'cate:Nước hoa' },
+      { img:'brand-molton-brown-collection-06.jpg', title:'Delicious Rhubarb & Rose', text:'Đại hoàng chua dịu gặp cánh hồng mềm — vừa tươi vừa ngọt.', cta:'Mua ngay', go:'scent:Rhubarb & Rose' },
+    ] },
+    discover: { eyebrow:'', title:'Khám phá thêm', items: [
+      { img:'brand-molton-brown-discover-01.jpg', title:'Quà tặng ý nghĩa', text:'Bộ quà chọn sẵn: nước hoa, sữa tắm, dưỡng tay, hương không gian.', cta:'Mua ngay', go:'cate:Quà tặng' },
+      { img:'brand-molton-brown-discover-02.jpg', title:'Dòng hương mới: Bluebell & Wild Strawberry', text:'Series Artists of Note, hợp tác cùng nhà thiết kế giày Ancuta Sarca.', cta:'Mua ngay', go:'flag:Hàng mới về' },
+      { img:'brand-molton-brown-discover-03.jpg', title:'Hương thơm cho mỗi ngày', text:'Mùi hương đậm chất riêng, làm ngày bình thường thêm đầy đặn.', cta:'Mua ngay', go:'cate:Nước hoa' },
+    ] },
+    /* Khối INSTAGRAM thay cho "Khách hàng nói gì" (lệnh user 04/10: "bỏ cái khách nói gì thì gắn cục như insta"): cùng khối `hmInsta()` của trang chủ
+       (đầu mục "Nguồn cảm hứng / Theo dõi chúng tôi @dafcvietnam", ảnh 4/5 sát nhau), chỉ khác BỘ ẢNH. 6 ảnh là ảnh Molton Brown ĐÃ CÓ trong dự án
+       (kho trang chủ Làm đẹp, user giao 30/09) — không tải thêm gì, và không tấm nào lặp với ảnh khác trên trang hub này. Là ảnh MƯỢN chứ không phải bài
+       Instagram thật; có bài thật thì thay mảng này. Xếp theo tông để 2 ô cạnh nhau không cùng màu. */
+    insta: ['home-beauty-category-01.jpg', 'home-beauty-occasion-01.jpg', 'home-beauty-category-02.jpg', 'home-beauty-spotlight.webp', 'home-beauty-category-04.jpg', 'home-beauty-occasion-02.jpg'],
+    about: { eyebrow:'Về thương hiệu', title:'Nhà hương thơm nước Anh Molton Brown', paras: [
+      'Ra đời tại Anh cách đây hơn nửa thế kỷ, Molton Brown luôn làm việc theo một cách: chọn những nguyên liệu thơm có cá tính rõ rệt, rồi giao cho các nhà pha chế hương biến chúng thành từng mùi hương riêng. Thương hiệu cam kết không thử nghiệm sản phẩm trên động vật.',
+      'Tại DAFC, bạn có thể chọn sữa tắm, kem dưỡng tay, nước hoa và các bộ quà tặng Molton Brown trong cùng một nơi.',
+    ] },
+  },
 };
 
 /* MENU_BRANDS viết tên kiểu wordmark (ZIMMERMANN, FERRAGAMO) còn PRODUCTS.brand
@@ -6670,6 +6785,34 @@ const PRODUCT_CATS = [
   ['Quần áo','Quần dài & quần shorts','Quần jeans'],     // 45 Quần jeans ống loe
   ['Quần áo','Áo khoác ngoài','Áo khoác ngắn'],          // 46 Áo khoác Rebellion
   ['Quần áo','Chân váy','Váy midi'],                     // 47 Chân váy midi tulle
+  // ── Molton Brown (04/10/2026) — nhãn lấy nguyên văn từ cây Làm đẹp của FILTER_CATS ──
+  ['Làm đẹp','Quà tặng','Set quà tặng'],    // 48 Bộ du lịch tắm gội The Revived Voyager
+  ['Làm đẹp','Quà tặng','Quà theo mùa & lễ hội'],    // 49 Cracker quà tặng The Woody Opulent
+  ['Làm đẹp','Quà tặng','Quà theo mùa & lễ hội'],    // 50 Cracker quà tặng The Woody Citrus
+  ['Làm đẹp','Chăm sóc tay','Kem dưỡng tay'],    // 51 Bộ chăm sóc tay Orange & Bergamot
+  ['Làm đẹp','Quà tặng','Set quà tặng'],    // 52 Bộ layering hương Delicious Rhubarb & Rose
+  ['Làm đẹp','Quà tặng','Quà theo mùa & lễ hội'],    // 53 Bộ quà Stocking Filler
+  ['Làm đẹp','Tắm & dưỡng thể','Sữa tắm'],    // 54 Sữa tắm Neon Amber 300ml
+  ['Làm đẹp','Quà tặng','Set quà tặng'],    // 55 Bộ đôi Re-charge Black Pepper
+  ['Làm đẹp','Quà tặng','Set quà tặng'],    // 56 Bộ chăm sóc cơ thể Floral & Green
+  ['Làm đẹp','Quà tặng','Set quà tặng'],    // 57 Bộ layering hương Coastal Cypress & Sea Fennel
+  ['Làm đẹp','Chăm sóc tay','Nước rửa tay dạng refill'],    // 58 Nước rửa tay refill Delicious Rhubarb & Rose 400ml
+  ['Làm đẹp','Tắm & dưỡng thể','Sữa tắm'],    // 59 Sữa tắm Fiery Pink Pepper 300ml
+  ['Làm đẹp','Tắm & dưỡng thể','Sữa tắm'],    // 60 Sữa tắm Infusing Eucalyptus 300ml
+  ['Làm đẹp','Chăm sóc tay','Kem dưỡng tay'],    // 61 Kem dưỡng tay Fiery Pink Pepper 40ml
+  ['Làm đẹp','Nước hoa','Set khám phá'],    // 62 Bộ nước hoa khám phá Woody & Aromatic EDP
+  ['Làm đẹp','Nước hoa','Nước hoa du lịch'],    // 63 Nước hoa Mesmerising Oudh Accord & Gold EDP 7,5ml
+  ['Làm đẹp','Nước hoa','Eau de Parfum'],    // 64 Nước hoa Re-Charge Black Pepper EDP
+  ['Làm đẹp','Hương thơm không gian','Tinh dầu khuếch tán refill'],    // 65 Tinh dầu khuếch tán refill Re-Charge Black Pepper 150ml
+  ['Làm đẹp','Nước hoa','Nước hoa du lịch'],    // 66 Nước hoa Tobacco Absolute EDP 7,5ml
+  ['Làm đẹp','Nước hoa','Nước hoa du lịch'],    // 67 Nước hoa Delicious Rhubarb & Rose EDP 7,5ml
+  ['Làm đẹp','Nước hoa','Eau de Parfum'],    // 68 Nước hoa Mesmerising Oudh Accord & Gold EDP
+  ['Làm đẹp','Nước hoa','Eau de Parfum'],    // 69 Nước hoa Fiery Pink Pepper EDP
+  ['Làm đẹp','Nước hoa','Eau de Parfum'],    // 70 Nước hoa Sunlit Clementine & Vetiver EDP
+  ['Làm đẹp','Nước hoa','Eau de Parfum'],    // 71 Nước hoa Delicious Rhubarb & Rose EDP
+  ['Làm đẹp','Chăm sóc tay','Nước rửa tay'],    // 72 Nước rửa tay Heavenly Gingerlily 300ml
+  ['Làm đẹp','Chăm sóc tay','Nước rửa tay'],    // 73 Nước rửa tay Coastal Cypress & Sea Fennel 300ml
+  ['Làm đẹp','Chăm sóc tay','Nước rửa tay'],    // 74 Bộ chăm sóc tay Coastal Cypress & Sea Fennel
 ];
 PRODUCTS.forEach((p, i) => { if (PRODUCT_CATS[i]) p.cat = PRODUCT_CATS[i]; });
 /* ── GIỚI TÍNH CỦA SẢN PHẨM (27/09/2026, user chốt phương án A) ─────────────────
@@ -6874,7 +7017,10 @@ const money = n => n.toLocaleString('en-US').replace(/,/g, ',') + 'đ';
    list "Tất cả …" + item + chevron (không lặp hàng tài khoản trong submenu).
    (Tab Nam/Nữ/Làm đẹp dùng lại kiểu tab của màn Search để chuyển 3 bộ nội dung.)
 ════════════════════════════════════════════════════════════════ */
-const MENU_BRANDS = ['A.P.C.','BALMAIN','Burberry','Christian Louboutin','DAFC','Dolce&Gabbana','Emporio Armani','FERRAGAMO','Gianvito Rossi','MCM','MessyWeekend','MISBHV','Montblanc','Moschino','Moschino Jeans','MSGM','Palm Angels','PAUL&SHARK','Santoni','Stand Oil','Stefano Ricci','TUMI','Versace','Versace Jeans Couture','ZIMMERMANN'];
+/* 04/10/2026 (lệnh user: *"nhớ tạo entry point của nó từ mục Thương hiệu trên subheader bằng thêm thương hiệu Molton Brown"*) — thêm
+   'Molton Brown' (đúng thứ tự chữ cái, giữa MISBHV và Montblanc). Danh sách này dùng chung cho cả 3 ngành (MENU_BRAND_SUB) và cho panel
+   mega "Thương hiệu" ở desktop; mỗi hãng bấm vào ra data-plp-brand -> trang của chính hãng, riêng Molton Brown ra HUB (BRAND_HUBS). */
+const MENU_BRANDS = ['A.P.C.','BALMAIN','Burberry','Christian Louboutin','DAFC','Dolce&Gabbana','Emporio Armani','FERRAGAMO','Gianvito Rossi','MCM','MessyWeekend','MISBHV','Molton Brown','Montblanc','Moschino','Moschino Jeans','MSGM','Palm Angels','PAUL&SHARK','Santoni','Stand Oil','Stefano Ricci','TUMI','Versace','Versace Jeans Couture','ZIMMERMANN'];
 const MENU_BRAND_SUB = { title:'Thương hiệu', all:'Tất cả thương hiệu', items:MENU_BRANDS, login:true };
 /* Nhóm "Bộ sưu tập mới" trong submenu Sản phẩm mới — DATA THẬT từ menu
    shop.dafc.com.vn (10/08/2026), dùng chung cho tab Nam & Nữ.
@@ -7283,6 +7429,9 @@ function goPdp(i) {
 
 function goPlp(mode) {
   plpMode = (mode && mode.type) ? mode : { type: 'brand' };
+  /* 04/10/2026 — ô của HUB thương hiệu (brandHubGo) mang sẵn bộ lọc: danh mục / cờ áp NGAY, thay hẳn bộ lọc cũ và khoảng giá cũ
+     (vào lưới của hãng từ một ô thì không được dính bộ lọc của lượt xem trước). Lối vào khác không mang `filters` nên giữ nguyên. */
+  if (mode && Array.isArray(mode.filters)) { plpFilters = [...mode.filters]; plpPriceMin = null; plpPriceMax = null; plpPricePend = { min: null, max: null }; }
   pruneFilters();   // ngành mới có thể không còn facet của nhãn đang áp
   /* Đổi danh sách = nội dung khác hẳn -> vị trí cuộn cũ vô nghĩa, xoá đi kẻo
      lượt back sau đó trả về một toạ độ của danh sách khác (xem SCROLL_MEM) */
@@ -7295,7 +7444,10 @@ function goPlp(mode) {
 /* PLP đang ở ngành làm đẹp? Nhận qua breadcrumb chứ không cần cờ riêng: mọi
    lối vào (menu tab Làm đẹp, submenu, hàng "Trang chủ làm đẹp") đều đẩy
    crumbs[0] = 'Làm đẹp'. Dùng chung cho danh sách sản phẩm và bộ lọc. */
-const isBeautyPlp = () => plpMode.type === 'category' && (plpMode.crumbs || [])[0] === 'Làm đẹp';
+/* 04/10/2026 — PLP THƯƠNG HIỆU của hãng làm đẹp (BRAND_PAGES[...].dept === 'beauty', hiện chỉ Molton Brown) cũng là PLP làm đẹp: panel
+   lọc phải ra cây Làm đẹp + facet Dung tích, và pruneFilters() không được rụng nhãn danh mục làm đẹp vừa chọn ở ô hub. */
+const isBeautyPlp = () => (plpMode.type === 'category' && (plpMode.crumbs || [])[0] === 'Làm đẹp')
+  || (plpMode.type === 'brand' && (BRAND_PAGES[brandKey(plpMode.brand)] || {}).dept === 'beauty');
 
 /* GIỚI TÍNH của PLP đang đứng — nhận qua ĐÚNG chỗ isBeautyPlp() nhận ngành hàng:
    crumbs[0] là dept (menu đẩy crumbs [menuTab] hoặc [menuTab, cat]).
@@ -7340,7 +7492,9 @@ function plpProducts() {
      So bằng chuỗi brand — cùng nguồn với facet Thương hiệu của bộ lọc. */
   if (plpMode.type === 'brand') {
     const b = plpBrandName();
-    return all.filter(({ p }) => p.brand === b);
+    /* 04/10/2026 — `scent` (ô dòng hương / chip của hub Molton Brown): tên SP có chứa từ đó, không phân biệt hoa thường. */
+    const sc = String(plpMode.scent || '').toLowerCase();
+    return all.filter(({ p }) => p.brand === b && (!sc || p.name.toLowerCase().includes(sc)));
   }
   const beauty = isBeautyPlp();
   return all.filter(({ p }) => (p.dept === 'beauty') === beauty);
@@ -7495,9 +7649,157 @@ function brandCatStrip(cats) {
     </div>`;
 }
 
+/* ═════════════════════════════════════════════════════════════════════════════
+   HUB THƯƠNG HIỆU (04/10/2026) — dữ liệu ở BRAND_HUBS, ý đồ + thứ tự khối xem chú thích đó.
+   Mọi ô bấm mang `data-bh-go` (chuỗi đích); wireBrandHub() nối. ĐÃ GỠ 04/10/2026: `data-bh-pdp` + `bhStars` (khối đánh giá bị bỏ).
+═════════════════════════════════════════════════════════════════════════════ */
+
+/* Đích của một ô hub -> lưới PLP của hãng. 'all' · 'cate:<nhãn>' · 'scent:<từ>' · 'flag:<nhãn cờ>'. */
+function brandHubGo(brand, go) {
+  const [kind, ...rest] = String(go || 'all').split(':');
+  const arg = rest.join(':');
+  const mode = { type: 'brand', brand, all: true, filters: (kind === 'cate' || kind === 'flag') ? [arg] : [] };
+  if (kind === 'scent') mode.scent = arg;
+  /* Gắn ảnh chụp plpMode của HUB vào entry lịch sử đang đứng (state cũ + `plp`) TRƯỚC khi sang lưới — popstate đọc nó để Back từ
+     lưới về đúng hub. replaceState chứ không pushState: không đẻ thêm entry. */
+  try { window.history.replaceState({ screen: 'plp', plp: { ...plpMode } }, ''); } catch (e) { /* file:// hoặc iframe chặn */ }
+  goPlp(mode);
+}
+
+/* Thẻ của dải Bán chạy nhất: thẻ PLP chuẩn, bỏ dòng hãng (cả trang đã là hãng đó), badge "Mới về" cho SP cờ New arrival. */
+const bhRailHTML = ids => ids.map(i => productCard(PRODUCTS[i], i, {
+  w: 'w-[170px] shrink-0', noColors: true, noBrand: true, tight: true, badge: PRODUCTS[i].tag === 'New arrival' ? 'Mới về' : ''
+})).join('');
+
+function screenBrandHub(B, H) {
+  /* Ô bộ sưu tập / khám phá: khuôn Y HỆT ô occasion của trang chủ (hmOccasions) — cả ô là một nút, chữ + CTA nằm trong ảnh trên mảng phủ.
+     CTA là <p> gạch chân chứ không phải <button> lồng trong button. */
+  const tile = it => `
+        <button data-bh-go="${it.go}" class="bh-tile press group text-left">
+          <div class="hm-cat-media bh-tile-media w-full overflow-hidden bg-secondary">
+            <img src="${A}${it.img}" alt="${it.title}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
+            <span class="hm-occ-scrim" aria-hidden="true"></span>
+            <div class="hm-occ-copy">
+              <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground">${it.title}</p>
+              <p class="t-multiline text-primary-foreground">${it.text}</p>
+              <p class="t-single text-primary-foreground underline underline-offset-2">${it.cta}</p>
+            </div>
+          </div>
+        </button>`;
+  const tabs = H.rail.tabs;
+  return `
+  <div class="w-full" data-scroller data-brand-hub="${B.name}">
+    <!-- promo banner slider — cùng khuôn màn brand -->
+    <div class="h-8 bg-primary overflow-hidden relative">
+      <div id="promoSlider" class="flex h-full transition-transform ease-in-out" style="transition-duration:.5s">
+        ${PROMO_MESSAGES.map(msg => `
+          <div class="w-full h-full shrink-0 flex items-center justify-center px-4">
+            <span class="promo-msg text-[12px] font-medium text-primary-foreground opacity-90 tracking-wide text-center">${msg}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    ${navBar()}
+
+    <div class="t-single flex gap-1 items-center px-4 py-2 text-muted-foreground">
+      <button data-nav="home" class="press">Trang chủ</button>
+      <span class="flex gap-1 items-center">
+        <span class="w-4 h-4 flex items-center justify-center"><span class="w-[3px] h-[3px] rounded-full bg-muted-foreground"></span></span>
+        <span class="text-foreground">${B.name}</span>
+      </span>
+    </div>
+
+    <!-- 1. TIÊU ĐỀ TRANG — chữ thay cho logo (hãng chưa có wordmark), cùng bậc .t-display-title như tiêu đề PLP -->
+    <div class="flex items-center px-4 py-2">
+      <h1 class="t-display-title flex-1 min-w-0 text-foreground truncate">${B.name}</h1>
+    </div>
+
+    <!-- 1b. VỀ THƯƠNG HIỆU — LÊN ĐẦU TRANG, canh TRÁI (lệnh user 04/10; trước là khối cuối trang, canh giữa). Đầu mục dùng chung hmSecHead (nhánh canh trái),
+         đoạn chữ bỏ text-center. Không reveal: nằm ngay dưới tiêu đề trang, trong màn hình đầu. -->
+    <div class="flex flex-col gap-4 pt-4 pb-4">
+      ${hmSecHead(H.about.title, '', 'h2', H.about.eyebrow, false, true)}
+      <div class="flex flex-col gap-4 px-4">
+        ${H.about.paras.map(t => `<p class="t-multiline text-foreground">${t}</p>`).join('')}
+      </div>
+    </div>
+
+    <!-- 2. DẢI DANH MỤC — khuôn dải 150x150 của trang thương hiệu (brandCatStrip), đích là lưới PLP của hãng -->
+    <div class="py-2 reveal">
+      <div class="drag-x flex gap-2 overflow-x-auto no-scrollbar px-4 pb-1">
+        ${H.cats.map(c => `
+          <button class="shrink-0 w-[150px] flex flex-col press group text-left" data-bh-go="${c.go}">
+            <div class="w-full aspect-square overflow-hidden bg-secondary">
+              <img src="${A}${c.img}" alt="${c.label}" class="w-full h-full object-cover lazy">
+            </div>
+            <div class="flex flex-col gap-0.5 px-1 py-2 h-10 justify-center">
+              <p class="t-single font-medium text-foreground truncate">${c.label}</p>
+            </div>
+          </button>`).join('')}
+      </div>
+    </div>
+
+    <!-- 3. BANNER — ảnh của hãng, chữ nằm TRONG ảnh (đúng như trang gốc); tỉ lệ theo ảnh để không cắt chữ -->
+    <a data-bh-go="${H.banner.go}" class="block w-full overflow-hidden bg-secondary cursor-pointer press reveal mt-4" style="aspect-ratio:${H.banner.rm}">
+      <img src="${A}${H.banner.m}" alt="${H.banner.alt}" class="w-full h-full object-cover lazy">
+    </a>
+
+    <!-- 4. ĐOẠN GIỚI THIỆU -->
+    <p class="t-multiline text-foreground text-center px-4 pt-6 reveal">${H.intro}</p>
+
+    <!-- 5. CHIP LỐI TẮT — lưới 2 cột như bản gốc ở khổ nhỏ -->
+    <div class="grid grid-cols-2 gap-2 px-4 pt-6 reveal">
+      ${H.chips.map(([label, go]) => `
+        <button data-bh-go="${go}" class="t-multiline h-11 px-2 border border-border bg-background text-foreground btn-o press flex items-center justify-center text-center">${label}</button>`).join('')}
+    </div>
+
+    <!-- 6. BÁN CHẠY NHẤT — 3 tab (hàng tab .acc-tab của trang Tài khoản) + dải thẻ PLP -->
+    ${hmSec(H.rail.title, hmLink('Xem tất cả', 'data-bh-go="all"'), `
+      <div class="flex flex-col gap-4">
+        <div id="bhTabs" role="tablist" class="drag-x flex gap-6 overflow-x-auto no-scrollbar border-b border-border px-4">
+          ${tabs.map((t, i) => `
+          <button role="tab" data-bh-tab="${i}"${i === 0 ? ' aria-current="true"' : ''} class="t-single acc-tab shrink-0 h-11 press" style="min-width:44px">${t.label}</button>`).join('')}
+        </div>
+        <div id="bhRail" class="drag-x flex gap-1 overflow-x-auto no-scrollbar px-4">${bhRailHTML(tabs[0].ids)}</div>
+      </div>`, 'h2', H.rail.eyebrow, false, true)}
+
+    <!-- 7. CÁC BỘ SƯU TẬP (6) -->
+    ${hmSec(H.collections.title, '', `<div class="bh-tiles drag-x no-scrollbar">${H.collections.items.map(tile).join('')}</div>`, 'h2', H.collections.eyebrow)}
+
+    <!-- 8. KHÁM PHÁ THÊM (3) -->
+    ${hmSec(H.discover.title, '', `<div class="bh-tiles drag-x no-scrollbar">${H.discover.items.map(tile).join('')}</div>`, 'h2', H.discover.eyebrow, true)}
+
+    <!-- 9. INSTAGRAM — thay khối "Khách hàng nói gì" (lệnh user 04/10): đúng khối hmInsta của trang chủ, bộ ảnh riêng của hãng. Đoạn "Về thương hiệu" đã lên mục 1b. -->
+    ${hmInsta(H.insta)}
+
+    ${footer()}
+  </div>`;
+}
+
+/* Nối sự kiện của hub: ô/nút đích, hàng tab của dải Bán chạy nhất. Gọi cuối wire(); không có hub thì thoát. */
+function wireBrandHub(root) {
+  const hub = root.querySelector('[data-brand-hub]');
+  if (!hub) return;
+  const brand = hub.dataset.brandHub, H = BRAND_HUBS[brand];
+  hub.querySelectorAll('[data-bh-go]').forEach(el => el.addEventListener('click', e => { e.preventDefault(); brandHubGo(brand, el.dataset.bhGo); }));
+  const tabs = hub.querySelectorAll('[data-bh-tab]'), rail = hub.querySelector('#bhRail');
+  tabs.forEach(t => t.addEventListener('click', () => {
+    if (t.hasAttribute('aria-current')) return;
+    tabs.forEach(x => { if (x === t) x.setAttribute('aria-current', 'true'); else x.removeAttribute('aria-current'); });
+    rail.innerHTML = bhRailHTML(H.rail.tabs[+t.dataset.bhTab].ids);
+    rail.scrollLeft = 0;
+    wireProductCards(rail);   // thẻ mới: ảnh lazy + bấm mở PDP / quick add
+    localizeNew(rail);        // EN: chuỗi vừa ghi (badge, tên SP) phải được dịch
+  }));
+}
+
 function screenPLP() {
   if (plpMode.type !== 'brand') return screenPLPList();
   const B = brandPage(plpBrandName());   // logo / hero / mô tả / dải danh mục của hãng
+  /* 04/10/2026 — hãng có HUB (BRAND_HUBS) mở hub; bấm ô / "Xem tất cả" trong hub mới vào lưới (plpMode.all). Ở lưới của hãng có hub:
+     bỏ hero + dải danh mục (hub đã có), breadcrumb thêm đoạn thứ 3 và đoạn giữa quay về hub. */
+  const H = BRAND_HUBS[B.name];
+  if (H && !plpMode.all) return screenBrandHub(B, H);
+  const hubCrumb = H ? (plpMode.scent || (plpMode.filters || [])[0] || 'Tất cả sản phẩm') : '';
   /* Badge thẻ đầu: đọc từ DATA (`p.preorder`) chứ không phải "thẻ số 0 thì New"
      — SP#1 là hàng pre-order, để "New" ở PLP thì bấm vào PDP lại thấy
      "Pre-order", 2 nơi nói 2 chuyện (yêu cầu user 17/08/2026). */
@@ -7526,15 +7828,15 @@ function screenPLP() {
          và đoạn CUỐI (tên thương hiệu) để mực chính vì đó là trang đang đứng. -->
     <div class="t-single flex gap-1 items-center px-4 py-2 text-muted-foreground">
       <button data-nav="home" class="press">Trang chủ</button>
-      ${[B.name].map(t => `
+      ${(H ? [[B.name, 'hub'], [hubCrumb, 'cur']] : [[B.name, 'cur']]).map(([t, k]) => `
         <span class="flex gap-1 items-center">
           <span class="w-4 h-4 flex items-center justify-center"><span class="w-[3px] h-[3px] rounded-full bg-muted-foreground"></span></span>
-          <span class="text-foreground">${t}</span>
+          ${k === 'hub' ? `<button data-bh-hub class="press">${t}</button>` : `<span class="text-foreground">${t}</span>`}
         </span>`).join('')}
     </div>
 
     <!-- ── Hero banner 390×217 (full-bleed) ── -->
-    ${B.hero ? `
+    ${(B.hero && !H) ? `
     <div class="relative w-full overflow-hidden bg-secondary" style="aspect-ratio:390/217">
       <img src="${A}${B.hero}" alt="${B.name}" class="w-full h-full object-cover lazy" style="object-position:${B.pos || '50% 18%'}">
     </div>` : ''}
@@ -7559,7 +7861,7 @@ function screenPLP() {
       </div>` : ''}
     </div>
 
-    ${brandCatStrip(B.cats)}
+    ${H ? '' : brandCatStrip(B.cats)}
 
     <!-- THANH LỌC MOBILE — cùng khuôn filter-bar/platform=mobile với màn danh mục
          (xem chú thích dài ở screenPLPList): hàng đếm + đổi mật độ nay nằm TRONG
@@ -10454,7 +10756,8 @@ function screenPDP6() {
 
 /* 02/10/2026 (lệnh user): trang chủ LÀM ĐẸP chỉ bày sản phẩm làm đẹp (dept:'beauty'), các ngành thời trang thì không lẫn hàng làm đẹp.
    Kho beauty không mang tag 'New arrival' nên ở Làm đẹp dải "Hàng mới về" lấy toàn bộ hàng beauty; dải "Đang giảm giá" chỉ còn món beauty có `off` (hiện chưa có → mục tự ẩn). */
-const hmDeptOk = p => (hmBeauty() ? p.dept === 'beauty' : p.dept !== 'beauty');
+/* 04/10/2026 — `noHome`: 27 SKU Molton Brown chỉ sống ở trang thương hiệu / PLP / tìm kiếm, không lên dải trang chủ (trang chủ đã chốt). */
+const hmDeptOk = p => !p.noHome && (hmBeauty() ? p.dept === 'beauty' : p.dept !== 'beauty');
 const hmNew   = () => PRODUCTS.map((p, i) => ({ p, i })).filter(({ p }) => hmDeptOk(p) && (hmBeauty() || p.tag === 'New arrival'));
 const hmSale  = () => PRODUCTS.map((p, i) => ({ p, i })).filter(({ p }) => hmDeptOk(p) && p.off);
 
@@ -10488,10 +10791,12 @@ const hmLink = (label, attrs) =>
    nay đã có nhãn nhỏ, mà nhãn nhỏ tự bật khuôn canh giữa. GIỮ tham số chứ không gỡ, vì
    "canh giữa mà không nhãn nhỏ" là một biến thể có thật của đầu mục và mới sống cách đây một
    lượt — gỡ rồi thêm lại là công cốc. Chốt chặn `${eyebrow ? … : ''}` thì GIỮ BẰNG MỌI GIÁ:
-   nó là thứ chặn cái `<p>` rỗng nếu ai đó gọi `center` lần nữa. */
-function hmSecHead(title, right = '', tag = 'h2', eyebrow = '', center = false) {
+   nó là thứ chặn cái `<p>` rỗng nếu ai đó gọi `center` lần nữa.
+   THAM SỐ `left` (04/10/2026, lệnh user: khối "Về thương hiệu" của trang Molton Brown lên đầu trang và canh TRÁI): cùng khuôn nhãn nhỏ / dòng
+   Libre nhưng canh trái, thay vì canh giữa. Chỉ có nghĩa khi khuôn đó đang bật (có eyebrow hoặc `center`); mặc định false nên mọi chỗ gọi cũ không đổi. */
+function hmSecHead(title, right = '', tag = 'h2', eyebrow = '', center = false, left = false) {
   return (eyebrow || center) ? `
-        <div class="flex flex-col items-center gap-2 text-center px-4">
+        <div class="flex flex-col ${left ? 'items-start' : 'items-center text-center'} gap-2 px-4">
           ${eyebrow ? `<p class="t-single text-muted-foreground">${eyebrow}</p>` : ''}
           <${tag} class="text-[18px] font-medium leading-7 text-foreground">${title}</${tag}>
           ${right || ''}
@@ -11536,8 +11841,10 @@ const HM_INSTA = {
   ],
 };
 
-function hmInsta() {
-  if (!HM_INSTA || !HM_INSTA.imgs.length) return '';
+/* `imgs` (04/10/2026): trang thương hiệu Molton Brown dùng LẠI khối này với bộ ảnh riêng của hãng (BRAND_HUBS[...].insta); không truyền thì dùng
+   HM_INSTA.imgs như trang chủ. Đầu mục, handle và khuôn lưới giữ nguyên. */
+function hmInsta(imgs = HM_INSTA.imgs) {
+  if (!HM_INSTA || !imgs.length) return '';
   return `
     <!-- KHUÔN = nhánh eyebrow của hmSec bản mobile (gap-4 mt-10 pb-6, đầu mục px-4), chỉ
          khác ở chỗ DẢI ẢNH tràn mép nên khung ngoài không mang px-4 — đầu mục mang.
@@ -11559,7 +11866,7 @@ function hmInsta() {
            HM_INSTA.imgs: ban nay hien het 6 o cung luc nen khong co nut lat trang, va
            slice la cho de neu sau nay muon them nut thi doi mot dong. -->
       <div class="hm-insta">
-        ${HM_INSTA.imgs.slice(0, HM_INSTA.per).map(img => `
+        ${imgs.slice(0, HM_INSTA.per).map(img => `
         <div class="hm-insta-item overflow-hidden bg-secondary">
           <img src="${A}${img}" alt="DAFC ${HM_INSTA.handle}" class="w-full h-full object-cover lazy">
         </div>`).join('')}
@@ -12127,23 +12434,42 @@ function pruneVouchers() {
 
    ⚠ `SHIP_FAST_FEE` PHẢI KHỚP con số in trong nhãn `'Giao hàng nhanh - 25,000đ'`.
    Nhãn đó KHÔNG dựng từ hằng số này vì bảng i18n tra theo CHUỖI TIẾNG VIỆT CHÍNH XÁC —
-   nội suy vào là mất bản EN. Đổi phí thì phải sửa CẢ HAI chỗ (và cả dòng i18n). */
+   nội suy vào là mất bản EN. Đổi phí thì phải sửa CẢ HAI chỗ (và cả dòng i18n).
+
+   04/10/2026 — BỐN đường về 0đ: thêm "chưa chọn phương thức" ở dòng đầu. Trước đây tổng
+   cộng thẳng `ckShipFast` nên khách bấm "Giao hàng nhanh" mà chưa xác nhận thì tổng đã
+   +25.000 trong khi dòng phí còn ghi "chưa tính" — hai con số lệch nhau. Nay phí và tổng
+   cùng đọc MỘT mốc: ckShipChosen(). */
 const SHIP_FAST_FEE = 25000;
 function ckShipFee() {
   if (ckMode === 'pickup') return 0;
+  if (!ckShipChosen()) return 0;
   if (!ckShipFast) return 0;
   if (activeVouchers().some(v => v.type === 'ship')) return 0;
   return SHIP_FAST_FEE;
 }
-/* "Đã chọn xong phương thức vận chuyển?" — mốc là bước ĐÃ XÁC NHẬN, không phải
-   `ckShipFast` (biến đó có giá trị mặc định false ngay từ đầu nên không nói được gì).
-   Bước "Phương thức vận chuyển" là section index 1 và nút Xác nhận của nó mang
-   `data-next="2"`, mà `ckMaxStep = Math.max(ckMaxStep, ckStep)` — nên xác nhận xong
-   là `ckMaxStep >= 2`. Quay lại sửa bước đó thì ckMaxStep GIỮ NGUYÊN, phí vẫn hiện,
-   đúng ý (đã biết rồi thì đừng giấu lại).
+/* "Đã chọn phương thức vận chuyển?" — 04/10/2026 (lệnh user: "khi khách điền xong thông tin
+   vận chuyển và chọn phương thức thì mình show luôn") nên có HAI đường tới true:
+     · khách BẤM một dòng ở bước Phương thức vận chuyển (ckShipPicked) — hiện NGAY, chưa cần
+       bấm Xác nhận; điều kiện kèm `ckMaxStep >= 1` = bước Thông tin giao hàng đã xong;
+     · hoặc bước đó ĐÃ XÁC NHẬN (`ckMaxStep >= 2`) dù khách chỉ để nguyên dòng chọn sẵn
+       (Giao hàng thông thường) — bấm Xác nhận mà không bấm dòng nào cũng là đã chọn.
+   Mốc không phải `ckShipFast` (biến đó có giá trị mặc định false ngay từ đầu nên không nói
+   được gì). Bước "Phương thức vận chuyển" là section index 1 và nút Xác nhận của nó mang
+   `data-next="2"`, mà `ckMaxStep = Math.max(ckMaxStep, ckStep)` — nên xác nhận xong là
+   `ckMaxStep >= 2`. Quay lại sửa bước đó thì ckMaxStep GIỮ NGUYÊN, phí vẫn hiện, đúng ý
+   (đã biết rồi thì đừng giấu lại).
    Luồng "Nhận tại cửa hàng" ít hơn một bước nên không bao giờ true — nhánh
    "Tại cửa hàng" lo phần hiển thị. */
-function ckShipChosen() { return ckMode !== 'pickup' && ckMaxStep >= 2; }
+function ckShipChosen() { return ckMode !== 'pickup' && (ckMaxStep >= 2 || (ckMaxStep >= 1 && ckShipPicked)); }
+/* Chữ ở dòng "Phí vận chuyển" của khối tóm tắt đơn (checkout) — MỘT nơi cho cả 3 chỗ in
+   (khối tóm tắt, sheet Giỏ hàng, paintCheckout vẽ lại). Chưa chọn thì in "--" (hai gạch
+   ngang đúng như user ghi) chứ không còn "Sẽ được tính sau". */
+function ckShipText() {
+  if (ckMode === 'pickup') return 'Tại cửa hàng';
+  if (!ckShipChosen()) return '--';
+  return ckShipFee() > 0 ? vndCom(ckShipFee()) : 'Miễn phí';
+}
 
 function rewardAmount(kind) {
   const sub = cartSubtotal();
@@ -12457,8 +12783,10 @@ function dafcRewards() {
     const on = cartReward === id;
     return `
     <div class="opt ${on ? 'on' : ''} border ${on ? 'border-border-5' : 'border-border'} rounded-xs" data-reward-card="${id}">
-      <button class="w-full flex gap-2 items-start px-3 py-2 press text-left" data-reward="${id}">
-        <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border-2 ${on ? 'border-primary' : 'border-border'} flex items-center justify-center shrink-0">
+      <!-- 03/10/2026 (user: "các ô chọn ưu đãi dafc tăng padding top bottom từ 8 lên 12" + khung Figma 808:146543 của user): py-2 (8) → py-3 (12); chữ tên lựa chọn t-lead 14/20 → t-single 12/16 theo khung;
+           dấu radio bỏ mt-0.5 — nó chỉ để canh với dòng 20 của chữ 14/20, còn chữ 16 cao đúng bằng radio 16 nên tự thẳng hàng (cao ô = 12 + 16 + 12 + viền 2 = 42, đúng khung). -->
+      <button class="w-full flex gap-2 items-start px-3 py-3 press text-left" data-reward="${id}">
+        <span class="radio ${on ? 'on' : ''} w-4 h-4 rounded-full border-2 ${on ? 'border-primary' : 'border-border'} flex items-center justify-center shrink-0">
           <span class="radio-dot text-primary-foreground flex items-center justify-center">${I.tick}</span>
         </span>
         <!-- 20/09/2026 (đồng bộ từ desktop, theo thiết kế user): tên lựa chọn lên
@@ -12469,7 +12797,7 @@ function dafcRewards() {
              Bản mobile KHÔNG dính lỗi chữ hoa của desktop (nút ở đây không mang
              .btn-o nên không rơi vào rule typo nút) — chỉ cần đồng bộ cỡ/độ đậm. -->
         <span class="flex-1 min-w-0 flex flex-col gap-1">
-          <span class="t-lead block dk-reward-name text-foreground-alt">${title}</span>
+          <span class="t-single block dk-reward-name text-foreground-alt">${title}</span>
           ${sub ? `<span class="t-single block text-muted-foreground">${sub}</span>` : ''}
         </span>
       </button>
@@ -12785,7 +13113,8 @@ function discountPanel() {
          với cụm tiền, đứng NGAY DƯỚI các dòng giảm giá (không khe). ĐẢO quyết định
          18/09 ("dòng điểm thưởng đi sau Tổng cộng") — khung mới xếp nó thành dòng
          cuối của bảng tiền, đọc như một con số nữa của đơn. Giống hệt desktop. -->
-        <div class="py-4 flex flex-col gap-4">
+        <!-- 03/10/2026 (user: "tóm tắt đơn hàng ở mobile update lại theo kích thước của tôi", khung Figma 808:146543): đệm TRÊN của cụm [bảng tiền + ô mã] 16 → 0 (py-4 → pb-4) — dòng tiền đầu tiên đã có đệm 8 của chính nó. -->
+        <div class="pb-4 flex flex-col gap-4">
         <div id="discountLines" class="flex flex-col">${discountLinesHTML()}</div>
 
     <!-- 13/09/2026 — ĐẢO THỨ TỰ theo brief PDF trang 25 ("Flow trên mobile đoạn
@@ -12846,7 +13175,8 @@ function discountPanel() {
         <span id="cartTotal" class="t-lead font-medium text-foreground">${vndCom(cartTotalNow())}</span>
       </div>
   
-        <div id="cartCta" class="flex flex-col gap-4">
+        <!-- 03/10/2026 (khung Figma 808:146543 của user): khe giữa dòng điểm thưởng và nút Đặt hàng 16 → 8 (gap-4 → gap-2). -->
+        <div id="cartCta" class="flex flex-col gap-2">
         <p class="t-multiline text-secondary-foreground">${ckAuth
           ? `Hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`
           : `<button data-nav="login" class="underline font-medium text-foreground press">Đăng nhập</button> và hoàn tất đơn hàng để nhận ngay <b id="cartPointsVal" class="font-bold">${rewardPointsEarned().toLocaleString('vi-VN')}</b> điểm thưởng`}</p>
@@ -12860,7 +13190,8 @@ function discountPanel() {
            hơn nên theo lệnh, ghi lại đây để biết mình đang lệch brief chỗ nào.
            Hook CSS vẫn là id riêng #pbhAcc nên dời chỗ không làm trật rule nào.
            (LƯU Ý: comment này nằm TRONG template literal — KHÔNG dùng backtick.) -->
-      <div id="pbhAcc" class="acc dk-sum-acc pt-3">
+      <!-- 03/10/2026 (khung Figma 808:146543 của user): đệm trên của "Bạn có phiếu mua hàng?" 12 → 0 — bỏ pt-3 VÀ đặt padding-top 0 ở rule .dk-sum-acc (rule cũng cấp 12, hai nguồn cho cùng một số). -->
+      <div id="pbhAcc" class="acc dk-sum-acc">
         <!-- 24/09/2026 — VE DUNG KHUON ACCORDION CUA CUM THONG TIN PDP (cung lenh voi
              ban desktop). Lay tu [data-pdp-acc] o CHINH FILE NAY: cao h-14 (56) · nhan
              t-multiline text-foreground KHONG font-medium · icon giu nguyen accIco tho
@@ -13474,11 +13805,6 @@ function screenLOGIN() {
    đơn mẫu trong ORDERS — nên đổi tên là đổi cả 4. KHAI GIỐNG desktop.html. */
 const SHIP_NAME_STD = 'Giao hàng tiêu chuẩn', SHIP_NAME_FAST = 'Giao hàng hỏa tốc';
 const SHIP_ETA_STD = 'Dự kiến giao hàng từ 14/07 - 18/07', SHIP_ETA_FAST = 'Dự kiến giao hàng trước 18:00 ngày 14/07';
-/* 02/10/2026 (lệnh user: "sửa luôn ngày dự kiến ở màn hoàn tất") — GIÁ TRỊ của dòng "Dự kiến giao" (và "Sẵn sàng nhận" ở luồng nhận
-   tại cửa hàng) trên màn Hoàn tất, CÙNG mốc ngày với hai SHIP_ETA_* ở trên. Trước đây màn Hoàn tất cứng "12 – 16/08" / "Từ 12/08" —
-   lệch hẳn 14/07 – 18/07 mà checkout vừa hứa. Giao hàng thì theo ĐÚNG phương thức của đơn vừa đặt (tiêu chuẩn: khoảng ngày; hỏa
-   tốc: trước 18:00 ngày đầu). Nhận tại cửa hàng lấy mốc đầu của khoảng giao. Đổi ngày demo = sửa hai SHIP_ETA_* ở trên VÀ ba hằng này (5 chuỗi). KHAI GIỐNG desktop.html. */
-const SHIP_DONE_STD = '14/07 - 18/07', SHIP_DONE_FAST = 'Trước 18:00 ngày 14/07', PICKUP_READY = 'Từ 14/07';
 
 /* Rich radio: label + mô tả phụ */
 /* Figma "Rich Radio Group": thẻ p12 r2 viền 1px — #e5e5e5 thường, #262626 khi
@@ -13886,7 +14212,7 @@ function screenCHECKOUT() {
      nên quay lại giỏ rồi vào lại KHÔNG mất dữ liệu đã nhập.
      Guard dưới đây vẫn cần cho chế độ nhận tại cửa hàng: chưa chọn cửa hàng thì
      không được coi bước nào là xong. */
-  if (ckMode === 'pickup' && !ckStore) { ckStep = 0; ckMaxStep = 0; }
+  if (ckMode === 'pickup' && !ckStore) { ckStep = 0; ckMaxStep = 0; ckShipPicked = false; }
 
   /* Brief PDF trang 31: "Khi đã log in bỏ mục Đăng nhập tài khoản UserOne, show
      thẳng default info" — khách vãng lai vẫn thấy khối nhắc điểm thưởng như cũ,
@@ -14285,10 +14611,13 @@ function screenCHECKOUT() {
       ${row('Tạm tính', vndCom(cartSubtotal()))}
       ${cartDiscountTotal() > 0 ? row('Giảm giá', '-' + vndCom(cartDiscountTotal())) : ''}
       <!-- Dựng thẳng thay vì qua row(): cần id để paintCheckout vẽ lại sau khi
-           chọn xong phương thức vận chuyển. -->
+           chọn xong phương thức vận chuyển.
+           04/10/2026 (lệnh user: "có cái chi phí giao hàng sửa lại là phí vận chuyển, bên giá trị thì để --, khi khách điền xong
+           thông tin vận chuyển và chọn phương thức thì mình show luôn") — nhãn "Giao hàng" -> "Phí vận chuyển"; chưa chọn thì
+           giá trị là "--" (chữ mờ); bấm chọn phương thức là hiện phí ngay, xem ckShipChosen() / ckShipText(). -->
       <div class="h-9 flex items-center justify-between">
-        <span class="t-multiline text-foreground">${ckMode === 'pickup' ? 'Nhận hàng' : 'Giao hàng'}</span>
-        <span id="ckShipVal2" class="t-multiline ${ckMode === 'pickup' || ckShipChosen() ? 'text-foreground' : 'text-muted-foreground'}">${ckMode === 'pickup' ? 'Tại cửa hàng' : (ckShipChosen() ? (ckShipFee() > 0 ? vndCom(ckShipFee()) : 'Miễn phí') : 'Sẽ được tính sau')}</span>
+        <span class="t-multiline text-foreground">${ckMode === 'pickup' ? 'Nhận hàng' : 'Phí vận chuyển'}</span>
+        <span id="ckShipVal2" class="t-multiline ${ckMode === 'pickup' || ckShipChosen() ? 'text-foreground' : 'text-muted-foreground'}">${ckShipText()}</span>
       </div>
       <div class="ck-total h-14 flex items-center justify-between">
         <!-- 02/10/2026 (lệnh user: "trong cái tóm tắt đơn hàng ở check out bổ sung (đã bao gồm VAT)") — ghi chú VAT
@@ -14375,11 +14704,12 @@ function screenCHECKOUT() {
             <!-- 23/09/2026 — BA TRẠNG THÁI thay vì hai (lệnh user: chọn phương thức
                  xong mới hiện chi phí):
                    nhận tại cửa hàng      -> Tại cửa hàng
-                   chưa xác nhận phương thức -> Sẽ được tính sau (chữ mờ)
-                   đã xác nhận            -> Miễn phí / 25,000đ (chữ chính) -->
+                   chưa chọn phương thức  -> -- (chữ mờ; trước 04/10 là "Sẽ được tính sau")
+                   đã chọn                -> Miễn phí / 25,000đ (chữ chính)
+                 04/10/2026: nhãn "Giao hàng" -> "Phí vận chuyển"; "đã chọn" = khách BẤM một phương thức (không cần Xác nhận). -->
             <div class="h-9 flex items-center justify-between">
-              <span class="t-multiline text-foreground">${ckMode === 'pickup' ? 'Nhận hàng' : 'Giao hàng'}</span>
-              <span id="ckShipVal" class="t-multiline ${ckMode === 'pickup' || ckShipChosen() ? 'text-foreground' : 'text-muted-foreground'}">${ckMode === 'pickup' ? 'Tại cửa hàng' : (ckShipChosen() ? (ckShipFee() > 0 ? vndCom(ckShipFee()) : 'Miễn phí') : 'Sẽ được tính sau')}</span>
+              <span class="t-multiline text-foreground">${ckMode === 'pickup' ? 'Nhận hàng' : 'Phí vận chuyển'}</span>
+              <span id="ckShipVal" class="t-multiline ${ckMode === 'pickup' || ckShipChosen() ? 'text-foreground' : 'text-muted-foreground'}">${ckShipText()}</span>
             </div>
           </div>
           <div class="h-px bg-border-1"></div>
@@ -14515,19 +14845,10 @@ function paintCheckout(root) {
      tổng cũ — đã đo được đúng lỗi này ngay khi dựng tính năng.
      Cập nhật theo id, có guard: bản mobile có THÊM một cặp trong #ckBagSheet
      (`ckShipVal2` / `ckTotalVal`), bản desktop chỉ có một cặp.
-     `localizeNew` để chuỗi vừa ghi được dịch nếu đang ở bản EN. */
-  const shipTxt = ckMode === 'pickup'
-    ? 'Tại cửa hàng'
-    : (ckShipChosen() ? (ckShipFee() > 0 ? vndCom(ckShipFee()) : 'Miễn phí') : 'Sẽ được tính sau');
-  const shipMuted = !(ckMode === 'pickup' || ckShipChosen());
-  root.querySelectorAll('#ckShipVal, #ckShipVal2').forEach(el => {
-    el.textContent = shipTxt;
-    el.classList.toggle('text-muted-foreground', shipMuted);
-    el.classList.toggle('text-foreground', !shipMuted);
-    localizeNew(el);
-  });
-  const totalEl = root.querySelector('#ckTotalVal');
-  if (totalEl) totalEl.textContent = vndCom(ckTotalNow());
+     `localizeNew` để chuỗi vừa ghi được dịch nếu đang ở bản EN.
+     04/10/2026: phần vẽ này tách thành paintCkMoney() ngay dưới hàm — bấm chọn phương thức
+     (chưa Xác nhận) cũng phải vẽ lại đúng hai con số này mà KHÔNG đụng tới các section. */
+  paintCkMoney(root);
   /* 02/10/2026 — đổi bước thì thanh dính đáy của checkout (#ckStickyCta) phải hiện / ẩn theo, mà đổi bước không bắn sự kiện cuộn
      nào. Gọi lại lần nữa sau khi accordion trượt xong vì khối nút gốc #ckCta đang đổi chiều cao / vị trí. Hàm do wire() gắn
      (chưa có ở lần paintCheckout đầu tiên — đúng, lúc đó wire() tự gọi sau 60ms). */
@@ -14537,107 +14858,74 @@ function paintCheckout(root) {
   }
 }
 
+/* Vẽ lại ĐÚNG hai con số của khối tóm tắt đơn: dòng "Phí vận chuyển" (cả bản trong sheet Giỏ hàng) + Tổng cộng.
+   Tách khỏi paintCheckout 04/10/2026 để bấm chọn phương thức vận chuyển gọi riêng được. */
+function paintCkMoney(root) {
+  const shipMuted = !(ckMode === 'pickup' || ckShipChosen());
+  root.querySelectorAll('#ckShipVal, #ckShipVal2').forEach(el => {
+    el.textContent = ckShipText();
+    el.classList.toggle('text-muted-foreground', shipMuted);
+    el.classList.toggle('text-foreground', !shipMuted);
+    localizeNew(el);
+  });
+  const totalEl = root.querySelector('#ckTotalVal');
+  if (totalEl) totalEl.textContent = vndCom(ckTotalNow());
+}
+
 /* ════════════════════════════════════════════════════════════════
    SCREEN: DONE
 ════════════════════════════════════════════════════════════════ */
 function screenDONE() {
-  /* Đơn nhận tại cửa hàng thì 2 dòng cuối nói về cửa hàng thay vì vận chuyển */
-  const st = storeInfo(ckStore);
-  const oid = ckOrderId || 'DAFC102939';   // mã sinh lúc bấm Đặt hàng (placeOrder)
-  /* Giỏ hỗn hợp tách hai đơn con (01/10/2026): hiện CẢ HAI mã, xếp dọc, canh phải như mọi giá trị của bảng. */
-  const oids = ckOrderIds.length ? ckOrderIds : [oid];
-  const oidCell = oids.length > 1 ? oids.map(i => `<span class="block text-right">${i}</span>`).join('') : oid;
-  const total  = ckOrderTotal || vndCom(cartSubtotal());   // tổng đã chốt lúc đặt hàng
-  const points = ckOrderPoints || rewardPointsEarned().toLocaleString('vi-VN');
-  /* Quà đã chốt lúc đặt hàng; vào thẳng màn này mà chưa đặt (demo) thì lấy tạm từ giỏ */
-  const gifts = ckOrderGifts.length ? ckOrderGifts : activeGifts().map(pk => ({ pk, g: giftOf(pk) }));
-  /* Đơn có hàng pre-order: thêm 1 dòng ngày nhận riêng — ngày chốt lúc đặt hàng
-     (ckOrderPre); vào thẳng màn này chưa đặt (demo) thì lấy tạm từ giỏ như gifts. */
-  const pre = ckOrderPre || (cartSelected().find(c => c.preorder) || {}).preorder || '';
-  /* Email hiện trên màn hoàn tất: ưu tiên cái đã chốt lúc đặt, rồi tới ô đang
-     gõ, rồi tới email tài khoản. Vào thẳng màn này để xem (demo) thì vẫn có chữ. */
-  const doneEmail = ckOrderEmail || ckEmail || (ckAuth ? PROFILE.email : '');
-  /* 02/10/2026 — phương thức + phí giao đọc từ ĐƠN VỪA ĐẶT (đơn đầu, ORDERS đã unshift ở placeOrder) chứ không từ cờ ckShipFast: cờ đó
-     không được reset khi "Tiếp tục mua sắm". Chưa đặt gì (vào thẳng màn này để xem demo) thì rơi về cờ + "Miễn phí" như cũ. Trước lượt
-     này dòng "Vận chuyển" cứng "Miễn phí" nên đơn giao hỏa tốc (25.000đ) vẫn ghi miễn phí dù Tổng cộng đã cộng phí. */
-  const o0 = ORDERS.find(x => x.id === (ckOrderIds[0] || ckOrderId));
-  const fastShip = o0 ? o0.method === SHIP_NAME_FAST : ckShipFast;
-  const shipVal = o0 && o0.ship && o0.ship !== 'Miễn phí' ? vndCom(vndNum(o0.ship)) : 'Miễn phí';
-  const rows = ckMode === 'pickup'
-    ? [['Mã đơn hàng', oidCell],['Tổng cộng', total],['Nhận tại', st ? st.name : 'Cửa hàng DAFC'],['Sẵn sàng nhận', PICKUP_READY]]
-    : [['Mã đơn hàng', oidCell],['Tổng cộng', total],['Vận chuyển', shipVal],['Dự kiến giao', fastShip ? SHIP_DONE_FAST : SHIP_DONE_STD]];
-  if (pre) rows.push(['Hàng pre-order', `Nhận dự kiến ${pre}`]);
+  /* 03/10/2026 (lệnh user, kèm ảnh trang đặt hàng thành công của website DAFC: "trang đặt hàng thành công thì giữ layout đơn giản như
+     hiện tại của website dafc nhé"; rồi "bạn chỉ cần theo nội dung k cần theo sát hình brief") — màn Hoàn tất chỉ còn NỘI DUNG của trang
+     website: tiêu đề → mã đơn → một đoạn cảm ơn (đúng chữ của website, gồm "quý khách") → nút "Tiếp tục mua sắm", cộng một liên kết
+     chữ "Theo dõi đơn hàng" (lối vào theo dõi đơn của brief trang 38; website không có nên chỉ để dạng chữ gạch chân, không phải nút).
+     KHÔNG bê hình của website (vòng tròn nâu + túi, chữ hoa, màu nâu): vòng tick + confetti cũ giữ nguyên, kiểu chữ theo hệ dự án.
+     ĐÃ GỠ khỏi màn này (thông tin vẫn nằm ở Chi tiết đơn): chữ "Xác nhận" trên tiêu đề, bảng Tổng cộng / Vận chuyển / Dự kiến giao /
+     Hàng pre-order, quà tặng kèm đơn, điểm thưởng, ô email + tải hoá đơn, lời mời tạo tài khoản của khách vãng lai. Bản cũ nguyên
+     văn: _notes/BACKUP-MAN-HOAN-TAT-TRUOC-DON-GIAN-2026-10-03.md.
+     Cùng ngày user báo thêm: "màn kết quả thanh toán ở mobile đang thiếu header footer và lặp lại mã đơn hàng 2 lần" ⇒ mobile có thêm
+     header + footer và đơn tách chỉ in MÃ GỐC một dòng.
+     04/10/2026 (user: "header của trang thanh toán thành công là header mặc định luôn á, header của homepage") ⇒ header của màn này là
+     navBar() MẶC ĐỊNH y như trang chủ (burger · tìm kiếm · logo · tài khoản · giỏ), không còn header rút gọn chỉ có logo giữa. */
+  const oid = ckOrderId || 'DAFC102939';   // mã GỐC sinh lúc bấm Đặt hàng (placeOrder); đơn tách có thêm hậu tố -01 / -02 ở ckOrderIds
+  /* Giỏ hỗn hợp tách hai đơn con (01/10/2026): màn này in MÃ GỐC đúng MỘT lần (03/10/2026 — mỗi đơn con một dòng bị user báo là "lặp lại
+     mã đơn hàng 2 lần"), cùng mã gốc màn cổng thanh toán đang in; hai mã -01 / -02 xem ở Chi tiết đơn. Câu giải thích bên dưới nói đơn đã tách. */
+  const split = ckOrderIds.length > 1;
   return `
   <div class="w-full relative" data-scroller>
     <div id="confettiHost" class="absolute inset-x-0 top-0 h-full pointer-events-none overflow-hidden z-10"></div>
-    <div class="flex flex-col items-center justify-center min-h-full gap-7 px-8 py-10 bg-background relative z-20">
-      <div class="flex flex-col items-center gap-5 text-center">
-        <div id="ring" class="w-[72px] h-[72px] rounded-full flex items-center justify-center border-[1.5px] border-primary">
-          <svg width="38" height="38" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="9.5" stroke="var(--general-primary)" stroke-width="1.2"/>
-            <path id="tick" d="m7.5 12.3 3 3 6-6.4" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+    <!-- 03/10/2026 (user: "màn kết quả thanh toán ở mobile đang thiếu header footer"): thêm header + footer. 04/10/2026 (user: "header của
+         trang thanh toán thành công là header mặc định luôn á, header của homepage"): header là navBar() mặc định như trang chủ. Cả hai nằm
+         TRONG lớp z-20 nền trắng như thân cũ, nên confetti vẫn ở phía sau lớp này như trước (mobile chưa bao giờ nhìn thấy confetti, giữ
+         nguyên hiện trạng). -->
+    <div class="relative z-20 bg-background">
+      ${navBar()}
+      <div class="flex flex-col items-center gap-7 px-8 py-12">
+        <div class="flex flex-col items-center gap-5 text-center">
+          <div id="ring" class="w-[72px] h-[72px] rounded-full flex items-center justify-center border-[1.5px] border-primary">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9.5" stroke="var(--general-primary)" stroke-width="1.2"/>
+              <path id="tick" d="m7.5 12.3 3 3 6-6.4" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="rise flex flex-col items-center gap-3">
+            <h2 class="t-display-title font-medium text-foreground">Đặt hàng thành công</h2>
+            <p class="t-lead text-foreground">Đơn hàng #${oid}</p>
+            <p class="t-multiline text-muted-foreground">Cảm ơn quý khách đã lựa chọn mua sắm tại DAFC. Quý khách vui lòng truy cập email để kiểm tra chi tiết hoá đơn đặt hàng.</p>
+            ${split ? `<p class="t-multiline text-muted-foreground">Đơn có cả hàng có sẵn và hàng đặt trước nên được tách thành 2 đơn.</p>` : ''}
+          </div>
         </div>
-        <div class="rise">
-          <p class="t-micro tracking-[0.22em] text-muted-foreground mb-1.5">Xác nhận</p>
-          <h2 class="t-display-title font-medium text-foreground mb-2">Đặt hàng thành công</h2>
-          <p class="t-multiline text-muted-foreground">Đơn hàng đang được xử lý.<br>Cảm ơn bạn đã tin tưởng mua sắm.</p>
+
+        <div class="w-full flex flex-col items-center gap-2.5 rise">
+          <button data-nav="plp" data-reset class="t-multiline w-full text-primary-foreground font-semibold py-3.5 rounded-xs tracking-wider bg-primary btn-p press">Tiếp tục mua sắm</button>
+          <!-- 22/09/2026: theo dõi ĐƠN VỪA ĐẶT (ckOrderId, placeOrder đã unshift vào ORDERS nên
+               trackLookup tìm thấy); trước in cứng DAFC103015 = đơn seed đặt trước 05/09.
+               Rơi về mã seed khi mở màn này mà chưa đặt gì (demo). 03/10/2026: nút viền → liên kết chữ gạch chân. -->
+          <button data-track-open="${ckOrderIds[0] || ckOrderId || 'DAFC103015'}" class="t-multiline underline text-foreground py-3 press">Theo dõi đơn hàng</button>
         </div>
       </div>
-
-      <div class="w-full rounded-xs overflow-hidden border border-border rise">
-        ${rows.map(([l, v]) => `
-          <div class="t-multiline flex justify-between px-4 py-3">
-            <span class="text-muted-foreground">${l}</span><span class="font-medium text-foreground">${v}</span>
-          </div>`).join('')}
-      </div>
-
-      ${oids.length > 1 ? `<p class="t-single w-full text-muted-foreground rise">Đơn có cả hàng có sẵn và hàng đặt trước nên được tách thành 2 đơn.</p>` : ''}
-
-      <!-- Quà của đơn — chốt lúc bấm Đặt hàng (giỏ bị dọn rỗng ngay sau đó nên
-           không thể tính lại từ giỏ). Dùng chung khuôn dòng quà của màn Thanh toán. -->
-      ${gifts.length ? `
-      <div class="w-full flex flex-col gap-2 rise">
-        <div class="flex items-baseline justify-between gap-2">
-          <p class="t-multiline font-medium text-foreground">Quà tặng kèm đơn</p>
-          <p class="text-[12px] text-muted-foreground shrink-0">${gifts.length} quà</p>
-        </div>
-        <div class="w-full rounded-xs border border-border overflow-hidden flex flex-col">
-          ${gifts.map((x, i) => `<div class="px-4 py-3 ${i ? 'border-t border-border-1' : ''}">${giftSummaryRow(x.pk, x.g)}</div>`).join('')}
-        </div>
-      </div>` : ''}
-      <div class="t-multiline flex items-center gap-2 text-muted-foreground w-full px-4 py-3 rounded-xs bg-accent-0 rise">
-        ${I.gift}<span>Bạn nhận được <strong class="text-foreground-alt">${points} điểm thưởng</strong> từ đơn hàng này</span>
-      </div>
-
-      <!-- XÁC NHẬN QUA EMAIL + HOÁ ĐƠN (11/09/2026). Trước lượt này màn hoàn tất
-           không nói một chữ nào về email, trong khi đó là thứ người mua đi tìm
-           đầu tiên sau khi đặt xong. Email lấy từ ckOrderEmail (chốt lúc đặt). -->
-      <div class="w-full flex flex-col gap-2 px-4 py-3 rounded-xs bg-accent-0 rise">
-        <p class="t-multiline text-secondary-foreground">${doneEmail ? `Đã gửi xác nhận đơn hàng tới <span class="font-medium text-foreground">${doneEmail}</span>.` : 'Xác nhận đơn hàng đã được gửi tới email của bạn.'}</p>
-        <button id="dlInvoice" class="t-multiline self-start underline font-medium text-foreground press">Tải hoá đơn (PDF)</button>
-      </div>
-
-      <!-- KHÁCH VÃNG LAI: mời tạo tài khoản (11/09/2026). Đặt SAU khối thông tin
-           đơn, TRƯỚC hai nút điều hướng: nó là lời mời, không phải việc bắt buộc,
-           nên không được chen lên trên phần người ta đang cần đọc. -->
-      ${ckAuth ? '' : `
-      <div class="w-full flex flex-col gap-3 px-4 py-4 rounded-xs border border-border rise">
-        <div class="flex flex-col gap-1">
-          <p class="t-multiline font-medium text-foreground">Tạo tài khoản để theo dõi đơn này</p>
-          <p class="t-single text-muted-foreground">Đơn vừa đặt sẽ được gắn vào tài khoản, và bạn nhận ${points} điểm thưởng.</p>
-        </div>
-        ${doneEmail ? `<p class="t-single text-secondary-foreground">Email: <span class="font-medium text-foreground">${doneEmail}</span></p>` : ''}
-        <button data-nav="login" data-auth-view="register" class="t-multiline self-start h-10 px-6 rounded-xs bg-primary text-primary-foreground font-semibold btn-p press">Tạo tài khoản</button>
-      </div>`}
-
-      <div class="w-full flex flex-col gap-2.5 rise">
-        <button data-nav="plp" data-reset class="t-multiline w-full text-primary-foreground font-semibold py-3.5 rounded-xs tracking-wider bg-primary btn-p press">Tiếp tục mua sắm</button>
-        <!-- 22/09/2026: theo dõi ĐƠN VỪA ĐẶT (ckOrderId, placeOrder đã unshift vào ORDERS nên
-             trackLookup tìm thấy); trước in cứng DAFC103015 = đơn seed đặt trước 05/09.
-             Rơi về mã seed khi mở màn này mà chưa đặt gì (demo). -->
-        <button data-track-open="${ckOrderIds[0] || ckOrderId || 'DAFC103015'}" class="t-multiline w-full font-medium py-3.5 rounded-xs tracking-wider border border-border text-mid-alt btn-o press hover:bg-accent-0 transition-colors">Theo dõi đơn hàng</button>
-      </div>
+      ${footer()}
     </div>
   </div>`;
 }
@@ -17329,6 +17617,10 @@ let ckAuth = false, ckStep = 0, ckMaxStep = 0;
    không có state nào giữ lại, nên đơn ghi vào lịch sử luôn là "Giao hàng thông thường"
    dù khách chọn giao nhanh. Giữ cờ ở đây để placeOrder ghi đúng phương thức. */
 let ckShipFast = false;
+/* 04/10/2026 — khách đã BẤM chọn một phương thức ở bước Phương thức vận chuyển (chưa cần Xác nhận). `ckShipFast` không nói được việc
+   này vì mặc định false = "Giao hàng thông thường" chọn sẵn. Cùng `ckMaxStep >= 1` thì ckShipChosen() true → dòng "Phí vận chuyển" hiện phí NGAY.
+   Về false mọi nơi ckMaxStep về 0 (đổi hình thức nhận hàng · đăng nhập/đăng xuất · chạy lại demo). */
+let ckShipPicked = false;
 let vatMode = 'none';             // 'none' | 'personal' | 'company' — bước Xuất hoá đơn VAT (19/09/2026, gộp từ cặp ô tick + segmented cũ)
 let vatVals = {};                 // chữ khách đã gõ ở bước VAT, khoá theo id ô (`vat-company-0`…) — xem khối "THÔNG TIN VAT CỦA ĐƠN"
 let loginFrom = null, authGuardTo = '';             // mở login từ màn nào
@@ -17561,7 +17853,7 @@ const I18N = {
      → cặp luật Thanh toán (N) ↔ Payment (N) đã GỠ; tiêu đề đi khoá cứng 'Đặt hàng':'Checkout'.) */
   // ── Quà tặng trong giỏ ── ('Quà tặng' đã có key ở khối Khuyến mãi, không khai lại)
   'Quà tặng theo đơn hàng':'Order gifts', 'Đổi quà':'Change gift', 'Đóng':'Close',
-  'Quà tặng kèm đơn':'Gifts with this order', 'Đổi quà tặng':'Change your gift',
+  'Đổi quà tặng':'Change your gift',
   'Chọn quà tặng':'Choose your gift',
   /* 21/09/2026 — đường "Chọn quà" trên hàng chương trình đủ điều kiện mà chưa chọn
      (xem giftPickRowHTML). Giá trị EN 'Choose gift' KHÔNG trùng chuỗi nào khác — đã
@@ -17595,7 +17887,7 @@ const I18N = {
   'Thanh toán không thành công':'Payment failed', 'Phiên thanh toán đã hết hạn':'Payment session expired',
   'Thử lại':'Try again', 'Tạo mã mới':'Generate a new code', 'Chọn cách thanh toán khác':'Choose another payment method',
   'Đang xử lý…':'Processing…', 'Ghi chú đơn hàng':'Order note', 'Thanh toán khi nhận hàng':'Cash on delivery',
-  'Tải hoá đơn (PDF)':'Download invoice (PDF)', 'Tạo tài khoản':'Create an account',
+  'Tạo tài khoản':'Create an account',
   'Về trang chủ':'Back to home', 'Đang thêm…':'Adding…', 'Đã có trong giỏ':'Already in your cart', 'Xem giỏ hàng':'View cart',
   'Giá đã thay đổi, trước là':'Price changed, was',
   // ── Sheet chọn ưu đãi (17/08/2026) ──
@@ -17640,7 +17932,7 @@ const I18N = {
      (khoá đã có ở trang Chính sách vận chuyển) / "Giao hàng hỏa tốc" (khoá mới, viết hoa chữ đầu mỗi từ như khoá
      "Giao hàng hỏa tốc trong ngày" — EN theo site chính thức). Hai khoá cũ gỡ vì không còn chỗ dùng. */
   'Thay đổi':'Change', 'Giao hàng hỏa tốc':'Express Delivery',
-  'Sẽ được tính sau':'Calculated later', 'Xem tất cả địa chỉ':'View all addresses', 'Sổ địa chỉ':'Address book', 'Thẻ tín dụng/Ghi nợ':'Credit / debit card',
+  'Xem tất cả địa chỉ':'View all addresses', 'Sổ địa chỉ':'Address book', 'Thẻ tín dụng/Ghi nợ':'Credit / debit card',
   'Chuyển khoản / QR code':'Bank transfer / QR code', 'Thẻ tín dụng · **** 4829':'Credit card · **** 4829', 'Thẻ tín dụng':'Credit card',
   /* 02/10/2026 — dòng CTKM DEMO dưới "Thẻ tín dụng/Ghi nợ" ở bước Thanh toán; dấu * là của câu quảng cáo. */
   'Giảm 5% tối đa 2.000.000 với VISA Techcombank*':'5% off, up to 2,000,000 with VISA Techcombank*',
@@ -18003,10 +18295,6 @@ const I18N = {
   'Chưa chọn cửa hàng':'No store selected',
   'Đơn hàng được giữ tại cửa hàng trong 3 ngày kể từ khi có thông báo sẵn sàng nhận.':'We hold your order at the store for 3 days from the ready-for-pickup notice.',
   'Nhận hàng':'Collection', 'Tại cửa hàng':'In store',
-  /* 02/10/2026 — màn Hoàn tất theo mốc ngày của checkout: "Từ 12/08" → "Từ 14/07" (nhận tại cửa hàng); thêm giá trị hỏa tốc. Khoảng ngày tiêu chuẩn "14/07 - 18/07" chỉ có số nên không cần khoá. */
-  'Nhận tại':'Pick up at', 'Sẵn sàng nhận':'Ready from', 'Từ 14/07':'From 14/07', 'Trước 18:00 ngày 14/07':'Before 18:00 on 14/07',
-  'Hàng pre-order':'Pre-order items',
-  'Cửa hàng DAFC':'DAFC store',
 
   // ── Cookie consent (bản thảo khách 17/08/2026) ──
   // Đoạn cuối banner bị 2 inline button cắt thành nhiều text node nên mỗi mảnh
@@ -18260,13 +18548,9 @@ const I18N = {
   'Số tiền':'Amount',
   'Nội dung':'Transfer note',
   'Mã hết hạn sau':'Code expires in',
-  'Đơn hàng đang được xử lý.':'Your order is being processed.',
-  'Cảm ơn bạn đã tin tưởng mua sắm.':'Thank you for shopping with us.',
+  /* 03/10/2026 — màn Hoàn tất đơn giản hoá theo website: MỘT đoạn cảm ơn (cả đoạn là một nút chữ nên là một khoá). */
+  'Cảm ơn quý khách đã lựa chọn mua sắm tại DAFC. Quý khách vui lòng truy cập email để kiểm tra chi tiết hoá đơn đặt hàng.':'Thank you for choosing to shop at DAFC. Please check your email for your order invoice details.',
   'Mã đơn hàng':'Order number',
-  'Bạn nhận được':'You earned',
-  'từ đơn hàng này':'from this order',
-  'Xác nhận đơn hàng đã được gửi tới email của bạn.':'An order confirmation has been sent to your email.',
-  'Tạo tài khoản để theo dõi đơn này':'Create an account to track this order',
   'Tra cứu đơn hàng':'Track your order',
   'Nhập mã đơn hàng để theo dõi kiện hàng của bạn.':'Enter your order number to follow your parcel.',
   'Chỉ nhận mã đơn hàng, gồm chữ DAFC và 6 chữ số.':'Order numbers only — the letters DAFC followed by 6 digits.',
@@ -18688,7 +18972,6 @@ const I18N = {
   'Giảm đến 10%':'Up to 10% off',
   'Giỏ hàng trống':'Your cart is empty',
   'Hai túi nắp gập trước ngực và hai túi khóa kéo bên hông':'Two flap chest pockets and two zipped side pockets',
-  'Hoá đơn sẽ được gửi kèm email xác nhận':'The invoice will be sent with your confirmation email',
   'Hàng có sẵn':'In stock',
   'Hàng có sẵn · Giao nhanh':'In stock · Express delivery',
   'Hàng có sẵn · Giao thường':'In stock · Standard delivery',
@@ -19067,6 +19350,56 @@ const I18N = {
   '1. Sản phẩm được bảo hành và sửa chữa miễn phí nếu sản phẩm có hội đủ tất cả các điều kiện sau':'1. Free Warranty and Repair',
   '2. Những trường hợp không được bảo hành và khách hàng đồng ý chi phí sửa chữa':'2. Cases Not Covered by Warranty (Customer Agrees to Pay for Repair)',
   '1. Quy trình tiếp nhận và xử lý khiếu nại':'1. Complaint handling regulations',
+  /* ── Trang thương hiệu Molton Brown (04/10/2026): nhãn khối, đoạn chữ hub, 27 tên SP. EN là bản VIẾT RIÊNG, không chép chữ lookfantastic. ── */
+  'Tất cả sản phẩm':'All products',
+  'Bộ quà tặng':'Gift sets',
+  'Bán chạy nhất':'Bestsellers',
+  'Các bộ sưu tập':'Collections',
+  'Mới về':'New in',
+  'Molton Brown là nhà hương thơm và chăm sóc cơ thể cao cấp đến từ nước Anh. Mỗi dòng sản phẩm được dựng quanh một câu chuyện mùi hương — từ gỗ, hoa cỏ đến gia vị — để việc tắm gội, dưỡng tay hay xịt nước hoa trở thành khoảnh khắc đáng nhớ trong ngày.':'Molton Brown is a British house of luxury bodycare and fragrance. Every line is built around a scent story — woods, flowers, spices — so a shower, a moment of hand care or a spritz of perfume becomes a moment worth remembering.',
+  'Molton Brown — nước hoa 30ml mới':'Molton Brown — new 30ml Eau de Parfum',
+  'Nhà hương thơm nước Anh Molton Brown':'Molton Brown, a British house of scent',
+  'Gỗ ấm hòa cam chanh tươi — dòng hương biểu tượng của hãng.':'Warm woods meet bright citrus — the house signature scent.',
+  'Tiêu hồng rực rỡ quyện gia vị nồng ấm, cuốn hút và đầy cá tính.':'Vivid pink pepper and warm spice — magnetic, full of character.',
+  'Cây bách, thì là biển và chút hơi muối — sảng khoái, mát nhẹ.':'Cypress, sea fennel and a touch of salt — fresh and cool.',
+  'Trầm hương ấm cùng ánh vàng lấp lánh — dày dặn và sang trọng.':'Warm oudh with glints of gold — rich and opulent.',
+  'Hồng mịn như nhung hòa gia vị ấm, gợi những đồi cát trải dài.':'Velvety rose with warm spice, like rolling desert dunes.',
+  'Đại hoàng chua dịu gặp cánh hồng mềm — vừa tươi vừa ngọt.':'Tangy rhubarb meets soft rose — fresh and sweet at once.',
+  'Quà tặng ý nghĩa':'Thoughtful gifting',
+  'Bộ quà chọn sẵn: nước hoa, sữa tắm, dưỡng tay, hương không gian.':'Ready-made sets: fragrance, bath, hand care and home scent.',
+  'Dòng hương mới: Bluebell & Wild Strawberry':'New scent: Bluebell & Wild Strawberry',
+  'Series Artists of Note, hợp tác cùng nhà thiết kế giày Ancuta Sarca.':'The Artists of Note series, made with shoe designer Ancuta Sarca.',
+  'Hương thơm cho mỗi ngày':'Scents for every day',
+  'Mùi hương đậm chất riêng, làm ngày bình thường thêm đầy đặn.':'Characterful scents that make an ordinary day feel fuller.',
+  'Ra đời tại Anh cách đây hơn nửa thế kỷ, Molton Brown luôn làm việc theo một cách: chọn những nguyên liệu thơm có cá tính rõ rệt, rồi giao cho các nhà pha chế hương biến chúng thành từng mùi hương riêng. Thương hiệu cam kết không thử nghiệm sản phẩm trên động vật.':'Born in Britain more than half a century ago, Molton Brown has always worked one way: choose aromatic ingredients with real character, then hand them to its perfumers to shape into individual scents. The brand commits to never testing its products on animals.',
+  'Tại DAFC, bạn có thể chọn sữa tắm, kem dưỡng tay, nước hoa và các bộ quà tặng Molton Brown trong cùng một nơi.':'At DAFC you can find Molton Brown shower gels, hand creams, fragrances and gift sets in one place.',
+  'Bộ du lịch tắm gội The Revived Voyager':'The Revived Voyager Body & Hair Travel Bag',
+  'Cracker quà tặng The Woody Opulent':'The Woody Opulent Christmas Cracker',
+  'Cracker quà tặng The Woody Citrus':'The Woody Citrus Christmas Cracker',
+  'Bộ chăm sóc tay Orange & Bergamot':'Orange & Bergamot Hand Care Collection',
+  'Bộ layering hương Delicious Rhubarb & Rose':'Delicious Rhubarb & Rose Scent Layering Set',
+  'Bộ quà Stocking Filler':'Stocking Filler Collection',
+  'Sữa tắm Neon Amber 300ml':'Neon Amber Bath & Shower Gel 300ml',
+  'Bộ đôi Re-charge Black Pepper':'Re-charge Black Pepper Duo',
+  'Bộ chăm sóc cơ thể Floral & Green':'Floral & Green Body Care Collection',
+  'Bộ layering hương Coastal Cypress & Sea Fennel':'Coastal Cypress & Sea Fennel Scent Layering Set',
+  'Nước rửa tay refill Delicious Rhubarb & Rose 400ml':'Delicious Rhubarb & Rose Fine Liquid Hand Wash Refill 400ml',
+  'Sữa tắm Fiery Pink Pepper 300ml':'Fiery Pink Pepper Bath & Shower Gel 300ml',
+  'Sữa tắm Infusing Eucalyptus 300ml':'Infusing Eucalyptus Bath & Shower Gel 300ml',
+  'Kem dưỡng tay Fiery Pink Pepper 40ml':'Fiery Pink Pepper Hand Cream 40ml',
+  'Bộ nước hoa khám phá Woody & Aromatic EDP':'Woody & Aromatic Eau de Parfum Discovery Set',
+  'Nước hoa Mesmerising Oudh Accord & Gold EDP 7,5ml':'Mesmerising Oudh Accord & Gold 7.5ml EDP',
+  'Nước hoa Re-Charge Black Pepper EDP':'Re-Charge Black Pepper Eau de Parfum',
+  'Tinh dầu khuếch tán refill Re-Charge Black Pepper 150ml':'Re-Charge Black Pepper Aroma Reeds Refill 150ml',
+  'Nước hoa Tobacco Absolute EDP 7,5ml':'Tobacco Absolute 7.5ml EDP',
+  'Nước hoa Delicious Rhubarb & Rose EDP 7,5ml':'Delicious Rhubarb & Rose 7.5ml EDP',
+  'Nước hoa Mesmerising Oudh Accord & Gold EDP':'Mesmerising Oudh Accord & Gold Eau de Parfum',
+  'Nước hoa Fiery Pink Pepper EDP':'Fiery Pink Pepper Eau de Parfum',
+  'Nước hoa Sunlit Clementine & Vetiver EDP':'Sunlit Clementine & Vetiver Eau de Parfum',
+  'Nước hoa Delicious Rhubarb & Rose EDP':'Delicious Rhubarb & Rose Eau de Parfum',
+  'Nước rửa tay Heavenly Gingerlily 300ml':'Heavenly Gingerlily Fine Liquid Hand Wash 300ml',
+  'Nước rửa tay Coastal Cypress & Sea Fennel 300ml':'Coastal Cypress & Sea Fennel Fine Liquid Hand Wash 300ml',
+  'Bộ chăm sóc tay Coastal Cypress & Sea Fennel':'Coastal Cypress & Sea Fennel Hand Care Collection',
 };
 
 // Luật cho chuỗi động
@@ -19144,10 +19477,8 @@ const I18N_RE = [
   [/^Pre-order · Nhận hàng dự kiến (\d{2}\/\d{2}\/\d{4})$/, 'Pre-order · Estimated arrival $1'],
   [/^Riêng hàng pre-order: nhận hàng dự kiến (\d{2}\/\d{2}\/\d{4}), giao riêng khi hàng về\.$/, 'Pre-order items ship separately — estimated arrival $1.'],
   [/^Nhận dự kiến (\d{2}\/\d{2}\/\d{4})$/, 'Est. arrival $1'],
-  /* 24/09/2026 — dòng mời tạo tài khoản ở màn đặt hàng thành công: có SỐ nên phải đi bằng luật,
-     in số vào khoá tĩnh là đổi số một cái chết dịch. */
-  [/^Đơn vừa đặt sẽ được gắn vào tài khoản, và bạn nhận ([\d.,]+) điểm thưởng\.$/,
-   'The order you just placed will be linked to your account, and you earn $1 points.'],
+  /* 03/10/2026 — màn Hoàn tất đơn giản hoá: dòng "Đơn hàng #mã" có MÃ nên phải đi bằng luật. */
+  [/^Đơn hàng #(\S+)$/, 'Order #$1'],
   /* 30/09/2026 — dot ra soat i18n: cac chuoi CO SO / CO TEN RIENG nen phai di bang luat. */
   [/^Chỉ còn (\d+) sản phẩm$/,        'Just $1 left'],
   [/^([\d.,]+) điểm$/,                '$1 points'],
@@ -19214,9 +19545,8 @@ const I18N_REV_RE = [
   [/^Pre-order · Estimated arrival (\d{2}\/\d{2}\/\d{4})$/, 'Pre-order · Nhận hàng dự kiến $1'],
   [/^Pre-order items ship separately — estimated arrival (\d{2}\/\d{2}\/\d{4})\.$/, 'Riêng hàng pre-order: nhận hàng dự kiến $1, giao riêng khi hàng về.'],
   [/^Est\. arrival (\d{2}\/\d{2}\/\d{4})$/, 'Nhận dự kiến $1'],
-  /* 24/09/2026 — chiều ngược của luật cùng tên bên I18N_RE. */
-  [/^The order you just placed will be linked to your account, and you earn ([\d.,]+) points\.$/,
-   'Đơn vừa đặt sẽ được gắn vào tài khoản, và bạn nhận $1 điểm thưởng.'],
+  /* 03/10/2026 — chiều ngược của luật "Đơn hàng #mã" bên I18N_RE. */
+  [/^Order #(\S+)$/, 'Đơn hàng #$1'],
   /* 30/09/2026 — chieu nguoc cua 8 luat cung ten ben I18N_RE. */
   [/^Just (\d+) left$/,               'Chỉ còn $1 sản phẩm'],
   [/^([\d.,]+) points$/,              '$1 điểm'],
@@ -19420,7 +19750,12 @@ if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'm
 window.addEventListener('popstate', (e) => {
   const target = (e.state && e.state.screen) || history.pop() || 'home';
   if (e.state && e.state.screen) history.pop();
-  go(target, { back: true, fromPopstate: true });
+  /* 04/10/2026 — entry của HUB thương hiệu mang ảnh chụp plpMode (brandHubGo ghi trước khi sang lưới). Hub và lưới là CÙNG màn
+     `plp`, mà plpMode là biến toàn cục — không khôi phục thì Back từ lưới dựng lại đúng lưới chứ không về hub. Entry khác không mang
+     `plp` nên không đổi gì. */
+  const hubBack = !!(e.state && e.state.plp);
+  if (hubBack) plpMode = e.state.plp;
+  go(target, { back: true, fromPopstate: true, force: hubBack });   // force: đang đứng ở lưới (cũng là `plp`) nên go() sẽ nuốt lệnh nếu không ép dựng lại
 });
 
 /* ── Khoá scroll nền khi có bottom sheet/drawer mở ──
@@ -19754,10 +20089,12 @@ function screenPAY() {
   const grp = payFor.map(id => ORDERS.find(x => x.id === id)).filter(Boolean);
   const oid = grp.length ? orderBaseId(grp[0]) : (ckOrderId || 'DAFC102939');
   const total = grp.length ? vndCom(grp.reduce((n, x) => n + vndNum(x.total), 0)) : (ckOrderTotal || vndCom(ckTotalNow()));
+  /* 03/10/2026 (user: "màn kết quả thanh toán ở mobile đang thiếu header footer") — màn cổng thanh toán (cả 4 trạng thái: chuyển cổng · QR · thất bại · hết hạn) đã có header, nay thêm FOOTER. */
   const shell = (body) => `
   <div class="w-full" data-scroller>
     ${navBar()}
     <div class="flex flex-col items-center justify-center gap-6 px-8 py-16 text-center">${body}</div>
+    ${footer()}
   </div>`;
 
   if (payStage === 'redirect') return shell(`
@@ -20429,6 +20766,7 @@ function wire(root) {
       if (el.hasAttribute('data-reset')) {
         cartQty = CART_BASE.length; CART.length = 0; CART.push(...CART_BASE.map(c => ({ ...c })));
         history = []; ckStep = 0; ckMaxStep = 0; ckMode = 'ship';
+        ckShipPicked = false; ckShipFast = false;   // 04/10/2026 — chạy lại demo: dòng Phí vận chuyển về "--", dòng chọn sẵn về Giao hàng thông thường
         ckCity = ''; ckStore = ''; ckHome = ''; ckFirst = ''; ckLast = ''; ckPhone = ''; ckEmail = '';
         ckAddr = 0; ckAddrEdit = null; ckShipFirst = ''; ckShipLast = ''; ckShipPhone = ''; ckShipLine = '';
         ckPlaced = false; ckOrderId = ''; ckOrderIds = []; payFor = []; ckOrderTotal = ''; ckOrderPoints = ''; ckOrderGifts = []; ckOrderPre = '';
@@ -20438,7 +20776,7 @@ function wire(root) {
          hàng, đẩy đơn vào ORDERS để tab Đơn hàng thấy ngay, rồi DỌN GIỎ —
          trước đây đặt xong quay lại giỏ vẫn thấy đủ 4 món "vừa mua". */
       if (t === 'done' && !ckPlaced) { if (!ckGuard()) return; startPayment(el); return; }
-      if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = 0; ckMaxStep = 0; }
+      if (el.dataset.auth !== undefined) { ckAuth = el.dataset.auth === '1'; ckStep = 0; ckMaxStep = 0; ckShipPicked = false; }
       if (t === 'back') { window.history.back(); return; }
       if (el.hasAttribute('data-loading')) {
         if (btnBusy(el)) return;
@@ -20751,10 +21089,6 @@ function wire(root) {
   // toast buttons
   root.querySelectorAll('[data-toast]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); toast(b.dataset.toast); }));
 
-  /* Tải hoá đơn — demo không sinh PDF thật, nên nói thẳng thay vì giả vờ tải. */
-  const dl = root.querySelector('#dlInvoice');
-  if (dl) dl.addEventListener('click', () => toast('Hoá đơn sẽ được gửi kèm email xác nhận'));
-
   // checkout: chuyển section (không chuyển trang)
   if (root.querySelector('#ckSections')) {
     paintCheckout(root);
@@ -20893,7 +21227,7 @@ function wire(root) {
       btn.addEventListener('click', () => {
         if (ckMode === btn.dataset.ckMode) return;
         ckMode = btn.dataset.ckMode;
-        ckStep = 0; ckMaxStep = 0;
+        ckStep = 0; ckMaxStep = 0; ckShipPicked = false;
         rerenderCheckout(root);
         window.scrollTo(0, 0);
       });
@@ -21011,6 +21345,11 @@ function wire(root) {
     root.querySelectorAll('#shipOpts [data-opt]').forEach(o => {
       o.addEventListener('click', () => {
         ckShipFast = o.dataset.opt === 'fast';
+        /* 04/10/2026 (lệnh user: "khi khách điền xong thông tin vận chuyển và chọn phương thức thì mình show luôn") — bấm là hiện phí
+           + tổng ở khối tóm tắt NGAY, không đợi nút Xác nhận. Bấm lại đúng dòng đang chọn cũng tính là chọn (khách chấp nhận dòng
+           chọn sẵn Giao hàng thông thường). */
+        ckShipPicked = true;
+        paintCkMoney(root);
         const lbl = root.querySelector('#shipDoneLabel');
         if (lbl) { lbl.textContent = ckShipFast ? SHIP_NAME_FAST : SHIP_NAME_STD; localizeNew(lbl); }
         /* 02/10/2026 — dòng dự kiến đổi theo phương thức (hai câu khác nhau). localizeNew để chuỗi vừa ghi
@@ -21778,6 +22117,11 @@ function wire(root) {
   /* Ô màu trên card do wireProductCards lo — bản cũ ở đây toggle border-primary
      trong khi markup dùng ring-*, tức bấm vào không có gì đổi. */
 
+  wireBrandHub(root);
+  // breadcrumb của lưới hãng có hub: đoạn giữa quay về trang hub
+  root.querySelectorAll('[data-bh-hub]').forEach(b => b.addEventListener('click', () => goPlp({ type: 'brand', brand: plpBrandName() })));
+  // vào lưới từ một ô hub thì bộ lọc đã áp sẵn (plpMode.filters) — hàng chip phải hiện ngay, không đợi lượt lọc đầu tiên
+  if (plpMode.type === 'brand' && plpMode.all && plpFilters.length && root.querySelector('#plpChips')) renderPlpChips(root);
   observeReveal(root);
 }
 
@@ -24739,6 +25083,53 @@ wirePasswordToggles(document.getElementById('loginPop'));
 
 wireFilter();
 
+/* ── NGỮ CẢNH MÀN ĐI QUA HASH KHI ĐỔI BẢN (04/10/2026) ───────────────────────────────────────────────────────────────
+   Cầu nối RESP chỉ mang TÊN màn (+ ngôn ngữ, phông, giao diện, dải trang chủ). Màn `plp` thì tên không đủ: hãng đang xem, hub hay lưới,
+   bộ lọc đang áp đều nằm ở biến toàn cục (plpMode / plpFilters) — kéo cửa sổ qua mốc 768 là bản kia dựng `plp` với mặc định, tức trang
+   VERSACE (đo 04/10: đứng ở trang Molton Brown mà đổi bản là ra Versace). PDP cũng vậy: pdpIdx rơi về 0. navCarry() đóng gói phần đó
+   thành MỘT chuỗi JSON (tham số `ctx` của hash), navRestore() đọc lại TRƯỚC khi dựng màn đầu tiên.
+   Hash là dữ liệu từ ngoài nên navRestore() chỉ nhận đúng các khoá đã biết, hãng phải là hãng có thật, nhãn lọc bị pruneFilters() rụng nếu lạ,
+   chuỗi tự do (tiêu đề, từ khoá) bị bỏ dấu < > — hỏng chỗ nào thì bỏ cả lượt và rơi về mặc định như cũ. */
+function navCarry() {
+  try {
+    if (current === 'plp') return JSON.stringify({ m: plpMode, f: plpFilters });
+    if (current === 'pdp') return JSON.stringify({ i: pdpIdx });
+  } catch (e) { /* không đóng gói được thì thôi, bản kia dựng mặc định */ }
+  return '';
+}
+function navRestore(screen, raw) {
+  try {
+    const o = JSON.parse(raw);
+    if (!o || typeof o !== 'object') return;
+    if (screen === 'pdp') {
+      const i = +o.i;
+      if (Number.isInteger(i) && PRODUCTS[i]) pdpIdx = i;
+      return;
+    }
+    if (screen !== 'plp') return;
+    const m = o.m;
+    if (!m || !['brand', 'category', 'search'].includes(m.type)) return;
+    const txt = v => (typeof v === 'string' ? v.replace(/[<>]/g, '').slice(0, 200) : '');
+    const strs = v => (Array.isArray(v) ? v.filter(x => typeof x === 'string').map(txt).slice(0, 40) : []);
+    const next = { type: m.type };
+    if (m.type === 'brand') {
+      const known = new Set([...PRODUCTS.map(p => p.brand), ...MENU_BRANDS, ...Object.keys(BRAND_PAGES)]);
+      if (m.brand !== undefined && !known.has(m.brand)) return;   // tên hãng lạ: bỏ cả lượt
+      if (m.brand) next.brand = m.brand;
+      if (m.all === true) next.all = true;
+      if (typeof m.scent === 'string' && /^[A-Za-z0-9\u00C0-\u1EF9 &'’.\-]{1,40}$/.test(m.scent)) next.scent = m.scent;
+      if (Array.isArray(m.filters)) next.filters = strs(m.filters);
+    } else {
+      if (m.title) next.title = txt(m.title);
+      if (Array.isArray(m.crumbs)) next.crumbs = strs(m.crumbs);
+      if (m.type === 'search') next.query = txt(m.query);
+    }
+    plpMode = next;
+    plpFilters = strs(o.f);
+    pruneFilters();   // nhãn lạ / không hợp ngành của PLP này thì rụng
+  } catch (e) { /* hash hỏng: bỏ qua */ }
+}
+
 /* ── Khởi động: nhận trạng thái từ bản kia (nếu vừa đổi bản qua mốc 768) ──
    RESP dựng ở <head>. Khi trang đang bị chuyển sang file kia thì KHÔNG dựng
    màn hình nào nữa — đỡ vẽ thừa một trang sắp bị bỏ.
@@ -24761,6 +25152,9 @@ if (!RESP.swapped) {
   /* 29/09/2026 — dải sản phẩm trang chủ (Hàng mới về / Khuyến mãi) đi qua hash như ngôn ngữ và giao
      diện: kéo cửa sổ qua mốc 768 sang file kia mà lựa chọn không mất. Mặc định 'new' không ghi hash. */
   if (st.hm === 'sale') { hmBlock = 'sale'; paintHmBlockUI(); }
+
+  /* 04/10/2026 — ngữ cảnh màn (hãng + hub/lưới + bộ lọc ở PLP · chỉ số SP ở PDP) đi qua hash; phải đặt TRƯỚC go(first) bên dưới. */
+  if (st.ctx) navRestore(st.screen, st.ctx);
 
   const f = FONTS.find(x => x[0] === st.font);
   if (f) {
@@ -24795,7 +25189,7 @@ if (!RESP.swapped) {
   }
 
   /* Kéo cửa sổ rộng ≥ 768 -> sang bản desktop, mang theo màn + cài đặt */
-  RESP.watch(() => [current, LANG, currentFont, currentTheme, hmBlock]);
+  RESP.watch(() => [current, LANG, currentFont, currentTheme, hmBlock, navCarry()]);
 }
 </script>
 </body>
