@@ -675,10 +675,31 @@ window.RESP = (function () {
      trong các rule dưới đây. */
   .acc-layout { display: flex; align-items: flex-start; gap: 24px; padding-bottom: 40px; min-height: 60vh; }
   .acc-main { flex: 1 1 0%; min-width: 0; }
-  .dk-sticky-side.acc-side { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
-  .acc-side .acc-tab { width: 100%; padding-left: 16px; }
-  .acc-side .acc-tab::after { left: 0; right: auto; }
-  @media (max-width: 1279px) { .dk-sticky-side.acc-side { width: clamp(216px, 22vw, 280px); } }
+  /* 05/10/2026 (lệnh user: "ở trang account limit chiều ngang cái block bên nội dung ở 800 và dồn toàn trang sang bên trái") — ĐẢO chốt 21/09 "BỊ TRẦN 720" (khi đó user bắt lỗi 377px bỏ trống bên phải và
+     bỏ trần; nay chính user đặt trần MỚI = 800 và chấp nhận khoảng trống bên phải). Trần chỉ ở màn TÀI KHOẢN (4 tab + lịch sử điểm + form): thẻ Thông tin vẫn 720 (`.acc-info`, hẹp hơn trần nên không đổi); sổ địa chỉ /
+     hạng thành viên / danh sách đơn từ ~1025 (ở 1440 có thanh cuộn) xuống 800.
+     ĐẢO TIẾP cùng ngày (user: "cái chi tiết đơn hàng cũng limit chiều ngang 800 nhé"): màn CHI TIẾT ĐƠN (`data-screen="order"`) CŨNG trần 800 — lúc đầu mình chừa màn đó vì nó dựng theo khung user 1040 (hàng thông tin 3 cột đều 308,
+     hai khối giao hàng 512 | 512, tấm tổng 468). Ở 800: thẻ rộng 800 (lòng 750); hàng thông tin ba mục không còn vừa một hàng ở 9/12 đơn (cần 759–1011 > 750) — sau đó user chốt XẾP DỌC mỗi loại một dòng (xem `.ov-meta`);
+     hai khối giao hàng ~392 mỗi khối; bảng hàng giữ cột SL 160 / tiền 240 (cột tên còn 302, đủ); tấm tổng 468 vẫn nằm gọn bên phải.
+     DỒN TRANG SANG TRÁI: hộp `max-w-[1440px] mx-auto` của trang không còn tự CĂN GIỮA ở khổ rộng hơn 1440 — `margin-left: 0` ⇒ mục lục + nội dung dính lề trái 48 thay vì (khổ − 1440) / 2 + 48 (ở ≤ 1440 không đổi gì vì hộp đã kín bề ngang).
+     Hai màn cùng khuôn hộp + cùng mục lục nên căn trái CHUNG — không thì đi qua lại hai màn ở khổ rộng là mục lục trái NHẢY ngang (luật "cột trái không nhảy", 28/09). Header + footer vẫn full bề ngang, nội dung của chúng không đổi. */
+  [data-screen="account"] .acc-main, [data-screen="order"] .acc-main { max-width: 800px; }
+  [data-screen="account"] .acc-page, [data-screen="order"] .acc-page { margin-left: 0; }
+  /* 05/10/2026 (lệnh user: "cột bên trái của account thì cho kích thước limit 296 nhé") — TRẦN 296 (trước: cố định 280). Hiểu "limit" như trần 800 của cột nội dung ngay trên: cột co theo khổ
+     (`clamp(216px, 22vw, 296px)` — khổ ≥ 1346 thì đúng 296, 1280 còn 281,6, 1100 còn 242, 1024 còn 225) chứ không ghim cứng; dải co 216–22vw vốn có của rule ≤ 1279 (cũ, trần 280) gộp vào đây nên không còn rule media riêng.
+     ĐÂY LÀ MỤC LỤC DÙNG CHUNG (accSideNav) ⇒ màn CHI TIẾT ĐƠN cũng 296 (không thì đi qua lại hai màn là cột trái nhảy 16px + khối kem đổi bề ngang): cột nội dung của màn đó (flex 1, không trần) nhường 16 —
+     1040 → 1024 ở 1440 không thanh cuộn (1025 → 1009 có thanh cuộn). Đo: 9/12 đơn vẫn một hàng thông tin; Chờ thanh toán (cần ~1011) luôn xuống dòng như cũ; hai đơn Chuyển khoản / QR (cần ~989) nay xuống dòng CẢ khi không có thanh cuộn (974 < 989; có thanh cuộn thì vốn đã xuống dòng ở 975). */
+  .dk-sticky-side.acc-side { width: clamp(216px, 22vw, 296px); flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
+  /* 05/10/2026 (lệnh user: "ở trang account cái sidebar bên sẽ dùng chung hiệu ứng giống bộ trang policy") — MỤC LỤC TRÁI CÙNG NGÔN NGỮ VỚI MỤC LỤC TRANG CHÍNH SÁCH
+     (`.dk-policy-aside`, markup ở screenPOLICY): hàng 14/20, đệm 16 đều ⇒ cao 52 (markup `px-4 py-4`, bỏ `h-11` 44), mực nghỉ `--unofficial-foreground-alt` (#404040), rê ⇒ `--general-foreground` (#0a0a0a),
+     ĐANG CHỌN ⇒ NỀN KEM — màu khai CHUNG với `.pol-nav-on` ở khối "BANNER FULL-BLEED" (~dòng 1435: `--cu-surface` ở skin-li, `--general-secondary` ở bộ da khác; sửa một chỗ là cả hai theo).
+     KHÔNG CÒN: vạch đồng 2px bên trái tab đang chọn + thang mực 3 bậc (#727272 → #333 → #0a0a0a) của bản 05/09 (khung Figma `tab` kind=section · desktop) — vạch + 3 bậc vẫn sống ở các hàng tab KHÁC dùng `.acc-tab`
+     (Đăng nhập / Tạo tài khoản, dải Bán chạy nhất của hub thương hiệu). Phạm vi: CHỈ `.acc-side` — màn Chi tiết đơn dùng chung mục lục này qua accSideNav(). Hàng tab đang chọn VẪN bấm được (bấm lại = về đầu trang + bỏ form đang mở) nên giữ con trỏ tay.
+     Chuyển tiếp = đúng longhand của `.press` (.acc-tab khai `transition:` gộp ở khối "HÀNG TAB TÀI KHOẢN" nên phải khai lại, kẻo mất background-color): nền kem hiện / tắt mượt khi đổi tab tại chỗ.
+     KHÔNG gắn `.rise` cho cột như mục lục Chính sách: cột này đứng yên khi đi qua lại Tài khoản ↔ Chi tiết đơn (xem ghi chú "cột trái không nhảy" ở trên). */
+  .acc-side .acc-tab { width: 100%; color: var(--unofficial-foreground-alt); transition-property: opacity, background-color, border-color, color, box-shadow; transition-duration: .12s; transition-timing-function: ease; }
+  .acc-side .acc-tab:hover, .acc-side .acc-tab[aria-current] { color: var(--general-foreground); }
+  .acc-side .acc-tab::after { content: none; }
   /* Tab Thông tin: cụm thẻ rộng tối đa 720 (khung: hộp 720 trong cột 1040). Link "Chỉnh sửa"
      đứng góc trên bên phải, thẳng dòng đầu — đúng khuôn .acc-card-head sẵn có. */
   .acc-info { max-width: 720px; }
@@ -765,68 +786,89 @@ window.RESP = (function () {
      4,5:1. Phải đứng SAU `.ord-status.is-pay:hover` (hover mặt tối của chip cũ, 0,3,0) và nặng hơn nó (0,4,0) — không thì nền thành đen, chữ hổ phách chìm. KHAI GIỐNG HỆT file kia. */
   .ord-status.is-badge.is-pay:hover { background: var(--general-warning-border); }
 
-  /* ── CHI TIẾT ĐƠN HÀNG — DESKTOP · khung v4 của user (01/10/2026) ĐÃ ĐỔI "GIỐNG BẢN MOBILE" (02/10/2026) ──
-     Lệnh user: "làm desktop giống bản mobile luôn nhé" — sau khi MOBILE đi theo khung Figma 1063:78040 (khối `.ov-*` ở index.html). Cùng NGÔN NGỮ THIẾT KẾ, đổi bố cục cho cột nội dung 1040:
-       · hàng tiêu đề: [mũi tên lùi · "Chi tiết đơn hàng" (.t-display-title)] + KẺ ĐÁY 1px `--general-border`; mũi tên về tab Đơn hàng (data-atab);
-       · vùng thân nền XÁM `--general-secondary`, các thẻ TRẮNG cách nhau 4px, KHÔNG viền từng thẻ; khối tổng là tấm xám liền cuối (rộng hết cột, nội dung canh phải 420);
-       · thẻ MÃ ĐƠN: bên TRÁI [mã đơn 18/24 · 500 + nhãn trạng thái] / ngày đặt 14/20 · 500 #404040 / (đơn Chờ thanh toán: nút "Thanh toán lại"); bên PHẢI dải điểm nền kem `copper-surface` (rộng 420 như khối tổng,
-         số điểm 14/20 · 500 `copper-ink`; đơn huỷ không có); BỎ hai nhãn "Mã đơn hàng" và "Ngày đặt" + nút sao chép; rồi hai mục meta CẠNH NHAU — "Thông tin xuất hóa đơn" (đơn có VAT: loại hoá đơn + mũi tên, bấm mở
-         NGĂN KÉO bên phải; đơn không xuất: "Không xuất hoá đơn", không bấm) và "Phương thức thanh toán" (chỉ TÊN, bỏ "· **** 4829"); rồi kẻ + TIMELINE ngang (GIỮ của khung v4 — stepper là chỗ của sheet tiến trình bên mobile);
-       · thẻ GIAO HÀNG + NGƯỜI NHẬN gộp MỘT thẻ (đệm ngang 24, không đệm dọc), hai phần NGANG HÀNG ngăn bằng vạch dọc `--general-border-subtle` (mobile xếp dọc): giao hàng = Phương thức · Dự kiến giao · Tiến trình đơn hàng (hàng bấm mở ngăn kéo
-         tiến trình) + nút PRIMARY "Theo dõi vận đơn" (khi có mã vận đơn; mở cùng ngăn kéo) | người nhận; BỎ hàng Đơn vị vận chuyển + Mã vận đơn; giá trị trong thẻ này mực #404040 (`--general-secondary-foreground`);
-         tiêu đề thẻ Inter 16/24 · 500 thay Libre 16/24 (mobile: Inter 14/20 · 500);
-       · thẻ SẢN PHẨM: bảng 3 cột của khung v4 giữ nguyên (ảnh hàng VÀ quà cùng 72×96); khối TỔNG tách khỏi thẻ thành tấm xám, hàng 14/20, "(Bao gồm VAT)" 12/16 mờ CẠNH nhãn "Tổng thanh toán" (nhãn Inter 16/24 · 500 thay Libre),
-         BỎ dòng "Đã bao gồm VAT" và hàng điểm riêng (điểm lên dải kem);
-       · hai NGĂN KÉO bên phải (`#shipSheet`, 440, khuôn `.dk-drawer` như Sổ địa chỉ / chọn quà — quy ước desktop của user: sheet đáy mobile → trượt từ phải): "Thông tin xuất hóa đơn" và "Tiến trình đơn hàng" (timeline dọc + link "Theo dõi vận đơn").
-     Cỡ chữ GIỮ thang desktop của khung v4 (hàng 14/20, mã 18/24). NGOẠI LỆ 500 (STYLE-RULES §1.1, mục thứ BẢY mở rộng cho desktop): `.ov-v` · `.ov-name` · `.ov-code` · `.ov-date` · `.ov-pts` · `.ov-ttl` · `.ov-total` · `.ov-step-name.is-on`;
-     tiêu đề cột "SỐ LƯỢNG / THÀNH TIỀN" 12/16 · 500 · HOA (cặp 500 + hoa hợp luật). Dưới 1180px mọi cặp cột xếp dọc (thẻ giao hàng lên trước). */
+  /* ── CHI TIẾT ĐƠN HÀNG — DESKTOP · khung v4 của user (01/10/2026) → "GIỐNG BẢN MOBILE" (02/10/2026) → THEO KHUNG FIGMA 1071:54047 USER SỬA TAY + NÂNG CẤP GIAO DIỆN (04/10/2026) ──
+     Lệnh user 04/10: "update lại layout chi tiết đơn hàng theo thiết kế của tôi đồng thời nâng cấp giao diện ở bản desktop lên nhé". Khối `.ov-*` của index.html (mobile) KHÔNG đổi. Bố cục HIỆN HÀNH (số đo đọc từ khung user, cột nội dung 1040):
+       · hàng tiêu đề [mũi tên lùi · "Chi tiết đơn hàng" .t-display-title] + KẺ ĐÁY 1px `--general-border`; mũi tên về tab Đơn hàng (data-atab);
+       · thân TRẮNG: khung user TẮT nền xám `--general-secondary` của thân (bản 02/10 là thân xám + thẻ trắng), các thẻ trắng vẫn cách nhau 4px, không viền từng thẻ;
+       · thẻ MÃ ĐƠN: [mã đơn Inter 16/24 · 500 (trước 18/24) + nhãn trạng thái] / ngày đặt 14/20 · 500 #404040 / (đơn Chờ thanh toán: nút "Thanh toán lại" ngay dưới); rồi HÀNG THÔNG TIN 3 cột canh đều hai mép (space-between),
+         mỗi cột NHÃN 14/20 trên GIÁ TRỊ 16/24 · 500 khe 8 (cao 52): ĐIỂM TÍCH LUỸ (thay DẢI KEM nằm góc phải thẻ ở bản 02/10; đơn huỷ không có cột này; đồng `copper-ink` ở skin-li) · THÔNG TIN XUẤT HÓA ĐƠN (đơn có VAT: loại hoá đơn + mũi tên 16,
+         bấm mở NGĂN KÉO; không VAT: "Không xuất hoá đơn", không bấm) · PHƯƠNG THỨC THANH TOÁN (chỉ TÊN, bỏ "· **** 4829"); rồi kẻ + TIMELINE ngang (giữ);
+       · hai KHỐI VIỀN thay cho thẻ gộp có vạch dọc: NGƯỜI NHẬN bên TRÁI (đảo chỗ so với bản 02/10) · GIAO HÀNG bên PHẢI, khe 16, viền 1px bốn phía, đệm 24; giao hàng = Phương thức · Dự kiến giao · Tiến trình đơn hàng (hàng bấm mở ngăn kéo tiến trình)
+         + nút PRIMARY "Theo dõi vận đơn" (khi có mã vận đơn) canh PHẢI ở đáy khối; giá trị trong hai khối mực #404040 (`--general-secondary-foreground`); tiêu đề khối Inter 16/24 · 500;
+       · thẻ SẢN PHẨM giữ nguyên (bảng 3 cột, ảnh hàng VÀ quà cùng 72×96); khối TỔNG nay là TẤM XÁM THU GỌN (nội dung 420 + đệm 24 = 468) DÍNH MÉP PHẢI cột, không còn dải xám hết bề ngang; hàng 14/20, "(Bao gồm VAT)" 12/16 mờ cạnh nhãn;
+       · hai NGĂN KÉO bên phải (`#shipSheet`, 440, khuôn `.dk-drawer`): "Thông tin xuất hóa đơn" và "Tiến trình đơn hàng" (timeline dọc + link "Theo dõi vận đơn") — giữ.
+     Mình tự quyết 2 chỗ khung user chưa thống nhất (báo user): (1) hai khối viền khung vẽ hai màu (#d3d3d3 · #e6e6e6) và hai kiểu đệm → code CÙNG tầng V2 `--general-border` (STYLE-RULES §3.1: viền hộp) + cùng đệm 24; (2) khung để hai khối rộng 496 + khe 16
+     nên khối phải TRÀN 16px ra khỏi lề thẻ → code chia đều hai cột 1fr (mép khối thẳng cột chữ của các thẻ khác: x 24 và 1016).
+     Cỡ chữ GIỮ thang của khung (14/20 · 16/24 · 12/16). NGOẠI LỆ 500 (STYLE-RULES §1.1, mục thứ BẢY mở rộng cho desktop): `.ov-v` · `.ov-name` · `.ov-code` · `.ov-date` · `.ov-pts` · `.ov-mv` · `.ov-ttl` · `.ov-total` · `.ov-step-name.is-on`;
+     tiêu đề cột "SỐ LƯỢNG / THÀNH TIỀN" 12/16 · 500 · HOA (cặp 500 + hoa hợp luật). Dưới 1180px: hàng thông tin xuống dòng, hai khối viền xếp dọc (người nhận lên trước); tấm tổng giữ dáng gọn dính phải ở mọi khổ (chỉ co lại khi cột hẹp hơn 468). Lớp NÂNG CẤP GIAO DIỆN ở cuối khối này. */
+  /* ── 05/10/2026 — USER SỬA TIẾP: khung 1159:105033 "Order detail / desktop 1441" (bản sao của 1071:54047) ── lệnh: "cái chi tiết đơn hàng ở desktop dùng layout này của tôi nhé, áp cho các trạng thái khác luôn, trường hợp
+     thanh toán lỗi thì hiện nút 1 bên như vậy thay vì hiện kế bên badge". Đọc "user sửa gì" = so khung với anh em 1071:54047 (chữ ký từng khối). Khối trên mô tả bản 04/10; bản HIỆN HÀNH đổi như sau (số đo khung, cột 1040):
+       · hàng tiêu đề: BỎ kẻ đáy (cao 49 → 48); khe giữa các thẻ 4 → 16; thẻ MÃ ĐƠN và thẻ SẢN PHẨM có VIỀN 1px --general-border (đệm 24 như cũ); tấm TỔNG xám nằm TRONG thẻ SẢN PHẨM, canh phải, dưới KẺ 1px + đệm 16 của danh sách hàng;
+       · thẻ MÃ ĐƠN khe 20: [hàng đầu: nhãn "Mã đơn hàng" 16/24 · 500 mờ + mã + nhãn trạng thái (cao 28) / "Ngày đặt" 14/20 mờ + ngày | NÚT canh phải] khe 24 [hàng thông tin] · kẻ · timeline. Hàng thông tin: mỗi mục NẰM NGANG [nhãn 14/20 #404040 · giá trị 14/20 · 500],
+         ngăn bằng vạch dọc 1×14, THỨ TỰ điểm · thanh toán · hoá đơn (hoá đơn xuống CUỐI; trước là giữa). LẦN SỬA 2 (cùng ngày, user sửa lại khung): BA CỘT ĐỀU nhau (FILL, 308 ở 1440, khe 16 hai bên vạch), nội dung canh trái trong cột — lần đầu canh đều hai mép theo bề rộng nội dung.
+         LẦN SỬA 3 (05/10 tối, user: "cho xuống hàng từng loại nhé"): MỖI LOẠI MỘT DÒNG (danh sách dọc), hết vạch dọc + hết orderMetaFit() / .is-wrap — xem khối `.ov-meta` bên dưới;
+       · NÚT bên PHẢI hàng đầu = "Thanh toán lại" của đơn Chờ thanh toán (thanh toán lỗi / chưa xong): nhãn trạng thái chỉ còn là NHÃN (không còn là nút, không còn "Thanh toán lại ›" dính cạnh nhãn), nút dưới ngày cũ bỏ;
+       · thẻ GIAO HÀNG: thẻ không đệm nên hai khối kéo hết 1040 (khung vẽ 500 | 524 chỉ vì chữ địa chỉ không xuống dòng trong Figma — code giữ hai cột ĐỀU); nút "Theo dõi vận đơn": lần đầu LÊN hàng tiêu đề khối giao hàng (viền nhỏ cao 36), LẦN SỬA 2 (user: "cho nút xuống dưới
+         Thông tin giao hàng lại nhé") XUỐNG ĐÁY khối, kiểu VIỀN LỚN cao 48 full ngang khối (khung: instance action outline large FILL, khe 16 dưới cụm hàng); khe giữa các hàng thông tin 10 → 4.
+     Mình tự quyết: khe tiêu đề → nội dung ở hai khối giữ 16 (khung vẽ 14, số lẻ ngoài thang spacing, lệch 2px); hàng tiêu đề khối giao hàng canh ĐẦU như khung (MIN/MIN) nên chữ nằm mép trên nút; mũi tên hàng "Tiến trình đơn hàng" lúc đó GIỮ (lớp nâng cấp 04/10, khung không vẽ), nhỏ lại 14 như mũi tên hoá đơn — rồi BỎ HẲN cùng ngày (user: "bỏ cái > ở tiến trình đơn hàng luôn nhé"): hàng chỉ còn [nhãn · giờ mốc mới nhất], vẫn bấm được (mở ngăn kéo), hover gạch chân giờ. Mũi tên của hàng HOÁ ĐƠN trong hàng thông tin GIỮ (khung vẽ). */
   .ov-page { display: flex; flex-direction: column; padding-top: 6px; }
-  .ov-titlebar { display: flex; align-items: center; gap: 16px; padding: 0 0 16px; border-bottom: 1px solid var(--general-border); }
+  .ov-titlebar { display: flex; align-items: center; gap: 16px; padding: 0 0 16px; }
   .ov-backbtn { position: relative; flex: none; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; }
   .ov-backbtn::after { content: ''; position: absolute; inset: -14px; }
   .ov-backbtn svg { width: 16px; height: 16px; }
-  .ov-cards { display: flex; flex-direction: column; gap: 4px; background: var(--general-secondary); }
-  .ov-card { display: flex; flex-direction: column; gap: 16px; padding: 24px; background: var(--card-card); }
+  .ov-cards { display: flex; flex-direction: column; gap: 16px; }
+  /* 05/10/2026 (lệnh user: "giảm cái padding trong từng ô của order details xuống từ 24 xuống 16 nhé") — ĐỆM TRONG MỖI Ô 24 → 16, cả ba chỗ khai 24 của màn này: `.ov-card` (thẻ Mã đơn + thẻ Sản phẩm), `.ov-sec` (hai khối viền người nhận /
+     giao hàng) và `.ov-sum-wrap` (tấm tổng xám trong thẻ Sản phẩm). Chỉ ĐỆM — khe trong ô (16 / 20 / 24 của `.ov-top`) giữ nguyên. Hệ quả đã đo: mỗi ô thấp 16, lòng rộng thêm 16; tấm tổng 468 → 452 (nội dung 420 giữ). */
+  .ov-card { display: flex; flex-direction: column; gap: 16px; padding: 16px; background: var(--card-card); }
+  .ov-card.is-head, .ov-card.ov-items { border: 1px solid var(--general-border); }
+  .ov-card.is-head { gap: 20px; }
   .ov-card.is-head .ov-k { color: var(--general-secondary-foreground); }
-  .ov-top { display: grid; grid-template-columns: minmax(0, 1fr) 420px; column-gap: 24px; align-items: start; }
-  .ov-hd { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .ov-top { display: flex; flex-direction: column; gap: 24px; }
+  .ov-hrow { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
+  .ov-hd { flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
   .ov-codes { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
-  .ov-code { font-size: 18px; line-height: 24px; color: var(--general-foreground); }
+  .ov-idg, .ov-dateg { display: flex; align-items: center; gap: 4px; }
+  .ov-codek { font-size: 16px; line-height: 24px; color: var(--general-muted-foreground); }
+  .ov-code { font-size: 16px; line-height: 24px; color: var(--general-foreground); }
+  .ov-codes .ord-status.is-badge { padding: 4px 8px; }
+  .ov-datek { color: var(--general-muted-foreground); }
   .ov-date { color: var(--general-secondary-foreground); }
-  .ov-pay { margin-top: 12px; }
-  .ov-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 48px; }
+  .ov-pay { flex: none; }
+  /* 05/10/2026 tối (lệnh user, dán nguyên khối "Điểm tích luỹ sau khi hoàn tất +901 / Phương thức thanh toán … / Thông tin xuất hóa đơn …": "cho xuống hàng từng loại nhé") — HÀNG THÔNG TIN → DANH SÁCH DỌC:
+     MỖI LOẠI MỘT DÒNG [nhãn · giá trị 14/20] canh trái, khe giữa các dòng 8 — ở MỌI đơn (trước: ba cột đều + vạch dọc, và ở 800 đa số đơn tự xuống hai hàng lệch nhau). Hết vạch dọc `.ov-vdiv`, hết `orderMetaFit()` / `.is-wrap`
+     (không còn gì để đo — danh sách dọc luôn vừa). Nhãn + giá trị vẫn NẰM NGANG trong từng dòng như khung user; giá trị bắt đầu ngay sau nhãn nên mép trái giá trị lệch theo độ dài nhãn (cố ý, như khối hàng của thẻ giao hàng không canh cột). */
+  .ov-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .ov-mi { display: flex; align-items: center; gap: 8px; text-align: left; }
+  .ov-mi.ov-prog { width: auto; }
+  .ov-mv { font-size: 14px; line-height: 20px; color: var(--general-foreground); }
   .ov-divider { height: 1px; background: var(--general-border-subtle); }
-  .ov-rows { display: flex; flex-direction: column; gap: 10px; }
+  .ov-rows { display: flex; flex-direction: column; gap: 4px; }
   .ov-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .ov-row.is-top { align-items: flex-start; }
   .ov-k { flex: none; color: var(--general-muted-foreground); }
   .ov-v { min-width: 0; text-align: right; color: var(--general-foreground); }
   .ov-name { color: var(--general-foreground); }
   .ov-ttl { font-size: 16px; line-height: 24px; color: var(--general-foreground); }
-  .ov-v, .ov-name, .ov-code, .ov-date, .ov-pts, .ov-ttl, .ov-total, .ov-step-name.is-on, html.skin-mt .ov-v, html.skin-mt .ov-name, html.skin-mt .ov-code, html.skin-mt .ov-date, html.skin-mt .ov-pts, html.skin-mt .ov-ttl, html.skin-mt .ov-total, html.skin-mt .ov-step-name.is-on { font-weight: 500; }
+  .ov-v, .ov-name, .ov-code, .ov-codek, .ov-date, .ov-pts, .ov-mv, .ov-ttl, .ov-total, .ov-step-name.is-on, html.skin-mt .ov-v, html.skin-mt .ov-name, html.skin-mt .ov-code, html.skin-mt .ov-codek, html.skin-mt .ov-date, html.skin-mt .ov-pts, html.skin-mt .ov-mv, html.skin-mt .ov-ttl, html.skin-mt .ov-total, html.skin-mt .ov-step-name.is-on { font-weight: 500; }
   /* Hàng BẤM ĐƯỢC (hoá đơn · tiến trình): vùng chạm tràn 14px trên/dưới bằng phần tử ảo, hộp của nút vẫn cao đúng một hàng. `.ov-go` = giá trị + mũi tên phải 16. */
   .ov-prog { position: relative; width: 100%; text-align: left; }
   .ov-prog::after { content: ''; position: absolute; left: 0; right: 0; top: -14px; bottom: -14px; }
   .ov-go { display: inline-flex; align-items: center; gap: 4px; }
-  .ov-go svg { flex: none; width: 16px; height: 16px; }
-  /* Dải điểm: nền xám accent (bộ da khác) — skin-li ăn đồng `copper-surface`, số điểm `copper-ink` (token `--cu-*` chỉ khai ở skin-li / theme-cu). */
-  .ov-points { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 4px 8px; background: var(--unofficial-accent-0); color: var(--general-foreground); }
+  .ov-go svg { flex: none; width: 14px; height: 14px; }
+  /* Điểm tích luỹ: một CỘT của hàng thông tin (hết dải kem góc phải thẻ). Số điểm mực chính ở các bộ da khác; skin-li ăn đồng `copper-ink` (token `--cu-*` chỉ khai ở skin-li / theme-cu). */
   .ov-pts { flex: none; }
-  html.skin-mt.skin-li .ov-points { background: var(--cu-surface); }
   html.skin-mt.skin-li .ov-pts { color: var(--cu-ink); }
-  /* Thẻ GIAO HÀNG + NGƯỜI NHẬN gộp: hai phần ngang hàng, vạch dọc giữa. */
-  .ov-card.is-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; padding: 0 24px; }
-  .ov-sec { display: flex; flex-direction: column; gap: 16px; padding: 24px 24px 24px 0; }
-  .ov-sec + .ov-sec { padding: 24px 0 24px 24px; }
-  .ov-sec.is-line { border-right: 1px solid var(--general-border-subtle); }
+  /* Hai KHỐI VIỀN người nhận | giao hàng (khung user 04/10): khe 16, viền V2 bốn phía, đệm 24; thẻ không đệm dọc nên viền khối là mép trên / dưới của thẻ. Nút theo dõi canh phải ở đáy khối giao hàng. */
+  .ov-card.is-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 0; }
+  .ov-sec { display: flex; flex-direction: column; gap: 16px; padding: 16px; border: 1px solid var(--general-border); }
+  .ov-act { flex: none; width: 100%; }
   .ov-card.is-split .ov-v, .ov-card.is-split .ov-name { color: var(--general-secondary-foreground); }
   .ov-addr { display: flex; flex-direction: column; gap: 4px; color: var(--general-secondary-foreground); }
+  /* Hàng thông tin: ĐÃ ĐỔI THÀNH DANH SÁCH DỌC (05/10 tối) — xem khối `.ov-meta` ở trên. Bản trước (khung user 05/10, lần sửa 2) là BA CỘT ĐỀU ngăn bằng vạch dọc 1×14 + `orderMetaFit()` gắn `.is-wrap` khi hàng tràn
+     (Chờ thanh toán cần ~1011px, hai đơn Chuyển khoản / QR ~989, ở thẻ 800 đa số đơn cần 759–902) — gỡ cùng hàm đo, vạch dọc và rule `.is-wrap`.
+     Hai khối viền người nhận | giao hàng chỉ xếp dọc từ 1179 trở xuống. */
   @media (max-width: 1179px) {
-    .ov-top { grid-template-columns: minmax(0, 1fr); row-gap: 16px; }
-    .ov-meta { grid-template-columns: minmax(0, 1fr); }
     .ov-card.is-split { grid-template-columns: minmax(0, 1fr); }
-    .ov-sec, .ov-sec + .ov-sec { padding: 24px 0; }
-    .ov-sec.is-line { border-right: 0; border-bottom: 1px solid var(--general-border-subtle); }
   }
   /* Timeline 4 chặng (thẻ Mã đơn) */
   .ov-tl { display: flex; padding-top: 8px; }
@@ -851,19 +893,39 @@ window.RESP = (function () {
   .ov-vtxt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .ov-ivs { display: flex; flex-direction: column; gap: 12px; padding-bottom: 16px; }
   /* Thẻ sản phẩm + tổng */
-  .ov-items { gap: 0; }
-  .ov-items .ord-grid-head { align-items: center; padding-bottom: 16px; border-bottom: 0; }
+  .ov-items { gap: 16px; }
+  .ov-items .ord-grid-head { align-items: center; padding-bottom: 0; border-bottom: 0; }
   .ov-colhead { color: var(--general-muted-foreground); text-transform: uppercase; font-weight: 500; }
   html.skin-mt .ov-colhead { font-weight: 500; }
-  .ov-lines { display: flex; flex-direction: column; gap: 16px; }
-  .ov-sum-wrap { display: flex; justify-content: flex-end; padding: 24px; background: var(--general-secondary); }
-  .ov-sum { display: flex; flex-direction: column; gap: 8px; width: 420px; max-width: 100%; }
+  .ov-lines { display: flex; flex-direction: column; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--general-border); }
+  /* 05/10/2026 tối (lệnh user: "tóm tắt đơn hàng bên dưới cho full W luôn"): tấm TỔNG xám FULL BỀ NGANG lòng thẻ Sản phẩm (trước: gọn 420 + đệm = 452, canh PHẢI — `align-self: flex-end`, `.ov-sum { width: 420px }`),
+     nhãn trái · số phải giãn hết dòng. Vẫn nằm TRONG đệm của thẻ (không tràn ra mép thẻ), đệm 16, nền xám như cũ. */
+  .ov-sum-wrap { display: flex; align-self: stretch; padding: 16px; background: var(--general-secondary); }
+  .ov-sum { display: flex; flex-direction: column; gap: 8px; width: 100%; }
   .ov-sum-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--general-foreground); }
   .ov-sum-row.is-neg { color: var(--general-destructive); }
   .ov-sum-total { padding: 8px 0; }
   .ov-total-l { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .ov-total { font-size: 16px; line-height: 24px; white-space: nowrap; }
   .ov-vat { color: var(--general-muted-foreground); white-space: nowrap; }
+  /* ── LỚP NÂNG CẤP GIAO DIỆN (04/10/2026, lệnh "nâng cấp giao diện ở bản desktop lên") — TÁCH RIÊNG: không đổi kích thước nào của khung user; gỡ nguyên khối này là về đúng khung ──
+     1. Số ĐẲNG CHIỀU (tabular-nums, cùng lý do màn giỏ): cột tiền, điểm, ngày thẳng hàng theo hàng đơn vị.
+     2. Hàng BẤM ĐƯỢC (hoá đơn · tiến trình) có hover đọc ra được: giá trị gạch chân, mũi tên nhích 2px; mũi tên lùi nhích trái. Hàng tiến trình (mở ngăn kéo) từng thêm mũi tên phải như hàng hoá đơn — BỎ 05/10/2026 theo lệnh user (hover gạch chân vẫn còn).
+     3. Đơn nhiều món: KẺ MẢNH V3 nằm giữa khe 16 của hai dòng hàng (đường kẻ giả ::after; KHÔNG đổi chiều cao nào, đơn 1 món không có gì thay đổi).
+        Hover của dòng hàng (nền đồng nhạt · gạch chân tên · ảnh mờ nhẹ) — ĐÃ GỠ HẾT 05/10/2026 theo lệnh user (xem khối ".ord-grid" bên dưới): thẻ SẢN PHẨM không có hiệu ứng hover.
+     4. Vào màn: bốn khối nổi lên lần lượt bằng .rise có sẵn (như các màn khác). Mọi chuyển động tắt khi hệ điều hành bật "giảm chuyển động". */
+  [data-screen="order"] { font-variant-numeric: tabular-nums; }
+  .ov-lines > .ord-grid + .ord-grid::after { content: ''; position: absolute; left: 0; right: 0; top: -8px; height: 1px; background: var(--general-border-subtle); pointer-events: none; }
+  .ov-backbtn svg, .ov-go svg { transition: transform .2s ease; }
+  @media (hover: hover) {
+    .ov-backbtn:hover svg { transform: translateX(-2px); }
+    .ov-prog:hover .ov-go svg { transform: translateX(2px); }
+    .ov-prog:hover .ov-go > span { text-decoration: underline; text-underline-offset: 3px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ov-backbtn svg, .ov-go svg { transition: none; }
+    .screen.active .ov-cards > .rise { animation: none; }
+  }
 
   /* ── MÀN CHI TIẾT ĐƠN — DESKTOP (brief trang 55, 28/09/2026) ──
      Bảng hàng 3 cột như brief: "Chi tiết đơn hàng | Số lượng | Thành tiền". Cột 1 co
@@ -871,7 +933,9 @@ window.RESP = (function () {
      cộng giá gạch 11 ký tự trên MỘT hàng. Hàng tiêu đề và hàng hàng dùng CHUNG lưới nên
      "Số lượng" đứng đúng trên "x2", "Thành tiền" đúng trên giá.
      Viết CSS thật vì bản tailwind.css dựng sẵn không có utility lưới cột cố định. */
-  .ord-grid { display: grid; grid-template-columns: minmax(0, 1fr) 160px 240px; column-gap: 24px; align-items: center; }
+  /* 05/10/2026 (user giới hạn màn này 800): bảng hàng lấy luôn bộ cột GỌN của khổ ≤ 1279 (rule `@media (max-width: 1279px)` bên dưới) làm mặc định — SL 96 · tiền 176 · khe 16. Ở thẻ 800 (lòng 750) cột tên được 446 thay vì 302
+     (tên dài như "Khăn lụa in họa tiết Broken Jewels 90x90cm" về MỘT dòng), vẫn đủ cho chip % + giá gạch (~150) ở cột tiền. Bộ 160 / 240 / 24 là số của khung user ở thẻ 1040 — nay không còn khổ nào dùng tới. */
+  .ord-grid { display: grid; grid-template-columns: minmax(0, 1fr) 96px 176px; column-gap: 16px; align-items: center; }
   .ord-grid-head { align-items: end; padding-bottom: 16px; border-bottom: 1px solid var(--general-border); }
   /* Khối tổng canh phải, rộng 360 (w-[360px] không có trong bản build). */
   .ord-sum { width: 360px; margin-left: auto; }
@@ -923,8 +987,9 @@ window.RESP = (function () {
        ≤1279 thu cột SL 160→96, Thành tiền 240→176;
        ≤1071 gộp còn 2 cột: "SL: N" xuống dưới cụm chữ (.ord-qty-in), cột SL và nhãn cột "Số lượng" ẩn. (Bảng danh sách đơn
        .ord-lgrid từng cùng mốc 1071; 30/09 nó thành thẻ và có mốc riêng 1200, xem .ord-card.)
-     HOVER HÀNG (ở 1440 tên hàng cách cột SL 405px, mắt phải đi ~500px): nền đồng nhạt tràn 8px trên/dưới và 16px hai bên bằng
-     phần tử ảo — bố cục đứng yên. Ảnh + tên dòng hàng bấm được sang PDP nên hover còn gạch chân tên / làm mờ nhẹ ảnh.
+     HOVER HÀNG — ĐÃ GỠ HẾT 05/10/2026 (lệnh user: "cái thẻ sản phẩm k có hiệu ứng khi hover nhé"). Trước đó rê vào dòng hàng thì: nền đồng nhạt tràn 8px trên/dưới + 16px hai bên bằng phần tử ảo ::before
+     (`--unofficial-ghost-hover`, skin-li `--cu-surface`, mờ dần .15s), tên gạch chân (offset 2), ảnh mờ .85 — hai chiều (rê ảnh gạch tên, rê tên mờ ảnh). Nay thẻ SẢN PHẨM không có hiệu ứng hover nào; ảnh + tên VẪN bấm được sang PDP
+     (con trỏ tay giữ). Hàng đứng yên nên bố cục không đổi. Muốn có lại phải do user nói — đừng "thêm lại giúp".
      .ord-note: ghi chú "đơn đã rời kho" giữa hàng nút, giới hạn bề ngang để không đẩy nút CSKH.
      .ord-back / .ord-hit: vùng chạm cao 44 (chữ chỉ cao 16) bằng phần tử ảo ::after tràn 14px trên/dưới — hộp nút VẪN cao 16 nên bố
      cục và bản bóc Figma không đổi (bản đầu dùng đệm + lề âm: hộp nút cao 44 đè khối kế bên, bộ chuyển Figma gỡ auto layout cả trang). */
@@ -936,14 +1001,6 @@ window.RESP = (function () {
     .ord-qty-in { display: block; }
   }
   .ord-grid:not(.ord-grid-head) { position: relative; z-index: 0; }
-  .ord-grid:not(.ord-grid-head)::before { content: ''; position: absolute; inset: -8px -16px; z-index: -1; pointer-events: none; opacity: 0; transition: opacity .15s ease; background: var(--unofficial-ghost-hover); }
-  .ord-grid:not(.ord-grid-head):hover::before { opacity: 1; }
-  html.skin-mt.skin-li .ord-grid:not(.ord-grid-head)::before { background: var(--cu-surface); }
-  .ord-grid div[data-order-pdp] { transition: opacity .15s ease; }
-  .ord-grid span[data-order-pdp]:hover { text-decoration: underline; text-underline-offset: 2px; }
-  .ord-grid div[data-order-pdp]:hover { opacity: .85; }
-  .ord-grid:has(div[data-order-pdp]:hover) span[data-order-pdp] { text-decoration: underline; text-underline-offset: 2px; }
-  .ord-grid:has(span[data-order-pdp]:hover) div[data-order-pdp] { opacity: .85; }
   .ord-note { max-width: 560px; }
   .ord-back, .ord-hit { position: relative; }
   .ord-back::after, .ord-hit::after { content: ''; position: absolute; left: 0; right: 0; top: -14px; bottom: -14px; }
@@ -1095,6 +1152,29 @@ window.RESP = (function () {
   .tier-perk-lb { font-size: 9px; line-height: 12px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--tl); }
   .tier-perk-val { font-family: var(--font-head); font-size: 24px; line-height: 32px; letter-spacing: .2px; color: var(--ts); }
   .tier-perk-sub { font-size: 10px; line-height: 14px; letter-spacing: .35px; color: var(--tl); }
+  /* ── THANH HẠNG Ở CỘT NỘI DUNG 800 (05/10/2026, hệ quả lệnh user "limit chiều ngang cái block bên nội dung ở 800") ──
+     Thanh 4 hạng vẽ cho thanh RỘNG ~1090 (panel mở 802 + 3 hạng đóng 96 — Figma 756:108020, cột danh xưng 250 | kẻ | lưới quyền lợi, đệm 32). Ở 800 chỉ còn: panel mở 506 → lưới quyền lợi còn 135, cột phải cố định 177 TRÀN
+     (đo: `.tier-perks` 201/135, `.tier-body` 540/506; chữ chồng lên nhau, "Khi giới thiệu khách hàng mớ…" bị cắt). THU GỌN theo số đo, giữ nguyên bố cục + chữ + màu:
+       hạng đóng 96 → 56 · đệm panel 32 → 24 · khe 28 / 22 → 20 · cột danh xưng 250 / 290 → 200 · cột quyền lợi phải 177 → 150.
+     Tính ở 800: panel mở = 800 − 3 × 56 − 3 × 2 = 626, ruột 578, danh xưng 200 + khe 20 + kẻ 1 + khe 20 ⇒ lưới quyền lợi 337 (cột trái 163, cột phải 150, khe 24). Cỡ chữ KHÔNG đổi.
+     Chỉ `desktop.html`; thanh này chỉ có ở tab "Hạng thành viên & Ưu đãi" (mobile là bản riêng). Khung Figma 756:108020 là THIẾT KẾ CỦA USER ở khổ rộng — chưa sửa, chờ user quyết hướng. */
+  .tier { flex-basis: 56px; }
+  .tier-tab { width: 56px; }
+  .tier.is-open .tier-body { padding: 24px; gap: 20px; }
+  .tier-id, .tier-face-gold .tier-id { flex-basis: 200px; }
+  .tier-perk + .tier-perk { flex-basis: 150px; }
+  /* Khe giữa hàng quyền lợi và kẻ 40 → 32 (thang spacing): cột phải hẹp hơn nên có hàng xuống 2 dòng (Platinum: 66 + 98 + 66 + 4 khe 40 = 392 > 372 lòng panel — chữ cuối chỉ còn cách mép dưới 4px); với 32 còn 360, vừa 420 ở bản VI. */
+  .tier-perks { gap: 32px; }
+  /* Cột quyền lợi hẹp ⇒ giá trị / nhãn có thể xuống dòng (đo: bản EN ở 800 dài hơn bản VI 8px ở hạng Gold / Platinum / Diamond) ⇒ thanh GIÃN THEO ruột panel, tối thiểu vẫn 420 (hạng đóng kéo cao theo) thay vì cắt dòng chữ cuối.
+     Bản VI ở 800 vừa 420 nên KHÔNG đổi cao khi đổi hạng. */
+  .tier-acc { height: auto; min-height: 420px; }
+  /* Khổ ≤ 1215 cột nội dung còn dưới 800 (khổ − 15 thanh cuộn − 96 lề − 280 cột trái − 24 khe; ở 1100 còn 723, ở 1024 còn 664) — thu thêm một bậc để thanh không tràn lại (trước lượt này thanh đã tràn ở các khổ này). */
+  @media (max-width: 1215px) {
+    .tier { flex-basis: 44px; }
+    .tier-tab { width: 44px; }
+    .tier-id, .tier-face-gold .tier-id { flex-basis: 184px; }
+    .tier-perk + .tier-perk { flex-basis: 128px; }
+  }
   /* ===== THẺ HẠNG v2 — Figma 780:129669 (27/09/2026, lệnh user) ===================
      Khung "Chân dung · Editorial bất đối xứng · Dọc" 343 wide: đệm 12, khe 20, bo 8,
      viền 1px + 2 lớp bóng. Cụm trái: HẠNG THÀNH VIÊN HIỆN TẠI / tên Libre 32/40 / vạch
@@ -1179,8 +1259,13 @@ window.RESP = (function () {
   .addr-card { position: relative; }
   .addr-card-body { padding-right: 56px; }
   .addr-card-edit { position: absolute; top: 12px; right: 12px; }
+  /* 05/10/2026 (lệnh user, khung Figma 1107:64765 = step 1 do user sửa tay: "chỉnh mấy step kia theo
+     kích thước mà tôi sửa cho step 1"): huy hiệu số bước 32 → 40 ở MỌI trạng thái (đang mở · đã xong ·
+     chưa tới). Chữ số giữ 14/20 Libre. Kéo theo ba số: hàng tiêu đề 72 → 80 (đệm 20 + 40 + 20), chữ
+     tiêu đề lùi vào 52 = 40 + khe 12, thân bước cũng lùi 52 (xem `#ckSections > .ck-sec > .acc-body >
+     .acc-inner` bên dưới) — chữ tiêu đề và chữ nội dung cùng cách mép cột 52. */
   .ck-step-no {
-    flex: 0 0 32px; height: 32px; border-radius: 999px;
+    flex: 0 0 40px; height: 40px; border-radius: 999px;
     display: inline-flex; align-items: center; justify-content: center;
     background: var(--general-secondary); color: var(--general-secondary-foreground);
     /* ⚠⚠ DA GO `transition: background .3s ease, color .3s ease` — 24/09/2026.
@@ -1395,8 +1480,10 @@ window.RESP = (function () {
      ve 0 khi muc dang mo, de khe CHU-DEN-CHU dung bang 8. User xem roi chot GIU NHU CU:
      nut giu nguyen dem cua trang thai dong, 8 chi la dem RIENG cua khoi noi dung.
      DUNG DUNG LAI rule do neu khong co lenh moi. */
-  .pol-nav-on { background: var(--general-secondary); }
-  html.skin-mt.skin-li .pol-nav-on { background: var(--cu-surface); }
+  /* NỀN KEM CỦA MỤC ĐANG CHỌN trong mục lục dọc — DÙNG CHUNG (05/10/2026, lệnh user): mục lục trang Chính sách (`.pol-nav-on`, span) VÀ sidebar trang Tài khoản desktop
+     (`.acc-side .acc-tab[aria-current]`, nút). Một nguồn màu: đổi một chỗ là cả hai theo. Phần còn lại của "hiệu ứng" (cỡ chữ, đệm 16, mực nghỉ / rê) khai ở khối `.acc-side .acc-tab` (~dòng 679). */
+  .pol-nav-on, .acc-side .acc-tab[aria-current] { background: var(--general-secondary); }
+  html.skin-mt.skin-li .pol-nav-on, html.skin-mt.skin-li .acc-side .acc-tab[aria-current] { background: var(--cu-surface); }
   .ck-prenote { background: var(--unofficial-accent-0); }
   html.skin-mt.skin-li .ck-prenote { background: var(--cu-surface); }
   [data-screen="checkout"] .opt.on { background: var(--unofficial-accent-0); }
@@ -1432,11 +1519,25 @@ window.RESP = (function () {
      sách có điểm dừng. */
   #ckSections { border-bottom: 1px solid var(--unofficial-border-1); }
   #ckSections > .ck-sec:first-child { border-top: 0; }
-  /* Thân bước thụt vào cho thẳng hàng tiêu đề: 28 ở đây + px-4 sẵn có của từng khối
-     con = 44 = huy hiệu 32 + khe 12. Đặt ở .acc-inner để khỏi phải sửa px-4 trong
-     hàng chục chuỗi markup con; chọn đường dẫn con TRỰC TIẾP để accordion lồng bên
-     trong thân bước (nếu có) không bị cộng thêm lần nữa. */
-  #ckSections > .ck-sec > .acc-body > .acc-inner { padding-left: 28px; }
+  /* Thân bước thụt vào cho thẳng hàng tiêu đề (05/10/2026, theo khung step 1 do user sửa tay,
+     Figma 1107:64765): chữ nội dung cách mép cột 52 = chữ tiêu đề cách mép cột 52 (huy hiệu 40 +
+     khe 12). 52 TÁCH THÀNH HAI SỐ ĐÚNG THANG spacing: 32 ở `.acc-inner` + 20 ở từng khối con —
+     đúng cách khung của user chia (`collapsible-content` đệm trái 32, `inset` đệm trái 20), nên
+     lượt dựng Figma sau ra đúng 32 / 20 và lượt `spacing-snap.js` không còn gì để chỉnh.
+     (Bản trước: 28 + 16 = 44 = 32 + 12 — số 28 lệch thang, bị snap về 24 và chữ nội dung lùi 4px
+     so với tiêu đề; một số lẻ làm vỡ đường dóng thì nên tách thành hai số trên thang.)
+     Phần 20 đè px-4 sẵn có (chỉ phía TRÁI) của khối "mang lề" NGOÀI CÙNG trong thân bước — một
+     `.px-4` không nằm trong `.px-4` khác — để khỏi sửa px-4 trong hàng chục chuỗi markup con.
+     ⚠ KHÔNG chọn theo "con trực tiếp của .acc-inner": có khối bọc KHÔNG mang lề (`#addrOpts` ở
+     bước Vận chuyển khi đã đăng nhập: thẻ sổ địa chỉ + nút thêm địa chỉ nằm trong một div px-4
+     BÊN TRONG nó). Bản đầu 05/10 đè 20 lên chính khối bọc rồi div px-4 bên trong cộng thêm 16 ⇒
+     khối địa chỉ nằm ở 68, lệch 16 so với tiêu đề (user chụp ảnh, kẻ đường dóng đỏ). Chọn theo
+     "px-4 ngoài cùng" thì bọc bao nhiêu tầng cũng ra đúng 52.
+     Bên PHẢI giữ px-4 (16): nội dung dừng ở 856 — khung step 1 của user để ô nhập chạy sát mép cột
+     872 (820 rộng), chưa áp vì user chỉ nói lề TRÁI; muốn sát mép thì bỏ padding-right của khối
+     ngoài cùng VÀ chừa chỗ cho vòng focus của ô sát phải (.acc-inner đang overflow: hidden). */
+  #ckSections > .ck-sec > .acc-body > .acc-inner { padding-left: 32px; }
+  #ckSections > .ck-sec > .acc-body > .acc-inner .px-4:not(.acc-inner .px-4 .px-4) { padding-left: 20px; }
 
   .acc.open .acc-chev { transform: rotate(90deg); }
   .acc-chev { transition: transform .3s ease; }
@@ -1657,9 +1758,7 @@ window.RESP = (function () {
   @keyframes ringIn { from { transform: scale(.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }
   .screen.active #ring { animation: ringIn .5s cubic-bezier(.22,1,.36,1) both; }
   .screen.active #tick { stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw .5s .35s ease forwards; }
-  /* ── Confetti ── */
-  @keyframes fall { to { transform: translateY(340px) rotate(540deg); opacity: 0; } }
-  .confetti { position: absolute; width: 6px; height: 10px; top: -12px; animation: fall 2.2s ease-in forwards; }
+  /* ── Confetti: ĐÃ GỠ 05/10/2026 (user: "bỏ cái hiệu ứng pháo hoa khi đặt xong đơn hàng") — cùng host #confettiHost + hàm confetti() + lệnh gọi ở go(); bản cũ nguyên văn: _notes/GO-PHAO-HOA-HOAN-TAT-2026-10-05.md ── */
   /* Màn Hoàn tất desktop (03/10/2026): chỉ còn MỘT nút chính nên không kéo hết cột 512 — rộng tối đa 320 như nút của form. */
   .done-cta { max-width: 320px; }
   /* ── Progress bar ── */
@@ -4607,6 +4706,14 @@ window.RESP = (function () {
      (rule `:has(.dk-mega.open)` ở trên đặt trong suốt để panel liền khối với header) — đường kẻ vẽ riêng sẽ cắt ngang panel đang mở.
      Độ ưu tiên: (0,4,1) thắng rule nền (0,3,1) nhưng THUA rule mega-open (0,5,1) nên khi panel mở viền vẫn trong suốt như cũ. */
   html.skin-mt [data-screen="cart"] .navbar .dk-sub { border-bottom-color: var(--general-border); }
+  /* 05/10/2026 (lệnh user: "cái header ở check out cho cái line bên dưới nhé" — khung Figma `1107:64741`, user đã vẽ viền #d3d3d3 cho header): CHỈ màn Thanh toán
+     DESKTOP (cả trạng thái "đã đặt hàng rồi mà quay lại"), header RÚT GỌN (`navBar({ logoOnly: true })`: nút back · logo · "Thanh toán an toàn & bảo mật") có MỘT đường
+     kẻ chân — 1px --general-border (#d3d3d3), tràn mép — cùng màu / cùng nét với đường kẻ chân header ở trang Giỏ. Header này KHÔNG có sẵn viền nào (đo: border-bottom 0)
+     nên phải THÊM; để header giữ nguyên 64 (khung Figma của user cũng 64, viền tính vào trong) thì hàng bên trong hạ 64 → 63 để cộng với viền 1 = 64 —
+     không dời trang 1px, không phải dò lại các mốc phía dưới. Viền nằm trên `.navbar` ngoài (rộng hết khung nhìn), KHÔNG trên hàng trong (bị max-w 1440 cắt ngắn ở
+     màn rộng). Khoanh `html.skin-mt` như rule giỏ ngay trên (các bộ da đóng băng không đụng). Mobile KHÔNG đổi (header 48, chưa ai nói). */
+  html.skin-mt [data-screen="checkout"] .navbar { border-bottom: 1px solid var(--general-border); }
+  html.skin-mt [data-screen="checkout"] .navbar > div { height: 63px; }
   /* Vách hàng danh sách GIỮ #ececec (không kéo lên #dfdfdf như bản trước) — cùng
      lý do trên: hàng danh mục trong menu dùng đúng token này. */
   html.skin-mt { --unofficial-border-1: #ececec; }
@@ -12649,7 +12756,9 @@ function accResetForms() { accEdit = ''; addrEdit = null; addrDel = null; accDra
 /* MỤC LỤC TRÁI trang Tài khoản — tách thành hàm 28/09/2026 để màn Chi tiết đơn dùng
    CHUNG (brief trang 55: chi tiết đơn là một trang của My Account, như Lịch sử điểm).
    `tab` = mục đang sáng; mặc định là tab đang mở của màn Tài khoản. Markup giữ NGUYÊN
-   từng chữ của bản viết thẳng trong screenACCOUNT trước đây. */
+   từng chữ của bản viết thẳng trong screenACCOUNT trước đây.
+   05/10/2026 (lệnh user): hiệu ứng DÙNG CHUNG với mục lục trang Chính sách — mực nghỉ #404040, rê ⇒ #0a0a0a, đang chọn ⇒ NỀN KEM, hàng cao 52 (đệm 16 đều: `px-4 py-4` thay `h-11`).
+   Bỏ vạch đồng + thang mực 3 bậc của bản 05/09 CHỈ ở cột này; khai ở `.acc-side .acc-tab` + `.pol-nav-on` (CSS), cờ vẫn là `aria-current` (JS đổi tab tại chỗ không đổi). */
 const accSideNav = (tab = accountTab) => `
         <!-- cột điều hướng -->
         <!-- 29/09/2026 (khung user 734:52984) — cột 280 (.acc-side; lượt 1 cùng ngày là 306), BỎ kẻ dọc ngăn cột và BỎ
@@ -12665,7 +12774,7 @@ const accSideNav = (tab = accountTab) => `
                dùng ở mục lục. -->
           <div id="accTabs" class="flex flex-col">
             ${ACCOUNT_TABS.map(([id, label], i) => `
-              <button data-atab="${id}"${id===tab ? ' aria-current="true"' : ''} class="t-lead acc-tab h-11 flex items-center text-left press">${label}</button>`).join('')}
+              <button data-atab="${id}"${id===tab ? ' aria-current="true"' : ''} class="t-lead acc-tab px-4 py-4 flex items-center text-left press">${label}</button>`).join('')}
             <!-- 27/09/2026 (user) — BỎ mục "Theo dõi đơn hàng" khỏi mục lục: lối vào màn tra
                  cứu nay ở footer (cột Chăm sóc khách hàng). Mục lục còn 4 mục ngang hàng. -->
           </div>
@@ -12704,7 +12813,8 @@ function screenACCOUNT() {
              bên phải, mà MỌI trang trong khác (giỏ · đơn hàng · chính sách · thanh toán)
              đều dùng hết max-w-[1440px] px-6. Nay cột nội dung ăn hết chỗ còn lại (~1081).
              Dòng nhập KHÔNG dài ra theo: lưới .acc-card-cols dùng auto-fit nên tự lên 3
-             cột (~318 mỗi cột), còn form trong thẻ vẫn đi .acc-grid2 2 cột. -->
+             cột (~318 mỗi cột), còn form trong thẻ vẫn đi .acc-grid2 2 cột.
+             ĐẢO 05/10/2026 (lệnh user: giới hạn cột nội dung 800 + dồn trang sang trái): trần 800 và căn trái khai ở CSS, ngay dưới .acc-main. -->
         <div class="acc-main">
           <div id="accBody">${accountBody()}</div>
         </div>
@@ -12994,7 +13104,8 @@ function accInfo() {
    20/08 (AUDIT B2). Mặt tối + chữ đồng signature (--cu-signature = "vàng DAFC" của bộ da)
    10,7:1; đơn huỷ mặt đỏ chữ trắng 4,9:1 (chữ đỏ trên mặt tối chỉ 4,0 — rớt AA). Chữ
    thường 12/16 như mọi nhãn nội dung. Chỉ màn CHI TIẾT truyền interactive=true: hàng danh
-   sách đơn cả hàng đã là <button>, lồng nút là HTML sai. */
+   sách đơn cả hàng đã là <button>, lồng nút là HTML sai.
+   05/10/2026 (user, khung 1159:105033): màn chi tiết cũng thôi truyền interactive — nút "Thanh toán lại" nằm riêng bên phải hàng đầu thẻ Mã đơn, không còn dính cạnh nhãn. Nhánh interactive giữ lại để hoàn tác. */
 const statusTag = (o, interactive = false, badge = false) => {
   /* `badge` (30/09/2026, user: "cái trạng thái đổi thành dạng badge với nền là màu 50 và chữ 600-700"): DANH SÁCH ĐƠN hiện nhãn = BADGE nền nhạt (bậc 50) + chữ đậm (bậc 700)
      cùng họ màu theo trạng thái — thay chấm màu + chữ mực cùng ngày. Tối 30/09 (user: "đồng bộ cái thẻ trạng thái đơn hàng cho trang chi tiết đơn hàng luôn") màn CHI TIẾT
@@ -13871,7 +13982,7 @@ function screenORDER() {
   const o = ORDERS.find(x => x.id === currentOrder) || ORDERS[0];
   const n = v => v.toLocaleString('vi-VN');
   const noteLines = orderNoteLines(o);
-  /* Nút "Thanh toán lại" TRONG thẻ Mã đơn (01/10/2026 khuya): chỉ đơn Chờ thanh toán; cùng hành động data-repay với nhãn trạng thái (statusTag). */
+  /* Nút "Thanh toán lại" TRONG thẻ Mã đơn (01/10/2026 khuya): chỉ đơn Chờ thanh toán; hành động data-repay. 05/10/2026: nằm BÊN PHẢI hàng đầu thẻ (khung user 1159:105033) và là nút DUY NHẤT — nhãn trạng thái không còn là nút. */
   const payAct = orderActions(o).primary;
   /* 01/10/2026 — LAYOUT "v4" của user (xem khối ORDER_CARRIER ở trên): thẻ MÃ ĐƠN (có timeline) · hai thẻ NGƯỜI NHẬN | GIAO HÀNG · thẻ SẢN PHẨM + TỔNG, KHÔNG chia đợt, KHÔNG khúc liên hệ CSKH. Nút Theo dõi
      đơn hàng không còn là nút chính của màn — thẻ giao hàng có link riêng "Theo dõi vận đơn ↗" — nên nút cạnh nhãn trạng thái không còn (01/10: Mua lại · Nhắc tôi khi hàng về đã gỡ; đơn Chờ thanh toán thì chính nhãn là nút). Link "‹ Đơn hàng" gỡ vì khung không
@@ -13959,14 +14070,14 @@ function screenORDER() {
                 <p class="t-lead text-foreground text-right">0 ₫</p>
               </div>`;
   /* Khối tổng (02/10/2026, giống bản mobile): hàng 14/20 nhãn + số cùng màu mực (Giảm giá đỏ cả nhãn lẫn số), kẻ ngăn nhạt, Tổng thanh toán Inter 16/24 · 500 kèm "(Bao gồm VAT)" mờ cạnh nhãn; hàng điểm đã DỜI lên
-     dải kem của thẻ Mã đơn (v4 từng: Libre 16/24, "Đã bao gồm VAT" một dòng riêng, hàng điểm màu thành công). Đơn do checkout sinh ra ghi discount '' khi không giảm — quy về '0 ₫' cho khỏi in một ô đỏ rỗng. Nhãn "Giảm giá" và "(7%)" là hai span riêng để luật i18n khớp nguyên chuỗi.
+     thẻ Mã đơn (02/10: dải kem góc phải; 04/10: cột "Điểm tích luỹ" của hàng thông tin) (v4 từng: Libre 16/24, "Đã bao gồm VAT" một dòng riêng, hàng điểm màu thành công). Đơn do checkout sinh ra ghi discount '' khi không giảm — quy về '0 ₫' cho khỏi in một ô đỏ rỗng. Nhãn "Giảm giá" và "(7%)" là hai span riêng để luật i18n khớp nguyên chuỗi.
      Hàng điểm: "Điểm tích luỹ sau khi hoàn tất" khi đơn chưa Hoàn tất (điểm DỰ KIẾN), "Điểm tích luỹ" khi đã xong; đơn huỷ không có hàng này; cùng luật giỏ (100.000 ₫ = 1 điểm); số trần "+1.195"
      như khung (không chữ "điểm"). */
   const sumRow = (label, val, cls = '') => `
               <div class="ov-sum-row t-lead ${cls}"><span>${label}</span><span>${val}</span></div>`;
   const disc = o.discount || '0 ₫', pct = orderDiscPct(o), neg = disc !== '0 ₫';
-  /* Không còn nút hành động riêng ở màn này (01/10/2026, quy trình khách chốt): đơn Chờ thanh toán thì chính nhãn trạng thái là nút "Thanh toán lại" (statusTag), đơn đang giao có link "Theo dõi vận đơn ↗" trong thẻ giao hàng;
-     Mua lại · Xuất hoá đơn · Huỷ đơn · Nhắc tôi khi hàng về đã gỡ. */
+  /* Hành động của màn (01/10/2026, quy trình khách chốt; ĐỔI CHỖ 05/10/2026 theo khung user 1159:105033): đơn Chờ thanh toán có MỘT nút "Thanh toán lại" nằm BÊN PHẢI hàng đầu thẻ Mã đơn (trước: chính nhãn trạng thái là nút — statusTag(o, true, true) —
+     và một nút nữa dưới ngày đặt; nay nhãn chỉ là nhãn); đơn có mã vận đơn có nút viền "Theo dõi vận đơn" ở hàng tiêu đề khối giao hàng. Mua lại · Xuất hoá đơn · Huỷ đơn · Nhắc tôi khi hàng về đã gỡ. */
   /* Timeline 4 chặng của thẻ MÃ ĐƠN (khung v4): xong = nút đen + tick · ĐANG Ở = vòng đen + chấm · chưa tới = nền mờ + chấm nhỏ; chặng CUỐI của đơn đã hoàn tất là tick (không phải "đang ở") như stepper cũ
      (28/09: tick ở chặng "Chờ thanh toán" đang chờ đọc ra "đã thanh toán xong"). Đơn huỷ: các chặng đã qua + nút cuối ✕ đỏ "Đã huỷ". Giờ ghi "dd/mm · hh:mm"; chặng cuối chưa tới ghi "Dự kiến dd/mm" khi có ngày giao. */
   const tlHTML = orderTlSteps(o).map((s, i) => {
@@ -13979,6 +14090,21 @@ function screenORDER() {
                 ${s.when ? `<span class="t-single ov-step-time">${s.when}</span>` : ''}
               </div>`;
   }).join('');
+  /* HÀNG THÔNG TIN của thẻ MÃ ĐƠN (khung user 05/10/2026 `1159:105033`): mỗi mục NẰM NGANG [nhãn 14/20 #404040 · giá trị 14/20 · 500] (trước 04/10: nhãn TRÊN giá trị 16/24). THỨ TỰ: điểm tích luỹ · phương thức thanh toán ·
+     thông tin xuất hóa đơn (hoá đơn xuống CUỐI — trước là giữa). Đơn huỷ không có mục điểm (còn hai dòng). 05/10 TỐI (user: "cho xuống hàng từng loại nhé"): MỖI LOẠI MỘT DÒNG, xếp dọc — hết vạch dọc ngăn giữa các mục
+     (trước: `.join(` vạch `)`, ba cột đều), nên danh sách chỉ còn `.join('')`. */
+  const metaHTML = [
+    o.tone === 'cancel' ? '' : `
+                    <div class="ov-mi"><span class="t-lead ov-k">${orderPointsFinal(o) ? 'Điểm tích luỹ' : 'Điểm tích luỹ sau khi hoàn tất'}</span><span class="t-lead ov-mv ov-pts">+${n(orderPoints(o))}</span></div>`,
+    `
+                    <div class="ov-mi"><span class="t-lead ov-k">Phương thức thanh toán</span><span class="t-lead ov-mv">${orderPayName(o)}</span></div>`,
+    o.vat ? `
+                    <button type="button" data-inv-sheet="${o.id}" aria-haspopup="dialog" class="ov-mi ov-prog press">
+                      <span class="t-lead ov-k">Thông tin xuất hóa đơn</span>
+                      <span class="t-lead ov-mv ov-go"><span>${orderVatRows(o)[0][1]}</span>${I.chevR('currentColor')}</span>
+                    </button>` : `
+                    <div class="ov-mi"><span class="t-lead ov-k">Thông tin xuất hóa đơn</span><span class="t-lead ov-mv">Không xuất hoá đơn</span></div>`
+  ].filter(Boolean).join('');
 
   return `
   <div class="w-full" data-scroller>
@@ -13986,8 +14112,9 @@ function screenORDER() {
     <div class="max-w-[1440px] mx-auto w-full acc-page">
       ${dkCrumbs(['Trang chủ', 'Tài khoản', 'Chi tiết đơn hàng'])}
       <!-- 28/09/2026 (brief trang 55) — BỎ TRẦN 860, rồi đưa màn VÀO KHUNG TÀI KHOẢN: mục lục trái với "Đơn hàng" đang sáng, cột nội dung 1040 (khuôn khung user 734:52984, xem .acc-layout). 02/10/2026 (user: "làm desktop giống
-           bản mobile luôn nhé"): nội dung theo NGÔN NGỮ của bản mobile (khung Figma 1063:78040) — hàng tiêu đề [mũi tên lùi · tiêu đề] kẻ đáy, vùng thân XÁM với các thẻ trắng cách 4px, thẻ MÃ ĐƠN (mã + nhãn / ngày / dải điểm kem /
-           hoá đơn · thanh toán / timeline ngang), thẻ GIAO HÀNG + NGƯỜI NHẬN gộp, thẻ SẢN PHẨM, tấm TỔNG xám — xem khối CSS ".ov-cards". Hoá đơn và tiến trình mở NGĂN KÉO bên phải (#shipSheet). -->
+           bản mobile luôn nhé"): theo NGÔN NGỮ của bản mobile (khung Figma 1063:78040). 04/10/2026 (user sửa khung 1071:54047 + "nâng cấp giao diện ở bản desktop"): hàng tiêu đề kẻ đáy, thân TRẮNG, thẻ MÃ ĐƠN (mã · nhãn / ngày / hàng thông tin 3 cột
+           điểm · hoá đơn · thanh toán / timeline ngang), hai KHỐI VIỀN người nhận | giao hàng, thẻ SẢN PHẨM, tấm TỔNG xám thu gọn dính phải — xem khối CSS ".ov-cards". Hoá đơn và tiến trình mở NGĂN KÉO bên phải (#shipSheet).
+           05/10/2026 (user sửa tiếp khung 1159:105033, "dùng layout này … áp cho các trạng thái khác"): hàng tiêu đề HẾT kẻ đáy, các thẻ cách 16 + thẻ Mã đơn / Sản phẩm có VIỀN, tấm tổng nằm TRONG thẻ Sản phẩm, hàng thông tin NGANG, nút "Thanh toán lại" bên PHẢI hàng đầu, nút "Theo dõi vận đơn" lên hàng tiêu đề khối giao hàng. -->
       <div class="acc-layout">
         ${accSideNav('orders')}
         <div class="acc-main">
@@ -13998,53 +14125,36 @@ function screenORDER() {
             </div>
             <div class="ov-cards">
 
-              <div class="ov-card is-head">
+              <!-- THẺ MÃ ĐƠN (khung user 05/10 1159:105033): VIỀN 1px · đệm 24 · khe 20 — [khối đầu: hàng [nhãn "Mã đơn hàng" + mã + nhãn trạng thái / "Ngày đặt" + ngày | NÚT canh phải] + hàng thông tin] · kẻ · timeline.
+                   Nút bên PHẢI hàng đầu = chỗ của "Thanh toán lại" (đơn Chờ thanh toán — thanh toán lỗi / chưa xong — user: "hiện nút 1 bên như vậy thay vì hiện kế bên badge"): nhãn trạng thái chỉ còn là NHÃN, không còn là nút. -->
+              <div class="ov-card is-head rise">
                 <div class="ov-top">
-                  <div class="ov-hd">
-                    <div class="ov-codes">
-                      <span class="ov-code">${o.id}</span>
-                      ${statusTag(o, true, true)}
+                  <div class="ov-hrow">
+                    <div class="ov-hd">
+                      <div class="ov-codes">
+                        <span class="ov-idg"><span class="ov-codek">Mã đơn hàng</span><span class="ov-code">${o.id}</span></span>
+                        ${statusTag(o, false, true)}
+                      </div>
+                      <span class="ov-dateg"><span class="t-lead ov-datek">Ngày đặt</span><span class="t-lead ov-date">${orderPlaced(o)}</span></span>
                     </div>
-                    <span class="t-lead ov-date">${orderPlaced(o)}</span>
-                    <!-- Đơn Chờ thanh toán (thanh toán lỗi / chưa xong): NÚT "Thanh toán lại" ngay dưới khối [mã · nhãn · ngày], đúng chỗ dòng "tự huỷ trong 30 phút" cũ (user 01/10 khuya) — dòng đó đã bỏ -->
                     ${payAct ? `<button ${payAct.attr} class="ov-pay t-lead h-12 px-8 bg-primary text-primary-foreground btn-p press">${payAct.label}</button>` : ''}
                   </div>
-                  ${o.tone === 'cancel' ? '' : `
-                  <div class="ov-points t-lead"><span>${orderPointsFinal(o) ? 'Điểm tích luỹ' : 'Điểm tích luỹ sau khi hoàn tất'}</span><span class="t-lead ov-pts">+${n(orderPoints(o))}</span></div>`}
-                </div>
-                <!-- dải thông báo theo trạng thái (đơn huỷ vì sao + tiền hoàn, xem orderNoteLines) — khung chỉ vẽ đơn đang giao nên không có dải này; giữ trong thẻ đầu -->
-                ${noteLines.length ? `
-                <div class="bg-accent-0 px-4 py-2 flex flex-col gap-1">
-                  ${noteLines.map(l => `<span class="t-multiline text-foreground-alt">${l}</span>`).join('')}
-                </div>` : ''}
-                <div class="ov-meta">
-                  ${o.vat ? `
-                  <button type="button" data-inv-sheet="${o.id}" aria-haspopup="dialog" class="ov-row ov-prog press">
-                    <span class="t-lead ov-k">Thông tin xuất hóa đơn</span>
-                    <span class="t-lead ov-v ov-go"><span>${orderVatRows(o)[0][1]}</span>${I.chevR('currentColor')}</span>
-                  </button>` : `
-                  <div class="ov-row"><span class="t-lead ov-k">Thông tin xuất hóa đơn</span><span class="t-lead ov-v">Không xuất hoá đơn</span></div>`}
-                  <div class="ov-row"><span class="t-lead ov-k">Phương thức thanh toán</span><span class="t-lead ov-v">${orderPayName(o)}</span></div>
+                  <!-- dải thông báo theo trạng thái (đơn huỷ vì sao + tiền hoàn, xem orderNoteLines) — khung chỉ vẽ đơn đang giao nên không có dải này; giữ giữa hàng đầu và hàng thông tin -->
+                  ${noteLines.length ? `
+                  <div class="bg-accent-0 px-4 py-2 flex flex-col gap-1">
+                    ${noteLines.map(l => `<span class="t-multiline text-foreground-alt">${l}</span>`).join('')}
+                  </div>` : ''}
+                  <!-- HÀNG THÔNG TIN (khung user 05/10; 05/10 TỐI user: cho xuống hàng từng loại): MỖI LOẠI MỘT DÒNG, xếp dọc, canh trái; mỗi dòng NẰM NGANG [nhãn 14/20 · giá trị 14/20 · 500] — ĐIỂM TÍCH LUỸ · PHƯƠNG THỨC THANH TOÁN · THÔNG TIN XUẤT HÓA ĐƠN (hoá đơn xuống CUỐI, trước là giữa). Điểm là DỰ KIẾN khi đơn chưa Hoàn tất; đơn huỷ không có dòng điểm (còn hai dòng). Hết vạch dọc ngăn mục. -->
+                  <div class="ov-meta">${metaHTML}
+                  </div>
                 </div>
                 <div class="ov-divider"></div>
                 <div class="ov-tl">${tlHTML}
                 </div>
               </div>
 
-              <div class="ov-card is-split">
-                <div class="ov-sec is-line">
-                  <p class="ov-ttl text-foreground">Thông tin giao hàng</p>
-                  <div class="ov-rows">
-                    <div class="ov-row"><span class="t-lead ov-k">Phương thức</span><span class="t-lead ov-v">${o.method}</span></div>
-                    ${deliver ? `<div class="ov-row"><span class="t-lead ov-k">${deliver.k}</span><span class="t-lead ov-v">${deliver.v}</span></div>` : ''}
-                    <button type="button" data-ship-sheet="${o.id}" aria-haspopup="dialog" class="ov-row ov-prog press">
-                      <span class="t-lead ov-k">Tiến trình đơn hàng</span>
-                      <span class="t-lead ov-v">${progAt}</span>
-                    </button>
-                  </div>
-                  ${awbs.length ? `
-                  <button type="button" data-ship-sheet="${o.id}" aria-haspopup="dialog" class="t-lead h-12 px-8 self-start bg-primary text-primary-foreground btn-p press">Theo dõi vận đơn</button>` : ''}
-                </div>
+              <!-- Hai KHỐI VIỀN (khung user 05/10): NGƯỜI NHẬN bên trái, GIAO HÀNG bên phải, hai khối kéo hết bề ngang thẻ (thẻ không đệm); nút "Theo dõi vận đơn" (VIỀN, LỚN cao 48, full ngang khối) nằm DƯỚI cụm "Thông tin giao hàng" — khung user sửa lần 2 cùng ngày đưa nút trở xuống đáy (lần đầu nút ở hàng tiêu đề, cao 36); hàng Tiến trình bấm mở ngăn kéo (KHÔNG mũi tên — user bỏ 05/10). -->
+              <div class="ov-card is-split rise">
                 <div class="ov-sec">
                   <p class="ov-ttl text-foreground">Thông tin người nhận</p>
                   <div class="ov-addr">
@@ -14053,11 +14163,24 @@ function screenORDER() {
                     ${o.address.line ? `<span class="t-lead">${o.address.line}</span>` : ''}
                   </div>
                 </div>
+                <div class="ov-sec">
+                  <p class="ov-ttl text-foreground">Thông tin giao hàng</p>
+                  <div class="ov-rows">
+                    <div class="ov-row"><span class="t-lead ov-k">Phương thức</span><span class="t-lead ov-v">${o.method}</span></div>
+                    ${deliver ? `<div class="ov-row"><span class="t-lead ov-k">${deliver.k}</span><span class="t-lead ov-v">${deliver.v}</span></div>` : ''}
+                    <button type="button" data-ship-sheet="${o.id}" aria-haspopup="dialog" class="ov-row ov-prog press">
+                      <span class="t-lead ov-k">Tiến trình đơn hàng</span>
+                      <span class="t-lead ov-v ov-go"><span>${progAt}</span></span>
+                    </button>
+                  </div>
+                  ${awbs.length ? `
+                  <button type="button" data-ship-sheet="${o.id}" aria-haspopup="dialog" class="t-lead h-12 px-5 ov-act w-full border border-border bg-background text-foreground btn-o press">Theo dõi vận đơn</button>` : ''}
+                </div>
               </div>
 
-              <!-- Thẻ SẢN PHẨM. Bảng hàng (brief trang 55): "Sản phẩm (N) | Số lượng | Thành tiền" — hàng tiêu đề và mọi dòng dùng CHUNG lưới .ord-grid nên nhãn cột đứng thẳng trên cột của nó
-                   (khung v4: bỏ kẻ dưới hàng tiêu đề). N = số dòng hàng, như "Giỏ hàng (N)". Quà vào cùng danh sách, ảnh quà 72×96 bằng ảnh hàng thường. -->
-              <div class="ov-card ov-items">
+              <!-- Thẻ SẢN PHẨM + TỔNG (khung user 05/10: VIỀN 1px, tấm TỔNG xám nằm TRONG thẻ, canh phải). Bảng hàng (brief trang 55): "Sản phẩm (N) | Số lượng | Thành tiền" — hàng tiêu đề và mọi dòng dùng CHUNG lưới .ord-grid nên nhãn cột đứng thẳng trên cột của nó
+                   (khung v4: bỏ kẻ dưới hàng tiêu đề). N = số dòng hàng, như "Giỏ hàng (N)". Quà vào cùng danh sách, ảnh quà 72×96 bằng ảnh hàng thường. Dưới danh sách có KẺ 1px + đệm 16 rồi mới tới tấm tổng (khe thẻ 16). -->
+              <div class="ov-card ov-items rise">
                 <div class="ord-grid ord-grid-head">
                   <p class="ov-ttl text-foreground">Sản phẩm (${o.items.length})</p>
                   <span class="t-single ov-colhead text-center">Số lượng</span>
@@ -14065,18 +14188,17 @@ function screenORDER() {
                 </div>
                 <div class="ov-lines">${o.items.map(itemRow).join('')}${orderGifts(o).map(giftRow).join('')}
                 </div>
-              </div>
-
-              <div class="ov-sum-wrap">
-                <div class="ov-sum">
-                  ${sumRow('Tạm tính', o.sub)}
-                  ${sumRow(pct ? `<span>Giảm giá</span> <span>(${pct}%)</span>` : 'Giảm giá', disc, neg ? 'is-neg' : '')}
-                  ${sumRow('Phí vận chuyển', o.ship)}
-                  ${o.pointsUsed ? sumRow(`Dùng ${Math.round(o.pointsUsed).toLocaleString('vi-VN')} điểm`, '− ' + vndDot(o.pointsUsed * REWARD_POINT_VALUE), 'is-neg') : ''}
-                  <div class="ov-divider"></div>
-                  <div class="ov-sum-row ov-sum-total">
-                    <span class="ov-total-l"><span class="ov-total">Tổng thanh toán</span><span class="t-single ov-vat">(Bao gồm VAT)</span></span>
-                    <span class="ov-total">${o.total}</span>
+                <div class="ov-sum-wrap">
+                  <div class="ov-sum">
+                    ${sumRow('Tạm tính', o.sub)}
+                    ${sumRow(pct ? `<span>Giảm giá</span> <span>(${pct}%)</span>` : 'Giảm giá', disc, neg ? 'is-neg' : '')}
+                    ${sumRow('Phí vận chuyển', o.ship)}
+                    ${o.pointsUsed ? sumRow(`Dùng ${Math.round(o.pointsUsed).toLocaleString('vi-VN')} điểm`, '− ' + vndDot(o.pointsUsed * REWARD_POINT_VALUE), 'is-neg') : ''}
+                    <div class="ov-divider"></div>
+                    <div class="ov-sum-row ov-sum-total">
+                      <span class="ov-total-l"><span class="ov-total">Tổng thanh toán</span><span class="t-single ov-vat">(Bao gồm VAT)</span></span>
+                      <span class="ov-total">${o.total}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -14089,6 +14211,9 @@ function screenORDER() {
     ${footer()}
   </div>`;
 }
+
+/* `orderMetaFit()` (đo hàng thông tin ba cột rồi gắn `.is-wrap`) ĐÃ GỠ 05/10/2026 tối cùng vạch dọc và rule `.is-wrap`: user chốt hàng thông tin xếp DỌC, mỗi loại một dòng (xem `.ov-meta`) — danh sách dọc luôn vừa
+   nên không còn gì để đo. Muốn trở lại ba cột đều thì phải do user nói (bản cũ: README mục "Chi tiết đơn hàng DESKTOP: theo khung Figma 1159:105033", ghi chú lần sửa 2). */
 
 /* ════════════════════════════════════════════════════════════════
    SCREEN: CART
@@ -15867,8 +15992,13 @@ function ckSection(i, title, openBody, doneBody) {
     <!-- Hàng tiêu đề bước 56 -> 72px: nhịp thoáng kiểu Farfetch (14/08/2026) -->
     <!-- 19/09/2026 (lệnh user, tham chiếu Ralph Lauren): bỏ px-4 bên TRÁI — huy hiệu
          số bước đứng sát mép cột, đúng chỗ kẻ chia bước bắt đầu; tiêu đề lùi vào 44
-         và thân bước cũng lùi 44 nên cả cột thành MỘT đường dóng. -->
-    <div class="h-[72px] pr-4 flex items-center justify-between gap-3">
+         và thân bước cũng lùi 44 nên cả cột thành MỘT đường dóng.
+         05/10/2026 (lệnh user, khung Figma 1107:64765): huy hiệu 32 → 40 nên hàng 72 → 80
+         (20 + 40 + 20); tiêu đề lùi 44 → 52 (40 + khe 12) và thân bước 44 → 52 theo.
+         ⚠ Hàng nay ÔM huy hiệu bằng đệm py-5 thay cho h-[72px]: utility h-[80px] KHÔNG có
+         trong tailwind.css bản build sẵn (class chết), còn py-5 thì có — và đệm 20 trên / 20
+         dưới cũng đúng cách khung Figma dựng (ck-sec đệm 20 / 20 quanh hàng 40). -->
+    <div class="py-5 pr-4 flex items-center justify-between gap-3">
       <div class="flex-1 min-w-0 flex items-center gap-3">
         <!-- 19/09/2026 (lệnh user): SỐ THỨ TỰ tách khỏi tên bước, vào huy hiệu tròn.
              Trước là chuỗi "1. " dính liền tên nên số đọc ra như một phần của tên.
@@ -16871,10 +17001,18 @@ function screenCHECKOUT() {
                       ${c.preorder ? `<span class="t-single badge-inline px-1 font-medium text-foreground shrink-0">Đặt trước</span>` : ''}
                       <p class="w-full min-w-0 text-[12px] text-secondary-foreground line-clamp-2">${c.name}</p>
                     </div>
-                    <p class="text-[12px] text-muted-foreground mt-0.5">${c.variant} · SL ${c.qty}</p>
+                    ${c.variant ? `<p class="text-[12px] text-muted-foreground mt-0.5">${c.variant}</p>` : ''}
                     ${c.preorder ? `<p class="text-[12px] text-foreground-alt mt-0.5">Nhận hàng dự kiến <span class="font-medium">${c.preorder}</span></p>` : ''}
                   </div>
-                  <p class="t-multiline pc-price font-medium text-foreground self-end">${c.now}</p>
+                  <!-- 05/10/2026 (lệnh user, Figma 1107:64862: "đồng bộ layout với mấy cái giỏ ngoài, vị trí
+                       của số lượng giống cái cart mini"): số lượng SÁT TRÁI, giá SÁT PHẢI, cùng MỘT hàng ghim
+                       đáy cột chữ — đúng khuôn hàng mini cart (x1 · giá) và hàng ở trang Giỏ (bộ đếm · giá, brief
+                       PDF trang 25). Trước đó số lượng dính vào dòng phân loại ("Onesize , Black · SL 1") và giá
+                       đứng một mình bên phải. Chữ "x1" viết như mini cart (x thường, liền số). -->
+                  <div class="flex items-center justify-between gap-2 pt-1">
+                    <span class="t-single text-muted-foreground shrink-0">x${c.qty || 1}</span>
+                    <span class="t-multiline pc-price font-medium text-foreground whitespace-nowrap">${c.now}</span>
+                  </div>
                 </div>
               </div>` + (c.gift && GIFT_PROGRAMS[c.gift] ? giftSummaryRow(c.gift, null, true) : '')).join('')}
             ${orderGiftState().earned.map(t => giftSummaryRow(t.program, null, true)).join('')}
@@ -16969,10 +17107,12 @@ function screenDONE() {
      hiện tại của website dafc nhé"; rồi "bạn chỉ cần theo nội dung k cần theo sát hình brief") — màn Hoàn tất chỉ còn NỘI DUNG của trang
      website: tiêu đề → mã đơn → một đoạn cảm ơn (đúng chữ của website, gồm "quý khách") → nút "Tiếp tục mua sắm", cộng một liên kết
      chữ "Theo dõi đơn hàng" (lối vào theo dõi đơn của brief trang 38; website không có nên chỉ để dạng chữ gạch chân, không phải nút).
-     KHÔNG bê hình của website (vòng tròn nâu + túi, chữ hoa, màu nâu): vòng tick + confetti cũ giữ nguyên, kiểu chữ theo hệ dự án.
+     KHÔNG bê hình của website (vòng tròn nâu + túi, chữ hoa, màu nâu): vòng tick giữ nguyên, kiểu chữ theo hệ dự án (confetti cũ cũng giữ lúc đó — GỠ 05/10/2026, xem dưới).
      ĐÃ GỠ khỏi màn này (thông tin vẫn nằm ở Chi tiết đơn): chữ "Xác nhận" trên tiêu đề, bảng Tổng cộng / Vận chuyển / Dự kiến giao /
      Hàng pre-order, quà tặng kèm đơn, điểm thưởng, ô email + tải hoá đơn, lời mời tạo tài khoản của khách vãng lai; desktop bỏ cả dải "Sản phẩm tương tự". Bản cũ nguyên
      văn: _notes/BACKUP-MAN-HOAN-TAT-TRUOC-DON-GIAN-2026-10-03.md.
+     05/10/2026 (user: "bỏ cái hiệu ứng pháo hoa khi đặt xong đơn hàng nhé") ⇒ GỠ confetti: host #confettiHost (trên màn này), hàm confetti() + lệnh gọi ở go(), CSS .confetti + @keyframes fall. Vòng tick + hiệu ứng vòng hiện ra / nét tick vẽ (#ring / #tick) GIỮ.
+     Chỉ desktop.html — ở mobile (index.html) confetti nằm DƯỚI lớp nền trắng nên chưa bao giờ nhìn thấy, để nguyên.
      Cùng ngày user báo thêm: "màn kết quả thanh toán ở mobile đang thiếu header footer và lặp lại mã đơn hàng 2 lần" ⇒ mobile có thêm
      header + footer và đơn tách chỉ in MÃ GỐC một dòng.
      04/10/2026 (user: "header của trang thanh toán thành công là header mặc định luôn á, header của homepage") ⇒ header của màn này là
@@ -16983,7 +17123,6 @@ function screenDONE() {
   const split = ckOrderIds.length > 1;
   return `
   <div class="w-full relative" data-scroller>
-    <div id="confettiHost" class="absolute inset-x-0 top-0 h-[70vh] pointer-events-none overflow-hidden z-10"></div>
     ${navBar()}
 
     <div class="relative z-20 max-w-[560px] mx-auto w-full flex flex-col items-center gap-7 px-6 py-16">
@@ -22327,7 +22466,6 @@ function go(name, opts = {}) {
   current = name;
   wire(el);
   localizeNew(el);
-  if (name === 'done') confetti();
 
   // Đồng bộ với History API của trình duyệt: mỗi lần đi TỚI một màn mới
   // (không phải do popstate kích hoạt) sẽ tạo 1 entry mới trong lịch sử
@@ -25135,22 +25273,7 @@ function flyToCart(srcImg) {
   document.body.appendChild(clone);
   setTimeout(() => clone.remove(), 760);
 }
-/* ── Confetti ── */
-function confetti() {
-  const host = document.getElementById('confettiHost');
-  if (!host) return;
-  const colors = ['var(--general-primary)','var(--general-destructive)','var(--general-warning)','var(--unofficial-border-4)','var(--general-border)'];
-  for (let i = 0; i < 26; i++) {
-    const c = document.createElement('span');
-    c.className = 'confetti';
-    c.style.left = Math.random() * 100 + '%';
-    c.style.background = colors[i % colors.length];
-    c.style.animationDelay = (Math.random() * .5) + 's';
-    c.style.animationDuration = (1.6 + Math.random()) + 's';
-    host.appendChild(c);
-    setTimeout(() => c.remove(), 3000);
-  }
-}
+/* ── Confetti: ĐÃ GỠ 05/10/2026 (user: "bỏ cái hiệu ứng pháo hoa khi đặt xong đơn hàng") — hàm confetti() + host #confettiHost + CSS .confetti; bản cũ: _notes/GO-PHAO-HOA-HOAN-TAT-2026-10-05.md ── */
 /* ── Boot ── */
 document.body.insertAdjacentHTML('beforeend', filterSheet());
 document.body.insertAdjacentHTML('beforeend', menuSheet());
