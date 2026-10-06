@@ -346,13 +346,6 @@ window.RESP = (function () {
   .search-pane { animation: searchIn .22s ease both; }
   .search-row { transition: height .28s cubic-bezier(.22,1,.36,1), opacity .2s ease; }
   .search-row.removing { overflow: hidden; opacity: 0; }
-  /* 06/10/2026 — NỔI CHỮ KHỚP ở gợi ý tìm kiếm: nhấn bằng BẬC MỰC (STYLE-RULES §2.1) — hàng gợi ý mực phụ, riêng TỪ khớp mực chính.
-     Không dùng độ đậm hay nền tô (§2.3 cấm cả hai; font-medium còn là class chết dưới skin-mt). Thẻ mark cho đúng ngữ nghĩa
-     "đoạn khớp"; gỡ nền vàng mặc định của trình duyệt. */
-  .search-hit { background: transparent; color: var(--general-foreground); font: inherit; }
-  /* 06/10/2026 — hàng "Sản phẩm gợi ý" của pane tìm kiếm (danh sách dọc kiểu mini cart): kẻ ngăn V2 giữa hai hàng, thụt 16 vì li mang mx-4
-     — cùng cách #ccList ngăn dòng ở mini cart desktop. */
-  .search-prow + .search-prow { border-top: 1px solid var(--general-border); }
   /* ── Menu full-screen: nội dung trượt nhẹ khi đổi cấp/tab ── */
   @keyframes msIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
   .ms-view { animation: msIn .22s ease both; }
@@ -499,10 +492,7 @@ window.RESP = (function () {
      cùng token nền của nhãn "Chờ thanh toán" ở đơn hàng; khai ở tokens.css nên dùng được ở mọi bộ da).
      Chữ giữ `text-muted-foreground` #727272: trên #fffbeb vẫn 4,6:1 (đạt AA 4,5); link "Xem điều khoản"
      giữ mực chính gạch chân. Nền chỉ cách nền ngăn kéo trắng 1,04:1 nên rất nhạt, đúng chữ "vàng nhạt" —
-     muốn rõ hơn thì nâng lên `--general-warning-border` (#fef3c7) hoặc thêm viền cùng sắc.
-     06/10/2026: chữ đoạn lưu ý đổi `text-muted-foreground` #727272 → `text-foreground-alt` #404040 theo khung Figma
-     `PDP — installment popup` 1106:64738 (user sửa tay cả 2 khung; cùng màu 4 dòng điều khoản phía trên; trên #fffbeb đạt 10:1,
-     trước 4,64:1). Link "Xem điều khoản" vẫn mực chính gạch chân. */
+     muốn rõ hơn thì nâng lên `--general-warning-border` (#fef3c7) hoặc thêm viền cùng sắc. */
   #instSheet .ins-fee { background: var(--general-warning-subtle); }
 
   /* ── Bảng size (mở từ PDP / sheet chọn size) ──
@@ -3104,25 +3094,20 @@ window.RESP = (function () {
      phổ biến) và ĐÃ GỒM `pt-8 pb-10` vì box-sizing là border-box — đặt 480 như
      bản đầu thì padding ăn hết, tấm vẫn tụt xuống 480. Trạng thái nào cao hơn
      552 thì tấm cứ giãn, nền tối bám theo nhờ flex nên không hở. */
-  /* 06/10/2026 (lệnh user: "ở search desktop bên trái giảm cột nội dung xuống 220 như figma" — khung Figma `Menu / desktop · search overlay` 1192:133607 do user sửa tay):
-     cột trái 280 → 220, khe giữa hai cột 40 → 24, đệm trái của cột sản phẩm 40 → 24 (đúng ba số user đổi trong Figma). Cột phải VẪN `flex: 1` nên 60 + 16 + 16 px nhả ra
-     chảy hết vào lưới sản phẩm và mép phải vẫn khớp ô nhập (luật "nội dung = ô nhập" của lượt 3). Figma để ds-main CỐ ĐỊNH 660 (số của bản dựng) nên nội dung dừng ở x 1134,
-     hở 76px bên phải — chỗ này KHÔNG bắt chước. */
-  #dkSearchLayer .ds-cols { display: flex; gap: 24px; min-height: 552px; }
-  #dkSearchLayer .ds-side { width: 220px; flex-shrink: 0; }
+  #dkSearchLayer .ds-cols { display: flex; gap: 40px; min-height: 552px; }
+  #dkSearchLayer .ds-side { width: 280px; flex-shrink: 0; }
   #dkSearchLayer .ds-main {
     flex: 1; min-width: 0;
-    border-left: 1px solid var(--general-border); padding-left: 24px;
+    border-left: 1px solid var(--general-border); padding-left: 40px;
   }
   /* SẢN PHẨM NỔI BẬT của lớp tìm kiếm — lệnh user 06/10/2026, hai bước: (1) "tầm 5 sản phẩm 1 row và không có quick add"; (2) khi bóp nội dung bằng ô nhập:
      "sản phẩm để lại 4 sản phẩm". Nay MỘT HÀNG 4 thẻ, KHÔNG quick add (`noQuick`, cùng cờ dải trang chủ; trước bước 1 là 4 thẻ có quick add, `grid-cols-4`).
-     Cột phải = ô nhập 980 − cột trái 220 − khe 24 − viền 1 − đệm 24 = 711 ⇒ thẻ ≈ 171,75 (khe 8; trước khi cột trái xuống 220 là 280 / 40 / 40 ⇒ 619 ⇒ thẻ 149); ô nhập hẹp dần
-     theo cửa sổ (1366 ⇒ 906 ⇒ thẻ 153,25 · 1280 ⇒ 820 ⇒ thẻ 131,75). Đặt bằng CSS riêng (không `grid-cols-4`) để số cột đi cùng media query. */
+     Cột phải = ô nhập 980 − cột trái 280 − khe 40 − viền 1 − đệm 40 = 619 ⇒ thẻ ≈ 149 (khe 8); ô nhập hẹp dần theo cửa sổ (1366 ⇒ 906 ⇒ thẻ 130). Đặt bằng CSS
+     riêng (không `grid-cols-4`) để số cột đi cùng media query. */
   #dkSearchProducts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-  /* Cửa sổ < 1280: ô nhập (= nội dung) còn ≤ 819 — hai cột sẽ ép thẻ xuống < 130 nên XẾP CHỒNG, đường ngăn dọc đổi thành ngang; hai khối trái
-     ("Vừa tìm kiếm" / "Từ khóa phổ biến") đứng CẠNH nhau để tấm không cao thêm (khối rỗng — chưa có lịch sử — ẩn để khối kia trải hết hàng).
-     Ngưỡng từng là 1366 (cột trái 280); cột trái 220 làm thẻ ở 1366 lên 153 nên ngưỡng "thẻ ≥ 130" lùi xuống 1280 (thẻ 131,75). */
-  @media (max-width: 1279px) {
+  /* Cửa sổ < 1366: ô nhập (= nội dung) còn ≤ 905 — hai cột sẽ ép thẻ xuống < 130 nên XẾP CHỒNG, đường ngăn dọc đổi thành ngang; hai khối trái
+     ("Vừa tìm kiếm" / "Từ khóa phổ biến") đứng CẠNH nhau để tấm không cao thêm (khối rỗng — chưa có lịch sử — ẩn để khối kia trải hết hàng). */
+  @media (max-width: 1365px) {
     #dkSearchLayer .ds-cols { flex-direction: column; gap: 24px; }
     #dkSearchLayer .ds-side { width: auto; flex-direction: row; gap: 40px; }
     #dkSearchLayer .ds-side > * { flex: 1 1 0; min-width: 0; }
@@ -9745,10 +9730,8 @@ const heelSection = () => plpGender() === 'Nữ' && !isBeautyPlp();
 function plpProducts() {
   const all = PRODUCTS.map((p, i) => ({ p, i }));
   if (plpMode.type === 'search') {   // tìm kiếm quét cả 2 ngành hàng
-    /* 06/10/2026 — CÙNG bộ so khớp với gợi ý (searchProducts: bỏ dấu, từng từ ở đầu từ, hãng + tên + danh mục + giới tính), xếp theo độ
-       khớp — mục "Phù hợp nhất" của Sắp xếp giữ nguyên thứ tự này. Trước: chuỗi con CÓ DẤU của "hãng + tên" theo thứ tự PRODUCTS. */
-    const q = (plpMode.query || '').trim();
-    return q ? searchProducts(q) : all;
+    const q = (plpMode.query || '').trim().toLowerCase();
+    return q ? all.filter(({ p }) => `${p.brand} ${p.name}`.toLowerCase().includes(q)) : all;
   }
   /* PLP thương hiệu chỉ hiện hàng CỦA hãng đó (02/09/2026). Trước đây màn brand
      đổ nguyên danh sách nên trang "Versace" liệt kê cả nước hoa Montblanc.
@@ -10276,335 +10259,37 @@ let searchQuery = '';
 let searchTab = 0;
 let searchHistory = ['Áo sơ mi', 'Túi xách da', 'Versace loafer', 'Đầm dạ hội', 'Giày thể thao'];
 
-/* ══ TÌM KIẾM — SO KHỚP CHUẨN (06/10/2026, lệnh user: "research và bổ sung logic chuẩn chỉnh, cũng như highlight từ khóa trùng khớp"; lượt 6 cùng
-   ngày: "khi nhập thì dưới cùng sẽ là block gợi ý sản phẩm theo từ khóa · nhập từ khóa không khớp cái nào thì gợi ý sản phẩm kèm gợi ý cate liên quan ·
-   áp dụng cho cả desktop") ══ KHỐI NÀY GIỐNG HỆT Ở index.html VÀ desktop.html — sửa một bên thì chép sang bên kia.
-   TRƯỚC: gợi ý = chuỗi con CÓ DẤU của "hãng" / "tên SP" (gõ "dam" không ra "Đầm", gõ "versace túi" ra 0, chip "Túi xách" ra 1 vì chỉ dò tên);
-   kết quả = chuỗi con của "hãng + tên" theo thứ tự PRODUCTS; chữ khớp bọc `font-medium` — class CHẾT dưới skin-mt (mọi độ đậm về 400) nên
-   không nổi gì. CHUẨN ÁP DỤNG (Baymard "Autocomplete Design" · Algolia "Prefix searching" / typo tolerance · đo Hasaki.vn 06/10: gõ không dấu
-   "sua rua mat" vẫn ra "Sữa Rửa Mặt", gợi ý Regular không in đậm, phân biệt bằng MÀU, hàng sản phẩm có ảnh):
-   · CHUẨN HOÁ (searchNormMap): thường hoá · bỏ dấu (NFD, gỡ dấu kết hợp) · đ → d · ký tự không phải chữ/số = khoảng trắng ("Dolce&Gabbana"
-     → 2 từ) · tách ranh giới chữ ↔ số ("100ml" → "100 ml"). Áp cho CẢ truy vấn lẫn dữ liệu: "dam midi" = "Đầm Midi" = "ĐẦM MIDI".
-   · TỪNG TỪ, ĐẦU TỪ (word-prefix, AND): mọi từ gõ phải là ĐẦU một từ nào đó trong hãng / tên / danh mục 3 cấp / giới tính; thứ tự từ không
-     quan trọng ("túi versace" = "versace túi"). Không dò giữa từ ("ini" không ra "mini") — đúng lệ autocomplete.
-   · XẾP HẠNG (searchScore): tên bắt đầu đúng cụm gõ +100 > cụm liền kề ở đầu từ trong tên +60; mỗi từ: đầu tên 45 > hãng 40 > trong tên 30 >
-     danh mục 20 > giới tính 5; hoà: Best seller +3 / New arrival +2, rồi thứ tự PRODUCTS. TRANG KẾT QUẢ dùng CÙNG hàm (plpProducts) nên mục
-     "Phù hợp nhất" của Sắp xếp = thứ tự này; số trên gợi ý và số ở lưới không bao giờ chọi nhau.
-   · GỢI Ý khi CÓ kết quả: phần CHỮ = Thương hiệu (≤ 3, vào trang hãng / hub) · Danh mục (≤ 3, kèm số kết quả); phần SẢN PHẨM dưới cùng = block
-     "Sản phẩm gợi ý": MOBILE = DANH SÁCH DỌC ảnh + hãng + tên + giá, ĐÚNG khuôn hàng mini cart desktop (≤ 5 hàng; lượt 7 cùng ngày, user: "sản phẩm
-     gợi ý là hình sản phẩm luôn nhé, xếp dọc giống cái mini cart cho bản mobile" — thay dải thẻ ngang của lượt 6); LỚP DESKTOP = lưới 4 thẻ
-     (renderProducts riêng). Kèm liên kết "Xem tất cả (N)" = Enter. Chỉ gợi ý thứ CÓ kết quả (hãng / danh mục lấy từ chính PRODUCTS, không lấy từ
-     menu). Không còn hàng chữ tên sản phẩm — hàng có ảnh thay.
-   · KHÔNG CÓ KẾT QUẢ: báo kèm từ đã gõ + "Có phải bạn muốn tìm …?" (sửa lỗi gõ: Damerau-Levenshtein ≤ 1, từ ≥ 6 ký tự ≤ 2, chỉ gợi khi cụm
-     sửa CÓ kết quả) + "Danh mục liên quan" + block thẻ "Sản phẩm gợi ý". "Liên quan" tính theo 3 nấc (searchRelated): cụm đã sửa lỗi gõ →
-     khớp MỘT PHẦN (giữ từ có khớp, bỏ từ lạ; AND rồi OR) → không còn gì thì Sản phẩm nổi bật + danh mục cấp 1 nhiều hàng nhất ("Danh mục
-     phổ biến"). Danh mục liên quan = nhãn cấp 2 hay gặp nhất trong chính các sản phẩm gợi ý, nên chip nào bấm cũng có hàng.
-   · NỔI CHỮ KHỚP (highlightMatch): tô CẢ TỪ khớp (không tô nửa từ "Đầ|m" — đọc như lỗi), mọi từ khớp, mọi lần xuất hiện. Nhấn bằng BẬC MỰC
-     (STYLE-RULES §2.1): hàng gợi ý mực phụ, từ khớp mực chính (`.search-hit`). §2.3 cấm nhấn bằng độ đậm lẫn mảng màu nên KHÔNG 500 / nền;
-     muốn 500 phải ghi ngoại lệ §1.1 (chờ user). Khung Figma "typing" vẽ hàng gợi ý toàn Regular #0a0a0a (chưa có kiểu nổi) ⇒ LỆCH tới khi sync.
-   · LỊCH SỬ (searchHistoryAdd): tìm lại thì đưa lên đầu, gộp trùng không phân biệt hoa thường / dấu, tối đa 8.
-   · Block thẻ chỉ dựng lại khi DANH SÁCH THẺ đổi (so khoá `key`) — gõ thêm chữ mà vẫn cùng bộ thẻ thì ảnh không nhấp nháy (lý do cũ của việc
-     tách pane chữ / pane thẻ vẫn được giữ). */
-const SEARCH_ESC = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-
-/* Chuẩn hoá từng ký tự, giữ BẢN ĐỒ vị trí (norm[k] sinh từ str[map[k]]) để tô lại đúng chỗ trên chuỗi gốc. */
-function searchNormMap(str) {
-  const norm = [], map = [];
-  let prev = ' ';
-  for (let i = 0; i < str.length; i++) {
-    const base = str[i].normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/đ/g, 'd');
-    if (!base) continue;                                            // dấu kết hợp đứng riêng (chuỗi dạng NFD)
-    const c = base[0];
-    const kind = /[a-z]/.test(c) ? 'a' : /[0-9]/.test(c) ? 'd' : ' ';
-    if (kind === ' ') { if (prev !== ' ') { norm.push(' '); map.push(i); } prev = ' '; continue; }
-    if (prev !== ' ' && prev !== kind) { norm.push(' '); map.push(i); }   // "100ml" → "100 ml"
-    norm.push(c); map.push(i); prev = kind;
-  }
-  return { norm: norm.join(''), map };
-}
-const searchNorm = s => searchNormMap(String(s == null ? '' : s)).norm.trim();
-const searchTokens = s => searchNorm(s).split(' ').filter(Boolean);
-
-/* Các từ của chuỗi gốc: dạng chuẩn hoá `tok` + đoạn [s, e) trên chuỗi gốc — dùng cho tô chữ và kho từ sửa lỗi gõ. */
-function searchSpans(str) {
-  const { norm, map } = searchNormMap(str);
-  const out = []; const re = /[a-z0-9]+/g; let m;
-  while ((m = re.exec(norm))) {
-    const s = map[m.index];
-    let e = map[m.index + m[0].length - 1] + 1;
-    while (e < str.length && /[̀-ͯ]/.test(str[e])) e++;   // chuỗi NFD: dấu kết hợp đứng sau chữ cuối đi theo từ
-    out.push({ s, e, tok: m[0] });
-  }
-  return out;
-}
-
-/* Bọc MỌI từ khớp (đầu từ trùng một từ đã gõ) trong <mark class="search-hit">; phần còn lại giữ nguyên, đã escape HTML. */
 function highlightMatch(text, q) {
-  const str = String(text == null ? '' : text);
-  const qt = searchTokens(q);
-  if (!qt.length) return SEARCH_ESC(str);
-  let html = '', pos = 0;
-  searchSpans(str).forEach(sp => {
-    if (!qt.some(t => sp.tok.startsWith(t))) return;
-    html += SEARCH_ESC(str.slice(pos, sp.s)) + '<mark class="search-hit">' + SEARCH_ESC(str.slice(sp.s, sp.e)) + '</mark>';
-    pos = sp.e;
-  });
-  return html + SEARCH_ESC(str.slice(pos));
+  if (!q) return text;
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return text;
+  return text.slice(0, idx) + `<span class="font-medium">${text.slice(idx, idx + q.length)}</span>` + text.slice(idx + q.length);
 }
 
-/* Chỉ mục tìm kiếm: dựng MỘT lần ở lượt gõ đầu (p.cat / p.gender đã gán xong ở phần dữ liệu). */
-let SEARCH_INDEX = null;
-function searchIndex() {
-  if (SEARCH_INDEX) return SEARCH_INDEX;
-  SEARCH_INDEX = PRODUCTS.map((p, i) => {
-    const cats = [...new Set(p.cat || [])];                          // cây khách có lá trùng tên cha ("Túi đeo vai" × 2)
-    return {
-      i, p, cats,
-      brand: searchTokens(p.brand), name: searchTokens(p.name), catTok: cats.map(searchTokens), gender: searchTokens(p.gender),
-      brandNorm: searchNorm(p.brand), nameNorm: searchNorm(p.name),
-    };
-  });
-  return SEARCH_INDEX;
-}
-const SEARCH_W = { nameFirst: 45, brand: 40, name: 30, cat: 20, gender: 5 };
-/* Điểm khớp của một sản phẩm (0 = không khớp). qt = từ của truy vấn đã chuẩn hoá, qn = cả truy vấn chuẩn hoá. */
-function searchScore(e, qt, qn) {
-  let score = 0;
-  for (const t of qt) {
-    let best = 0;
-    if (e.name.length && e.name[0].startsWith(t)) best = SEARCH_W.nameFirst;
-    else if (e.name.some(w => w.startsWith(t))) best = SEARCH_W.name;
-    if (e.brand.some(w => w.startsWith(t))) best = Math.max(best, SEARCH_W.brand);
-    if (!best && e.catTok.some(ws => ws.some(w => w.startsWith(t)))) best = SEARCH_W.cat;
-    if (!best && e.gender.some(w => w.startsWith(t))) best = SEARCH_W.gender;
-    if (!best) return 0;
-    score += best;
-  }
-  if (e.nameNorm.startsWith(qn)) score += 100;
-  else if ((' ' + e.nameNorm).includes(' ' + qn)) score += 60;
-  if (e.p.tag === 'Best seller') score += 3; else if (e.p.tag === 'New arrival') score += 2;
-  return score;
-}
-/* Sản phẩm khớp, điểm giảm dần (hoà: thứ tự PRODUCTS) — trả { p, i } cùng khuôn với plpProducts(). */
-function searchProducts(q) {
-  const qt = searchTokens(q);
-  if (!qt.length) return [];
-  const qn = qt.join(' ');
-  return searchIndex().map(e => ({ e, s: searchScore(e, qt, qn) })).filter(x => x.s > 0)
-    .sort((a, b) => b.s - a.s || a.e.i - b.e.i).map(x => ({ p: x.e.p, i: x.e.i }));
-}
-/* Khớp MỘT PHẦN (OR theo từ) — chỉ dùng cho "liên quan" khi AND không ra gì: xếp theo số từ khớp, rồi điểm, rồi thứ tự PRODUCTS. */
-function searchProductsAny(qt) {
-  return searchIndex().map(e => {
-    const hit = qt.filter(t => searchScore(e, [t], t) > 0);
-    return { e, m: hit.length, s: hit.reduce((a, t) => a + searchScore(e, [t], t), 0) };
-  }).filter(x => x.m > 0).sort((a, b) => b.m - a.m || b.s - a.s || a.e.i - b.e.i).map(x => ({ p: x.e.p, i: x.e.i }));
-}
-/* Hãng khớp TRỌN truy vấn (mọi từ gõ là đầu một từ của tên hãng); hãng nhiều sản phẩm xếp trước. */
-function searchBrands(q, max = 3) {
-  const qt = searchTokens(q);
-  if (!qt.length) return [];
-  const n = new Map();
-  searchIndex().forEach(e => { if (qt.every(t => e.brand.some(w => w.startsWith(t)))) n.set(e.p.brand, (n.get(e.p.brand) || 0) + 1); });
-  return [...n.entries()].sort((a, b) => b[1] - a[1]).slice(0, max).map(x => x[0]);
-}
-/* Danh mục (3 cấp) khớp trọn truy vấn, kèm số KẾT QUẢ sẽ thấy khi bấm (= searchProducts(nhãn) — con số và lưới sau đó không chọi nhau);
-   nhãn bắt đầu đúng cụm gõ xếp trước, rồi theo số kết quả. */
-function searchCats(q, max = 3) {
-  const qt = searchTokens(q);
-  if (!qt.length) return [];
-  const qn = qt.join(' ');
-  const labels = new Set();
-  searchIndex().forEach(e => e.cats.forEach(l => labels.add(l)));
-  return [...labels]
-    .filter(l => { const ws = searchTokens(l); return qt.every(t => ws.some(w => w.startsWith(t))); })
-    .map(l => ({ label: l, n: searchProducts(l).length, lead: searchNorm(l).startsWith(qn) ? 1 : 0 }))
-    .filter(x => x.n > 0)
-    .sort((a, b) => b.lead - a.lead || b.n - a.n || a.label.localeCompare(b.label, 'vi'))
-    .slice(0, max);
+function searchSuggestions(q) {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return [];
+  const pool = [];
+  PRODUCTS.forEach(p => { pool.push(p.brand); pool.push(p.name); });
+  return [...new Set(pool)].filter(s => s.toLowerCase().includes(needle)).slice(0, 6);
 }
 
-/* Kho từ (dạng chuẩn hoá → { word: dạng gốc hay gặp nhất, n: số lần }) từ hãng + tên + danh mục + giới tính — cho sửa lỗi gõ. */
-let SEARCH_VOCAB = null;
-function searchVocab() {
-  if (SEARCH_VOCAB) return SEARCH_VOCAB;
-  const v = new Map();
-  const add = str => {
-    const s = String(str == null ? '' : str);
-    searchSpans(s).forEach(sp => {
-      const cur = v.get(sp.tok) || { word: '', n: 0, forms: new Map() };
-      const f = s.slice(sp.s, sp.e);
-      cur.n++; cur.forms.set(f, (cur.forms.get(f) || 0) + 1);
-      v.set(sp.tok, cur);
-    });
-  };
-  searchIndex().forEach(e => { add(e.p.brand); add(e.p.name); e.cats.forEach(add); add(e.p.gender); });
-  v.forEach(cur => { cur.word = [...cur.forms.entries()].sort((a, b) => b[1] - a[1])[0][0]; });
-  SEARCH_VOCAB = v;
-  return v;
-}
-/* Khoảng cách Damerau-Levenshtein (OSA: thay / thêm / bớt / hoán vị 2 ký tự kề), cắt sớm khi vượt max. */
-function searchEditDist(a, b, max) {
-  if (Math.abs(a.length - b.length) > max) return max + 1;
-  const d = [];
-  for (let i = 0; i <= a.length; i++) d[i] = [i];
-  for (let j = 0; j <= b.length; j++) d[0][j] = j;
-  for (let i = 1; i <= a.length; i++) {
-    let rowMin = Infinity;
-    for (let j = 1; j <= b.length; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      let x = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
-      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) x = Math.min(x, d[i - 2][j - 2] + 1);
-      d[i][j] = x; rowMin = Math.min(rowMin, x);
-    }
-    if (rowMin > max) return max + 1;
-  }
-  return d[a.length][b.length];
-}
-/* "Có phải bạn muốn tìm …?": sửa từng TỪ không khớp kho (≥ 3 ký tự) bằng từ gần nhất (≤ 1 lỗi; từ ≥ 6 ký tự ≤ 2 lỗi; so cả với phần đầu
-   cùng độ dài để "vesac" vẫn ra "Versace"); từ đã khớp giữ nguyên như khách gõ. Chỉ trả về khi có từ được sửa VÀ cụm sửa CÓ kết quả. */
-function searchDidYouMean(q) {
-  const pieces = String(q == null ? '' : q).trim().split(/\s+/).filter(Boolean);
-  if (!pieces.length) return '';
-  const vocab = searchVocab(); const keys = [...vocab.keys()];
-  let changed = false;
-  const fixed = pieces.map(piece => {
-    const toks = searchTokens(piece);
-    if (!toks.length) return piece;
-    if (toks.every(t => keys.some(w => w.startsWith(t)))) return piece;    // từ này đã có trong kho
-    const t = toks.join('');
-    if (t.length < 3) return null;
-    const max = t.length >= 6 ? 2 : 1;
-    let best = null;
-    vocab.forEach((v, w) => {
-      if (w.length < 3) return;
-      const d = Math.min(searchEditDist(t, w, max), w.length > t.length ? searchEditDist(t, w.slice(0, t.length), max) : max + 1);
-      if (d <= max && (!best || d < best.d || (d === best.d && v.n > best.n))) best = { d, n: v.n, word: v.word };
-    });
-    if (!best) return null;
-    changed = true;
-    return best.word;
-  });
-  if (!changed || fixed.some(x => x === null)) return '';
-  const out = fixed.join(' ');
-  return searchProducts(out).length ? out : '';
-}
-/* KHÔNG KHỚP GÌ → "liên quan" theo 3 nấc: (1) cụm đã sửa lỗi gõ · (2) khớp MỘT PHẦN — giữ từ có trong kho, bỏ từ lạ (AND; không ra thì OR,
-   khi đó không có cụm nào để "Xem tất cả") · (3) mặc định: 4 sản phẩm nổi bật + danh mục cấp 1 nhiều hàng nhất. Danh mục liên quan = nhãn
-   cấp 2 (không có thì cấp 1) hay gặp nhất trong chính các sản phẩm vừa chọn ⇒ chip nào bấm cũng có hàng. Trả { via, query, prods, cats }. */
-function searchRelated(q, maxCats = 6) {
-  const fix = searchDidYouMean(q);
-  let via = 'fix', query = fix, prods = fix ? searchProducts(fix) : [];
-  if (!prods.length) {
-    const keys = [...searchVocab().keys()];
-    const kept = searchTokens(q).filter(t => keys.some(w => w.startsWith(t)));
-    if (kept.length) {
-      via = 'partial'; query = kept.join(' '); prods = searchProducts(query);
-      if (!prods.length) { query = ''; prods = searchProductsAny(kept); }
-    }
-  }
-  if (!prods.length) { via = 'popular'; query = ''; prods = PRODUCTS.slice(0, 4).map((p, i) => ({ p, i })); }
-  const n = new Map();
-  if (via === 'popular') searchIndex().forEach(e => { const l = e.cats[0]; if (l) n.set(l, (n.get(l) || 0) + 1); });
-  else prods.forEach(({ p }) => { const l = (p.cat || [])[1] || (p.cat || [])[0]; if (l) n.set(l, (n.get(l) || 0) + 1); });
-  const cats = [...n.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'vi')).slice(0, maxCats).map(x => x[0]);
-  return { via, query, prods, cats };
-}
-
-/* Đưa từ vừa tìm lên ĐẦU lịch sử; gộp trùng không phân biệt hoa thường / dấu ("versace" = "Versace"); tối đa 8. */
-function searchHistoryAdd(term) {
-  const t = String(term == null ? '' : term).trim();
-  if (!t) return;
-  const n = searchNorm(t);
-  searchHistory = [t, ...searchHistory.filter(h => searchNorm(h) !== n)].slice(0, 8);
-}
-
-/* Pane "đang gõ" — PHẦN CHỮ (mobile + bản sao màn Search trong FLOW của desktop): nhóm Thương hiệu / Danh mục khi có kết quả; không có thì
-   báo kèm từ đã gõ + "Có phải bạn muốn tìm…?" + chip "Danh mục liên quan". Hàng gợi ý mực phụ, từ khớp mực chính; hàng hành động mực chính.
-   Trả '' khi không có gì để nói (có kết quả nhưng không hãng / danh mục nào khớp trọn) — pane sẽ chỉ còn block thẻ. */
+/* Pane "đang gõ" — chỉ chứa list gợi ý dạng chữ, tách khỏi pane trending
+   để mỗi phím gõ không re-mount lại product card (ảnh nhấp nháy). */
 function searchSuggestHTML() {
   const q = searchQuery.trim();
-  const row = (inner, attrs, ink = 'text-muted-foreground') =>
-    `<li><button class="t-multiline search-suggest w-full text-left px-4 py-3 ${ink} press" ${attrs}>${inner}</button></li>`;
-  const head = t => `<h2 class="t-single px-4 py-2 text-muted-foreground">${t}</h2>`;
-  /* Chữ DỮ LIỆU (hãng / nhãn danh mục) bọc data-i18n-skip: thẻ mark tách text node nên bộ dịch EN sẽ dịch LẺ TỪNG MẢNH ("Đầm" → "Dresses"
-     giữa một tên tiếng Việt — đo 06/10). Nhãn danh mục có khoá dịch thì dịch TRƯỚC khi tô: bản EN hiện "Bags (7)", không tô vì từ gõ là tiếng Việt. */
-  const keep = inner => `<span data-i18n-skip>${inner}</span>`;
-  const catLabel = l => (LANG === 'en' && tr(l, 'en')) || l;
-  const chip = l => `<button class="t-multiline af-chip h-9 px-3 shrink-0 whitespace-nowrap rounded-xs bg-secondary flex items-center font-medium text-secondary-foreground btn-s press" data-suggest="${SEARCH_ESC(l)}">${SEARCH_ESC(l)}</button>`;
-  if (!searchProducts(q).length) {
-    const dym = searchDidYouMean(q), rel = searchRelated(q);
-    return `
-  <section class="flex flex-col py-4">
-    ${head('Gợi ý')}
-    <p class="t-multiline px-4 py-3 text-foreground">Không tìm thấy kết quả cho “${SEARCH_ESC(q)}”</p>
-    ${dym ? `<ul>${row(`Có phải bạn muốn tìm “${SEARCH_ESC(dym)}”?`, `data-suggest="${SEARCH_ESC(dym)}"`, 'text-foreground')}</ul>` : ''}
-    <p class="t-multiline px-4 py-3 text-muted-foreground">Thử từ khoá ngắn hơn, hoặc tìm theo tên thương hiệu.</p>
-  </section>
-  ${rel.cats.length ? `
-  <section class="flex flex-col gap-3 py-4">
-    <h2 class="t-single px-4 text-muted-foreground">${rel.via === 'popular' ? 'Danh mục phổ biến' : 'Danh mục liên quan'}</h2>
-    <div class="flex flex-wrap gap-2 px-4">${rel.cats.map(chip).join('')}</div>
-  </section>` : ''}`;
-  }
-  const brands = searchBrands(q), cats = searchCats(q);
-  if (!brands.length && !cats.length) return '';
+  const sug = searchSuggestions(q);
   return `
   <section class="flex flex-col py-4">
-    ${brands.length ? head('Thương hiệu') + `<ul>${brands.map(b => row(keep(highlightMatch(b, q)), `data-brand="${SEARCH_ESC(b)}"`)).join('')}</ul>` : ''}
-    ${cats.length ? head('Danh mục') + `<ul>${cats.map(c => row(keep(`${highlightMatch(catLabel(c.label), q)} (${c.n})`), `data-suggest="${SEARCH_ESC(c.label)}"`)).join('')}</ul>` : ''}
+    <h2 class="t-single px-4 text-muted-foreground">Gợi ý</h2>
+    ${sug.length ? `
+    <ul>
+      ${sug.map(s => `
+      <li><button class="t-multiline search-suggest w-full text-left px-4 py-3 text-foreground press" data-suggest="${s}">${highlightMatch(s, q)}</button></li>`).join('')}
+    </ul>` : `<p class="t-multiline px-4 py-3 font-medium text-foreground">Không tìm thấy kết quả</p>`}
   </section>`;
 }
 
-/* Pane "đang gõ" — BLOCK SẢN PHẨM dưới cùng (mobile + bản sao FLOW desktop): DANH SÁCH DỌC, mỗi hàng = ảnh + hãng + tên + giá, ĐÚNG khuôn
-   hàng mini cart desktop (Figma 413:18646, hàm ccRow bên desktop.html): ảnh 79×106 đặt INLINE (utility w-[79px] không có trong tailwind.css
-   build sẵn — cùng bẫy class chết đã dính 28/08), align-self:flex-start để cột chữ không kéo ảnh cao thêm; khe 12, đệm dọc 12; cột chữ cao tối
-   thiểu bằng ảnh để GIÁ GHIM ĐÁY; hãng mượn hook .pc-brand (Libre ở skin-li, cùng vai tên hãng trên thẻ), tên t-multiline mực phụ + badge
-   "Đặt trước" đứng trước như thẻ; giá .pc-price (đỏ khi giảm) + giá gạch + chip % như thẻ PLP. Kẻ ngăn giữa hàng thụt 16 (li mang mx-4, rule
-   .search-prow + .search-prow) như #ccList. Lệnh user 06/10 lượt 7: "sản phẩm gợi ý là hình sản phẩm luôn nhé, xếp dọc giống cái mini cart cho
-   bản mobile" — thay dải thẻ ngang 170 của lượt 6. Theo từ khoá ≤ 5 hàng; "liên quan" khi không khớp gì (searchRelated; nấc mặc định = 4 hàng
-   Sản phẩm nổi bật). Tiêu đề + liên kết "Xem tất cả (N)" (= Enter với cụm tương ứng; không có cụm thì không có liên kết). Trả { key, html } —
-   renderSearchSug() bỏ qua khi khoá không đổi để ảnh không nhấp nháy. Bấm hàng → PDP qua wireProductCards (data-product). */
-function searchSugProductsHTML() {
-  const q = searchQuery.trim();
-  let prods = searchProducts(q), title = 'Sản phẩm gợi ý', more = q, max = 5;
-  if (!prods.length) {
-    const r = searchRelated(q);
-    prods = r.prods; more = r.query;
-    if (r.via === 'popular') { title = 'Sản phẩm nổi bật'; max = 4; }
-  }
-  const list = prods.slice(0, max);
-  const key = `${LANG}|${title}|${more}|${prods.length}|${list.map(x => x.i).join(',')}`;
-  const row = ({ p, i }) => `
-      <li class="search-prow mx-4">
-        <button class="w-full flex gap-3 py-3 text-left press" data-product="${i}">
-          <span class="shrink-0 bg-secondary overflow-hidden" style="width:79px;height:106px;align-self:flex-start">
-            <img src="${A}${p.img}" class="w-full h-full object-cover lazy" alt="${SEARCH_ESC(p.name)}">
-          </span>
-          <span class="flex-1 min-w-0 flex flex-col" style="min-height:106px">
-            <span class="t-lead pc-brand block font-medium text-foreground truncate">${SEARCH_ESC(p.brand)}</span>
-            <span class="flex items-center gap-1.5 min-w-0">
-              ${p.preorder ? `<span class="t-single badge-inline px-1 font-medium text-foreground shrink-0">Đặt trước</span>` : ''}
-              <span class="t-multiline block w-full min-w-0 text-secondary-foreground truncate">${SEARCH_ESC(p.name)}</span>
-            </span>
-            <span class="flex items-center gap-2 pt-1 mt-auto">
-              <span class="t-multiline pc-price whitespace-nowrap font-medium ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</span>
-              ${p.was ? `<span class="t-single whitespace-nowrap text-muted-foreground line-through">${p.was}</span>` : ''}
-              ${p.off ? `<span class="t-single bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${p.off}</span>` : ''}
-            </span>
-          </span>
-        </button>
-      </li>`;
-  const html = `
-  <section class="flex flex-col py-4">
-    <div class="flex items-center justify-between gap-2 px-4 py-2">
-      <h2 class="t-single text-muted-foreground">${title}</h2>
-      ${more ? hmLink(`Xem tất cả (${prods.length})`, `data-suggest="${SEARCH_ESC(more)}"`) : ''}
-    </div>
-    <ul class="flex flex-col">${list.map(row).join('')}</ul>
-  </section>`;
-  return { key, html };
-}
 function searchHistoryHTML() {
   if (!searchHistory.length) return '';
   return `
@@ -10637,7 +10322,7 @@ function searchTrendingHTML(fixedTitle = '') {
 
 function screenSearch() {
   const q = searchQuery.trim();
-  const sp = q ? searchSugProductsHTML() : { key: '', html: '' };   // 06/10/2026: block THẺ dưới cùng của pane đang gõ (khoá để không dựng lại thừa)
+  const noResult = q && !searchSuggestions(q).length;
   return `
   <div class="w-full" data-scroller>
     ${navBar()}
@@ -10646,7 +10331,7 @@ function screenSearch() {
         <label class="search-field flex-1 min-w-0 flex items-center gap-3 min-h-12 bg-secondary rounded-xs p-3">
           <span class="w-5 h-5 flex items-center justify-center shrink-0 [&_svg]:w-4 [&_svg]:h-4">${I.search}</span>
           <span style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">Tìm kiếm</span>
-          <input id="searchInput" type="search" value="${SEARCH_ESC(searchQuery)}" placeholder="Bạn đang tìm kiếm gì" autocomplete="off" enterkeyhint="search"
+          <input id="searchInput" type="search" value="${searchQuery}" placeholder="Bạn đang tìm kiếm gì" autocomplete="off" enterkeyhint="search"
                  class="t-single flex-1 min-w-0 outline-none font-light text-foreground placeholder:text-muted-foreground" style="background:transparent;border:0;padding:0;-webkit-appearance:none;appearance:none">
           <button id="searchClear" type="button" class="t-multiline shrink-0 text-muted-foreground press"${searchQuery ? '' : ' style="display:none"'}>Xóa</button>
         </label>
@@ -10659,7 +10344,7 @@ function screenSearch() {
 
       <div id="searchResults">
         <div id="searchSug" class="search-pane"${q ? '' : ' style="display:none"'}>${q ? searchSuggestHTML() : ''}</div>
-        <div id="searchSugProducts" class="search-pane" data-key="${SEARCH_ESC(sp.key)}"${q ? '' : ' style="display:none"'}>${sp.html}</div>
+        <div id="searchNores"${noResult ? '' : ' style="display:none"'}>${searchTrendingHTML('Sản phẩm nổi bật')}</div>
         <div id="searchEmpty" class="search-pane"${q ? ' style="display:none"' : ''}>
           <div id="searchHistoryBox" class="rise">${searchHistoryHTML()}</div>
           <div class="rise">${searchTrendingHTML()}</div>
@@ -20090,17 +19775,6 @@ function renderSearchSug(root) {
   sug.innerHTML = searchSuggestHTML();
   wireSearchPane(root, sug);
   localizeNew(sug);
-  /* 06/10/2026 — block THẺ dưới cùng: chỉ dựng lại khi DANH SÁCH THẺ đổi (so khoá) — gõ thêm một chữ mà vẫn cùng bộ thẻ thì ảnh
-     không nhấp nháy. Dải thẻ dựng lúc chạy nên phải nối dragScroll + wireProductCards tại đây (wire() chỉ chạy lúc dựng màn). */
-  const box = root.querySelector('#searchSugProducts');
-  if (!box) return;
-  const { key, html } = searchSugProductsHTML();
-  if (box.dataset.key === key) return;
-  box.dataset.key = key;
-  box.innerHTML = html;
-  wireSearchPane(root, box);
-  if (typeof dragScroll === 'function') box.querySelectorAll('.drag-x').forEach(dragScroll);
-  localizeNew(box);
 }
 
 function refreshSearchHistory(root) {
@@ -20126,20 +19800,10 @@ function wireSearchPane(root, pane) {
   pane.querySelectorAll('[data-suggest]').forEach(btn => {
     btn.addEventListener('click', () => {
       const term = btn.dataset.suggest;
-      searchHistoryAdd(term);   // 06/10/2026: lên đầu + gộp trùng không phân biệt hoa thường / dấu
+      if (!searchHistory.includes(term)) searchHistory = [term, ...searchHistory].slice(0, 8);
       searchQuery = term;
       // Results = PLP grid (Figma 02—PLP): mở màn kết quả tìm kiếm
       goPlp({ type: 'search', query: term, title: `Kết quả tìm kiếm của “${term}”` });
-    });
-  });
-  /* 06/10/2026 — gợi ý gom nhóm: hàng Thương hiệu vào trang hãng (hub nếu hãng có). Hàng Danh mục / chip liên quan / liên kết
-     "Xem tất cả (N)" / "Có phải bạn muốn tìm" đi đường data-suggest ở trên; thẻ sản phẩm ở block dưới cùng đi wireProductCards (vào PDP). */
-  pane.querySelectorAll('[data-brand]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const b = btn.dataset.brand;
-      searchHistoryAdd(b);
-      searchQuery = b;
-      goPlp({ type: 'brand', brand: b });
     });
   });
   pane.querySelectorAll('[data-remove]').forEach(btn => {
@@ -21028,9 +20692,6 @@ const I18N = {
   'Tìm kiếm':'Search', 'Đóng tìm kiếm':'Close search', 'Bạn đang tìm kiếm gì':'What are you looking for?',
   'Vừa tìm kiếm':'Recent searches', 'Gợi ý':'Suggestions', 'Sản phẩm nổi bật':'Featured items',
   'Xóa':'Clear', 'Không tìm thấy kết quả':'No results found',
-  /* 06/10/2026 — gợi ý gom nhóm (tự dịch, chờ duyệt). 'Thương hiệu' / 'Danh mục' dùng khoá sẵn có; 'Sản phẩm' đã là khoá facet
-     ('Product type') nên tiêu đề nhóm dùng chữ riêng. Câu có số / có từ gõ đi bằng luật regex trong I18N_RE / I18N_REV_RE. */
-  'Sản phẩm gợi ý':'Suggested products', 'Danh mục liên quan':'Related categories', 'Danh mục phổ biến':'Popular categories',
 
   // ── Menu full-screen ──
   'Đóng menu':'Close menu', 'Đăng ký / đăng nhập':'Sign up / sign in',
@@ -22418,10 +22079,6 @@ const I18N_RE = [
   [/^Phông chữ: (.+)$/,               'Font: $1'],
   [/^Đang tìm "(.+)"$/,               'Searching for "$1"'],
   [/^Kết quả tìm kiếm của “(.+)”$/,   'Search results for “$1”'],
-  /* 06/10/2026 — tìm kiếm: không có kết quả / xem tất cả / sửa lỗi gõ (chiều ngược ở I18N_REV_RE). */
-  [/^Không tìm thấy kết quả cho “(.+)”$/, 'No results for “$1”'],
-  [/^Xem tất cả \((\d+)\)$/,            'See all ($1)'],
-  [/^Có phải bạn muốn tìm “(.+)”\?$/,  'Did you mean “$1”?'],
   [/^Không tìm thấy kết quả phù hợp với "(.+)"$/, 'No results found for "$1"'],
   [/^Xoá "(.+)" khỏi lịch sử$/,       'Remove "$1" from history'],
   [/^Dùng ([\d.]+) điểm$/,               'Use $1 points'],
@@ -22503,9 +22160,6 @@ const I18N_REV_RE = [
   [/^Font: (.+)$/,                    'Phông chữ: $1'],
   [/^Searching for "(.+)"$/,          'Đang tìm "$1"'],
   [/^Search results for “(.+)”$/,     'Kết quả tìm kiếm của “$1”'],
-  [/^No results for “(.+)”$/,          'Không tìm thấy kết quả cho “$1”'],
-  [/^See all \((\d+)\)$/,               'Xem tất cả ($1)'],
-  [/^Did you mean “(.+)”\?$/,          'Có phải bạn muốn tìm “$1”?'],
   [/^No results found for "(.+)"$/,   'Không tìm thấy kết quả phù hợp với "$1"'],
   [/^Remove "(.+)" from history$/,    'Xoá "$1" khỏi lịch sử'],
   [/^Use ([\d.]+) points$/,              'Dùng $1 điểm'],
@@ -23874,7 +23528,7 @@ function wire(root) {
   const searchInput = root.querySelector('#searchInput');
   if (searchInput) {
     const sugEl = root.querySelector('#searchSug');
-    const prodEl = root.querySelector('#searchSugProducts');   // 06/10/2026: block thẻ dưới cùng (thay pane không-kết-quả)
+    const noresEl = root.querySelector('#searchNores');
     const emptyEl = root.querySelector('#searchEmpty');
     const clearBtn = root.querySelector('#searchClear');
     // hiện/ẩn pane có fade-rise nhẹ; gõ tiếp trong pane đang mở thì không chạy lại animation
@@ -23895,7 +23549,7 @@ function wire(root) {
       if (clearBtn) clearBtn.style.display = searchInput.value ? '' : 'none';
       if (q) renderSearchSug(root);
       setShown(sugEl, !!q);
-      setShown(prodEl, !!q);
+      setShown(noresEl, !!q && !searchSuggestions(q).length);
       setShown(emptyEl, !q);
     };
     searchInput.addEventListener('input', () => {
@@ -23907,7 +23561,7 @@ function wire(root) {
       if (e.key !== 'Enter') return;
       const q = searchInput.value.trim();
       if (!q) return;
-      searchHistoryAdd(q);
+      if (!searchHistory.includes(q)) searchHistory = [q, ...searchHistory].slice(0, 8);
       searchQuery = q;
       goPlp({ type: 'search', query: q, title: `Kết quả tìm kiếm của “${q}”` });
     });
@@ -23932,7 +23586,7 @@ function wire(root) {
       });
     });
     wireSearchPane(root, sugEl);
-    wireSearchPane(root, prodEl);
+    wireSearchPane(root, noresEl);
     wireSearchPane(root, emptyEl);
   }
 
@@ -26704,14 +26358,8 @@ function instSheetHTML(price, sel) {
      (12/18 · #727272, không nền) thành BĂNG TIÊU ĐỀ y hệt khối "Tóm tắt đơn hàng": dùng ĐÚNG khuôn
      `.dk-sum-head` (đệm 16, nền xám `--general-secondary`) + chữ `.t-block-title.dk-summary-title`
      (Libre Bodoni 16/24, mực chính) — nên băng và chữ đi theo khuôn chung của tóm tắt đơn hàng, đổi một
-     chỗ là hai nơi cùng đổi. Băng rộng bằng nội dung mục (446), không tràn mép ngăn kéo.
-     06/10/2026 (lệnh user: "update lại cái phần này, title 16 thôi k cần libre, và bỏ cái nền xám" + khung Figma
-     `PDP — installment popup` 1106:64738 do user sửa tay): BỎ băng xám và BỎ Libre — tiêu đề mục là chữ thường Inter
-     16/24 mực chính, class `.t-overlay` (cùng vai với số tiền kỳ hạn ngay dưới; dưới skin-mt đo ra Inter 500, tracking
-     0,5 — đúng style Figma `t-label-overlay`). Khung bọc `dk-sum-head` trong Figma còn nhưng đệm 0, không nền; trong code
-     không cần bọc. Cách dưới tiêu đề 12 (`gap-3` của mục) giữ nguyên. Tiêu đề lớp "Các kỳ hạn trả góp" vẫn Libre 18
-     (Figma không đổi). KHAI GIỐNG index.html (CẢ HAI FILE). */
-  const head = t => `<p class="t-overlay text-foreground">${t}</p>`;
+     chỗ là hai nơi cùng đổi. Băng rộng bằng nội dung mục (446), không tràn mép ngăn kéo. */
+  const head = t => `<div class="dk-sum-head"><p class="t-block-title dk-summary-title text-foreground">${t}</p></div>`;
   return `
     <div class="flex flex-col gap-3">
       ${head('Chọn kỳ hạn')}
@@ -26728,7 +26376,7 @@ function instSheetHTML(price, sel) {
          ['info','Điều kiện trả góp theo quy định của ngân hàng phát hành thẻ. DAFC có quyền từ chối đơn không đủ điều kiện.']]
         .map(([k, t]) => `<div class="flex gap-2 text-foreground-alt">${instIco(k)}<p class="t-multiline">${t}</p></div>`).join('')}
     </div>
-    <div class="ins-fee rounded-xs p-3 t-multiline text-foreground-alt">
+    <div class="ins-fee rounded-xs p-3 t-multiline text-muted-foreground">
       <p>Phí không được hoàn lại sau khi giao dịch thành công. Kỳ hạn áp dụng tùy ngân hàng và loại thẻ phát hành.</p>
       <button data-ins-link="installment" class="underline text-foreground press mt-1">Xem điều khoản trả góp đầy đủ</button>
     </div>`;
@@ -28291,10 +27939,7 @@ document.body.insertAdjacentHTML('beforeend', `
             <div id="dkSearchHot"></div>
           </div>
           <div class="ds-main">
-            <div class="flex items-center justify-between gap-2 pb-3">
-              <p id="dkSearchProdTitle" class="t-single text-muted-foreground">Sản phẩm nổi bật</p>
-              <span id="dkSearchProdMore"></span>
-            </div>
+            <p class="t-single text-muted-foreground pb-3">Sản phẩm nổi bật</p>
             <div id="dkSearchProducts"></div>
           </div>
         </div>
@@ -28315,42 +27960,29 @@ document.body.insertAdjacentHTML('beforeend', `
   const terms = document.getElementById('dkSearchTerms');
   const hot   = document.getElementById('dkSearchHot');
   const prods = document.getElementById('dkSearchProducts');
-  const prodTitle = document.getElementById('dkSearchProdTitle');   // 06/10/2026: tiêu đề cột phải đổi theo từ khoá
-  const prodMore  = document.getElementById('dkSearchProdMore');    // liên kết "Xem tất cả (N)"
-  let prodKey = '';                                                  // khoá bộ thẻ đang hiện — không dựng lại khi không đổi
 
   /* Chọn/gõ xong -> đóng layer rồi mới điều hướng, vì goPlp() dựng lại màn và
      khoá cuộn phải được nhả trước đó. */
   const goSearch = term => {
-    searchHistoryAdd(term);   // 06/10/2026: lên đầu + gộp trùng không phân biệt hoa thường / dấu
+    if (!searchHistory.includes(term)) searchHistory = [term, ...searchHistory].slice(0, 8);
     searchQuery = term;
     close();
     goPlp({ type: 'search', query: term, title: `Kết quả tìm kiếm của “${term}”` });
   };
 
-  /* CỘT TRÁI. Chưa gõ -> lịch sử tìm kiếm (như pane rỗng của bản mobile); đang gõ -> gợi ý GOM NHÓM (Thương hiệu · Danh mục — hàng chữ mực phụ,
-     từ khớp mực chính, cùng bộ so khớp với mobile); không khớp gì -> báo kèm từ đã gõ + "Có phải bạn muốn tìm…?" + Danh mục liên quan
-     (06/10/2026). Hàng tên sản phẩm KHÔNG còn ở đây — cột phải đã là thẻ theo từ khoá (renderProducts). */
+  /* Cột trái. Chưa gõ -> lịch sử tìm kiếm (như pane rỗng của bản mobile);
+     đang gõ -> danh sách gợi ý. Cột phải KHÔNG đổi theo phím gõ để ảnh sản
+     phẩm không nhấp nháy — cùng lý do bản mobile tách 2 pane. */
   const renderTerms = () => {
     const el = $in();
     const q = (el ? el.value : '').trim();
-    const row = (inner, attrs, ink = 'text-muted-foreground') => `<button class="t-multiline w-full text-left px-2 py-2.5 rounded-xs ${ink} ghost-hover press" ${attrs}>${inner}</button>`;
-    const head = (t, extra = '') => `<p class="t-single text-muted-foreground pb-2${extra ? ' ' + extra : ''}">${t}</p>`;
-    const keep = inner => `<span data-i18n-skip>${inner}</span>`;   // chữ dữ liệu: mark tách text node, bộ dịch EN sẽ dịch lẻ từng mảnh
-    const catLabel = l => (LANG === 'en' && tr(l, 'en')) || l;
     if (q) {
-      if (searchProducts(q).length) {
-        const brands = searchBrands(q), cats = searchCats(q);
-        terms.innerHTML = (brands.length ? head('Thương hiệu') + brands.map(b => row(keep(highlightMatch(b, q)), `data-brand="${SEARCH_ESC(b)}"`)).join('') : '')
-          + (cats.length ? head('Danh mục', brands.length ? 'pt-4' : '') + cats.map(c => row(keep(`${highlightMatch(catLabel(c.label), q)} (${c.n})`), `data-suggest="${SEARCH_ESC(c.label)}"`)).join('') : '');
-      } else {
-        const dym = searchDidYouMean(q), rel = searchRelated(q);
-        terms.innerHTML = head('Gợi ý')
-          + `<p class="t-multiline px-2 py-2.5 text-foreground">Không tìm thấy kết quả cho “${SEARCH_ESC(q)}”</p>`
-          + (dym ? row(`Có phải bạn muốn tìm “${SEARCH_ESC(dym)}”?`, `data-suggest="${SEARCH_ESC(dym)}"`, 'text-foreground') : '')
-          + `<p class="t-multiline px-2 py-2.5 text-muted-foreground">Thử từ khoá ngắn hơn, hoặc tìm theo tên thương hiệu.</p>`
-          + (rel.cats.length ? head(rel.via === 'popular' ? 'Danh mục phổ biến' : 'Danh mục liên quan', 'pt-4') + rel.cats.map(c => row(SEARCH_ESC(c), `data-suggest="${SEARCH_ESC(c)}"`, 'text-foreground')).join('') : '');
-      }
+      const sug = searchSuggestions(q);
+      terms.innerHTML = `
+        <p class="t-single text-muted-foreground pb-2">Gợi ý</p>
+        ${sug.length
+          ? sug.map(s => `<button class="t-multiline w-full text-left px-2 py-2.5 rounded-xs text-mid-alt ghost-hover press" data-suggest="${s}">${highlightMatch(s, q)}</button>`).join('')
+          : `<p class="t-multiline px-2 py-2 font-medium text-foreground">Không tìm thấy kết quả</p>`}`;
     } else if (searchHistory.length) {
       terms.innerHTML = `
         <p class="t-single text-muted-foreground pb-2">Vừa tìm kiếm</p>
@@ -28363,12 +27995,6 @@ document.body.insertAdjacentHTML('beforeend', `
       terms.innerHTML = '';   // chưa tìm gì lần nào -> chỉ còn khối từ khóa phổ biến
     }
     terms.querySelectorAll('[data-suggest]').forEach(b => b.addEventListener('click', () => goSearch(b.dataset.suggest)));
-    terms.querySelectorAll('[data-brand]').forEach(b => b.addEventListener('click', () => {
-      const br = b.dataset.brand;
-      searchHistoryAdd(br); searchQuery = br;
-      close();
-      goPlp({ type: 'brand', brand: br });
-    }));
     terms.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', e => {
       e.stopPropagation();
       searchHistory = searchHistory.filter(h => h !== b.dataset.remove);
@@ -28376,7 +28002,8 @@ document.body.insertAdjacentHTML('beforeend', `
     }));
     localizeNew(terms);
   };
-  /* Từ khóa phổ biến: dựng 1 lần khi mở, không đụng lúc gõ. (Lưới sản phẩm nay đi theo từ khoá — renderProducts() ngay dưới.) */
+
+  /* Từ khóa phổ biến + lưới sản phẩm: dựng 1 lần khi mở, không đụng lúc gõ */
   const renderStatic = () => {
     hot.innerHTML = `
       <p class="t-single text-muted-foreground pb-2">Từ khóa phổ biến</p>
@@ -28386,44 +28013,33 @@ document.body.insertAdjacentHTML('beforeend', `
         <span class="flex-1 min-w-0 truncate">${k}</span>
       </button>`).join('')}`;
     hot.querySelectorAll('[data-suggest]').forEach(b => b.addEventListener('click', () => goSearch(b.dataset.suggest)));
-    localizeNew(hot);
-  };
-  /* CỘT PHẢI — 06/10/2026 (user: "khi nhập thì dưới cùng sẽ là block gợi ý sản phẩm theo từ khóa … áp dụng cho cả desktop"): chưa gõ = Sản phẩm
-     nổi bật (4 thẻ đầu, như cũ); đang gõ = 4 thẻ khớp nhất + liên kết "Xem tất cả (N)" (= Enter); không khớp gì = sản phẩm LIÊN QUAN theo
-     searchRelated (cụm đã sửa lỗi gõ → khớp một phần → nổi bật). Chỉ dựng lại khi DANH SÁCH THẺ đổi (so khoá) để ảnh không nhấp nháy theo
-     từng phím — lý do cũ của việc "cột phải không đổi theo phím gõ" vẫn được giữ. Lưới 4 cột ở CSS #dkSearchProducts, `noQuick` như lượt 3. */
-  const renderProducts = () => {
-    const el = $in();
-    const q = (el ? el.value : '').trim();
-    let found = [], title = 'Sản phẩm nổi bật', more = '';
-    if (q) {
-      found = searchProducts(q);
-      if (found.length) { title = 'Sản phẩm gợi ý'; more = q; }
-      else { const r = searchRelated(q); found = r.prods; if (r.via !== 'popular') { title = 'Sản phẩm gợi ý'; more = r.query; } }
-    } else found = PRODUCTS.slice(0, 4).map((p, i) => ({ p, i }));
-    const list = found.slice(0, 4);
-    const key = `${LANG}|${title}|${more}|${found.length}|${list.map(x => x.i).join(',')}`;
-    if (key === prodKey) return;
-    prodKey = key;
-    prodTitle.textContent = title;
-    prodMore.innerHTML = more ? hmLink(`Xem tất cả (${found.length})`, `data-suggest="${SEARCH_ESC(more)}"`) : '';
-    prodMore.querySelectorAll('[data-suggest]').forEach(b => b.addEventListener('click', () => goSearch(b.dataset.suggest)));
-    prods.innerHTML = list.map(({ p, i }) => productCard(p, i, { w: 'w-full', noColors: true, noQuick: true })).join('');
-    /* BẮT BUỘC gọi wireLazy: ảnh trong productCard mang class `lazy` = opacity 0 cho tới khi có thêm `.loaded`, mà chỗ gắn class đó nằm
-       trong wire() — chỉ chạy khi dựng MÀN. Tấm gợi ý này dựng ngoài #viewport nên không được wire() chạm tới (lỗi user báo 17/08/2026). */
+
+    /* 06/10/2026 (user: "tầm 5 sản phẩm 1 row và không có quick add", rồi "sản phẩm để lại 4 sản phẩm" khi bóp nội dung bằng ô nhập): 4 thẻ MỘT HÀNG (lưới 4 cột ở
+       CSS #dkSearchProducts), `noQuick: true` bỏ cả lớp size hover lẫn nút giỏ tròn. Nhánh `[data-pc-size]` / `.quick-add` ở handler bên dưới thành mã chết ở chỗ này
+       nhưng giữ lại — bật quick add lại chỉ cần bỏ cờ. */
+    prods.innerHTML = PRODUCTS.slice(0, 4).map((p, i) => productCard(p, i, { w: 'w-full', noColors: true, noQuick: true })).join('');
+    /* BẮT BUỘC gọi wireLazy: ảnh trong productCard mang class `lazy` = opacity 0
+       cho tới khi có thêm `.loaded`, mà chỗ gắn class đó nằm trong wire() — chỉ
+       chạy khi dựng MÀN. Tấm gợi ý này dựng ngoài #viewport nên không được
+       wire() chạm tới -> 4 ảnh trong suốt vĩnh viễn, chỉ thấy khung xám.
+       (Lỗi user báo 17/08/2026.) */
     if (window.wireLazy) wireLazy(prods);
     prods.querySelectorAll('[data-product]').forEach(el => el.addEventListener('click', e => {
-      const ps = e.target.closest('[data-pc-size]');        // dải size hover (mã chết khi noQuick, giữ để bật lại chỉ cần bỏ cờ)
+      // Dải size hover: xử lý TẠI CHỖ, không đóng layer tìm kiếm
+      const ps = e.target.closest('[data-pc-size]');
       if (ps) { e.stopPropagation(); pcSizeClick(el, ps); return; }
       const qa = e.target.closest('.quick-add');
       const i = el.dataset.product;
-      close();                                              // đóng layer trước, y như goSearch
+      close();                                    // đóng layer trước, y như goSearch
       if (qa) { if (window.__openQuickAdd) window.__openQuickAdd(+qa.dataset.quick); return; }
+      /* 22/09/2026 — goPdp() thay ternary chọn màn: thẻ #1 (i='0') về khuôn 'pdp' mà không
+         set pdpIdx nên mở SP vừa xem trước đó (đo 22/09: pdpIdx=5 -> thẻ #1 mở SP#6). */
       goPdp(i);
     }));
-    localizeNew(prodTitle.parentElement); localizeNew(prods);
+    localizeNew(hot); localizeNew(prods);
   };
-  const render = () => { renderTerms(); renderStatic(); renderProducts(); };
+
+  const render = () => { renderTerms(); renderStatic(); };
 
   const open = () => {
     if (layer.classList.contains('open')) return;
@@ -28478,7 +28094,7 @@ document.body.insertAdjacentHTML('beforeend', `
   window.__wireDkSearch = root => {
     const el = root.querySelector('#dkSearchInput');
     if (!el) return;
-    el.addEventListener('input', () => { renderTerms(); renderProducts(); });   // 06/10/2026: cột phải cũng đi theo từ khoá (có so khoá)
+    el.addEventListener('input', renderTerms);   // chỉ cột trái đổi theo phím gõ
     el.addEventListener('keydown', e => {
       if (e.key === 'Enter') { const q = el.value.trim(); if (q) goSearch(q); }
       if (e.key === 'Escape') close();
