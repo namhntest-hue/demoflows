@@ -3039,12 +3039,9 @@ window.RESP = (function () {
   #dkSearchLayer.open .ds-backdrop { opacity: 1; }
   #dkSearchLayer.open .ds-sheet { transform: none; }
   /* Các số đo dưới đây không có sẵn trong tailwind.css đã build nên đặt tay.
-     06/10/2026 (lệnh user: "bóp phần nội dung bên trong search lại nhỏ bằng thanh search bar ở trên"): khung nội dung = ĐÚNG bề rộng + vị
-     trí của ô nhập trên header — JS đo `#dkNavSearchField` lúc mở và lúc đổi cỡ cửa sổ rồi đặt `--ds-left` / `--ds-width` (xem `syncInner`).
-     KHÔNG tính bằng CSS (`min(100%, 1440px) − 2 × inset`): khoá cuộn nền làm thanh cuộn biến mất, body bù `padding-right` còn lớp này (fixed)
-     rộng thêm đúng bề rộng thanh cuộn ⇒ lệch nửa thanh cuộn (~8px) so với ô nhập. Trước đó khung bó 1240 canh giữa. Ô nhập = min(980, cửa sổ − 460)
-     nên ở khung ≥ 1440 nội dung rộng 980. Dưới 1024 ô nhập chỉ còn < 564 ⇒ nội dung về lại trải hết bề ngang, đệm 24 (xem media 1023 bên dưới). */
-  #dkSearchLayer .ds-inner { width: var(--ds-width, auto); margin: 0 0 0 var(--ds-left, 0px); padding: 0; }
+     Khung trong bó 1240 (cùng cỡ với khung thanh toán), riêng Ô NHẬP vẫn giữ
+     max 600 canh giữa như yêu cầu trước. */
+  #dkSearchLayer .ds-inner { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
   /* ── Ô nhập tìm kiếm ĐÈ LÊN HÀNG NAV, CANH GIỮA (17/08/2026, yêu cầu user —
      tham chiếu stradivarius.com) ──
      Ô absolute trong #dkNavRow với LỀ HAI BÊN BẰNG NHAU (`--dk-search-inset`)
@@ -3100,26 +3097,14 @@ window.RESP = (function () {
     flex: 1; min-width: 0;
     border-left: 1px solid var(--general-border); padding-left: 40px;
   }
-  /* SẢN PHẨM NỔI BẬT của lớp tìm kiếm — lệnh user 06/10/2026, hai bước: (1) "tầm 5 sản phẩm 1 row và không có quick add"; (2) khi bóp nội dung bằng ô nhập:
-     "sản phẩm để lại 4 sản phẩm". Nay MỘT HÀNG 4 thẻ, KHÔNG quick add (`noQuick`, cùng cờ dải trang chủ; trước bước 1 là 4 thẻ có quick add, `grid-cols-4`).
-     Cột phải = ô nhập 980 − cột trái 280 − khe 40 − viền 1 − đệm 40 = 619 ⇒ thẻ ≈ 149 (khe 8); ô nhập hẹp dần theo cửa sổ (1366 ⇒ 906 ⇒ thẻ 130). Đặt bằng CSS
-     riêng (không `grid-cols-4`) để số cột đi cùng media query. */
-  #dkSearchProducts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-  /* Cửa sổ < 1366: ô nhập (= nội dung) còn ≤ 905 — hai cột sẽ ép thẻ xuống < 130 nên XẾP CHỒNG, đường ngăn dọc đổi thành ngang; hai khối trái
-     ("Vừa tìm kiếm" / "Từ khóa phổ biến") đứng CẠNH nhau để tấm không cao thêm (khối rỗng — chưa có lịch sử — ẩn để khối kia trải hết hàng). */
-  @media (max-width: 1365px) {
+  /* Dải desktop hẹp: 2 cột xếp chồng, đường ngăn dọc đổi thành ngang */
+  @media (max-width: 1023px) {
     #dkSearchLayer .ds-cols { flex-direction: column; gap: 24px; }
-    #dkSearchLayer .ds-side { width: auto; flex-direction: row; gap: 40px; }
-    #dkSearchLayer .ds-side > * { flex: 1 1 0; min-width: 0; }
-    #dkSearchLayer .ds-side > :empty { display: none; }
+    #dkSearchLayer .ds-side { width: auto; }
     #dkSearchLayer .ds-main {
       border-left: 0; padding-left: 0;
       border-top: 1px solid var(--general-border); padding-top: 24px;
     }
-  }
-  /* < 1024: ô nhập chỉ còn < 564 — nội dung KHÔNG theo nó nữa mà trải hết bề ngang như trước (đệm 24). */
-  @media (max-width: 1023px) {
-    #dkSearchLayer .ds-inner { width: auto; margin: 0; padding: 0 24px; }
   }
   /* Thẻ thanh toán: Figma cho 4 thẻ CAO BẰNG NHAU 64 (thẻ "trả góp 0%" xuống
      2 dòng kéo cả nhóm lên 64). Đặt sàn ở đây thay vì trong richRadio để thẻ
@@ -3206,19 +3191,6 @@ window.RESP = (function () {
   .field-float.is-btn.is-filled > label, .field-float.is-btn:focus-within > label {
     top: 8px; transform: translateY(0); font-size: 10px; line-height: 14px;
   }
-  /* NÚT HÀNH ĐỘNG NẰM TRONG Ô (06/10/2026 — user kèm ảnh tham chiếu: "Gửi mã OTP" đứng ngay trong ô SĐT, ô Nhập mã OTP ngay dưới).
-     afield() gắn `.has-act` lên khung khi nhận tham số `act`. Nút là GHOST (`.btn-g`: không nền, không viền, chỉ nhãn — đúng vai
-     "hành động trong ô") nên TỰ ăn rule nút ở dưới: 12/16 VIẾT HOA (rule khách chốt 17/09). Đứng sát phải, cao 40 canh giữa ô 48.
-     Nhãn dài nhất "Nhận lại mã (60s)" ≈ 125px (+ đệm 24) nên ô chừa 160px bên phải, chữ đang gõ không chui xuống dưới nút. Nhãn nổi
-     của field vốn `pointer-events:none` nên không chặn bấm vào nút. KHAI GIỐNG HỆT ở index.html và desktop.html. */
-  .field-float.has-act > input { padding-right: 160px; }
-  .field-float > .fld-act {
-    position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
-    height: 40px; padding: 0 12px; display: flex; align-items: center; white-space: nowrap;
-    border-radius: 2px;
-  }
-  /* Đang đếm ngược (vô hiệu): bỏ cả mặt hover của .btn-g — nút không bấm được thì không được tỏ ra bấm được. */
-  .field-float > .fld-act:disabled { background: none; cursor: default; }
   /* FOCUS RING (15/09/2026, sửa lại 16/09/2026) — khớp biến thể đã có sẵn của nút
      (`.press:focus-visible`, xem khối "State của Button" phía trên): shadow tròn 3px,
      KHÔNG blur, màu `--btn-focus-ring`. Ô CHỌN (pickField/accPick) mang class `.press`
@@ -15729,18 +15701,12 @@ function screenCART() {
    r-2 #e5e5e5. Giữ loginFrom/ckAuth.
    Luồng đăng ký (Figma 3107:50758 + 3354:47931): nhập SĐT → Gửi mã
    OTP → Xác thực OTP → Hoàn tất đăng ký (điền thông tin).
-   ⚠ 06/10/2026 (user, kèm ảnh tham chiếu): bước "Xác thực OTP" của ĐĂNG KÝ nay nằm CHUNG TRANG
-   với bước nhập SĐT — ô SĐT có nút Gửi mã OTP ngay trong ô, ô Nhập mã OTP ngay dưới (xem
-   viewRegister). Không còn qua view 'otp'; view 'otp' (6 ô) chỉ còn cho QUÊN MẬT KHẨU bằng SĐT.
 ════════════════════════════════════════════════════════════════ */
 let authView = 'login';
 let authViewIntent = false;
 let authPhone = '';
 let authFlow = 'register';   // luồng đang dùng OTP: 'register' (SĐT → OTP → điền thông tin) | 'forgot' (SĐT → OTP → đặt lại mật khẩu)
 let forgotEmailSent = '';    // khác rỗng = vừa quên mật khẩu bằng EMAIL (brief trang 23, Opt2) — viewLogin() vẽ banner xanh; dọn ở [data-auth-go]
-let regOtpSent = false;      // ĐĂNG KÝ bằng SĐT (một trang, 06/10/2026): đã bấm "Gửi mã OTP" trong ô SĐT — nút đổi sang "Nhận lại mã (60s)", ô Nhập mã OTP ngay dưới mới có mã để Xác nhận. Dọn bằng resetRegOtp() ở [data-auth-go] · go('login') · sau khi xác nhận
-let regOtpIv = null;         // bộ đếm ngược 60s của nút Nhận lại mã (một trang đăng ký)
-const resetRegOtp = () => { regOtpSent = false; clearInterval(regOtpIv); regOtpIv = null; };
 let regFullName = '';        // "Họ Tên" chốt lúc bấm Tạo tài khoản — màn 04c (regsuccess) đọc lại để chào tên
 
 /* input theo Figma: 358x36, pad 8, stroke #e5e5e5, r2, text 14 */
@@ -15766,8 +15732,7 @@ const eyeBtn = () => `
    của nhãn. `labelCls` vẫn nhận, đặt lên chính <label> — nó chỉ đổi màu MỘT nhãn
    đứng riêng, không đụng gì tới trạng thái nổi/không nổi (luôn do :focus /
    :placeholder-shown quyết, không do labelCls). */
-/* 06/10/2026 — tham số thứ 6 `act` = HTML một nút hành động nằm TRONG ô, sát phải (vd "Gửi mã OTP" ở ô SĐT của trang Đăng ký; khuôn `.fld-act`). Ô có `act` mang class `.has-act` để chừa chỗ bên phải cho chữ đang gõ. Mọi chỗ gọi cũ không truyền ⇒ không đổi. */
-const afield = (label, attrs, ph, extra = '', labelCls = 'text-muted-foreground', act = '') => {
+const afield = (label, attrs, ph, extra = '', labelCls = 'text-muted-foreground') => {
   const isPass = /type="password"/.test(attrs);
   /* 21/09/2026 — ô của màn xác thực nhận attrs dưới dạng CHUỔI thô nên không có khoá
      để tra như 2 builder kia — đoán luật từ chính attrs: type/inputmode email hoặc tel,
@@ -15777,10 +15742,10 @@ const afield = (label, attrs, ph, extra = '', labelCls = 'text-muted-foreground'
              : /autocomplete="bday"/.test(attrs) ? 'dob' : '';
   return `
   <div class="flex flex-col gap-1">
-    <div class="field-float${act ? ' has-act' : ''}">
+    <div class="field-float">
       <input ${attrs}${rule ? ` data-rule="${rule}"` : ''} placeholder=" " class="t-multiline border rounded-xs px-2 ${isPass ? 'pr-9' : ''} text-foreground outline-none focus:border-primary transition-colors">
       <label class="${labelCls}">${label}</label>
-      ${isPass ? eyeBtn() : ''}${act}
+      ${isPass ? eyeBtn() : ''}
     </div>
     ${extra ? `<div class="flex justify-end">${extra}</div>` : ''}
   </div>`;
@@ -15845,16 +15810,8 @@ function viewLogin() {
     ${abtn('Đăng nhập', 'data-login-submit')}
   </div>`;
 }
-/* ── 02 Register — nhập SĐT + nhập OTP CHUNG MỘT TRANG (Figma 3107:50758; gộp OTP 06/10/2026) ──
-   Lệnh user: "ở trang đăng ký bằng sđt thì cho cái nhập otp vào chung 1 trang luôn", rồi (kèm ảnh tham chiếu) "đem cái chỗ nhập OTP xuống
-   ngay dưới ô nhập sđt". Bố cục theo ảnh, hiện SẴN từ đầu — không còn bước mở khối sau khi gửi mã:
-     · ô Số điện thoại, nút "Gửi mã OTP" nằm NGAY TRONG ô (sát phải; bấm xong đổi thành "Nhận lại mã (60s)", hết đếm ngược thì bấm gửi lại);
-     · ô "Nhập mã OTP" (MỘT ô, 6 số, gợi ý mã SMS của điện thoại) ngay dưới;
-     · nút Xác nhận → sang "Hoàn tất đăng ký".
-   KHÔNG bê nguyên ảnh: bỏ ô chọn quốc gia (cờ + mũi tên) và dấu * bắt buộc — dự án không dùng (xem README 02/10, "không dấu sao").
-   View 'otp' (6 ô) chỉ còn cho Quên mật khẩu bằng SĐT. */
+/* ── 02 Register — chỉ nhập SĐT để nhận OTP (Figma 3107:50758) ── */
 function viewRegister() {
-  const sent = regOtpSent;
   return `
   ${authTabs('register')}
   <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
@@ -15862,10 +15819,8 @@ function viewRegister() {
       <p>Để tận hưởng những ưu đãi độc quyền, Quý khách vui lòng sử dụng số điện thoại đã đăng ký chương trình Khách hàng thân thiết tại hệ thống cửa hàng DAFC khi mua sắm trực tuyến tại DAFC Online.</p>
       <p>Hãy sẵn sàng trải nghiệm những đặc quyền mua sắm tuyệt vời chỉ dành riêng cho bạn!</p>
     </div>
-    ${afield('Số điện thoại', `type="tel" inputmode="tel" id="regPhone" value="${authPhone.replace(/"/g, '&quot;')}"`, 'Nhập thông tin...', '', 'text-foreground',
-      `<button type="button" data-reg-send${sent ? ' disabled' : ''} class="btn-g fld-act text-foreground tracking-wide press">${sent ? 'Nhận lại mã (<span id="otpTimer">60</span>s)' : 'Gửi mã OTP'}</button>`)}
-    ${afield('Nhập mã OTP', 'type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" id="regOtp"', 'Nhập mã OTP', '', 'text-foreground')}
-    ${abtn('Xác nhận', 'data-reg-verify', 'h-10')}
+    ${afield('Số điện thoại', `type="tel" inputmode="tel" id="regPhone" value="${authPhone.replace(/"/g, '&quot;')}"`, 'Nhập thông tin...', '', 'text-foreground')}
+    ${abtn('Gửi mã OTP', 'data-auth-otp', 'h-10')}
   </div>`;
 }
 /* ── 03 Forgot Password (PDF brief trang 23) ── xem chú thích đầy đủ ở bản
@@ -20504,8 +20459,6 @@ const I18N = {
     'We’d love to keep you posted on the latest from DAFC by email, including store events, offers and promotions. You can stop anytime via the unsubscribe link in our emails, or by changing your preferences in Account. Find out more in our',
   'Nhập số điện thoại hoặc email đã đăng ký. Chúng tôi sẽ gửi mã OTP để xác thực.':'Enter the phone number or email you registered with. We\u2019ll send you an OTP to verify.',
   'Gửi mã xác thực':'Send verification code', 'Xác thực OTP':'OTP verification',
-  /* Trang Đăng ký một trang (06/10/2026): nhãn ô OTP + lỗi bấm Xác nhận khi chưa gửi mã. */
-  'Nhập mã OTP':'Enter OTP code', 'Vui lòng gửi mã OTP trước':'Please request an OTP code first',
   'Mã xác thực đã được gửi đến':'A verification code has been sent to',
   'Gửi lại mã sau':'Resend code in', 'Không nhận được mã? Gửi lại':'Didn\u2019t get the code? Resend',
   'Đặt mật khẩu mới':'Set a new password', 'Mật khẩu mới':'New password', 'Nhập mật khẩu mới':'Enter new password',
@@ -22590,7 +22543,7 @@ function go(name, opts = {}) {
     authGuardTo = name;
     name = 'login';
   }
-  if (name === 'login' && current !== 'login') { resetRegOtp(); loginFrom = authGuardTo || current; authGuardTo = ''; if (!authViewIntent) authView = 'login'; authViewIntent = false; }
+  if (name === 'login' && current !== 'login') { loginFrom = authGuardTo || current; authGuardTo = ''; if (!authViewIntent) authView = 'login'; authViewIntent = false; }
 
   scrollCleanups.forEach(fn => fn());
   scrollCleanups = [];
@@ -23831,7 +23784,7 @@ function wire(root) {
 
   // ── AUTH: chuyển view ── (mọi cú bấm tab/link đều dọn banner Opt2 của trang 23)
   root.querySelectorAll('[data-auth-go]').forEach(btn => {
-    btn.addEventListener('click', () => { authView = btn.dataset.authGo; forgotEmailSent = ''; resetRegOtp(); rerenderLogin(); });
+    btn.addEventListener('click', () => { authView = btn.dataset.authGo; forgotEmailSent = ''; rerenderLogin(); });
   });
 
   /* Nhận OTP / Quên mật khẩu — xem chú thích đầy đủ ở bản mobile (index.html,
@@ -23864,63 +23817,6 @@ function wire(root) {
      Cùng lối với ô checkout ([data-ckf]) đã làm. */
   root.querySelectorAll('#regPhone, #loginId').forEach(inp =>
     inp.addEventListener('input', () => clearFieldErr(inp)));
-
-  /* ── ĐĂNG KÝ bằng SĐT — MỘT TRANG (06/10/2026, user kèm ảnh tham chiếu) ──
-     Ô SĐT (nút "Gửi mã OTP" nằm trong ô) + ô "Nhập mã OTP" ngay dưới + nút Xác nhận, tất cả hiện sẵn. Nút trong ô:
-       · chưa gửi: kiểm SĐT (trống → "Vui lòng nhập số điện thoại"; sai định dạng → "Số điện thoại chưa đúng", cùng luật kiểm khi rời ô) rồi
-         quay 0,7s → toast "Đã gửi mã OTP" → đổi thành "Nhận lại mã (60s)" (đếm ngược, vô hiệu) → ô OTP lấy focus;
-       · đã gửi + hết đếm ngược: bấm = gửi lại (toast "Đã gửi lại mã OTP", đếm lại 60s).
-     Sửa SĐT sau khi đã gửi ⇒ mã cũ không còn khớp: nút về "Gửi mã OTP", xoá ô OTP.
-     Xác nhận: SĐT trống → báo ở ô SĐT; chưa gửi mã → "Vui lòng gửi mã OTP trước"; thiếu số → "Vui lòng nhập đủ 6 số" (cùng chuỗi cũ của 6 ô);
-     đủ 6 số → sang "Hoàn tất đăng ký" (như cũ; demo chưa so mã đúng/sai — xem AUDIT). */
-  const regSend = root.querySelector('[data-reg-send]');
-  if (regSend) {
-    const phoneEl = root.querySelector('#regPhone'), otpEl = root.querySelector('#regOtp');
-    const stopTimer = () => { clearInterval(regOtpIv); regOtpIv = null; };
-    const startCountdown = () => {
-      stopTimer();
-      regSend.disabled = true;
-      regSend.innerHTML = 'Nhận lại mã (<span id="otpTimer">60</span>s)';
-      localizeNew(regSend);
-      let t = 60; const tEl = regSend.querySelector('#otpTimer');
-      regOtpIv = setInterval(() => {
-        t--; if (tEl) tEl.textContent = t;
-        if (t <= 0) { stopTimer(); regSend.disabled = false; regSend.textContent = 'Nhận lại mã'; localizeNew(regSend); }
-      }, 1000);
-    };
-    const idleSend = () => { regSend.disabled = false; regSend.textContent = 'Gửi mã OTP'; localizeNew(regSend); };
-    if (regOtpSent) startCountdown(); else stopTimer();
-
-    regSend.addEventListener('click', () => {
-      if (regSend.disabled) return;
-      if (regOtpSent) { toast('Đã gửi lại mã OTP'); startCountdown(); return; }
-      const val = phoneEl.value.trim();
-      if (!val) { setFieldErr(phoneEl, 'Vui lòng nhập số điện thoại'); phoneEl.focus(); return; }
-      if (!FIELD_RULE.phone[0](val)) { setFieldErr(phoneEl, FIELD_RULE.phone[1]); phoneEl.focus(); return; }
-      clearFieldErr(phoneEl);
-      authPhone = val; authFlow = 'register';
-      regSend.disabled = true; regSend.innerHTML = spinnerSVG();
-      setTimeout(() => {
-        if (phoneEl.value.trim() !== val) { idleSend(); return; }   // vừa sửa số trong lúc quay: không coi là đã gửi
-        regOtpSent = true; startCountdown(); clearFieldErr(otpEl); toast('Đã gửi mã OTP'); otpEl.focus();   // clearFieldErr: bỏ lỗi "gửi mã OTP trước" nếu đã lỡ bấm Xác nhận
-      }, 700);
-    });
-    phoneEl.addEventListener('input', () => {
-      if (!regOtpSent) return;
-      resetRegOtp(); idleSend(); otpEl.value = ''; clearFieldErr(otpEl);
-    });
-    otpEl.addEventListener('input', () => { otpEl.value = otpEl.value.replace(/\D/g, '').slice(0, 6); clearFieldErr(otpEl); });
-    root.querySelectorAll('[data-reg-verify]').forEach(btn => btn.addEventListener('click', () => {
-      const val = phoneEl.value.trim();
-      if (!val) { setFieldErr(phoneEl, 'Vui lòng nhập số điện thoại'); phoneEl.focus(); return; }
-      if (!regOtpSent) { setFieldErr(otpEl, 'Vui lòng gửi mã OTP trước'); otpEl.focus(); return; }
-      if (otpEl.value.length < 6) { setFieldErr(otpEl, 'Vui lòng nhập đủ 6 số'); otpEl.focus(); return; }
-      clearFieldErr(otpEl);
-      authPhone = val; authFlow = 'register';
-      btn.innerHTML = spinnerSVG();
-      setTimeout(() => { resetRegOtp(); authView = 'reginfo'; rerenderLogin(); }, 700);
-    }));
-  }
 
   // Đổi SĐT từ màn OTP -> quay lại màn nhập SĐT của luồng
   root.querySelectorAll('[data-otp-change]').forEach(btn => {
@@ -27915,9 +27811,9 @@ document.body.insertAdjacentHTML('beforeend', `
    Bố cục 2 cột (tham chiếu overlay tìm kiếm của versace.com), NỘI DUNG lấy
    đúng bộ của bản mobile:
    · cột trái  = "Vừa tìm kiếm" (đang gõ thì đổi thành "Gợi ý") + "Từ khóa phổ biến"
-   · cột phải  = "Sản phẩm nổi bật" — productCard (ảnh + thương hiệu + tên + giá), MỘT HÀNG 4 thẻ
-                 và KHÔNG quick add (06/10/2026, lệnh user; trước đó có quick add như PLP).
-   Ô nhập trên header rộng min(980, cửa sổ − 460) canh giữa; từ 06/10/2026 khung nội dung BẰNG ĐÚNG ô nhập (cùng mép trái / phải, JS `syncInner`).
+   · cột phải  = "Sản phẩm nổi bật" — productCard như mọi lưới khác (ảnh +
+                 thương hiệu + tên + giá), nên thẻ ở đây hành xử y hệt ở PLP.
+   Ô nhập vẫn bó 600px canh giữa; khung ngoài rộng 1240 để đủ chỗ 2 cột.
    Dựng ở body (ngoài #viewport) nên router không xoá mất; nút trên header
    render lại mỗi lần go() thì wire() nối lại qua window.__openDkSearch.
 ════════════════════════════════════════════════════════════════ */
@@ -27940,7 +27836,7 @@ document.body.insertAdjacentHTML('beforeend', `
           </div>
           <div class="ds-main">
             <p class="t-single text-muted-foreground pb-3">Sản phẩm nổi bật</p>
-            <div id="dkSearchProducts"></div>
+            <div id="dkSearchProducts" class="grid grid-cols-4 gap-2"></div>
           </div>
         </div>
       </div>
@@ -28014,10 +27910,7 @@ document.body.insertAdjacentHTML('beforeend', `
       </button>`).join('')}`;
     hot.querySelectorAll('[data-suggest]').forEach(b => b.addEventListener('click', () => goSearch(b.dataset.suggest)));
 
-    /* 06/10/2026 (user: "tầm 5 sản phẩm 1 row và không có quick add", rồi "sản phẩm để lại 4 sản phẩm" khi bóp nội dung bằng ô nhập): 4 thẻ MỘT HÀNG (lưới 4 cột ở
-       CSS #dkSearchProducts), `noQuick: true` bỏ cả lớp size hover lẫn nút giỏ tròn. Nhánh `[data-pc-size]` / `.quick-add` ở handler bên dưới thành mã chết ở chỗ này
-       nhưng giữ lại — bật quick add lại chỉ cần bỏ cờ. */
-    prods.innerHTML = PRODUCTS.slice(0, 4).map((p, i) => productCard(p, i, { w: 'w-full', noColors: true, noQuick: true })).join('');
+    prods.innerHTML = PRODUCTS.slice(0, 4).map((p, i) => productCard(p, i, { w: 'w-full', noColors: true })).join('');
     /* BẮT BUỘC gọi wireLazy: ảnh trong productCard mang class `lazy` = opacity 0
        cho tới khi có thêm `.loaded`, mà chỗ gắn class đó nằm trong wire() — chỉ
        chạy khi dựng MÀN. Tấm gợi ý này dựng ngoài #viewport nên không được
@@ -28051,7 +27944,6 @@ document.body.insertAdjacentHTML('beforeend', `
     btn.innerHTML = I.close;                    // icon search -> dấu ✕ (chính nó đóng)
     btn.setAttribute('aria-label', 'Đóng tìm kiếm');
     lockBodyScroll();                           // khoá cuộn TRƯỚC rồi mới đo nav
-    syncInner();                                // nội dung = đúng ô nhập: đo SAU khi khoá cuộn (body bù thanh cuộn nên ô nhập giữ nguyên chỗ)
     /* Tấm gợi ý bắt đầu ĐÚNG DƯỚI HÀNG NAV CHÍNH, tức KÉO LÊN phủ luôn dải
        subheader vừa tắt (17/08/2026, yêu cầu user) — trước đó đo theo đáy cả
        .navbar nên tấm này bắt đầu dưới subheader, chừa lại một dải trống.
@@ -28073,16 +27965,6 @@ document.body.insertAdjacentHTML('beforeend', `
     unlockBodyScroll();
   }
 
-  /* NỘI DUNG BẰNG Ô NHẬP (06/10/2026, user): đo hộp của `#dkNavSearchField` (animation của nó là clip-path nên hộp luôn ở chỗ cuối, không đổi
-     theo hiệu ứng) rồi đặt `--ds-left` / `--ds-width` cho `.ds-inner`. Gọi lúc mở và khi đổi cỡ cửa sổ đang mở. Không có ô nhập (không xảy ra) thì để mặc định. */
-  const syncInner = () => {
-    const bar = document.getElementById('dkNavSearchField');
-    if (!bar) return;
-    const r = bar.getBoundingClientRect();
-    layer.style.setProperty('--ds-left', Math.round(r.left * 100) / 100 + 'px');
-    layer.style.setProperty('--ds-width', Math.round(r.width * 100) / 100 + 'px');
-  };
-  addEventListener('resize', () => { if (layer.classList.contains('open')) syncInner(); });
   layer.querySelector('.ds-backdrop').addEventListener('click', close);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 
