@@ -691,10 +691,10 @@ window.RESP = (function () {
      ĐẢO TIẾP cùng ngày (user: "cái chi tiết đơn hàng cũng limit chiều ngang 800 nhé"): màn CHI TIẾT ĐƠN (`data-screen="order"`) CŨNG trần 800 — lúc đầu mình chừa màn đó vì nó dựng theo khung user 1040 (hàng thông tin 3 cột đều 308,
      hai khối giao hàng 512 | 512, tấm tổng 468). Ở 800: thẻ rộng 800 (lòng 750); hàng thông tin ba mục không còn vừa một hàng ở 9/12 đơn (cần 759–1011 > 750) — sau đó user chốt XẾP DỌC mỗi loại một dòng (xem `.ov-meta`);
      hai khối giao hàng ~392 mỗi khối; bảng hàng giữ cột SL 160 / tiền 240 (cột tên còn 302, đủ); tấm tổng 468 vẫn nằm gọn bên phải.
-     ⚠ ĐẢO 07/10/2026 phần "DỒN TRANG SANG TRÁI" (user: "cái khung của phần account nằm trong khung màn 1440 nhé, hiện tại màn lớn nó đang bị thụt sang lề trái là sai"): lượt 05/10 từng đặt `margin-left: 0` cho `.acc-page` (hộp `max-w-[1440px] mx-auto` của trang) ⇒ ở khổ rộng hơn 1440
-     mục lục + nội dung dính lề trái của MÀN thay vì nằm trong khung 1440. Nay BỎ rule đó: hộp 1440 CĂN GIỮA như mọi trang (mục lục + nội dung nằm trong hộp, lề 48 tính từ mép hộp: ở 1920 là (1920 − 1440) / 2 + 48 = 288); trần 800 của cột nội dung giữ nguyên.
-     Hai màn Tài khoản / Chi tiết đơn vẫn cùng khuôn hộp + cùng mục lục nên cột trái KHÔNG nhảy ngang khi đi qua lại (luật 28/09). Ở ≤ 1440 không đổi gì vì hộp đã kín bề ngang. Header + footer vẫn full bề ngang. */
+     DỒN TRANG SANG TRÁI: hộp `max-w-[1440px] mx-auto` của trang không còn tự CĂN GIỮA ở khổ rộng hơn 1440 — `margin-left: 0` ⇒ mục lục + nội dung dính lề trái 48 thay vì (khổ − 1440) / 2 + 48 (ở ≤ 1440 không đổi gì vì hộp đã kín bề ngang).
+     Hai màn cùng khuôn hộp + cùng mục lục nên căn trái CHUNG — không thì đi qua lại hai màn ở khổ rộng là mục lục trái NHẢY ngang (luật "cột trái không nhảy", 28/09). Header + footer vẫn full bề ngang, nội dung của chúng không đổi. */
   [data-screen="account"] .acc-main, [data-screen="order"] .acc-main { max-width: 800px; }
+  [data-screen="account"] .acc-page, [data-screen="order"] .acc-page { margin-left: 0; }
   /* 05/10/2026 (lệnh user: "cột bên trái của account thì cho kích thước limit 296 nhé") — TRẦN 296 (trước: cố định 280). Hiểu "limit" như trần 800 của cột nội dung ngay trên: cột co theo khổ
      (`clamp(216px, 22vw, 296px)` — khổ ≥ 1346 thì đúng 296, 1280 còn 281,6, 1100 còn 242, 1024 còn 225) chứ không ghim cứng; dải co 216–22vw vốn có của rule ≤ 1279 (cũ, trần 280) gộp vào đây nên không còn rule media riêng.
      ĐÂY LÀ MỤC LỤC DÙNG CHUNG (accSideNav) ⇒ màn CHI TIẾT ĐƠN cũng 296 (không thì đi qua lại hai màn là cột trái nhảy 16px + khối kem đổi bề ngang): cột nội dung của màn đó (flex 1, không trần) nhường 16 —
@@ -1610,6 +1610,15 @@ window.RESP = (function () {
      không có thật. */
   .is-busy { opacity: .45; pointer-events: none; }
 
+  /* MÃ QR MINH HOẠ — lưới 21×21 ô vuông, ô bật thì tô mực. Vẽ bằng CSS thay vì
+     ảnh: không cần thêm file, và đổi mã đơn là đổi hình ngay. */
+  .pay-qr {
+    display: grid; grid-template-columns: repeat(21, 1fr);
+    width: 168px; height: 168px; padding: 8px; background: #fff;
+    border: 1px solid var(--general-border);
+  }
+  .pay-qr i { background: transparent; }
+  .pay-qr i.on { background: var(--general-foreground); }
   /* Con quay của màn "đang chuyển sang cổng" — cùng mực với nút chính. */
   .pay-spin {
     width: 40px; height: 40px; border-radius: 50%;
@@ -13359,7 +13368,7 @@ function screenACCOUNT() {
              đều dùng hết max-w-[1440px] px-6. Nay cột nội dung ăn hết chỗ còn lại (~1081).
              Dòng nhập KHÔNG dài ra theo: lưới .acc-card-cols dùng auto-fit nên tự lên 3
              cột (~318 mỗi cột), còn form trong thẻ vẫn đi .acc-grid2 2 cột.
-             ĐẢO 05/10/2026 (lệnh user: giới hạn cột nội dung 800 + dồn trang sang trái): trần 800 khai ở CSS, ngay dưới .acc-main; phần "dồn trái" ĐÃ ĐẢO 07/10 (hộp 1440 căn giữa trở lại). -->
+             ĐẢO 05/10/2026 (lệnh user: giới hạn cột nội dung 800 + dồn trang sang trái): trần 800 và căn trái khai ở CSS, ngay dưới .acc-main. -->
         <div class="acc-main">
           <div id="accBody">${accountBody()}</div>
         </div>
@@ -20829,10 +20838,10 @@ const I18N = {
   'Phí vận chuyển (ước tính)':'Shipping (estimated)', 'Sản phẩm đã hết hàng':'Out of stock',
   'Gợi ý cho bạn':'Recommended for you', 'Mã ưu đãi':'Promo code',
   'Sản phẩm không còn bán':'Product no longer available', 'Xem sản phẩm tương tự':'See similar products',
-  'Đang chuyển tới cổng thanh toán':'Redirecting to payment gateway',
-  'Huỷ và chọn cách khác':'Cancel and choose another method',
+  'Đang chuyển tới cổng thanh toán':'Redirecting to payment gateway', 'Quét mã để thanh toán':'Scan to pay',
+  'Tôi đã thanh toán':'I have paid', 'Huỷ và chọn cách khác':'Cancel and choose another method',
   'Thanh toán không thành công':'Payment failed', 'Phiên thanh toán đã hết hạn':'Payment session expired',
-  'Thử lại':'Try again', 'Chọn cách thanh toán khác':'Choose another payment method',
+  'Thử lại':'Try again', 'Tạo mã mới':'Generate a new code', 'Chọn cách thanh toán khác':'Choose another payment method',
   'Đang xử lý…':'Processing…', 'Ghi chú đơn hàng':'Order note', 'Thanh toán khi nhận hàng':'Cash on delivery',
   'Tạo tài khoản':'Create an account',
   'Về trang chủ':'Back to home', 'Đang thêm…':'Adding…', 'Đã có trong giỏ':'Already in your cart', 'Xem giỏ hàng':'View cart',
@@ -21443,6 +21452,11 @@ const I18N = {
   'Bạn đang thanh toán không đăng nhập.':'You are checking out as a guest.',   // 02/10/2026: khối nhắc đăng nhập desktop xếp ngang, câu đầu có dấu chấm (khung Figma 726:48878)
   'Thông tin liên hệ':'Contact details',
   'Ghi chú đơn hàng (không bắt buộc)':'Order note (optional)',
+  'Mở ứng dụng ngân hàng và quét mã bên dưới.':'Open your banking app and scan the code below.',
+  'Mã minh hoạ cho bản demo — không quét được.':'Sample code for this demo — it cannot be scanned.',
+  'Số tiền':'Amount',
+  'Nội dung':'Transfer note',
+  'Mã hết hạn sau':'Code expires in',
   'Mã đơn hàng':'Order number',
   'Tra cứu đơn hàng':'Track your order',
   'Nhập mã đơn hàng để theo dõi kiện hàng của bạn.':'Enter your order number to follow your parcel.',
@@ -21976,7 +21990,8 @@ const I18N = {
   'Mua 2 giảm thêm 5%, mua 3 giảm thêm 10%':'Extra 5% on 2 items, extra 10% on 3 items',
   'Mua 2 sản phẩm giảm thêm 5%. Mua 3 sản phẩm trở lên giảm thêm 10%.':'Buy 2 items for an extra 5% off. Buy 3 or more for an extra 10% off.',
   'Mua càng nhiều, giảm càng sâu':'Buy more, save more',
-  'Phiên thanh toán chỉ có hiệu lực 15 phút. Tiền chưa bị trừ — thanh toán lại đơn':'The payment session is valid for 15 minutes only. Nothing has been charged — pay again for order',
+  'Mã QR chỉ có hiệu lực 15 phút. Tiền chưa bị trừ — tạo mã mới để thanh toán lại đơn':'The QR code is valid for 15 minutes only. Nothing has been charged — create a new code to pay for order',
+  'Mã QR minh hoạ':'Sample QR code',
   'Mã đơn gồm chữ DAFC và 6 chữ số, ví dụ DAFC103015.':'An order number is DAFC followed by 6 digits, for example DAFC103015.',
   'Mũi nhọn':'Pointed toe',
   'Mũi tròn':'Round toe',
@@ -23086,10 +23101,6 @@ window.addEventListener('popstate', (e) => {
      `plp` nên không đổi gì. */
   const hubBack = !!(e.state && e.state.plp);
   if (hubBack) plpMode = e.state.plp;
-  /* 07/10/2026 — cổng thanh toán (#pay) là màn BẮC CẦU, không phải đích để quay lại: chỉ trang thất bại / hết phiên (còn nút Thử lại / Quay lại) dựng lại được.
-     Hết phiên cổng (vừa trả xong, hoặc đã rời) thì Back / Forward đi QUA nó — về màn "Đơn … đã được đặt" của checkout, hay màn trước đó — thay vì mở lại màn
-     chuyển cổng không có gì để bấm (trước đây là màn mã QR cũ). window.history chứ không phải history: biến history của file này là mảng lịch sử nội bộ. */
-  if (target === 'pay' && payStage !== 'fail' && payStage !== 'timeout') { window.history.back(); return; }
   go(target, { back: true, fromPopstate: true, force: hubBack });   // force: đang đứng ở lưới (cũng là `plp`) nên go() sẽ nuốt lệnh nếu không ép dựng lại
 });
 /* ── Khoá scroll nền khi có bottom sheet/drawer mở ──
@@ -23410,18 +23421,13 @@ function ckGuard() {
 
    Trước lượt này bấm "Đặt hàng" là nhảy thẳng sang màn Hoàn tất: demo bỏ qua
    đúng quãng mà người mua lo nhất — tiền đã đi chưa, quét mã ở đâu, lỡ hỏng thì
-   sao. Ba chặng dưới đây là ba màn THẬT của một đơn trả qua cổng:
+   sao. Bốn chặng dưới đây là bốn màn THẬT của một đơn trả qua cổng:
 
      redirect -> đang chuyển sang cổng (ngắn, nhưng phải có: nó giải thích vì sao
-                 trang đổi, và là chỗ duy nhất nói "đừng tắt trình duyệt"); hết 1,4 s thì
-                 payResolve đọc công tắc paySim và ra thẳng kết cục
+                 trang đổi, và là chỗ duy nhất nói "đừng tắt trình duyệt")
+     qr       -> mã + số tiền + mã đơn + ĐỒNG HỒ ĐẾM NGƯỢC
      fail     -> thất bại, mở 2 đường: thử lại / quay lại đơn hàng
-     timeout  -> hết phiên, KHÁC thất bại: tiền chưa hề đi, thanh toán lại để mở phiên mới
-
-   07/10/2026 — USER: "sau thanh toán bỏ cái trang hiện QR nhé" → BỎ HẲN màn mã QR (mã + số tiền + nội dung + đồng hồ 15 phút + nút "Tôi đã thanh toán")
-   từng đứng giữa "đang chuyển cổng" và kết cục. Nay thành công đi THẲNG sang Hoàn tất (vừa đặt hàng) / về chi tiết đơn (Thanh toán lại); thất bại và hết phiên
-   vẫn là hai màn riêng, nút Thử lại / Thanh toán lại mở một phiên cổng MỚI (payEnter). Hai chỗ phụ: (1) #pay mở thẳng khi chưa có phiên vẫn vẽ con quay
-   nhưng không hẹn giờ; (2) Back / Forward vào #pay khi hết phiên cổng thì đi QUA nó (xem popstate) — trước đây rơi vào chính màn QR cũ.
+     timeout  -> hết phiên, KHÁC thất bại: mã cũ chết chứ tiền chưa hề đi
 
    Kết cục KHÔNG ngẫu nhiên: đọc công tắc `paySim` trong bảng cài đặt demo, để
    khách bấm xem được từng nhánh. Demo mà random thì người xem không chủ động
@@ -23430,16 +23436,39 @@ function ckGuard() {
    01/10/2026 — KHÁCH / USER CHỐT quy trình đặt hàng (xem khối "QUY TRÌNH ĐẶT HÀNG" ở ORDER_CARRIER): thanh toán thất bại ở bên thứ 3 KHÔNG có trạng thái lỗi — đơn đã nằm sẵn ở "Chờ thanh toán" (đơn được tạo NGAY khi
    bấm Đặt hàng, trước khi sang cổng) và chi tiết đơn có MỘT nút "Thanh toán lại" mở lại cổng này (payEnter). Vì thế ra khỏi cổng mà chưa trả (thất bại · hết phiên · "Quay lại đơn hàng") là VỀ CHI TIẾT ĐƠN, không còn
    đường "chọn cách thanh toán khác" quay lại checkout (giỏ đã chốt thành đơn rồi); thành công → đơn sang "Đang xử lý". Đơn hỗn hợp tách hai đơn con nhưng chỉ MỘT lần trả: payFor giữ cả hai mã. */
-let payStage = '', payTimer = null;   // payStage: '' (chưa có phiên) | 'redirect' | 'fail' | 'timeout' · payTimer: cú hẹn hết "đang chuyển cổng"
+let payStage = '', payLeft = 0, payTimer = null;
 let paySim = 'success';      // 'success' | 'fail' | 'timeout' — công tắc demo
+const PAY_SECS = 15 * 60;    // 15 phút, đúng mức các cổng trong nước đang dùng
 let payFor = [];             // mã các đơn đang trả ở cổng — một lần trả cho cả nhóm đơn con (-01 / -02)
 let payFrom = 'checkout';    // 'checkout' (vừa đặt hàng → thành công sang màn Hoàn tất) | 'order' (Thanh toán lại ở chi tiết đơn → thành công về chi tiết đơn)
 
+const payMM = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+
+/* Ô mã QR MINH HOẠ — sinh từ mã đơn nên cùng đơn thì cùng hình, đổi đơn thì đổi
+   hình. KHÔNG phải mã quét được: demo không có cổng thật, vẽ một mã quét ra tiền
+   là nói dối. Ghi rõ "mã minh hoạ" ngay dưới ô. */
+function payQR(seed) {
+  let h = 0;
+  for (let i = 0; i < String(seed).length; i++) h = (h * 31 + String(seed).charCodeAt(i)) >>> 0;
+  const N = 21, cells = [];
+  for (let i = 0; i < N * N; i++) {
+    const r = Math.floor(i / N), c = i % N;
+    /* 3 ô định vị ở góc — thứ làm cho hình nhìn ra là mã QR */
+    const eye = (rr, cc) => (rr < 7 && cc < 7) && !((rr > 1 && rr < 5) && (cc > 1 && cc < 5)) === false
+      ? false : (rr < 7 && cc < 7) && (rr === 0 || rr === 6 || cc === 0 || cc === 6 || (rr > 1 && rr < 5 && cc > 1 && cc < 5));
+    const inEye = eye(r, c) || eye(r, c - (N - 7)) || eye(r - (N - 7), c);
+    h = (h * 1103515245 + 12345) >>> 0;
+    cells.push(inEye || (h >>> 16) % 100 < 46);
+  }
+  return `<div class="pay-qr" aria-label="Mã QR minh hoạ">${cells.map(on => `<i class="${on ? 'on' : ''}"></i>`).join('')}</div>`;
+}
+
 function screenPAY() {
-  /* Nhóm đơn đang trả (payFor): mã hiện = mã GỐC của nhóm (DAFC102948 cho cặp -01 / -02). Mở màn thẳng mà chưa có nhóm (demo) thì rơi về mã chốt lúc đặt. */
+  /* Nhóm đơn đang trả (payFor): mã hiện = mã GỐC của nhóm (DAFC102948 cho cặp -01 / -02), số tiền = tổng các đơn. Mở màn thẳng mà chưa có nhóm (demo) thì rơi về mã + tiền chốt lúc đặt. */
   const grp = payFor.map(id => ORDERS.find(x => x.id === id)).filter(Boolean);
   const oid = grp.length ? orderBaseId(grp[0]) : (ckOrderId || 'DAFC102939');
-  /* 03/10/2026 (user: "kiểm tra bản desktop luôn") — màn cổng thanh toán desktop (3 trạng thái: chuyển cổng · thất bại · hết hạn; màn mã QR đã bỏ 07/10/2026) trước KÉO bảng + nút ra hết bề ngang (1376) và không có footer:
+  const total = grp.length ? vndCom(grp.reduce((n, x) => n + vndNum(x.total), 0)) : (ckOrderTotal || vndCom(ckTotalNow()));
+  /* 03/10/2026 (user: "kiểm tra bản desktop luôn") — màn cổng thanh toán desktop (4 trạng thái: chuyển cổng · QR · thất bại · hết hạn) trước KÉO bảng + nút ra hết bề ngang (1376) và không có footer:
      nay cột canh giữa tối đa 560 (như màn Hoàn tất) và thêm footer. */
   const shell = (body) => `
   <div class="w-full" data-scroller>
@@ -23447,6 +23476,13 @@ function screenPAY() {
     <div class="max-w-[560px] mx-auto w-full flex flex-col items-center justify-center gap-6 px-8 py-16 text-center">${body}</div>
     ${footer()}
   </div>`;
+
+  if (payStage === 'redirect') return shell(`
+    <div class="pay-spin"></div>
+    <div class="flex flex-col gap-2">
+      <p class="t-multiline font-medium text-foreground">Đang chuyển tới cổng thanh toán</p>
+      <p class="t-multiline text-muted-foreground">Vui lòng không tắt trình duyệt cho tới khi thanh toán xong.</p>
+    </div>`);
 
   if (payStage === 'fail') return shell(`
     <div class="w-16 h-16 rounded-full border border-destructive flex items-center justify-center">
@@ -23467,39 +23503,42 @@ function screenPAY() {
     </div>
     <div class="flex flex-col gap-2">
       <p class="t-multiline font-medium text-foreground">Phiên thanh toán đã hết hạn</p>
-      <p class="t-multiline text-muted-foreground">Phiên thanh toán chỉ có hiệu lực 15 phút. Tiền chưa bị trừ — thanh toán lại đơn <span class="font-medium text-foreground">${oid}</span>.</p>
+      <p class="t-multiline text-muted-foreground">Mã QR chỉ có hiệu lực 15 phút. Tiền chưa bị trừ — tạo mã mới để thanh toán lại đơn <span class="font-medium text-foreground">${oid}</span>.</p>
     </div>
     <div class="w-full flex flex-col gap-2.5">
-      <button data-pay-retry class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-semibold btn-p press">Thanh toán lại</button>
+      <button data-pay-retry class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-semibold btn-p press">Tạo mã mới</button>
       <button data-pay-back class="t-multiline w-full h-12 rounded-xs border border-border font-medium text-foreground btn-o press">Quay lại đơn hàng</button>
     </div>`);
 
-  // payStage === 'redirect' (và #pay mở thẳng khi chưa có phiên): con quay. Kết cục do payResolve đọc sau 1,4 s — payEnter đặt hẹn giờ.
+  // payStage === 'qr'
   return shell(`
-    <div class="pay-spin" data-pay-redirect></div>
     <div class="flex flex-col gap-2">
-      <p class="t-multiline font-medium text-foreground">Đang chuyển tới cổng thanh toán</p>
-      <p class="t-multiline text-muted-foreground">Vui lòng không tắt trình duyệt cho tới khi thanh toán xong.</p>
+      <p class="t-multiline font-medium text-foreground">Quét mã để thanh toán</p>
+      <p class="t-multiline text-muted-foreground">Mở ứng dụng ngân hàng và quét mã bên dưới.</p>
+    </div>
+    ${payQR(oid)}
+    <p class="t-single text-muted-foreground">Mã minh hoạ cho bản demo — không quét được.</p>
+    <div class="w-full rounded-xs border border-border overflow-hidden">
+      <div class="t-multiline flex justify-between px-4 py-3"><span class="text-muted-foreground">Số tiền</span><span class="font-medium text-foreground">${total}</span></div>
+      <div class="t-multiline flex justify-between px-4 py-3 border-t border-border-1"><span class="text-muted-foreground">Nội dung</span><span class="font-medium text-foreground">${oid}</span></div>
+      <div class="t-multiline flex justify-between px-4 py-3 border-t border-border-1"><span class="text-muted-foreground">Mã hết hạn sau</span><span id="payClock" class="font-medium text-foreground">${payMM(payLeft)}</span></div>
+    </div>
+    <div class="w-full flex flex-col gap-2.5">
+      <button data-pay-done class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-semibold btn-p press">Tôi đã thanh toán</button>
+      <button data-pay-back class="t-multiline w-full h-12 rounded-xs border border-border font-medium text-foreground btn-o press">Quay lại đơn hàng</button>
     </div>`);
 }
 
-/* Dừng cú hẹn "đang chuyển cổng" ở MỌI đường ra khỏi màn (xem khối MÀN CỔNG THANH TOÁN trong wire) — không dọn thì nó chạy ngầm rồi
-   chốt thanh toán / quăng người dùng trở lại cổng khi họ đã ở màn khác (bấm Back giữa chừng). */
-function payStopTimer() { if (payTimer) { clearTimeout(payTimer); payTimer = null; } }
-
-/* Hết "đang chuyển cổng": ra kết cục theo công tắc paySim của bảng cài đặt demo — KHÔNG còn màn mã QR + nút "Tôi đã thanh toán" ở giữa (07/10/2026).
-   Thất bại / hết phiên → màn tương ứng. Thành công → các đơn của nhóm sang "Đang xử lý": vừa đặt hàng → màn Hoàn tất; "Thanh toán lại" ở chi tiết đơn → về chi tiết đơn đó. */
-function payResolve() {
-  payTimer = null;
-  if (current !== 'pay') return;
-  if (paySim === 'fail')    { payStage = 'fail';    go('pay', { force: true }); return; }
-  if (paySim === 'timeout') { payStage = 'timeout'; go('pay', { force: true }); return; }
-  payMarkPaid(payFor); payStage = '';
-  if (payFrom === 'checkout') { go('done'); return; }
-  currentOrder = payFor[0] || currentOrder;
-  toast('Đã thanh toán qua cổng Payoo');
-  go('order', { force: true });
+/* Mở màn QR (lần đầu hoặc tạo lại mã): đặt lại đồng hồ rồi mới vẽ. */
+function payOpenQR() {
+  payStage = 'qr';
+  payLeft = PAY_SECS;
+  go('pay', { force: true });
 }
+
+/* Dừng đồng hồ ở MỌI đường ra khỏi màn QR — không dọn thì nó chạy ngầm và
+   quăng người dùng về màn hết phiên khi họ đã ở màn khác. */
+function payStopClock() { if (payTimer) { clearInterval(payTimer); payTimer = null; } }
 
 /* Bấm "Đặt hàng": trạng thái ĐANG XỬ LÝ rồi mới rẽ nhánh. Quãng chờ này có thật
    (máy chủ tạo đơn), và nó là chỗ duy nhất chặn cú bấm thứ hai. */
@@ -23524,9 +23563,8 @@ function startPayment(btn) {
 function payEnter(ids, from) {
   payFor = ids.slice(); payFrom = from;
   payStage = 'redirect';
-  go('pay', current === 'pay' ? { force: true } : {});   // đứng sẵn ở #pay (Thử lại / Thanh toán lại ở trang thất bại, hết phiên) thì dựng LẠI chính màn đó
-  payStopTimer();
-  payTimer = setTimeout(payResolve, 1400);
+  go('pay');
+  setTimeout(() => { if (payStage === 'redirect') payOpenQR(); }, 1400);
 }
 
 /* Trả xong: các đơn của nhóm sang chặng 2 "Đang xử lý", giờ chặng 2 = lúc trả thật. */
@@ -24459,16 +24497,34 @@ function wire(root) {
   });
 
   /* ── MÀN CỔNG THANH TOÁN ── */
-  if (root.querySelector('[data-pay-redirect], [data-pay-retry]')) {
-    payStopTimer();
-    /* 22/09/2026 — dừng hẹn giờ ở MỌI đường ra khỏi màn (logo, header, back...): go() chạy scrollCleanups trước khi dựng màn mới.
-       07/10/2026: trước đây đó là đồng hồ đếm ngược 15 phút của màn QR; nay là cú hẹn 1,4 s của "đang chuyển cổng" (payEnter đặt, payResolve đọc). */
-    scrollCleanups.push(payStopTimer);
-    /* Thử lại / Thanh toán lại: MỘT phiên cổng mới — chuyển cổng rồi ra kết cục theo công tắc, y như lần đầu. */
-    root.querySelectorAll('[data-pay-retry]').forEach(b => b.addEventListener('click', () => payEnter(payFor, payFrom)));
+  if (root.querySelector('[data-pay-done], [data-pay-retry]')) {
+    const clock = root.querySelector('#payClock');
+    payStopClock();
+    /* 22/09/2026 — dừng đồng hồ ở MỌI đường ra khỏi màn (logo, header, back...): go() chạy
+       scrollCleanups trước khi dựng màn mới. Trước chỉ 3 nút trong màn gọi payStopClock nên
+       rời bằng header là 15 phút sau bị kéo về màn hết phiên từ bất kỳ đâu (đo 22/09). */
+    scrollCleanups.push(payStopClock);
+    if (clock) payTimer = setInterval(() => {
+      payLeft--;
+      if (payLeft <= 0) { payStopClock(); payStage = 'timeout'; go('pay', { force: true }); return; }
+      clock.textContent = payMM(payLeft);
+    }, 1000);
+    const done = root.querySelector('[data-pay-done]');
+    if (done) done.addEventListener('click', () => {
+      payStopClock();
+      if (paySim === 'fail')    { payStage = 'fail';    go('pay', { force: true }); return; }
+      if (paySim === 'timeout') { payStage = 'timeout'; go('pay', { force: true }); return; }
+      /* Thành công: các đơn của nhóm sang "Đang xử lý". Vừa đặt hàng → màn Hoàn tất; "Thanh toán lại" ở chi tiết đơn → về chi tiết đơn đó. */
+      payMarkPaid(payFor); payStage = '';
+      if (payFrom === 'checkout') { go('done'); return; }
+      currentOrder = payFor[0] || currentOrder;
+      toast('Đã thanh toán qua cổng Payoo');
+      go('order', { force: true });
+    });
+    root.querySelectorAll('[data-pay-retry]').forEach(b => b.addEventListener('click', () => { payStopClock(); payOpenQR(); }));
     /* Ra khỏi cổng mà chưa trả: về chi tiết đơn, đơn vẫn "Chờ thanh toán" với nút "Thanh toán lại". */
     root.querySelectorAll('[data-pay-back]').forEach(b => b.addEventListener('click', () => {
-      payStage = '';
+      payStopClock(); payStage = '';
       currentOrder = payFor[0] || currentOrder;
       go('order', { force: true });
     }));
@@ -26386,7 +26442,7 @@ document.body.insertAdjacentHTML('beforeend', `
   panel.querySelector('.sp-backdrop').addEventListener('click', closeP);
   // ── đổi ngôn ngữ: dịch thật toàn bộ UI ──
   /* Công tắc tình huống thanh toán — chỉ đổi biến, không dựng lại màn nào: nó
-     chỉ có tác dụng ở lần sang cổng thanh toán kế tiếp (payResolve đọc lúc hết "đang chuyển cổng"). */
+     chỉ có tác dụng ở lần bấm "Tôi đã thanh toán" kế tiếp. */
   panel.querySelectorAll('[data-paysim]').forEach(btn => {
     btn.addEventListener('click', () => {
       paySim = btn.dataset.paysim;
