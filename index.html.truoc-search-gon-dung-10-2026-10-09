@@ -8162,7 +8162,7 @@ const SEARCH_HOT = SEARCH_HOT_KEYWORDS.flatMap((k, i) => [k, SEARCH_HOT_BRANDS[i
      còn gõ query mà không có dữ liệu ở hệ thống để map thì ra no result"; THAY đoạn "KHÔNG CÓ KẾT QUẢ" của lượt 9 ở chỗ "rơi về từ khoá phổ biến" và trần ≤ 3 / ≤ 5): searchRelated(q) trả via 'fix' (sửa lỗi gõ,
      vd "vesace" → "Versace") hoặc 'partial' (không sửa được nhưng ≥ MỘT NỬA số từ gõ map được vào kho và các từ đó cùng có sản phẩm, vd "versace zzzz") = GÕ SAI nhưng VẪN MAP ĐƯỢC dữ liệu ⇒ gợi ý từ khoá ≤ 5
      (SEARCH_SUG_MAX) + danh sách sản phẩm gợi ý ≤ 10 (SEARCH_LIST_MAX); via 'none' (còn lại: "zzzz", hãng ngoài kho "gucci", "hoa tai ngọc trai", "đầm molton") = NO RESULT ⇒ CHỈ báo
-     "Không tìm thấy kết quả cho “…”" + gợi ý cách tìm, KHÔNG sản phẩm / từ khoá / danh mục (đã bỏ nhánh phổ biến và nhánh xen kẽ từng từ). Gõ ĐÚNG (có kết quả) cũng ≤ 10 hàng (lượt 14c, 09/10 chiều — user: "sao tôi k cuộn đc cái danh sách": trước đó mobile 5 · desktop 4 nên không có gì để cuộn); desktop cuộn riêng trong cột phải.
+     "Không tìm thấy kết quả cho “…”" + gợi ý cách tìm, KHÔNG sản phẩm / từ khoá / danh mục (đã bỏ nhánh phổ biến và nhánh xen kẽ từng từ). Gõ ĐÚNG (có kết quả) không đổi: mobile ≤ 5 hàng, desktop 4 hàng.
    · NỔI CHỮ KHỚP (highlightMatch): tô CẢ TỪ khớp (không tô nửa từ "Đầ|m" — đọc như lỗi), mọi từ khớp, mọi lần xuất hiện. Nhấn bằng BẬC MỰC
      (STYLE-RULES §2.1): hàng gợi ý mực phụ, từ khớp mực chính (`.search-hit`). §2.3 cấm nhấn bằng độ đậm lẫn mảng màu nên KHÔNG 500 / nền;
      muốn 500 phải ghi ngoại lệ §1.1 (chờ user). Khung Figma "typing" vẽ hàng gợi ý toàn Regular #0a0a0a (chưa có kiểu nổi) ⇒ LỆCH tới khi sync.
@@ -8499,18 +8499,18 @@ function searchProductRowHTML({ p, i }, tag = 'li', cls = 'search-prow mx-4') {
    thiểu bằng ảnh để GIÁ GHIM ĐÁY; hãng mượn hook .pc-brand (Libre ở skin-li, cùng vai tên hãng trên thẻ), tên t-multiline mực phụ + badge
    "Đặt trước" đứng trước như thẻ; giá .pc-price (đỏ khi giảm) + giá gạch + chip % như thẻ PLP. Kẻ ngăn giữa hàng thụt 16 (li mang mx-4, rule
    .search-prow + .search-prow) như #ccList. Lệnh user 06/10 lượt 7: "sản phẩm gợi ý là hình sản phẩm luôn nhé, xếp dọc giống cái mini cart cho
-   bản mobile" — thay dải thẻ ngang 170 của lượt 6. Theo từ khoá ≤ 10 hàng (trước 09/10 chiều: 5); GÕ SAI thì sản phẩm "gần với gợi ý" (searchRelated) cũng ≤ 10 hàng (lượt 14, 09/10/2026; none = không block),
+   bản mobile" — thay dải thẻ ngang 170 của lượt 6. Theo từ khoá ≤ 5 hàng; GÕ SAI thì sản phẩm "gần với gợi ý" (searchRelated) ≤ 10 hàng (lượt 14, 09/10/2026; none = không block),
    rồi chip "Danh mục liên quan" XẾP CUỐI pane (07/10/2026, thứ tự user chốt). Tiêu đề + liên kết "Xem tất cả (N)" (= Enter với cụm tương ứng; không có cụm thì không có liên kết). Trả { key, html } —
    renderSearchSug() bỏ qua khi khoá không đổi để ảnh không nhấp nháy. Bấm hàng → PDP qua wireProductCards (data-product). */
 function searchSugProductsHTML() {
   const q = searchQuery.trim();
-  let prods = searchProducts(q), more = q, cats = [];
+  let prods = searchProducts(q), more = q, cats = [], typo = false;
   if (!prods.length) {
     const r = searchRelated(q);
     if (r.via === 'none') return { key: `${LANG}|none`, html: '' };                  // NO RESULT: không block sản phẩm, không chip (09/10/2026)
-    prods = r.prods; more = r.query; cats = r.cats;
+    prods = r.prods; more = r.query; cats = r.cats; typo = true;
   }
-  const list = prods.slice(0, SEARCH_LIST_MAX);                                     // ≤ 10 hàng ở MỌI trạng thái đang gõ (gõ sai 09/10 · gõ đúng 09/10 chiều)
+  const list = prods.slice(0, typo ? SEARCH_LIST_MAX : 5);                          // gõ sai ≤ 10 hàng (09/10/2026, user); gõ đúng ≤ 5
   const key = `${LANG}|${more}|${prods.length}|${list.map(x => x.i).join(',')}|${cats.join(',')}`;
   const html = `
   <section class="flex flex-col py-4">

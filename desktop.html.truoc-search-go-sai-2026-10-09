@@ -3182,9 +3182,6 @@ window.RESP = (function () {
      ẩn hẳn cột trái, bỏ đường ngăn, danh sách sản phẩm trải hết bề ngang ô nhập (JS đặt class ds-solo trên ds-cols trong renderTerms). Đặc hiệu (1,3,0) thắng cả rule xếp chồng < 1280. */
   #dkSearchLayer .ds-cols.ds-solo .ds-side { display: none; }
   #dkSearchLayer .ds-cols.ds-solo .ds-main { border-left: 0; padding-left: 0; border-top: 0; padding-top: 0; }
-  /* 09/10/2026 (user: "gõ query mà không có dữ liệu ở hệ thống để map thì ra no result") — NO RESULT (không chữ nào map được vào dữ liệu, xem searchRelated via 'none'): chỉ còn lời báo ở cột trái;
-     ẩn cả cột sản phẩm + đường ngăn, cột trái trải hết ô nhập. Tấm giữ sàn cao như mọi trạng thái đang gõ (không nhảy cao). */
-  #dkSearchLayer .ds-cols.ds-empty .ds-main { display: none; }
   /* SẢN PHẨM của lớp tìm kiếm — lịch sử: 06/10/2026 (user: "tầm 5 sản phẩm 1 row và không có quick add", rồi "sản phẩm để lại 4 sản phẩm") là MỘT HÀNG 4 thẻ productCard `noQuick` ở trạng thái CHƯA gõ
      (thẻ 171,75 ở khung 1440, cột trái 220); 08/10/2026 chiều thay bằng DANH SÁCH HÀNG xếp dọc ở MỌI trạng thái — xem khối ngay dưới. */
   #dkSearchProducts { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 0; }
@@ -3199,13 +3196,8 @@ window.RESP = (function () {
   #dkSearchProducts .search-prow { border-top: 0; }
   /* Hàng tiêu đề cột phải (title + liên kết "Xem tất cả (N)") cao 36 ở MỌI trạng thái: chưa gõ không có liên kết nên hàng chỉ cao 28 (title 16 + đệm 12) ⇒ 4 hàng sản phẩm dịch lên 8 px so với lúc gõ — sàn 36 (= liên kết 24 + đệm 12) để hàng không nhảy ở phím đầu tiên. */
   #dkSearchLayer .ds-head { min-height: 36px; }
-  /* 09/10/2026 (user, sau khi gõ sai ra tới 10 sản phẩm gợi ý làm cả tấm cuộn: "bản desktop thì cho scroll bên cột đó nha"): từ 1280 hai cột đứng cạnh nhau ⇒ danh sách sản phẩm CUỘN RIÊNG trong cột phải —
-     cao tối đa 4 hàng = 520 (đúng phần nội dung của sàn 628) nên tấm giữ 628; tiêu đề "Sản phẩm gợi ý · Xem tất cả" và cột trái ĐỨNG YÊN khi cuộn; ≤ 4 hàng thì không cuộn. `overscroll-behavior: contain` để cuộn tới đáy
-     không kéo theo tấm / trang; `scrollbar-gutter: stable` giữ bề rộng hàng không đổi giữa trạng thái có / không thanh cuộn (4 ↔ 10 hàng khi gõ tiếp); thanh cuộn mảnh. Dưới 1280 (xếp chồng) KHÔNG giới hạn:
-     tấm tự cuộn như trước, tránh hai thanh cuộn lồng nhau. */
   @media (min-width: 1280px) {
     #dkSearchLayer .ds-cols { min-height: 628px; }
-    #dkSearchProducts { max-height: 520px; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; scrollbar-width: thin; }
   }
   /* Cửa sổ < 1280: ô nhập (= nội dung) còn ≤ 819 — hai cột sẽ ép thẻ xuống < 130 nên XẾP CHỒNG, đường ngăn dọc đổi thành ngang; hai khối trái
      ("Vừa tìm kiếm" / "Từ khóa phổ biến") đứng CẠNH nhau để tấm không cao thêm (khối rỗng — chưa có lịch sử — ẩn để khối kia trải hết hàng).
@@ -10473,11 +10465,6 @@ let searchHistory = ['Áo sơ mi', 'Túi xách da', 'Versace loafer', 'Đầm d�
      sửa lỗi → khớp một phần → xen kẽ từng từ / từng từ khoá phổ biến); (3) "Danh mục liên quan" = nhãn cấp 2 hay gặp nhất trong chính các sản phẩm ở (2) nên chip nào
      bấm cũng có hàng — MOBILE xếp CUỐI pane (dạng chip, dưới danh sách sản phẩm); DESKTOP ở CỘT TRÁI ngay dưới khối Gợi ý, cùng cột với các từ (user 07/10: "cate liên quan
      nằm bên chỗ danh sách các từ, không phải bên chỗ hình"). Không còn nhãn "phổ biến" ở bất kỳ trạng thái ĐANG GÕ nào (chỉ lúc chưa gõ). Sửa lỗi gõ: Damerau-Levenshtein ≤ 1, từ ≥ 6 ký tự ≤ 2, chỉ gợi khi cụm sửa CÓ kết quả.
-   · GÕ SAI TÊN vs KHÔNG CÓ DỮ LIỆU (lượt 14, 09/10/2026 — user: "cái search ở trạng thái gõ sai tên: Suggest kw tối đa 5 · Suggest listing tối đa 10; gõ sai là nó vẫn có thể map dc data của hệ thống,
-     còn gõ query mà không có dữ liệu ở hệ thống để map thì ra no result"; THAY đoạn "KHÔNG CÓ KẾT QUẢ" của lượt 9 ở chỗ "rơi về từ khoá phổ biến" và trần ≤ 3 / ≤ 5): searchRelated(q) trả via 'fix' (sửa lỗi gõ,
-     vd "vesace" → "Versace") hoặc 'partial' (không sửa được nhưng ≥ MỘT NỬA số từ gõ map được vào kho và các từ đó cùng có sản phẩm, vd "versace zzzz") = GÕ SAI nhưng VẪN MAP ĐƯỢC dữ liệu ⇒ gợi ý từ khoá ≤ 5
-     (SEARCH_SUG_MAX) + danh sách sản phẩm gợi ý ≤ 10 (SEARCH_LIST_MAX); via 'none' (còn lại: "zzzz", hãng ngoài kho "gucci", "hoa tai ngọc trai", "đầm molton") = NO RESULT ⇒ CHỈ báo
-     "Không tìm thấy kết quả cho “…”" + gợi ý cách tìm, KHÔNG sản phẩm / từ khoá / danh mục (đã bỏ nhánh phổ biến và nhánh xen kẽ từng từ). Gõ ĐÚNG (có kết quả) cũng ≤ 10 hàng (lượt 14c, 09/10 chiều — user: "sao tôi k cuộn đc cái danh sách": trước đó mobile 5 · desktop 4 nên không có gì để cuộn); desktop cuộn riêng trong cột phải.
    · NỔI CHỮ KHỚP (highlightMatch): tô CẢ TỪ khớp (không tô nửa từ "Đầ|m" — đọc như lỗi), mọi từ khớp, mọi lần xuất hiện. Nhấn bằng BẬC MỰC
      (STYLE-RULES §2.1): hàng gợi ý mực phụ, từ khớp mực chính (`.search-hit`). §2.3 cấm nhấn bằng độ đậm lẫn mảng màu nên KHÔNG 500 / nền;
      muốn 500 phải ghi ngoại lệ §1.1 (chờ user). Khung Figma "typing" vẽ hàng gợi ý toàn Regular #0a0a0a (chưa có kiểu nổi) ⇒ LỆCH tới khi sync.
@@ -10572,6 +10559,18 @@ function searchProducts(q) {
   return searchIndex().map(e => ({ e, s: searchScore(e, qt, qn) })).filter(x => x.s > 0)
     .sort((a, b) => b.s - a.s || a.e.i - b.e.i).map(x => ({ p: x.e.p, i: x.e.i }));
 }
+/* Xen kẽ các danh sách sản phẩm (mỗi danh sách đã xếp hạng): lấy lần lượt phần tử đầu của từng danh sách, khử trùng — để mỗi gợi ý / mỗi từ đều có mặt trong ~5 hàng đầu. */
+function searchInterleave(lists) {
+  const seen = new Set(), out = [];
+  for (let k = 0; ; k++) {
+    let any = false;
+    for (const L of lists) if (k < L.length) { any = true; if (!seen.has(L[k].i)) { seen.add(L[k].i); out.push(L[k]); } }
+    if (!any) break;
+  }
+  return out;
+}
+/* Khớp MỘT PHẦN (OR theo từ) — chỉ dùng cho "liên quan" khi AND không ra gì: xen kẽ kết quả của TỪNG từ ("đầm molton" → đầm, Molton, đầm, Molton …) thay vì dồn hết một từ lên đầu. */
+function searchProductsAny(qt) { return searchInterleave(qt.map(t => searchProducts(t))); }
 /* Hãng khớp TRỌN truy vấn (mọi từ gõ là đầu một từ của tên hãng); hãng nhiều sản phẩm xếp trước. */
 function searchBrands(q, max = 3) {
   const qt = searchTokens(q);
@@ -10661,67 +10660,51 @@ function searchDidYouMean(q) {
   const out = fixed.join(' ');
   return searchProducts(out).length ? out : '';
 }
-/* Trần hiển thị của trạng thái GÕ SAI (lượt 14, 09/10/2026 — user): từ khoá gợi ý ≤ 5, danh sách sản phẩm gợi ý ≤ 10. */
-const SEARCH_SUG_MAX = 5, SEARCH_LIST_MAX = 10;
+/* Từ khoá phổ biến CỦA TỪNG FILE (mobile SEARCH_HOT · desktop DK_SEARCH_HOT) — chỉ làm gợi ý DỰ PHÒNG khi không có gì gần chữ đã gõ; typeof để dùng chung MỘT khối cho cả 2 file. */
+const searchPopularKeywords = () => (typeof SEARCH_HOT !== 'undefined' && SEARCH_HOT) || (typeof DK_SEARCH_HOT !== 'undefined' && DK_SEARCH_HOT) || [];
 
-/* GÕ SAI TÊN / KHÔNG CÓ DỮ LIỆU — MỘT nguồn cho cả 3 khối (07/10/2026: Gợi ý → Sản phẩm gần với gợi ý → Danh mục liên quan; 09/10/2026 tách hai trạng thái). Trả { via, query, sg, prods, cats }:
-   · via 'fix' = cụm đã SỬA LỖI GÕ có kết quả ("vesace" → "Versace"); via 'partial' = không sửa được nhưng ≥ MỘT NỬA số từ gõ map được vào kho VÀ các từ đó cùng có sản phẩm (AND), vd "versace zzzz" → "Versace"
-     — cả hai là GÕ SAI nhưng VẪN MAP ĐƯỢC dữ liệu;
-     via 'none' = còn lại ⇒ NO RESULT: không từ nào map được ("zzzz", hãng ngoài kho "gucci"), đa số từ lạ ("hoa tai ngọc trai": 2 / 4 từ có trong kho nhưng không sản phẩm nào có cả hai), hoặc các từ map được không
-     đi chung sản phẩm nào ("đầm molton": không có đầm Molton Brown) — sg / prods / cats rỗng, nơi gọi chỉ báo "Không tìm thấy kết quả cho …";
-   · sg = ≤ 5 gợi ý { text, kind, head?, tail? }: 'fix' cụm sửa lỗi gõ · 'brand' / 'cat' hãng / danh mục phủ TRỌN cụm đã map (không có thì từng từ đã biết một) · 'word' chính các từ đã biết khi không phải hãng / danh mục ·
-     'combo' = cụm + danh mục / hãng hay gặp nhất trong chính kết quả của cụm ("Versace" → "Versace Nước hoa" …) để lấp tới trần 5 — chỉ khi cụm có ≥ 3 sản phẩm, nhãn có ≥ 2 sản phẩm và không trùng chữ nào trong cụm;
-   · prods = sản phẩm của cụm đã map, TOÀN BỘ (nơi gọi tự cắt ≤ SEARCH_LIST_MAX): via 'fix' = kết quả của cụm sửa; 'partial' = kết quả của các từ đã map (AND);
-   · query = cụm để nút "Xem tất cả (N)" tìm;
+/* KHÔNG KHỚP GÌ — MỘT nguồn cho cả 3 khối (07/10/2026: Gợi ý → Sản phẩm gần với gợi ý → Danh mục liên quan). Trả { via, query, sg, prods, cats }:
+   · sg = ≤ 3 gợi ý { text, kind } sinh từ chữ đã gõ: 'fix' cụm đã sửa lỗi gõ · 'brand' / 'cat' hãng / danh mục phủ TRỌN các từ đã biết trong kho (không có thì từng từ một) · 'word' chính các
+     từ đã biết khi không phải hãng / danh mục; không có gì gần chữ đã gõ thì 'popular' ≤ 5 từ khoá phổ biến của file — khối "Gợi ý" không bao giờ rỗng;
+   · prods = sản phẩm gần với gợi ý: via 'fix' = kết quả của cụm sửa; 'partial' = kết quả của các từ đã biết (AND), không ra thì xen kẽ từng từ (OR); 'popular' = xen kẽ kết quả của từng từ khoá phổ biến;
+   · query = cụm để nút "Xem tất cả (N)" tìm (rỗng khi danh sách là hỗn hợp nhiều gợi ý ⇒ không có liên kết);
    · cats = nhãn cấp 2 (không có thì cấp 1) hay gặp nhất trong chính prods ⇒ chip nào bấm cũng có hàng.
    Ghi nhớ kết quả của lần gọi gần nhất (mỗi phím gõ gọi vài lần từ nhiều chỗ). Nơi gọi chỉ ĐỌC kết quả, không sửa. */
 let SEARCH_REL_MEMO = { q: null, r: null };
 function searchRelated(q) {
   if (SEARCH_REL_MEMO.q === q) return SEARCH_REL_MEMO.r;
+  const fix = searchDidYouMean(q);
   const keys = [...searchVocab().keys()];
   const kept = searchTokens(q).filter(t => keys.some(w => w.startsWith(t)));      // từ đã có trong kho
-  /* Dạng GỐC CÓ DẤU của một từ trong kho — từ trọn: dạng hay gặp nhất ("lua" → "lụa"); tiền tố: từ dài hơn hay gặp nhất bắt đầu bằng nó ("versac" → "Versace"). */
-  const canon = t => {
-    const v = searchVocab().get(t); if (v) return v.word;
-    let best = null; searchVocab().forEach((x, w) => { if (w.startsWith(t) && (!best || x.n > best.n)) best = x; });
-    return best ? best.word : t;
-  };
-  const fixRaw = searchDidYouMean(q), fix = fixRaw ? searchTokens(fixRaw).map(canon).join(' ') : '';   // cụm sửa lỗi cũng ở dạng gốc ("nuoc hoa Dylan" → "Nước hoa Dylan")
-  const phrase = kept.map(canon).join(' ');                                      // các từ đã map
-  const partial = !fix && kept.length > 0 && kept.length * 2 >= searchTokens(q).length && searchProducts(phrase).length > 0;
-  let r;
-  if (!fix && !partial) r = { via: 'none', query: '', sg: [], prods: [], cats: [] };   // KHÔNG có dữ liệu để map ⇒ NO RESULT
-  else {
-    const sg = [], seen = new Set();
-    const add = (text, kind, head, tail) => { const k = searchNorm(text); if (k && !seen.has(k)) { seen.add(k); sg.push({ text, kind, head, tail }); } };
-    const via = fix ? 'fix' : 'partial', base = fix || phrase;                    // base = cụm đã map vào dữ liệu
-    const prods = searchProducts(base);
-    if (fix) add(fix, 'fix');
-    const bs = searchBrands(base, 2), cs = searchCats(base, 3);                    // hãng / danh mục phủ TRỌN cụm
-    bs.forEach(b => add(b, 'brand')); cs.forEach(c => add(c.label, 'cat'));
-    if (!bs.length && !cs.length) kept.forEach(t => { const tb = searchBrands(t, 1)[0], tc = searchCats(t, 1)[0]; if (tb) add(tb, 'brand'); else if (tc) add(tc.label, 'cat'); });
-    if (!sg.length) add(phrase, 'word');
-    /* LẤP tới trần 5: cụm + danh mục (rồi hãng) hay gặp nhất trong CHÍNH kết quả của cụm — chỉ nhãn có ≥ 2 sản phẩm (nhãn lẻ như "Túi Áo khoác ngoài" không đáng gợi). */
-    if (sg.length < SEARCH_SUG_MAX && prods.length >= 3) {
-      const bt = searchTokens(base);
-      const tally = pick => { const m = new Map(); prods.forEach(({ p }) => { const v = pick(p); if (v) m.set(v, (m.get(v) || 0) + 1); }); return [...m.entries()].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'vi')).filter(x => x[1] >= 2).map(x => x[0]); };
-      for (const label of [...tally(p => (p.cat || [])[1] || (p.cat || [])[0]), ...tally(p => p.brand)]) {
-        if (sg.length >= SEARCH_SUG_MAX) break;
-        if (searchTokens(label).some(t => bt.some(w => w.startsWith(t) || t.startsWith(w)))) continue;   // nhãn trùng chữ đã có trong cụm
-        add(`${base} ${label}`, 'combo', base, label);
-      }
-    }
-    const n = new Map();
-    prods.forEach(({ p }) => { const l = (p.cat || [])[1] || (p.cat || [])[0]; if (l) n.set(l, (n.get(l) || 0) + 1); });
-    const cats = [...n.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'vi')).slice(0, 6).map(x => x[0]);
-    r = { via, query: base, sg: sg.slice(0, SEARCH_SUG_MAX), prods, cats };
+  const phrase = kept.join(' ');
+  const sg = [], seen = new Set();
+  const add = (text, kind) => { const k = searchNorm(text); if (k && !seen.has(k)) { seen.add(k); sg.push({ text, kind }); } };
+  if (fix) add(fix, 'fix');
+  if (kept.length) {
+    const b = searchBrands(phrase, 1)[0], c = searchCats(phrase, 1)[0];             // một hãng / danh mục phủ trọn các từ đã biết
+    if (b) add(b, 'brand');
+    if (c) add(c.label, 'cat');
+    if (!b && !c) kept.forEach(t => { const tb = searchBrands(t, 1)[0], tc = searchCats(t, 1)[0]; if (tb) add(tb, 'brand'); else if (tc) add(tc.label, 'cat'); });
+    if (!sg.length) add(kept.map(t => (searchVocab().get(t) || { word: t }).word).join(' '), 'word');
   }
+  let via = 'popular', query = '', prods = [];
+  if (fix) { via = 'fix'; query = fix; prods = searchProducts(fix); }
+  else if (kept.length) { via = 'partial'; prods = searchProducts(phrase); query = prods.length ? phrase : ''; if (!prods.length) prods = searchProductsAny(kept); }
+  if (via === 'popular') {
+    const pop = searchPopularKeywords().slice(0, 5);
+    pop.forEach(k => add(k, 'popular'));
+    prods = searchInterleave(pop.map(k => searchProducts(k)));
+    if (!prods.length) prods = PRODUCTS.slice(0, 5).map((p, i) => ({ p, i }));
+  }
+  const n = new Map();
+  prods.forEach(({ p }) => { const l = (p.cat || [])[1] || (p.cat || [])[0]; if (l) n.set(l, (n.get(l) || 0) + 1); });
+  const cats = [...n.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'vi')).slice(0, 6).map(x => x[0]);
+  const r = { via, query, sg: sg.slice(0, via === 'popular' ? 5 : 3), prods, cats };
   SEARCH_REL_MEMO = { q, r };
   return r;
 }
 
-/* Hàng trong khối "Gợi ý" của trạng thái GÕ SAI — dùng chung mobile (li) và lớp desktop (button): `row(inner, attrs, ink)` do nơi gọi truyền vào. Hãng → trang hãng (data-brand); còn lại → tìm chữ đó.
-   'combo' (cụm + nhãn): nhãn danh mục dịch EN như hàng 'cat', phần cụm giữ nguyên; data-suggest luôn là chuỗi tiếng Việt đầy đủ. */
+/* Hàng trong khối "Gợi ý" của trạng thái KHÔNG khớp — dùng chung mobile (li) và lớp desktop (button): `row(inner, attrs, ink)` do nơi gọi truyền vào. Hãng → trang hãng (data-brand); còn lại → tìm chữ đó. */
 function searchSuggestRows(sg, q, row) {
   const keep = inner => `<span data-i18n-skip>${inner}</span>`;
   const catLabel = l => (LANG === 'en' && tr(l, 'en')) || l;
@@ -10731,9 +10714,7 @@ function searchSuggestRows(sg, q, row) {
       ? row(keep(highlightMatch(s.text, q)), `data-brand="${SEARCH_ESC(s.text)}"`)
       : s.kind === 'cat'
         ? row(keep(highlightMatch(catLabel(s.text), q)), `data-suggest="${SEARCH_ESC(s.text)}"`)
-        : s.kind === 'combo'
-          ? row(keep(`${SEARCH_ESC(s.head)} ${SEARCH_ESC(catLabel(s.tail))}`), `data-suggest="${SEARCH_ESC(s.text)}"`)
-          : row(keep(highlightMatch(s.text, q)), `data-suggest="${SEARCH_ESC(s.text)}"`)
+        : row(s.kind === 'word' ? keep(highlightMatch(s.text, q)) : SEARCH_ESC(s.text), `data-suggest="${SEARCH_ESC(s.text)}"`)
   ).join('');
 }
 
@@ -10748,8 +10729,8 @@ function searchHistoryAdd(term) {
   searchHistory = [t, ...searchHistory.filter(h => searchNorm(h) !== n)].slice(0, 8);
 }
 
-/* Pane "đang gõ" — PHẦN CHỮ (mobile + bản sao màn Search trong FLOW của desktop): nhóm Thương hiệu / Danh mục khi có kết quả; GÕ SAI thì khối "Gợi ý" = báo kèm từ đã gõ + ≤ 5
-   từ khoá gợi ý sinh từ chữ đã gõ (xem searchRelated); KHÔNG map được gì (via none) thì CHỈ báo + gợi ý cách tìm (lượt 14), TIẾP THEO là block Sản phẩm rồi chip Danh mục liên quan (searchSugProductsHTML) — đúng thứ tự user chốt 07/10. Hàng gợi ý mực phụ,
+/* Pane "đang gõ" — PHẦN CHỮ (mobile + bản sao màn Search trong FLOW của desktop): nhóm Thương hiệu / Danh mục khi có kết quả; KHÔNG khớp gì thì khối "Gợi ý" = báo kèm từ đã gõ + ≤ 3
+   từ khoá gợi ý sinh từ chữ đã gõ (xem searchRelated), TIẾP THEO là block Sản phẩm rồi chip Danh mục liên quan (searchSugProductsHTML) — đúng thứ tự user chốt 07/10. Hàng gợi ý mực phụ,
    từ khớp mực chính; hàng hành động mực chính. Trả '' khi không có gì để nói (có kết quả nhưng không hãng / danh mục nào khớp trọn) — pane sẽ chỉ còn block sản phẩm. */
 function searchSuggestHTML() {
   const q = searchQuery.trim();
@@ -10762,11 +10743,6 @@ function searchSuggestHTML() {
   const catLabel = l => (LANG === 'en' && tr(l, 'en')) || l;
   if (!searchProducts(q).length) {
     const rel = searchRelated(q);
-    if (rel.via === 'none') return `
-  <section class="flex flex-col py-4">
-    <p class="t-multiline px-4 py-3 text-foreground">Không tìm thấy kết quả cho “${SEARCH_ESC(q)}”</p>
-    <p class="t-multiline px-4 py-3 text-muted-foreground">Thử từ khoá ngắn hơn, hoặc tìm theo tên thương hiệu.</p>
-  </section>`;
     return `
   <section class="flex flex-col py-4">
     ${head('Gợi ý')}
@@ -10814,18 +10790,14 @@ function searchProductRowHTML({ p, i }, tag = 'li', cls = 'search-prow mx-4') {
    thiểu bằng ảnh để GIÁ GHIM ĐÁY; hãng mượn hook .pc-brand (Libre ở skin-li, cùng vai tên hãng trên thẻ), tên t-multiline mực phụ + badge
    "Đặt trước" đứng trước như thẻ; giá .pc-price (đỏ khi giảm) + giá gạch + chip % như thẻ PLP. Kẻ ngăn giữa hàng thụt 16 (li mang mx-4, rule
    .search-prow + .search-prow) như #ccList. Lệnh user 06/10 lượt 7: "sản phẩm gợi ý là hình sản phẩm luôn nhé, xếp dọc giống cái mini cart cho
-   bản mobile" — thay dải thẻ ngang 170 của lượt 6. Theo từ khoá ≤ 10 hàng (trước 09/10 chiều: 5); GÕ SAI thì sản phẩm "gần với gợi ý" (searchRelated) cũng ≤ 10 hàng (lượt 14, 09/10/2026; none = không block),
+   bản mobile" — thay dải thẻ ngang 170 của lượt 6. Theo từ khoá ≤ 5 hàng; không khớp gì thì sản phẩm "gần với gợi ý" (searchRelated),
    rồi chip "Danh mục liên quan" XẾP CUỐI pane (07/10/2026, thứ tự user chốt). Tiêu đề + liên kết "Xem tất cả (N)" (= Enter với cụm tương ứng; không có cụm thì không có liên kết). Trả { key, html } —
    renderSearchSug() bỏ qua khi khoá không đổi để ảnh không nhấp nháy. Bấm hàng → PDP qua wireProductCards (data-product). */
 function searchSugProductsHTML() {
   const q = searchQuery.trim();
   let prods = searchProducts(q), more = q, cats = [];
-  if (!prods.length) {
-    const r = searchRelated(q);
-    if (r.via === 'none') return { key: `${LANG}|none`, html: '' };                  // NO RESULT: không block sản phẩm, không chip (09/10/2026)
-    prods = r.prods; more = r.query; cats = r.cats;
-  }
-  const list = prods.slice(0, SEARCH_LIST_MAX);                                     // ≤ 10 hàng ở MỌI trạng thái đang gõ (gõ sai 09/10 · gõ đúng 09/10 chiều)
+  if (!prods.length) { const r = searchRelated(q); prods = r.prods; more = r.query; cats = r.cats; }
+  const list = prods.slice(0, 5);
   const key = `${LANG}|${more}|${prods.length}|${list.map(x => x.i).join(',')}|${cats.join(',')}`;
   const html = `
   <section class="flex flex-col py-4">
@@ -28551,8 +28523,7 @@ document.body.insertAdjacentHTML('beforeend', `
        trái, sản phẩm trải hết bề ngang ô nhập (xem CSS ds-solo). */
     const found = !!q && searchProducts(q).length > 0;
     hot.style.display = q ? 'none' : '';
-    let catsHTML = '';   // khối "Danh mục liên quan" của cột trái — chỉ có ở trạng thái GÕ SAI
-    let noResult = false;   // 09/10/2026: không chữ nào map được vào dữ liệu ⇒ NO RESULT (class ds-empty)
+    let catsHTML = '';   // khối "Danh mục liên quan" của cột trái — chỉ có ở trạng thái gõ KHÔNG khớp
     const row = (inner, attrs, ink = 'text-muted-foreground') => `<button class="t-multiline w-full text-left px-2 py-2.5 rounded-xs ${ink} ghost-hover press" ${attrs}>${inner}</button>`;
     const head = (t, extra = '') => `<p class="t-single text-muted-foreground pb-2${extra ? ' ' + extra : ''}">${t}</p>`;
     const keep = inner => `<span data-i18n-skip>${inner}</span>`;   // chữ dữ liệu: mark tách text node, bộ dịch EN sẽ dịch lẻ từng mảnh
@@ -28566,18 +28537,10 @@ document.body.insertAdjacentHTML('beforeend', `
         /* KHÔNG KHỚP GÌ (07/10/2026): cột trái = khối "Gợi ý" (báo + từ khoá gợi ý sinh từ chữ đã gõ) rồi khối "Danh mục liên quan" NGAY DƯỚI, cùng cột với các từ (user: "cate liên quan nằm bên
            chỗ danh sách các từ, không phải bên chỗ hình"); cột phải chỉ còn sản phẩm gần với gợi ý (renderProducts). */
         const rel = searchRelated(q);
-        if (rel.via === 'none') {
-          /* NO RESULT (09/10/2026, user: "gõ query mà không có dữ liệu ở hệ thống để map thì ra no result"): CHỈ lời báo + gợi ý cách tìm, cột phải ẩn (ds-empty). */
-          noResult = true;
-          terms.innerHTML = `<p class="t-multiline px-2 py-2.5 text-foreground">Không tìm thấy kết quả cho “${SEARCH_ESC(q)}”</p>`
-            + `<p class="t-multiline px-2 py-2.5 text-muted-foreground">Thử từ khoá ngắn hơn, hoặc tìm theo tên thương hiệu.</p>`;
-        } else {
-          /* GÕ SAI (map được dữ liệu): Gợi ý ≤ 5 từ khoá (searchRelated.sg) + Danh mục liên quan; cột phải = sản phẩm gợi ý ≤ 10. */
-          terms.innerHTML = head('Gợi ý')
-            + `<p class="t-multiline px-2 py-2.5 text-foreground">Không tìm thấy kết quả cho “${SEARCH_ESC(q)}”</p>`
-            + (rel.sg.length ? searchSuggestRows(rel.sg, q, row) : `<p class="t-multiline px-2 py-2.5 text-muted-foreground">Thử từ khoá ngắn hơn, hoặc tìm theo tên thương hiệu.</p>`);
-          catsHTML = rel.cats.length ? head('Danh mục liên quan') + rel.cats.map(c => row(SEARCH_ESC(c), `data-suggest="${SEARCH_ESC(c)}"`)).join('') : '';
-        }
+        terms.innerHTML = head('Gợi ý')
+          + `<p class="t-multiline px-2 py-2.5 text-foreground">Không tìm thấy kết quả cho “${SEARCH_ESC(q)}”</p>`
+          + (rel.sg.length ? searchSuggestRows(rel.sg, q, row) : `<p class="t-multiline px-2 py-2.5 text-muted-foreground">Thử từ khoá ngắn hơn, hoặc tìm theo tên thương hiệu.</p>`);
+        catsHTML = rel.cats.length ? head('Danh mục liên quan') + rel.cats.map(c => row(SEARCH_ESC(c), `data-suggest="${SEARCH_ESC(c)}"`)).join('') : '';
       }
     } else if (searchHistory.length) {
       terms.innerHTML = `
@@ -28595,7 +28558,7 @@ document.body.insertAdjacentHTML('beforeend', `
     catBox.querySelectorAll('[data-suggest]').forEach(b => b.addEventListener('click', () => goSearch(b.dataset.suggest)));
     localizeNew(catBox);
     const cols = layer.querySelector('.ds-cols');
-    if (cols) { cols.classList.toggle('ds-solo', found && !terms.innerHTML.trim()); cols.classList.toggle('ds-empty', noResult); }
+    if (cols) cols.classList.toggle('ds-solo', found && !terms.innerHTML.trim());
     terms.querySelectorAll('[data-suggest]').forEach(b => b.addEventListener('click', () => goSearch(b.dataset.suggest)));
     terms.querySelectorAll('[data-brand]').forEach(b => b.addEventListener('click', () => {
       const br = b.dataset.brand;
@@ -28627,20 +28590,19 @@ document.body.insertAdjacentHTML('beforeend', `
      4 sản phẩm GẦN VỚI gợi ý (searchRelated); "Danh mục liên quan" nằm ở CỘT TRÁI cùng các từ gợi ý (renderTerms). Chỉ dựng lại khi DANH SÁCH đổi (so khoá) để ảnh không nhấp nháy theo từng phím — lý do cũ của
      việc "cột phải không đổi theo phím gõ" vẫn được giữ.
      08/10/2026 (user: "cái kết quả search cho layout thẻ dạng list ngang giống mobile"; chiều: "search chia layout như vậy nhé, xếp dọc, bỏ line giữa mỗi thẻ" rồi "áp dụng cho trạng thái mặc định chưa nhập gì của search luôn á"):
-     MỌI trạng thái (chưa gõ · gõ đúng · gõ sai) là HÀNG ngang kiểu mini cart y như mobile (searchProductRowHTML dùng chung) xếp DỌC một cột, không kẻ giữa hàng — xem CSS #dkSearchProducts; chưa gõ 4 sản phẩm đầu, ĐANG GÕ ≤ 10
-     (09/10/2026 chiều, user gửi ảnh gõ "quần" 21 kết quả: "sao tôi k cuộn đc cái danh sách" — gõ đúng từng chỉ 4 hàng nên cột phải không tràn, không có gì để cuộn).
+     MỌI trạng thái (chưa gõ · gõ đúng · gõ sai) là 4 HÀNG ngang kiểu mini cart y như mobile (searchProductRowHTML dùng chung) xếp DỌC một cột, không kẻ giữa hàng — xem CSS #dkSearchProducts.
      Trước 08/10 chiều "Sản phẩm nổi bật" lúc chưa gõ là lưới 4 thẻ productCard `noQuick`. */
   const renderProducts = () => {
     const el = $in();
     const q = (el ? el.value : '').trim();
-    let found = [], title = 'Sản phẩm nổi bật', more = '', cap = 4;
+    let found = [], title = 'Sản phẩm nổi bật', more = '';
     if (q) {
-      title = 'Sản phẩm gợi ý'; cap = SEARCH_LIST_MAX;   // ≤ 10 hàng khi đang gõ (gõ sai 09/10 · gõ đúng 09/10 chiều); cột phải cuộn riêng khi > 4 hàng (CSS #dkSearchProducts)
+      title = 'Sản phẩm gợi ý';
       found = searchProducts(q);
       if (found.length) more = q;
-      else { const r = searchRelated(q); found = r.prods; more = r.query; if (r.via === 'none') title = ''; }   // none = rỗng
+      else { const r = searchRelated(q); found = r.prods; more = r.query; }
     } else found = PRODUCTS.slice(0, 4).map((p, i) => ({ p, i }));
-    const list = found.slice(0, cap);
+    const list = found.slice(0, 4);
     const key = `${LANG}|${title}|${more}|${found.length}|${list.map(x => x.i).join(',')}`;
     if (key === prodKey) return;
     prodKey = key;

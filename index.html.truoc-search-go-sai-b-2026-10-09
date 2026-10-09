@@ -8160,9 +8160,9 @@ const SEARCH_HOT = SEARCH_HOT_KEYWORDS.flatMap((k, i) => [k, SEARCH_HOT_BRANDS[i
      nằm bên chỗ danh sách các từ, không phải bên chỗ hình"). Không còn nhãn "phổ biến" ở bất kỳ trạng thái ĐANG GÕ nào (chỉ lúc chưa gõ). Sửa lỗi gõ: Damerau-Levenshtein ≤ 1, từ ≥ 6 ký tự ≤ 2, chỉ gợi khi cụm sửa CÓ kết quả.
    · GÕ SAI TÊN vs KHÔNG CÓ DỮ LIỆU (lượt 14, 09/10/2026 — user: "cái search ở trạng thái gõ sai tên: Suggest kw tối đa 5 · Suggest listing tối đa 10; gõ sai là nó vẫn có thể map dc data của hệ thống,
      còn gõ query mà không có dữ liệu ở hệ thống để map thì ra no result"; THAY đoạn "KHÔNG CÓ KẾT QUẢ" của lượt 9 ở chỗ "rơi về từ khoá phổ biến" và trần ≤ 3 / ≤ 5): searchRelated(q) trả via 'fix' (sửa lỗi gõ,
-     vd "vesace" → "Versace") hoặc 'partial' (không sửa được nhưng ≥ MỘT NỬA số từ gõ map được vào kho và các từ đó cùng có sản phẩm, vd "versace zzzz") = GÕ SAI nhưng VẪN MAP ĐƯỢC dữ liệu ⇒ gợi ý từ khoá ≤ 5
-     (SEARCH_SUG_MAX) + danh sách sản phẩm gợi ý ≤ 10 (SEARCH_LIST_MAX); via 'none' (còn lại: "zzzz", hãng ngoài kho "gucci", "hoa tai ngọc trai", "đầm molton") = NO RESULT ⇒ CHỈ báo
-     "Không tìm thấy kết quả cho “…”" + gợi ý cách tìm, KHÔNG sản phẩm / từ khoá / danh mục (đã bỏ nhánh phổ biến và nhánh xen kẽ từng từ). Gõ ĐÚNG (có kết quả) cũng ≤ 10 hàng (lượt 14c, 09/10 chiều — user: "sao tôi k cuộn đc cái danh sách": trước đó mobile 5 · desktop 4 nên không có gì để cuộn); desktop cuộn riêng trong cột phải.
+     vd "vesace" → "Versace") hoặc 'partial' (có từ gõ map được vào kho, vd "versace zzzz") = GÕ SAI nhưng VẪN MAP ĐƯỢC dữ liệu ⇒ gợi ý từ khoá ≤ 5 (SEARCH_SUG_MAX) + danh sách sản phẩm gợi ý ≤ 10 (SEARCH_LIST_MAX);
+     via 'none' (không từ nào map được: "zzzz", hãng ngoài kho như "gucci") = NO RESULT ⇒ CHỈ báo "Không tìm thấy kết quả cho “…”" + gợi ý cách tìm, KHÔNG sản phẩm / từ khoá / danh mục (đã bỏ nhánh phổ biến).
+     Gõ ĐÚNG (có kết quả) không đổi: mobile ≤ 5 hàng, desktop 4 hàng.
    · NỔI CHỮ KHỚP (highlightMatch): tô CẢ TỪ khớp (không tô nửa từ "Đầ|m" — đọc như lỗi), mọi từ khớp, mọi lần xuất hiện. Nhấn bằng BẬC MỰC
      (STYLE-RULES §2.1): hàng gợi ý mực phụ, từ khớp mực chính (`.search-hit`). §2.3 cấm nhấn bằng độ đậm lẫn mảng màu nên KHÔNG 500 / nền;
      muốn 500 phải ghi ngoại lệ §1.1 (chờ user). Khung Figma "typing" vẽ hàng gợi ý toàn Regular #0a0a0a (chưa có kiểu nổi) ⇒ LỆCH tới khi sync.
@@ -8257,6 +8257,18 @@ function searchProducts(q) {
   return searchIndex().map(e => ({ e, s: searchScore(e, qt, qn) })).filter(x => x.s > 0)
     .sort((a, b) => b.s - a.s || a.e.i - b.e.i).map(x => ({ p: x.e.p, i: x.e.i }));
 }
+/* Xen kẽ các danh sách sản phẩm (mỗi danh sách đã xếp hạng): lấy lần lượt phần tử đầu của từng danh sách, khử trùng — để mỗi gợi ý / mỗi từ đều có mặt trong ~5 hàng đầu. */
+function searchInterleave(lists) {
+  const seen = new Set(), out = [];
+  for (let k = 0; ; k++) {
+    let any = false;
+    for (const L of lists) if (k < L.length) { any = true; if (!seen.has(L[k].i)) { seen.add(L[k].i); out.push(L[k]); } }
+    if (!any) break;
+  }
+  return out;
+}
+/* Khớp MỘT PHẦN (OR theo từ) — chỉ dùng cho "liên quan" khi AND không ra gì: xen kẽ kết quả của TỪNG từ ("đầm molton" → đầm, Molton, đầm, Molton …) thay vì dồn hết một từ lên đầu. */
+function searchProductsAny(qt) { return searchInterleave(qt.map(t => searchProducts(t))); }
 /* Hãng khớp TRỌN truy vấn (mọi từ gõ là đầu một từ của tên hãng); hãng nhiều sản phẩm xếp trước. */
 function searchBrands(q, max = 3) {
   const qt = searchTokens(q);
@@ -8350,46 +8362,41 @@ function searchDidYouMean(q) {
 const SEARCH_SUG_MAX = 5, SEARCH_LIST_MAX = 10;
 
 /* GÕ SAI TÊN / KHÔNG CÓ DỮ LIỆU — MỘT nguồn cho cả 3 khối (07/10/2026: Gợi ý → Sản phẩm gần với gợi ý → Danh mục liên quan; 09/10/2026 tách hai trạng thái). Trả { via, query, sg, prods, cats }:
-   · via 'fix' = cụm đã SỬA LỖI GÕ có kết quả ("vesace" → "Versace"); via 'partial' = không sửa được nhưng ≥ MỘT NỬA số từ gõ map được vào kho VÀ các từ đó cùng có sản phẩm (AND), vd "versace zzzz" → "Versace"
-     — cả hai là GÕ SAI nhưng VẪN MAP ĐƯỢC dữ liệu;
-     via 'none' = còn lại ⇒ NO RESULT: không từ nào map được ("zzzz", hãng ngoài kho "gucci"), đa số từ lạ ("hoa tai ngọc trai": 2 / 4 từ có trong kho nhưng không sản phẩm nào có cả hai), hoặc các từ map được không
-     đi chung sản phẩm nào ("đầm molton": không có đầm Molton Brown) — sg / prods / cats rỗng, nơi gọi chỉ báo "Không tìm thấy kết quả cho …";
+   · via 'fix' (cụm đã SỬA LỖI GÕ có kết quả) / 'partial' (có ít nhất một từ gõ map được vào kho, vd "versace zzzz") = GÕ SAI nhưng VẪN MAP ĐƯỢC dữ liệu;
+     via 'none' = KHÔNG từ nào map được ("zzzz", hãng ngoài kho "gucci") ⇒ NO RESULT: sg / prods / cats rỗng, nơi gọi chỉ báo "Không tìm thấy kết quả cho …";
    · sg = ≤ 5 gợi ý { text, kind, head?, tail? }: 'fix' cụm sửa lỗi gõ · 'brand' / 'cat' hãng / danh mục phủ TRỌN cụm đã map (không có thì từng từ đã biết một) · 'word' chính các từ đã biết khi không phải hãng / danh mục ·
-     'combo' = cụm + danh mục / hãng hay gặp nhất trong chính kết quả của cụm ("Versace" → "Versace Nước hoa" …) để lấp tới trần 5 — chỉ khi cụm có ≥ 3 sản phẩm, nhãn có ≥ 2 sản phẩm và không trùng chữ nào trong cụm;
-   · prods = sản phẩm của cụm đã map, TOÀN BỘ (nơi gọi tự cắt ≤ SEARCH_LIST_MAX): via 'fix' = kết quả của cụm sửa; 'partial' = kết quả của các từ đã map (AND);
-   · query = cụm để nút "Xem tất cả (N)" tìm;
+     'combo' = cụm + danh mục / hãng hay gặp nhất trong chính kết quả của cụm ("Versace" → "Versace Nước hoa" …) để lấp tới trần 5 — chỉ khi cụm có ≥ 3 sản phẩm và nhãn không trùng chữ nào trong cụm;
+   · prods = sản phẩm của cụm đã map, TOÀN BỘ (nơi gọi tự cắt ≤ SEARCH_LIST_MAX): via 'fix' = kết quả của cụm sửa; 'partial' = kết quả của các từ đã biết (AND), không ra thì xen kẽ từng từ (OR);
+   · query = cụm để nút "Xem tất cả (N)" tìm (rỗng khi danh sách là hỗn hợp nhiều gợi ý ⇒ không có liên kết);
    · cats = nhãn cấp 2 (không có thì cấp 1) hay gặp nhất trong chính prods ⇒ chip nào bấm cũng có hàng.
    Ghi nhớ kết quả của lần gọi gần nhất (mỗi phím gõ gọi vài lần từ nhiều chỗ). Nơi gọi chỉ ĐỌC kết quả, không sửa. */
 let SEARCH_REL_MEMO = { q: null, r: null };
 function searchRelated(q) {
   if (SEARCH_REL_MEMO.q === q) return SEARCH_REL_MEMO.r;
+  const fix = searchDidYouMean(q);
   const keys = [...searchVocab().keys()];
   const kept = searchTokens(q).filter(t => keys.some(w => w.startsWith(t)));      // từ đã có trong kho
-  /* Dạng GỐC CÓ DẤU của một từ trong kho — từ trọn: dạng hay gặp nhất ("lua" → "lụa"); tiền tố: từ dài hơn hay gặp nhất bắt đầu bằng nó ("versac" → "Versace"). */
-  const canon = t => {
-    const v = searchVocab().get(t); if (v) return v.word;
-    let best = null; searchVocab().forEach((x, w) => { if (w.startsWith(t) && (!best || x.n > best.n)) best = x; });
-    return best ? best.word : t;
-  };
-  const fixRaw = searchDidYouMean(q), fix = fixRaw ? searchTokens(fixRaw).map(canon).join(' ') : '';   // cụm sửa lỗi cũng ở dạng gốc ("nuoc hoa Dylan" → "Nước hoa Dylan")
-  const phrase = kept.map(canon).join(' ');                                      // các từ đã map
-  const partial = !fix && kept.length > 0 && kept.length * 2 >= searchTokens(q).length && searchProducts(phrase).length > 0;
   let r;
-  if (!fix && !partial) r = { via: 'none', query: '', sg: [], prods: [], cats: [] };   // KHÔNG có dữ liệu để map ⇒ NO RESULT
+  if (!fix && !kept.length) r = { via: 'none', query: '', sg: [], prods: [], cats: [] };   // KHÔNG chữ nào map được vào dữ liệu ⇒ NO RESULT
   else {
+    const canon = t => (searchVocab().get(t) || { word: t }).word;
+    const phrase = kept.map(canon).join(' ');                                      // các từ đã map, dạng gốc CÓ DẤU trong kho ("lua" → "lụa")
     const sg = [], seen = new Set();
     const add = (text, kind, head, tail) => { const k = searchNorm(text); if (k && !seen.has(k)) { seen.add(k); sg.push({ text, kind, head, tail }); } };
-    const via = fix ? 'fix' : 'partial', base = fix || phrase;                    // base = cụm đã map vào dữ liệu
-    const prods = searchProducts(base);
+    let via = 'partial', query = '', prods = [];
+    if (fix) { via = 'fix'; query = fix; prods = searchProducts(fix); }
+    else { prods = searchProducts(phrase); query = prods.length ? phrase : ''; if (!prods.length) prods = searchProductsAny(kept); }
+    const base = fix || phrase;                                                    // cụm đã map vào dữ liệu
     if (fix) add(fix, 'fix');
     const bs = searchBrands(base, 2), cs = searchCats(base, 3);                    // hãng / danh mục phủ TRỌN cụm
     bs.forEach(b => add(b, 'brand')); cs.forEach(c => add(c.label, 'cat'));
     if (!bs.length && !cs.length) kept.forEach(t => { const tb = searchBrands(t, 1)[0], tc = searchCats(t, 1)[0]; if (tb) add(tb, 'brand'); else if (tc) add(tc.label, 'cat'); });
     if (!sg.length) add(phrase, 'word');
-    /* LẤP tới trần 5: cụm + danh mục (rồi hãng) hay gặp nhất trong CHÍNH kết quả của cụm — chỉ nhãn có ≥ 2 sản phẩm (nhãn lẻ như "Túi Áo khoác ngoài" không đáng gợi). */
-    if (sg.length < SEARCH_SUG_MAX && prods.length >= 3) {
+    /* LẤP tới trần 5: cụm + danh mục (rồi hãng) hay gặp nhất trong CHÍNH kết quả của cụm — mỗi gợi ý đều có kết quả. */
+    const hit = searchProducts(base);
+    if (sg.length < SEARCH_SUG_MAX && hit.length >= 3) {
       const bt = searchTokens(base);
-      const tally = pick => { const m = new Map(); prods.forEach(({ p }) => { const v = pick(p); if (v) m.set(v, (m.get(v) || 0) + 1); }); return [...m.entries()].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'vi')).filter(x => x[1] >= 2).map(x => x[0]); };
+      const tally = pick => { const m = new Map(); hit.forEach(({ p }) => { const v = pick(p); if (v) m.set(v, (m.get(v) || 0) + 1); }); return [...m.entries()].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), 'vi')).map(x => x[0]); };
       for (const label of [...tally(p => (p.cat || [])[1] || (p.cat || [])[0]), ...tally(p => p.brand)]) {
         if (sg.length >= SEARCH_SUG_MAX) break;
         if (searchTokens(label).some(t => bt.some(w => w.startsWith(t) || t.startsWith(w)))) continue;   // nhãn trùng chữ đã có trong cụm
@@ -8399,7 +8406,7 @@ function searchRelated(q) {
     const n = new Map();
     prods.forEach(({ p }) => { const l = (p.cat || [])[1] || (p.cat || [])[0]; if (l) n.set(l, (n.get(l) || 0) + 1); });
     const cats = [...n.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'vi')).slice(0, 6).map(x => x[0]);
-    r = { via, query: base, sg: sg.slice(0, SEARCH_SUG_MAX), prods, cats };
+    r = { via, query, sg: sg.slice(0, SEARCH_SUG_MAX), prods, cats };
   }
   SEARCH_REL_MEMO = { q, r };
   return r;
@@ -8499,18 +8506,18 @@ function searchProductRowHTML({ p, i }, tag = 'li', cls = 'search-prow mx-4') {
    thiểu bằng ảnh để GIÁ GHIM ĐÁY; hãng mượn hook .pc-brand (Libre ở skin-li, cùng vai tên hãng trên thẻ), tên t-multiline mực phụ + badge
    "Đặt trước" đứng trước như thẻ; giá .pc-price (đỏ khi giảm) + giá gạch + chip % như thẻ PLP. Kẻ ngăn giữa hàng thụt 16 (li mang mx-4, rule
    .search-prow + .search-prow) như #ccList. Lệnh user 06/10 lượt 7: "sản phẩm gợi ý là hình sản phẩm luôn nhé, xếp dọc giống cái mini cart cho
-   bản mobile" — thay dải thẻ ngang 170 của lượt 6. Theo từ khoá ≤ 10 hàng (trước 09/10 chiều: 5); GÕ SAI thì sản phẩm "gần với gợi ý" (searchRelated) cũng ≤ 10 hàng (lượt 14, 09/10/2026; none = không block),
+   bản mobile" — thay dải thẻ ngang 170 của lượt 6. Theo từ khoá ≤ 5 hàng; GÕ SAI thì sản phẩm "gần với gợi ý" (searchRelated) ≤ 10 hàng (lượt 14, 09/10/2026; none = không block),
    rồi chip "Danh mục liên quan" XẾP CUỐI pane (07/10/2026, thứ tự user chốt). Tiêu đề + liên kết "Xem tất cả (N)" (= Enter với cụm tương ứng; không có cụm thì không có liên kết). Trả { key, html } —
    renderSearchSug() bỏ qua khi khoá không đổi để ảnh không nhấp nháy. Bấm hàng → PDP qua wireProductCards (data-product). */
 function searchSugProductsHTML() {
   const q = searchQuery.trim();
-  let prods = searchProducts(q), more = q, cats = [];
+  let prods = searchProducts(q), more = q, cats = [], typo = false;
   if (!prods.length) {
     const r = searchRelated(q);
     if (r.via === 'none') return { key: `${LANG}|none`, html: '' };                  // NO RESULT: không block sản phẩm, không chip (09/10/2026)
-    prods = r.prods; more = r.query; cats = r.cats;
+    prods = r.prods; more = r.query; cats = r.cats; typo = true;
   }
-  const list = prods.slice(0, SEARCH_LIST_MAX);                                     // ≤ 10 hàng ở MỌI trạng thái đang gõ (gõ sai 09/10 · gõ đúng 09/10 chiều)
+  const list = prods.slice(0, typo ? SEARCH_LIST_MAX : 5);                          // gõ sai ≤ 10 hàng (09/10/2026, user); gõ đúng ≤ 5
   const key = `${LANG}|${more}|${prods.length}|${list.map(x => x.i).join(',')}|${cats.join(',')}`;
   const html = `
   <section class="flex flex-col py-4">
