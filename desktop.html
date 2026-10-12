@@ -751,10 +751,16 @@ window.RESP = (function () {
   .acc-addr-card { display: flex; align-items: stretch; gap: 4px; }
   .acc-addr-info { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
   .acc-addr-act { flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 8px; padding-top: 4px; }
-  /* Ô KHOÁ: mặt xám + mực phụ, vẫn giữ đúng chiều cao/viền của ô nhập thường. */
+  /* Ô KHOÁ — theo biến thể `disabled` / `filled-disabled` của component `field` (Figma 420:6231; 12/10/2026, lệnh user "ô khoá cũng theo figma luôn nhé"). ĐỌC THEO BIẾN,
+     không theo số lưu trên paint: Dev Mode của biến thể ra nền `var(--muted)` · viền `1px solid var(--input)` · nhãn `var(--muted-foreground)` · chữ `var(--foreground)` ⇒ nền xám
+     #f5f5f5, viền + nhãn như ô thường (#d3d3d3 / #727272), chữ ĐEN #0a0a0a — bản trước dùng mực phụ #404040 (`--general-secondary-foreground`) nên lệch. Các số #8c8c8c / #d1d1d1
+     đọc được trên paint của biến thể là giá trị LƯU CŨ lệch khỏi biến (instance đọc ra #727272 / #0a0a0a / #d3d3d3), không hiển thị — đừng lấy làm chuẩn. Chiều cao / đệm / cỡ chữ =
+     ô thường. `--general-input` của code là #fff (khác biến `input` #d3d3d3 của Figma) nên viền vẫn dùng `--general-border`, cùng giá trị. */
   .field-float.is-locked > input {
-    background: var(--general-secondary);
-    color: var(--general-secondary-foreground);
+    background: var(--general-muted);
+    color: var(--general-foreground);
+    -webkit-text-fill-color: var(--general-foreground);   /* WebKit tô chữ ô disabled bằng màu riêng, mờ hơn — ép về đúng mực của thiết kế */
+    opacity: 1;
     border-color: var(--general-border);
     cursor: not-allowed;
   }
@@ -1001,10 +1007,10 @@ window.RESP = (function () {
      KHỔ DESKTOP. ĐẢO phương án A buổi chiều (dòng ngang ≥1200 + CTA chữ "Xem chi tiết", vạch ngăn hàng): user gửi khung mới và nói đó là layout thẻ desktop.
      Số đo đọc bằng figma_execute từ `order-card` 966×196 nằm trong `Frame 63` 1000×198:
        thẻ       viền 1px `border` BỐN PHÍA, đệm 16 (khung: Frame 63 đệm ngang 16 + order-card đệm dọc 16), khe 16 giữa đầu thẻ và thân, vuông góc; các thẻ cách nhau 32 (ĐẢO 08/10/2026: 16, xem rule .ord-list)
-       đầu thẻ   hàng 1  [Mã đơn #DAFC… ›] (500, mũi tên 12 ngay sau mã, khe 4)  ········  [27/09/2026] (400, canh phải)
-                 hàng 2  [Chờ thanh toán] (BADGE nền 50 + chữ 700, cao 24 — xem `.ord-status.is-badge`); hai hàng cách 8 ⇒ đầu thẻ cao 20 + 8 + 24 = 52
+       đầu thẻ   MỘT hàng cao 24  [Mã đơn #DAFC…] [Chờ thanh toán] [›]  ········  [27/09/2026] — mã (500) · badge (nền 50 + chữ 700, cao 24, xem `.ord-status.is-badge`) · mũi tên 12 SAU badge, cả cụm khe 4; ngày (400) canh phải
+                 12/10/2026 (user, khung `order-card` 1219:151903: "move cái trạng thái lên cùng hàng với mã đơn hàng ở bản desktop"): nhãn trạng thái LÊN hàng mã đơn — trước đó là hàng 2 riêng, hai hàng cách 8 ⇒ đầu thẻ cao 20 + 8 + 24 = 52, thẻ 202
        thân      [ảnh 75×100 khe 8, ăn phần dư]  ········  [N sản phẩm (mờ) / số tiền (500)], cột tiền ôm chữ, canh phải, khe 4
-     Tô mờ 80% mã, mũi tên, ngày (`.ord-card-top`); khung vẽ cả khối `meta` mờ nhưng nhãn badge KHÔNG mờ (chữ màu trên nền nhạt mờ 80% còn ~3,4:1, rớt AA). Thẻ cao 202 = 1 + 16 + (20 + 8 + 24) + 16 + 100 + 16 + 1 (khung vẽ chấm: 198). Ảnh 75 co đều
+     Tô mờ 80% TỪNG phần tử mã / mũi tên / ngày (`.ord-card-code`, `-go`, `-date`), KHÔNG tô cả `.ord-card-top` nữa vì nhãn badge đã nằm trong hàng: khung vẽ cả `meta-row` mờ .8 nhưng nhãn badge KHÔNG mờ (chữ màu trên nền nhạt mờ 80% còn ~3,4:1, rớt AA). Thẻ cao 174 = 1 + 16 + 24 + 16 + 100 + 16 + 1 (khung user: 174; trước đó 202). Ảnh 75 co đều
      khi hết chỗ (flex-shrink); đơn nhiều món hơn ORD_THUMB_SLOTS thì chỉ hiện ảnh các món đầu, KHÔNG có ô "+N" (user 30/09). KHÔNG còn chữ "Xem chi tiết": mũi tên cạnh mã là lối vào (cả thẻ là MỘT <button>),
      khung không vẽ CTA chữ. Hover: mũi tên nhích 2px + mã gạch chân (giữ từ bản trước). CHỮ 500: `font-medium` là class chết dưới skin-mt (0,2,1) nên khai ngoại
      lệ có tên (STYLE-RULES §1.1, ngoại lệ thứ tư). Khổ hẹp nhất 768 (cột ~430): ảnh co còn ~64, đầu thẻ vẫn đủ chỗ (mã 158 + mũi tên 16 + ngày ~84). */
@@ -1014,11 +1020,12 @@ window.RESP = (function () {
     border: 1px solid var(--general-border); background: transparent; text-align: left;
   }
   .ord-card-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; }
-  .ord-card-top { display: flex; align-items: center; justify-content: space-between; gap: 4px; width: 100%; opacity: .8; }
+  .ord-card-top { display: flex; align-items: center; justify-content: space-between; gap: 4px; width: 100%; }
   .ord-card-ids { display: flex; align-items: center; gap: 4px; min-width: 0; }
-  .ord-card-code { display: inline-flex; gap: 4px; white-space: nowrap; color: var(--general-foreground); }
-  .ord-card-date { white-space: nowrap; color: var(--general-foreground); }
-  .ord-card-go { display: flex; flex: none; color: var(--general-foreground); }
+  /* 12/10/2026 — độ mờ .8 chuyển từ `.ord-card-top` xuống TỪNG phần tử (mã · mũi tên · ngày): badge trạng thái nay nằm trong hàng nhưng KHÔNG được mờ (AA). */
+  .ord-card-code { display: inline-flex; gap: 4px; white-space: nowrap; color: var(--general-foreground); opacity: .8; }
+  .ord-card-date { white-space: nowrap; color: var(--general-foreground); opacity: .8; }
+  .ord-card-go { display: flex; flex: none; color: var(--general-foreground); opacity: .8; }
   .ord-card-go svg { width: 12px; height: 12px; transition: transform .15s ease; }
   .ord-card:hover .ord-card-go svg { transform: translateX(2px); }
   .ord-card:hover .ord-card-code { text-decoration: underline; text-underline-offset: 2px; }
@@ -3270,13 +3277,23 @@ window.RESP = (function () {
      `.is-filled` gắn ngay lúc DỰNG theo `val` đang có, cộng `:focus-within` cho đúng lượt
      vừa bấm mở mà giá trị chưa kịp đổi. */
   .field-float { position: relative; display: flex; flex-direction: column; }
+  /* LỀ NGANG Ô = 12 — 12/10/2026, lệnh user "đưa code về 12px theo figma": component `field` (Figma 420:6231) đệm 12/12 + viền 1 ⇒ nhãn nghỉ, nhãn nổi và chữ gõ
+     cùng đứng ở x = 13 (nhãn `left: 13px` = 12 + 1 viền). Trước đó đa số ô đệm 8 + nhãn 9, còn modal newsletter / popup đăng nhập / checkout desktop / ô chọn đệm 12
+     mà nhãn vẫn 9 ⇒ chữ gõ lệch nhãn nổi 4px. Khai ĐÚNG MỘT CHỖ ở đây (selector thắng utility): class `px-2` / `px-3` / `p-2` / `pl-2` / `pl-3` trên <input> / <button>
+     của ô trong `.field-float` KHÔNG còn quyết đệm TRÁI — đừng chỉnh bằng utility. Dòng báo lỗi dưới ô vẫn sát mép trái x=0 (đúng biến thể invalid). */
   .field-float > input, .field-float > textarea {
-    width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px;
+    width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px; padding-left: 12px;
     border-color: var(--general-border);
   }
+  /* ĐỆM PHẢI = 12 (12/10/2026, lệnh user "đệm phải cũng về 12 luôn nhé"; component `field` đệm 12/12) cho mọi ô KHÔNG mang class `pr-*` — `px-2` (8) / `px-3` / `p-2` trên ô
+     cũng không còn quyết đệm phải. Ô nào phải chừa chỗ bên phải cho nút / mũi tên thì mang đúng một utility `pr-*` (mật khẩu `pr-9` 36 / `pr-10` 40 chừa nút mắt) hoặc có rule riêng
+     (`.has-act` 160 chừa nút trong ô; ô chọn <button> có `pr-9` chừa mũi tên) — selector `:not([class*="pr-"])` LOẠI các ô đó, chúng giữ nguyên. ⚠ đừng viết `padding` rút gọn ép 12
+     cả hai phía: lần đầu 12/10 làm thế thì ô mật khẩu popup đăng nhập desktop (`pr-10`) mất chỗ chừa nút mắt (bắt được nhờ đo trước / sau). Rule này đứng TRƯỚC `.has-act` để
+     cùng độ ưu tiên (0,2,1) thì `.has-act` thắng. */
+  .field-float > input:not([class*="pr-"]), .field-float > textarea:not([class*="pr-"]) { padding-right: 12px; }
   .field-float > textarea { height: auto; min-height: 72px; padding-top: 22px; resize: none; }
   .field-float > label {
-    position: absolute; left: 9px; right: 36px; top: 50%; transform: translateY(-50%);
+    position: absolute; left: 13px; right: 36px; top: 50%; transform: translateY(-50%);
     font-size: 14px; line-height: 20px; letter-spacing: .5px;
     pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     transition: top .15s ease, transform .15s ease, font-size .15s ease;
@@ -3306,7 +3323,7 @@ window.RESP = (function () {
      "Tối đa N" nằm BÊN TRONG). Từ lượt này ô điểm đi kèm nút Áp dụng nên chữ
      "Tối đa" đã rời xuống thành dòng riêng; không còn phần tử nào mang class này
      nữa nên để lại là rule chết. */
-  .field-float.is-btn > button { width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px; border-color: var(--general-border); }
+  .field-float.is-btn > button { width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px; padding-left: 12px; border-color: var(--general-border); }
   .field-float.is-btn > label { top: 50%; transform: translateY(-50%); }
   .field-float.is-btn.is-filled > label, .field-float.is-btn:focus-within > label {
     top: 8px; transform: translateY(0); font-size: 10px; line-height: 14px;
@@ -14063,11 +14080,10 @@ const orderGifts = o => (o.gifts || []).map(x => ({ pk: x.pk, g: GIFT_CATALOG[x.
 const ordersNewestFirst = () => ORDERS.slice().sort((a, b) => dmyKey(a.date) < dmyKey(b.date) ? 1 : dmyKey(a.date) > dmyKey(b.date) ? -1 : 0);
 /* 30/09/2026 chiều muộn (user, Figma 987:84835 — "đây là layout responsive của thẻ sp bản desktop") — THẺ ĐƠN DESKTOP = THẺ CÓ KHUNG, một bố cục cho mọi khổ desktop.
    Thay phương án A buổi chiều (dòng ngang ≥1200 + CTA chữ "Xem chi tiết"). Giữ từ phương án A: nhãn cột tiền "N sản phẩm" (Σ qty, không tính quà). BỎ giờ trong ngày
-   (phương án A ghi "27/09/2026, 15:26" lấy từ `log`): khung ghi ngày trơn — user 30/09 "theo khung của tôi hết". Mới theo khung:
-     [Mã đơn #DAFC… ›]  ····················  [27/09/2026]
-     [Chờ thanh toán]  (badge)
+   (phương án A ghi "27/09/2026, 15:26" lấy từ `log`): khung ghi ngày trơn — user 30/09 "theo khung của tôi hết". Mới theo khung (12/10/2026: nhãn trạng thái LÊN CÙNG HÀNG với mã đơn, khung `order-card` 1219:151903):
+     [Mã đơn #DAFC…] [Chờ thanh toán] [›]  ····················  [27/09/2026]
      [ảnh][ảnh][ảnh][ảnh]  ····················  N sản phẩm / số tiền
-   Mũi tên 12 đứng ngay sau mã đơn thay cho chữ "Xem chi tiết". Số đo và lý do nằm ở khối CSS `.ord-card` (cạnh `.ord-status`). Cả thẻ là MỘT <button>; nhãn là <span>
+   Mũi tên 12 đứng sau badge (trước 12/10: ngay sau mã đơn) thay cho chữ "Xem chi tiết". Số đo và lý do nằm ở khối CSS `.ord-card` (cạnh `.ord-status`). Cả thẻ là MỘT <button>; nhãn là <span>
    riêng để luật i18n khớp nguyên chuỗi ("Mã đơn", "N sản phẩm"). Bản mobile (index.html) có khung riêng, không đổi theo. */
 /* Hàng ảnh của thẻ đơn — tối đa ORD_THUMB_SLOTS ảnh, theo thứ tự món trong đơn. Đơn nhiều món hơn số ô thì CHỈ hiện ảnh các món đầu, KHÔNG có ô "+N"
    (user 30/09: "nhiều món hơn cứ để vậy được rồi, không cần +N"; khung Figma vẽ đơn "5 sản phẩm" với 4 ảnh — nhãn "N sản phẩm" bên phải đã nói số món). Desktop 4 ô
@@ -14084,11 +14100,11 @@ function accOrders() {
           <span class="ord-card-top">
             <span class="ord-card-ids">
               <span class="ord-card-code t-lead"><span>Mã đơn</span> <span>#${o.id}</span></span>
+              ${statusTag(o, false, true)}
               <span class="ord-card-go" aria-hidden="true">${I.chevR('currentColor')}</span>
             </span>
             <span class="ord-card-date t-lead">${o.date}</span>
           </span>
-          ${statusTag(o, false, true)}
         </span>
         <span class="ord-card-body">
           <span class="ord-thumbs">${orderThumbs(o)}</span>

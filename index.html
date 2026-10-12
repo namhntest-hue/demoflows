@@ -890,13 +890,23 @@ window.RESP = (function () {
      `.is-filled` gắn ngay lúc DỰNG theo `val` đang có, cộng `:focus-within` cho đúng lượt
      vừa bấm mở mà giá trị chưa kịp đổi. */
   .field-float { position: relative; display: flex; flex-direction: column; }
+  /* LỀ NGANG Ô = 12 — 12/10/2026, lệnh user "đưa code về 12px theo figma": component `field` (Figma 420:6231) đệm 12/12 + viền 1 ⇒ nhãn nghỉ, nhãn nổi và chữ gõ
+     cùng đứng ở x = 13 (nhãn `left: 13px` = 12 + 1 viền). Trước đó đa số ô đệm 8 + nhãn 9, còn modal newsletter / popup đăng nhập / checkout desktop / ô chọn đệm 12
+     mà nhãn vẫn 9 ⇒ chữ gõ lệch nhãn nổi 4px. Khai ĐÚNG MỘT CHỖ ở đây (selector thắng utility): class `px-2` / `px-3` / `p-2` / `pl-2` / `pl-3` trên <input> / <button>
+     của ô trong `.field-float` KHÔNG còn quyết đệm TRÁI — đừng chỉnh bằng utility. Dòng báo lỗi dưới ô vẫn sát mép trái x=0 (đúng biến thể invalid). */
   .field-float > input, .field-float > textarea {
-    width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px;
+    width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px; padding-left: 12px;
     border-color: var(--general-border);
   }
+  /* ĐỆM PHẢI = 12 (12/10/2026, lệnh user "đệm phải cũng về 12 luôn nhé"; component `field` đệm 12/12) cho mọi ô KHÔNG mang class `pr-*` — `px-2` (8) / `px-3` / `p-2` trên ô
+     cũng không còn quyết đệm phải. Ô nào phải chừa chỗ bên phải cho nút / mũi tên thì mang đúng một utility `pr-*` (mật khẩu `pr-9` 36 / `pr-10` 40 chừa nút mắt) hoặc có rule riêng
+     (`.has-act` 160 chừa nút trong ô; ô chọn <button> có `pr-9` chừa mũi tên) — selector `:not([class*="pr-"])` LOẠI các ô đó, chúng giữ nguyên. ⚠ đừng viết `padding` rút gọn ép 12
+     cả hai phía: lần đầu 12/10 làm thế thì ô mật khẩu popup đăng nhập desktop (`pr-10`) mất chỗ chừa nút mắt (bắt được nhờ đo trước / sau). Rule này đứng TRƯỚC `.has-act` để
+     cùng độ ưu tiên (0,2,1) thì `.has-act` thắng. */
+  .field-float > input:not([class*="pr-"]), .field-float > textarea:not([class*="pr-"]) { padding-right: 12px; }
   .field-float > textarea { height: auto; min-height: 72px; padding-top: 22px; resize: none; }
   .field-float > label {
-    position: absolute; left: 9px; right: 36px; top: 50%; transform: translateY(-50%);
+    position: absolute; left: 13px; right: 36px; top: 50%; transform: translateY(-50%);
     font-size: 14px; line-height: 20px; letter-spacing: .5px;
     pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     transition: top .15s ease, transform .15s ease, font-size .15s ease;
@@ -919,7 +929,7 @@ window.RESP = (function () {
      theo ô một dòng (cao 48, nhãn 20 canh giữa = top 14) nên hai loại ô vẫn cùng
      một đường dóng chữ. */
   .field-float > textarea + label { top: 14px; transform: translateY(0); }
-  .field-float.is-btn > button { width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px; border-color: var(--general-border); }
+  .field-float.is-btn > button { width: 100%; height: 48px; padding-top: 20px; padding-bottom: 6px; padding-left: 12px; border-color: var(--general-border); }
   .field-float.is-btn > label { top: 50%; transform: translateY(-50%); }
   .field-float.is-btn.is-filled > label, .field-float.is-btn:focus-within > label {
     top: 8px; transform: translateY(0); font-size: 10px; line-height: 14px;
@@ -1032,10 +1042,16 @@ window.RESP = (function () {
   .acc-nav-sep { height: 0; margin: 8px 0; border-top: 1px solid var(--unofficial-border-1); }
   /* Sổ địa chỉ: lưới tự chia theo chỗ — xem chú thích tại chỗ gọi trong accAddress. */
   .acc-addr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr)); gap: 16px; }
-  /* Ô KHOÁ: mặt xám + mực phụ, vẫn giữ đúng chiều cao/viền của ô nhập thường. */
+  /* Ô KHOÁ — theo biến thể `disabled` / `filled-disabled` của component `field` (Figma 420:6231; 12/10/2026, lệnh user "ô khoá cũng theo figma luôn nhé"). ĐỌC THEO BIẾN,
+     không theo số lưu trên paint: Dev Mode của biến thể ra nền `var(--muted)` · viền `1px solid var(--input)` · nhãn `var(--muted-foreground)` · chữ `var(--foreground)` ⇒ nền xám
+     #f5f5f5, viền + nhãn như ô thường (#d3d3d3 / #727272), chữ ĐEN #0a0a0a — bản trước dùng mực phụ #404040 (`--general-secondary-foreground`) nên lệch. Các số #8c8c8c / #d1d1d1
+     đọc được trên paint của biến thể là giá trị LƯU CŨ lệch khỏi biến (instance đọc ra #727272 / #0a0a0a / #d3d3d3), không hiển thị — đừng lấy làm chuẩn. Chiều cao / đệm / cỡ chữ =
+     ô thường. `--general-input` của code là #fff (khác biến `input` #d3d3d3 của Figma) nên viền vẫn dùng `--general-border`, cùng giá trị. */
   .field-float.is-locked > input {
-    background: var(--general-secondary);
-    color: var(--general-secondary-foreground);
+    background: var(--general-muted);
+    color: var(--general-foreground);
+    -webkit-text-fill-color: var(--general-foreground);   /* WebKit tô chữ ô disabled bằng màu riêng, mờ hơn — ép về đúng mực của thiết kế */
+    opacity: 1;
     border-color: var(--general-border);
     cursor: not-allowed;
   }
