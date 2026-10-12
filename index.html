@@ -158,12 +158,20 @@ window.RESP = (function () {
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
   /* ── Screen transitions ── */
-  .screen { opacity: 0; transform: translateY(6px); transition: opacity .28s ease, transform .28s cubic-bezier(.22,1,.36,1); }
+  /* ── Vào màn — ĐÃ TẮT 12/10/2026 (user: "tắt luôn hiệu ứng vào trang đi", sau lệnh tắt .reveal) ──
+     `.screen` hiện SẴN: không mờ, không trượt 6px, không chuyển 0,28 s — đúng trạng thái cuối của `.screen.active` (opacity 1, transform none).
+     go() dựng màn rồi gắn `.active` ĐỒNG BỘ, không chờ transitionend nên không code nào phụ thuộc thời gian chuyển.
+     Gốc: .screen { opacity: 0; transform: translateY(6px); transition: opacity .28s ease, transform .28s cubic-bezier(.22,1,.36,1); } */
+  .screen { opacity: 1; transform: none; transition: none; }
   .screen.active { opacity: 1; transform: none; }
 
   /* ── Entrance stagger ── */
   @keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  .screen.active .rise { animation: riseIn .45s cubic-bezier(.22,1,.36,1) both; }
+  /* `.rise` ĐÃ TẮT 12/10/2026 (cùng lệnh): không còn hoạt cảnh riseIn .45 s + trễ so le, nhưng GIỮ trạng thái cuối của nó — opacity 1 + transform
+     translateY(0). Hoạt cảnh fill-mode both từng để lại đúng transform ấy, tức mỗi khối .rise là MỘT ngăn xếp z riêng, và nhiều chỗ dựa vào đó
+     (nhóm biến thể PDP z-30, #sortMenu ← #plpFilterAnchor z-40, hàng tab trang Chính sách z-30) — bỏ transform là lệch lớp chồng.
+     Gốc: .screen.active .rise { animation: riseIn .45s cubic-bezier(.22,1,.36,1) both; }  (kèm các animation-delay so le ngay dưới, nay vô hại) */
+  .screen.active .rise { animation: none; opacity: 1; transform: translateY(0); }
   .screen.active .rise:nth-child(1) { animation-delay: .02s } .screen.active .rise:nth-child(2) { animation-delay: .06s }
   .screen.active .rise:nth-child(3) { animation-delay: .10s } .screen.active .rise:nth-child(4) { animation-delay: .14s }
   .screen.active .rise:nth-child(5) { animation-delay: .18s } .screen.active .rise:nth-child(6) { animation-delay: .22s }
@@ -171,8 +179,14 @@ window.RESP = (function () {
      TRƯỚC tiêu đề. Chặn đuôi để thứ tự luôn từ trên xuống. */
   .screen.active .rise:nth-child(n+7) { animation-delay: .26s }
 
-  /* ── Reveal on scroll ── */
-  .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1); }
+  /* ── Reveal on scroll — ĐÃ TẮT 12/10/2026 (user: "tắt ở các trang luôn nhé", sau câu hỏi về hiệu ứng hiện dần khi cuộn) ──
+     Mọi khối `.reveal` hiện SẴN, đúng trạng thái đã `.in`: opacity 1 + translateY(0). CỐ Ý giữ `translateY(0)` chứ không `none`
+     (mọi khối đã hiện từng mang transform khác `none` ⇒ vẫn là khối chứa cho con absolute/fixed và vẫn là ngăn xếp z riêng — đổi
+     sang `none` có thể làm lệch lớp chồng / vị trí con tuyệt đối) và giữ nguyên dòng `transition` (không còn gì để chuyển, nhưng
+     khỏi đổi cách `.reveal` đè transition của tiện ích tailwind trên cùng phần tử). Class + IntersectionObserver (observeReveal)
+     vẫn chạy, chỉ gắn `.in` vô hại. BẬT LẠI: trả `.reveal` về `opacity: 0; transform: translateY(14px)`.
+     Gốc: .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1); }  .reveal.in { opacity: 1; transform: translateY(0); } */
+  .reveal { opacity: 1; transform: translateY(0); transition: opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1); }
   .reveal.in { opacity: 1; transform: translateY(0); }
 
   /* ── Quà tặng vừa đủ điều kiện thì hiện tại chỗ ──
@@ -9633,9 +9647,10 @@ const ACC_H1 = 'text-[18px] font-medium leading-7 text-foreground';
    ("Cập nhật thông tin" · "Đổi mật khẩu"), hạ xuống là tiêu đề trang bằng tiêu đề thẻ.
    `extra` để chỗ cho nút bên phải (tab Sổ địa chỉ có "Thêm địa chỉ mới").
    `pb` (30/09/2026, user: "theo khung của tôi hết"): lớp đệm đáy hàng tiêu đề. Tab Đơn hàng truyền `acc-head-flush` (0, kể cả đệm 8 của .acc-sec-title) vì khung Figma
-   984:84749 đặt thẻ đầu SÁT tiêu đề (y 48 = 16 + tiêu đề 32; đệm đầu thẻ 16 đã là khoảng thở); các tab khác giữ pb-4. */
+   984:84749 đặt thẻ đầu SÁT tiêu đề (y 48 = 16 + tiêu đề 32; đệm đầu thẻ 16 đã là khoảng thở); các tab khác giữ pb-4.
+   12/10/2026: đệm ĐẦU (trên tiêu đề) không còn ở đây — chuyển lên #accBody (pt-6 = 24, khung user 1124:84130; số 16 ghi ở dòng trên là của khung cũ, nay y 56 = 24 + 32). */
 const accHead = (label, extra = '', pb = 'pb-4') => `
-    <div class="px-4 pt-4 ${pb}">
+    <div class="px-4 ${pb}">
       <div class="acc-sec-title flex items-end justify-between gap-4">
         <h1 class="${ACC_H1} flex-1 min-w-0">${label}</h1>
         ${extra}
@@ -9767,7 +9782,8 @@ function screenACCOUNT() {
     </div>
 
     <!-- nội dung tab -->
-    <div id="accBody" class="pb-16">
+    <!-- 12/10/2026 (user, khung Figma 1124:84130: "tăng cái accBody padding top từ 16 lên 24"): đệm đầu cột nội dung 16 → 24 — nay do CHÍNH #accBody giữ (pt-6); trước đó mỗi đầu tab tự mang pt-4 (accHead, link lùi lịch sử điểm). -->
+    <div id="accBody" class="pt-6 pb-16">
       ${accountBody()}
     </div>
   </div>`;
@@ -9806,8 +9822,8 @@ function accountBody() {
      cột (xem accAddress). Hàng tiêu đề của cả 4 tab về lại một khuôn chỉ có chữ.
      Cùng ngày trước đó: nút đã đổi từ primary sang VIỀN (lệnh user). */
   if (isPts) return `
-    <div class="px-4 pt-4"><button data-member-view="" class="t-single underline text-secondary-foreground press"><span aria-hidden="true">‹ </span>Hạng thành viên & Ưu đãi</button></div>
-    ${accHead('Lịch sử điểm thưởng')}
+    <div class="px-4"><button data-member-view="" class="t-single underline text-secondary-foreground press"><span aria-hidden="true">‹ </span>Hạng thành viên & Ưu đãi</button></div>
+    <div class="pt-4">${accHead('Lịch sử điểm thưởng')}</div>
     ${body}`;
   return `
     ${accHead(label, '', accountTab === 'orders' ? 'acc-head-flush' : 'pb-4')}

@@ -157,19 +157,33 @@ window.RESP = (function () {
   input, textarea, select { font-size: 14px; }
 
   /* ── Screen transitions ── */
-  .screen { opacity: 0; transform: translateY(6px); transition: opacity .28s ease, transform .28s cubic-bezier(.22,1,.36,1); }
+  /* ── Vào màn — ĐÃ TẮT 12/10/2026 (user: "tắt luôn hiệu ứng vào trang đi", sau lệnh tắt .reveal) ──
+     `.screen` hiện SẴN: không mờ, không trượt 6px, không chuyển 0,28 s — đúng trạng thái cuối của `.screen.active` (opacity 1, transform none).
+     go() dựng màn rồi gắn `.active` ĐỒNG BỘ, không chờ transitionend nên không code nào phụ thuộc thời gian chuyển.
+     Gốc: .screen { opacity: 0; transform: translateY(6px); transition: opacity .28s ease, transform .28s cubic-bezier(.22,1,.36,1); } */
+  .screen { opacity: 1; transform: none; transition: none; }
   .screen.active { opacity: 1; transform: none; }
   /* ── Entrance stagger ── */
   @keyframes riseIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  .screen.active .rise { animation: riseIn .45s cubic-bezier(.22,1,.36,1) both; }
+  /* `.rise` ĐÃ TẮT 12/10/2026 (cùng lệnh): không còn hoạt cảnh riseIn .45 s + trễ so le, nhưng GIỮ trạng thái cuối của nó — opacity 1 + transform
+     translateY(0). Hoạt cảnh fill-mode both từng để lại đúng transform ấy, tức mỗi khối .rise là MỘT ngăn xếp z riêng, và nhiều chỗ dựa vào đó
+     (nhóm biến thể PDP z-30, #sortMenu ← #plpFilterAnchor z-40, hàng tab trang Chính sách z-30) — bỏ transform là lệch lớp chồng.
+     Gốc: .screen.active .rise { animation: riseIn .45s cubic-bezier(.22,1,.36,1) both; }  (kèm các animation-delay so le ngay dưới, nay vô hại) */
+  .screen.active .rise { animation: none; opacity: 1; transform: translateY(0); }
   .screen.active .rise:nth-child(1) { animation-delay: .02s } .screen.active .rise:nth-child(2) { animation-delay: .06s }
   .screen.active .rise:nth-child(3) { animation-delay: .10s } .screen.active .rise:nth-child(4) { animation-delay: .14s }
   .screen.active .rise:nth-child(5) { animation-delay: .18s } .screen.active .rise:nth-child(6) { animation-delay: .22s }
   /* Quá 6 khối thì shorthand ở trên đưa delay về 0 -> khối cuối trang lại vào
      TRƯỚC tiêu đề. Chặn đuôi để thứ tự luôn từ trên xuống. */
   .screen.active .rise:nth-child(n+7) { animation-delay: .26s }
-  /* ── Reveal on scroll ── */
-  .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1); }
+  /* ── Reveal on scroll — ĐÃ TẮT 12/10/2026 (user: "tắt ở các trang luôn nhé", sau câu hỏi về hiệu ứng hiện dần khi cuộn) ──
+     Mọi khối `.reveal` hiện SẴN, đúng trạng thái đã `.in`: opacity 1 + translateY(0). CỐ Ý giữ `translateY(0)` chứ không `none`
+     (mọi khối đã hiện từng mang transform khác `none` ⇒ vẫn là khối chứa cho con absolute/fixed và vẫn là ngăn xếp z riêng — đổi
+     sang `none` có thể làm lệch lớp chồng / vị trí con tuyệt đối) và giữ nguyên dòng `transition` (không còn gì để chuyển, nhưng
+     khỏi đổi cách `.reveal` đè transition của tiện ích tailwind trên cùng phần tử). Class + IntersectionObserver (observeReveal)
+     vẫn chạy, chỉ gắn `.in` vô hại. BẬT LẠI: trả `.reveal` về `opacity: 0; transform: translateY(14px)`.
+     Gốc: .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1); }  .reveal.in { opacity: 1; transform: translateY(0); } */
+  .reveal { opacity: 1; transform: translateY(0); transition: opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1); }
   .reveal.in { opacity: 1; transform: translateY(0); }
 
   /* ── Quà tặng vừa đủ điều kiện thì hiện tại chỗ ──
@@ -623,7 +637,9 @@ window.RESP = (function () {
   /* 30/09/2026 (lệnh user, Figma 934:59690) — nút "Thêm địa chỉ mới" nay là LINK `.btn-l` cao 40, ĐÚNG bằng hàng tiêu đề 40 (32 + đệm 8 ở trên) nên luật margin âm
      hai phía ở trên (dành cho nút viền cao 48) KHÔNG dùng nữa: link căn ĐẦU hàng (hộp 0–40 như khung, chữ rơi giữa hộp nên cùng đường chữ với tiêu đề 24/32),
      và chỉ trừ 8 ở ĐÁY để hộp chiếm chỗ của nó còn 32 — không thì hàng phình 40 → 48 và cả nội dung tab tụt 8px so với khung. */
-  .acc-sec-title > .btn-l { align-self: flex-start; margin-block: 0 -8px; }
+  /* 12/10/2026 (user, khung Figma 1219:153932: "cho cái nút thêm địa chỉ sát ra viền luôn nhé"): chữ nút SÁT MÉP PHẢI của cột — bỏ đệm PHẢI 16 của `.btn-l` riêng ở hàng tiêu đề này, để
+     chữ thẳng mép phải với các thẻ địa chỉ bên dưới (trước đó thụt 16: hộp 1037→1204, chữ tới 1188). Khung vẽ chữ trần rộng đúng chữ (134) ở x 692→826 của cột 826. Đệm TRÁI 16 giữ làm vùng chạm. */
+  .acc-sec-title > .btn-l { align-self: flex-start; margin-block: 0 -8px; padding-right: 0; }
   /* Vạch dọc giữa 2 khối màn Tra cứu đơn. KHÔNG mượn .lp-line được: rule của nó
      khoanh trong #loginPop nên ở đây sẽ ra một thẻ rỗng không bề rộng. */
   .tr-line { width: 1px; background: var(--general-border); }
@@ -3461,6 +3477,30 @@ window.RESP = (function () {
   html:not(.skin-mp) [data-policy-sec] { scroll-margin-top: 144px; }
   html:not(.skin-mp) .dk-sticky-info,
   html:not(.skin-mp) .dk-sticky-side  { top: 152px; }             /* 156 - 4 */
+  /* ĐỆM TRÁI KHỐI NGÀNH HÀNG (NỮ · NAM · LÀM ĐẸP) +4 — 12/10/2026, lệnh user: "tăng 4 px bên
+     block bên trái theo component của tôi" (Figma `page-header-desktop` 1153:103059, biến thể
+     kind=default: khối `dept-group` đệm trái 0 → 4). Chữ NỮ lùi từ x=20 về x=24 = đúng lề 24 của
+     khung nội dung (checkout px-6, mega panel padding 24).
+     Đo thêm được một hệ quả: `#dkNavLeft` là flex-1 nên cơ sở flex của nó = đúng đệm của nó. Khối
+     phải (px-0.5 = 2 + 2) có cơ sở 4, trước đây khối trái 0 ⇒ hai bên lệch 4 và LOGO trôi trái 2px
+     (đo ở 1440: tâm logo 710,5 so với tâm hàng 712,5). Nay hai bên cùng cơ sở 4 ⇒ chia đều, logo về
+     đúng giữa — khớp component, nơi hai khối đều FILL.
+     ⚠ Sau này đổi đệm ngang của khối phải thì phải giữ TỔNG đệm hai bên bằng nhau, kẻo logo lệch lại.
+     Cùng nhóm geometry với 64/64 nên cùng điều kiện: mọi bộ da TRỪ skin-mp. */
+  html:not(.skin-mp) #dkNavLeft { padding-left: 4px; }
+  /* KHỐI PHẢI CỦA HÀNG NAV + NÚT NGÔN NGỮ — 12/10/2026, lệnh user: "áp luôn khối phải và nút lang
+     theo figma nhé" (trả lời hai chỗ còn lệch sau lượt +4 bên trái; component `page-header-desktop`
+     kind=default, khối `box` 638:51306 và instance `lang` 1333:77568).
+     · Khối phải: đệm 2/2 (px-0.5) → TRÁI 4 / PHẢI 0, vẫn canh phải ⇒ nút giỏ chạm mép phải của hàng
+       (x=1432 ở khung 1440, trước 1430), cả cụm dịch phải 2px. Đệm TRÁI 4 giữ cơ sở flex của hai khối
+       quanh logo BẰNG NHAU (đúng lý do của rule `#dkNavLeft` ngay trên): trái 4 / phải 4 ⇒ logo vẫn
+       đúng giữa. Bỏ đệm trái này thì logo trôi trái 2px.
+     · Nút ngôn ngữ: h-9 (36) → 44, bằng ba nút icon cùng hàng. Cờ + chữ vẫn canh giữa (items-center),
+       bề ngang giữ 79 (đệm 12 + cờ 20 + khe 8 + chữ 27 + đệm 12); nền hover ghost cũng cao 44.
+     Cùng điều kiện với rule trên: mọi bộ da TRỪ skin-mp. Selector theo id / thuộc tính (đặc hiệu
+     0,2,1) nên thắng `.px-0\.5` / `.h-9` còn ở markup. */
+  html:not(.skin-mp) #dkNavRight { padding: 0 0 0 4px; }
+  html:not(.skin-mp) [data-dklang] { height: 44px; }
   /* ⚠ CỘT TÓM TẮT GIỎ PHẢI BÙ LẠI ĐỆM TRÊN 64 (17/09/2026, user báo: "khi scroll
      xuống ở bên tóm tắt đơn hàng đang bị thừa 1 khoảng gap lớn bên trên khiến
      không hiển thị đủ nội dung").
@@ -9644,10 +9684,14 @@ function navBar({ logoOnly = false, plp = false, back = false } = {}) {
         <img id="dkNavLogo" src="${A}logo.png" alt="DAFC" class="h-5 w-[93px] object-contain cursor-pointer press shrink-0" data-nav="home">
         <!-- Cụm tiện ích (đổi 17/08/2026, yêu cầu user): nút ngôn ngữ thành CỜ +
              mã 3 chữ · BỎ nút "Danh sách cửa hàng" · nút TÌM KIẾM dời từ
-             subheader lên đây, đứng cạnh nút ngôn ngữ. -->
-        <div class="flex-1 flex items-center justify-end px-0.5">
+             subheader lên đây, đứng cạnh nút ngôn ngữ.
+             12/10/2026 (theo component Figma): đệm khối = trái 4 / phải 0 và nút ngôn ngữ cao 44 —
+             khai ở CSS "KHỐI PHẢI CỦA HÀNG NAV"; px-0.5 và h-9 ở đây là số của bộ da skin-mp.
+             Nhãn ENG / VIE là MỘT dòng nên dùng t-single 12/16 (trước t-multiline 12/18 — lệch 2px
+             so với Figma, nơi nhãn lang cao 16; đổi class không làm đổi hộp nút vì chiều cao nút cố định). -->
+        <div id="dkNavRight" class="flex-1 flex items-center justify-end px-0.5">
           <button id="dkSearchBtn" class="ghost-hover w-11 h-11 rounded-xs flex items-center justify-center press [&_svg]:w-4 [&_svg]:h-4" aria-label="Tìm kiếm">${I.search}</button>
-          <button data-dklang class="t-multiline ghost-hover h-9 px-3 rounded-xs flex items-center gap-2 font-medium text-mid-alt transition-colors press" aria-label="Đổi ngôn ngữ">${dkLangChip()}</button>
+          <button data-dklang class="t-single ghost-hover h-9 px-3 rounded-xs flex items-center gap-2 font-medium text-mid-alt transition-colors press" aria-label="Đổi ngôn ngữ">${dkLangChip()}</button>
           <!-- brief PDF trang 36: "Hover vào Account xổ ra màn đăng nhập hoặc
                đăng ký tài khoản" (tham chiếu Ralph Lauren). data-acc-icon là
                móc RIÊNG cho panel hover (đợt sau, xem IIFE gần cuối file) —
