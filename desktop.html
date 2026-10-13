@@ -4683,6 +4683,15 @@ window.RESP = (function () {
     --unofficial-outline-hover: rgba(0,0,0,.04);
     --unofficial-outline-active: rgba(0,0,0,.06);
     --general-success: #1a7a5c;
+    /* 12/10/2026 (lệnh user: "màu thì theo figma làm chuẩn", lượt quét token Figma ↔ code 28/42): 4 token trạng thái nhạt về ĐÚNG giá trị bộ Color Figma
+       (thêm 30/09) — success-surface emerald/50 #ecfdf5 (nền badge đơn "Hoàn tất", qua --ord-bg) · success-border #6ee7b7 · success-foreground #ffffff ·
+       warning-foreground #0a0a0a. Chỉ success-subtle đang có chỗ gọi (nền badge); 3 token kia chưa dùng ở đâu. KHÔNG đụng --general-warning-border (#fef3c7):
+       code dùng nó làm NỀN hover của badge "Chờ thanh toán" (amber/100) chứ không phải viền — còn `warning-border` Figma là amber/300 #fcd34d, hai VAI khác
+       nhau; chờ user chốt (đổi tên token ở code hay sửa Figma). */
+    --general-success-subtle: #ecfdf5;
+    --general-success-border: #6ee7b7;
+    --general-success-foreground: #ffffff;
+    --general-warning-foreground: #0a0a0a;
     --general-warning: #d97706;
     --general-info: #2563eb;
     --focus-ring: #727272;
@@ -7106,6 +7115,10 @@ window.RESP = (function () {
     background: var(--cu-surface);
     --general-muted-foreground: #666666;
   }
+  /* 12/10/2026 (lệnh user: "màu thì theo figma làm chuẩn", lượt quét Figma ↔ code): nhãn nổi "Nhập email" của băng đăng ký nằm TRONG ô nhập nền
+     TRẮNG (bg-background), không nằm trên mặt kem — nên lấy lại muted-foreground #727272 như component `field` (Figma 418:6100, 8 khung) thay vì
+     #666666 của ngoại lệ mặt kem ở trên. CHỈ nhãn trong ô: dòng pháp lý "Bằng việc đăng ký…" đứng trên kem vẫn #666666 (Figma cũng #666666 thô). */
+  html.skin-mt.skin-li .hm-signup-band .field-float > label { --general-muted-foreground: #727272; }
 
   /* ── GIỎ HÀNG — ĐỒNG + THẺ NHỎ LẠI (23/09/2026) · CHỈ CÓ Ở FILE NÀY ──────────
      Lệnh user: *"ở trang cart sẽ nhúng màu và giảm size của các thẻ cart theo
@@ -9803,6 +9816,12 @@ const FOOTER_ROUTES = {
   'Tra cứu đơn hàng':        'track',
 };
 
+/* 13/10/2026 (lệnh user "làm theo đề xuất của bạn", câu hỏi chân trang): TẤT CẢ link chân trang cùng #404040
+   `secondary-foreground` — link có route lẫn link chỉ hiện toast. Hôm qua (12/10) Figma `page-footer-desktop`
+   (65:2022) còn 3 link ĐEN (bảo mật · đổi trả · điều khoản) nên code giữ hằng riêng cho 3 link đó; nay 3 nút
+   ấy trong component Figma (638:50660 · 638:50667 · 638:50669) đã buộc `secondary-foreground` (125 instance
+   đều #404040) ⇒ hằng gỡ. Hover vẫn đen + gạch chân (.ft-link). Chỉ bản DESKTOP: footer mobile là accordion,
+   Figma mobile không vẽ link nên chưa có số đo. */
 const FOOTER_COLS = [
   ['Liên hệ với chúng tôi', ['Thông tin về DAFC','Tuyển dụng','Liên hệ','Danh sách cửa hàng']],
   ['Chăm sóc khách hàng',   ['Chương trình thành viên','Câu hỏi thường gặp','Tra cứu đơn hàng','Chính sách vận chuyển','Chính sách đổi trả','Chính sách trả góp','Chính sách thanh toán','Hướng dẫn bảo quản sản phẩm']],
@@ -9848,7 +9867,7 @@ function footer() {
             <p class="t-multiline font-medium text-foreground">${title}</p>
             <div class="flex flex-col gap-2">
               ${links.map(l => FOOTER_ROUTES[l]
-                ? `<button data-nav="${FOOTER_ROUTES[l]}" class="t-multiline text-left py-0.5 text-foreground ft-link hover:text-foreground transition-colors press">${l}</button>`
+                ? `<button data-nav="${FOOTER_ROUTES[l]}" class="t-multiline text-left py-0.5 text-secondary-foreground ft-link hover:text-foreground transition-colors press">${l}</button>`
                 : `<button data-toast="${l}" class="t-multiline text-left py-0.5 text-secondary-foreground hover:text-foreground transition-colors press">${l}</button>`).join('')}
             </div>
           </div>`).join('')}
@@ -10038,6 +10057,8 @@ function dkCrumbs(parts) {
    [Bộ lọc (n) outline h-48 + chip ghost h-48] · [density 4/3 cột | nhãn sắp xếp]
    · nút Bộ lọc kèm số bộ lọc đang áp dụng (Figma: "Bộ lọc (2)")
    · chip trùng danh mục đang xem = State Active → chữ #0a0a0a
+   · chip còn lại = ghost-muted → chữ #727272 `muted-foreground` (12/10/2026, lệnh user "màu thì theo
+     figma làm chuẩn": component `action` 451:32729 ở cả 12 khung PLP; trước đó là .text-mid-alt #666666)
    · icon mật độ 20px, cái không chọn để opacity .5 (State Disabled)
    · nhãn nút sắp xếp = giá trị đang chọn (Figma: "Giá : Tăng dần") ── */
 function dkFilterBar(count) {
@@ -10068,7 +10089,7 @@ function dkFilterBar(count) {
              template literal của filterBar(), backtick sẽ cắt đứt chuỗi.) -->
         <button data-sheet="filter" class="t-multiline h-9 px-3 shrink-0 rounded-xs border border-primary bg-background flex items-center gap-2 text-foreground btn-o press">${I.sliders} <span id="filterBtnLabel">Bộ lọc${plpFilters.length ? ` (${plpFilters.length})` : ''}</span></button>
         <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
-          ${chips.map(c => `<button ${dkCatAttrs(c)} class="t-single h-9 px-3 shrink-0 rounded-xs flex items-center font-medium ghost-hover press ${c === activeChip ? 'text-foreground' : 'text-mid-alt'}">${c}</button>`).join('')}
+          ${chips.map(c => `<button ${dkCatAttrs(c)} class="t-single h-9 px-3 shrink-0 rounded-xs flex items-center font-medium ghost-hover press ${c === activeChip ? 'text-foreground' : 'text-muted-foreground'}">${c}</button>`).join('')}
         </div>
       </div>
       <div class="flex items-center shrink-0">
@@ -15996,10 +16017,12 @@ function screenCART() {
              "Swap vị trí giá và số lượng"): số lượng giờ đứng TRƯỚC (trái), giá đứng
              SAU (phải). Xem chú thích đầy đủ ở bản mobile (index.html, cùng hàm). -->
         <div class="flex items-end justify-between gap-0.5">
-          <!-- stepper ghost không viền: [− 12px][02 12 medium][+ 12px], cao 24 -->
+          <!-- stepper ghost không viền: [− 12px][02 12 medium][+ 12px], cao 24.
+               12/10/2026 (lệnh user: "màu thì theo figma làm chuẩn"): CON SỐ lấy secondary-foreground #404040 như
+               cart-row-desktop 543:20984 (68 khung); hai icon +/- giữ nguyên (ghost-foreground), chưa có số đo Figma thống nhất -->
           <div class="flex items-center shrink-0">
             <button class="qty-btn min-h-6 px-2 rounded-xs flex items-center justify-center press"${(c.qty || 1) <= 1 ? ' disabled' : ''} data-step="-1" aria-label="Giảm số lượng"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--unofficial-ghost-foreground)"><path d="M0,11.5H24V12.5H0Z"/></svg></button>
-            <span class="t-single qty w-7 min-h-6 flex items-center justify-center font-medium" style="color:var(--unofficial-ghost-foreground)">${String(c.qty).padStart(2,'0')}</span>
+            <span class="t-single qty w-7 min-h-6 flex items-center justify-center font-medium" style="color:var(--general-secondary-foreground)">${String(c.qty).padStart(2,'0')}</span>
             <button class="qty-btn min-h-6 px-2 rounded-xs flex items-center justify-center press"${c.stock === 0 || (c.stock != null && (c.qty || 1) >= c.stock) ? ' disabled' : ''} data-step="1" aria-label="Tăng số lượng"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--unofficial-ghost-foreground)"><path d="M24,12.5H12.5v11.5h-1V12.5H0v-1H11.5V0h1V11.5h11.5v1Z"/></svg></button>
           </div>
           <!-- THỨ TỰ 2 DÒNG GIÁ — chốt 17/09/2026 theo component cart-row (65:2122),

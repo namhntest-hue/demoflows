@@ -2217,6 +2217,15 @@ window.RESP = (function () {
     --unofficial-outline-hover: rgba(0,0,0,.04);
     --unofficial-outline-active: rgba(0,0,0,.06);
     --general-success: #1a7a5c;
+    /* 12/10/2026 (lệnh user: "màu thì theo figma làm chuẩn", lượt quét token Figma ↔ code 28/42): 4 token trạng thái nhạt về ĐÚNG giá trị bộ Color Figma
+       (thêm 30/09) — success-surface emerald/50 #ecfdf5 (nền badge đơn "Hoàn tất", qua --ord-bg) · success-border #6ee7b7 · success-foreground #ffffff ·
+       warning-foreground #0a0a0a. Chỉ success-subtle đang có chỗ gọi (nền badge); 3 token kia chưa dùng ở đâu. KHÔNG đụng --general-warning-border (#fef3c7):
+       code dùng nó làm NỀN hover của badge "Chờ thanh toán" (amber/100) chứ không phải viền — còn `warning-border` Figma là amber/300 #fcd34d, hai VAI khác
+       nhau; chờ user chốt (đổi tên token ở code hay sửa Figma). */
+    --general-success-subtle: #ecfdf5;
+    --general-success-border: #6ee7b7;
+    --general-success-foreground: #ffffff;
+    --general-warning-foreground: #0a0a0a;
     --general-warning: #d97706;
     --general-info: #2563eb;
     --focus-ring: #727272;
@@ -5169,6 +5178,10 @@ window.RESP = (function () {
     background: var(--cu-surface);
     --general-muted-foreground: #666666;
   }
+  /* 12/10/2026 (lệnh user: "màu thì theo figma làm chuẩn", lượt quét Figma ↔ code): nhãn nổi "Nhập email" của băng đăng ký nằm TRONG ô nhập nền
+     TRẮNG (bg-background), không nằm trên mặt kem — nên lấy lại muted-foreground #727272 như component `field` (Figma 418:6100, 8 khung) thay vì
+     #666666 của ngoại lệ mặt kem ở trên. CHỈ nhãn trong ô: dòng pháp lý "Bằng việc đăng ký…" đứng trên kem vẫn #666666 (Figma cũng #666666 thô). */
+  html.skin-mt.skin-li .hm-signup-band .field-float > label { --general-muted-foreground: #727272; }
 
   /* ── GIỎ HÀNG — ĐỒNG (23/09/2026) · ĐỒNG BỘ VỚI `desktop.html` ────────────────
      Lệnh user: *"đồng bộ luôn cho bản mobile đi"*, ngay sau lượt làm cho desktop
@@ -14024,10 +14037,12 @@ function screenCART() {
              hàng giỏ đậm lên" — .font-medium bị skin-mt quét về 400 nên phải có
              ngoại lệ tên riêng, không thể chỉ thêm class font-medium/font-bold). -->
         <div class="flex items-end justify-between gap-0.5">
-          <!-- stepper ghost không viền (item-cart 2851:28705): [− 12px][02 12 medium][+ 12px], cao 24 -->
+          <!-- stepper ghost không viền (item-cart 2851:28705): [− 12px][02 12 medium][+ 12px], cao 24.
+               12/10/2026 (lệnh user: "màu thì theo figma làm chuẩn"): CON SỐ lấy secondary-foreground #404040 như
+               cart-row 543:20817 (68 khung); hai icon +/- vẫn #333 (ghost-foreground) vì Figma cart-row mobile cũng #333 -->
           <div class="flex items-center shrink-0">
             <button class="qty-btn min-h-6 px-2 rounded-xs flex items-center justify-center press"${(c.qty || 1) <= 1 ? ' disabled' : ''} data-step="-1" aria-label="Giảm số lượng"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--unofficial-ghost-foreground)"><path d="M0,11.5H24V12.5H0Z"/></svg></button>
-            <span class="t-single qty w-7 min-h-6 flex items-center justify-center font-medium" style="color:var(--unofficial-ghost-foreground)">${String(c.qty).padStart(2,'0')}</span>
+            <span class="t-single qty w-7 min-h-6 flex items-center justify-center font-medium" style="color:var(--general-secondary-foreground)">${String(c.qty).padStart(2,'0')}</span>
             <button class="qty-btn min-h-6 px-2 rounded-xs flex items-center justify-center press"${c.stock === 0 || (c.stock != null && (c.qty || 1) >= c.stock) ? ' disabled' : ''} data-step="1" aria-label="Tăng số lượng"><svg width="12" height="12" viewBox="0 0 24 24" fill="var(--unofficial-ghost-foreground)"><path d="M24,12.5H12.5v11.5h-1V12.5H0v-1H11.5V0h1V11.5h11.5v1Z"/></svg></button>
           </div>
           <!-- whitespace-nowrap trên 2 dòng giá: chuỗi giá mang space thường
@@ -14394,7 +14409,10 @@ function viewOtp() {
   ${authNav('Xác thực OTP')}
   <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
     <h2 class="t-display-title font-light text-foreground">Xác thực OTP</h2>
-    <p class="t-multiline" style="color:var(--unofficial-ghost-foreground)">Mã xác thực đã được gửi đến ${authPhone ? `<b class="font-medium text-foreground">${authPhone}</b>` : 'số điện thoại của bạn'}<br>Hoặc <button data-otp-change class="underline underline-offset-2 press">thay đổi số điện thoại</button></p>
+    <!-- 12/10/2026 (lệnh user: "màu thì theo figma làm chuẩn"): cả đoạn #404040 secondary-foreground theo khung Figma
+         mobile "Auth / mobile · enter OTP" (413:23765, nút 413:23790 · 413:23791); trước đó ghost-foreground #333333.
+         Bản desktop GIỮ #333333 vì khung Figma desktop "Auth / desktop · enter OTP" (1123:81024) vẫn #333333. -->
+    <p class="t-multiline" style="color:var(--general-secondary-foreground)">Mã xác thực đã được gửi đến ${authPhone ? `<b class="font-medium text-foreground">${authPhone}</b>` : 'số điện thoại của bạn'}<br>Hoặc <button data-otp-change class="underline underline-offset-2 press">thay đổi số điện thoại</button></p>
     <!-- Bọc thêm 1 lớp để dòng lỗi nằm SÁT hàng ô (gap-2 = 8px). Để nó làm con
          trực tiếp của cột gap-6 thì lỗi rơi cách hàng ô 24px, đọc ra là chú
          thích của khối dưới chứ không phải lỗi của ô. -->
@@ -24716,7 +24734,9 @@ function quickAddBody(p, idx, sel = 0) {
             ${p.preorder ? `<span class="t-single badge-inline px-1 font-medium text-foreground shrink-0">Đặt trước</span>` : ''}
             <p class="t-multiline min-w-0 truncate text-foreground-alt">${p.name}</p>
           </div>
-          <button id="qaDetail" class="t-multiline shrink-0 underline press" style="color:var(--unofficial-ghost-foreground)">Xem chi tiết</button>
+          <!-- 12/10/2026 (lệnh user: "màu thì theo figma làm chuẩn"): chữ #404040 secondary-foreground
+               như component quick-add 821:192936 (trước đó ghost-foreground #333333) -->
+          <button id="qaDetail" class="t-multiline shrink-0 underline press" style="color:var(--general-secondary-foreground)">Xem chi tiết</button>
         </div>
       </div>
       ${document.documentElement.classList.contains('skin-mt') ? '' : `
@@ -25102,7 +25122,9 @@ document.body.insertAdjacentHTML('beforeend', `
       </div>
       <div class="px-4 pt-2 pb-4 flex flex-col gap-2.5 shrink-0">
         <button id="ccGoCart" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press">Xem giỏ hàng</button>
-        <button id="ccContinue" class="t-multiline w-full h-9 rounded-xs font-medium press" style="color:var(--unofficial-ghost-foreground)">Tiếp tục mua sắm</button>
+        <!-- 12/10/2026 (lệnh user: "màu thì theo figma làm chuẩn"): #404040 secondary-foreground như khung Figma
+             "Add to cart / mobile · pre-order item" (413:18595 · 413:18819); trước đó ghost-foreground #333333 -->
+        <button id="ccContinue" class="t-multiline w-full h-9 rounded-xs font-medium press" style="color:var(--general-secondary-foreground)">Tiếp tục mua sắm</button>
       </div>
       <div class="safe-b"></div>
     </div>
