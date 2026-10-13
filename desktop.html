@@ -9043,7 +9043,11 @@ const OOS_MODE = { '43': 'oos', '44': 'notify' };
    (Onesize, S/M/L, dung tích 90 ml) giữ nguyên.
    Khác bản mobile: chip/dropdown desktop lấy data-size = chính label nên nhãn
    có tiền tố CHẢY VÀO setCta — tra OOS_MODE/SIZE_LOW_STOCK (key số thô) phải
-   qua sizeRaw() bóc tiền tố trước. */
+   qua sizeRaw() bóc tiền tố trước.
+   13/10/2026 (lệnh user: "vẫn giữ tiền tố IT"): luật áp cho CẢ bộ size RIÊNG của SP
+   (thắt lưng 85-105, D&G, Zimmermann 0-4 / 25-27, Versace bổ sung) — KHÔNG có ngoại
+   lệ theo hãng. PDP · dải size hover · quick add cùng đọc pcSizesOf() nên ra cùng một
+   chuỗi, nhờ vậy 3 lối thêm giỏ gộp được về MỘT dòng. */
 const SIZE_UNIT = 'IT';
 const sizeLabel = s => /^\d+$/.test(s) ? `${SIZE_UNIT} ${s}` : s;
 const sizeRaw = l => String(l).startsWith(`${SIZE_UNIT} `) ? String(l).slice(SIZE_UNIT.length + 1) : l;
@@ -9086,6 +9090,15 @@ const SIZES_SHOE = ['36','37','38','39','40','41','42','43','44'];
    một chỗ sửa, mọi nơi chọn size đọc theo. */
 const isShoe = p => /^(giày|sandal|sneaker|bốt|dép)/i.test((p && p.name) || '');
 const sizesOf = p => isShoe(p) ? SIZES_SHOE : SIZES;
+/* 13/10/2026 — NÚT "BẢNG KÍCH THƯỚC" CHỈ DỰNG CHO HÀNG CÓ SIZE ĐỂ TRA (lệnh user: "mấy cái sản phẩm beauty bỏ cái size guide ra nhé", rồi "làm cả 2 câu luôn nhé"
+   cho 4 túi Onesize). Bảng SIZE_CHART chỉ có quần áo nam + đồ lót nên vô nghĩa với: (1) hàng làm đẹp — chọn DUNG TÍCH (ml), nhận theo p.dept chứ KHÔNG đoán từ p.sizes
+   (hàng thời trang D&G / Zimmermann cũng khai sizes); (2) hàng chỉ có MỘT nhãn Onesize (túi). `labels` = bộ size mà chính màn đó đang bày — chuỗi hoặc { label }.
+   MỘT nguồn cho 6 màn PDP mobile + PDP desktop + quick add desktop. */
+const hasSizeChart = (p, labels) => {
+  if (p && p.dept === 'beauty') return false;
+  const L = (labels || []).map(x => String(x && x.label !== undefined ? x.label : x));
+  return !(L.length === 1 && /^onesize$/i.test(L[0]));
+};
 
 // Danh sách kích thước cho các PDP dùng "dropdown" (giờ mở bottom sheet thay vì <select>)
 // `left` = số lượng còn lại, CHỈ gán khi sắp hết -> hàng đó hiện "Còn X sản phẩm";
@@ -11395,9 +11408,19 @@ function pcSizesOf(p, i) {
      28/08. Lưới của nó vẫn 4 cột (.pc-sizes) — hẹp hơn trần 5 ô/dòng nên KHÔNG
      phạm luật; đổi 4 -> 5 ở đây phải tính lại bề rộng ô trong tấm hover, nói
      một tiếng nếu muốn ép cả tấm đó về đúng 5. */
-  if (p.sizes && p.sizes.length) return capSizes(p.sizes).map(label => ({ label, oos: '' }));
+  /* 13/10/2026 (lệnh user: "vẫn giữ tiền tố IT"): bộ size RIÊNG của SP cũng qua sizeLabel — nhãn số thuần mang tiền tố IT (85 -> IT 85), nhãn chữ (Onesize,
+     S/M/L, 30 ml) giữ nguyên. Trước đó nhãn riêng để trần nên PDP + dải size hover ghi "85" còn quick add ghi "IT 85". */
+  if (p.sizes && p.sizes.length) return capSizes(p.sizes).map(s => ({ label: sizeLabel(s), oos: '' }));
   return capSizes(SIZES_BY_PRODUCT[i] || pdpSizes(sizesOf(p)));
 }
+
+/* 13/10/2026 (lệnh user: "làm cả 2 câu luôn nhé") — BỘ SIZE CỦA QUICK ADD DESKTOP = ĐÚNG BỘ PDP CỦA CHÍNH SP, cùng hợp đồng qaSizesOf() của bản mobile.
+   Trước đó quick add đọc thẳng `capSizes(p.sizes || sizesOf(p))` nên SP KHÔNG khai p.sizes mà có PDP riêng (khăn lụa S / M / L, túi Onesize) ra mặc định IT 39–44.
+   · SP khai p.sizes (hàng làm đẹp ml, D&G, Zimmermann, 6 SP Versace bổ sung): nhãn qua sizeLabel (số thuần mang tiền tố IT), không món nào hết;
+   · còn lại: bộ của PDP tương ứng (SIZES_BY_PRODUCT) hoặc mặc định theo loại hàng (sizesOf), kèm cờ hết hàng (43 · 44).
+   Cả hai nhánh nằm trong pcSizesOf() (từ lượt "vẫn giữ tiền tố IT" cùng ngày, PDP + dải size hover + quick add dùng chung MỘT nguồn nên không còn "IT 85" ≠ "85").
+   Trả [{ label, oos }]; label vừa là nhãn hiển thị vừa là data-size (ghi vào giỏ). */
+const qaSizesOf = (p, idx) => pcSizesOf(p, idx);
 
 /* TRẢ GÓP — "Trả trước từ … /tháng · Xem chi tiết" nằm NGAY DƯỚI nút Thêm vào
    giỏ hàng và CĂN GIỮA (chốt 18/08/2026, yêu cầu user; trước đó khối này nằm
@@ -11754,8 +11777,13 @@ function dkScreenPDP(kind) {
             </div>`}
             <div class="flex flex-col gap-2">
               <div class="flex items-center justify-between">
-                <p class="t-single font-medium text-foreground">Kích thước</p>
-                <button data-size-chart aria-label="Mở bảng kích thước" class="t-single text-foreground press whitespace-nowrap">Bảng kích thước<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:inline-block;vertical-align:middle"><path transform="translate(5 6.04)" d="M 14 5.96 C 14 6.62 13.74 7.25 13.28 7.72 L 9.36 11.8 C 9.26 11.91 9.13 11.96 9 11.96 C 8.88 11.96 8.75 11.91 8.65 11.82 C 8.45 11.63 8.45 11.31 8.64 11.11 L 12.56 7.02 C 12.73 6.86 12.84 6.67 12.92 6.46 L 0.5 6.46 C 0.22 6.46 0 6.23 0 5.96 C 0 5.68 0.22 5.46 0.5 5.46 L 12.91 5.46 C 12.84 5.25 12.71 5.06 12.55 4.9 L 8.6 0.85 C 8.41 0.65 8.41 0.33 8.61 0.14 C 8.81 -0.05 9.12 -0.05 9.31 0.15 L 13.26 4.19 C 13.73 4.66 14 5.29 14 5.96 Z" fill="currentColor"/></svg></button>
+                <!-- 13/10/2026 (lệnh user: "làm cả 3 câu luôn nhé"): nhãn đọc theo NGÀNH HÀNG như quick add — hàng làm đẹp chọn Dung tích (ml), không phải Kích thước.
+                     (Không dấu backtick trong comment — khối này nằm trong template literal.) -->
+                <p class="t-single font-medium text-foreground">${P.dept === 'beauty' ? 'Dung tích' : 'Kích thước'}</p>
+                <!-- 13/10/2026 (lệnh user: "mấy cái sản phẩm beauty bỏ cái size guide ra nhé", rồi "làm cả 2 câu luôn nhé"): nút bảng kích thước CHỈ dựng khi hasSizeChart(): hàng
+                     làm đẹp (chọn dung tích ml) và hàng chỉ có một nhãn Onesize (túi) không có bảng size áo / giày để tra. KHÔNG đoán ngành từ p.sizes.
+                     (Không dấu backtick trong comment — khối này nằm trong template literal.) -->
+                ${hasSizeChart(P, D.sizes) ? '<button data-size-chart aria-label="Mở bảng kích thước" class="t-single text-foreground press whitespace-nowrap">Bảng kích thước<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:inline-block;vertical-align:middle"><path transform="translate(5 6.04)" d="M 14 5.96 C 14 6.62 13.74 7.25 13.28 7.72 L 9.36 11.8 C 9.26 11.91 9.13 11.96 9 11.96 C 8.88 11.96 8.75 11.91 8.65 11.82 C 8.45 11.63 8.45 11.31 8.64 11.11 L 12.56 7.02 C 12.73 6.86 12.84 6.67 12.92 6.46 L 0.5 6.46 C 0.22 6.46 0 6.23 0 5.96 C 0 5.68 0.22 5.46 0.5 5.46 L 12.91 5.46 C 12.84 5.25 12.71 5.06 12.55 4.9 L 8.6 0.85 C 8.41 0.65 8.41 0.33 8.61 0.14 C 8.81 -0.05 9.12 -0.05 9.31 0.15 L 13.26 4.19 C 13.73 4.66 14 5.29 14 5.96 Z" fill="currentColor"/></svg></button>' : ''}
               </div>
               <!-- CHIP GRID cho CẢ 6 kind — 28/08 bỏ dropdown (lệnh user); nhánh
                    [data-size-dd] cũ trong wire() đã gỡ. Nguồn size vẫn là
@@ -12959,7 +12987,7 @@ const HM_USP = [
   ['member',   'Đặc quyền thành viên DAFC'],
   ['pay',      'Thanh toán linh hoạt'],
   ['exchange', 'Đổi trả miễn phí trong 14 ngày'],
-  ['ship',     'Miễn phí giao hàng (*)'],
+  ['ship',     'Miễn phí giao hàng cho thành viên DAFC (*)'],
 ];
 
 function hmUsp() {
@@ -16004,9 +16032,13 @@ function screenCART() {
                  TÊN cùng hàng với tên — đúng khuôn thẻ PLP chốt 27/08 (lệnh user
                  "đồng bộ cách đặt badge đặt trước trước tên sản phẩm cho toàn bộ
                  các thẻ"). -->
+            <!-- 13/10/2026 (lệnh user "làm code lên 14/20 theo figma"): TÊN hàng lên .t-lead 14/20 — đúng
+                 cart-row-desktop 543:20989 (text style t-body-lead, cả 5 kind); trước là .t-multiline 12/18.
+                 Dòng biến thể nhờ đó tụt từ y 63 xuống y 65 = số của Figma. Brand ĐÃ 14/20 từ trước (rule
+                 p:has(+ .del) ở khối CSS giỏ). Mini cart (639:64885) và tấm "Đã thêm vào giỏ" KHÔNG đổi. -->
             <div class="flex items-center gap-1.5 min-w-0">
               ${c.preorder ? `<span class="t-single badge-inline px-1 font-medium text-foreground shrink-0">Đặt trước</span>` : ''}
-              <p class="t-multiline w-full min-w-0 text-secondary-foreground truncate">${c.name}</p>
+              <p class="t-lead w-full min-w-0 text-secondary-foreground truncate">${c.name}</p>
             </div>
           </div>
           <p class="t-single text-muted-foreground">${c.variant}</p>
@@ -16548,7 +16580,7 @@ function viewLogin() {
     <div class="flex flex-col gap-6">
       ${afield('Số điện thoại', 'type="tel" inputmode="tel" id="loginId"', 'Nhập số điện thoại')}
       ${afield('Mật khẩu', 'type="password"', 'Nhập mật khẩu',
-        '<button data-auth-go="forgot" class="t-multiline text-muted-foreground press">Quên mật khẩu?</button>')}
+        '<button data-auth-go="forgot" class="t-multiline text-muted-foreground underline press">Quên mật khẩu?</button>')}
     </div>
     ${abtn('Đăng nhập', 'data-login-submit')}
   </div>`;
@@ -20415,7 +20447,7 @@ function trackEntryView() {
         <div class="flex flex-col gap-4">
           ${afield('Số điện thoại', 'type="tel" inputmode="tel" id="trackLoginId"', 'Nhập số điện thoại')}
           ${afield('Mật khẩu', 'type="password"', 'Nhập mật khẩu',
-            '<button data-nav="login" class="t-multiline text-muted-foreground press">Quên mật khẩu?</button>')}
+            '<button data-nav="login" class="t-multiline text-muted-foreground underline press">Quên mật khẩu?</button>')}
         </div>
         <button data-nav="login" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press flex items-center justify-center">Đăng nhập</button>
       </div>
@@ -21742,7 +21774,7 @@ const I18N = {
      mấy chuỗi dưới đây KHÔNG có khoá nên bản Anh vẫn đứng nguyên tiếng Việt. */
   'Tóm tắt đơn hàng':'Order summary',
   'Đổi trả miễn phí trong 14 ngày':'14 days free product exchange',
-  'Miễn phí giao hàng (*)':'Free shipping for DAFC members',
+  'Miễn phí giao hàng cho thành viên DAFC (*)':'Free shipping for DAFC members',
   'Tầng 3, Tòa nhà Centec, 72-74 Nguyễn Thị Minh Khai, Phường Xuân Hòa, TP. Hồ Chí Minh':'3rd Floor, Centec Tower, 72-74 Nguyen Thi Minh Khai, Xuan Hoa Ward, Ho Chi Minh City',
   'Sản phẩm không áp dụng:':'Not applied for:',
   'Đồ lót, đồ tắm':'Underwear, beachwear',
@@ -27418,16 +27450,16 @@ function quickAddBody(p, idx, sel = 0) {
              nên điều kiện cũ gọi đầm Zimmermann là "Dung tích".
              (Không dấu backtick trong comment — khối này nằm trong template literal.) -->
         <p class="t-single font-medium text-foreground">${p.dept === 'beauty' ? 'Dung tích' : 'Kích thước'}</p>
-          ${p.dept === 'beauty' ? '' : '<button data-size-chart aria-label="Mở bảng kích thước" class="t-single text-foreground press whitespace-nowrap">Bảng kích thước<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:inline-block;vertical-align:middle"><path transform="translate(5 6.04)" d="M 14 5.96 C 14 6.62 13.74 7.25 13.28 7.72 L 9.36 11.8 C 9.26 11.91 9.13 11.96 9 11.96 C 8.88 11.96 8.75 11.91 8.65 11.82 C 8.45 11.63 8.45 11.31 8.64 11.11 L 12.56 7.02 C 12.73 6.86 12.84 6.67 12.92 6.46 L 0.5 6.46 C 0.22 6.46 0 6.23 0 5.96 C 0 5.68 0.22 5.46 0.5 5.46 L 12.91 5.46 C 12.84 5.25 12.71 5.06 12.55 4.9 L 8.6 0.85 C 8.41 0.65 8.41 0.33 8.61 0.14 C 8.81 -0.05 9.12 -0.05 9.31 0.15 L 13.26 4.19 C 13.73 4.66 14 5.29 14 5.96 Z" fill="currentColor"/></svg></button>'}
+          ${hasSizeChart(p, qaSizesOf(p, idx)) ? '<button data-size-chart aria-label="Mở bảng kích thước" class="t-single text-foreground press whitespace-nowrap">Bảng kích thước<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="display:inline-block;vertical-align:middle"><path transform="translate(5 6.04)" d="M 14 5.96 C 14 6.62 13.74 7.25 13.28 7.72 L 9.36 11.8 C 9.26 11.91 9.13 11.96 9 11.96 C 8.88 11.96 8.75 11.91 8.65 11.82 C 8.45 11.63 8.45 11.31 8.64 11.11 L 12.56 7.02 C 12.73 6.86 12.84 6.67 12.92 6.46 L 0.5 6.46 C 0.22 6.46 0 6.23 0 5.96 C 0 5.68 0.22 5.46 0.5 5.46 L 12.91 5.46 C 12.84 5.25 12.71 5.06 12.55 4.9 L 8.6 0.85 C 8.41 0.65 8.41 0.33 8.61 0.14 C 8.81 -0.05 9.12 -0.05 9.31 0.15 L 13.26 4.19 C 13.73 4.66 14 5.29 14 5.96 Z" fill="currentColor"/></svg></button>' : ''}
         </div>
         <!-- Lưới size theo LUẬT CHUNG (chốt 28/08, lệnh user): SIZE_PER_ROW ô
              mỗi dòng, tối đa SIZE_MAX_SHOWN ô — cùng một luật với 6 bản PDP và
              quick add mobile. (Trước 28/08 ô này xếp 6/dòng theo bề rộng cột
              phải của dialog; nay bề rộng nhường cho luật hiển thị.) -->
         <div class="grid gap-2" style="grid-template-columns:repeat(${SIZE_PER_ROW},1fr)" data-qa-sizes>
-          ${capSizes(p.sizes || sizesOf(p)).map((s, si) => {
-            const off = !p.sizes && DISABLED.includes(s);
-            return `<button class="t-multiline chip w-full h-9 px-1 rounded-xs font-medium border ${(si === 0 && !off) ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${sizeLabel(s)}" ${off ? 'disabled' : ''}>${sizeLabel(s)}</button>`;
+          ${qaSizesOf(p, idx).map((o, si) => {
+            const off = !!o.oos;
+            return `<button class="t-multiline chip w-full h-9 px-1 rounded-xs font-medium border ${(si === 0 && !off) ? 'on border-primary' : 'border-border'} ${off ? 'off' : 'text-foreground'}" data-size="${o.label}" ${off ? 'disabled' : ''}>${o.label}</button>`;
           }).join('')}
         </div>
       </div>
