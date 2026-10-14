@@ -720,14 +720,11 @@ window.RESP = (function () {
      vao vo `.acc` o day la trung rule do -> ke nhay len tren va mat ke duoi.
      Khai rieng `.pol-sec` thi khong dinh. */
   .pol-sec { border-bottom: 1px solid var(--general-border); }
-  /* LINK FOOTER — chi gach chan KHI HOVER (lenh user 25/09/2026: "khi nao hover vo
-     moi hien underline dang link, binh thuong khong hien").
-     Truoc do gach chan thuong truc: desktop dung cap utility underline + underline-offset-2,
-     mobile chi co underline (khong offset) — hai ban da lech san, nay ve mot moi.
-     ⚠ PHAI khai class co ten: hover:underline va no-underline DEU KHONG CO trong ban
-     tailwind.css tinh (da do: 0 lan khai o ca hai). Dung vao la class chet, tuong chay.
-     Dat text-decoration: none o trang thai nghi thay vi bo han utility, de neu sau nay ai
-     gan lai underline vao markup thi van khong tu dung hien. */
+  /* LINK FOOTER — gach chan CHI KHI HOVER (lenh user 25/09/2026: "khi nao hover vo moi hien underline dang link, binh thuong khong hien").
+     14/10/2026 sang user bao bo gach chan khi hover, chieu DOI Y ("dung dang hover vo co underline a") => khoi phuc, ap CA hai ban vi rule von khai giong het.
+     Mobile khong co hover that nen khong doi gi nhin thay duoc; ban desktop gan class .ft-link cho CA 18 link (xem chu thich o desktop.html).
+     ⚠ PHAI khai class co ten: hover:underline va no-underline KHONG CO trong tailwind.css tinh (class chet, tuong chay).
+     Dat text-decoration: none o trang thai nghi de neu sau nay ai gan lai underline vao markup thi van khong tu dung hien. */
   .ft-link { text-decoration: none; }
   .ft-link:hover { text-decoration: underline; text-underline-offset: 2px; }
   /* HANG TAB TRANG CHINH SACH (mobile) — 25/09/2026.
@@ -4821,7 +4818,10 @@ window.RESP = (function () {
      ĐẶT NGOÀI khối `skin-li` có chủ ý: khối đó giữ bất biến "giống hệt từng byte ở 2
      file" (13.7 · 13.8 · §4.3 mục 4), còn khối trang chủ này là chỗ 2 file ĐÃ lệch có chủ
      ý (gap 8 vs 24 · ô 210 vs 448 · ô dịp 210 vs 330). */
-  html.skin-mt.skin-li .hm-cat-media p.hm-cat-label {
+  /* 14/10/2026: khối chữ của ô occasion (`.hm-occ-copy`) nay là ANH EM của `.hm-cat-media` (xem `.hm-occ-item`) nên nhãn của nó không còn nằm trong `.hm-cat-media` —
+     thêm vào cùng rule này, KHÔNG đổi một thông số nào (cùng điểm 0,4,2); thiếu dòng này nhãn mobile rơi về hook 24/32. */
+  html.skin-mt.skin-li .hm-cat-media p.hm-cat-label,
+  html.skin-mt.skin-li .hm-occ-copy p.hm-cat-label {
     font-size: 18px; line-height: 24px;
     font-family: var(--font-head); font-weight: 400;
   }
@@ -4963,7 +4963,9 @@ window.RESP = (function () {
   .hm-signup-photo { aspect-ratio: 375 / 134; }
 
   .hm-occ-band { background: var(--unofficial-accent-0); }
-  .hm-occ { display: flex; gap: 4px; }
+  /* 14/10/2026: dải trượt thành LƯỚI một dòng cột (grid-auto-flow: column, cột 264) có 2 hàng — hàng 2 (auto) là khối chữ CHUNG của mọi ô nên cao bằng khối chữ dài nhất
+     trong CẢ dải (kể cả ô chưa cuộn tới); xem `.hm-occ-item`. Ô vẫn 264×352, khe 4, cuộn ngang như cũ. */
+  .hm-occ { display: grid; grid-auto-flow: column; grid-auto-columns: 264px; grid-template-rows: 1fr auto; gap: 0 4px; }
   /* Ô 210 -> 264, BẰNG ĐÚNG THẺ BLOG (09/09/2026, lệnh user: *"bản mobile tăng size của mùa
      của áo trench lên to ngang bộ blog nhé"*).
      264 KHÔNG phải số mới: nó là chính con số của `.hm-story` chốt cùng ngày (§8.52) — 2 dải
@@ -4971,7 +4973,26 @@ window.RESP = (function () {
      một họ. Ô ra 264x352, và ở khổ 390 thấy đúng 1,396 ô như dải Blog.
      ⚠ ĐỔI SỐ NÀY THÌ ĐỔI CẢ `.hm-story` (và ngược lại) — chúng là một cặp có chủ ý, không
      phải hai số trùng nhau tình cờ. */
-  .hm-occ-item { flex: 0 0 264px; }
+  /* ── KHỐI CHỮ BẮT THEO Ô DÀI NHẤT, CANH ĐỈNH (14/10/2026) ──
+     Lệnh user (kèm link Figma khối "Tuyển chọn theo mùa"): *"khách muốn nội dung sẽ bắt theo cái thẻ có nội dung
+     dài nhất, và align top"*. Trước đó mỗi khối chữ `.hm-occ-copy` là `position: absolute; bottom: 16` nên CAO
+     theo chữ của riêng ô và NEO ĐÁY: ô tiêu đề 2 dòng có đỉnh chữ cao hơn ô tiêu đề 1 dòng (đo desktop Làm đẹp:
+     đỉnh 351 / 319 / 369 tính từ đỉnh ô) — ba tiêu đề không thẳng hàng.
+     Nay: ô là SUBGRID hai hàng của lưới `.hm-occ` — hàng 1 (1fr) là phần ảnh trống, hàng 2 (auto) là khối chữ. Hàng 2 của
+     CẢ BA ô là MỘT hàng chung nên cao bằng khối chữ DÀI NHẤT; chữ xếp từ ĐỈNH hàng (flex-start). Ảnh vẫn là một khối
+     tỉ lệ 3/4 trải qua cả hai hàng (kích thước ô không đổi: 350×467 desktop · 264×352 mobile). Đổi ngôn ngữ / chữ dài
+     thêm thì trình duyệt tự tính lại — không có đo bằng JS.
+     Khối chữ nay là ANH EM của ảnh (không còn nằm trong `.hm-cat-media`) để đứng được trong hàng chung; mảng phủ
+     `.hm-occ-scrim` vẫn ở trong ảnh (200 cao, đặc 136) — không đụng. Chỉ phạm vi `.hm-occ-item` của trang chủ:
+     `.hm-occ-copy` của trang hãng (`.bh-tile`, `.bh-grid6`) giữ NGUYÊN neo-đáy. */
+  .hm-occ-item { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: subgrid; grid-row: 1 / -1; }
+  .hm-occ-item > .hm-cat-media { grid-row: 1 / -1; grid-column: 1; }
+  .hm-occ-item > .hm-occ-copy { position: relative; z-index: 1; inset: auto; grid-row: 2; grid-column: 1; padding: 0 16px 16px; justify-content: flex-start; }
+  /* Trình duyệt chưa có subgrid: về đúng kiểu cũ (khối chữ neo đáy, mỗi ô tự cao). */
+  @supports not (grid-template-rows: subgrid) {
+    .hm-occ-item { display: block; position: relative; }
+    .hm-occ-item > .hm-occ-copy { position: absolute; inset: auto 16px 16px 16px; padding: 0; }
+  }
   /* USP 2 CỘT ở khổ máy: 4 mục một hàng thì nhãn dài nhất còn ~78px và vỡ 3 dòng. */
   /* LƯỚI 2x2 (07/09/2026, lệnh user), khe 8.
      ĐÍNH CHÍNH KẾT LUẬN CŨ CỦA TÔI: lượt trước tôi bỏ 2 cột với lý do "2 cột ở 375 chỉ cho
@@ -12406,18 +12427,19 @@ function hmOccasions() {
              HM_OCCASIONS de rong 2 cot do.
              Bo truncate: tieu de bien tap dai hon nhan mot tu nen phai duoc xuong dong. -->
         ${hmOccList().map(([img, label, sub, cta, cat, dept]) => `
-        <button data-hm-cat="${cat}"${dept ? ` data-hm-dept="${dept}"` : ''} class="hm-occ-item flex flex-col press group text-left">
+        <button data-hm-cat="${cat}"${dept ? ` data-hm-dept="${dept}"` : ''} class="hm-occ-item press group text-left">
           <div class="hm-cat-media w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
             <img src="${A}${hmFile(img)}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
             <span class="${sub ? 'hm-occ-scrim' : 'hm-cat-scrim'}" aria-hidden="true"></span>
-            ${sub ? `
-            <div class="hm-occ-copy">
-              <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground">${label}</p>
-              <p class="t-multiline text-primary-foreground">${sub}</p>
-              ${cta ? `<p class="t-single text-primary-foreground underline underline-offset-2">${cta}</p>` : ''}
-            </div>` : `
+            ${sub ? '' : `
             <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground">${label}</p>`}
           </div>
+          ${sub ? `
+          <div class="hm-occ-copy">
+            <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground">${label}</p>
+            <p class="t-multiline text-primary-foreground">${sub}</p>
+            ${cta ? `<p class="t-single text-primary-foreground underline underline-offset-2">${cta}</p>` : ''}
+          </div>` : ''}
         </button>`).join('')}
         </div>
       </div>
@@ -14234,8 +14256,11 @@ function screenCART() {
            phẩm đã chọn" (~150px). Lý do ấy nay hết: nhãn rút còn "Xoá" (23px), đo ở khổ
            375 vẫn dư chỗ.
            (KHONG go dau huyen nguoc trong chu thich nay: ca khoi nam trong template
-           literal, mot dau la cat doi chuoi.) -->
-      <button id="delSelected" class="t-multiline font-medium text-muted-foreground press">Xoá</button>
+           literal, mot dau la cat doi chuoi.)
+           14/10/2026 (lệnh user: "nút Delete / xóa thì cho sài button dạng có underline"): thêm underline —
+           hành động dạng GẠCH CHÂN (variant link của action), cùng khuôn "Sửa | Xoá" ở sổ địa chỉ.
+           Chỉ thêm class: cỡ chữ, mực xám phụ và hành vi giữ nguyên. -->
+      <button id="delSelected" class="t-multiline font-medium text-muted-foreground underline press">Xoá</button>
     </div>
 
     <!-- Giỏ rỗng (sau khi đặt hàng xong) dùng lại đúng khối trạng thái rỗng mà

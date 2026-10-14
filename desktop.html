@@ -1503,14 +1503,12 @@ window.RESP = (function () {
      vao vo `.acc` o day la trung rule do -> ke nhay len tren va mat ke duoi.
      Khai rieng `.pol-sec` thi khong dinh. */
   .pol-sec { border-bottom: 1px solid var(--general-border); }
-  /* LINK FOOTER — chi gach chan KHI HOVER (lenh user 25/09/2026: "khi nao hover vo
-     moi hien underline dang link, binh thuong khong hien").
-     Truoc do gach chan thuong truc: desktop dung cap utility underline + underline-offset-2,
-     mobile chi co underline (khong offset) — hai ban da lech san, nay ve mot moi.
-     ⚠ PHAI khai class co ten: hover:underline va no-underline DEU KHONG CO trong ban
-     tailwind.css tinh (da do: 0 lan khai o ca hai). Dung vao la class chet, tuong chay.
-     Dat text-decoration: none o trang thai nghi thay vi bo han utility, de neu sau nay ai
-     gan lai underline vao markup thi van khong tu dung hien. */
+  /* LINK FOOTER — gach chan CHI KHI HOVER (lenh user 25/09/2026: "khi nao hover vo moi hien underline dang link, binh thuong khong hien").
+     14/10/2026 sang user bao bo gach chan khi hover ("bo gach chan khi hover o code luon di"), chieu DOI Y: "dung dang hover vo co underline a"
+     => khoi phuc, kem MOT diem moi: class .ft-link nay gan cho CA 18 link (truoc chi 12 link co route; 6 link chi hien toast khong gach) de khop Figma
+     action variant=footer-link: nghi #404040, hover / active #0a0a0a (utility hover:text-foreground) + gach chan cach chu 2px.
+     ⚠ PHAI khai class co ten: hover:underline va no-underline KHONG CO trong tailwind.css tinh (class chet, tuong chay).
+     Dat text-decoration: none o trang thai nghi de neu sau nay ai gan lai underline vao markup thi van khong tu dung hien. */
   .ft-link { text-decoration: none; }
   .ft-link:hover { text-decoration: underline; text-underline-offset: 2px; }
 
@@ -6766,7 +6764,8 @@ window.RESP = (function () {
     /* 09/09/2026: repeat(2) -> repeat(3) theo HM_OCC_COUNT. Ô ra 345 = (1377 − 48 đệm
        − 282 cột chữ − 3 khe 4) / 3, đúng bằng thẻ lưới PLP (341) nên không phải bậc cỡ mới. */
     display: grid; grid-template-columns: 282px repeat(3, minmax(0, 1fr));
-    gap: 4px; align-items: end;
+    gap: 0 4px; align-items: end;
+    grid-template-rows: 1fr auto;     /* 14/10/2026: hàng 2 = khối chữ DÀI NHẤT trong 3 ô (xem `.hm-occ-item`) */
     padding: 32px 24px; background: var(--unofficial-accent-0);
   }
   /* ── KHOI CHU 3 DONG TRONG ANH (08/09/2026, lenh user + anh tham chieu) ──
@@ -6816,7 +6815,26 @@ window.RESP = (function () {
   /* Nhan von TU dinh vi tuyet doi (dung cho cac o CHI co nhan); nam trong khoi chu thi tra
      no ve dong chay binh thuong de 3 dong xep duoc theo nhau. */
   .hm-occ-copy .hm-cat-label { position: static; }
-  .hm-occ-item { min-width: 0; }
+  /* ── KHỐI CHỮ BẮT THEO Ô DÀI NHẤT, CANH ĐỈNH (14/10/2026) ──
+     Lệnh user (kèm link Figma khối "Tuyển chọn theo mùa"): *"khách muốn nội dung sẽ bắt theo cái thẻ có nội dung
+     dài nhất, và align top"*. Trước đó mỗi khối chữ `.hm-occ-copy` là `position: absolute; bottom: 16` nên CAO
+     theo chữ của riêng ô và NEO ĐÁY: ô tiêu đề 2 dòng có đỉnh chữ cao hơn ô tiêu đề 1 dòng (đo desktop Làm đẹp:
+     đỉnh 351 / 319 / 369 tính từ đỉnh ô) — ba tiêu đề không thẳng hàng.
+     Nay: ô là SUBGRID hai hàng của lưới `.hm-occ` — hàng 1 (1fr) là phần ảnh trống, hàng 2 (auto) là khối chữ. Hàng 2 của
+     CẢ BA ô là MỘT hàng chung nên cao bằng khối chữ DÀI NHẤT; chữ xếp từ ĐỈNH hàng (flex-start). Ảnh vẫn là một khối
+     tỉ lệ 3/4 trải qua cả hai hàng (kích thước ô không đổi: 350×467 desktop · 264×352 mobile). Đổi ngôn ngữ / chữ dài
+     thêm thì trình duyệt tự tính lại — không có đo bằng JS.
+     Khối chữ nay là ANH EM của ảnh (không còn nằm trong `.hm-cat-media`) để đứng được trong hàng chung; mảng phủ
+     `.hm-occ-scrim` vẫn ở trong ảnh (200 cao, đặc 136) — không đụng. Chỉ phạm vi `.hm-occ-item` của trang chủ:
+     `.hm-occ-copy` của trang hãng (`.bh-tile`, `.bh-grid6`) giữ NGUYÊN neo-đáy. */
+  .hm-occ-item { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: subgrid; grid-row: 1 / -1; }
+  .hm-occ-item > .hm-cat-media { grid-row: 1 / -1; grid-column: 1; }
+  .hm-occ-item > .hm-occ-copy { position: relative; z-index: 1; inset: auto; grid-row: 2; grid-column: 1; padding: 0 16px 16px; justify-content: flex-start; }
+  /* Trình duyệt chưa có subgrid: về đúng kiểu cũ (khối chữ neo đáy, mỗi ô tự cao). */
+  @supports not (grid-template-rows: subgrid) {
+    .hm-occ-item { display: block; position: relative; }
+    .hm-occ-item > .hm-occ-copy { position: absolute; inset: auto 16px 16px 16px; padding: 0; }
+  }
   /* Ô của dải danh mục dưới GIỎ TRỐNG (13/09/2026). Khai bề rộng bằng CSS chứ
      không bằng utility `w-[…]`: bản CSS của demo dựng sẵn, mọi giá trị tuỳ ý
      không có trong bản dựng đều là class CHẾT — đo được đúng thế, ô phình ra
@@ -6832,6 +6850,7 @@ window.RESP = (function () {
      một cột canh giữa thì nó lệch chữ lên 8px so với trục. */
   .hm-occ-aside {
     align-self: center; padding-right: 16px;
+    grid-row: 1 / -1;     /* 14/10/2026: lưới có 2 hàng — cột chữ trải cả hai, vẫn canh giữa theo chiều cao ô */
   }
 
   /* ĐÃ GỠ 09/09/2026 — khối CSS `.hm-occ-nu*` (bản Nữ: 1 ô lớn 566 + cột chữ và dải ô
@@ -9833,7 +9852,7 @@ const FOOTER_ROUTES = {
    `secondary-foreground` — link có route lẫn link chỉ hiện toast. Hôm qua (12/10) Figma `page-footer-desktop`
    (65:2022) còn 3 link ĐEN (bảo mật · đổi trả · điều khoản) nên code giữ hằng riêng cho 3 link đó; nay 3 nút
    ấy trong component Figma (638:50660 · 638:50667 · 638:50669) đã buộc `secondary-foreground` (125 instance
-   đều #404040) ⇒ hằng gỡ. Hover vẫn đen + gạch chân (.ft-link). Chỉ bản DESKTOP: footer mobile là accordion,
+   đều #404040) ⇒ hằng gỡ. Hover đen + gạch chân (.ft-link, nay gắn cho CẢ 18 link; 14/10/2026 sáng bỏ, chiều user đổi ý — xem chú thích CSS). Chỉ bản DESKTOP: footer mobile là accordion,
    Figma mobile không vẽ link nên chưa có số đo. */
 const FOOTER_COLS = [
   ['Liên hệ với chúng tôi', ['Thông tin về DAFC','Tuyển dụng','Liên hệ','Danh sách cửa hàng']],
@@ -9881,7 +9900,7 @@ function footer() {
             <div class="flex flex-col gap-2">
               ${links.map(l => FOOTER_ROUTES[l]
                 ? `<button data-nav="${FOOTER_ROUTES[l]}" class="t-multiline text-left py-0.5 text-secondary-foreground ft-link hover:text-foreground transition-colors press">${l}</button>`
-                : `<button data-toast="${l}" class="t-multiline text-left py-0.5 text-secondary-foreground hover:text-foreground transition-colors press">${l}</button>`).join('')}
+                : `<button data-toast="${l}" class="t-multiline text-left py-0.5 text-secondary-foreground ft-link hover:text-foreground transition-colors press">${l}</button>`).join('')}
             </div>
           </div>`).join('')}
           <div class="flex-1 flex flex-col gap-4 reveal">
@@ -12944,19 +12963,23 @@ function hmOccasions() {
      con lai cua HM_OCCASIONS khong phai bia chu de theo khuon moi.
      Khuon co khoi chu KHONG dung `truncate`: tieu de bien tap dai hon nhan mot tu nen phai
      duoc xuong dong, cat chu giua cau con te hon. */
+  /* 14/10/2026 (lệnh user: "nội dung bắt theo thẻ có nội dung dài nhất, và align top"): khối chữ `.hm-occ-copy` đứng NGOÀI `.hm-cat-media`, là anh em của ảnh trong nút —
+     ô (nút) là subgrid hai hàng của `.hm-occ`, hàng 2 chung cho cả ba ô nên cao bằng khối chữ dài nhất; chữ canh đỉnh. Nhánh chỉ-có-nhãn (không dòng phụ) giữ nhãn trong ảnh như cũ.
+     Bỏ `flex flex-col` khỏi nút: CSS `.hm-occ-item` đặt `display: grid`. */
   const tile = ([img, label, sub, cta, cat, dept], w, ratio) => `
-              <button ${dkCatAttrs(cat, [dept || hmFashionDept()])} class="${w} flex flex-col press group text-left">
+              <button ${dkCatAttrs(cat, [dept || hmFashionDept()])} class="${w} press group text-left">
                 <div class="hm-cat-media w-full overflow-hidden bg-secondary"${ratio ? ` style="aspect-ratio:${ratio}"` : ''}>
                   <img src="${A}${hmFile(img)}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
                   <span class="${sub ? 'hm-occ-scrim' : 'hm-cat-scrim'}" aria-hidden="true"></span>
-                  ${sub ? `
-                  <div class="hm-occ-copy">
-                    <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground">${label}</p>
-                    <p class="t-multiline text-primary-foreground">${sub}</p>
-                    ${cta ? `<p class="t-single text-primary-foreground underline underline-offset-2">${cta}</p>` : ''}
-                  </div>` : `
+                  ${sub ? '' : `
                   <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground truncate">${label}</p>`}
                 </div>
+                ${sub ? `
+                <div class="hm-occ-copy">
+                  <p class="hm-cat-label text-[18px] font-medium leading-7 text-primary-foreground">${label}</p>
+                  <p class="t-multiline text-primary-foreground">${sub}</p>
+                  ${cta ? `<p class="t-single text-primary-foreground underline underline-offset-2">${cta}</p>` : ''}
+                </div>` : ''}
               </button>`;
 
   /* ĐÃ GỠ 09/09/2026 — khuôn `nu()` (bản Nữ: 1 ô lớn + cột chữ và dải ô bên phải, dựng
@@ -16211,8 +16234,11 @@ function screenCART() {
                    phẩm đã chọn" (~150px). Lý do ấy nay hết: nhãn rút còn "Xoá" (23px), đo ở khổ
                    375 vẫn dư chỗ.
                    (KHONG go dau huyen nguoc trong chu thich nay: ca khoi nam trong template
-                   literal, mot dau la cat doi chuoi.) -->
-              <button id="delSelected" class="t-multiline font-medium text-muted-foreground press">Xoá</button>
+                   literal, mot dau la cat doi chuoi.)
+                   14/10/2026 (lệnh user: "nút Delete / xóa thì cho sài button dạng có underline"): thêm underline —
+                   hành động dạng GẠCH CHÂN (variant link của action), cùng khuôn "Sửa | Xoá" ở sổ địa chỉ.
+                   Chỉ thêm class: cỡ chữ, mực xám phụ và hành vi giữ nguyên. -->
+              <button id="delSelected" class="t-multiline font-medium text-muted-foreground underline press">Xoá</button>
             </div>
             <!-- Bỏ qua món đã xoá NHƯNG GIỮ NGUYÊN chỉ số i (data-row trỏ vào CART) -->
             <div id="cartList">${cartItems().length ? CART.map((c, i) => c.removed ? '' : row(c, i) + productGiftHTML(c, i)).join('') : cartEmptyHTML()}</div>
