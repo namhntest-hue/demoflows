@@ -11706,6 +11706,21 @@ const HM_HERO = [
   ['home-{nganh}-hero-02-mobile.jpg', '50% 50%', 'Dolce&Gabbana — Spring / Summer 2027', 'Quần áo', 'Brand day', '',                              'Dolce&Gabbana', 'Spring / Summer 2027', 'Discover now'],
 ];
 
+/* 14/10/2026 (lệnh user, kèm ảnh doc "Slide 1 · EN / VN": "cái home beauty, update lại nội dung của banner 1 như sau") — TRANG CHỦ LÀM ĐẸP: nội dung banner 1 RIÊNG, ảnh giữ nguyên (home-beauty-hero-01-*):
+     hãng  Molton Brown (CHƯA có file logo ⇒ vẽ bằng CHỮ ở chỗ logo, xem hmHero)
+     VN    NỐT HƯƠNG KINH ĐIỂN · Hương thơm dấu ấn dành riêng cho bạn · [KHÁM PHÁ NGAY]
+     EN    ICONIC SCENT · Your new favourite scent awaits · [DISCOVER NOW]
+   Chữ nhập bằng VI, bản EN đi qua bảng I18N (2 khoá mới ngay dưới khoá 'Nhà'; nút dùng khoá sẵn có 'Khám phá ngay' → 'Discover now'). Khác hai tấm chiến dịch kia (data-i18n-skip): cột cuối `i18n` = true thì
+   tiêu đề + dòng phụ KHÔNG đeo data-i18n-skip, và `cta` để rỗng ⇒ nhãn mặc định HM_HERO_CTA (cũng dịch được). Tấm 2 xem HM_HERO_BEAUTY_2 (cùng ngày); trang chủ Nữ / Nam không đổi. */
+const HM_HERO_BEAUTY_1 = ['home-{nganh}-hero-01-mobile.jpg', '50% 50%', 'Molton Brown — Iconic Scent', 'Làm đẹp', 'Brand day', 'Hương thơm dấu ấn dành riêng cho bạn', 'Molton Brown', 'NỐT HƯƠNG KINH ĐIỂN', '', true];
+/* 14/10/2026 (lệnh user, kèm ảnh 5 chai Christian Louboutin: "banner hình thứ 2 thay bằng hình này, và nội dung sẽ sửa lại là …") — LÀM ĐẸP tấm 2:
+     hãng Christian Louboutin (CHƯA có trang hãng / logo ⇒ tên vẽ bằng CHỮ ở chỗ logo; bấm ra DANH MỤC 'Nước hoa' của Làm đẹp, không ra trang hãng rỗng — xem heroNav trong hmHero)
+     · tiêu đề "Rouge Louboutin Silky" · nút Khám phá ngay / Discover now (khoá sẵn có) · KHÔNG dòng phụ.
+   Hãng + tiêu đề là tên riêng nên VI = EN (không khoá I18N). ẢNH: file user gửi 1200×675 (16:9) ⇒ desktop cắt 2:1 (25px trên · 50px dưới) rồi nâng 1800×900; mobile cắt 3:4 quanh chai LE CUIR rồi nâng 2× (1012×1350) — nguồn thấp
+   nên mobile hơi mềm; có bản dọc / độ phân giải cao thì thay `home-beauty-hero-v2-02-*.jpg`. Gốc: _notes/onedrive-1014/louboutin-goc.jpg. */
+const HM_HERO_BEAUTY_2 = ['home-beauty-hero-v2-02-mobile.jpg', '50% 50%', 'Christian Louboutin — Rouge Louboutin Silky', 'Nước hoa', 'Brand day', '', 'Christian Louboutin', 'Rouge Louboutin Silky', '', true];
+const hmHeroSlides = () => (hmBeauty() ? [HM_HERO_BEAUTY_1, HM_HERO_BEAUTY_2] : HM_HERO);
+
 /* NHAN NUT TREN HERO (08/09/2026, lenh user: *"o banner desktop va mobile hay cho title kem
    CTA 'discover now' tren banner nhe tuong tu hinh dinh kem"*, kem anh MR PORTER).
    Viet hoa CHU DAU theo luat khong-dung-UPPERCASE cua du an (anh tham chieu de "Shop now"
@@ -11730,8 +11745,11 @@ function hmPromo() {
 }
 
 function hmHero() {
-  if (!HM_HERO.length) return '';
-  const many = HM_HERO.length > 1;
+  const SL = hmHeroSlides();   // 14/10/2026: ngành Làm đẹp thay tấm 1 bằng HM_HERO_BEAUTY_1
+  if (!SL.length) return '';
+  /* 14/10/2026 — ĐÍCH BẤM của tấm: hãng CÓ trang (BRAND_PAGES) thì ra trang hãng; hãng CHƯA có trang (Christian Louboutin) thì ra DANH MỤC `cat`, kèm ngành 'Làm đẹp' khi đang ở Làm đẹp. Nữ / Nam không đổi. */
+  const heroNav = (brand, cat) => (brand && brandKey(brand)) ? `data-hm-brand="${brand}"` : `data-hm-cat="${cat}"${hmBeauty() ? ' data-hm-dept="Làm đẹp"' : ''}`;
+  const many = SL.length > 1;
   return `
     <div class="reveal">
       <div class="hm-hero">
@@ -11743,12 +11761,12 @@ function hmHero() {
                menuTab = "Ecom camp", tuc tab menu va moi thu doc theo nganh deu chay tren mot
                gia tri khong ton tai. Bo thuoc tinh di la handler roi ve dung nhanh du phong
                hmFashionDept(). Doi ten bien thanh role cho khoi ai lai tuong no la nganh. -->
-          ${HM_HERO.map(([img, pos, alt, cat, role, sub, brand, title, cta]) => `
+          ${SL.map(([img, pos, alt, cat, role, sub, brand, title, cta, i18n]) => `
           <!-- TAM HERO GIO LA MOT KHUNG, KHONG CON LA MOT THE <a> (08/09/2026): trong tam
                co mot NUT rieng, ma nut long trong <a> la markup sai (nested interactive).
                <a> chi boc ANH, nut dung song song, ca hai tro cung mot danh muc. -->
           <div class="hm-hero-slide">
-            <a class="block cursor-pointer press" ${brand ? `data-hm-brand="${brand}"` : `data-hm-cat="${cat}"`}>
+            <a class="block cursor-pointer press" ${heroNav(brand, cat)}>
             <!-- KHUNG 3/4 (08/09/2026): anh khach giao la 1080x1440 = 3/4. Truoc la 1/1 —
                  con so do chot 06/09 bang bang do 4 tam kv-* cu, nay bo anh khac nen so cu
                  het hieu luc: de 1/1 la cat mat 25% chieu cao tam anh khach dung, ma phan
@@ -11764,19 +11782,19 @@ function hmHero() {
               <!-- CỤM LOGO + TIÊU ĐỀ + DÒNG PHỤ bọc riêng (tối 28/09/2026, lệnh user): cụm cách nút 16,
                    logo cách tiêu đề 12, tiêu đề cách dòng phụ 8 — xem rule .hm-hero-text / .hm-hero-lines. -->
               <div class="hm-hero-text">
-                ${brand && brandPage(brand).logo ? `<img src="${A}${brandPage(brand).logo}" alt="${brandPage(brand).name}" class="hm-hero-logo">` : ''}
+                ${brand && brandPage(brand).logo ? `<img src="${A}${brandPage(brand).logo}" alt="${brandPage(brand).name}" class="hm-hero-logo">` : (brand ? `<p class="hm-hero-brand t-lead text-primary-foreground">${brandPage(brand).name}</p>` : '')}
                 <div class="hm-hero-lines">
-                  <p class="text-[18px] font-medium leading-7 text-primary-foreground" data-i18n-skip>${title || alt}</p>
-                  ${sub ? `<p class="t-multiline text-primary-foreground" data-i18n-skip>${sub}</p>` : ''}
+                  <p class="text-[18px] font-medium leading-7 text-primary-foreground"${i18n ? '' : ' data-i18n-skip'}>${title || alt}</p>
+                  ${sub ? `<p class="t-multiline text-primary-foreground"${i18n ? '' : ' data-i18n-skip'}>${sub}</p>` : ''}
                 </div>
               </div>
-              <button ${brand ? `data-hm-brand="${brand}"` : `data-hm-cat="${cat}"`} class="t-lead h-12 px-8 w-fit rounded-xs border border-border bg-background text-foreground btn-o btn-oi press"${cta ? ' data-i18n-skip' : ''}>${cta || HM_HERO_CTA}</button>
+              <button ${heroNav(brand, cat)} class="t-lead h-12 px-8 w-fit rounded-xs border border-border bg-background text-foreground btn-o btn-oi press"${cta ? ' data-i18n-skip' : ''}>${cta || HM_HERO_CTA}</button>
             </div>
           </div>`).join('')}
         </div>
         ${many ? `
         <div class="hm-hero-dots" data-hero-dots>
-          ${HM_HERO.map((x, i) => `
+          ${SL.map((x, i) => `
           <button class="hm-pip w-2 h-2 rounded-full press${i === 0 ? ' hm-pip-on' : ''}" data-hero-dot="${i}" aria-label="${x[2]}"></button>`).join('')}
         </div>` : ''}
       </div>
@@ -11807,12 +11825,13 @@ function hmRail(list, opts = {}, flush = false) {
    khối kế tiếp còn đúng khe 40 của mt-10 (trước là 68). Khối cao 404,7 = đầu mục 80 + khe 16 + thẻ 308,7. */
 function hmFeatured(news, sales) {
   const sale = hmBlock === 'sale';
-  const list = sale ? sales : news;
+  const bp = hmBeauty() && !sale;   // 14/10/2026: Làm đẹp, trạng thái 'new' → "Bán chạy nhất / BST Black Pepper" (xem HM_NEW_LINE_BEAUTY)
+  const list = sale ? sales : (bp ? hmBlackPepper() : news);
   if (!list.length) return '';
-  return hmSec(sale ? HM_SALE_TITLE : HM_NEW_LINE,
-    hmLink('Xem tất cả', sale ? 'data-hm-cat="Khuyến mãi"' : 'data-hm-cat="Sản phẩm mới"'),
+  return hmSec(sale ? HM_SALE_TITLE : (bp ? HM_NEW_LINE_BEAUTY : HM_NEW_LINE),
+    hmLink('Xem tất cả', sale ? 'data-hm-cat="Khuyến mãi"' : (bp ? 'data-hm-brand="Molton Brown"' : 'data-hm-cat="Sản phẩm mới"')),
     hmRail(list, { noName: false, noQuick: true, tight: true }, true),
-    'h1', sale ? 'Khuyến mãi' : 'Hàng mới về', false, true);
+    'h1', sale ? 'Khuyến mãi' : (bp ? HM_NEW_EYEBROW_BEAUTY : 'Hàng mới về'), false, true);
 }
 
 /* ── 6 Ô DANH MỤC ──────────────────────────────────────────────────────────────
@@ -11861,7 +11880,17 @@ const HM_CAT_COUNT = 4;
    TÊN ANH CỦA USER GIỮ NGUYÊN TỪNG KÝ TỰ, làm giá trị EN trong `I18N` — nên bật công tắc ENG
    là đọc lại đúng chữ user đặt. */
 const HM_CAT_TITLE  = 'Đón đầu xu hướng';
+/* 14/10/2026 (lệnh user, doc "cục đón đầu xu hướng sẽ sửa content lại"): trang chủ LÀM ĐẸP đổi TIÊU ĐỀ khối 4 ô danh mục — VN "Xu hướng làm đẹp", EN "Beauty radar" (cặp nằm trong I18N, ngay dưới 'Get ahead').
+   Nhãn nhỏ 'Khám phá tuyển chọn' (EN 'Shop by category') và link 'Xem tất cả' (EN 'See all') GIỮ NGUYÊN — đúng chữ trong doc (dòng EN của doc ghi 'Xem tất cả' bằng tiếng Việt, coi là sót nên giữ 'See all' sẵn có).
+   GHI THƯỜNG (lệnh user cùng ngày: "XU HƯỚNG LÀM ĐẸP ghi thường thôi k ghi full upper nhé"): doc gõ HOA nhưng user chốt ghi thường ⇒ VI 'Xu hướng làm đẹp', EN 'Beauty radar' (EN cũng bỏ HOA, theo luật không-uppercase của dự án).
+   Trang chủ Nữ / Nam vẫn 'Đón đầu xu hướng'. */
+const HM_CAT_TITLE_BEAUTY = 'Xu hướng làm đẹp';
 const HM_SPOT_TITLE = 'Thương hiệu nổi bật mùa này';
+/* 14/10/2026 (lệnh user: "cục thương hiệu nổi bật theo mùa của beauty thì thêm bản EN là Brand Spotlights / Beauty’s finest this season / See all"): trang chủ LÀM ĐẸP có bản EN RIÊNG cho DÒNG LỚN.
+   VI giữ nguyên 'Thương hiệu nổi bật mùa này' — khoá I18N sẵn có của chuỗi này ra 'The maisons of the season' (câu cho nhà mốt thời trang) nên không dùng được cho Làm đẹp; mà I18N tra theo khoá VI còn hai ngành dùng
+   CHUNG một chuỗi VI ⇒ EN riêng đi bằng thuộc tính `data-en` (cơ chế thêm ở applyLang, kèm data-i18n-skip để bộ dịch theo khoá không đụng tới). Nhãn nhỏ ('Brand Spotlights') và link ('See all') ĐÃ đúng chữ qua khoá sẵn có.
+   Dấu ’ (U+2019) là ký tự user gõ trong doc. Nữ / Nam không đổi. */
+const HM_SPOT_TITLE_BEAUTY_EN = 'Beauty’s finest this season';
 
 const HM_CATS = [
   ['home-{nganh}-category-01.jpg', '50% 50%', 'Quần áo',  ''],
@@ -11951,6 +11980,20 @@ function hmCatTiles() {
    khác (kho đang có `Christian Louboutin tại DAFC Online` chưa dùng làm tiêu đề bài), hoặc
    đổi tiêu đề thẻ Blog đó, hoặc nhận rằng 2 chỗ cách nhau đủ xa để không đọc ra là lặp. */
 const HM_NEW_LINE = 'Bộ sưu tập AW26';
+/* 14/10/2026 (lệnh user: "ở beauty đổi cái block new thành …" + "các update nảy giờ chỉ có ở beauty thôi nhé"): dải ĐẦU trang chủ LÀM ĐẸP (trạng thái 'new') = nhãn nhỏ "Bán chạy nhất" + dòng lớn "BST Black Pepper" + link "Xem tất cả".
+   EN: Best Sellers / Black Pepper Collection / See all. I18N: khoá 'Bán chạy nhất' đổi giá trị EN 'Bestsellers' → 'Best Sellers' (đúng chữ user; kéo theo tiêu đề dải Bán chạy nhất của hub Molton Brown dùng CHUNG khoá), khoá 'BST Black Pepper' mới.
+   Nữ / Nam và trạng thái 'sale' KHÔNG đổi.
+   DẢI SẢN PHẨM của Làm đẹp ở trạng thái này = các món Black Pepper của Molton Brown (hmBlackPepper: 5 SP cùng nền ảnh xám của bộ Drive 0810 — xem ghi chú ở hàm) thay 8 nước hoa Versace / D&G / Montblanc / Moschino
+   (không liên quan tiêu đề). SP của MB mang cờ noHome nên không lọt dải qua hmNew — ở đây lấy thẳng. Link 'Xem tất cả' → hub Molton Brown (trước đó Làm đẹp rơi vào 'Sản phẩm mới' của ngành Nam). */
+const HM_NEW_LINE_BEAUTY = 'BST Black Pepper';
+const HM_NEW_EYEBROW_BEAUTY = 'Bán chạy nhất';
+/* 14/10/2026 (lệnh user: "dùng 5 cái cùng 1 màu nền đồng bộ chứ lỏm chỏm trắng vàng xám vậy k đc đâu", sau bản dùng TOÀN BỘ 31 món Molton Brown): dải chỉ còn 5 SP CÙNG MÀU NỀN ẢNH.
+   ĐO màu nền (4 góc + 3 mép giữa, 31 ảnh mb*-0.jpg): xám #f1f1f1 = 11 ảnh (bộ Drive 0810: mb4 5 6 7 8 13 26 + 4 ảnh Tea Ceremony mb28-31, và cũng là nền của 10 ảnh SP khác đã đo: p1 p2 p5 b1 b4 b6 b8 d1 z1 x1) ·
+   kem #faf9f7 = 14 ảnh (mb1 9 11 12 14-17 19-24, bộ MB cũ) · trắng #ffffff = 6 ảnh (mb2 3 10 18 25 27). Ba màu đứng cạnh nhau trong một dải = "lỏm chỏm trắng vàng xám".
+   5 SP lấy từ bộ xám của Drive, theo ảnh (HM_BP_IMGS): món 'Best seller' đứng đầu — Bộ đôi Re-charge Black Pepper (khớp 'BST Black Pepper') + Sữa tắm Neon Amber — rồi 3 bộ quà Quà tặng.
+   Muốn dải dài hơn mà vẫn đồng bộ: chuẩn hoá nền các ảnh kem / trắng về #f1f1f1 (chưa làm — chờ user) rồi mở lại danh sách; bản 31 món / 8 món của các lượt trước đã gỡ. */
+const HM_BP_IMGS = ['mb8-0.jpg', 'mb7-0.jpg', 'mb4-0.jpg', 'mb5-0.jpg', 'mb6-0.jpg'];
+const hmBlackPepper = () => HM_BP_IMGS.map(f => { const i = PRODUCTS.findIndex(p => p.img === f); return i < 0 ? null : { p: PRODUCTS[i], i }; }).filter(Boolean);
 
 /* SPOTLIGHT ĐỔI SANG FERRAGAMO (08/09/2026, lệnh user: *"brand highlight giờ chỉ có 3 brand
    thôi nhé, lớn nhất là ferragamo, 2 cái nhỏ là balmain và vescace"*). Trước là Versace.
@@ -12171,7 +12214,7 @@ function hmMaison() {
            trước. ĐÃ THỬ cho riêng CTA né sang PLP thường rồi BỎ — né một chỗ mà hai chỗ kia
            vẫn rỗng thì chỉ làm khối tự mâu thuẫn. Cách chữa đúng là ở DỮ LIỆU: hoặc thêm SP
            Ferragamo, hoặc đổi HM_MAISON sang hãng đã có SP. Đã báo user 24/09. -->
-      ${hmSecHead(HM_SPOT_TITLE, hmLink('Xem tất cả', `data-hm-brand="${hmMaisonName()}"`), 'h2', 'Tâm điểm thời trang')}
+      ${hmSecHead(hmBeauty() ? `<span data-i18n-skip data-en="${HM_SPOT_TITLE_BEAUTY_EN}">${HM_SPOT_TITLE}</span>` : HM_SPOT_TITLE, hmLink('Xem tất cả', `data-hm-brand="${hmMaisonName()}"`), 'h2', 'Tâm điểm thời trang')}
       <!-- KHE 4px giua anh spotlight va hang o brand (07/09/2026, lenh user:
            *"highlight brand cach 2 brand nho ben duoi 4px"*). Truoc la gap-6 = 24.
            gap-1 CO trong ban tailwind dung san (do tren trang: 4px) — da kiem, vi
@@ -12283,6 +12326,18 @@ const HM_OCCASIONS = [
   ['p10-1.jpg', 'Điểm nhấn',           '', '', 'Phụ kiện'],
 ];
 
+/* 14/10/2026 (lệnh user, kèm ảnh doc + OneDrive_1_10-14-2026.zip: "mục tuyển chọn theo mùa sửa hình và nội dung lại như sau") — LÀM ĐẸP có 3 ô RIÊNG, thay bộ chữ + ảnh thời trang mượn từ HM_OCCASIONS.
+   Chữ theo doc, 2 ngôn ngữ: Dấu ấn mùa lễ hội / Festive Limited Editions · Hương thơm cho mọi hành trình / Scent on the go · Thư giãn tại nhà / New Year Home spa (+ dòng phụ). EN đi bằng bảng I18N (khoá VI → EN, 6 khoá mới),
+   nút 'Khám phá ngay' → 'Discover now' là khoá sẵn có. ẢNH từ zip (gốc 1080×1350, cắt 3:4 → 1012×1350): ô 1 = bàn tiệc đỏ + chai (khớp ảnh 1 trong doc) · ô 3 = bộ dưỡng da hồng tím + bật lửa (khớp ảnh 3) ·
+   ô 2 = nước hoa viên cầu xanh + máy bay trên đá cẩm thạch — ẢNH 2 TRONG DOC LÀ NỀN XANH NGỌC + BƯU THIẾP, KHÔNG CÓ TRONG ZIP nên dùng tấm "du lịch" này; có file đúng thì thay `home-beauty-occasion-v2-02.jpg`.
+   Cột 6 = ngành của ô: bấm ra Quà tặng · Nước hoa · Tắm & dưỡng thể của LÀM ĐẸP (bộ cũ rơi vào 'Quần áo' của ngành Nam). */
+const HM_OCCASIONS_BEAUTY = [
+  ['home-beauty-occasion-v2-01.jpg', 'Dấu ấn mùa lễ hội',             'BST Hương thơm cho mùa lễ hội, phiên bản giới hạn.',                  'Khám phá ngay', 'Quà tặng',        'Làm đẹp'],
+  ['home-beauty-occasion-v2-02.jpg', 'Hương thơm cho mọi hành trình', 'Mùi hương yêu thích bản mini, luôn gọn trong túi xách của bạn.',     'Khám phá ngay', 'Nước hoa',        'Làm đẹp'],
+  ['home-beauty-occasion-v2-03.jpg', 'Thư giãn tại nhà',              'Dưỡng da và rạng rỡ đón năm mới ngay tại nhà.',                       'Khám phá ngay', 'Tắm & dưỡng thể', 'Làm đẹp'],
+];
+const hmOccList = () => (hmBeauty() ? HM_OCCASIONS_BEAUTY : HM_OCCASIONS).slice(0, HM_OCC_COUNT);
+
 /* TEN MUC + DONG PHU, lay tu khoi chu ben phai cua anh tham chieu.
    MOT CHO PHAI DOI: anh ghi "Bottega Veneta Intrecciato coverup", ma DAFC trong demo nay
    khong ban Bottega Veneta (catalog co Versace · D&G · Zimmermann · MCM · Stefano Ricci ·
@@ -12345,8 +12400,8 @@ function hmOccasions() {
              Muc nao KHONG co dong phu thi giu y nguyen khuon mot-nhan cu — 2 muc con lai cua
              HM_OCCASIONS de rong 2 cot do.
              Bo truncate: tieu de bien tap dai hon nhan mot tu nen phai duoc xuong dong. -->
-        ${HM_OCCASIONS.slice(0, HM_OCC_COUNT).map(([img, label, sub, cta, cat]) => `
-        <button data-hm-cat="${cat}" class="hm-occ-item flex flex-col press group text-left">
+        ${hmOccList().map(([img, label, sub, cta, cat, dept]) => `
+        <button data-hm-cat="${cat}"${dept ? ` data-hm-dept="${dept}"` : ''} class="hm-occ-item flex flex-col press group text-left">
           <div class="hm-cat-media w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
             <img src="${A}${hmFile(img)}" alt="${label}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]">
             <span class="${sub ? 'hm-occ-scrim' : 'hm-cat-scrim'}" aria-hidden="true"></span>
@@ -12467,6 +12522,21 @@ const HM_STORIES = [
   ['home-story-05.jpg',   '50% 50%', 'Bộ sưu tập', 'Stefano Ricci: The Lifestyle Sartorial',  'Phụ kiện'],
 ];
 
+/* 14/10/2026 (lệnh user: "ở phần block thì lấy nội dung cho beauty từ trang https://www.moltonbrown.co.uk/store/stories") — BLOG của trang chủ LÀM ĐẸP: 5 bài về MÙI HƯƠNG thay 5 bài thời trang (Stefano Ricci · AW26 · MCM · D&G).
+   ⚠ TRANG STORIES CỦA MOLTON BROWN CHẶN TRÌNH ĐỌC TỰ ĐỘNG (Cloudflare "Performing security verification"; WebFetch trả 403) — KHÔNG đọc được trực tiếp và KHÔNG vượt kiểm tra bot. Chủ đề lấy từ KẾT QUẢ TÌM KIẾM trỏ vào chính
+   mục Stories: 'A Guide to the Tea Ceremony Collection' (tiêu đề thật) · 'Molton Brown History' (tiêu đề thật) · bài tặng nước hoa dịp lễ · bài cách dùng nước hoa để lưu hương · bài vì sao mùi hương đặc trưng nhạt dần vào mùa đông.
+   Chữ VI là CHỮ VIẾT LẠI (không chép nguyên văn); EN chắc đúng nguyên văn ở 2 tiêu đề thật, 3 tiêu đề còn lại là EN mô tả đúng chủ đề — user gửi danh sách / tiêu đề thật thì thay data, không sửa khối.
+   ẢNH: 1 = bộ sưu tập Tea Ceremony · 2 = ảnh trao túi quà (ảnh cũ của khối "tuyển chọn theo mùa", nay trống) · 3 + 4 = hai ảnh còn lại của zip OneDrive 14/10 (chai nút vàng + ruy băng · bàn nhung đỏ mùa đông) · 5 = cửa hàng.
+   Cột 6 = ngành, cột 7 = hãng (có thì bấm ra trang hãng, bỏ qua cột 5). */
+const HM_STORIES_BEAUTY = [
+  ['home-beauty-story-01.jpg', '50% 50%', 'Bộ sưu tập', 'Cẩm nang bộ sưu tập Tea Ceremony',                 'Nước hoa', 'Làm đẹp'],
+  ['home-beauty-story-02.jpg', '50% 50%', 'Quà tặng',   'Nghệ thuật chọn nước hoa làm quà tặng',            'Quà tặng', 'Làm đẹp'],
+  ['home-beauty-story-03.jpg', '50% 50%', 'Hướng dẫn',  'Cách dùng nước hoa để lưu hương lâu hơn',          'Nước hoa', 'Làm đẹp'],
+  ['home-beauty-story-04.jpg', '50% 50%', 'Hướng dẫn',  'Vì sao mùi hương đặc trưng nhạt dần vào mùa đông', 'Nước hoa', 'Làm đẹp'],
+  ['home-beauty-story-05.jpg', '50% 50%', 'Thương hiệu', 'Lịch sử thương hiệu Molton Brown',                '',         'Làm đẹp', 'Molton Brown'],
+];
+const hmStoryList = () => (hmBeauty() ? HM_STORIES_BEAUTY : HM_STORIES);
+
 function hmStories() {
   /* ĐẦU MỤC CANH GIỮA (07/09/2026, lệnh user: *"phần hiển thị title canh giữa sẽ tương tự
      block items trên đó bạn đã làm nhưng k có CTA"*) — dùng lại đúng tham số `eyebrow` của
@@ -12485,8 +12555,8 @@ function hmStories() {
   return hmSec('Điểm tin nổi bật',
     hmLink('Xem tất cả', 'data-toast="Xem tất cả bài viết"'),
     `<div class="hm-stories drag-x overflow-x-auto no-scrollbar px-4">
-        ${HM_STORIES.map(([img, pos, eyebrow, title, cat]) => `
-        <button data-hm-cat="${cat}" class="hm-story flex flex-col gap-2 press group text-left">
+        ${hmStoryList().map(([img, pos, eyebrow, title, cat, dept, brand]) => `
+        <button ${brand ? `data-hm-brand="${brand}"` : `data-hm-cat="${cat}"${dept ? ` data-hm-dept="${dept}"` : ''}`} class="hm-story flex flex-col gap-2 press group text-left">
           <div class="w-full overflow-hidden bg-secondary" style="aspect-ratio:3/4">
             <img src="${A}${img}" alt="${title}" class="w-full h-full object-cover lazy transition-transform duration-500 group-hover:scale-[1.04]" style="object-position:${pos}">
           </div>
@@ -12757,7 +12827,7 @@ function screenHOME() {
            Dùng lại hmLink — KHÔNG dựng nút mới: đó đúng khuôn "Xem tất cả" mà mục
            "Hàng mới về" ngay trên đang dùng (12/18 gạch chân, không phải nút viền), nên ba
            mục của trang đọc ra cùng một hạng. -->
-    ${hmSec(HM_CAT_TITLE, hmLink('Xem tất cả', 'data-nav="plp"'), hmCatTiles(), 'h2', 'Khám phá tuyển chọn')}
+    ${hmSec(hmBeauty() ? HM_CAT_TITLE_BEAUTY : HM_CAT_TITLE, hmLink('Xem tất cả', 'data-nav="plp"'), hmCatTiles(), 'h2', 'Khám phá tuyển chọn')}
 
     ${hmMaison()}
 
@@ -19283,6 +19353,21 @@ const I18N = {
   'Dấu ấn đêm tiệc:':'Spotlight',
   'Toả sáng cùng Satin và những chất liệu tạo dấu ấn mùa này.':'The chicest way to stay cool this season with satin and more.',
   'Đón đầu xu hướng':'Get ahead',
+  'Xu hướng làm đẹp':'Beauty radar',   // 14/10/2026 (ghi thường, không HOA) — tiêu đề khối 4 ô danh mục trang chủ Làm đẹp (HM_CAT_TITLE_BEAUTY)
+  /* 14/10/2026 — khối "Tuyển chọn theo mùa" của home Làm đẹp (HM_OCCASIONS_BEAUTY): EN đúng chữ trong doc của user (ô 1 không có dấu chấm cuối — như doc) */
+  'Dấu ấn mùa lễ hội':'Festive Limited Editions',
+  'BST Hương thơm cho mùa lễ hội, phiên bản giới hạn.':'Seasonal scents and special designs, here for a limited time only',
+  'Hương thơm cho mọi hành trình':'Scent on the go',
+  'Mùi hương yêu thích bản mini, luôn gọn trong túi xách của bạn.':'Travel-sized favourites to keep your signature scent within reach.',
+  'Thư giãn tại nhà':'New Year Home spa',
+  'Dưỡng da và rạng rỡ đón năm mới ngay tại nhà.':'Soak, scrub and glow into the new year, all from the comfort of home.',
+  /* 14/10/2026 — Blog home Làm đẹp (HM_STORIES_BEAUTY): 'A Guide to the Tea Ceremony Collection' và 'Molton Brown History' là tiêu đề thật của trang Stories, 3 câu còn lại là EN mô tả chủ đề (xem ghi chú ở HM_STORIES_BEAUTY) */
+  'Hướng dẫn':'Guide',
+  'Cẩm nang bộ sưu tập Tea Ceremony':'A Guide to the Tea Ceremony Collection',
+  'Nghệ thuật chọn nước hoa làm quà tặng':'The art of gifting fragrance',
+  'Cách dùng nước hoa để lưu hương lâu hơn':'How to apply fragrance for lasting scent',
+  'Vì sao mùi hương đặc trưng nhạt dần vào mùa đông':'Why your signature scent fades in winter',
+  'Lịch sử thương hiệu Molton Brown':'Molton Brown History',
   'Tâm điểm thời trang':'Brand Spotlights',
   'Thương hiệu nổi bật mùa này':'The maisons of the season',
   'Khám phá ngay':'Discover now',
@@ -20178,7 +20263,11 @@ const I18N = {
   'Tất cả sản phẩm':'All products',
   'Bộ quà tặng':'Gift sets',
   'Nhà':'Home',
-  'Bán chạy nhất':'Bestsellers',
+  /* 14/10/2026 — banner 1 trang chủ Làm đẹp (HM_HERO_BEAUTY_1) */
+  'NỐT HƯƠNG KINH ĐIỂN':'ICONIC SCENT',
+  'Hương thơm dấu ấn dành riêng cho bạn':'Your new favourite scent awaits',
+  'Bán chạy nhất':'Best Sellers',   // 14/10/2026: 'Bestsellers' → 'Best Sellers' theo chữ user (dải đầu trang chủ Làm đẹp; hub Molton Brown dùng chung khoá)
+  'BST Black Pepper':'Black Pepper Collection',   // 14/10/2026 — HM_NEW_LINE_BEAUTY
   'Các bộ sưu tập':'Collections',
   'Mới về':'New in',
   'Molton Brown là nhà hương thơm và chăm sóc cơ thể cao cấp đến từ nước Anh. Mỗi dòng sản phẩm được dựng quanh một câu chuyện mùi hương — từ gỗ, hoa cỏ đến gia vị — để việc tắm gội, dưỡng tay hay xịt nước hoa trở thành khoảnh khắc đáng nhớ trong ngày.':'Molton Brown is a British house of luxury bodycare and fragrance. Every line is built around a scent story — woods, flowers, spices — so a shower, a moment of hand care or a spritz of perfume becomes a moment worth remembering.',
@@ -20447,6 +20536,12 @@ function applyLang(root, to) {
   });
   root.querySelectorAll && root.querySelectorAll('[aria-label]').forEach(e => {
     const out = tr(e.getAttribute('aria-label'), to); if (out) e.setAttribute('aria-label', out);
+  });
+  /* 14/10/2026 — BẢN EN THEO NGỮ CẢNH: phần tử mang `data-en` (nên kèm data-i18n-skip để bộ dịch theo khoá không đụng) đổi NGUYÊN chữ sang EN, và trả lại chữ VI đã nhớ khi về VI.
+     Dùng cho chuỗi mà MỘT khoá VI phải ra HAI bản EN khác nhau theo ngành (dòng lớn khối "Thương hiệu nổi bật" của trang chủ Làm đẹp — xem HM_SPOT_TITLE_BEAUTY_EN). Chỉ cho phần tử chứa MỘT text node. */
+  root.querySelectorAll && root.querySelectorAll('[data-en]').forEach(e => {
+    if (to === 'en') { if (e.dataset.vi === undefined) e.dataset.vi = e.textContent; e.textContent = e.dataset.en; }
+    else if (e.dataset.vi !== undefined) e.textContent = e.dataset.vi;
   });
 }
 
