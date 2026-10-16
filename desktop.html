@@ -10465,7 +10465,7 @@ function screenPLPList() {
    · plpSkelCard / plpSkelCards — THẺ xương dùng chung mọi chỗ (CSS .skel-card ở <style>, số đo khớp thẻ thật nên thẻ thật thay vào lưới không tụt).
    · screenPLPSkeleton — CẢ TRANG xương: đầu trang (navBar) và chân trang (footer) là THẬT vì khung vỏ luôn có ngay; phần giữa là ô xám đúng bố cục
      thật (đường dẫn 48 · tiêu đề + số lượng 56 · thanh lọc 60 · lưới 4 cột 12 thẻ · tiến độ + nút Xem thêm). Chỉ cho trang DANH SÁCH (danh mục /
-     tìm kiếm): trang hãng + hub có bố cục riêng (hero, dải danh mục) CHƯA có khung xương.
+     tìm kiếm); trang hãng + hub có khung xương RIÊNG từ 16/10/2026 (khối KHUNG XƯƠNG TRANG HÃNG · HUB bên dưới).
    · go('plp') dựng nó TRƯỚC khi netWeak() (xem go + plpSkelThenReal), NET_WEAK_FIRST ms sau đổ trang thật vào CHÍNH phần tử màn.
    Ô xám là trang trí (aria-hidden); một dòng ẩn role=status "Đang tải" cho trình đọc màn hình, cả khối aria-busy.
    ═══════════════════════════════════════════════════════════════════════ */
@@ -10484,29 +10484,18 @@ function plpSkelCard() {
 }
 const plpSkelCards = n => Array(n).fill(plpSkelCard()).join('');
 
-function screenPLPSkeleton() {
-  /* bề rộng CHỮ của 7 chip nhanh (đo 1440: 18 · 51 · 27 · 53 · 61 · 71 · 55); chip = chữ + đệm ngang 12 × 2, cao 36 — xem dkFilterBar */
-  const chipW = [18, 51, 27, 53, 61, 71, 55];
-  return `
-  <div class="w-full" data-scroller data-plp-skeleton aria-busy="true">
-    <p class="skel-sr" role="status">Đang tải</p>
-    ${navBar({ plp: true })}
-    <div class="max-w-[1440px] mx-auto w-full">
-      <!-- đường dẫn: px-6 py-4 + dòng 16 = 48 như dkCrumbs; bốn thanh thay cho "Trang chủ · ngành · nhóm · danh mục" -->
+/* 16/10/2026: thanh lọc · lưới · tiến độ + Xem thêm TÁCH RA để trang danh sách và trang hãng / hub dùng CHUNG một khuôn (số đo y như bản 15/10, chỉ đổi chỗ đặt). */
+const plpSkelDkCrumb = ws => `
       <div class="flex items-center px-6 py-4" aria-hidden="true">
-        ${skelLn(16, skelBar('56px') + skelBar('40px') + skelBar('72px') + skelBar('80px'), 16)}
-      </div>
-      <!-- tiêu đề + số sản phẩm: pt-2 pb-4 + h1 32 = 56, hai bên canh đáy -->
-      <div class="flex items-end justify-between gap-2 px-6 pt-2 pb-4" aria-hidden="true">
-        ${skelLn(32, skelBar('168px', 24))}
-        ${skelLn(20, skelBar('92px'))}
-      </div>
-      <!-- thanh lọc: pt-2 pb-4 pl-6 pr-4 + hàng 36 = 60 như dkFilterBar (không dính, không bấm) -->
+        ${skelLn(16, ws.map(w => skelBar(w + 'px')).join(''), 16)}
+      </div>`;
+const plpSkelDkBar = () => `
+      <!-- thanh lọc: pt-2 pb-4 pl-6 pr-4 + hàng 36 = 60 như dkFilterBar (không dính, không bấm); bề rộng CHỮ của 7 chip nhanh đo ở 1440: 18 · 51 · 27 · 53 · 61 · 71 · 55, chip = chữ + đệm ngang 12 × 2, cao 36 -->
       <div class="pt-2 pb-4 pl-6 pr-4 flex items-center justify-between gap-4" aria-hidden="true">
         <div class="flex items-center gap-2 min-w-0">
           <div class="skel shrink-0" style="width:98px;height:36px"></div>
           <div class="flex items-center gap-2">
-            ${chipW.map(w => `<div class="flex items-center px-3 shrink-0" style="height:36px">${skelBar(w + 'px')}</div>`).join('')}
+            ${[18, 51, 27, 53, 61, 71, 55].map(w => `<div class="flex items-center px-3 shrink-0" style="height:36px">${skelBar(w + 'px')}</div>`).join('')}
           </div>
         </div>
         <div class="flex items-center shrink-0">
@@ -10515,13 +10504,18 @@ function screenPLPSkeleton() {
           </div>
           <div class="px-3">${skelLn(36, skelBar('72px'))}</div>
         </div>
-      </div>
-
+      </div>`;
+/* lưới theo plpCols: 4 cột 12 thẻ (3 hàng) · 3 cột 9 thẻ (3 hàng) */
+const plpSkelDkGrid = () => {
+  const three = plpCols === '3';
+  return `
       <div class="px-6" aria-hidden="true">
-        <div class="grid grid-cols-4 gap-x-1 py-2" style="row-gap:16px">
-          ${plpSkelCards(12)}
+        <div class="grid ${three ? 'grid-cols-3' : 'grid-cols-4'} gap-x-1 py-2" style="row-gap:16px">
+          ${plpSkelCards(three ? 9 : 12)}
         </div>
-      </div>
+      </div>`;
+};
+const plpSkelDkMore = () => `
       <!-- tiến độ (chữ 18 + khe 24 + vạch 2, pt-40 = 84) và nút Xem thêm (py-4 + 48 = 80) như dkProductGrid -->
       <div class="flex flex-col items-center gap-6 pt-10" aria-hidden="true">
         ${skelLn(18, skelBar('210px'))}
@@ -10529,7 +10523,26 @@ function screenPLPSkeleton() {
       </div>
       <div class="flex justify-center py-4" aria-hidden="true">
         <div class="skel" style="width:110px;height:48px"></div>
+      </div>`;
+
+function screenPLPSkeleton() {
+  /* 16/10/2026: trang HÃNG / HUB có khung xương riêng (xem khối KHUNG XƯƠNG TRANG HÃNG · HUB bên dưới) */
+  if (plpMode.type === 'brand') return (BRAND_HUBS[brandPage(plpBrandName()).name] && !plpMode.all) ? plpHubSkeleton() : plpBrandSkeleton();
+  return `
+  <div class="w-full" data-scroller data-plp-skeleton aria-busy="true">
+    <p class="skel-sr" role="status">Đang tải</p>
+    ${navBar({ plp: true })}
+    <div class="max-w-[1440px] mx-auto w-full">
+      <!-- đường dẫn: px-6 py-4 + dòng 16 = 48 như dkCrumbs; bốn thanh thay cho "Trang chủ · ngành · nhóm · danh mục" -->
+      ${plpSkelDkCrumb([56, 40, 72, 80])}
+      <!-- tiêu đề + số sản phẩm: pt-2 pb-4 + h1 32 = 56, hai bên canh đáy -->
+      <div class="flex items-end justify-between gap-2 px-6 pt-2 pb-4" aria-hidden="true">
+        ${skelLn(32, skelBar('168px', 24))}
+        ${skelLn(20, skelBar('92px'))}
       </div>
+      ${plpSkelDkBar()}
+      ${plpSkelDkGrid()}
+      ${plpSkelDkMore()}
     </div>
     ${footer()}
   </div>`;
@@ -10537,7 +10550,7 @@ function screenPLPSkeleton() {
 
 /* Vào PLP khi "Mạng yếu" bật → khung xương trước. Chỉ trang DANH SÁCH; đi LÙI (Back) không qua khung xương — danh sách coi như đã có sẵn, và
    khôi phục vị trí cuộn lên một khung xương là vô nghĩa. */
-const plpSkelFirst = () => netWeak() && (plpMode.type === 'category' || plpMode.type === 'search');
+const plpSkelFirst = () => netWeak() && (plpMode.type === 'category' || plpMode.type === 'search' || plpMode.type === 'brand');   // 16/10/2026: + trang hãng / hub (plpBrandSkeleton · plpHubSkeleton)
 let plpSkelTok = 0;
 function plpSkelThenReal(el) {
   const tok = ++plpSkelTok;
@@ -10548,6 +10561,155 @@ function plpSkelThenReal(el) {
     el.innerHTML = RENDER.plp();
     wire(el); localizeNew(el);
   }, NET_WEAK_FIRST);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   KHUNG XƯƠNG TRANG HÃNG · HUB THƯƠNG HIỆU · LƯỚI 3 CỘT — BẢN DESKTOP (16/10/2026, lệnh user "tiến hành"; bản mobile xem index.html cùng tên khối).
+   · plpBrandSkeleton — trang HÃNG (đo Versace 1440 = 4 183): navBar 161 · đường dẫn 48 · đầu trang 342 (ảnh 575 × 320 cạnh cột chữ 801: logo 44 + mô tả 76 + dải danh mục 182, khe 16;
+     cột chữ cao 326 hơn ảnh nên hàng cao 326, + pb-4 = 342) · thanh lọc 60 · lưới · tiến độ 84 + Xem thêm 80 · chân trang 484. Ảnh / mô tả / dải danh mục chỉ vẽ khi hãng CÓ data (brandPage)
+     và theo ĐÚNG luật screenPLP: lưới của hãng có hub = không ảnh, không dải danh mục, đường dẫn 4 đoạn.
+   · plpHubSkeleton — HUB Molton Brown (đo 1440 = 4 143,8): navBar 161 · đường dẫn 48 · banner pt-6 + tỉ lệ ảnh (1920/696 → 522) = 546 · dải 6 ô tròn 224 · Bán chạy nhất 654,9 (đầu mục 58 · dải 5 thẻ 476,9) ·
+     Highlights 748 (ảnh vuông 684 cạnh cột chữ + 3 thẻ 378,9) · Bộ sưu tập 554,9 (đầu mục 58 · 6 ô 376,9) · Về hãng 707 (tiêu đề 32 · lời dẫn 18 · ảnh 4:3 684 × 513 cạnh hai cửa hàng 344) · chân trang 484.
+     Khối nào nằm trong H.hide (title · intro · chips · tabs · eyebrow · insta) thì khung xương CŨNG không vẽ; bật lại khối nào thì phải thêm ô xám tương ứng, kẻo khung xương ngắn hơn trang thật.
+   Mượn class THUẦN CSS của trang thật (.dk-brand-hero · .hm-hero-wrap / .hm-hero / .hm-hero-dots · .bh-cats · .bh-cat · .bh-cat-img · .bh-hl-* · .bh-about-* · .bh-stores · .bh-store · .hm-rail-item) để đệm / khe / khổ do CSS cũ cấp.
+   KHÔNG mang id / hook mà wire() nối (#plpGrid · #brandDesc · #brandToggle · [data-bh-go] · [data-cate] · [data-strip-next] · .dk-rail · .dk-rail-track · .drag-x …): dải thẻ dùng div flex thường, KHÔNG dùng .dk-rail
+   (wireRail ném lỗi khi .dk-rail không có nút mũi tên). Đi LÙI (Back) không qua khung xương. Cơ chế đổ trang thật: plpSkelThenReal ở trên.
+   ═══════════════════════════════════════════════════════════════════════ */
+function plpBrandSkeleton() {
+  const B = brandPage(plpBrandName());
+  const H = BRAND_HUBS[B.name];
+  const heroOn = (B.heroDk || B.hero) && !H;
+  const cats = (!H && B.cats && B.cats.length) ? B.cats.slice(0, 5) : [];
+  /* mô tả bị cắt 3 dòng ở trang thật (line-clamp 3); ~130 ký tự một dòng ở cột 801 */
+  const descLines = B.desc ? Math.min(3, Math.max(1, Math.ceil(B.desc.length / 130))) : 0;
+  const descW = ['100%', '96%', '62%'];
+  return `
+  <div class="w-full" data-scroller data-plp-skeleton aria-busy="true">
+    <p class="skel-sr" role="status">Đang tải</p>
+    ${navBar()}
+    <div class="max-w-[1440px] mx-auto w-full">
+      ${plpSkelDkCrumb(H ? [56, 72, 64, 80] : [56, 72, 64])}
+
+      <!-- đầu trang hãng: ảnh 575 x 320 cạnh cột chữ; cột chữ = logo (py-2 + 28) · mô tả (3 dòng 18 + pt-1 + dòng Xem thêm 18) · dải danh mục (5 ô 150 x 182 + nút 44) -->
+      <div class="px-6" aria-hidden="true">
+        <div class="flex gap-4 pb-4 items-start">
+          ${heroOn ? `<div class="dk-brand-hero w-[575px] shrink-0 skel" style="height:320px"></div>` : ''}
+          <div class="flex-1 min-w-0 flex flex-col gap-4">
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center justify-between py-2">${B.logo ? skelLn(28, skelBar('149px', 24)) : skelLn(32, skelBar('160px', 24))}</div>
+              ${descLines ? `
+              <div>
+                <div>${Array.from({ length: descLines }, (_, k) => skelLn(18, skelBar(descLines === 1 ? '62%' : (k === descLines - 1 ? descW[2] : descW[k])))).join('')}</div>
+                <div class="flex justify-start pt-1">${skelLn(18, skelBar('64px'))}</div>
+              </div>` : ''}
+            </div>
+            ${cats.length ? `
+            <div class="flex items-center gap-4 pr-2">
+              <div class="flex-1 min-w-0 flex gap-2 overflow-hidden">
+                ${cats.map(() => `<div class="shrink-0 w-[150px] flex flex-col"><div class="skel w-full aspect-square"></div><div class="flex flex-col p-1 h-8 justify-center">${skelLn(16, skelBar('72%'))}</div></div>`).join('')}
+              </div>
+              <div class="skel w-11 h-11 shrink-0"></div>
+            </div>` : ''}
+          </div>
+        </div>
+      </div>
+
+      ${plpSkelDkBar()}
+      ${plpSkelDkGrid()}
+      ${plpSkelDkMore()}
+    </div>
+    ${footer()}
+  </div>`;
+}
+
+function plpHubSkeleton() {
+  const B = brandPage(plpBrandName());
+  const H = BRAND_HUBS[B.name];
+  /* đầu mục canh giữa của hmSecHead khi không có eyebrow: tiêu đề 32 + khe 8 + liên kết Xem tất cả 18 = 58 */
+  const head = w => `<div class="flex flex-col items-center text-center gap-2">${skelLn(32, skelBar(w + 'px', 20))}${skelLn(18, skelBar('72px'))}</div>`;
+  /* thẻ trong khối Highlights: (684 - 2 × 8) / 3 = 222,7 rộng · ảnh 189/252 (296,9) + khối chữ 82 = 378,9 */
+  const hlCard = () => `
+              <div class="bg-card flex flex-col min-w-0">
+                <div class="skel w-full" style="aspect-ratio:189/252"></div>
+                <div class="flex flex-col px-1 py-2" style="height:82px">${skelLn(18, skelBar('80%'))}${skelLn(18, skelBar('34%'))}</div>
+              </div>`;
+  /* ô bộ sưu tập: ảnh 3:4 (228,7 x 304,9) + khe 8 + nhãn 16 · khe 8 · tiêu đề 2 dòng 20 = 64 → 376,9 như ô cao nhất của hàng thật */
+  const story = () => `
+            <div class="flex flex-col gap-2 min-w-0">
+              <div class="skel w-full" style="aspect-ratio:3/4"></div>
+              <div class="flex flex-col gap-2 px-0.5">${skelLn(16, skelBar('46%'))}<div>${skelLn(20, skelBar('78%'))}${skelLn(20, skelBar('42%'))}</div></div>
+            </div>`;
+  /* cửa hàng (bản chia đôi): đệm 24 + tên thành phố 24 + khe 20 + 3 dòng 20 (khe 4) + đệm 24 = 160, hai ô + khe 24 = 344 */
+  const store = () => `<div class="bh-store">${skelLn(24, skelBar('130px', 16))}<div class="bh-store-info">${skelLn(20, skelBar('120px'))}${skelLn(20, skelBar('220px'))}${skelLn(20, skelBar('120px'))}</div></div>`;
+  const leadLines = (H.about.paras || []).map(t => Math.max(1, Math.ceil(String(t).length / 230)));
+  return `
+  <div class="w-full" data-scroller data-plp-skeleton aria-busy="true">
+    <p class="skel-sr" role="status">Đang tải</p>
+    ${navBar()}
+    <div class="max-w-[1440px] mx-auto w-full">
+      ${plpSkelDkCrumb([56, 72, 80])}
+    </div>
+
+    <!-- banner: pt-6 + ảnh theo tỉ lệ banner (H.banner.rd) + chấm trang cách đáy 16, tràn hết bề ngang như hero thật -->
+    <div class="hm-hero-wrap pt-6" aria-hidden="true">
+      <div class="hm-hero">
+        <div class="skel w-full" style="aspect-ratio:${H.banner.rd}"></div>
+        ${H.banner.slides.length > 1 ? `<div class="hm-hero-dots skel-on">${'<span class="skel" style="width:8px;height:8px;border-radius:9999px"></span>'.repeat(H.banner.slides.length)}</div>` : ''}
+      </div>
+    </div>
+
+    <div class="max-w-[1440px] mx-auto w-full">
+      <!-- dải ô tròn: pt-10 + [ô 172 x 184: ảnh tròn 140 + khe 12 + nhãn 20 + đệm đáy 12] = 224 -->
+      <div class="px-6 pt-10" aria-hidden="true">
+        <div class="bh-cats">${H.cats.map(() => `<div class="bh-cat"><div class="skel bh-cat-img"></div>${skelLn(20, skelBar('84px'))}</div>`).join('')}</div>
+      </div>
+
+      <!-- Bán chạy nhất: py-8 + pt-8 + [đầu mục 58 · khe 24 · dải 5 thẻ 275,2 x 476,9] + py-8 = 654,9 -->
+      <div class="px-6 py-8" aria-hidden="true">
+        <div class="pt-8 flex flex-col gap-6">
+          ${head(159)}
+          <div class="flex gap-1 overflow-hidden">${Array.from({ length: 5 }, () => pdpSkelCard('hm-rail-item shrink-0')).join('')}</div>
+        </div>
+      </div>
+
+      <!-- Highlights: py-8 + [ảnh vuông 684 · cột chữ (đệm 16 · chữ co giãn 257,1 · khe 16 · 3 thẻ 378,9 · đệm 16)] + py-8 = 748 -->
+      <div class="px-6 py-8" aria-hidden="true">
+        <div class="bh-hl-list">
+          <div class="skel bh-hl-media"></div>
+          <div class="bh-hl-side">
+            <div class="bh-hl-copy">
+              <div class="w-full">${skelLn(32, skelBar('62%', 20))}${skelLn(32, skelBar('44%', 20))}</div>
+              <div class="w-full">${[100, 96, 100, 62].map(w => skelLn(18, skelBar(w + '%'))).join('')}</div>
+              ${skelLn(16, skelBar('118px'))}
+            </div>
+            <div class="bh-hl-prods">${hlCard()}${hlCard()}${hlCard()}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bộ sưu tập: py-8 + pt-8 + [đầu mục 58 · khe 24 · hàng 6 ô 376,9] + py-8 = 554,9 -->
+      <div class="px-6 py-8" aria-hidden="true">
+        <div class="pt-8 flex flex-col gap-6">
+          ${head(162)}
+          <div class="bh-stories">${Array.from({ length: 6 }, () => story()).join('')}</div>
+        </div>
+      </div>
+
+      <!-- Về hãng: py-8 + pt-8 + [tiêu đề 32 · khe 24 · lời dẫn 18 · khe 24 · lưới (ảnh 4:3 684 x 513 cạnh hai cửa hàng 344)] + py-8 = 707 -->
+      <div class="px-6 py-8" aria-hidden="true">
+        <div class="bh-about bh-about-split pt-8 flex flex-col gap-6">
+          <div class="flex flex-col items-center text-center gap-2">${skelLn(32, skelBar('220px', 20))}</div>
+          ${leadLines.map(n => `<div class="flex flex-col items-center">${Array.from({ length: n }, () => skelLn(18, skelBar(n === 1 ? '58%' : '94%'))).join('')}</div>`).join('')}
+          <div class="bh-about-grid">
+            <div class="skel bh-about-img"></div>
+            <div class="bh-stores">${store()}${store()}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    ${footer()}
+  </div>`;
 }
 
 /* Dải danh mục 150×150 của trang thương hiệu. Tách khỏi template của screenPLP
@@ -15635,6 +15797,150 @@ function screenORDER() {
 /* `orderMetaFit()` (đo hàng thông tin ba cột rồi gắn `.is-wrap`) ĐÃ GỠ 05/10/2026 tối cùng vạch dọc và rule `.is-wrap`: user chốt hàng thông tin xếp DỌC, mỗi loại một dòng (xem `.ov-meta`) — danh sách dọc luôn vừa
    nên không còn gì để đo. Muốn trở lại ba cột đều thì phải do user nói (bản cũ: README mục "Chi tiết đơn hàng DESKTOP: theo khung Figma 1159:105033", ghi chú lần sửa 2). */
 
+/* ═══════════════════════════════════════════════════════════════════════
+   KHUNG XƯƠNG CHI TIẾT ĐƠN HÀNG — BẢN DESKTOP (16/10/2026, lệnh user "tiến hành"; bản mobile xem index.html cùng tên khối) — cùng cơ chế "Mạng yếu" của PLP · giỏ · PDP · Thanh toán · Tài khoản · Theo dõi đơn.
+   · screenOrderSkeleton — CẢ TRANG xương (đo 1440 trên DAFC103015: navBar 161 · đường dẫn 48 · tiêu đề 48 · thẻ đầu 218 · thẻ Trạng thái 152 · thẻ Sản phẩm 378, khe 16 = 782 · chân trang 484 = trang 1 617): navBar + đường dẫn + mục lục trái
+     (accSideNav, đang sáng "Đơn hàng") + hàng tiêu đề (nút lùi + chữ) + chân trang là THẬT vì khung vỏ luôn có ngay; ba thẻ là ô xám đúng bố cục thật, vẽ theo ĐƠN ĐANG MỞ (currentOrder) chỉ về SỐ ĐẾM — số dòng hàng · quà ·
+     số chặng · có / không mã vận đơn · nút Thanh toán lại · dải ghi chú · hàng điểm — nên cao bằng trang thật lúc đổ. Không in chữ thật của đơn.
+     Mượn class THUẦN CSS của trang thật: `.acc-page` · `.acc-layout` · `.acc-main` · `.ov-*` · `.ord-grid`; ô xám trên tấm tổng xám dùng `.skel-on`. KHÔNG mang hook mà wire() nối ngoài nút lùi [data-atab] và mục lục trái (khung vỏ thật).
+   · ordSkelThenReal đổ screenORDER thật sau NET_WEAK_FIRST ms vào CHÍNH phần tử màn (token ordSkelTok). Back không qua khung xương.
+   ═══════════════════════════════════════════════════════════════════════ */
+let ordSkelTok = 0;
+function ordSkelThenReal(el) {
+  const tok = ++ordSkelTok;
+  setTimeout(() => {
+    /* bỏ nếu đã sang màn khác · đã mở chi tiết đơn lại (token đổi) · phần tử đã bị thay · khung xương không còn là thứ đang hiện */
+    if (tok !== ordSkelTok || current !== 'order' || !el.isConnected || !el.querySelector('[data-ord-skeleton]')) return;
+    scrollCleanups.forEach(fn => fn()); scrollCleanups = [];
+    el.innerHTML = RENDER.order();
+    wire(el); localizeNew(el);
+  }, NET_WEAK_FIRST);
+}
+function screenOrderSkeleton() {
+  const o = ORDERS.find(x => x.id === currentOrder) || ORDERS[0];
+  const payAct = orderActions(o).primary, awb = orderAwbs(o).length > 0, cancel = o.tone === 'cancel';
+  const plain = t => String(t || '').replace(/<[^>]*>/g, '');
+  /* số dòng ước theo độ dài chữ: địa chỉ ~54 ký tự một dòng 14/20 ở cột 380 · tên hàng ~58 ở cột chữ (~ 400 rộng 12/18) */
+  const lines = (t, per) => Math.max(1, Math.ceil(plain(t).length / per));
+  const noteLines = orderNoteLines(o);
+  const addr = o.address || {};
+  const addrN = lines(addr.line, 54);
+  const row = it => {
+    const p = orderItemP(it), sale = !it.preorder && p.off;
+    return `
+              <div class="ord-grid">
+                <div class="flex gap-4 min-w-0">
+                  <div class="skel shrink-0" style="width:72px;height:96px"></div>
+                  <div class="flex-1 min-w-0 flex flex-col">
+                    ${p.brand ? skelLn(20, skelBar('84px', 14)) : ''}
+                    <div>${Array.from({ length: Math.min(2, lines(it.name, 58)) }, (_, k) => skelLn(18, skelBar(k ? '40%' : '72%'))).join('')}</div>
+                    <div class="mt-1">${skelLn(16, skelBar('96px'))}</div>
+                    ${it.sku ? `<div class="mt-0.5">${skelLn(16, skelBar('132px'))}</div>` : ''}
+                    ${it.qty > 1 ? `<div class="mt-0.5">${skelLn(16, skelBar('112px'))}</div>` : ''}
+                    ${it.preorder ? `<div class="mt-0.5">${skelLn(16, skelBar('170px'))}</div>` : ''}
+                  </div>
+                </div>
+                <div class="flex justify-center">${skelLn(20, skelBar('24px'))}</div>
+                <div class="flex flex-col items-end">${sale ? skelLn(16, skelBar('120px')) : ''}${skelLn(20, skelBar('96px'))}</div>
+              </div>`;
+  };
+  const gift = ({ g }) => `
+              <div class="ord-grid">
+                <div class="flex gap-4 min-w-0">
+                  <div class="skel shrink-0" style="width:72px;height:96px"></div>
+                  <div class="flex-1 min-w-0 flex flex-col">
+                    ${skelLn(20, skelBar('64px', 14))}
+                    <div>${Array.from({ length: Math.min(2, lines(g.name, 58)) }, (_, k) => skelLn(18, skelBar(k ? '36%' : '68%'))).join('')}</div>
+                    <div class="mt-1">${skelLn(16, skelBar('90px'))}</div>
+                  </div>
+                </div>
+                <span aria-hidden="true"></span>
+                <div class="flex flex-col items-end">${skelLn(20, skelBar('64px'))}</div>
+              </div>`;
+  const sumRow = (a, b) => `<div class="ov-sum-row">${skelLn(20, skelBar(a + 'px'))}${skelLn(20, skelBar(b + 'px'))}</div>`;
+  const mi = (a, b) => `<div class="ov-mi">${skelLn(20, skelBar(a + 'px'))}${skelLn(20, skelBar(b + 'px'))}</div>`;
+  const steps = orderTlSteps(o).length;
+  return `
+  <div class="w-full" data-scroller data-ord-skeleton aria-busy="true">
+    <p class="skel-sr" role="status">Đang tải</p>
+    ${navBar()}
+    <div class="max-w-[1440px] mx-auto w-full acc-page">
+      ${dkCrumbs(['Trang chủ', 'Tài khoản', 'Chi tiết đơn hàng'])}
+      <div class="acc-layout">
+        ${accSideNav('orders')}
+        <div class="acc-main">
+          <div class="ov-page">
+            <div class="ov-titlebar">
+              <button type="button" data-atab="orders" aria-label="Đơn hàng" class="ov-backbtn press">${I.chevL}</button>
+              <h1 class="t-display-title text-foreground">Chi tiết đơn hàng</h1>
+            </div>
+            <div class="ov-cards">
+
+              <!-- thẻ đầu: đệm 16 · [hàng đầu 28 (có nút Thanh toán lại thì cột phải 28 + 8 + 48) · (dải ghi chú) · kẻ · thông tin 108 (người nhận: tiêu đề 24 · khe 16 · 3 dòng 20 khe 4 | 3 dòng hoá đơn · thanh toán · giao hàng)], khe 24 · kẻ đáy 1 = 218 -->
+              <div class="ov-card is-head" aria-hidden="true">
+                <div class="ov-top">
+                  <div class="ov-hrow">
+                    <div class="ov-codes">
+                      <span class="ov-idg">${skelLn(24, skelBar('88px', 14))}${skelLn(24, skelBar('112px', 16))}</span>
+                      <div class="skel" style="width:104px;height:28px"></div>
+                    </div>
+                    <div class="ov-headr">
+                      <span class="ov-dateg">${skelLn(20, skelBar('64px'))}${skelLn(20, skelBar('128px'))}</span>
+                      ${payAct ? '<div class="skel" style="width:168px;height:48px"></div>' : ''}
+                    </div>
+                  </div>
+                  ${noteLines.length ? `
+                  <div class="bg-accent-0 px-4 py-2 flex flex-col gap-1 skel-on">
+                    ${noteLines.map(l => { const n = lines(l, 125); return `<div>${Array.from({ length: n }, (_, k) => skelLn(18, skelBar(k === n - 1 && n > 1 ? '58%' : '94%'))).join('')}</div>`; }).join('')}
+                  </div>` : ''}
+                  <div class="ov-divider"></div>
+                  <div class="ov-info">
+                    <div class="ov-rcv">
+                      ${skelLn(24, skelBar('148px', 16))}
+                      <div class="ov-addr">${skelLn(20, skelBar('120px'))}${Array.from({ length: addrN }, (_, k) => skelLn(20, skelBar(k === addrN - 1 && addrN > 1 ? '48%' : '96%'))).join('')}${addr.phone ? skelLn(20, skelBar('108px')) : ''}</div>
+                    </div>
+                    <div class="ov-meta">${mi(168, 116)}${mi(176, 156)}${mi(172, 128)}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- thẻ Trạng thái: đệm 16 · [hàng đầu 24 (có mã vận đơn: nút 36 + khe 8 + dòng mã 28 = 72) · khe 16 · stepper pt-8 + [nút 24 · khe 8 · nhãn 16 · khe 8 · giờ 16] = 80] = 152 -->
+              <div class="ov-card is-stat" aria-hidden="true">
+                <div class="ov-st-head">
+                  ${skelLn(24, skelBar('164px', 16))}
+                  ${awb ? `<div class="ov-trk"><div class="skel" style="height:36px"></div><div class="ov-mi ov-awb">${skelLn(20, skelBar('76px'))}${skelLn(20, skelBar('112px'))}</div></div>` : ''}
+                </div>
+                <div class="ov-tl">${Array.from({ length: steps }, () => `<div class="ov-step"><div class="skel" style="width:24px;height:24px;border-radius:9999px"></div>${skelLn(16, skelBar('84px'))}${skelLn(16, skelBar('64px'))}</div>`).join('')}</div>
+              </div>
+
+              <!-- thẻ Sản phẩm + tổng: đệm 16 · đầu bảng 24 + 16 · mỗi hàng 96 (khe 16) + đệm 16 · tấm tổng xám [đệm 16 · 3 hàng 20 · kẻ · Tổng thanh toán 40 · hàng điểm 20; khe 8] -->
+              <div class="ov-card ov-items" aria-hidden="true">
+                <div class="ord-grid ord-grid-head">
+                  ${skelLn(24, skelBar('108px', 16))}
+                  <div class="flex justify-center">${skelLn(16, skelBar('56px'))}</div>
+                  <div class="flex justify-end">${skelLn(16, skelBar('72px'))}</div>
+                </div>
+                <div class="ov-lines">${o.items.map(row).join('')}${orderGifts(o).map(gift).join('')}
+                </div>
+                <div class="ov-sum-wrap skel-on">
+                  <div class="ov-sum">
+                    ${sumRow(84, 100)}${sumRow(76, 88)}${sumRow(112, 72)}${o.pointsUsed ? sumRow(96, 84) : ''}
+                    <div class="ov-divider"></div>
+                    <div class="ov-sum-row ov-sum-total"><div class="ov-total-l">${skelLn(24, skelBar('128px', 16))}${skelLn(16, skelBar('88px'))}</div>${skelLn(24, skelBar('104px', 16))}</div>
+                    ${cancel ? '' : `<div class="ov-sum-row ov-ptsrow">${skelLn(20, skelBar('200px'))}${skelLn(20, skelBar('44px'))}</div>`}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${footer()}
+  </div>`;
+}
+
 /* ════════════════════════════════════════════════════════════════
    SCREEN: CART
 ════════════════════════════════════════════════════════════════ */
@@ -16489,7 +16795,7 @@ function pbhCheck(raw) {
   const ok = [], bad = [];
   codes.forEach(c => {
     const code = c.toUpperCase();
-    if (!/^[A-Z0-9-]{6,20}$/.test(code)) { bad.push([code, PBH_MSG.invalid]); return; }
+    if (!valOff() && !/^[A-Z0-9-]{6,20}$/.test(code)) { bad.push([code, PBH_MSG.invalid]); return; }   // 16/10/2026: Kiểm lỗi nhập TẮT bỏ luật định dạng
     if (cartPbh.some(p => p.code === code) || ok.some(p => p.code === code)) { bad.push([code, PBH_MSG.dup]); return; }
     if (pbhSim !== 'ok') { bad.push([code, PBH_MSG[pbhSim]]); return; }
     ok.push({ code, amount: pbhAmount(code) });
@@ -17341,6 +17647,10 @@ function skelPageFor(name, opts) {
   if (PDP_SCREENS.includes(name)) return pdpSkelFirst() ? { html: screenPDPSkeleton, then: el => pdpSkelThenReal(el, name) } : null;
   if (name === 'checkout') return ckSkelFirst() ? { html: screenCheckoutSkeleton, then: ckSkelThenReal } : null;
   if (name === 'account') return accSkelFirst() ? { html: () => screenACCOUNT(true), then: accSkelThenReal } : null;
+  /* 16/10/2026: Chi tiết đơn hàng (từ danh sách đơn · từ cổng thanh toán). Back không qua (go() bỏ skelPageFor khi opts.back). */
+  if (name === 'order') return netWeak() ? { html: screenOrderSkeleton, then: ordSkelThenReal } : null;
+  /* 16/10/2026: màn Hoàn tất (đặt xong · cổng thanh toán trả về thành công). Cổng thanh toán (#pay) KHÔNG có khung xương — xem payEnter. */
+  if (name === 'done') return netWeak() ? { html: screenDoneSkeleton, then: doneSkelThenReal } : null;
   /* 16/10/2026 (lô 6 · TRK-29): kết quả tra cứu mở khi đã biết mã (từ Chi tiết đơn). Tra cứu từ ô nhập đi qua nút "Đang tra cứu…" nên go() truyền noSkel. */
   if (name === 'track') return (netWeak() && trackFound && !(opts && opts.noSkel)) ? { html: screenTrackSkeleton, then: trackSkelThenReal } : null;
   return null;
@@ -17464,6 +17774,53 @@ function ckMoneyBusy(root) {
   els.forEach(e => e.classList.add('is-skel-wait'));
   const tok = ++ckBusyTok;
   setTimeout(() => { if (tok === ckBusyTok) els.forEach(e => e.classList.remove('is-skel-wait')); }, NET_WEAK_GRID);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   KHUNG XƯƠNG BƯỚC 2–4 CỦA THANH TOÁN (16/10/2026, lệnh user "tiến hành" sau câu "mấy cái skeleton làm hết chưa") — nối tiếp khung xương Thanh toán (15/10, chỉ có BƯỚC 1 lúc vào trang) cho các bước sau.
+   · Lúc "Mạng yếu" bật, bấm "Xác nhận & tiếp tục" mở một bước MỚI (lần đầu tới bước đó: phương thức vận chuyển · xuất hoá đơn VAT · phương thức thanh toán — những thứ coi như tải từ máy chủ) ⇒ THÂN BƯỚC là ô xám NET_WEAK_GRID ms,
+     rồi các thẻ thật trở lại. Bước 1 (địa chỉ / cửa hàng — dữ liệu của chính khách), "Lưu thay đổi" (nhảy về bước đã tới), "Thay đổi" và đổi vùng giao (dựng lại cả màn) KHÔNG có khung xương.
+   · ckGreyTwin dựng BẢN SAO XÁM của thân bước TỪ CHÍNH DOM THẬT (đo cao / rộng từng khối): giữ lớp bố cục của vỏ (đệm · khe · lưới) nên cao đúng bằng thân thật (thêm height khoá = scrollHeight), mỗi thẻ / nút / ô nhập / đoạn chữ là MỘT ô xám cao đúng
+     (khối có viền hoặc nền giữ nguyên hộp; chữ trần trừ đệm của nó). Không mang id nào (wire() không nối nhầm); thân thật được GIỮ NGUYÊN NÚT (replaceChildren), không innerHTML — nên chỗ nghe sự kiện gắn từ trước còn nguyên khi trả lại.
+   · Trả lại chỉ khi khung xương CÒN trong cây DOM (dựng lại màn / đổi màn trong lúc chờ thì thôi). Thanh dính đáy #ckStickyCta tự ẩn lúc nút Đặt hàng gốc rời cây (đo ra 0) và được gọi làm mới ngay khi trả lại.
+   ═══════════════════════════════════════════════════════════════════════ */
+function ckGreyTwin(e) {
+  const r = e.getBoundingClientRect();
+  if (!r.width && !r.height) return '';   // khối ẩn / rỗng (vd #vatFieldRows chưa chọn loại hoá đơn) — không vẽ
+  const cs = getComputedStyle(e);
+  const kids = [...e.children].filter(c => { const q = c.getBoundingClientRect(); return q.width || q.height; });
+  const r1 = n => Math.round(n * 10) / 10;
+  if (e.tagName === 'DIV' && kids.length && !e.matches('.field-float')) {
+    return `<div class="${String(e.className).replace(/\s+/g, ' ').trim()}">${kids.map(ckGreyTwin).join('')}</div>`;
+  }
+  /* lá: khối có viền / nền (thẻ chọn · nút · ô nhập · ghi chú nền) giữ cả hộp; chữ trần chỉ lấy phần ruột (đệm của nó thành lề) */
+  const boxed = /^(BUTTON|LABEL|INPUT|SELECT|TEXTAREA)$/.test(e.tagName) || parseFloat(cs.borderTopWidth) > 0 || !/rgba?\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor);
+  const pt = boxed ? 0 : parseFloat(cs.paddingTop) || 0, pb = boxed ? 0 : parseFloat(cs.paddingBottom) || 0;
+  const mt = parseFloat(cs.marginTop) || 0, mb = parseFloat(cs.marginBottom) || 0;   // lề của chính khối (vd .ck-next-gap) cũng phải giữ
+  const pcs = e.parentElement ? getComputedStyle(e.parentElement) : null;
+  const inRow = pcs && /flex/.test(pcs.display) && /^row/.test(pcs.flexDirection);   // trong hàng flex một ô xám không nội dung sẽ co về 0 ⇒ khoá bề rộng
+  return `<div class="skel" style="${inRow ? `width:${r1(r.width)}px;flex:none;` : ''}height:${r1(r.height - pt - pb)}px;margin:${r1(pt + mt)}px 0 ${r1(pb + mb)}px"></div>`;
+}
+function ckStepBusy(root, fresh) {
+  if (!fresh || !netWeak()) return;
+  const sec = root.querySelector(`.ck-sec[data-sec="${ckStep}"]`);
+  const inner = sec && sec.querySelector('.ck-open > .acc-inner');
+  if (!inner || inner.querySelector('[data-ck-step-skeleton]') || !inner.querySelector('#shipOpts, #vatOpts, #payOpts')) return;
+  const html = [...inner.children].map(ckGreyTwin).join('');   // đo TRƯỚC khi gỡ thân thật
+  const H = inner.scrollHeight;
+  const saved = [...inner.childNodes];
+  const sk = document.createElement('div');
+  sk.dataset.ckStepSkeleton = '1';
+  sk.setAttribute('aria-busy', 'true');
+  sk.style.cssText = `height:${H}px;overflow:hidden`;
+  sk.innerHTML = `<p class="skel-sr" role="status">Đang tải</p><div aria-hidden="true">${html}</div>`;
+  inner.replaceChildren(sk);
+  localizeNew(sk);   // EN: chữ ẩn "Đang tải" cho trình đọc màn hình
+  setTimeout(() => {
+    if (!sk.isConnected) return;   // màn đã dựng lại / đã sang màn khác
+    inner.replaceChildren(...saved);
+    if (window.__ckStickyRefresh) window.__ckStickyRefresh();
+  }, NET_WEAK_GRID);
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -19084,6 +19441,49 @@ function screenDONE() {
   </div>`;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   KHUNG XƯƠNG MÀN HOÀN TẤT — BẢN DESKTOP (16/10/2026, lệnh user "tiến hành"; xem khối cùng tên ở index.html) — "Đặt hàng thành công" lúc "Mạng yếu": đặt xong vào KHUNG XƯƠNG NET_WEAK_FIRST ms rồi mới ra màn thật (vòng tick vẽ ra lúc đó).
+     navBar + chân trang THẬT; giữa là ô xám đúng bố cục thật (cột 560: vòng 72 · tiêu đề · mã đơn · đoạn cảm ơn · nút 280 · liên kết). Không mang hook của màn thật (#ring · #tick · [data-nav] · [data-track-open]).
+   ═══════════════════════════════════════════════════════════════════════ */
+let doneSkelTok = 0;
+function doneSkelThenReal(el) {
+  const tok = ++doneSkelTok;
+  setTimeout(() => {
+    if (tok !== doneSkelTok || current !== 'done' || !el.isConnected || !el.querySelector('[data-done-skeleton]')) return;
+    scrollCleanups.forEach(fn => fn()); scrollCleanups = [];
+    el.innerHTML = RENDER.done();
+    wire(el); localizeNew(el);
+  }, NET_WEAK_FIRST);
+}
+function screenDoneSkeleton() {
+  const split = ckOrderIds.length > 1;
+  const code = () => `<div class="flex flex-col items-center">${skelLn(20, skelBar('176px'))}${skelLn(16, skelBar('110px'))}</div>`;
+  return `
+  <div class="w-full relative" data-scroller data-done-skeleton aria-busy="true">
+    <p class="skel-sr" role="status">Đang tải</p>
+    ${navBar()}
+
+    <!-- cột giữa 560: px-6 py-16 · [vòng 72 · khe 20 · tiêu đề 32 · khe 12 · mã đơn 20 (đơn tách: 2 khối) · khe 12 · đoạn cảm ơn (+ câu đơn tách)] · khe 28 · [nút · khe 10 · liên kết 42] -->
+    <div class="relative z-20 max-w-[560px] mx-auto w-full flex flex-col items-center gap-7 px-6 py-16" aria-hidden="true">
+      <div class="flex flex-col items-center gap-5 text-center w-full">
+        <div class="skel" style="width:72px;height:72px;border-radius:9999px"></div>
+        <div class="flex flex-col items-center gap-3 w-full">
+          ${skelLn(32, skelBar('240px', 24))}
+          ${split ? `<div class="flex flex-col items-center gap-3">${code()}${code()}</div>` : skelLn(20, skelBar('176px'))}
+          <div class="w-full flex flex-col items-center">${skelLn(18, skelBar('100%'))}${skelLn(18, skelBar('72%'))}</div>
+          ${split ? `<div class="w-full flex flex-col items-center">${skelLn(18, skelBar('86%'))}</div>` : ''}
+        </div>
+      </div>
+      <div class="w-full flex flex-col items-center gap-2.5">
+        <div class="skel w-full" style="height:44px"></div>
+        ${skelLn(42, skelBar('120px'))}
+      </div>
+    </div>
+
+    ${footer()}
+  </div>`;
+}
+
 /* ════════════════════════════════════════════════════════════════
    FILTER BOTTOM SHEET — WAP/Filter Bottom Sheet (3060:49070)
    Bấm "Bộ lọc" -> đẩy từ dưới lên full màn hình.
@@ -20327,7 +20727,7 @@ function wireFilter() {
     sh.querySelector('#filterReset').classList.toggle('hidden', trống);
     /* 16/10/2026 (lô 3 · PLP-36) — "Từ" lớn hơn "Đến": báo ngay dưới hai ô (#plpPriceErr, đỏ 12/16 như mọi lỗi ô), viền đỏ cả hai ô, nút Áp dụng VÔ HIỆU (trước đây nút vẫn sáng và ghi "Áp dụng (0)" mà không nói gì).
        Tính từ plpPricePend NGAY TẠI ĐÂY (hàm này chạy sau mỗi lần gõ / bấm / dựng lại thân sheet) nên mọi đường vào đều ra cùng một trạng thái, không cần xoá lỗi bằng tay. */
-    const priceBad = plpPricePend.min != null && plpPricePend.max != null && plpPricePend.min > plpPricePend.max;
+    const priceBad = !valOff() && plpPricePend.min != null && plpPricePend.max != null && plpPricePend.min > plpPricePend.max;   // 16/10/2026: Kiểm lỗi nhập TẮT thì không báo Từ > Đến
     const priceErr = sh.querySelector('#plpPriceErr');
     if (priceErr) priceErr.classList.toggle('hidden', !priceBad);
     sh.querySelectorAll('[data-price]').forEach(i => {
@@ -21386,8 +21786,8 @@ const TRACK_RE = /^DAFC\d{6}(-\d{2})?$/i;
 
 function trackLookup(raw) {
   const q = String(raw || '').trim().toUpperCase();
-  if (!q) return { err: 'Vui lòng nhập mã đơn hàng.' };
-  if (!TRACK_RE.test(q)) return { err: 'Mã đơn gồm chữ DAFC và 6 chữ số, ví dụ DAFC103015.' };
+  if (!q && !valOff()) return { err: 'Vui lòng nhập mã đơn hàng.' };   // 16/10/2026: Kiểm lỗi nhập TẮT bỏ qua kiểm trống / định dạng (mã không có thật vẫn "Không tìm thấy")
+  if (!valOff() && !TRACK_RE.test(q)) return { err: 'Mã đơn gồm chữ DAFC và 6 chữ số, ví dụ DAFC103015.' };
   const o = ORDERS.find(x => x.id.toUpperCase() === q);
   if (!o) return { err: 'Không tìm thấy đơn hàng này. Kiểm tra lại mã trong email xác nhận.' };
   return { order: o };
@@ -22551,6 +22951,8 @@ const I18N = {
   'Email mới phải khác email hiện tại':'The new email must differ from the current one',
   'Vui lòng nhập mã OTP':'Please enter the OTP', 'Nhận lại mã':'Resend code',
   'Đã cập nhật số điện thoại':'Phone number updated', 'Đã cập nhật email':'Email updated',
+  /* 16/10/2026 — công tắc Kiểm lỗi nhập. */
+  'Kiểm lỗi nhập':'Input validation', 'Bật':'On', 'Tắt':'Off', 'Kiểm lỗi nhập: Tắt':'Input validation: Off', 'Kiểm lỗi nhập: Bật':'Input validation: On',
   /* 16/10/2026 — lô 8: trần giỏ hàng. */
   'Tối đa 10 sản phẩm cho mỗi mặt hàng':'Maximum 10 per item', 'Giỏ hàng đã đầy':'Your cart is full', 'Giỏ hàng chứa tối đa 20 sản phẩm. Hãy xoá bớt một sản phẩm để thêm sản phẩm mới.':'Your cart holds up to 20 items. Remove one to add a new item.', 'Giỏ hàng đã đầy (tối đa 20 sản phẩm)':'Your cart is full (20 items maximum)', 'Mẫu (5)':'Sample (5)', 'Đầy (20)':'Full (20)',
   /* 16/10/2026 — lô 8: gợi ý tìm theo giá · màu sắc thẻ. */
@@ -25005,6 +25407,19 @@ function setPickLabel(btn, value, placeholder) {
    Ô TRỐNG THÌ KHÔNG MẮNG: rời ô khi chưa gõ gì mà đã báo "chưa đúng" là mắng người ta
    vì một việc họ chưa làm — chỉ cần lướt một lượt qua form là đỏ cả màn. Luật "bắt buộc
    nhập" vẫn thuộc về lúc bấm CTA; rời ô chỉ lo ĐỊNH DẠNG của thứ đã gõ. */
+/* ══ CÔNG TẮC "KIỂM LỖI NHẬP" (16/10/2026, lệnh user: "tạo cái toggle giữa kiểm lỗi nhập và không kiểm lỗi nhập, để tôi có thể test nhanh hơn") ═════════════════════════════
+   Bánh răng → nhóm ĐẦU TIÊN "Kiểm lỗi nhập" (Bật · Tắt). Mặc định BẬT ⇒ luồng cũ không đổi. TẮT = bỏ qua mọi kiểm TRỐNG và ĐỊNH DẠNG ở phía khách để bấm đi tiếp nhanh: ô bắt buộc · số điện thoại · email · mã số thuế ·
+   ngày sinh · mật khẩu (độ dài / khớp / khác mật khẩu cũ) · mã OTP đủ 6 số · tỉnh / phường · khoảng giá Từ > Đến · định dạng phiếu mua hàng · mã đơn ở trang Theo dõi · đăng ký nhận tin · nhận thông báo khi có hàng …
+   KHÔNG đụng: kết cục "từ máy chủ" đã có công tắc riêng (Đăng nhập sai / khoá · Mã OTP sai / hết hạn · Phiếu mua hàng hết hạn / đã dùng · Hết hàng lúc đặt · Thanh toán thất bại · Ngoài vùng giao) và các chốt chặn nghiệp vụ
+   (giỏ rỗng · số điện thoại / email đã có tài khoản · mã ưu đãi không tồn tại). Mọi chỗ kiểm đọc valOff(); đổi công tắc xoá luôn lỗi đang hiện trên màn (valSimApply). */
+let valSim = 'on';   // 'on' | 'off'
+const valOff = () => valSim === 'off';
+function valSimApply() {
+  document.querySelectorAll('.fld-err').forEach(el => { try { clearFieldErr(el); } catch (e) { /* ô đã bị gỡ */ } });
+  const eo = document.getElementById('err-consent'); if (eo) eo.remove();
+  if (window.syncFilterFooter) { try { window.syncFilterFooter(); } catch (e) { /* sheet lọc chưa dựng */ } }
+  toast(valOff() ? 'Kiểm lỗi nhập: Tắt' : 'Kiểm lỗi nhập: Bật');
+}
 const FIELD_RULE = {
   phone: [v => /^0\d{8,10}$/.test(v.replace(/\s/g, '')), 'Số điện thoại chưa đúng'],
   email: [v => /^\S+@\S+\.\S+$/.test(v.trim()),           'Email chưa đúng'],
@@ -25033,7 +25448,7 @@ function wireBlurCheck(root) {
     el.addEventListener('blur', () => {
       const r = FIELD_RULE[el.dataset.rule];
       if (!r) return;
-      if (!el.value.trim()) { clearFieldErr(el); return; }
+      if (valOff() || !el.value.trim()) { clearFieldErr(el); return; }   // 16/10/2026: công tắc Kiểm lỗi nhập TẮT thì không báo gì
       if (r[0](el.value)) clearFieldErr(el); else setFieldErr(el, r[1]);
     });
     el.addEventListener('input', () => { if (el.classList.contains('fld-err')) clearFieldErr(el); });
@@ -25084,6 +25499,7 @@ function otpErr(root, msg) {
   });
 }
 function validatePickup(root) {
+  if (valOff()) { root.querySelectorAll('.fld-err').forEach(clearFieldErr); return true; }   // 16/10/2026: Kiểm lỗi nhập TẮT
   const get = k => root.querySelector(`[data-ckf="${k}"]`);
   const rules = [
     [get('pfirst'), v => !!v.trim(),                      'Vui lòng nhập tên'],
@@ -25111,6 +25527,7 @@ function validatePickup(root) {
    khi addrForm không dựng (đã đăng nhập + chọn địa chỉ có sẵn) hàm tự coi
    như hợp lệ, không cần tách nhánh riêng ở chỗ gọi. */
 function validateShipping(root) {
+  if (valOff()) { root.querySelectorAll('.fld-err').forEach(clearFieldErr); return true; }   // 16/10/2026: Kiểm lỗi nhập TẮT
   const get = k => root.querySelector(`[data-ckf="${k}"]`);
   const pick = k => { const b = root.querySelector('#pk-' + k); return b ? b.parentElement : null; };
   const rules = [
@@ -25165,7 +25582,7 @@ const VAT_REQUIRED_MSG = {
   company:  ['Nhập tên công ty', 'Nhập địa chỉ công ty', 'Nhập mã số thuế', 'Nhập email nhận hóa đơn VAT'],
 };
 function vatIssues(getVal) {
-  if (vatMode === 'none') return [];
+  if (valOff() || vatMode === 'none') return [];   // 16/10/2026: Kiểm lỗi nhập TẮT
   const out = [];
   vatFieldSets[vatMode].forEach(([, , , rule], i) => {
     const val = String(getVal(i) || '');
@@ -25176,7 +25593,7 @@ function vatIssues(getVal) {
   return out;
 }
 function validateVat(root) {
-  if (vatMode === 'none') return true;
+  if (valOff() || vatMode === 'none') { if (valOff()) root.querySelectorAll('.fld-err').forEach(clearFieldErr); return true; }   // 16/10/2026: Kiểm lỗi nhập TẮT
   const inpOf = i => root.querySelector('#vat-' + vatMode + '-' + i);
   const bad = vatIssues(i => { const inp = inpOf(i); return inp ? inp.value : (vatVals['vat-' + vatMode + '-' + i] || ''); });
   let first = null;
@@ -25211,6 +25628,7 @@ function validateVat(root) {
    Ô chọn tỉnh/phường là <button> nằm trong `div.relative`, nên gắn lỗi vào CHÍNH div
    đó: gắn vào button thì <p> lỗi rơi vào giữa nút và mũi tên chevron. */
 function ckMissingFields(root) {
+  if (valOff()) return [];   // 16/10/2026: Kiểm lỗi nhập TẮT — ĐẶT HÀNG không đòi ô nào
   const fld = k => root.querySelector('[data-ckf="' + k + '"]');
   const pick = k => { const b = root.querySelector('#pk-' + k); return b ? b.parentElement : null; };
   const miss = [];
@@ -25816,7 +26234,7 @@ function accConfirm(kind) {
     if (del) {
       const inp = pop.querySelector('#confPass');
       clearFieldErr(inp);
-      if (!inp.value) { setFieldErr(inp, 'Nhập mật khẩu để xác nhận'); inp.focus(); return; }
+      if (!inp.value && !valOff()) { setFieldErr(inp, 'Nhập mật khẩu để xác nhận'); inp.focus(); return; }
       if (loginSim === 'wrong') { setFieldErr(inp, 'Mật khẩu chưa đúng'); inp.focus(); return; }
     }
     close();
@@ -25882,10 +26300,12 @@ function authLoginTry({ phoneEl, passEl, btn, host, pos, forgotAttrs, onOk }) {
   clearFieldErr(phoneEl); clearFieldErr(passEl); authMsgClear();
   const ph = phoneEl.value.trim(), pw = passEl.value;
   let first = null;
+  if (!valOff()) {   // 16/10/2026: Kiểm lỗi nhập TẮT thì bỏ qua kiểm trống / định dạng
   if (!ph) { setFieldErr(phoneEl, 'Vui lòng nhập số điện thoại'); first = first || phoneEl; }
   else if (!FIELD_RULE.phone[0](ph)) { setFieldErr(phoneEl, FIELD_RULE.phone[1]); first = first || phoneEl; }
   if (!pw) { setFieldErr(passEl, 'Vui lòng nhập mật khẩu'); first = first || passEl; }
   if (first) { first.focus(); return; }
+  }
   const lockMsg = () => { loginLocked = true; authMsgShow(host, { ...LOGIN_LOCK_MSG, action: { label: LOGIN_LOCK_MSG.action.label, attrs: forgotAttrs } }, pos); btn.disabled = true; };
   if (loginLocked) { lockMsg(); return; }
   if (loginSim === 'ok') { loginFails = 0; onOk(); return; }
@@ -26012,7 +26432,8 @@ function payEnter(ids, from) {
   payStage = 'redirect';
   go('pay', current === 'pay' ? { force: true } : {});   // đứng sẵn ở #pay (Thử lại / Thanh toán lại ở trang thất bại, hết phiên) thì dựng LẠI chính màn đó
   payStopTimer();
-  payTimer = setTimeout(payResolve, 1400);
+  /* 16/10/2026: mạng yếu ⇒ chờ NET_WEAK_FIRST (3 s) thay vì 1,4 s — màn này vốn là con quay "đang chuyển cổng" (không phải trang dựng từ dữ liệu) nên KHÔNG có khung xương xám; chỉ kéo dài quãng chờ. */
+  payTimer = setTimeout(payResolve, netWeak() ? NET_WEAK_FIRST : 1400);
 }
 
 /* Trả xong: các đơn của nhóm sang chặng 2 "Đang xử lý", giờ chặng 2 = lúc trả thật. */
@@ -26225,6 +26646,7 @@ function wireAccount(root) {
      TIÊN — đúng cách `validatePickup()` của checkout đang làm, dùng lại luôn cặp
      `setFieldErr` / `clearFieldErr` chứ không đẻ kiểu báo lỗi thứ hai. */
   const check = rules => {
+    if (valOff()) { rules.forEach(([k]) => { const el = inp(k); if (el) clearFieldErr(el); }); return true; }   // 16/10/2026: Kiểm lỗi nhập TẮT
     let first = null;
     rules.forEach(([k, ok, msg]) => {
       const el = inp(k);
@@ -26265,17 +26687,21 @@ function wireAccount(root) {
     if (act === 'chg-send') {
       const isPhone = accEdit === 'phone', key = isPhone ? 'phone' : 'email', v = val(key), el = inp(key);
       const cur = isPhone ? PROFILE.phone : PROFILE.email;
+      if (!valOff()) {   // 16/10/2026: Kiểm lỗi nhập TẮT
       if (!v) { setFieldErr(el, isPhone ? 'Vui lòng nhập số điện thoại mới' : 'Vui lòng nhập email mới'); el.focus(); return; }
       if (!FIELD_RULE[key][0](v)) { setFieldErr(el, FIELD_RULE[key][1]); el.focus(); return; }
       if (isPhone ? phoneDigits(v) === phoneDigits(cur) : v.toLowerCase() === String(cur).toLowerCase()) { setFieldErr(el, isPhone ? 'Số điện thoại mới phải khác số hiện tại' : 'Email mới phải khác email hiện tại'); el.focus(); return; }
+      }
       accDraft = { step: 'otp', value: v }; otpFails = 0; repaint(); toast('Đã gửi mã OTP');
       return;
     }
     if (act === 'chg-resend') { otpFails = 0; toast('Đã gửi lại mã OTP'); return; }
     if (act === 'chg-verify') {
       const el = inp('otp'), v = val('otp').replace(/\D/g, '');
+      if (!valOff()) {   // 16/10/2026: Kiểm lỗi nhập TẮT
       if (!v) { setFieldErr(el, 'Vui lòng nhập mã OTP'); el.focus(); return; }
       if (v.length < 6) { setFieldErr(el, 'Vui lòng nhập đủ 6 số'); el.focus(); return; }
+      }
       if (!otpSimPass(msg => { setFieldErr(el, msg); el.focus(); })) return;
       const what = accEdit;
       if (what === 'phone') PROFILE.phone = accDraft.value; else PROFILE.email = accDraft.value;
@@ -26324,7 +26750,7 @@ function wireAccount(root) {
         ['new',  () => nw.length >= 8 && /[a-zA-Z]/.test(nw) && /\d/.test(nw), 'Mật khẩu cần tối thiểu 8 ký tự, gồm cả chữ và số'],
         ['new2', () => !!nw2 && nw2 === nw, 'Hai lần nhập chưa khớp'],
       ])) return;
-      if (nw === cur) {
+      if (!valOff() && nw === cur) {
         setFieldErr(inp('new'), 'Mật khẩu mới phải khác mật khẩu hiện tại');
         inp('new').focus({ preventScroll: true });
         return;
@@ -26805,7 +27231,7 @@ function wire(root) {
       const inp = root.querySelector('#regPhone');
       const val = inp && inp.value.trim() ? inp.value.trim() : '';
       const isForgot = authView === 'forgot';
-      if (!val) {
+      if (!val && !valOff()) {
         if (inp) { setFieldErr(inp, isForgot ? 'Vui lòng nhập số điện thoại hoặc email' : 'Vui lòng nhập số điện thoại'); inp.focus(); }
         return;
       }
@@ -26858,8 +27284,10 @@ function wire(root) {
       if (regSend.disabled) return;
       if (regOtpSent) { otpFails = 0; toast('Đã gửi lại mã OTP'); startCountdown(); return; }
       const val = phoneEl.value.trim();
+      if (!valOff()) {   // 16/10/2026: Kiểm lỗi nhập TẮT
       if (!val) { setFieldErr(phoneEl, 'Vui lòng nhập số điện thoại'); phoneEl.focus(); return; }
       if (!FIELD_RULE.phone[0](val)) { setFieldErr(phoneEl, FIELD_RULE.phone[1]); phoneEl.focus(); return; }
+      }
       /* 16/10/2026 (AUT-20) — số của thành viên demo ⇒ không gửi mã, báo "đã có tài khoản" kèm lối sang Đăng nhập. */
       if (phoneDigits(val) === phoneDigits(PROFILE.phone)) { setFieldErr(phoneEl, 'Số điện thoại này đã có tài khoản. <button type="button" data-msg-go="login" class="text-foreground underline press">Đăng nhập</button>'); phoneEl.focus(); return; }
       clearFieldErr(phoneEl);
@@ -26877,9 +27305,11 @@ function wire(root) {
     otpEl.addEventListener('input', () => { otpEl.value = otpEl.value.replace(/\D/g, '').slice(0, 6); clearFieldErr(otpEl); });
     root.querySelectorAll('[data-reg-verify]').forEach(btn => btn.addEventListener('click', () => {
       const val = phoneEl.value.trim();
+      if (!valOff()) {   // 16/10/2026: Kiểm lỗi nhập TẮT
       if (!val) { setFieldErr(phoneEl, 'Vui lòng nhập số điện thoại'); phoneEl.focus(); return; }
       if (!regOtpSent) { setFieldErr(otpEl, 'Vui lòng gửi mã OTP trước'); otpEl.focus(); return; }
       if (otpEl.value.length < 6) { setFieldErr(otpEl, 'Vui lòng nhập đủ 6 số'); otpEl.focus(); return; }
+      }
       clearFieldErr(otpEl);
       /* 16/10/2026 (AUT-18) — kết cục mã theo công tắc "Mã OTP"; sai / hết hạn thì mở lại nút Nhận lại mã ngay. */
       if (!otpSimPass(msg => { setFieldErr(otpEl, msg); otpEl.focus(); }, () => { stopTimer(); regSend.disabled = false; regSend.textContent = 'Nhận lại mã'; localizeNew(regSend); })) return;
@@ -26939,7 +27369,7 @@ function wire(root) {
   root.querySelectorAll('[data-auth-verify]').forEach(btn => {
     btn.addEventListener('click', () => {
       const code = otpCells.map(c => c.value).join('');
-      if (code.length < 6) { otpErr(root, 'Vui lòng nhập đủ 6 số'); return; }
+      if (code.length < 6 && !valOff()) { otpErr(root, 'Vui lòng nhập đủ 6 số'); return; }   // 16/10/2026: Kiểm lỗi nhập TẮT
       otpErr(root, '');
       /* 16/10/2026 (AUT-35) — kết cục mã theo công tắc "Mã OTP" (cùng luật với đăng ký); mở lại nút Nhận lại mã ngay. */
       if (!otpSimPass(msg => otpErr(root, msg), () => { const rb = root.querySelector('#otpResend'); if (rb) { rb.disabled = false; rb.textContent = 'Nhận lại mã'; localizeNew(rb); } })) return;
@@ -26954,7 +27384,7 @@ function wire(root) {
       const fn = root.querySelector('#regFirstName'), ln = root.querySelector('#regLastName');
       /* 16/10/2026 (AUT-23) — KIỂM TRƯỚC KHI TẠO: trước đây bỏ trống cả form vẫn tạo được. Brief trang 21: Email bắt buộc; Tên · Họ · Ngày sinh · Mật khẩu cũng bắt buộc (không dấu *, xem README 02/10);
          mật khẩu theo luật của Tài khoản (≥ 8, chữ + số), hai lần nhập phải khớp; ô tích đồng ý Điều khoản mặc định ĐÃ TÍCH (demo) — bỏ tích mới báo. Email = email của thành viên demo ⇒ "đã được sử dụng". */
-      {
+      if (!valOff()) {   // 16/10/2026: Kiểm lỗi nhập TẮT thì bỏ qua cả khối kiểm Hoàn tất đăng ký
         const dobEl = root.querySelector('input[data-rule="dob"]'), emailEl = root.querySelector('input[data-rule="email"]');
         const pws = [...root.querySelectorAll('input[type="password"]')], consent = root.querySelector('input[type="checkbox"]');
         const fields = [fn, ln, dobEl, emailEl, ...pws].filter(Boolean);
@@ -27139,13 +27569,14 @@ function wire(root) {
         const shipDone = root.querySelector('#ckShipDone');
         if (shipDone) { shipDone.innerHTML = ckShipDoneHTML(); localizeNew(shipDone); }
         // đang sửa lại một bước đã xong -> nhảy thẳng về bước xa nhất
-        const editing = ckMaxStep > ckStep;
+        const editing = ckMaxStep > ckStep, prevMax = ckMaxStep;
         ckStep = editing ? ckMaxStep : +btn.dataset.next;
         ckMaxStep = Math.max(ckMaxStep, ckStep);
         /* 16/10/2026 (lô 5 · CHK-27) — đổi tỉnh ở bước Giao hàng làm vùng / phí đổi: dựng lại màn để thẻ phương thức (phí · hỏa tốc) đọc vùng mới. */
         if (btn.dataset.require === 'ship' && ckShipSig !== ckZoneSig()) { rerenderCheckout(root); setTimeout(() => scrollTo(ckStep), 120); return; }
         paintCheckout(root);
         ckMoneyBusy(root);   // mạng yếu: phí vận chuyển + Tổng cộng thành ô xám 1,8 s (xem khung xương Thanh toán)
+        ckStepBusy(root, ckStep > prevMax);   // mạng yếu: bước MỚI vừa mở (vận chuyển · VAT · thanh toán) là ô xám 1,8 s rồi mới ra thẻ thật
         setTimeout(() => scrollTo(ckStep), 120);
       });
     });
@@ -28904,6 +29335,17 @@ document.body.insertAdjacentHTML('beforeend', `
   <div id="settingsPanel" aria-hidden="true">
     <div class="sp-backdrop"></div>
     <div class="sp-card" role="dialog" aria-label="Cài đặt phông chữ">
+      <!-- KIỂM LỖI NHẬP (16/10/2026, lệnh user "để tôi test nhanh hơn") — công cụ của người xem demo: "Tắt" bỏ qua mọi kiểm trống / định dạng ở phía khách để bấm đi tiếp nhanh (xem valOff); "Bật" (mặc định) kiểm như thật. Nhóm ĐẦU panel. -->
+      <div class="px-3 pt-3 pb-2">
+        <p class="t-multiline tracking-[0.12em] text-muted-foreground">Kiểm lỗi nhập</p>
+      </div>
+      <div class="px-3 pb-3">
+        <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Kiểm lỗi nhập">
+          ${[['on','Bật'],['off','Tắt']].map(([id, label]) => `
+            <button data-valsim="${id}" class="t-multiline valsimopt flex-1 h-8 rounded-full transition-colors press ${id === valSim ? 'bg-background text-foreground font-medium shadow-sm' : 'text-muted-foreground'}">${label}</button>`).join('')}
+        </div>
+      </div>
+      <div class="h-px bg-border mx-3"></div>
       <!-- MẠNG (15/10/2026) — công tắc của người xem demo: "Yếu" thì trang DANH SÁCH (PLP) vào bằng KHUNG XƯƠNG vài giây rồi mới đổ sản phẩm, và mọi lần tải
            lại lưới (Xem thêm · lọc · sắp xếp) giữ ô xám lâu hơn (xem netMode, go, plpSkelThenReal). Đặt Ở ĐẦU panel như nhóm "Dải sản phẩm trang chủ": panel neo
            đáy nên thêm nhóm ở đầu thì các nhóm cũ không nhích. -->
@@ -29228,7 +29670,7 @@ document.body.insertAdjacentHTML('beforeend', `
   /* Hết phiên ngay (16/10/2026): đóng panel rồi mở hộp thoại, đợi panel khép xong (~0,26 s) cho người xem thấy hộp thoại, không phải hai lớp chồng nhau. */
   panel.querySelectorAll('[data-sim-session]').forEach(btn => btn.addEventListener('click', () => { closeP(); setTimeout(sessionExpire, 260); }));
   /* Lô 2 "Cần bổ sung" (16/10/2026): công tắc Tình huống đăng nhập / Mã OTP đổi biến toàn cục (loginSim / otpSim) và dọn bộ đếm; 3 nút "Liên kết đặt lại mật khẩu" MỞ trang tương ứng (không phải công tắc). */
-  [['data-loginsim', 'loginsim', v => { loginSim = v; loginFails = 0; loginLocked = false; authMsgClear(); }], ['data-otpsim', 'otpsim', v => { otpSim = v; otpFails = 0; }], ['data-pbhsim', 'pbhsim', v => { pbhSim = v; }], ['data-tiersim', 'tiersim', v => { setMemberTier(v); closeP(); setTimeout(() => accGearGo('member'), 260); }], ['data-accdata', 'accdata', v => { accDemoData = v; accDemoApply('data'); closeP(); setTimeout(() => (v === 'expiring' ? accGearGo('member', 'points') : accGearGo('orders')), 260); }], ['data-accaddr', 'accaddr', v => { accDemoAddr = v; accDemoApply('addr'); closeP(); setTimeout(() => accGearGo('address'), 260); }], ['data-oossim', 'oossim', v => { oosSim = v; }], ['data-failwhy', 'failwhy', v => { payFailWhy = v; if (current === 'pay' && payStage === 'fail') go('pay', { force: true }); }], ['data-shipsim', 'shipsim', v => { shipSim = v; const r = document.querySelector('[data-screen="checkout"]'); if (r) rerenderCheckout(r); }], ['data-tracksim', 'tracksim', v => { trackSim = v; closeP(); setTimeout(trackGearGo, 260); }], ['data-imgsim', 'imgsim', v => { imgSim = v; imgSimApply(); }], ['data-colorsim', 'colorsim', v => { colorSim = v; closeP(); setTimeout(colorSimApply, 260); }], ['data-cartsim', 'cartsim', v => { cartSim = v; closeP(); setTimeout(cartSimApply, 260); }]].forEach(([attr, key, set]) => {
+  [['data-loginsim', 'loginsim', v => { loginSim = v; loginFails = 0; loginLocked = false; authMsgClear(); }], ['data-otpsim', 'otpsim', v => { otpSim = v; otpFails = 0; }], ['data-pbhsim', 'pbhsim', v => { pbhSim = v; }], ['data-tiersim', 'tiersim', v => { setMemberTier(v); closeP(); setTimeout(() => accGearGo('member'), 260); }], ['data-accdata', 'accdata', v => { accDemoData = v; accDemoApply('data'); closeP(); setTimeout(() => (v === 'expiring' ? accGearGo('member', 'points') : accGearGo('orders')), 260); }], ['data-accaddr', 'accaddr', v => { accDemoAddr = v; accDemoApply('addr'); closeP(); setTimeout(() => accGearGo('address'), 260); }], ['data-oossim', 'oossim', v => { oosSim = v; }], ['data-failwhy', 'failwhy', v => { payFailWhy = v; if (current === 'pay' && payStage === 'fail') go('pay', { force: true }); }], ['data-shipsim', 'shipsim', v => { shipSim = v; const r = document.querySelector('[data-screen="checkout"]'); if (r) rerenderCheckout(r); }], ['data-tracksim', 'tracksim', v => { trackSim = v; closeP(); setTimeout(trackGearGo, 260); }], ['data-imgsim', 'imgsim', v => { imgSim = v; imgSimApply(); }], ['data-colorsim', 'colorsim', v => { colorSim = v; closeP(); setTimeout(colorSimApply, 260); }], ['data-cartsim', 'cartsim', v => { cartSim = v; closeP(); setTimeout(cartSimApply, 260); }], ['data-valsim', 'valsim', v => { valSim = v; closeP(); setTimeout(valSimApply, 260); }]].forEach(([attr, key, set]) => {
     panel.querySelectorAll('[' + attr + ']').forEach(btn => btn.addEventListener('click', () => {
       set(btn.dataset[key]);
       panel.querySelectorAll('[' + attr + ']').forEach(x => {
@@ -29726,7 +30168,7 @@ document.body.insertAdjacentHTML('beforeend', `
     const em = ns.querySelector('#nsEmail').value.trim();
     const ph = ns.querySelector('#nsPhone').value.trim();
     const err = ns.querySelector('#nsErr');
-    if (!em && !ph) { err.classList.remove('hidden'); return; }
+    if (!em && !ph && !valOff()) { err.classList.remove('hidden'); return; }   // 16/10/2026: Kiểm lỗi nhập TẮT
     err.classList.add('hidden');
     closeN();
     if (onDone) onDone();
@@ -29792,8 +30234,10 @@ document.body.insertAdjacentHTML('beforeend', `
     const box = b.closest('.hm-signup-card, .hm-signup-band') || document;
     const inp = box.querySelector('#hmNlEmail'); if (!inp) return;
     const v = inp.value.trim();
+    if (!valOff()) {   // 16/10/2026: Kiểm lỗi nhập TẮT
     if (!v) { setFieldErr(inp, 'Vui lòng nhập email'); inp.focus(); return; }
     if (!FIELD_RULE.email[0](v)) { setFieldErr(inp, FIELD_RULE.email[1]); inp.focus(); return; }
+    }
     clearFieldErr(inp);
     inp.value = '';
     inp.blur();
