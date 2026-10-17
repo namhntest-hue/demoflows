@@ -1680,6 +1680,12 @@ window.RESP = (function () {
   /* 15/10/2026 (user: "áp dụng cho cả desktop nhé" sau khi vẽ lại khung Figma MOBILE bước VAT) — khung ô nhập chứa CẢ dòng ghi chú VAT ở đầu khung: nền secondary
      (#f5f5f5), KHÔNG viền (khung mobile của user ẨN nét viền), đệm 12 đều bốn phía — cùng số với mobile. */
   #vatFieldRows { padding: 12px; }
+  /* 16/10/2026 (user gửi 2 ảnh trang gốc: "bố cục … với các hàng ngang, hàng dọc") — các ô hoá đơn VAT xếp LƯỚI 2 CỘT (khe ngang 16 = khe dọc py-2 + py-2); ô mang `.vat-wide` chiếm CẢ HÀNG
+     (Địa chỉ · Địa chỉ email của Cá nhân). `align-items: start` để dòng báo lỗi dưới một ô không kéo cao ô hàng xóm. Mobile KHÔNG có rule này (index.html) nên các ô xếp dọc. */
+  .vat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; align-items: start; }
+  .vat-grid > .vat-wide { grid-column: 1 / -1; }
+  /* dưới 1024 cột bước chỉ còn ~330 ⇒ ô 146 rộng làm nhãn dài ("Mã số thuế cá nhân*") bị cắt …: về MỘT cột như mobile. */
+  @media (max-width: 1023px) { .vat-grid { grid-template-columns: minmax(0, 1fr); } .vat-grid > .vat-wide { grid-column: auto; } }
 
   /* BỎ KHUNG bao quanh các bước (lệnh user 19/09/2026: "ở bản desktop bỏ cái khung
      ra luôn"): các bước nay chỉ ngăn nhau bằng kẻ mảnh chạy hết bề ngang cột, đúng
@@ -14649,7 +14655,7 @@ const ORDERS = [
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 3, log: ['06/09/2026 15:26', '06/09/2026 15:58', '07/09/2026 17:21'],
     ships: { fast: { awb: 'TKN284960', done: '08/09/2026' }, std: { awb: 'TKN284972', eta: '12/09/2026' } },
-    vat: { type: 'company', company: 'Công ty TNHH Thời Trang ABC', address: '25 Nguyễn Huệ, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh', tax: '0312345678', email: 'ketoan@abcfashion.vn' },
+    vat: { type: 'company', company: 'Công ty TNHH Thời Trang ABC', address: '25 Nguyễn Huệ, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh', tax: '0312345678', buyer: PROFILE.name, email: 'ketoan@abcfashion.vn' },
   },
   {
     id: 'DAFC103042-02', status: 'Đang xử lý', tone: 'info', date: '06/09/2026',
@@ -14663,7 +14669,7 @@ const ORDERS = [
     payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 2, log: ['06/09/2026 15:26', '06/09/2026 15:58'],
-    vat: { type: 'company', company: 'Công ty TNHH Thời Trang ABC', address: '25 Nguyễn Huệ, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh', tax: '0312345678', email: 'ketoan@abcfashion.vn' },
+    vat: { type: 'company', company: 'Công ty TNHH Thời Trang ABC', address: '25 Nguyễn Huệ, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh', tax: '0312345678', buyer: PROFILE.name, email: 'ketoan@abcfashion.vn' },
   },
   {
     id: 'DAFC102938', status: 'Đang giao hàng', tone: 'warning', date: '02/08/2026',
@@ -14676,7 +14682,7 @@ const ORDERS = [
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 3, log: ['02/08/2026 10:22', '02/08/2026 11:38', '03/08/2026 17:21'],
     ships: { std: { awb: 'TKN284917', eta: '12/08/2026' } },
-    vat: { type: 'company', company: 'Công ty TNHH Thời Trang ABC', address: '25 Nguyễn Huệ, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh', tax: '0312345678', email: 'ketoan@abcfashion.vn' },
+    vat: { type: 'company', company: 'Công ty TNHH Thời Trang ABC', address: '25 Nguyễn Huệ, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh', tax: '0312345678', buyer: PROFILE.name, email: 'ketoan@abcfashion.vn' },
   },
   {
     id: 'DAFC102801', status: 'Hoàn tất', tone: 'muted', date: '10/07/2026',
@@ -14686,7 +14692,7 @@ const ORDERS = [
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh' },
     steps: 4, log: ['10/07/2026 09:02', '10/07/2026 09:40', '11/07/2026 08:15', '12/07/2026 17:55'],
     ships: { std: { awb: 'TKN284790' } },
-    vat: { type: 'personal', name: PROFILE.name, address: '45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh', email: PROFILE.email },
+    vat: { type: 'personal', name: PROFILE.name, tax: '0109876543', address: '45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh', email: PROFILE.email },
   },
   {
     id: 'DAFC102720', status: 'Đã huỷ', tone: 'cancel', date: '01/07/2026',
@@ -15502,16 +15508,18 @@ document.addEventListener('input', e => {
 const orderVatSnapshot = () => {
   if (vatMode === 'none') return null;
   const v = i => String(vatVals[`vat-${vatMode}-${i}`] || '').trim();
+  /* 16/10/2026: chỉ số theo vatFieldSets mới — Công ty: tên · MST · người mua · email · địa chỉ; Cá nhân: họ tên · MST cá nhân · email · địa chỉ. */
   return vatMode === 'company'
-    ? { type: 'company', company: v(0), address: v(1), tax: v(2), email: v(3) }
-    : { type: 'personal', name: v(0), address: v(1), email: v(2) };
+    ? { type: 'company', company: v(0), tax: v(1), buyer: v(2), email: v(3), address: v(4) }
+    : { type: 'personal', name: v(0), tax: v(1), email: v(2), address: v(3) };
 };
 const orderVatRows = o => {
   const v = o.vat, d = x => x ? vatEsc(x) : '—';
   if (!v) return [];
+  /* 16/10/2026: cùng bộ ô + tên + thứ tự với bước "Xuất hoá đơn VAT" (vatFieldSets mới). Đơn cũ thiếu ô nào thì hiện "—". */
   return v.type === 'company'
-    ? [['Loại hoá đơn', 'Công ty'], ['Tên công ty', d(v.company)], ['Địa chỉ công ty', d(v.address)], ['Mã số thuế', d(v.tax)], ['Email nhận hóa đơn VAT', d(v.email)]]
-    : [['Loại hoá đơn', 'Cá nhân'], ['Họ và tên', d(v.name)], ['Địa chỉ', d(v.address)], ['Email nhận hóa đơn VAT', d(v.email)]];
+    ? [['Loại hoá đơn', 'Công ty'], ['Tên công ty', d(v.company)], ['Mã số thuế', d(v.tax)], ['Họ và Tên người mua', d(v.buyer)], ['Địa chỉ email', d(v.email)], ['Địa chỉ', d(v.address)]]
+    : [['Loại hoá đơn', 'Cá nhân'], ['Họ tên', d(v.name)], ['Mã số thuế cá nhân', d(v.tax)], ['Địa chỉ email', d(v.email)], ['Địa chỉ', d(v.address)]];
 };
 /* Thân mục: các hàng nhãn–giá trị đúng khuôn thẻ giao hàng (`.ov-row.is-top`: nhãn canh theo dòng ĐẦU vì địa chỉ có thể xuống dòng). `cls` = cỡ chữ của màn: mobile 't-single' 12/16, desktop 't-lead' 14/20. */
 const orderVatBodyHTML = (o, cls) => {
@@ -15600,7 +15608,8 @@ function screenORDER() {
   /* Một dòng hàng của thẻ SẢN PHẨM — danh sách PHẲNG (hàng rồi quà), không chia đợt (layout v4,
      01/10/2026). Khuôn tách riêng từ trước khi màn còn chia đợt.
      28/09/2026 (brief trang 55): dòng vào LƯỚI 3 CỘT .ord-grid — ảnh + chữ | SL | tiền.
-     Hãng tra PRODUCTS (trước in cứng "Versace"); thêm dòng "Mã sản phẩm" (brief "Itemno"). */
+     Hãng tra PRODUCTS (trước in cứng "Versace"); thêm dòng "Mã sản phẩm" (brief "Itemno").
+     16/10/2026 (user: "ở trang chi tiết đơn hàng, bỏ cái đơn giá ra khỏi các thẻ sản phẩm … hiển thị như hiện tại là số lượng với thành tiền"): BỎ dòng "Đơn giá: …" (trước hiện khi SL > 1) — thẻ chỉ còn SL + thành tiền; khoá i18n 'Đơn giá:' gỡ cùng lúc. */
   const itemRow = it => {
     const p = orderItemP(it), pa = orderPdpAttr(it), cp = pa ? ' cursor-pointer press' : '';
     return `
@@ -15622,7 +15631,6 @@ function screenORDER() {
                     </span>
                     <span class="t-single text-muted-foreground mt-1">${it.variant}</span>
                     ${it.sku ? `<span class="t-single text-muted-foreground mt-0.5">Mã sản phẩm: <span>${it.sku}</span></span>` : ''}
-                    ${it.qty > 1 ? `<span class="t-single text-muted-foreground mt-0.5"><span>Đơn giá:</span> <span>${vndDot(vndNum(it.price))}</span></span>` : ''}
                     ${it.preorder ? `<span class="t-single text-foreground-alt mt-0.5">Nhận hàng dự kiến <span class="font-medium">${it.preorder}</span></span>` : ''}
                     <span class="ord-qty-in t-single text-muted-foreground mt-0.5">SL: ${it.qty || 1}</span>
                   </div>
@@ -15635,7 +15643,8 @@ function screenORDER() {
      như ở chi tiết đơn hàng, summary đơn hàng"): cùng khuôn dòng hàng (itemRow), khác đúng 4 chỗ như thẻ quà ở giỏ (giftRowPlainHTML) — dòng HÃNG thành chữ "Quà tặng" (không in hãng thật, không badge rời),
      dòng phụ là BIẾN THỂ của quà (không phải tên chương trình), không "SL" / "x1", và CỘT GIÁ ghi "Miễn phí" (không "0 ₫"; đậm 500 qua .gift-free, cùng bậc t-lead với giá hàng thường).
      Trước 15/10: badge "Quà tặng" đứng trước TÊN + hãng thật ở dòng trên + tên chương trình + "SL: 1" / "x1" / "0 ₫". Trước 06/09 quà chỉ sống ở giỏ, thanh toán và màn Hoàn tất; mở lại đơn cũ thì không còn dấu vết nào của quà đã nhận.
-     28/09/2026: vào cùng lưới 3 cột với dòng hàng — nay ô giữa (cột SL) để TRỐNG vì quà không có số lượng (ẩn theo luật ≤1071 như hàng thường). */
+     28/09/2026: vào cùng lưới 3 cột với dòng hàng — ô giữa (cột SL) từng để TRỐNG vì quà không có số lượng (ẩn theo luật ≤1071 như hàng thường).
+     16/10/2026 (user: "đồng bộ lại cái quà tặng luôn có sl = 1"): ô giữa nay ghi "x1" như hàng thường (và dòng "SL: 1" .ord-qty-in cho ≤1071, khi cột SL gộp xuống dưới cụm chữ) — quà luôn đúng 1 phần. */
   const giftRow = ({ g }) => `
               <div class="ord-grid">
                 <div class="flex gap-4 min-w-0">
@@ -15646,9 +15655,10 @@ function screenORDER() {
                     <span class="t-lead pc-brand font-medium text-foreground">Quà tặng</span>
                     <span class="t-multiline w-full min-w-0 text-foreground line-clamp-2">${g.name}</span>
                     <span class="t-single text-muted-foreground mt-1">${g.variant}</span>
+                    <span class="ord-qty-in t-single text-muted-foreground mt-0.5">SL: 1</span>
                   </div>
                 </div>
-                <span aria-hidden="true"></span>
+                <span class="t-multiline text-foreground text-center">x1</span>
                 <p class="t-lead gift-free text-foreground text-right">Miễn phí</p>
               </div>`;
   /* Khối tổng (02/10/2026, giống bản mobile): hàng 14/20 nhãn + số cùng màu mực (Giảm giá đỏ cả nhãn lẫn số), kẻ ngăn nhạt, Tổng thanh toán Inter 16/24 · 500 kèm "(Bao gồm VAT)" mờ cạnh nhãn; hàng điểm đã DỜI lên
@@ -15838,7 +15848,6 @@ function screenOrderSkeleton() {
                     <div>${Array.from({ length: Math.min(2, lines(it.name, 58)) }, (_, k) => skelLn(18, skelBar(k ? '40%' : '72%'))).join('')}</div>
                     <div class="mt-1">${skelLn(16, skelBar('96px'))}</div>
                     ${it.sku ? `<div class="mt-0.5">${skelLn(16, skelBar('132px'))}</div>` : ''}
-                    ${it.qty > 1 ? `<div class="mt-0.5">${skelLn(16, skelBar('112px'))}</div>` : ''}
                     ${it.preorder ? `<div class="mt-0.5">${skelLn(16, skelBar('170px'))}</div>` : ''}
                   </div>
                 </div>
@@ -16481,7 +16490,7 @@ function giftRowPlainHTML(pk, attrs = '') {
              chữ nghĩa của quy tắc "Tên Brand + Tên sản phẩm + thẻ Free Gift":
              dòng 1 là "Quà tặng miễn phí" (KHÔNG phải tên brand), dòng 2 là tên quà,
              dòng 3 là biến thể — biến thể VẪN GIỮ, lượt trước tôi bỏ nhầm.
-             Không badge rời, không giá, không số lượng.
+             Không badge rời, không giá (số lượng: xem hàng đáy, từ 16/10/2026).
              Nút "Đổi quà" xuống GÓC PHẢI DƯỚI của thẻ (trước nằm ở hàng tiêu đề
              chương trình) — đúng chỗ ảnh chỉ. Chỉ hiện khi chương trình có từ 2 quà:
              mặc định hệ thống đã chọn sẵn 1 quà cho khách, nút này để đổi. -->
@@ -16501,8 +16510,13 @@ function giftRowPlainHTML(pk, attrs = '') {
         <!-- 21/09/2026 — Ô này trước giữ đường "Đổi quà" (nay đã lên hàng tiêu đề),
              giờ là CỘT GIÁ: chữ "Miễn phí" đúng chỗ giá của dòng hàng thường, cùng bậc
              chữ (.t-lead 14/20) và cùng độ đậm 500 — độ đậm lấy từ ngoại lệ có tên
-             .gift-free vì font-medium là class chết dưới skin-mt. -->
-        <div class="flex justify-end pt-2">
+             .gift-free vì font-medium là class chết dưới skin-mt.
+             16/10/2026 (user: "cả mấy cái thẻ quà ở min cart, giỏ hàng, order detail nữa nhé" — nối tiếp lệnh "quà tặng luôn có sl = 1"):
+             hàng đáy nay có "SL: 1" BÊN TRÁI (chữ, KHÔNG có nút cộng trừ vì quà luôn đúng 1 phần: activeGifts() mỗi chương trình = 1 quà,
+             không nhân theo SL món đi kèm) và "Miễn phí" BÊN PHẢI — cùng khuôn hàng sản phẩm ngay trên (bộ đếm trái, giá phải). Chiều cao thẻ
+             KHÔNG đổi: cột chữ đã bị ảnh 133 kéo giãn, hàng đáy chỉ đổi từ justify-end sang justify-between. -->
+        <div class="flex items-end justify-between gap-0.5 pt-2">
+          <span class="t-single text-muted-foreground">SL: 1</span>
           <p class="t-lead gift-free shrink-0 text-foreground">Miễn phí</p>
         </div>
       </div>
@@ -16594,6 +16608,10 @@ function orderGiftInner() {
            chữ báo việc — lồng nút vào là HTML sai và trình đọc màn hình đọc hỏng.
            Chữ đổi theo trạng thái: chưa chọn gì thì "Chọn quà", đã có thì "Đổi quà". -->
       <button data-gift-order-open class="w-full p-4 flex items-center gap-3 text-left press">
+        <!-- 16/10/2026 (lệnh user kèm ảnh: "ở trang cart, ngay chỗ chọn quà thêm icon gift ra trước như hình minh họa"; khung Figma user vẽ 803:132880):
+             ICON QUÀ đứng TRƯỚC nhãn — I.gift có sẵn (thin-straight, 16x16 = icon/ts/gift), cách nhãn 12 nhờ gap-3 của hàng, canh giữa dọc nhờ items-center.
+             Chỉ là trang trí (nhãn đã nói việc) nên aria-hidden. Hàng vẫn cao 52 (icon 16 thấp hơn dòng chữ 20). -->
+        <span class="shrink-0 flex items-center" aria-hidden="true">${I.gift}</span>
         <span class="t-lead flex-1 min-w-0 text-foreground truncate">Quà tặng theo đơn hàng</span>
         <span class="t-lead shrink-0 text-secondary-foreground">${dat.some(d => giftKeyOf(d.pk)) ? 'Đổi quà' : 'Chọn quà'}</span>
         <!-- KHÔNG gắn class cỡ cho svg: I.chevR() đã tự khai width/height 14 (đúng
@@ -16644,7 +16662,9 @@ function giftSummaryRow(pk, g, big) {
   // 13/09/2026 — rà lại rule typo trang giỏ: xem chú thích đầy đủ ở bản mobile (index.html, cùng hàm).
   /* 15/10/2026 (user: "lấy cách hiển thị quà tặng ở trang cart làm chuẩn … chữ Quà tặng trên cùng thay cho brand … đồng bộ cho các vị trí có quà tặng khác luôn như ở chi tiết đơn hàng, summary đơn hàng") — ĐỒNG BỘ THEO
      THẺ QUÀ Ở GIỎ (giftRowPlainHTML): dòng 1 là chữ "Quà tặng" thay cho hãng thật (dùng đúng lớp của dòng hãng ở hàng sản phẩm ngay trên), dòng 2 tên quà, dòng 3 BIẾN THỂ của quà (thay tên chương trình), badge "Quà tặng"
-     đè lên ảnh GỠ (dòng 1 đã nói rồi), và CỘT GIÁ ghi "Miễn phí" ghim góc phải dưới đúng chỗ giá của hàng thường (.gift-free: đậm 500 như giá). Bản gọn (52×60) không có cột giá nên không in "Miễn phí". */
+     đè lên ảnh GỠ (dòng 1 đã nói rồi), và CỘT GIÁ ghi "Miễn phí" ghim góc phải dưới đúng chỗ giá của hàng thường (.gift-free: đậm 500 như giá). Bản gọn (52×60) không có cột giá nên không in "Miễn phí".
+     16/10/2026 (user: "cả mấy cái thẻ quà ở min cart, giỏ hàng, order detail nữa nhé" — nối tiếp "quà tặng luôn có sl = 1"): bản big nay có hàng đáy "x1" TRÁI · "Miễn phí" PHẢI
+     y hệt hàng sản phẩm ngay trên (x{qty} trái · giá phải, lệnh 05/10 theo Figma 1107:64862); quà luôn đúng 1 phần nên không đọc c.qty. Bản gọn không có hàng này nên không ghi. */
   const info = `
                   <p class="t-lead pc-brand font-medium text-foreground truncate">Quà tặng</p>
                   <p class="t-multiline text-secondary-foreground ${big ? 'line-clamp-2' : 'truncate'}">${g.name}</p>
@@ -16657,7 +16677,10 @@ function giftSummaryRow(pk, g, big) {
                 ${big ? `
                 <div class="flex-1 min-w-0 flex flex-col justify-between">
                   <div>${info}</div>
-                  <p class="t-multiline gift-free text-foreground self-end">Miễn phí</p>
+                  <div class="flex items-center justify-between gap-2 pt-1">
+                    <span class="t-single text-muted-foreground shrink-0">x1</span>
+                    <span class="t-multiline gift-free text-foreground whitespace-nowrap">Miễn phí</span>
+                  </div>
                 </div>` : `
                 <div class="flex-1 min-w-0">${info}</div>`}
               </div>`;
@@ -18216,35 +18239,58 @@ function vatRadio(id, label) {
    Hoist lên module scope vì cả screenCHECKOUT() (render lần đầu) và wire()
    (đổi tab sau khi mount) đều cần gọi vatFieldRows(). */
 const vatFieldSets = {
+  /* 16/10/2026 (user gửi 2 ảnh trang gốc DAFC, kèm "với các hàng ngang, hàng dọc … bản mobile chỉ cần đặt tên và đầy đủ các ô sắp hàng dọc") — bộ ô + TÊN + THỨ TỰ theo ảnh:
+     Công ty  : Tên công ty · Mã số thuế | Họ và Tên người mua · Địa chỉ email | Địa chỉ (cả hàng)   — 5 ô
+     Cá nhân  : Họ tên · Mã số thuế cá nhân | Địa chỉ email (cả hàng) | Địa chỉ (cả hàng)            — 4 ô
+     (thứ tự mảng = thứ tự đọc: desktop xếp LƯỚI 2 CỘT, phần tử thứ 5 `true` = chiếm CẢ HÀNG; mobile xếp DỌC theo đúng thứ tự này.)
+     Trước đó: Cá nhân 3 ô (Họ và tên · Địa chỉ · Email nhận hóa đơn VAT), Công ty 4 ô (Tên công ty · Địa chỉ công ty · Mã số thuế · Email nhận hóa đơn VAT) — MỚI THÊM "Họ và Tên người mua" (Công ty)
+     và "Mã số thuế cá nhân" (Cá nhân); "Địa chỉ công ty" → "Địa chỉ", "Email nhận hóa đơn VAT" → "Địa chỉ email", "Họ và tên" → "Họ tên". Mọi ô đều BẮT BUỘC (dấu * đỏ ở nhãn — xem vatFieldRows).
+     CHỈ SỐ ô gắn với id `vat-<loại>-<i>`, `VAT_REQUIRED_MSG`, `orderVatSnapshot` và `orderVatRows`: đổi thứ tự ở đây là phải đổi cả bốn chỗ đó. */
   personal: [
-    ['Họ và tên', 'Nhập Họ và tên', ''],
-    ['Địa chỉ', 'Nhập Địa chỉ', ''],
-    ['Email nhận hóa đơn VAT', 'Nhập Email nhận hóa đơn VAT', 'email', 'email'],
+    ['Họ tên', 'Nhập Họ tên', ''],
+    ['Mã số thuế cá nhân', 'Nhập Mã số thuế cá nhân', 'numeric', 'taxp'],
+    ['Địa chỉ email', 'Nhập Địa chỉ email', 'email', 'email', true],
+    ['Địa chỉ', 'Nhập Địa chỉ', '', '', true],
   ],
   company: [
     ['Tên công ty', 'Nhập Tên công ty', ''],
-    ['Địa chỉ công ty', 'Nhập Địa chỉ công ty', ''],
     ['Mã số thuế', 'Nhập Mã số thuế', 'numeric', 'tax'],
-    ['Email nhận hóa đơn VAT', 'Nhập Email nhận hóa đơn VAT', 'email', 'email'],
+    ['Họ và Tên người mua', 'Nhập Họ và Tên người mua', ''],
+    ['Địa chỉ email', 'Nhập Địa chỉ email', 'email', 'email'],
+    ['Địa chỉ', 'Nhập Địa chỉ', '', '', true],
   ],
 };
 /* DOI SANG FIELD NOI (16/09/2026) -- xem khoi CSS .field-float. Truoc la nhan
    tinh phia tren + placeholder rieng trong o (2 dong noi cung mot dieu), nay
    gop lam mot. id sinh theo type+chi so vi 2 bo (personal/company) co nhan
-   trung ten ("Email nhan hoa don VAT"). */
-/* 15/10/2026 (user vẽ lại khung Figma MOBILE bước VAT rồi bảo "áp dụng cho cả desktop nhé") — dòng GHI CHÚ VAT nằm TRONG khung ô nhập, là phần tử đầu (đệm dưới 8),
+   trung ten ("Dia chi", "Dia chi email"). */
+/* 15/10/2026 (user vẽ lại khung Figma mobile, nút 1425:112954: "dời cục note vô trong luôn, tăng font lên") — dòng GHI CHÚ VAT nằm TRONG khung ô nhập, là phần tử đầu (đệm dưới 8),
    chữ 12/18 → 14/20 (t-lead); mỗi ô chỉ còn đệm dọc 8 (đệm ngang do chính khung giữ). Chọn "Không xuất hoá đơn" thì khung rỗng (ẩn bằng :empty) nên ghi chú ẩn theo —
-   dòng chữ nói về "thông tin bên dưới" chỉ có nghĩa khi có ô. Cùng khuôn index.html (nhãn 3 lựa chọn desktop GIỮ dài, user chỉ nói mobile). */
+   dòng chữ nói về "thông tin bên dưới" chỉ có nghĩa khi có ô.
+   16/10/2026 (user gửi 2 ảnh trang gốc: "có note * như hình") — THÊM dòng "* Những trường bắt buộc." làm phần tử ĐẦU của khung (ảnh để nó đứng đầu khung xám) và dấu * ĐỎ sau
+   nhãn mọi ô (span riêng `.vat-star` để luật i18n khớp nguyên nhãn). ⚠ NGOẠI LỆ của luật 02/10/2026 "bỏ dấu * bắt buộc ở mọi ô nhập": chỉ form hoá đơn VAT, theo ĐÚNG lệnh + ảnh của user. Các ô
+   nằm trong `.vat-grid`: desktop là lưới 2 cột (xem CSS), mobile không có CSS ⇒ xếp dọc đúng thứ tự mảng.
+   16/10/2026 (lượt sau, user: "bỏ dòng Hóa đơn VAT chỉ xuất trong ngày…, thay bằng Chú ý: giá trị hóa đơn … nằm bên ngoài khung xám như hình") — đoạn chú CŨ (14/20 đầu khung) BỎ HẲN; thay bằng dòng
+   "Chú ý: giá trị hóa đơn VAT bao gồm tổng giá trị đơn hàng và phí vận chuyển." nằm NGAY DƯỚI khung xám, NGOÀI `#vatFieldRows` (`#vatNote` trong sVatOpen; handler đổi loại hoá đơn ẩn / hiện nó theo vatMode:
+   "Không xuất" ⇒ ẩn cùng khung). Khung nay chỉ còn dòng "* Những trường bắt buộc." + các ô.
+   16/10/2026 (lượt sau nữa — user vẽ lại 2 khung Figma, mobile 1425:112904 · desktop 1425:113231: "cục VAT update lại theo thiết kế tôi nhé, hóa đơn cá nhân tương tự") — theo ĐÚNG khung của user:
+   (1) BỎ dòng "* Những trường bắt buộc." và dấu * đỏ sau nhãn — NGOẠI LỆ của luật 02/10/2026 chấm dứt, form VAT cũng KHÔNG có dấu * (giữ aria-required cho trình đọc màn hình);
+   (2) ĐẦU khung xám là đoạn dẫn 2 câu, ngắt dòng sau câu đầu ("Hóa đơn VAT chỉ được xuất trong ngày mua hàng." / "Quý khách có nhu cầu xuất hóa đơn vui lòng cung cấp đầy đủ thông tin bên dưới."),
+       desktop 14/20 (t-lead), đệm dưới 8 (cùng nhịp với ô: chữ cuối đoạn → mép trên ô đầu = 16);
+   (3) dòng chú NGOÀI khung (#vatNote): 14/20 (t-lead) "Lưu ý: Giá trị hóa đơn VAT bao gồm tổng giá trị đơn hàng và phí vận chuyển" (khung desktop của user gõ lại: "Lưu ý", G hoa, bỏ dấu chấm cuối; khung mobile của user giữ "Chú ý: …" có dấu chấm).
+   Cá nhân làm y như Công ty (cùng đoạn dẫn, cùng dòng chú). */
 function vatFieldRows(type) {
-  const note = `
-    <p class="vat-note t-lead text-secondary-foreground pb-2">Hóa đơn VAT chỉ xuất trong ngày, khách hàng có nhu cầu xuất hóa đơn vui lòng điền đầy đủ thông tin bên dưới.</p>`;
-  return note + vatFieldSets[type].map(([lb, ph, im, rule], i) => `
-    <div class="py-2">
-      <div class="field-float">
-        <input id="vat-${type}-${i}" ${im ? `inputmode="${im}"` : ''} ${rule ? `data-rule="${rule}"` : ''} value="${vatVal(type, i)}" placeholder=" " class="t-multiline bg-input border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
-        <label for="vat-${type}-${i}" class="text-muted-foreground">${lb}</label>
-      </div>
-    </div>`).join('');
+  const intro = `
+    <p class="vat-intro t-lead text-secondary-foreground pb-2">Hóa đơn VAT chỉ được xuất trong ngày mua hàng.<br>Quý khách có nhu cầu xuất hóa đơn vui lòng cung cấp đầy đủ thông tin bên dưới.</p>`;
+  return intro + `
+    <div class="vat-grid">` + vatFieldSets[type].map(([lb, ph, im, rule, wide], i) => `
+      <div class="py-2${wide ? ' vat-wide' : ''}">
+        <div class="field-float">
+          <input id="vat-${type}-${i}" ${im ? `inputmode="${im}"` : ''} ${rule ? `data-rule="${rule}"` : ''} aria-required="true" value="${vatVal(type, i)}" placeholder=" " class="t-multiline bg-input border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors">
+          <label for="vat-${type}-${i}" class="text-muted-foreground">${lb}</label>
+        </div>
+      </div>`).join('') + `
+    </div>`;
 }
 
 /* ── Cặp nút phân đoạn (segmented toggle) — đồng bộ với index.html ──
@@ -19034,6 +19080,8 @@ function screenCHECKOUT() {
            15/10/2026 (user: "áp dụng cho cả desktop nhé" theo khung Figma mobile vừa vẽ lại): khung này nay chứa CẢ dòng ghi chú VAT (đầu khung, chữ 14/20), nền secondary thay
            accent-0, KHÔNG viền (khung mobile của user ẨN nét viền), đệm 12 (CSS #vatFieldRows), ô nhập chỉ còn đệm dọc — xem vatFieldRows(). -->
       <div id="vatFieldRows" class="bg-secondary rounded-xs">${vatMode === 'none' ? '' : vatFieldRows(vatMode)}</div>
+      <!-- 16/10/2026 (user: "thay bằng Chú ý: giá trị hóa đơn … nằm bên ngoài khung xám như hình") — dòng chú NGOÀI khung, ngay dưới khung xám (khe gap-4); ẩn khi chọn Không xuất hoá đơn (handler [data-vat-mode] đổi class hidden). -->
+      <p id="vatNote" class="vat-note t-lead text-secondary-foreground${vatMode === 'none' ? ' hidden' : ''}">Lưu ý: Giá trị hóa đơn VAT bao gồm tổng giá trị đơn hàng và phí vận chuyển</p>
       <button class="t-multiline ck-next ck-next-gap w-[280px] h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="${ckMode === 'pickup' ? 2 : 3}" data-require="vat">Xác nhận</button>
     </div>`;
   const sVatDone = `
@@ -23027,10 +23075,16 @@ const I18N = {
   'Nhập Họ và tên':'Enter full name', 'Nhập Địa chỉ':'Enter address',
   'Tên công ty':'Company name', 'Địa chỉ công ty':'Company address',
   'Mã số thuế':'Tax code', 'Email nhận hóa đơn VAT':'Email for VAT invoice',
+  /* 16/10/2026 — bộ ô hoá đơn VAT mới (theo ảnh trang gốc của user). EN không trùng giá trị khoá nào khác ('Full name' đã của 'Họ và tên'). */
+  'Họ tên':'Name', 'Mã số thuế cá nhân':'Personal tax code', 'Họ và Tên người mua':'Name of buyer', 'Địa chỉ email':'Email address',
+  'Nhập họ tên':'Enter your name', 'Nhập mã số thuế cá nhân':'Enter the personal tax code', 'Nhập họ và tên người mua':'Enter the name of the buyer', 'Nhập địa chỉ email':'Enter the email address',
+  'Mã số thuế cá nhân gồm 10 hoặc 12 số':'Personal tax code must be 10 or 12 digits',
   'Thông tin VAT':'VAT information', 'Thông tin xuất hóa đơn':'Invoice information', 'Loại hoá đơn':'Invoice type', 'Đơn hàng này không xuất hoá đơn VAT.':'No VAT invoice was requested for this order.',
   'Nhập Tên công ty':'Enter company name', 'Nhập Địa chỉ công ty':'Enter company address',
   'Nhập Mã số thuế':'Enter tax code', 'Nhập Email nhận hóa đơn VAT':'Enter email for VAT invoice',
-  'Hóa đơn VAT chỉ xuất trong ngày, khách hàng có nhu cầu xuất hóa đơn vui lòng điền đầy đủ thông tin bên dưới.':'VAT invoices are issued same-day only. Please complete all fields below if you need one.',
+  'Lưu ý: Giá trị hóa đơn VAT bao gồm tổng giá trị đơn hàng và phí vận chuyển':'Notice: VAT invoice value including the total amount of bill and shipping fee.',   // 16/10/2026 (thay câu "Hóa đơn VAT chỉ xuất trong ngày…" đã bỏ; EN = bản của site chính thức theo luật 24/09)
+  'Hóa đơn VAT chỉ được xuất trong ngày mua hàng.':'VAT invoices can only be issued on the day of purchase.',
+  'Quý khách có nhu cầu xuất hóa đơn vui lòng cung cấp đầy đủ thông tin bên dưới.':'If you need a VAT invoice, please provide all the information below.',
   'Họ':'Last name', 'Tên':'First name', 'Nhập họ':'Enter last name', 'Nhập tên':'Enter first name',
   'Số nhà, tên đường':'House number, street', 
   'Chọn tỉnh / thành phố':'Select province / city', 'Chọn phường / xã':'Select ward',
@@ -23219,7 +23273,6 @@ const I18N = {
   'Lý do huỷ đơn:':'Cancellation reason:',
   'Tiền sẽ được hoàn về phương thức thanh toán ban đầu trong 5–7 ngày làm việc.':'The refund will go back to your original payment method within 5–7 business days.',
   'Đơn chưa thanh toán nên không có khoản nào cần hoàn.':'This order was never paid, so there is nothing to refund.',
-  'Đơn giá:':'Unit price:',
   'Điểm thưởng dự kiến':'Expected points', 'Tổng thanh toán':'Total payment', 'Đã bao gồm VAT':'VAT included', '(Bao gồm VAT)':'(VAT included)',
   'Lịch sử điểm thưởng':'Rewards history', 'Điểm tích luỹ':'Points earned', 'Điểm đã đổi':'Points redeemed',
   'Giá trị đơn hàng':'Order value', 'Hết hạn vào':'Expires on', 'Điểm hết hạn':'Expired points',
@@ -25427,6 +25480,8 @@ const FIELD_RULE = {
   email: [v => /^\S+@\S+\.\S+$/.test(v.trim()),           'Email chưa đúng'],
   /* 16/10/2026 (lô 3 · CHK-29) — Mã số thuế doanh nghiệp: 10 số, hoặc 13 số (10 số + 3 số đơn vị phụ thuộc, thường viết 0312345678-001; gạch giữa có thể bỏ). */
   tax: [v => /^\d{10}(-?\d{3})?$/.test(v.replace(/\s/g, '')), 'Mã số thuế gồm 10 hoặc 13 số'],
+  /* 16/10/2026 — Mã số thuế CÁ NHÂN (ô mới của hoá đơn VAT Cá nhân): 10 số, hoặc 12 số (số căn cước công dân dùng làm mã số thuế). ĐỀ XUẤT — khách chốt. */
+  taxp: [v => /^(\d{10}|\d{12})$/.test(v.replace(/\s/g, '')), 'Mã số thuế cá nhân gồm 10 hoặc 12 số'],
   /* Ngày sinh: đúng khuôn dd/mm/yyyy VÀ là ngày có thật VÀ không nằm ở tương lai.
      new Date(y, m-1, d) tự TRÀN (31/02 thành 03/03) nên phải so lại cả 3 số mới biết
      ngày vừa gõ có tồn tại hay không. */
@@ -25580,8 +25635,9 @@ function ckStoreDoneHTML() {
    BA LỚP: (1) rời ô thì kiểm ĐỊNH DẠNG thứ đã gõ (data-rule trong vatFieldSets → wireBlurCheck, ô trống không bị mắng); (2) bấm Xác nhận → validateVat() báo MỌI ô sai ngay dưới ô,
    focus nhảy tới ô sai đầu tiên (cùng cách validateShipping); (3) chốt chặn cuối ở ckGuard(): đường vòng (sửa VAT thành sai rồi nhảy sang bước khác) vẫn bị chặn ở nút Đặt hàng và đưa người dùng về bước VAT. */
 const VAT_REQUIRED_MSG = {
-  personal: ['Nhập họ và tên', 'Nhập địa chỉ', 'Nhập email nhận hóa đơn VAT'],
-  company:  ['Nhập tên công ty', 'Nhập địa chỉ công ty', 'Nhập mã số thuế', 'Nhập email nhận hóa đơn VAT'],
+  /* 16/10/2026: theo bộ ô mới của vatFieldSets (cùng THỨ TỰ). */
+  personal: ['Nhập họ tên', 'Nhập mã số thuế cá nhân', 'Nhập địa chỉ email', 'Nhập địa chỉ'],
+  company:  ['Nhập tên công ty', 'Nhập mã số thuế', 'Nhập họ và tên người mua', 'Nhập địa chỉ email', 'Nhập địa chỉ'],
 };
 function vatIssues(getVal) {
   if (valOff() || vatMode === 'none') return [];   // 16/10/2026: Kiểm lỗi nhập TẮT
@@ -27698,6 +27754,8 @@ function wire(root) {
         });
         const rows = root.querySelector('#vatFieldRows');
         if (rows) { rows.innerHTML = vatMode === 'none' ? '' : vatFieldRows(vatMode); localizeNew(rows); wireBlurCheck(rows); }
+        const vNote = root.querySelector('#vatNote');   // 16/10/2026: dòng "Chú ý" ngoài khung — chỉ khi có khung ô nhập
+        if (vNote) vNote.classList.toggle('hidden', vatMode === 'none');
         const done = root.querySelector('#ckVatDone');
         if (done) { done.textContent = vatLabel(vatMode); localizeNew(done); }
       });
