@@ -13931,7 +13931,10 @@ function voucherTitle(v) {
   return v.title;
 }
 
-const voucherByCode = code => VOUCHERS.find(v => v.code === code);
+/* 19/10/2026 (user: "không kiểm tra luôn mấy cái tra cứu, nhập mã đó luôn nha"): Kiểm lỗi nhập TẮT ⇒ gõ MÃ NÀO cũng nhận. Mã có trong kho thì dùng đúng ưu đãi của nó (bỏ qua hạn dùng · mức tối thiểu, xem voucherEligible);
+   mã lạ thì sinh ưu đãi TẠM "giảm 500,000đ" (nhóm Mã giảm giá, ẩn khỏi danh sách) để demo đi tiếp. Bật lại Kiểm lỗi nhập thì mã lạ không còn tra ra → tự rớt (valSimApply · pruneVouchers). */
+const voucherAdhoc = code => ({ code, group: 'promo', type: 'amount', amount: 500000, prog: 'MÃ GÕ TAY', hidden: true, adhoc: true });
+const voucherByCode = code => VOUCHERS.find(v => v.code === code) || (code && valOff() ? voucherAdhoc(code) : undefined);
 /* Số sản phẩm ĐANG TICK (nhân số lượng) — điều kiện của nhóm "mua nhiều" */
 const cartSelectedQty = () => cartSelected().reduce((s, c) => s + (c.qty || 1), 0);
 
@@ -14016,6 +14019,7 @@ function voucherExpired(v) {
 }
 function voucherEligible(v) {
   if (!v) return false;
+  if (valOff()) return true;   // 19/10/2026: Kiểm lỗi nhập TẮT — dùng được bất kể hạn dùng / mức tối thiểu
   if (voucherExpired(v)) return false;
   if (v.minSub && cartSubtotal() < v.minSub) return false;
   if (v.minQty && cartSelectedQty() < v.minQty) return false;
@@ -14023,6 +14027,7 @@ function voucherEligible(v) {
 }
 /* Lý do chưa dùng được — hiện ngay trên thẻ ưu đãi (thay vì chỉ làm mờ nó) */
 function voucherBlockReason(v) {
+  if (valOff()) return '';   // 19/10/2026: Kiểm lỗi nhập TẮT — không có lý do chặn
   if (voucherExpired(v)) return `Mã đã hết hạn ngày ${v.exp}`;
   if (v.minSub && cartSubtotal() < v.minSub) return `Mua thêm ${(v.minSub - cartSubtotal()).toLocaleString('en-US')}đ để dùng mã`;
   if (v.minQty && cartSelectedQty() < v.minQty) return `Cần mua từ ${v.minQty} sản phẩm`;
@@ -14049,7 +14054,7 @@ function cartApplyCode(raw) {
   if (!code) return { err: '' };
   const v = voucherByCode(code);
   if (!v) return { err: 'Mã không hợp lệ' };
-  if (cartVouchers.includes(code)) return { err: 'Mã đã được áp dụng' };
+  if (cartVouchers.includes(code)) return valOff() ? { ok: true, code } : { err: 'Mã đã được áp dụng' };   // 19/10/2026: Kiểm lỗi nhập TẮT — gõ lại mã đang áp vẫn "nhận"
   if (!voucherEligible(v)) return { err: voucherBlockReason(v) };
   const old = cartVouchers.find(c => { const o = voucherByCode(c); return o && o.group === v.group; });
   cartVouchers = cartVouchers.filter(c => c !== old).concat(code);
@@ -14568,7 +14573,7 @@ function pbhCheck(raw) {
   codes.forEach(c => {
     const code = c.toUpperCase();
     if (!valOff() && !/^[A-Z0-9-]{6,20}$/.test(code)) { bad.push([code, PBH_MSG.invalid]); return; }   // 16/10/2026: Kiểm lỗi nhập TẮT bỏ luật định dạng
-    if (cartPbh.some(p => p.code === code) || ok.some(p => p.code === code)) { bad.push([code, PBH_MSG.dup]); return; }
+    if (!valOff() && (cartPbh.some(p => p.code === code) || ok.some(p => p.code === code))) { bad.push([code, PBH_MSG.dup]); return; }   // 19/10/2026: Kiểm lỗi nhập TẮT không chặn mã trùng
     if (pbhSim !== 'ok') { bad.push([code, PBH_MSG[pbhSim]]); return; }
     ok.push({ code, amount: pbhAmount(code) });
   });
@@ -19435,8 +19440,16 @@ function trackLookup(raw) {
   if (!q && !valOff()) return { err: 'Vui lòng nhập mã đơn hàng.' };   // 16/10/2026: Kiểm lỗi nhập TẮT bỏ qua kiểm trống / định dạng (mã không có thật vẫn "Không tìm thấy")
   if (!valOff() && !TRACK_RE.test(q)) return { err: 'Mã đơn gồm chữ DAFC và 6 chữ số, ví dụ DAFC103015.' };
   const o = ORDERS.find(x => x.id.toUpperCase() === q);
+  if (!o && valOff()) return { order: trackAnyOrder(q) };   // 19/10/2026: Kiểm lỗi nhập TẮT — tra cứu không báo "Không tìm thấy"
   if (!o) return { err: 'Không tìm thấy đơn hàng này. Kiểm tra lại mã trong email xác nhận.' };
   return { order: o };
+}
+
+/* 19/10/2026 (user: "không kiểm tra luôn mấy cái tra cứu, nhập mã đó luôn nha"): Kiểm lỗi nhập TẮT ⇒ tra cứu KHÔNG bao giờ báo lỗi. Mã khớp đơn nào thì ra đơn đó (trackLookup); mã dở dang (vd DAFC102990 → đơn con -01) lấy đơn đầu tiên bắt đầu bằng mã;
+   còn lại (để trống · chữ lạ · mã không có thật) ra đơn mẫu "đang giao" DAFC102938 (đủ thẻ vận chuyển · lịch sử · giờ từng chặng). Danh sách đơn trống (gói "Khách mới") thì lấy từ bản chụp gốc ACC_SNAP. */
+function trackAnyOrder(q) {
+  const pool = ORDERS.length ? ORDERS : (ACC_SNAP.orders || []);
+  return (q && pool.find(x => x.id.toUpperCase().startsWith(q))) || pool.find(x => x.id === 'DAFC102938') || pool[0] || null;
 }
 
 /* Che bớt số điện thoại và địa chỉ: đủ để chủ đơn nhận ra đúng đơn của mình,
@@ -22375,16 +22388,28 @@ function setPickLabel(btn, value, placeholder) {
    vì một việc họ chưa làm — chỉ cần lướt một lượt qua form là đỏ cả màn. Luật "bắt buộc
    nhập" vẫn thuộc về lúc bấm CTA; rời ô chỉ lo ĐỊNH DẠNG của thứ đã gõ. */
 /* ══ CÔNG TẮC "KIỂM LỖI NHẬP" (16/10/2026, lệnh user: "tạo cái toggle giữa kiểm lỗi nhập và không kiểm lỗi nhập, để tôi có thể test nhanh hơn") ═════════════════════════════
-   Bánh răng → nhóm ĐẦU TIÊN "Kiểm lỗi nhập" (Bật · Tắt). Mặc định BẬT ⇒ luồng cũ không đổi. TẮT = bỏ qua mọi kiểm TRỐNG và ĐỊNH DẠNG ở phía khách để bấm đi tiếp nhanh: ô bắt buộc · số điện thoại · email · mã số thuế ·
+   Bánh răng → nhóm ĐẦU TIÊN "Kiểm lỗi nhập" (Bật · Tắt). MẶC ĐỊNH TẮT (từ 19/10/2026, user: "mặc định bật chế độ không kiểm duyệt thông tin nhập nhé, khi nào muốn chỉnh mode kiểm tra thông tin thì bật toggle"; trước đó mặc định BẬT). TẮT = bỏ qua mọi kiểm TRỐNG và ĐỊNH DẠNG ở phía khách để bấm đi tiếp nhanh: ô bắt buộc · số điện thoại · email · mã số thuế ·
    ngày sinh · mật khẩu (độ dài / khớp / khác mật khẩu cũ) · mã OTP đủ 6 số · tỉnh / phường · khoảng giá Từ > Đến · định dạng phiếu mua hàng · mã đơn ở trang Theo dõi · đăng ký nhận tin · nhận thông báo khi có hàng …
    KHÔNG đụng: kết cục "từ máy chủ" đã có công tắc riêng (Đăng nhập sai / khoá · Mã OTP sai / hết hạn · Phiếu mua hàng hết hạn / đã dùng · Hết hàng lúc đặt · Thanh toán thất bại · Ngoài vùng giao) và các chốt chặn nghiệp vụ
-   (giỏ rỗng · số điện thoại / email đã có tài khoản · mã ưu đãi không tồn tại). Mọi chỗ kiểm đọc valOff(); đổi công tắc xoá luôn lỗi đang hiện trên màn (valSimApply). */
-let valSim = 'on';   // 'on' | 'off'
+   (giỏ rỗng · số điện thoại / email đã có tài khoản · mã ưu đãi không tồn tại). Mọi chỗ kiểm đọc valOff(); đổi công tắc xoá luôn lỗi đang hiện trên màn (valSimApply).
+   19/10/2026 (user: "không kiểm tra luôn mấy cái tra cứu, nhập mã đó luôn nha"): TẮT cũng bỏ kiểm ở TRA CỨU và NHẬP MÃ — tra cứu đơn hàng gõ gì / để trống cũng ra một đơn (trackAnyOrder); ô Mã giảm giá nhận mọi mã (kho: bỏ qua hạn dùng · mức tối thiểu ·
+   "đã áp dụng"; mã lạ: ưu đãi tạm 500,000đ — voucherAdhoc); ô Phiếu mua hàng không chặn mã trùng. Kết cục có công tắc riêng (pbhSim · loginSim · otpSim · oosSim …) GIỮ NGUYÊN. */
+let valSim = 'off';   // 'on' | 'off' — MẶC ĐỊNH 'off' (Tắt) từ 19/10/2026: muốn kiểm lỗi nhập thì bật công tắc
 const valOff = () => valSim === 'off';
 function valSimApply() {
   document.querySelectorAll('.fld-err').forEach(el => { try { clearFieldErr(el); } catch (e) { /* ô đã bị gỡ */ } });
   const eo = document.getElementById('err-consent'); if (eo) eo.remove();
   if (window.syncFilterFooter) { try { window.syncFilterFooter(); } catch (e) { /* sheet lọc chưa dựng */ } }
+  /* 19/10/2026: bật lại Kiểm lỗi nhập ⇒ mã gõ tuỳ ý (ưu đãi tạm) không còn tra ra: gỡ khỏi giỏ rồi vẽ lại khối tiền đang hiện (mã trong kho nhưng hết hạn / chưa đủ mức tối thiểu cũng rớt theo luật cũ). */
+  if (!valOff()) {
+    try {
+      pruneVouchers();
+      const cr = current === 'cart' && document.querySelector('[data-screen="cart"]');
+      if (cr) refreshCartSummary(cr);
+      const kr = current === 'checkout' && document.querySelector('[data-screen="checkout"]');
+      if (kr) rerenderCheckout(kr);
+    } catch (e) { /* màn giỏ / thanh toán chưa dựng */ }
+  }
   toast(valOff() ? 'Kiểm lỗi nhập: Tắt' : 'Kiểm lỗi nhập: Bật');
 }
 const FIELD_RULE = {
@@ -23997,7 +24022,7 @@ function wire(root) {
       /* 16/10/2026 (lô 6 · TRK-29) — MẠNG YẾU: mã đúng khuôn thì "hỏi máy chủ" — nút giữ "Đang tra cứu…" NET_WEAK_GRID ms (ô mã khoá lại), rồi mới ra kết quả / "Không tìm thấy". Bỏ trống / sai khuôn là kiểm ở
          phía khách nên báo NGAY. Kết quả đã nằm sẵn nên không qua khung xương (noSkel); khung xương là cho lần mở kết quả từ Chi tiết đơn. */
       const q = String(trackQuery || '').trim().toUpperCase();
-      if (netWeak() && q && TRACK_RE.test(q)) {
+      if (netWeak() && (valOff() || (q && TRACK_RE.test(q)))) {   // 19/10/2026: Kiểm lỗi nhập TẮT — mọi lần bấm đều "hỏi máy chủ" (kể cả để trống)
         if (el.dataset.busy) return;
         el.disabled = true; el.dataset.busy = '1'; el.innerHTML = 'Đang tra cứu…'; localizeNew(el);
         if (inp) inp.readOnly = true;
@@ -26436,7 +26461,7 @@ document.body.insertAdjacentHTML('beforeend', `
   <div id="settingsPanel" aria-hidden="true">
     <div class="sp-backdrop"></div>
     <div class="sp-card" role="dialog" aria-label="Cài đặt phông chữ">
-      <!-- KIỂM LỖI NHẬP (16/10/2026, lệnh user "để tôi test nhanh hơn") — công cụ của người xem demo: "Tắt" bỏ qua mọi kiểm trống / định dạng ở phía khách để bấm đi tiếp nhanh (xem valOff); "Bật" (mặc định) kiểm như thật. Nhóm ĐẦU panel. -->
+      <!-- KIỂM LỖI NHẬP (16/10/2026, lệnh user "để tôi test nhanh hơn") — công cụ của người xem demo: "Tắt" bỏ qua mọi kiểm trống / định dạng ở phía khách để bấm đi tiếp nhanh (xem valOff); "Bật" kiểm như thật; MẶC ĐỊNH TẮT (19/10/2026). Nhóm ĐẦU panel. -->
       <div class="px-3 pt-3 pb-2">
         <p class="t-multiline tracking-[0.12em] text-muted-foreground">Kiểm lỗi nhập</p>
         <p class="t-single sp-note text-muted-foreground">Mọi form: Thanh toán, Đăng nhập, Tài khoản, Giỏ… Tắt = bấm đi tiếp, không báo lỗi nhập.</p>
