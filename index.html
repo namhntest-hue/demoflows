@@ -7123,7 +7123,8 @@ function cartAddGate(d) {
 }
 document.addEventListener('click', e => { if (e.target.closest && e.target.closest('[data-cart-go]')) { authMsgClear(); go('cart'); } });
 /* Công tắc bánh răng "Giỏ hàng" (Mẫu · Đầy). Dòng thêm lấy từ PRODUCTS (bỏ hàng đặt trước, bỏ món đã có ở giỏ mẫu), tồn kho 12 (> trần 10) để thấy đúng luật trần số lượng. */
-let cartSim = 'base';
+let cartSim = 'base';   // 'base' | 'full' | 'pre2' (19/10/2026: thêm món đặt trước ngày về thứ hai)
+const CART_PRE2_ETA = '15/11/2026';
 function cartSimExtra(n) {
   const names = new Set(CART_BASE.map(c => c.name)), out = [];
   PRODUCTS.forEach((p, i) => {
@@ -7145,9 +7146,11 @@ function cartSimApply() {
   CART.length = 0;
   CART.push(...CART_BASE.map(c => ({ ...c })));
   if (cartSim === 'full') { const ex = cartSimExtra(CART_MAX_LINES - CART.length); if (ex[0]) ex[0].qty = CART_MAX_QTY; CART.push(...ex); }
+  /* 19/10/2026 (KHÁCH CHỐT: hàng đặt trước tách tiếp THEO NGÀY HÀNG VỀ → ra -03): demo chỉ có 1 sản phẩm đặt trước (đầm về 30/09), nên "2 ngày về" thêm MỘT món đặt trước thứ hai (lấy từ kho, không đụng PRODUCTS) về 15/11/2026 — bấm Đặt hàng ra 3 đơn con: -01 hàng có sẵn · -02 về 30/09 · -03 về 15/11. Hàng đặt trước không có sale (luật 03/09). */
+  if (cartSim === 'pre2') { const ex = cartSimExtra(1)[0]; if (ex) CART.push({ ...ex, qty: 1, stock: 5, off: '', was: '', preorder: CART_PRE2_ETA }); }
   syncCartBadge();
   if (current === 'cart') go('cart', { force: true, back: true });
-  else toast(cartSim === 'full' ? `Giỏ hàng: đầy (${CART.length} sản phẩm)` : `Giỏ hàng: mẫu (${CART.length} sản phẩm)`);
+  else toast(cartSim === 'full' ? `Giỏ hàng: đầy (${CART.length} sản phẩm)` : cartSim === 'pre2' ? `Giỏ hàng: 2 ngày hàng về (${CART.length} sản phẩm)` : `Giỏ hàng: mẫu (${CART.length} sản phẩm)`);
 }
 
 /* ── LUẬT DEMO: HÀNG ĐẶT TRƯỚC KHÔNG BÁN GIẢM GIÁ (chốt user 03/09/2026) ──────
@@ -11594,6 +11597,12 @@ const orderActions = o => ({ primary: o.tone === 'pay' ? { attr: `data-repay="${
 /* Mã GỐC của nhóm đơn con ("DAFC102990-01" / "-02" → "DAFC102990") và các đơn còn chờ thanh toán của cùng nhóm — một lần thanh toán cho cả nhóm. */
 const orderBaseId = o => String(o.id).split('-')[0];
 const orderPayGroup = o => ORDERS.filter(x => x.tone === 'pay' && orderBaseId(x) === orderBaseId(o));
+/* 19/10/2026 (KHÁCH CHỐT: "mua as guest mà đơn có đặt trước và sp thường thì tạo 2, 3 mã đơn nhưng màn thành công chỉ trả ra 1 đơn tổng; vô tracking nhập mã đơn tổng thì hiện order listing các đơn con, bấm vô từng cái mới vô chi tiết")
+   — ĐƠN TỔNG = mã gốc (DAFC102939), không phải một đơn; ĐƠN CON = <mã>-01 · -02 · -03…: hàng có sẵn đứng đầu (-01), rồi hàng đặt trước TÁCH THEO NGÀY HÀNG VỀ (sớm → muộn, mỗi ngày khác nhau một đơn — xem placeOrder).
+   orderKids(base) = các đơn con của một mã tổng, theo thứ tự mã; orderKindLabel = nhãn loại hàng của đơn con (suy từ dòng hàng, như orderPreItems). */
+const orderKids = base => ORDERS.filter(x => orderBaseId(x).toUpperCase() === String(base || '').toUpperCase()).sort((a, b) => String(a.id) < String(b.id) ? -1 : String(a.id) > String(b.id) ? 1 : 0);
+const orderKindLabel = o => orderPreItems(o).length ? 'Hàng đặt trước' : 'Hàng có sẵn';
+const orderKidsTotal = kids => vndDot(kids.reduce((n, o) => n + vndNum(o.total), 0));
 /* Dòng hàng của đơn dẫn sang PDP của chính sản phẩm đó (tra theo ảnh như orderItemP); không khớp thì ảnh
    và tên đứng yên, còn hơn dẫn sai chỗ. Uỷ quyền ở document vì màn đơn vẽ lại mỗi lần go(). */
 const orderPdpAttr = it => {
@@ -11761,7 +11770,7 @@ function orderDetailHTML(o, guest) {
          Thẻ MÃ ĐƠN: [mã đơn · nhãn trạng thái] + ngày đặt, dải điểm nền kem, hàng hoá đơn (có VAT: giá trị = loại hoá đơn + mũi tên, bấm mở bottom sheet chi tiết), hàng phương thức thanh toán. Thẻ GIAO HÀNG + NGƯỜI NHẬN gộp một thẻ (hàng "Tiến trình đơn hàng" và nút primary "Theo dõi vận đơn" đều mở sheet tiến trình). 07/10/2026 lượt 3: BỐ CỤC đổi theo HÌNH brief (người nhận lên thẻ đầu, thẻ Trạng thái mới có stepper ngang, điểm xuống tấm tổng, hàng Tiến trình bỏ), STYLE giữ — xem khối CSS ov-page. -->
     <div class="ov-page">
       <div class="ov-titlebar">
-        <button type="button" ${guest ? 'data-track-reset aria-label="Tra cứu đơn khác"' : 'data-atab="orders" aria-label="Đơn hàng"'} class="ov-backbtn press">${I.chevL}</button>
+        <button type="button" ${guest ? (trackGroup ? 'data-track-list aria-label="Đơn hàng"' : 'data-track-reset aria-label="Tra cứu đơn khác"') : 'data-atab="orders" aria-label="Đơn hàng"'} class="ov-backbtn press">${I.chevL}</button>
         <h1 class="t-section-title text-foreground">Chi tiết đơn hàng</h1>
       </div>${guestNote ? `
       <div class="pt-4">${guestNote}</div>` : ''}
@@ -11919,7 +11928,7 @@ function screenOrderSkeleton(guest) {
 
     <div class="ov-page">
       <div class="ov-titlebar">
-        <button type="button" ${guest ? 'data-track-reset aria-label="Tra cứu đơn khác"' : 'data-atab="orders" aria-label="Đơn hàng"'} class="ov-backbtn press">${I.chevL}</button>
+        <button type="button" ${guest ? (trackGroup ? 'data-track-list aria-label="Đơn hàng"' : 'data-track-reset aria-label="Tra cứu đơn khác"') : 'data-atab="orders" aria-label="Đơn hàng"'} class="ov-backbtn press">${I.chevL}</button>
         <h1 class="t-section-title text-foreground">Chi tiết đơn hàng</h1>
       </div>
 
@@ -15446,7 +15455,7 @@ function skelPageFor(name, opts) {
   /* 16/10/2026: màn Hoàn tất (đặt xong · cổng thanh toán trả về thành công). Cổng thanh toán (#pay) KHÔNG có khung xương — xem payEnter. */
   if (name === 'done') return netWeak() ? { html: screenDoneSkeleton, then: doneSkelThenReal } : null;
   /* 16/10/2026 (lô 6 · TRK-29): kết quả tra cứu mở khi đã biết mã (từ Chi tiết đơn). Tra cứu từ ô nhập đi qua nút "Đang tra cứu…" nên go() truyền noSkel. */
-  if (name === 'track') return (netWeak() && trackFound && !(opts && opts.noSkel)) ? { html: screenTrackSkeleton, then: trackSkelThenReal } : null;
+  if (name === 'track') return (netWeak() && (trackFound || trackGroup) && !(opts && opts.noSkel)) ? { html: trackFound ? screenTrackSkeleton : screenTrackGroupSkeleton, then: trackSkelThenReal } : null;   // 19/10/2026: mở chi tiết một đơn con từ danh sách → xương của chi tiết; mở danh sách (từ Hoàn tất · cổng thanh toán) → xương của danh sách
   return null;
 }
 
@@ -16211,7 +16220,7 @@ let ckAddrPrev = 0;
 const COD_MAX = 20000000;
 let ckNote = '';          // ghi chú đơn hàng (11/09/2026)
 let ckPlaced = false, ckOrderId = '', ckOrderTotal = '', ckOrderPoints = '';   // tổng + điểm chốt lúc đặt hàng (giỏ bị dọn ngay sau đó)
-let ckOrderIds = [];     // mã các đơn vừa đặt: một mã, hoặc hai mã đơn con -01 / -02 của giỏ hỗn hợp (ckOrderId = mã gốc)
+let ckOrderIds = [];     // mã các đơn vừa đặt: một mã, hoặc các mã đơn con -01 / -02 / -03 của giỏ có hàng đặt trước (19/10/2026: hàng đặt trước tách tiếp theo ngày hàng về) (ckOrderId = mã gốc = ĐƠN TỔNG)
 let ckOrderGifts = [];   // [{pk, g}] quà của đơn vừa đặt — chốt luôn cả MÓN đang chọn, không chỉ key chương trình
 let ckOrderPre = '';     // ngày nhận pre-order của đơn vừa đặt — chốt lúc placeOrder vì sau đó giỏ bị dọn rỗng
 let ckOrderEmail = '';   // email nhận xác nhận — chốt lúc đặt, vì form bị dọn ngay sau đó (11/09/2026)
@@ -16357,7 +16366,7 @@ function screenCHECKOUT() {
     ${navBar({ logoOnly: true })}
     <div class="px-4 py-10 flex flex-col items-center text-center gap-3">
       <div class="w-12 h-12 rounded-full border border-primary text-primary flex items-center justify-center">${I.tick}</div>
-      <p class="text-[18px] font-medium leading-7 text-foreground">Đơn ${ckOrderIds.length > 1 ? ckOrderIds.join(' và ') : ckOrderId} đã được đặt</p>
+      <p class="text-[18px] font-medium leading-7 text-foreground">Đơn ${ckOrderId} đã được đặt</p>
       <p class="t-multiline text-muted-foreground">${ckPlacedUnpaid() ? 'Đơn hàng đang chờ thanh toán. Bạn không cần đặt lại.' : 'Đơn hàng đang được xử lý. Bạn không cần đặt lại.'}</p>
       <div class="w-full flex flex-col gap-2 pt-2">
         <button data-order="0" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground btn-p press">Xem chi tiết đơn hàng</button>
@@ -16660,7 +16669,8 @@ function screenCHECKOUT() {
      món đặt trước — không nhắc là checkout đang hứa "14–18/07" cho món 30/09.
      Nhắc đúng tại chỗ khách đọc thời gian giao (cả lúc chọn lẫn tóm tắt đã
      xác nhận). Demo chỉ có 1 SP pre-order nên lấy ngày món đầu tiên tìm thấy. */
-  const preDate = (cartSelected().find(c => c.preorder) || {}).preorder;
+  /* 19/10/2026: hàng đặt trước về NHIỀU ngày khác nhau (bánh răng Giỏ hàng → "2 ngày về") thì nêu đủ các ngày, sớm → muộn: mỗi ngày là một đơn con riêng (xem placeOrder). */
+  const preDate = [...new Set(cartSelected().filter(c => c.preorder).map(c => c.preorder))].sort((a, b) => dmyKey(a) < dmyKey(b) ? -1 : dmyKey(a) > dmyKey(b) ? 1 : 0).join(' và ');
   const preNote = preDate ? `<p class="t-single text-foreground-alt">Riêng hàng pre-order: nhận hàng dự kiến ${preDate}, giao riêng khi hàng về.</p>` : '';
   /* 19/09/2026 (lệnh user): bản NỀN ACCENT của chính dòng trên, dùng ở bước ĐANG MỞ —
      ở đó nó đứng trần dưới hai thẻ chọn nên dễ trôi đi mất. Trong HỘP tóm tắt của bước
@@ -17060,6 +17070,7 @@ function screenDONE() {
      header + footer và đơn tách chỉ in MÃ GỐC một dòng.
      04/10/2026 (user: "header của trang thanh toán thành công là header mặc định luôn á, header của homepage") ⇒ header của màn này là
      navBar() MẶC ĐỊNH y như trang chủ (burger · tìm kiếm · logo · tài khoản · giỏ), không còn header rút gọn chỉ có logo giữa. */
+  /* 19/10/2026 (lần 4, user dán nội dung trang Đặt hàng thành công của website: "Đặt hàng Thành Công · Đơn hàng #… · Cám ơn Quý khách đã lựa chọn mua sắm tại DAFC Online · Quý khách vui lòng truy cập địa chỉ email để kiểm tra chi tiết hóa đơn đặt hàng · <Tiếp tục mua sắm>"): CHỮ theo đúng bài dán — tiêu đề viết hoa chữ đầu "Thành Công", ĐOẠN cảm ơn tách thành HAI dòng (hai thẻ p liền nhau, không khe; text-wrap: balance để dòng thứ hai không mồ côi chữ "Online" ở mobile), "Cám ơn" · "Quý khách" · "DAFC Online" · "địa chỉ email" · "hóa" đúng chữ bài dán, không dấu chấm cuối. Mã đơn trong bài dán (#DA000000103094) chỉ là ví dụ của website: demo vẫn in mã ĐƠN VỪA ĐẶT (DAFC + 6 số, xem ckOrderId). Liên kết "Theo dõi đơn hàng" dưới nút GIỮ (bài dán không có — chờ user chốt giữ / gỡ). */
   const oid = ckOrderId || 'DAFC102939';   // mã GỐC sinh lúc bấm Đặt hàng (placeOrder); đơn tách có thêm hậu tố -01 / -02 ở ckOrderIds
   /* Giỏ hỗn hợp tách hai đơn con (01/10/2026): màn này in MÃ GỐC đúng MỘT lần (03/10/2026 — mỗi đơn con một dòng bị user báo là "lặp lại
      mã đơn hàng 2 lần"), cùng mã gốc màn cổng thanh toán đang in; hai mã -01 / -02 xem ở Chi tiết đơn. Câu giải thích bên dưới nói đơn đã tách. */
@@ -17082,13 +17093,14 @@ function screenDONE() {
             </svg>
           </div>
           <div class="rise flex flex-col items-center gap-3">
-            <h2 class="t-display-title font-medium text-foreground">Đặt hàng thành công</h2>
-            ${split ? `
-            <div class="flex flex-col items-center gap-3">
-              ${ckOrderIds.map((id, i) => `<div class="flex flex-col items-center"><p class="t-lead text-foreground">Đơn hàng #${id}</p><p class="t-single text-muted-foreground">${i === 0 ? 'Hàng có sẵn' : 'Hàng đặt trước'}</p></div>`).join('')}
-            </div>` : `<p class="t-lead text-foreground">Đơn hàng #${oid}</p>`}
-            <p class="t-multiline text-muted-foreground">Cảm ơn quý khách đã lựa chọn mua sắm tại DAFC. Quý khách vui lòng truy cập email để kiểm tra chi tiết hoá đơn đặt hàng.</p>
-            ${split ? `<p class="t-multiline text-muted-foreground">Đơn có cả hàng có sẵn và hàng đặt trước nên được tách thành 2 đơn.</p>` : ''}
+            <h2 class="t-display-title font-medium text-foreground">Đặt hàng Thành Công</h2>
+            <!-- 19/10/2026 (KHÁCH CHỐT: "màn thành công chỉ trả ra 1 đơn tổng") — đơn tách 2 · 3 đơn con vẫn chỉ in MỘT mã = mã tổng (như màn cổng thanh toán); các mã -01 / -02 / -03 xem ở danh sách đơn con khi tra cứu mã tổng. Đảo bản 15/10 (in từng mã đơn con có nhãn). -->
+            <p class="t-lead text-foreground">Đơn hàng #${oid}</p>
+            <div class="flex flex-col items-center">
+              <p class="t-multiline text-muted-foreground" style="text-wrap:balance">Cám ơn Quý khách đã lựa chọn mua sắm tại DAFC Online</p>
+              <p class="t-multiline text-muted-foreground" style="text-wrap:balance">Quý khách vui lòng truy cập địa chỉ email để kiểm tra chi tiết hóa đơn đặt hàng</p>
+            </div>
+            ${split ? `<p class="t-multiline text-muted-foreground">Đơn có hàng đặt trước nên được tách thành ${ckOrderIds.length} đơn, giao riêng theo ngày hàng về.</p>` : ''}
           </div>
         </div>
 
@@ -17097,7 +17109,7 @@ function screenDONE() {
           <!-- 22/09/2026: theo dõi ĐƠN VỪA ĐẶT (ckOrderId, placeOrder đã unshift vào ORDERS nên
                trackLookup tìm thấy); trước in cứng DAFC103015 = đơn seed đặt trước 05/09.
                Rơi về mã seed khi mở màn này mà chưa đặt gì (demo). 03/10/2026: nút viền → liên kết chữ gạch chân. -->
-          <button data-track-open="${ckOrderIds[0] || ckOrderId || 'DAFC103015'}" class="t-multiline underline text-foreground py-3 press">Theo dõi đơn hàng</button>
+          <button data-track-open="${split ? oid : (ckOrderIds[0] || ckOrderId || 'DAFC103015')}" class="t-multiline underline text-foreground py-3 press">Theo dõi đơn hàng</button>
         </div>
       </div>
       ${footer()}
@@ -17107,8 +17119,8 @@ function screenDONE() {
 
 /* ═══════════════════════════════════════════════════════════════════════
    KHUNG XƯƠNG MÀN HOÀN TẤT (16/10/2026, lệnh user "tiến hành") — "Đặt hàng thành công" lúc "Mạng yếu": đặt xong (bấm Đặt hàng · cổng thanh toán trả về thành công) vào KHUNG XƯƠNG NET_WEAK_FIRST ms rồi mới ra màn thật
-     (vòng tick + nét tick vẽ ra lúc đó — như đang chờ máy chủ xác nhận đơn). navBar + chân trang THẬT; giữa là ô xám đúng bố cục thật: vòng 72 · tiêu đề 32 · mã đơn (đơn tách: hai khối mã + dòng loại hàng) · đoạn cảm ơn
-     3 dòng (+ câu giải thích đơn tách) · nút Tiếp tục mua sắm · liên kết Theo dõi đơn hàng. Không mang hook của màn thật (#ring · #tick · [data-nav] · [data-track-open]) — không có gì để bấm lúc chờ ngoài header / chân trang.
+     (vòng tick + nét tick vẽ ra lúc đó — như đang chờ máy chủ xác nhận đơn). navBar + chân trang THẬT; giữa là ô xám đúng bố cục thật: vòng 72 · tiêu đề 32 · mã đơn (đơn tách: hai khối mã + dòng loại hàng) · hai câu cảm ơn
+     2 + 2 dòng (+ câu giải thích đơn tách) · nút Tiếp tục mua sắm · liên kết Theo dõi đơn hàng. Không mang hook của màn thật (#ring · #tick · [data-nav] · [data-track-open]) — không có gì để bấm lúc chờ ngoài header / chân trang.
    ═══════════════════════════════════════════════════════════════════════ */
 let doneSkelTok = 0;
 function doneSkelThenReal(el) {
@@ -17123,20 +17135,19 @@ function doneSkelThenReal(el) {
 }
 function screenDoneSkeleton() {
   const split = ckOrderIds.length > 1;
-  const code = () => `<div class="flex flex-col items-center">${skelLn(20, skelBar('176px'))}${skelLn(16, skelBar('110px'))}</div>`;
   return `
   <div class="w-full relative" data-scroller data-done-skeleton aria-busy="true">
     <p class="skel-sr" role="status">Đang tải</p>
     <div class="relative z-20 bg-background">
       ${navBar()}
-      <!-- khối giữa: px-8 py-12 · [vòng 72 · khe 20 · tiêu đề 32 · khe 12 · mã đơn (20; đơn tách: 2 khối 36 khe 12) · khe 12 · đoạn cảm ơn 3 dòng 18 (+ câu đơn tách 2 dòng)] · khe 28 · [nút 44 · khe 10 · liên kết 42] -->
+      <!-- khối giữa: px-8 py-12 · [vòng 72 · khe 20 · tiêu đề 32 · khe 12 · mã đơn (20; đơn tách: 2 khối 36 khe 12) · khe 12 · hai câu cảm ơn 2 + 2 dòng 18 (cân dòng, 19/10) (+ câu đơn tách 2 dòng)] · khe 28 · [nút 44 · khe 10 · liên kết 42] -->
       <div class="flex flex-col items-center gap-7 px-8 py-12" aria-hidden="true">
         <div class="flex flex-col items-center gap-5 text-center w-full">
           <div class="skel" style="width:72px;height:72px;border-radius:9999px"></div>
           <div class="flex flex-col items-center gap-3 w-full">
             ${skelLn(32, skelBar('220px', 24))}
-            ${split ? `<div class="flex flex-col items-center gap-3">${code()}${code()}</div>` : skelLn(20, skelBar('176px'))}
-            <div class="w-full flex flex-col items-center">${skelLn(18, skelBar('100%'))}${skelLn(18, skelBar('96%'))}${skelLn(18, skelBar('62%'))}</div>
+            ${skelLn(20, skelBar('176px'))}
+            <div class="w-full flex flex-col items-center">${[50, 61, 81, 73].map(w => skelLn(18, skelBar(w + '%'))).join('')}</div>
             ${split ? `<div class="w-full flex flex-col items-center">${skelLn(18, skelBar('94%'))}${skelLn(18, skelBar('48%'))}</div>` : ''}
           </div>
         </div>
@@ -19445,6 +19456,12 @@ function screenPOLICY(key) {
       của hệ thống chứ không phải của màn này. Ghi lại để hỏi khách.
 ════════════════════════════════════════════════════════════════ */
 let trackQuery = '', trackFound = null, trackErr = '';
+/* 19/10/2026 (KHÁCH CHỐT: "nhập mã đơn tổng ở tracking thì hiện order listing các đơn con, bấm vô từng cái mới vô chi tiết từng đơn") — trackGroup = MÃ TỔNG đang mở ở DANH SÁCH ĐƠN CON ('' = không phải).
+   Ba trạng thái của màn: trackFound (đơn con / đơn thường đang xem chi tiết) → chi tiết; không có mà có trackGroup → danh sách đơn con; không có cả hai → ô tra cứu. Từ chi tiết một đơn con, nút lùi về DANH SÁCH (data-track-list: chỉ bỏ trackFound, giữ trackGroup);
+   "Tra cứu đơn khác" (data-track-reset) bỏ cả hai. Mã tổng chỉ ra danh sách khi nhóm có ≥ 2 đơn con; đơn thường (không tách) và mã đơn con gõ thẳng vẫn vào chi tiết. */
+let trackGroup = '';
+/* Gán kết quả của trackLookup vào trạng thái màn (ba nơi gọi: gõ mã · nút "Theo dõi đơn hàng" ở màn Hoàn tất · ...). */
+function trackApply(r) { trackGroup = r.group || ''; trackFound = r.order || null; trackErr = r.err || ''; }
 /* 19/10/2026 (user: "khách chỉ có mã đơn vào xem đơn thì sẽ che thông tin của khách nhé") — LUẬT CHE (thay phần "nội dung KHÔNG che" của 17/10):
    trackByCode = kết quả đến từ việc GÕ mã ở ô tra cứu (người chỉ có mã đơn, không có phiên đặt hàng / đăng nhập). Khi đó và CHƯA đăng nhập (trackMasked) thông tin của khách được che: SĐT chừa 3 số cuối · địa chỉ giữ hai đoạn cuối ·
    hoá đơn VAT chỉ còn LOẠI (hàng không mở sheet / ngăn kéo chi tiết). KHÔNG có dòng giải thích và KHÔNG có nút đăng nhập (19/10: user chọn phương án A bỏ nút, rồi bỏ luôn dòng "Kiểm tra email xác nhận để xem đầy đủ"): khách mua không tài khoản không có gì để đăng nhập, và đăng nhập / tạo tài khoản mới còn bỏ che được đơn của người khác (demo không kiểm chủ đơn). Tên người nhận · hàng · giá · tổng tiền vẫn hiện (luật "không tiền" của 16/09 đã bỏ từ 17/10).
@@ -19462,6 +19479,9 @@ function trackLookup(raw) {
   if (!q && !valOff()) return { err: 'Vui lòng nhập mã đơn hàng.' };   // 16/10/2026: Kiểm lỗi nhập TẮT bỏ qua kiểm trống / định dạng (mã không có thật vẫn "Không tìm thấy")
   if (!valOff() && !TRACK_RE.test(q)) return { err: 'Mã đơn gồm chữ DAFC và 6 chữ số, ví dụ DAFC103015.' };
   const o = ORDERS.find(x => x.id.toUpperCase() === q);
+  /* 19/10/2026: MÃ TỔNG của đơn tách (DAFC102990 → -01 · -02 · …) không phải một đơn mà là danh sách đơn con — nhóm ≥ 2 đơn thì trả `group`; chỉ có 1 đơn trùng mã (đơn thường) vẫn là `order`. */
+  const kids = o ? [] : orderKids(q);
+  if (kids.length > 1) return { group: q, orders: kids };
   if (!o && valOff()) return { order: trackAnyOrder(q) };   // 19/10/2026: Kiểm lỗi nhập TẮT — tra cứu không báo "Không tìm thấy"
   if (!o) return { err: 'Không tìm thấy đơn hàng này. Kiểm tra lại mã trong email xác nhận.' };
   return { order: o };
@@ -19635,7 +19655,7 @@ function trackAct(kind) {
 /* Bánh răng "Theo dõi đơn": đổi xong mở kết quả tra cứu của một đơn ĐANG GIAO (đơn đang xem nếu đã là đơn đang giao, không thì DAFC102938) để thấy ngay. */
 function trackGearGo() {
   const o = (trackFound && trackFound.status === 'Đang giao hàng') ? trackFound : ORDERS.find(x => x.id === 'DAFC102938');
-  if (o !== trackFound) trackByCode = true;   // 19/10/2026: đổi sang đơn mẫu = như vừa gõ mã (che thông tin của khách)
+  if (o !== trackFound) { trackByCode = true; trackGroup = ''; }   // 19/10/2026: đổi sang đơn mẫu = như vừa gõ mã (che thông tin của khách); rời danh sách đơn con (đứng nguyên ở đơn đang giao thì giữ trackGroup để nút lùi vẫn về danh sách)
   trackQuery = o.id; trackFound = o; trackErr = '';
   go('track', { force: current === 'track', noSkel: true });
 }
@@ -19659,6 +19679,45 @@ function trackSkelThenReal(el) {
 }
 /* 17/10/2026: khung xương kết quả = khung xương BẢN KHÁCH của chi tiết đơn (cùng bố cục với trang thật — xem screenOrderSkeleton(true)); trước đó là khung của bố cục cũ (tiêu đề · stepper ngang · lịch sử · hàng · giao đến · hỗ trợ · hai nút). */
 function screenTrackSkeleton() { return screenOrderSkeleton(true); }
+/* 19/10/2026: khung xương DANH SÁCH ĐƠN CON (trackGroupHTML) — navBar + hàng tiêu đề + chân trang THẬT; thẻ tóm tắt + mỗi đơn con một thẻ xương mượn class thuần CSS của thẻ đơn (.ord-card…, như accOrdersSkeleton). Số ô theo dữ liệu nhóm: số đơn con · đơn đặt trước có thêm dòng ngày về · nút Thanh toán lại khi còn đơn Chờ thanh toán · số ảnh = số món (≤ 3). */
+function screenTrackGroupSkeleton() {
+  const kids = orderKids(trackGroup), pay = kids.some(o => o.tone === 'pay');
+  const card = o => `
+    <div class="ord-card">
+      <div class="ord-card-meta">
+        <div class="ord-card-top">
+          <div class="ord-card-ids">${skelLn(20, skelBar('155px'))}${skelLn(20, skelBar('84px'))}</div>
+          <div class="skel" style="width:12px;height:12px;border-radius:2px;flex:none"></div>
+        </div>
+        <div class="skel" style="width:125px;height:24px"></div>${orderPreItems(o).length ? skelLn(16, skelBar('170px')) : ''}
+      </div>
+      <div class="ord-card-body">
+        <div class="ord-thumbs">${'<div class="ord-thumb skel"></div>'.repeat(Math.max(1, Math.min(ORD_THUMB_SLOTS, o.items.length)))}</div>
+        <div class="ord-card-total">${skelLn(20, skelBar('67px'))}${skelLn(20, skelBar('93px', 14))}</div>
+      </div>
+    </div>`;
+  return `
+  <div class="w-full min-h-screen bg-background" data-scroller data-track-skeleton aria-busy="true">
+    <p class="skel-sr" role="status">Đang tải</p>
+    ${navBar()}
+    <div class="ov-page">
+      <div class="ov-titlebar">
+        <button type="button" data-track-reset aria-label="Tra cứu đơn khác" class="ov-backbtn press">${I.chevL}</button>
+        <h1 class="t-section-title text-foreground">Đơn hàng #${trackGroup}</h1>
+      </div>
+      <div class="ov-cards" aria-hidden="true">
+        <div class="ov-card">
+          ${skelLn(20, skelBar('220px', 14))}
+          <div>${skelLn(20, skelBar('96%'))}${skelLn(20, skelBar('72%'))}</div>
+          <div class="ov-sum-row">${skelLn(16, skelBar('96px'))}${skelLn(20, skelBar('110px'))}</div>
+          ${pay ? '<div class="skel" style="height:40px"></div>' : ''}
+        </div>
+        <div class="bg-background"><div class="ord-list">${kids.map(card).join('')}</div></div>
+      </div>
+    </div>
+    ${footer()}
+  </div>`;
+}
 
 function trackEntryView() {
   return `
@@ -19696,9 +19755,60 @@ function trackEntryView() {
     </div>`;
 }
 
+/* ════════════════════════════════════════════════════════════════
+   DANH SÁCH ĐƠN CON của MÃ TỔNG (19/10/2026 — KHÁCH CHỐT: "màn thành công chỉ trả ra 1 đơn tổng, vô tracking nhập mã đơn tổng thì hiện order listing, bấm vô từng cái mới vô chi tiết từng đơn").
+   Đơn hàng có hàng đặt trước tách 2 · 3 đơn con (-01 hàng có sẵn · -02 -03… hàng đặt trước, mỗi ngày hàng về một đơn); khách chỉ cầm MỘT mã tổng. Màn này = kết quả của việc gõ mã tổng (hoặc bấm "Theo dõi đơn hàng" ở màn Hoàn tất / quay lại từ cổng thanh toán):
+   hàng tiêu đề [nút lùi · "Đơn hàng #mã tổng"] → thẻ tóm tắt [số đơn · Tổng thanh toán cả nhóm · nút "Thanh toán lại" khi còn đơn Chờ thanh toán — một lần trả cho cả nhóm, đừng bắt vào từng đơn] → danh sách THẺ ĐƠN y như danh sách đơn của thành viên (.ord-card: mã · nhãn trạng thái · ảnh · tổng tiền),
+   khác một chỗ: ô ngày đặt (trùng nhau ở mọi đơn con) nhường cho NHÃN LOẠI HÀNG ("Hàng có sẵn" / "Hàng đặt trước") và đơn đặt trước có thêm dòng "Nhận hàng dự kiến dd/mm/yyyy" — chính là điều phân biệt -02 với -03. Bấm thẻ → chi tiết đơn con (bản khách, che SĐT / địa chỉ nếu khách chỉ gõ mã); từ đó nút lùi về danh sách.
+   Danh sách KHÔNG có SĐT / địa chỉ nên luật che chỉ áp ở trang chi tiết. ════════════════════════════════════════════════════════════════ */
+function trackGroupHTML() {
+  const kids = orderKids(trackGroup);
+  const pay = kids.find(o => o.tone === 'pay');
+  const card = o => `
+      <button type="button" data-track-child="${o.id}" class="ord-card press">
+        <span class="ord-card-meta">
+          <span class="ord-card-top">
+            <span class="ord-card-ids">
+              <span class="ord-card-code t-lead"><span>Mã đơn</span> <span>#${o.id}</span></span>
+              <span class="ord-card-date t-lead">${orderKindLabel(o)}</span>
+            </span>
+            <span class="ord-card-go" aria-hidden="true">${I.chevR('currentColor')}</span>
+          </span>
+          ${statusTag(o, false, true)}${orderPreItems(o).length ? `
+          <span class="t-single text-foreground-alt"><span>Nhận hàng dự kiến</span> <span class="font-medium">${orderEta(o)}</span></span>` : ''}
+        </span>
+        <span class="ord-card-body">
+          <span class="ord-thumbs">${orderThumbs(o)}</span>
+          <span class="ord-card-total t-lead"><span class="ord-card-total-l"><span>Tổng tiền</span>:</span><span class="ord-card-total-v">${o.total}</span></span>
+        </span>
+      </button>`;
+  return `
+  <div class="w-full min-h-screen bg-background" data-scroller>
+    ${navBar()}
+    <div class="ov-page">
+      <div class="ov-titlebar">
+        <button type="button" data-track-reset aria-label="Tra cứu đơn khác" class="ov-backbtn press">${I.chevL}</button>
+        <h1 class="t-section-title text-foreground">Đơn hàng #${trackGroup}</h1>
+      </div>
+      <div class="ov-cards">
+        <div class="ov-card">
+          <p class="t-lead ov-ttl text-foreground">Đơn hàng được tách thành ${kids.length} đơn</p>
+          <p class="t-multiline text-secondary-foreground">Mỗi đơn giao riêng và có trạng thái riêng. Bấm vào từng đơn để xem chi tiết.</p>
+          <div class="ov-sum-row t-single"><span>Tổng thanh toán</span><span class="t-lead ov-total">${orderKidsTotal(kids)}</span></div>
+          ${pay ? `<button type="button" data-repay="${pay.id}" class="t-lead w-full h-10 bg-primary text-primary-foreground btn-p press">Thanh toán lại</button>` : ''}
+        </div>
+        <div class="bg-background"><div class="ord-list">${kids.map(card).join('')}</div></div>
+      </div>
+    </div>
+    ${footer()}
+  </div>`;
+}
+
 function screenTRACK() {
-  /* 17/10/2026: KẾT QUẢ tra cứu = BẢN KHÁCH của chi tiết đơn (orderDetailHTML(o, true): tự mang navBar + chân trang); chưa có kết quả thì ô tra cứu như cũ. */
+  /* 17/10/2026: KẾT QUẢ tra cứu = BẢN KHÁCH của chi tiết đơn (orderDetailHTML(o, true): tự mang navBar + chân trang); chưa có kết quả thì ô tra cứu như cũ.
+     19/10/2026: mã TỔNG của đơn tách (trackGroup) mà chưa mở đơn con nào ⇒ DANH SÁCH ĐƠN CON. */
   if (trackFound) return orderDetailHTML(trackFound, true);
+  if (trackGroup) return trackGroupHTML();
   return `
   <div class="w-full min-h-screen bg-background" data-scroller>
     ${navBar()}
@@ -20347,7 +20457,8 @@ const I18N = {
   /* 16/10/2026 — công tắc Kiểm lỗi nhập. */
   'Kiểm lỗi nhập':'Input validation', 'Bật':'On', 'Tắt':'Off', 'Kiểm lỗi nhập: Tắt':'Input validation: Off', 'Kiểm lỗi nhập: Bật':'Input validation: On',
   /* 16/10/2026 — lô 8: trần giỏ hàng. */
-  'Tối đa 10 sản phẩm cho mỗi mặt hàng':'Maximum 10 per item', 'Giỏ hàng đã đầy':'Your cart is full', 'Giỏ hàng chứa tối đa 20 sản phẩm. Hãy xoá bớt một sản phẩm để thêm sản phẩm mới.':'Your cart holds up to 20 items. Remove one to add a new item.', 'Giỏ hàng đã đầy (tối đa 20 sản phẩm)':'Your cart is full (20 items maximum)', 'Mẫu (5)':'Sample (5)', 'Đầy (20)':'Full (20)',
+  'Tối đa 10 sản phẩm cho mỗi mặt hàng':'Maximum 10 per item', 'Giỏ hàng đã đầy':'Your cart is full', 'Giỏ hàng chứa tối đa 20 sản phẩm. Hãy xoá bớt một sản phẩm để thêm sản phẩm mới.':'Your cart holds up to 20 items. Remove one to add a new item.', 'Giỏ hàng đã đầy (tối đa 20 sản phẩm)':'Your cart is full (20 items maximum)', 'Mẫu (5)':'Sample (5)', 'Đầy (20)':'Full (20)', '2 ngày về':'2 arrival dates',
+  'Mỗi đơn giao riêng và có trạng thái riêng. Bấm vào từng đơn để xem chi tiết.':'Each order ships separately and has its own status. Tap an order to see its details.',
   /* 16/10/2026 — lô 8: gợi ý tìm theo giá · màu sắc thẻ. */
   'Muốn xem theo giá? Mở một danh mục rồi dùng Bộ lọc → Khoảng giá.':'Want to browse by price? Open a category and use Filter → Price range.', 'Màu sắc thẻ':'Card colours',
   /* 16/10/2026 — lô 7: ảnh lỗi · tên lớp nổi cho trình đọc. */
@@ -20448,7 +20559,7 @@ const I18N = {
      thành '(Bao gồm VAT)'. */
   '(đã bao gồm VAT)':'(incl. VAT)',
   'Đăng nhập và hoàn tất đơn hàng để nhận ngay':'Sign in and complete this purchase to earn up to',
-  'Đặt hàng thành công':'Order placed',
+  'Đặt hàng Thành Công':'Order placed',
   'Hoàn tất đơn hàng để nhận ngay':'Complete this purchase to earn up to',
   'và hoàn tất đơn hàng để nhận ngay':'and complete this purchase to earn up to',
   'điểm thưởng':'points', 'Hoặc':'Or',
@@ -21048,7 +21159,7 @@ const I18N = {
   'Thông tin liên hệ':'Contact details',
   'Ghi chú đơn hàng (không bắt buộc)':'Order note (optional)',
   /* 03/10/2026 — màn Hoàn tất đơn giản hoá theo website: MỘT đoạn cảm ơn (cả đoạn là một nút chữ nên là một khoá). */
-  'Cảm ơn quý khách đã lựa chọn mua sắm tại DAFC. Quý khách vui lòng truy cập email để kiểm tra chi tiết hoá đơn đặt hàng.':'Thank you for choosing to shop at DAFC. Please check your email for your order invoice details.',
+  'Cám ơn Quý khách đã lựa chọn mua sắm tại DAFC Online':'Thank you for choosing to shop at DAFC Online', 'Quý khách vui lòng truy cập địa chỉ email để kiểm tra chi tiết hóa đơn đặt hàng':'Please check your email for your order invoice details',
   'Mã đơn hàng':'Order number',
   'Tra cứu đơn hàng':'Track your order',
   'Nhập mã đơn hàng để theo dõi kiện hàng của bạn.':'Enter your order number to follow your parcel.',
@@ -22006,6 +22117,10 @@ const I18N_RE = [
   // key tĩnh ở trên; các luật dưới cho chuỗi còn nguyên 1 text node.)
   [/^Pre-order · Nhận hàng dự kiến (\d{2}\/\d{2}\/\d{4})$/, 'Pre-order · Estimated arrival $1'],
   [/^Riêng hàng pre-order: nhận hàng dự kiến (\d{2}\/\d{2}\/\d{4}), giao riêng khi hàng về\.$/, 'Pre-order items ship separately — estimated arrival $1.'],
+  /* 19/10/2026 — hàng đặt trước tách đơn THEO NGÀY HÀNG VỀ: ghi chú ở bước Vận chuyển nêu hai ngày; màn Hoàn tất + danh sách đơn con của tra cứu nói đơn đã tách N đơn. */
+  [/^Riêng hàng pre-order: nhận hàng dự kiến (\d{2}\/\d{2}\/\d{4}) và (\d{2}\/\d{2}\/\d{4}), giao riêng khi hàng về\.$/, 'Pre-order items ship separately — estimated arrival $1 and $2.'],
+  [/^Đơn có hàng đặt trước nên được tách thành (\d+) đơn, giao riêng theo ngày hàng về\.$/, 'Your order includes pre-order items, so it was split into $1 orders, shipped separately by arrival date.'],
+  [/^Đơn hàng được tách thành (\d+) đơn$/, 'Your order was split into $1 orders'],
   [/^Nhận dự kiến (\d{2}\/\d{2}\/\d{4})$/, 'Est. arrival $1'],
   /* 03/10/2026 — màn Hoàn tất đơn giản hoá: dòng "Đơn hàng #mã" có MÃ nên phải đi bằng luật. */
   [/^Đơn hàng #(\S+)$/, 'Order #$1'],
@@ -22086,6 +22201,9 @@ const I18N_REV_RE = [
   [/^Spend ([\d.]+ ₫) more to get$/,  'Mua thêm $1 để nhận'],
   [/^Pre-order · Estimated arrival (\d{2}\/\d{2}\/\d{4})$/, 'Pre-order · Nhận hàng dự kiến $1'],
   [/^Pre-order items ship separately — estimated arrival (\d{2}\/\d{2}\/\d{4})\.$/, 'Riêng hàng pre-order: nhận hàng dự kiến $1, giao riêng khi hàng về.'],
+  [/^Pre-order items ship separately — estimated arrival (\d{2}\/\d{2}\/\d{4}) and (\d{2}\/\d{2}\/\d{4})\.$/, 'Riêng hàng pre-order: nhận hàng dự kiến $1 và $2, giao riêng khi hàng về.'],
+  [/^Your order includes pre-order items, so it was split into (\d+) orders, shipped separately by arrival date\.$/, 'Đơn có hàng đặt trước nên được tách thành $1 đơn, giao riêng theo ngày hàng về.'],
+  [/^Your order was split into (\d+) orders$/, 'Đơn hàng được tách thành $1 đơn'],
   [/^Est\. arrival (\d{2}\/\d{2}\/\d{4})$/, 'Nhận dự kiến $1'],
   /* 03/10/2026 — chiều ngược của luật "Đơn hàng #mã" bên I18N_RE. */
   [/^Order #(\S+)$/, 'Đơn hàng #$1'],
@@ -23350,7 +23468,11 @@ function payResolve() {
 /* 17/10/2026: mở chi tiết đơn ĐÚNG NGƯỜI XEM — thành viên → màn order (Tài khoản); khách → BẢN KHÁCH ở màn track (go() chặn khách khỏi màn order và đẩy về đăng nhập, nên trước đây khách ra khỏi cổng thanh toán là bị hỏi đăng nhập). */
 function openOrderDetail(id) {
   if (ckAuth) { currentOrder = id; go('order', { force: true }); return; }
-  trackQuery = id; trackFound = ORDERS.find(x => x.id === id) || null; trackErr = '';
+  /* 19/10/2026: đơn thuộc nhóm tách ≥ 2 đơn con (thẻ "Đơn … đã được đặt" · cổng thanh toán vừa trả / "Quay lại đơn hàng" — đều là việc của CẢ nhóm) → khách về DANH SÁCH đơn con của mã tổng thay vì rơi vào một đơn con. */
+  const o = ORDERS.find(x => x.id === id) || null, kids = o ? orderKids(orderBaseId(o)) : [];
+  if (kids.length > 1) { trackQuery = orderBaseId(o); trackGroup = orderBaseId(o); trackFound = null; }
+  else { trackQuery = id; trackGroup = ''; trackFound = o; }
+  trackErr = '';
   trackByCode = false;   // 19/10/2026: khách vào từ luồng đặt hàng / thanh toán của chính mình ⇒ thấy đủ
   go('track', { force: true, noSkel: true });
 }
@@ -23434,25 +23556,32 @@ function placeOrder(unpaid, payName) {
     : { last: a ? a.last : ckShipLast, first: a ? a.first : ckShipFirst, phone: a ? a.phone : ckShipPhone,
         line: a ? addrLine(a) : [ckShipLine, ckWard, ckProvince].filter(Boolean).join(', ') };
   const stamp = vnStamp();
-  /* Tách theo hàng đặt trước. Hàng sẵn ĐỨNG ĐẦU (-01), hàng đặt trước -02. Quà kèm sản phẩm theo món của nó; quà theo mốc đơn / thương hiệu đi với đơn -01. */
+  /* Tách theo hàng đặt trước. Hàng sẵn ĐỨNG ĐẦU (-01), hàng đặt trước -02. Quà kèm sản phẩm theo món của nó; quà theo mốc đơn / thương hiệu đi với đơn -01.
+     19/10/2026 (KHÁCH CHỐT "hàng đặt trước tách tiếp theo ngày hàng về để ra -03"): hàng đặt trước chia tiếp theo NGÀY HÀNG VỀ — mỗi ngày khác nhau một đơn con, sớm → muộn (-02, -03…). Giỏ chỉ có hàng đặt trước mà về hai ngày khác nhau thì -01 / -02 đều là hàng đặt trước; một ngày về duy nhất thì vẫn MỘT đơn đặt trước như cũ.
+     Quà kèm sản phẩm đi theo đơn chứa món đó (giftOwner), quà theo mốc đơn / thương hiệu về đơn ĐẦU. */
   const sel = cartSelected();
   const stdSel = sel.filter(c => !c.preorder), preSel = sel.filter(c => c.preorder);
-  const split = stdSel.length > 0 && preSel.length > 0;
-  const parts = split ? [stdSel, preSel] : [sel];
-  const preGifts = new Set(preSel.map(c => c.gift).filter(Boolean));
+  const preEtas = [...new Set(preSel.map(c => c.preorder))].sort((a, b) => dmyKey(a) < dmyKey(b) ? -1 : dmyKey(a) > dmyKey(b) ? 1 : 0);
+  const parts = [stdSel, ...preEtas.map(d => preSel.filter(c => c.preorder === d))].filter(list => list.length);
+  if (!parts.length) parts.push(sel);
+  const split = parts.length > 1;
+  const giftOwner = pk => { let at = 0; parts.forEach((list, i) => { if (list.some(c => c.gift === pk)) at = i; }); return at; };   // món đặt trước thắng nếu một chương trình quà dính cả hai bên (như preGifts cũ)
   const subs = parts.map(list => list.reduce((n, c) => n + vndNum(c.now) * (c.qty || 1), 0));
-  /* Chia ưu đãi: ĐIỂM chia theo số điểm NGUYÊN (1 điểm = REWARD_POINT_VALUE ₫, không có "756,4 điểm"), phần giảm giá còn lại (mã · phiếu · hạng) chia riêng theo tỉ lệ tạm tính; phần dư dồn về đơn -02. */
+  /* Chia ưu đãi: ĐIỂM chia theo số điểm NGUYÊN (1 điểm = REWARD_POINT_VALUE ₫, không có "756,4 điểm"), phần giảm giá còn lại (mã · phiếu · hạng) chia riêng theo tỉ lệ tạm tính; phần dư dồn về đơn CUỐI. */
   const orderMemVnd = (ckAuth && cartReward === 'member') ? Math.min(rewardAmount('member'), orderDisc) : 0;
   const orderRestVnd = orderDisc - orderPtsVnd;
   const orderCodeVnd = orderRestVnd - orderMemVnd;   // phần còn lại = mã giảm giá + phiếu mua hàng
-  const pts = [orderPtsVnd], rest = [orderRestVnd];
+  const pts = parts.map((_, i) => i === 0 ? orderPtsVnd : 0), rest = [orderRestVnd];
   if (split) {
-    const r0 = subs[0] / (orderSub || 1);
-    /* 15/10/2026 — hàng đặt trước KHÔNG dùng được điểm lẫn ưu đãi thành viên (rewardAllowed): cả hai khoản này thuộc về đơn -01, đơn -02 không có. Chỉ mã giảm giá / phiếu mua hàng còn chia theo tỉ lệ tạm tính. */
-    pts[0] = orderPtsVnd; pts[1] = 0;
-    rest[0] = orderMemVnd + Math.round(orderCodeVnd * r0); rest[1] = orderRestVnd - rest[0];
+    /* 15/10/2026 — hàng đặt trước KHÔNG dùng được điểm lẫn ưu đãi thành viên (rewardAllowed): cả hai khoản này thuộc về đơn ĐẦU (-01), các đơn sau không có. Chỉ mã giảm giá / phiếu mua hàng còn chia theo tỉ lệ tạm tính. */
+    let left = orderRestVnd;
+    parts.forEach((_, i) => {
+      if (i === parts.length - 1) { rest[i] = left; return; }
+      rest[i] = (i === 0 ? orderMemVnd : 0) + Math.round(orderCodeVnd * subs[i] / (orderSub || 1));
+      left -= rest[i];
+    });
   }
-  const ids = split ? [`${baseId}-01`, `${baseId}-02`] : [baseId];
+  const ids = split ? parts.map((_, i) => `${baseId}-${String(i + 1).padStart(2, '0')}`) : [baseId];
   const built = parts.map((list, i) => {
     const first = i === 0, fee = first ? shipFee : 0, dsc = pts[i] + rest[i];
     return {
@@ -23461,7 +23590,7 @@ function placeOrder(unpaid, payName) {
       id: ids[i], status: unpaid ? 'Chờ thanh toán' : 'Đang xử lý', tone: unpaid ? 'pay' : 'info', date: stamp.split(' ')[0],
       items: list.map(c => ({ img: c.img, name: c.name, variant: c.variant, qty: c.qty, price: c.now, preorder: c.preorder })),
       /* Quà chốt lúc đặt hàng nay đi THEO ĐƠN, không chỉ hiện một lần ở màn Hoàn tất. */
-      gifts: ckOrderGifts.filter(({ pk }) => !split || preGifts.has(pk) !== first).map(({ pk, key }) => ({ pk, key })),
+      gifts: ckOrderGifts.filter(({ pk }) => !split || giftOwner(pk) === i).map(({ pk, key }) => ({ pk, key })),
       sub: vndDot(subs[i]), ship: first ? orderShip : (pickup ? 'Nhận tại cửa hàng' : 'Miễn phí'),
       discount: rest[i] ? '− ' + vndDot(rest[i]) : '', pointsUsed: pts[i] / REWARD_POINT_VALUE, total: vndDot(subs[i] - dsc + fee),
       payment: payName || 'Thẻ tín dụng/Ghi nợ',
@@ -23472,7 +23601,7 @@ function placeOrder(unpaid, payName) {
       vat: orderVatSnapshot(),
     };
   });
-  ORDERS.unshift(...built);   // -01 đứng trước -02: ORDERS[0] (nút "Xem chi tiết đơn hàng") là đơn hàng có sẵn
+  ORDERS.unshift(...built);   // -01 đứng trước -02 · -03: ORDERS[0] (nút "Xem chi tiết đơn hàng") là đơn đầu của nhóm (hàng có sẵn nếu có)
   ckOrderId = baseId; ckOrderIds = ids;
   // dọn giỏ: badge về 0 và màn Giỏ hàng hiện trạng thái rỗng
   CART.length = 0;
@@ -23958,11 +24087,10 @@ function wire(root) {
   root.querySelectorAll('[data-track-open]').forEach(el => {
     el.addEventListener('click', () => {
       const id = el.dataset.trackOpen;
-      if (ckAuth) { openOrderDetail(id); return; }   // 19/10/2026: cùng luật với link đáy ngăn kéo — thành viên về CHI TIẾT ĐƠN, chỉ khách mở kết quả tra cứu
+      /* 19/10/2026: màn Hoàn tất giờ đưa MÃ TỔNG (đơn tách ≥ 2 đơn con): thành viên vào chi tiết đơn con ĐẦU (-01), khách vào DANH SÁCH đơn con. */
+      if (ckAuth) { const kids = orderKids(id); openOrderDetail(kids.length > 1 ? kids[0].id : id); return; }   // 19/10/2026: cùng luật với link đáy ngăn kéo — thành viên về CHI TIẾT ĐƠN, chỉ khách mở kết quả tra cứu
       trackQuery = id;
-      const r = trackLookup(id);
-      trackFound = r.order || null;
-      trackErr = r.err || '';
+      trackApply(trackLookup(id));
       trackByCode = false;   // 19/10/2026: luồng ĐẶT HÀNG của chính khách ⇒ thấy đủ
       go('track');
     });
@@ -23976,8 +24104,7 @@ function wire(root) {
         /* 19/10/2026 (user: "nếu trùng thì đưa vào"): THÀNH VIÊN gõ ĐÚNG mã một đơn trong danh sách của mình → vào thẳng CHI TIẾT ĐƠN (cùng luật với link "Theo dõi vận đơn"). So mã gõ với mã đơn (không lấy kết quả thay thế của
            Kiểm lỗi nhập TẮT: mã dở dang → đơn đầu khớp, mã lạ → đơn mẫu); mã lạ / dở dang vẫn ra kết quả tra cứu như khách. */
         if (ckAuth && r.order && ORDERS.some(x => x.id === r.order.id) && String(trackQuery || '').trim().toUpperCase() === r.order.id.toUpperCase()) { openOrderDetail(r.order.id); return; }
-        trackFound = r.order || null;
-        trackErr = r.err || '';
+        trackApply(r);   // 19/10/2026: mã TỔNG của đơn tách ⇒ r.group ⇒ danh sách đơn con (xem trackGroupHTML)
         trackByCode = true;   // 19/10/2026: chỉ có mã đơn ⇒ che thông tin của khách (xem trackMasked)
         go('track', { force: true, noSkel: true });
       };
@@ -23996,8 +24123,24 @@ function wire(root) {
   });
   root.querySelectorAll('[data-track-reset]').forEach(el => {
     el.addEventListener('click', () => {
-      trackQuery = ''; trackFound = null; trackErr = '';
+      trackQuery = ''; trackFound = null; trackErr = ''; trackGroup = '';
       go('track', { force: true });
+    });
+  });
+  /* 19/10/2026 — DANH SÁCH ĐƠN CON: bấm một thẻ → chi tiết đơn con đó (đã biết mã nên qua khung xương khi Mạng yếu, như mở kết quả từ Chi tiết đơn); nút lùi ở chi tiết đơn con về DANH SÁCH (chỉ bỏ trackFound, giữ trackGroup; dữ liệu đã tải nên không qua khung xương). */
+  root.querySelectorAll('[data-track-child]').forEach(el => {
+    el.addEventListener('click', () => {
+      if (ckAuth) { openOrderDetail(el.dataset.trackChild); return; }   // thành viên gõ mã tổng: bấm đơn con → Chi tiết đơn của họ (cùng luật gõ đúng mã một đơn)
+      trackFound = ORDERS.find(x => x.id === el.dataset.trackChild) || null;
+      if (!trackFound) return;
+      trackQuery = trackFound.id; trackErr = '';
+      go('track', { force: true });
+    });
+  });
+  root.querySelectorAll('[data-track-list]').forEach(el => {
+    el.addEventListener('click', () => {
+      trackFound = null; trackQuery = trackGroup; trackErr = '';
+      go('track', { force: true, noSkel: true });
     });
   });
   /* 16/10/2026 (lô 6 · TRK-25 / TRK-26): link sang đơn vị vận chuyển, hàng hỗ trợ (Báo giao chậm · Đổi địa chỉ · Gọi hotline), nút trong hộp báo sự cố. */
@@ -26606,11 +26749,11 @@ document.body.insertAdjacentHTML('beforeend', `
       <!-- GIỎ HÀNG (16/10/2026, lô 8 "Cần bổ sung" · CART-53) — công cụ của người xem demo: "Đầy" đổ giỏ thành 20 dòng (trần số dòng) để xem giỏ dài và thử thêm dòng thứ 21; "Mẫu" trả giỏ 5 dòng như cũ. -->
       <div class="px-3 pt-3 pb-2">
         <p class="t-multiline tracking-[0.12em] text-muted-foreground">Giỏ hàng</p>
-        <p class="t-single sp-note text-muted-foreground">Trang Giỏ hàng: Đầy (20) = giỏ 20 dòng; thử thêm dòng thứ 21 từ trang sản phẩm.</p>
+        <p class="t-single sp-note text-muted-foreground">Trang Giỏ hàng: Đầy (20) = giỏ 20 dòng, thử thêm dòng thứ 21 từ trang sản phẩm. 2 ngày về = thêm 1 món đặt trước về ngày khác, bấm Đặt hàng ra 3 đơn con (Hoàn tất → Theo dõi đơn hàng thấy danh sách).</p>
       </div>
       <div class="px-3 pb-3">
         <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Giỏ hàng">
-          ${[['base','Mẫu (5)'],['full','Đầy (20)']].map(([id, label]) => `
+          ${[['base','Mẫu (5)'],['full','Đầy (20)'],['pre2','2 ngày về']].map(([id, label]) => `
             <button data-cartsim="${id}" class="t-multiline cartsimopt flex-1 h-8 rounded-full transition-colors press ${id === cartSim ? 'bg-background text-foreground font-medium shadow-sm' : 'text-muted-foreground'}">${label}</button>`).join('')}
         </div>
       </div>
