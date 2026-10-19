@@ -691,16 +691,9 @@ window.RESP = (function () {
   #lowStock { color: #8a6100; }
   /* ── THEO DÕI ĐƠN · LÔ 6 (16/10/2026) ─────────────────────────────────────────────────────────────────────────────────────────────
      · .trk-time  — giờ dưới nhãn chặng của stepper (mobile hai dòng ngày / giờ, desktop một dòng), mực phụ 12/16, cách nhãn 2.
-     · .trk-help / .trk-row — khối "Cần hỗ trợ về đơn hàng?": mỗi hàng [tiêu đề 14/20 + mô tả 12/18 xếp dọc khe 2 · mũi tên 16], cao tối thiểu 56, kẻ mảnh giữa các hàng
-       (hàng đầu không kẻ trên). Hàng "Đã gửi yêu cầu" là div (không phải nút) nên không bị luật button[disabled] làm mờ 50%. */
+     (19/10/2026: khối "Cần hỗ trợ về đơn hàng?" — .trk-help / .trk-row / .trk-chev — ĐÃ GỠ khỏi bản khách cho giống Chi tiết đơn của thành viên: không khúc liên hệ CSKH.) */
   [data-track-history] .ov-step-name.text-destructive { color: var(--general-destructive); }
   .trk-time { display: flex; flex-direction: column; align-items: center; margin-top: 2px; text-align: center; }
-  .trk-help { display: flex; flex-direction: column; }
-  .trk-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 56px; padding: 8px 0; text-align: left; background: none; border: 0; border-top: 1px solid var(--general-border); }
-  .trk-row:first-child { border-top: 0; }
-  button.trk-row { cursor: pointer; }
-  .trk-row-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .trk-chev { flex: none; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; color: var(--general-muted-foreground); }
   /* Lưới 2 cột của form (brief: desktop 2 cột, mobile mỗi mục dọc xuống). Khe dọc
      bằng 0 vì mỗi ô đã tự mang pb-4. */
   .acc-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
@@ -779,7 +772,7 @@ window.RESP = (function () {
      · cột nội dung trần 800 → 826 — CẢ màn Chi tiết đơn (dùng chung `.acc-main` + mục lục, luật 28/09 "cột trái không nhảy khi đi qua lại"); ở 1440: mục lục x 24–354, nội dung x 378–1204 như khung;
      · thẻ hạng của tab Hạng thành viên rộng 590, CĂN GIỮA cột nội dung (khung: x 118 trong 826) — rule `.tier-card:not(.ph-card)` ở khối "THẺ HẠNG v2"; thẻ Tóm tắt Lịch sử điểm (`.ph-card`) KHÔNG đổi.
      Số học khổ hẹp: cột nội dung = khổ − 15 thanh cuộn − 48 lề − cột trái − 24 khe (trước: − 96 lề): 1100 → 760, 1024 → 701 (trước 723 / 664). */
-  [data-screen="account"] .acc-main, [data-screen="order"] .acc-main { max-width: 826px; }
+  [data-screen="account"] .acc-main, [data-screen="order"] .acc-main, [data-screen="track"] .acc-main { max-width: 826px; }   /* 17/10/2026: + màn Theo dõi đơn (bản khách của chi tiết đơn) — cùng trần 826 */
   /* 05/10/2026 (lệnh user: "cột bên trái của account thì cho kích thước limit 296 nhé") — TRẦN 296 (trước: cố định 280). Hiểu "limit" như trần 800 của cột nội dung ngay trên: cột co theo khổ
      (`clamp(216px, 22vw, 296px)` — khổ ≥ 1346 thì đúng 296, 1280 còn 281,6, 1100 còn 242, 1024 còn 225) chứ không ghim cứng; dải co 216–22vw vốn có của rule ≤ 1279 (cũ, trần 280) gộp vào đây nên không còn rule media riêng.
      ĐÂY LÀ MỤC LỤC DÙNG CHUNG (accSideNav) ⇒ màn CHI TIẾT ĐƠN cũng 296 (không thì đi qua lại hai màn là cột trái nhảy 16px + khối kem đổi bề ngang): cột nội dung của màn đó (flex 1, không trần) nhường 16 —
@@ -1051,6 +1044,13 @@ window.RESP = (function () {
         Hover của dòng hàng (nền đồng nhạt · gạch chân tên · ảnh mờ nhẹ) — ĐÃ GỠ HẾT 05/10/2026 theo lệnh user (xem khối ".ord-grid" bên dưới): thẻ SẢN PHẨM không có hiệu ứng hover.
      4. Vào màn: bốn khối nổi lên lần lượt bằng .rise có sẵn (như các màn khác). Mọi chuyển động tắt khi hệ điều hành bật "giảm chuyển động". */
   [data-screen="order"] { font-variant-numeric: tabular-nums; }
+  /* 17/10/2026 — BẢN KHÁCH của chi tiết đơn (kết quả màn Theo dõi đơn, data-screen="track"): cùng số đều + cùng cột 826 như bản thành viên, nhưng KHÔNG mục lục trái nên khung CANH GIỮA hộp 1440 (`.acc-layout.is-guest`: cột nội dung trần 826 ở giữa, trống hai bên đều nhau).
+     Thẻ phụ (`.ov-card.is-extra`: Lịch sử vận chuyển; khối Cần hỗ trợ ĐÃ GỠ 19/10) xếp SAU thẻ Sản phẩm trong cùng khung viền — kẻ đỉnh như thẻ Sản phẩm; danh sách sự kiện bỏ đệm đáy 16 (đã có đệm của thẻ). Nút Tra cứu đơn khác dưới khung, cách 24. */
+  [data-screen="track"] .ov-page { font-variant-numeric: tabular-nums; }
+  .acc-layout.is-guest { justify-content: center; }
+  .ov-card.is-extra { border-top: 1px solid var(--general-border); }
+  .ov-card.is-extra .ov-vt { padding-bottom: 0; }
+  .ov-guest-cta { padding-top: 24px; }
   .ov-lines > .ord-grid + .ord-grid::after { content: ''; position: absolute; left: 0; right: 0; top: -8px; height: 1px; background: var(--general-border-subtle); pointer-events: none; }
   .ov-backbtn svg, .ov-go svg { transition: transform .2s ease; }
   @media (hover: hover) {
@@ -15574,8 +15574,12 @@ const orderPointsFinal = o => o.status === 'Hoàn tất';
 const orderItemP = it => PRODUCTS.find(p => p.img === it.img) || {};
 const orderLineTotal = it => vndNum(it.price) * (it.qty || 1);
 
-function screenORDER() {
-  const o = ORDERS.find(x => x.id === currentOrder) || ORDERS[0];
+/* 17/10/2026 (user: "cái chi tiết đơn hàng của khách check out as guest hiện layout như check out as member nhé vì as guest k có sidebar nên khung ở bản desktop sẽ nằm canh giữa, giữ nguyên kích thước" + "check out as guest thì không có điểm thưởng nhé") —
+   MỘT bố cục cho cả hai: orderDetailHTML(o, guest). guest = false ⇒ màn Chi tiết đơn của THÀNH VIÊN (mục lục trái + cột 826, như trước). guest = true ⇒ BẢN KHÁCH = kết quả của màn Theo dõi đơn (khách chưa đăng nhập không vào được màn order, xem go()):
+   CÙNG ba thẻ, CÙNG số đo; khác: không mục lục trái nên khung 826 CANH GIỮA hộp 1440 · KHÔNG có hàng điểm tích luỹ (khách không có điểm thưởng) · đường dẫn Trang chủ › Theo dõi đơn hàng › Chi tiết đơn hàng · nút lùi về ô tra cứu ·
+   thêm cho khách (khối của lô 6, TRK-25 / TRK-26): hộp báo giao chậm / thất bại, thẻ vận chuyển (kem) trong thẻ Trạng thái, thẻ phụ Lịch sử vận chuyển và nút Tra cứu đơn khác (khối "Cần hỗ trợ về đơn hàng?" ĐÃ GỠ 19/10). Nội dung đủ (hàng · giá · tổng tiền); thông tin của khách (SĐT · địa chỉ · hoá đơn) CHE khi khách chỉ GÕ mã ở ô tra cứu (19/10, xem trackMasked; KHÔNG có nút đăng nhập); luồng đặt hàng của chính khách và thành viên thấy đủ. */
+function screenORDER() { return orderDetailHTML(ORDERS.find(x => x.id === currentOrder) || ORDERS[0], false); }
+function orderDetailHTML(o, guest) {
   const n = v => v.toLocaleString('vi-VN');
   const noteLines = orderNoteLines(o);
   /* Nút "Thanh toán lại" TRONG thẻ Mã đơn (01/10/2026 khuya): chỉ đơn Chờ thanh toán; hành động data-repay. 05/10/2026: nằm BÊN PHẢI hàng đầu thẻ (khung user 1159:105033) và là nút DUY NHẤT — nhãn trạng thái không còn là nút. */
@@ -15583,6 +15587,7 @@ function screenORDER() {
   /* 01/10/2026 — LAYOUT "v4" của user (xem khối ORDER_CARRIER ở trên): thẻ MÃ ĐƠN (có timeline) · hai thẻ NGƯỜI NHẬN | GIAO HÀNG · thẻ SẢN PHẨM + TỔNG, KHÔNG chia đợt, KHÔNG khúc liên hệ CSKH. Nút Theo dõi
      đơn hàng không còn là nút chính của màn — thẻ giao hàng có link riêng "Theo dõi vận đơn ↗" — nên nút cạnh nhãn trạng thái không còn (01/10: Mua lại · Nhắc tôi khi hàng về đã gỡ; đơn Chờ thanh toán thì chính nhãn là nút). Link "‹ Đơn hàng" gỡ vì khung không
      vẽ (mục lục trái đã sáng "Đơn hàng"). KHAI GIỐNG HỆT index.html về dữ liệu; khác ở bố cục theo khung. */
+  const gMask = guest && trackMasked();   /* 19/10/2026: khách chỉ GÕ mã ⇒ che thông tin của khách (SĐT · địa chỉ · hoá đơn) */
   const awbs = orderAwbs(o);   /* 07/10 tối: bỏ biến deliver — dải giao hàng của thẻ Trạng thái đã gỡ (layout cuối), phương thức giao hàng lên khối Thông tin đơn hàng */
   /* 28/09/2026 (brief trang 55) — cột GIÁ của bảng hàng. Đúng khuôn giá của hàng giỏ
      (cart-row): chip % → giá gạch ở dòng trên, giá phải trả ở dòng dưới, đỏ khi có giảm.
@@ -15686,12 +15691,12 @@ function screenORDER() {
      điểm tích luỹ nay nằm CUỐI tấm tổng (hình). Hoá đơn có VAT là NÚT mở ngăn kéo (giá trị "Công ty / Cá nhân" + mũi tên phải).
      09/10/2026 (user, hình chụp màn này khoanh ba dòng: "cuối câu cho dấu :" — gõ ra là dấu ngoặc kép, hai phím sát nhau, hiểu là dấu hai chấm): NHÃN của cả ba dòng (và nhãn hoá đơn bản NÚT) thêm ":" cuối nhãn. Dấu đứng NGOÀI span nhãn để luật i18n còn khớp nguyên chuỗi — cùng nếp .ord-card-total-l. Bản mobile KHÔNG đổi (hàng nhãn trái · giá trị phải). */
   const metaHTML = [
-    o.vat ? `
+    o.vat && !gMask ? `
                     <button type="button" data-inv-sheet="${o.id}" aria-haspopup="dialog" class="ov-mi ov-prog press">
                       <span class="t-lead ov-k"><span>Thông tin xuất hóa đơn</span>:</span>
                       <span class="t-lead ov-mv ov-go"><span>${orderVatRows(o)[0][1]}</span>${I.chevR('currentColor')}</span>
                     </button>` : `
-                    <div class="ov-mi"><span class="t-lead ov-k"><span>Thông tin xuất hóa đơn</span>:</span><span class="t-lead ov-mv">Không xuất hoá đơn</span></div>`,
+                    <div class="ov-mi"><span class="t-lead ov-k"><span>Thông tin xuất hóa đơn</span>:</span><span class="t-lead ov-mv">${o.vat ? orderVatRows(o)[0][1] : 'Không xuất hoá đơn'}</span></div>`,
     `
                     <div class="ov-mi"><span class="t-lead ov-k"><span>Phương thức thanh toán</span>:</span><span class="t-lead ov-mv">${orderPayName(o)}</span></div>`,
     /* 07/10/2026 tối (layout cuối, khung 1220:155122): dòng thứ BA — giá trị = tên phương thức giao hàng (trước nằm ở dải vàng cuối thẻ Trạng thái). */
@@ -15699,26 +15704,36 @@ function screenORDER() {
                     <div class="ov-mi"><span class="t-lead ov-k"><span>Phương thức giao hàng</span>:</span><span class="t-lead ov-mv">${o.method}</span></div>`
   ].join('');
   /* Hàng ĐIỂM TÍCH LUỸ — hàng CUỐI của tấm tổng (hình: dải điểm ở góc phải dưới tấm). "Điểm tích luỹ sau khi hoàn tất" khi đơn chưa Hoàn tất (điểm DỰ KIẾN), "Điểm tích luỹ" khi đã xong; đơn huỷ không có hàng này; số trần "+1.195" (không chữ "điểm"). Kiểu chữ = hàng điểm cũ: nhãn xám · số 500 (đồng ở skin-li). */
-  const ptsRow = o.tone === 'cancel' ? '' : `
+  const ptsRow = (guest || o.tone === 'cancel') ? '' : `
                     <div class="ov-sum-row t-lead ov-ptsrow"><span class="ov-k">${orderPointsFinal(o) ? 'Điểm tích luỹ' : 'Điểm tích luỹ sau khi hoàn tất'}</span><span class="t-lead ov-mv ov-pts">+${n(orderPoints(o))}</span></div>`;
+
+  /* BẢN KHÁCH (17/10/2026): thẻ vận chuyển nằm DƯỚI stepper trong thẻ Trạng thái; hai thẻ phụ sau thẻ Sản phẩm; nút Tra cứu đơn khác dưới khung. Mỗi phần tự trả '' khi đơn không có dữ liệu (chưa giao · không ở trạng thái cần hỗ trợ). */
+  const guestShip = guest ? trackShipBox(o, true, true) : '';
+  const guestHist = guest ? trackHistoryHtml(o) : '';
+  const guestExtra = guest ? `${guestHist ? `
+              <div class="ov-card is-extra">
+                <p class="ov-ttl text-foreground">Lịch sử vận chuyển</p>${guestHist}
+              </div>` : ''}` : '';
+  const guestCta = guest ? `
+            <div class="ov-guest-cta"><button type="button" data-track-reset class="t-lead h-12 px-8 rounded-xs border border-border bg-background text-foreground btn-o press">Tra cứu đơn khác</button></div>` : '';
 
   return `
   <div class="w-full" data-scroller>
     ${navBar()}
     <div class="max-w-[1440px] mx-auto w-full acc-page">
-      ${dkCrumbs(['Trang chủ', 'Tài khoản', 'Chi tiết đơn hàng'])}
+      ${dkCrumbs(guest ? ['Trang chủ', 'Theo dõi đơn hàng', 'Chi tiết đơn hàng'] : ['Trang chủ', 'Tài khoản', 'Chi tiết đơn hàng'])}
       <!-- 28/09/2026 (brief trang 55) — BỎ TRẦN 860, rồi đưa màn VÀO KHUNG TÀI KHOẢN: mục lục trái với "Đơn hàng" đang sáng, cột nội dung 1040 (khuôn khung user 734:52984, xem .acc-layout). 02/10/2026 (user: "làm desktop giống
            bản mobile luôn nhé"): theo NGÔN NGỮ của bản mobile (khung Figma 1063:78040). 04/10/2026 (user sửa khung 1071:54047 + "nâng cấp giao diện ở bản desktop"): hàng tiêu đề kẻ đáy, thân TRẮNG, thẻ MÃ ĐƠN (mã · nhãn / ngày / hàng thông tin 3 cột
            điểm · hoá đơn · thanh toán / timeline ngang), hai KHỐI VIỀN người nhận | giao hàng, thẻ SẢN PHẨM, tấm TỔNG xám thu gọn dính phải — xem khối CSS ".ov-cards". Hoá đơn và tiến trình mở NGĂN KÉO bên phải (#shipSheet).
            05/10/2026 (user sửa tiếp khung 1159:105033, "dùng layout này … áp cho các trạng thái khác"): hàng tiêu đề HẾT kẻ đáy, các thẻ cách 16 + thẻ Mã đơn / Sản phẩm có VIỀN, tấm tổng nằm TRONG thẻ Sản phẩm, hàng thông tin NGANG, nút "Thanh toán lại" bên PHẢI hàng đầu, nút "Theo dõi vận đơn" lên hàng tiêu đề khối giao hàng. 07/10/2026 lượt 2: BỐ CỤC đổi theo HÌNH brief (người nhận lên thẻ đầu, thẻ Trạng thái mới, điểm xuống tấm tổng), STYLE giữ — xem khối CSS ov-cards. -->
-      <div class="acc-layout">
-        ${accSideNav('orders')}
+      <div class="acc-layout${guest ? ' is-guest' : ''}">
+        ${guest ? '' : accSideNav('orders')}
         <div class="acc-main">
           <div class="ov-page">
             <div class="ov-titlebar">
-              <button type="button" data-atab="orders" aria-label="Đơn hàng" class="ov-backbtn press">${I.chevL}</button>
+              <button type="button" ${guest ? 'data-track-reset aria-label="Tra cứu đơn khác"' : 'data-atab="orders" aria-label="Đơn hàng"'} class="ov-backbtn press">${I.chevL}</button>
               <h1 class="t-display-title text-foreground">Chi tiết đơn hàng</h1>
-            </div>
+            </div>${guest ? trackNoteBlock(o, true) : ''}
             <!-- 07/10/2026 (lượt 2; user: "bố cục dùng giống hình brief thôi, còn style thì như cũ"): MỘT KHUNG VIỀN (.ov-cards, 800, như 05/10 tối) chia ba phần bằng kẻ — thứ tự + vị trí nội dung theo HÌNH brief, kiểu dáng giữ của bản cũ. Giải thích: khối CSS ở .ov-cards. .rise đặt ở khung, không ở từng phần. -->
             <div class="ov-cards rise">
 
@@ -15747,8 +15762,8 @@ function screenORDER() {
                       <p class="ov-ttl text-foreground">Thông tin đơn hàng</p>
                       <div class="ov-addr">
                         <span class="t-lead ov-name">${personName(o.address)}</span>
-                        ${o.address.line ? `<span class="t-lead">${o.address.line}</span>` : ''}
-                        ${o.address.phone ? `<span class="t-lead">${o.address.phone}</span>` : ''}
+                        ${o.address.line ? `<span class="t-lead">${gMask ? trackMaskLine(o.address.line) : o.address.line}</span>` : ''}
+                        ${o.address.phone ? `<span class="t-lead">${gMask ? trackMaskPhone(o.address.phone) : o.address.phone}</span>` : ''}
                       </div>
                     </div>
                     <div class="ov-meta">${metaHTML}
@@ -15769,7 +15784,7 @@ function screenORDER() {
                   </div>` : ''}
                 </div>
                 <div class="ov-tl">${tlHTML}
-                </div>
+                </div>${guestShip}
               </div>
 
               <!-- 3. THẺ SẢN PHẨM + TỔNG (như 05/10 tối: chỉ kẻ ĐỈNH, tấm TỔNG xám FULL bề ngang lòng thẻ). Bảng hàng (brief trang 55): "Sản phẩm (N) | Số lượng | Thành tiền" — hàng tiêu đề và mọi dòng dùng CHUNG lưới .ord-grid nên nhãn cột đứng thẳng trên cột của nó. N = số dòng hàng, như "Giỏ hàng (N)".
@@ -15795,9 +15810,9 @@ function screenORDER() {
                     </div>${ptsRow}
                   </div>
                 </div>
-              </div>
+              </div>${guestExtra}
 
-            </div>
+            </div>${guestCta}
           </div>
         </div>
       </div>
@@ -15828,15 +15843,17 @@ function ordSkelThenReal(el) {
     wire(el); localizeNew(el);
   }, NET_WEAK_FIRST);
 }
-function screenOrderSkeleton() {
-  const o = ORDERS.find(x => x.id === currentOrder) || ORDERS[0];
+/* 17/10/2026: screenOrderSkeleton(guest) — guest = true là khung xương của BẢN KHÁCH (kết quả Theo dõi đơn, đơn = trackFound): bỏ mục lục trái, khung canh giữa, không hàng điểm, thêm ô cho thẻ vận chuyển · hai thẻ phụ · nút Tra cứu đơn khác. */
+function screenOrderSkeleton(guest) {
+  const o = guest ? (trackFound || ORDERS[0]) : (ORDERS.find(x => x.id === currentOrder) || ORDERS[0]);
   const payAct = orderActions(o).primary, awb = orderAwbs(o).length > 0, cancel = o.tone === 'cancel';
   const plain = t => String(t || '').replace(/<[^>]*>/g, '');
   /* số dòng ước theo độ dài chữ: địa chỉ ~54 ký tự một dòng 14/20 ở cột 380 · tên hàng ~58 ở cột chữ (~ 400 rộng 12/18) */
   const lines = (t, per) => Math.max(1, Math.ceil(plain(t).length / per));
   const noteLines = orderNoteLines(o);
   const addr = o.address || {};
-  const addrN = lines(addr.line, 54);
+  const gMask = guest && trackMasked();   // 19/10/2026: địa chỉ che ngắn hơn (KHÔNG còn dòng giải thích · nút Đăng nhập: user bỏ 19/10)
+  const addrN = lines(gMask ? trackMaskLine(addr.line) : addr.line, 54);
   const row = it => {
     const p = orderItemP(it), sale = !it.preorder && p.off;
     return `
@@ -15871,18 +15888,28 @@ function screenOrderSkeleton() {
   const sumRow = (a, b) => `<div class="ov-sum-row">${skelLn(20, skelBar(a + 'px'))}${skelLn(20, skelBar(b + 'px'))}</div>`;
   const mi = (a, b) => `<div class="ov-mi">${skelLn(20, skelBar(a + 'px'))}${skelLn(20, skelBar(b + 'px'))}</div>`;
   const steps = orderTlSteps(o).length;
+  /* BẢN KHÁCH: số ô theo CÙNG dữ liệu mà bản thật đọc — thẻ vận chuyển (đơn đã giao đi: 1 dòng đơn vị + mỗi kiện 1 dòng + ngày giao + link) · lịch sử (mỗi sự kiện 36, khe 16) · hỗ trợ (đơn Đang giao 3 hàng, Đang xử lý 2) */
+  const gShipN = guest && orderShipped(o) && orderAwbRows(o).length ? 2 + orderAwbRows(o).length + (orderDeliverRow(o) ? 1 : 0) : 0;
+  const gHistN = guest ? trackEvents(o).length : 0;
+  const gShip = gShipN ? `<div class="bg-accent-0 px-4 py-2 flex flex-col gap-1 skel-on" style="width:320px">${Array.from({ length: gShipN }, (_, k) => skelLn(18, skelBar(k === 0 ? '88%' : k === gShipN - 1 ? '56%' : '72%'))).join('')}</div>` : '';
+  const gHist = gHistN ? `
+              <div class="ov-card is-extra" aria-hidden="true">
+                ${skelLn(24, skelBar('150px', 16))}
+                <div class="flex flex-col" style="gap:16px;padding-top:4px">${Array.from({ length: gHistN }, () => `<div class="flex items-start gap-3"><div class="skel" style="width:24px;height:24px;border-radius:9999px;flex:none"></div><div class="flex flex-col" style="gap:2px;min-width:0;flex:1">${skelLn(18, skelBar('62%'))}${skelLn(16, skelBar('96px'))}</div></div>`).join('')}</div>
+              </div>` : '';
+  const gCta = guest ? '<div class="ov-guest-cta"><div class="skel" style="width:195px;height:48px"></div></div>' : '';
   return `
-  <div class="w-full" data-scroller data-ord-skeleton aria-busy="true">
+  <div class="w-full" data-scroller ${guest ? 'data-track-skeleton' : 'data-ord-skeleton'} aria-busy="true">
     <p class="skel-sr" role="status">Đang tải</p>
     ${navBar()}
     <div class="max-w-[1440px] mx-auto w-full acc-page">
-      ${dkCrumbs(['Trang chủ', 'Tài khoản', 'Chi tiết đơn hàng'])}
-      <div class="acc-layout">
-        ${accSideNav('orders')}
+      ${dkCrumbs(guest ? ['Trang chủ', 'Theo dõi đơn hàng', 'Chi tiết đơn hàng'] : ['Trang chủ', 'Tài khoản', 'Chi tiết đơn hàng'])}
+      <div class="acc-layout${guest ? ' is-guest' : ''}">
+        ${guest ? '' : accSideNav('orders')}
         <div class="acc-main">
           <div class="ov-page">
             <div class="ov-titlebar">
-              <button type="button" data-atab="orders" aria-label="Đơn hàng" class="ov-backbtn press">${I.chevL}</button>
+              <button type="button" ${guest ? 'data-track-reset aria-label="Tra cứu đơn khác"' : 'data-atab="orders" aria-label="Đơn hàng"'} class="ov-backbtn press">${I.chevL}</button>
               <h1 class="t-display-title text-foreground">Chi tiết đơn hàng</h1>
             </div>
             <div class="ov-cards">
@@ -15921,7 +15948,7 @@ function screenOrderSkeleton() {
                   ${skelLn(24, skelBar('164px', 16))}
                   ${awb ? `<div class="ov-trk"><div class="skel" style="height:36px"></div><div class="ov-mi ov-awb">${skelLn(20, skelBar('76px'))}${skelLn(20, skelBar('112px'))}</div></div>` : ''}
                 </div>
-                <div class="ov-tl">${Array.from({ length: steps }, () => `<div class="ov-step"><div class="skel" style="width:24px;height:24px;border-radius:9999px"></div>${skelLn(16, skelBar('84px'))}${skelLn(16, skelBar('64px'))}</div>`).join('')}</div>
+                <div class="ov-tl">${Array.from({ length: steps }, () => `<div class="ov-step"><div class="skel" style="width:24px;height:24px;border-radius:9999px"></div>${skelLn(16, skelBar('84px'))}${skelLn(16, skelBar('64px'))}</div>`).join('')}</div>${gShip}
               </div>
 
               <!-- thẻ Sản phẩm + tổng: đệm 16 · đầu bảng 24 + 16 · mỗi hàng 96 (khe 16) + đệm 16 · tấm tổng xám [đệm 16 · 3 hàng 20 · kẻ · Tổng thanh toán 40 · hàng điểm 20; khe 8] -->
@@ -15938,12 +15965,12 @@ function screenOrderSkeleton() {
                     ${sumRow(84, 100)}${sumRow(76, 88)}${sumRow(112, 72)}${o.pointsUsed ? sumRow(96, 84) : ''}
                     <div class="ov-divider"></div>
                     <div class="ov-sum-row ov-sum-total"><div class="ov-total-l">${skelLn(24, skelBar('128px', 16))}${skelLn(16, skelBar('88px'))}</div>${skelLn(24, skelBar('104px', 16))}</div>
-                    ${cancel ? '' : `<div class="ov-sum-row ov-ptsrow">${skelLn(20, skelBar('200px'))}${skelLn(20, skelBar('44px'))}</div>`}
+                    ${(cancel || guest) ? '' : `<div class="ov-sum-row ov-ptsrow">${skelLn(20, skelBar('200px'))}${skelLn(20, skelBar('44px'))}</div>`}
                   </div>
                 </div>
-              </div>
+              </div>${gHist}
 
-            </div>
+            </div>${gCta}
           </div>
         </div>
       </div>
@@ -21827,10 +21854,16 @@ function screenPOLICY(key) {
    (index.html) xếp dọc hai khối vì 375 không đủ cho hai cột có nhãn nổi.
 
    Brief CHỈ vẽ entry; kết quả tra cứu và các trạng thái hỏng là mình tự dựng.
-   Khách vãng lai thấy BẢN RÚT GỌN — không tiền, không thanh toán, địa chỉ đã che.
+   Khách vãng lai: từ 17/10 kết quả = chi tiết đơn của khách (đủ hàng · giá · tổng tiền); từ 19/10 khách chỉ GÕ mã thì thông tin của khách (SĐT · địa chỉ · hoá đơn) ĐƯỢC CHE — xem trackByCode / trackMasked.
    Lý do và ghi chú về định dạng mã: xem khối cùng tên trong index.html.
 ════════════════════════════════════════════════════════════════ */
 let trackQuery = '', trackFound = null, trackErr = '';
+/* 19/10/2026 (user: "khách chỉ có mã đơn vào xem đơn thì sẽ che thông tin của khách nhé") — LUẬT CHE (thay phần "nội dung KHÔNG che" của 17/10):
+   trackByCode = kết quả đến từ việc GÕ mã ở ô tra cứu (người chỉ có mã đơn, không có phiên đặt hàng / đăng nhập). Khi đó và CHƯA đăng nhập (trackMasked) thông tin của khách được che: SĐT chừa 3 số cuối · địa chỉ giữ hai đoạn cuối ·
+   hoá đơn VAT chỉ còn LOẠI (hàng không mở sheet / ngăn kéo chi tiết). KHÔNG có dòng giải thích và KHÔNG có nút đăng nhập (19/10: user chọn phương án A bỏ nút, rồi bỏ luôn dòng "Kiểm tra email xác nhận để xem đầy đủ"): khách mua không tài khoản không có gì để đăng nhập, và đăng nhập / tạo tài khoản mới còn bỏ che được đơn của người khác (demo không kiểm chủ đơn). Tên người nhận · hàng · giá · tổng tiền vẫn hiện (luật "không tiền" của 16/09 đã bỏ từ 17/10).
+   Khách mở chi tiết đơn từ luồng ĐẶT HÀNG của chính mình (màn Hoàn tất · thẻ "Đơn … đã được đặt" · cổng thanh toán) và thành viên (ckAuth) thấy ĐỦ. Đặt false ở [data-track-open] · openOrderDetail, true ở [data-track-go] (gõ mã) · trackGearGo (đổi sang đơn mẫu). */
+let trackByCode = false;
+const trackMasked = () => !ckAuth && trackByCode;
 /* 01/10/2026 — đơn hỗn hợp tách hai đơn con nên mã có thể kèm hậu tố "-01" / "-02" (DAFC102990-01). Mã gốc không phải đơn: không tìm thấy. */
 const TRACK_RE = /^DAFC\d{6}(-\d{2})?$/i;
 
@@ -21847,7 +21880,8 @@ function trackLookup(raw) {
 const trackMaskPhone = p => String(p || '').replace(/\d(?=(?:\D*\d){3})/g, '*');
 const trackMaskLine = l => {
   const parts = String(l || '').split(',').map(x => x.trim()).filter(Boolean);
-  return parts.length > 2 ? '…, ' + parts.slice(-2).join(', ') : parts.join(', ');
+  /* 19/10/2026: địa chỉ ngắn (≤ 2 đoạn) cũng KHÔNG được lộ số nhà / tên đường — luôn bỏ đoạn đầu; "***" thay "…" cho đồng bộ với số điện thoại (user 19/10) */
+  return parts.length > 2 ? '***, ' + parts.slice(-2).join(', ') : parts.length === 2 ? '***, ' + parts[1] : parts.length ? '***' : '';
 };
 
 /* ══ LÔ 6 — THEO DÕI ĐƠN (16/10/2026): TRK-25 · TRK-26 (+ TRK-29 bên dưới, cạnh khung xương) ═══════════════════════════════════════════════
@@ -21856,7 +21890,7 @@ const trackMaskLine = l => {
      thẻ vận chuyển (nền kem) thêm "Đơn vị vận chuyển" · "Dự kiến giao" / "Đã giao" · link "Theo dõi trên TIKINOW"; khối "Lịch sử vận chuyển" = sự kiện của đơn vị vận chuyển,
      MỚI NHẤT Ở TRÊN, dựng bằng khuôn timeline dọc `.ov-vt` của sheet Tiến trình đơn hàng. Sự kiện SINH TỪ các mốc `log` của đơn (dữ liệu mẫu — thật theo API của đơn vị vận chuyển).
      Bản đồ: không làm (đơn vị vận chuyển có sẵn ở link).
-   · TRK-26 — khối "Cần hỗ trợ về đơn hàng?" (Báo giao chậm · Đổi địa chỉ hoặc hẹn lại giờ giao · Gọi hotline) cho đơn Đang xử lý / Đang giao. Hai sự cố bật bằng BÁNH RĂNG → "Theo dõi đơn"
+   · TRK-26 — khối "Cần hỗ trợ về đơn hàng?" (Báo giao chậm · Đổi địa chỉ hoặc hẹn lại giờ giao · Gọi hotline) cho đơn Đang xử lý / Đang giao (ĐÃ GỠ 19/10 cho giống bản thành viên; còn hộp báo sự cố). Hai sự cố bật bằng BÁNH RĂNG → "Theo dõi đơn"
      (mặc định Bình thường — luồng cũ KHÔNG đổi): "Giao chậm" = hộp báo + nút Báo giao chậm + "Quá hạn" cạnh ngày dự kiến; "Thất bại" = sự kiện "Giao hàng không thành công" + hộp báo + nút Hẹn lại giờ giao.
      "Báo giao chậm" → hộp thoại xác nhận → dòng đổi thành "Đã gửi yêu cầu lúc …". "Đổi địa chỉ" = hộp thoại hướng dẫn gọi hotline (khách vãng lai không đăng nhập nên xác nhận qua điện thoại).
    Khuôn hộp thoại = #confirmPop (modal-popup) của lô 4; hộp báo = `.net-err` (message) của lô 1. ⚠ Quy tắc nghiệp vụ (đổi địa chỉ đến chặng nào, phí, thời hạn 24 giờ) do khách chốt. */
@@ -21916,16 +21950,9 @@ function trackHistoryHtml(o) {
       </div>`).join('')}
     </div>`;
 }
-function trackHistoryBlock(o, desktop) {
-  const h = trackHistoryHtml(o);
-  if (!h) return '';
-  return desktop
-    ? `<div class="flex flex-col gap-4 pt-4"><p class="t-block-title text-foreground">Lịch sử vận chuyển</p>${h}</div>`
-    : `<div class="px-4 pt-6 pb-2"><p class="t-block-title text-foreground">Lịch sử vận chuyển</p></div><div class="px-4 pb-2 border-b border-border">${h}</div>`;
-}
-
 /* Thẻ vận chuyển (nền kem, biểu tượng xe tải): đơn vị vận chuyển · mã vận đơn từng kiện · "Dự kiến giao" / "Đã giao" · link sang đơn vị vận chuyển. Chỉ khi đơn đã tới chặng giao. */
-function trackShipBox(o, desktop) {
+/* 17/10/2026: tham số flat — thẻ nằm TRONG thẻ Trạng thái của bản khách (không còn dưới stepper cũ): bỏ mt / margin-top, mobile phủ hết bề ngang thẻ. */
+function trackShipBox(o, desktop, flat) {
   if (!(orderShipped(o) && orderAwbRows(o).length)) return '';
   const dr = orderDeliverRow(o), going = o.status === 'Đang giao hàng';
   let dLabel = '', dVal = '';
@@ -21935,7 +21962,7 @@ function trackShipBox(o, desktop) {
     if (dr.k === 'Dự kiến giao' && going && trackSim === 'failed') dLabel = 'Dự kiến giao lại';
   }
   return `
-      <div class="${desktop ? 'w-fit ' : 'mt-4 '}bg-accent-0 px-4 py-2 flex items-start gap-2"${desktop ? ' style="margin-top:24px"' : ''}>
+      <div class="${desktop ? 'w-fit ' : flat ? '' : 'mt-4 '}bg-accent-0 px-4 py-2 flex items-start gap-2"${desktop && !flat ? ' style="margin-top:24px"' : ''}>
         <span class="w-4 h-4 text-foreground shrink-0 mt-0.5">${I.truck}</span>
         <span class="flex flex-col gap-1 min-w-0">
           <span class="t-multiline text-foreground-alt"><span>Đơn vị vận chuyển</span> <b class="font-medium">${ORDER_CARRIER}</b></span>
@@ -21954,30 +21981,10 @@ function trackNoteBlock(o, desktop) {
   const box = `
     <div class="net-err" role="status" data-track-note>
       <span class="net-err-dot" aria-hidden="true"></span>
-      <div class="net-err-txt"><p class="t-single text-foreground">${late ? 'Đơn hàng đang giao chậm hơn dự kiến' : 'Giao hàng chưa thành công'}</p><p class="t-multiline text-muted-foreground">${late ? 'DAFC đang làm việc với đơn vị vận chuyển để cập nhật lịch giao mới và sẽ thông báo cho bạn.' : 'Đơn vị vận chuyển chưa liên lạc được với người nhận. Bạn có thể hẹn lại giờ giao.'}</p></div>
+      <div class="net-err-txt"><p class="t-single text-foreground">${late ? 'Đơn hàng đang giao chậm hơn dự kiến' : 'Giao hàng chưa thành công'}</p><p class="t-multiline text-muted-foreground">${late ? 'DAFC đang làm việc với đơn vị vận chuyển để cập nhật lịch giao mới và sẽ thông báo cho bạn.' : 'Đơn vị vận chuyển chưa liên lạc được với người nhận. Bạn có thể hẹn lại giờ giao.'}</p>${late && trackReq[o.id] ? `<p class="t-single text-muted-foreground">Đã gửi yêu cầu lúc ${trackWhen(trackReq[o.id])}</p>` : ''}</div>
       ${act ? `<button type="button" data-track-act="${act.kind}" class="net-err-act t-multiline text-foreground press">${act.label}</button>` : ''}
     </div>`;
   return desktop ? `<div class="pb-8" style="max-width:560px">${box}</div>` : `<div class="px-4 pb-4">${box}</div>`;
-}
-
-/* Khối "Cần hỗ trợ về đơn hàng?" — đơn Đang xử lý / Đang giao. Hàng "Báo giao chậm" chỉ có khi đơn đang giao; gửi rồi thì đổi thành "Đã gửi yêu cầu lúc …". */
-function trackSupportBlock(o, desktop) {
-  if (o.status !== 'Đang xử lý' && o.status !== 'Đang giao hàng') return '';
-  const row = (kind, title, sub) => `
-      <button type="button" data-track-act="${kind}" class="trk-row press">
-        <span class="trk-row-txt"><span class="t-lead text-foreground">${title}</span><span class="t-multiline text-muted-foreground">${sub}</span></span>
-        <span class="trk-chev" aria-hidden="true">${I.chevR('currentColor')}</span>
-      </button>`;
-  const rows = [];
-  if (o.status === 'Đang giao hàng') rows.push(trackReq[o.id]
-    ? `<div class="trk-row"><span class="trk-row-txt"><span class="t-lead text-foreground">Báo giao chậm</span><span class="t-multiline text-muted-foreground">Đã gửi yêu cầu lúc ${trackWhen(trackReq[o.id])}</span></span></div>`
-    : row('late', 'Báo giao chậm', 'Đơn chưa tới theo ngày dự kiến.'));
-  rows.push(row('change', 'Đổi địa chỉ hoặc hẹn lại giờ giao', 'Báo trước khi đơn được giao.'));
-  rows.push(row('call', `Gọi hotline ${TRACK_HOTLINE}`, 'Đọc mã đơn hàng để được hỗ trợ nhanh hơn.'));
-  const list = `<div class="trk-help" data-track-help>${rows.join('')}</div>`;
-  return desktop
-    ? `<div class="flex flex-col gap-4 pt-4"><p class="t-block-title text-foreground">Cần hỗ trợ về đơn hàng?</p>${list}</div>`
-    : `<div class="px-4 pt-6 pb-2"><p class="t-block-title text-foreground">Cần hỗ trợ về đơn hàng?</p></div><div class="px-4 pb-6">${list}</div>`;
 }
 
 /* Hộp thoại xác nhận — khuôn #confirmPop của lô 4. 'late': Để sau / Gửi yêu cầu (hành động GHI ⇒ có cổng mất mạng `trk-ok`, mạng yếu giữ "Đang gửi…");
@@ -22027,6 +22034,7 @@ function trackAct(kind) {
 /* Bánh răng "Theo dõi đơn": đổi xong mở kết quả tra cứu của một đơn ĐANG GIAO (đơn đang xem nếu đã là đơn đang giao, không thì DAFC102938) để thấy ngay. */
 function trackGearGo() {
   const o = (trackFound && trackFound.status === 'Đang giao hàng') ? trackFound : ORDERS.find(x => x.id === 'DAFC102938');
+  if (o !== trackFound) trackByCode = true;   // 19/10/2026: đổi sang đơn mẫu = như vừa gõ mã (che thông tin của khách)
   trackQuery = o.id; trackFound = o; trackErr = '';
   go('track', { force: current === 'track', noSkel: true });
 }
@@ -22036,8 +22044,8 @@ function trackGearGo() {
    Hai chỗ, cùng cơ chế "Mạng yếu" của PLP · giỏ · PDP · Thanh toán · Tài khoản (khai giống bản mobile, xem index.html):
    · gõ mã rồi bấm TRA CỨU (mã đúng khuôn): nút giữ "Đang tra cứu…" NET_WEAK_GRID ms rồi mới ra kết quả;
    · mở kết quả khi ĐÃ BIẾT mã (từ Chi tiết đơn) → KHUNG XƯƠNG NET_WEAK_FIRST ms (skelPageFor('track') + trackSkelThenReal). Back không qua khung xương.
-   Khung xương dựng theo kết quả của một đơn ĐANG GIAO ít món (đo 1440 trên DAFC102990-01: tiêu đề 40 · ngày 50 · stepper + thẻ vận chuyển 256 · lưới 2 cột 484 [trái: hàng + lịch sử · phải: giao đến + hỗ trợ + nút]);
-   navBar + footer THẬT; mượn class thuần CSS của trang thật (`.trk-row` · `.trk-time` · `.bg-accent-0`). Không mang hook nào của trang thật. */
+   Khung xương (từ 17/10/2026) = khung xương BẢN KHÁCH của chi tiết đơn: screenOrderSkeleton(true), đơn = trackFound — ba thẻ như bản thành viên (không mục lục, khung 826 canh giữa, không hàng điểm) + ô cho thẻ vận chuyển · hai thẻ phụ · nút; số ô theo dữ liệu của đơn đang mở.
+   navBar + footer THẬT; chỉ mang hook [data-track-reset] của nút lùi (để thoát được lúc đang tải). */
 let trackSkelTok = 0;
 function trackSkelThenReal(el) {
   const tok = ++trackSkelTok;
@@ -22048,143 +22056,8 @@ function trackSkelThenReal(el) {
     wire(el); localizeNew(el);
   }, NET_WEAK_FIRST);
 }
-function screenTrackSkeleton() {
-  const dot = n => `<div class="skel" style="width:${n}px;height:${n}px;border-radius:9999px;flex:none"></div>`;
-  const stepCol = () => `
-        <div class="flex-1 flex flex-col items-center">
-          ${dot(24)}
-          <div class="mt-2 flex flex-col items-center">${skelLn(16, skelBar('84px'))}</div>
-          <span class="trk-time">${skelLn(16, skelBar('96px'))}</span>
-        </div>`;
-  const hist = (w) => `
-        <div class="flex items-start gap-3">${dot(24)}
-          <div class="flex flex-col" style="gap:2px;min-width:0;flex:1">${skelLn(18, skelBar(w))}${skelLn(16, skelBar('84px'))}</div>
-        </div>`;
-  const help = () => `
-        <div class="trk-row"><span class="trk-row-txt">${skelLn(20, skelBar('220px'))}${skelLn(18, skelBar('300px'))}</span>${dot(14)}</div>`;
-  return `
-  <div class="w-full" data-scroller data-track-skeleton aria-busy="true">
-    <p class="skel-sr" role="status">Đang tải</p>
-    ${navBar()}
-    <div class="max-w-[1440px] mx-auto w-full px-6 py-10">
-      <!-- tiêu đề: dòng 32 + nhãn trạng thái 24 ở bên phải, đệm dưới 8 = 40; ngày: dòng 18 + đệm dưới 32 = 50 -->
-      <div class="flex items-center justify-between gap-4 pb-2" aria-hidden="true">${skelLn(32, skelBar('280px', 24))}<div class="skel" style="width:128px;height:24px"></div></div>
-      <div class="pb-8" aria-hidden="true">${skelLn(18, skelBar('128px'))}</div>
-
-      <!-- stepper 4 chặng (nút 24 · nhãn 16 · giờ 16 = 66) + thẻ vận chuyển nền kem 229 × 100 cách 24: đệm 32 + 66 + 24 + 100 + 32 + kẻ 2 = 256 -->
-      <div class="py-8 border-y border-border" aria-hidden="true">
-        <div class="flex items-start">${stepCol()}${stepCol()}${stepCol()}${stepCol()}</div>
-        <div class="bg-accent-0 px-4 py-2 flex items-start gap-2 w-fit skel-on" style="margin-top:24px;width:229px">
-          <div class="skel" style="width:16px;height:16px;margin-top:2px;flex:none"></div>
-          <div class="flex flex-col gap-1" style="flex:1;min-width:0">${skelLn(18, skelBar('150px'))}${skelLn(18, skelBar('120px'))}${skelLn(18, skelBar('140px'))}${skelLn(18, skelBar('110px'))}</div>
-        </div>
-      </div>
-
-      <!-- lưới 2 cột (đệm trên 32 + 452): trái = hàng trong đơn + lịch sử vận chuyển · phải = giao đến + hỗ trợ + 2 nút -->
-      <div class="grid grid-cols-2 gap-10 pt-8" aria-hidden="true">
-        <div class="flex flex-col gap-4">
-          ${skelLn(24, skelBar('108px', 16))}
-          <div class="flex gap-4">
-            <div class="skel" style="width:72px;height:96px;flex:none"></div>
-            <div class="flex flex-col gap-1" style="flex:1;min-width:0">${skelLn(18, skelBar('220px'))}${skelLn(16, skelBar('96px'))}${skelLn(16, skelBar('84px'))}</div>
-          </div>
-          <div class="flex flex-col gap-4 pt-4">
-            ${skelLn(24, skelBar('138px', 16))}
-            <div class="flex flex-col" style="gap:16px;padding:4px 0 16px">${hist('260px')}${hist('240px')}${hist('200px')}</div>
-          </div>
-        </div>
-        <div class="flex flex-col gap-4">
-          ${skelLn(24, skelBar('84px', 16))}
-          <div class="flex flex-col gap-1">
-            ${skelLn(18, skelBar('112px'))}${skelLn(18, skelBar('88px'))}${skelLn(18, skelBar('210px'))}
-            <div class="pt-2">${skelLn(16, skelBar('420px'))}</div>
-          </div>
-          <div class="flex flex-col gap-4 pt-4">
-            ${skelLn(24, skelBar('190px', 16))}
-            <div class="trk-help">${help()}${help()}${help()}</div>
-          </div>
-          <div class="flex items-center gap-3 pt-4"><div class="skel" style="width:247px;height:48px"></div><div class="skel" style="width:195px;height:48px"></div></div>
-        </div>
-      </div>
-    </div>
-    ${footer()}
-  </div>`;
-}
-function trackResultView(o) {
-  /* 28/09/2026 (brief trang 55) — bộ chặng + nhãn trạng thái dùng CHUNG với màn chi tiết
-     đơn (ORDER_STEPS / statusTag): một bộ từ vựng cho cả hai màn. Nhãn ở đây KHÔNG bấm
-     được (khách vãng lai không thanh toán lại từ màn tra cứu). Tối muộn 30/09: nhãn = BADGE nền 50
-     + chữ 700 như danh sách và chi tiết đơn (statusTag(o, false, true)); hàng tiêu đề rộng đủ
-     (cột ≥ 720) nên KHÔNG cần xuống dòng — khác bản mobile (index.html) có flex-wrap.
-     Rà soát 28/09 (đồng bộ index.html): stepper đọc orderTimeline(o) như stepper màn chi
-     tiết đơn — đơn huỷ giữ các chặng đã qua rồi thêm nút ✕ "Đã huỷ" đỏ (.ord-step-x, cùng
-     khuôn stepper chi tiết), thay vì đứng ở "Chờ thanh toán" như đơn còn chờ. Chặng hiện tại
-     nhấn bằng mực chính, không font-medium (skin-mt dập về 400). Nhãn giữ .t-single: cột
-     desktop ≥ 1392/5 ≈ 278 nên nhãn chặng dài nhất vẫn một dòng (mobile phải .t-multiline). */
-  const tl = orderTimeline(o);
-  return `
-  <div class="max-w-[1440px] mx-auto w-full px-6 py-10">
-    <div class="flex items-center justify-between gap-4 pb-2">
-      <h1 class="t-display-title text-foreground">Mã đơn ${o.id}</h1>
-      ${statusTag(o, false, true)}
-    </div>
-    <p class="t-multiline pb-8 text-muted-foreground">Đặt ngày ${o.date}</p>
-    ${trackNoteBlock(o, true)}
-
-    <div class="py-8 border-y border-border">
-      <div class="flex items-start">
-        ${tl.map((s, i) => {
-          const reached = s.state !== 'todo';
-          const nameCls = s.state === 'cancel' ? 'text-destructive' : (s.state === 'cur' ? 'text-foreground' : 'text-muted-foreground');
-          return `
-          <div class="flex-1 flex flex-col items-center relative">
-            ${i > 0 ? `<span class="absolute top-[11px] right-1/2 w-full h-0.5 ${reached ? 'bg-primary' : 'bg-border'}"></span>` : ''}
-            ${s.state === 'cancel'
-              ? `<span class="relative z-10 w-6 h-6 rounded-full flex items-center justify-center ord-step-x">${I.close}</span>`
-              : `<span class="relative z-10 w-6 h-6 rounded-full flex items-center justify-center ${reached ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground border border-border'}">
-              ${reached && !(s.state === 'cur' && i < tl.length - 1) ? `<span class="w-2.5 h-2.5">${I.tick}</span>` : `<span class="w-1.5 h-1.5 rounded-full bg-current"></span>`}
-            </span>`}
-            <span class="t-single mt-2 text-center ${nameCls}">${s.label}</span>
-            ${trackStepTime(o, tl, i, false)}
-          </div>`;
-        }).join('')}
-      </div>
-      ${trackShipBox(o, true)}
-    </div>
-
-    <div class="grid grid-cols-2 gap-10 pt-8">
-      <div class="flex flex-col gap-4">
-        <p class="t-block-title text-foreground">Hàng trong đơn</p>
-        ${o.items.map(it => `
-        <div class="flex gap-4">
-          <div class="w-[72px] h-[96px] bg-secondary overflow-hidden shrink-0">
-            <img src="${A}${it.img}" class="w-full h-full object-cover" alt="${it.name}">
-          </div>
-          <div class="flex-1 min-w-0 flex flex-col gap-1">
-            <p class="t-multiline text-foreground">${it.name}</p>
-            <p class="t-single text-muted-foreground">${it.variant}</p>
-            <p class="t-single text-muted-foreground">Số lượng ${it.qty}</p>
-          </div>
-        </div>`).join('')}
-        ${trackHistoryBlock(o, true)}
-      </div>
-      <div class="flex flex-col gap-4">
-        <p class="t-block-title text-foreground">Giao đến</p>
-        <div class="flex flex-col gap-1">
-          <p class="t-multiline text-foreground">${personName(o.address)}</p>
-          <p class="t-multiline text-muted-foreground">${trackMaskPhone(o.address.phone)}</p>
-          <p class="t-multiline text-muted-foreground">${trackMaskLine(o.address.line)}</p>
-          <p class="t-single pt-2 text-muted-foreground">Địa chỉ được rút gọn. Đăng nhập để xem đầy đủ đơn hàng.</p>
-        </div>
-        ${trackSupportBlock(o, true)}
-        <div class="flex items-center gap-3 pt-4">
-          <button data-nav="login" class="t-lead h-12 px-8 bg-primary text-primary-foreground btn-p press">Đăng nhập để xem đầy đủ</button>
-          <button data-track-reset class="t-lead h-12 px-8 rounded-xs border border-border bg-background text-foreground btn-o press">Tra cứu đơn khác</button>
-        </div>
-      </div>
-    </div>
-  </div>`;
-}
+/* 17/10/2026: khung xương kết quả = khung xương BẢN KHÁCH của chi tiết đơn (cùng bố cục với trang thật — xem screenOrderSkeleton(true)); trước đó là khung của bố cục cũ (2 cột Hàng trong đơn | Giao đến). */
+function screenTrackSkeleton() { return screenOrderSkeleton(true); }
 
 function trackEntryView() {
   return `
@@ -22233,10 +22106,12 @@ function trackEntryView() {
 }
 
 function screenTRACK() {
+  /* 17/10/2026: KẾT QUẢ tra cứu = BẢN KHÁCH của chi tiết đơn (orderDetailHTML(o, true): tự mang navBar + chân trang); chưa có kết quả thì ô tra cứu như cũ. */
+  if (trackFound) return orderDetailHTML(trackFound, true);
   return `
   <div class="w-full" data-scroller>
     ${navBar()}
-    ${trackFound ? trackResultView(trackFound) : trackEntryView()}
+    ${trackEntryView()}
     ${footer()}
   </div>`;
 }
@@ -24482,7 +24357,6 @@ const I18N = {
   'Đăng ký thành viên DAFC':'Join DAFC membership',
   'Đăng nhập / Tạo tài khoản':'Sign in / Create an account',
   'Đăng nhập bằng tài khoản đã đạt hạng Insider trở lên. Mỗi đơn áp dụng 1 lần.':'Sign in with an account at Insider tier or above. One use per order.',
-  'Đăng nhập để xem đầy đủ':'Sign in to see the full details',
   'Đơn có gói quà cần thêm 1 ngày xử lý trước khi giao.':'Orders with gift wrapping need 1 extra day of processing before delivery.',
   'Đơn có quà tặng kèm':'Order with a gift',
   'Đơn hàng sẽ được giao tới tận nhà của Quý khách, ngoại trừ các trường hợp như: khu vực văn phòng hạn chế ra vào, khu vực chung cư/cao tầng (chỉ giao tại cửa tòa nhà).':'Orders are delivered to your door, except where access is restricted — office buildings and apartment or high-rise blocks, where we deliver to the building entrance.',
@@ -24501,7 +24375,6 @@ const I18N = {
   'Đặt hàng và thanh toán':'Ordering and payment',
   'Đế ngoài và đế trong bằng da phối nhãn':'Leather outsole and insole with a branded label',
   'Đế trong in logo Versace':'Versace logo printed on the insole',
-  'Địa chỉ được rút gọn. Đăng nhập để xem đầy đủ đơn hàng.':'The address is shortened. Sign in to see the full order.',
   'Đọc Hướng dẫn chăm sóc sản phẩm: Luôn tham khảo hướng dẫn chăm sóc quần áo để biết hướng dẫn giặt ủi cụ thể.':'Read the care guide: always check the garment care label for the exact washing and ironing instructions.',
   'Đối với phụ kiện thông thường và sản phẩm da:':'For general accessories and leather goods:',
   'Đối với trường hợp lỗi sản phẩm, DAFC sẽ hỗ trợ xử lý cho khách hàng (nếu đáp ứng đủ điều kiện đổi trả, chi tiết xem tại đây).':'Where an item is faulty, DAFC will help you resolve it (if the exchange conditions are met — see the details here).',
@@ -26461,7 +26334,15 @@ function payResolve() {
   if (payFrom === 'checkout') { go('done'); return; }
   currentOrder = payFor[0] || currentOrder;
   toast('Đã thanh toán qua cổng Payoo');
-  go('order', { force: true });
+  openOrderDetail(currentOrder);
+}
+
+/* 17/10/2026: mở chi tiết đơn ĐÚNG NGƯỜI XEM — thành viên → màn order (Tài khoản, có mục lục trái); khách → BẢN KHÁCH ở màn track (go() chặn khách khỏi màn order và đẩy về đăng nhập, nên trước đây khách ra khỏi cổng thanh toán là bị hỏi đăng nhập). */
+function openOrderDetail(id) {
+  if (ckAuth) { currentOrder = id; go('order', { force: true }); return; }
+  trackQuery = id; trackFound = ORDERS.find(x => x.id === id) || null; trackErr = '';
+  trackByCode = false;   // 19/10/2026: khách vào từ luồng đặt hàng / thanh toán của chính mình ⇒ thấy đủ
+  go('track', { force: true, noSkel: true });
 }
 
 /* Bấm "Đặt hàng": trạng thái ĐANG XỬ LÝ rồi mới rẽ nhánh. Quãng chờ này có thật
@@ -27079,6 +26960,7 @@ function wire(root) {
       const r = trackLookup(id);
       trackFound = r.order || null;
       trackErr = r.err || '';
+      trackByCode = false;   // 19/10/2026: luồng ĐẶT HÀNG của chính khách ⇒ thấy đủ
       go('track');
     });
   });
@@ -27090,6 +26972,7 @@ function wire(root) {
         const r = trackLookup(trackQuery);
         trackFound = r.order || null;
         trackErr = r.err || '';
+        trackByCode = true;   // 19/10/2026: chỉ có mã đơn ⇒ che thông tin của khách (xem trackMasked)
         go('track', { force: true, noSkel: true });
       };
       /* 16/10/2026 (lô 6 · TRK-29) — MẠNG YẾU: mã đúng khuôn thì "hỏi máy chủ" — nút giữ "Đang tra cứu…" NET_WEAK_GRID ms (ô mã khoá lại), rồi mới ra kết quả / "Không tìm thấy". Bỏ trống / sai khuôn là kiểm ở
@@ -27218,7 +27101,11 @@ function wire(root) {
   // mở từ giỏ (nút Đặt hàng) -> đi tiếp checkout như Figma
   // Mở chi tiết đơn hàng
   root.querySelectorAll('[data-order]').forEach(btn => {
-    btn.addEventListener('click', () => { currentOrder = btn.dataset.order; go('order'); });
+    /* 17/10/2026: khách chưa đăng nhập bị go() chặn khỏi màn order (đẩy về đăng nhập) — thẻ "Đơn … đã được đặt" (data-order="0" = đơn vừa đặt, ORDERS[0]) mở BẢN KHÁCH của chi tiết đơn thay vì đăng nhập. Thành viên giữ nguyên. */
+    btn.addEventListener('click', () => {
+      if (!ckAuth) { openOrderDetail(btn.dataset.order === '0' ? ORDERS[0].id : btn.dataset.order); return; }
+      currentOrder = btn.dataset.order; go('order');
+    });
   });
 
   /* ACCOUNT: hàng tab. 05/09/2026 — cờ đổi sang `aria-current`, và KHÔNG dựng lại
@@ -27557,7 +27444,7 @@ function wire(root) {
     root.querySelectorAll('[data-pay-back]').forEach(b => b.addEventListener('click', () => {
       payStage = '';
       currentOrder = payFor[0] || currentOrder;
-      go('order', { force: true });
+      openOrderDetail(currentOrder);
     }));
   }
 
@@ -31588,6 +31475,7 @@ document.body.insertAdjacentHTML('beforeend', `
     const id = curId;
     closeSH();
     trackQuery = id;
+    if (ckAuth) trackByCode = false;   // 19/10/2026: thành viên là chủ đơn; khách đang xem kết quả gõ mã thì giữ nguyên cờ
     const r = trackLookup(id);
     trackFound = r.order || null;
     trackErr = r.err || '';
