@@ -647,6 +647,8 @@ window.RESP = (function () {
     background: var(--general-border);
     transition: opacity .18s ease;
   }
+  /* 19/10/2026: hàng quick filter Làm đẹp (và ô xám của khung xương) là con đầu của thanh dính (pl-4 pr-2): lề âm kéo hàng ra sát mép màn, đệm 16 hai đầu giữ chip đầu cách mép 16. */
+  .plp-quick { margin: 0 -8px 0 -16px; padding: 0 16px; }
 
   /* ── Filter bottom sheet ── */
   #filterSheet { position: fixed; inset: 0; z-index: 300; pointer-events: none; }
@@ -928,7 +930,7 @@ window.RESP = (function () {
   /* ── HẾT PHIÊN ĐĂNG NHẬP (16/10/2026): hộp thoại giữa màn đúng khuôn `modal-popup` của bộ component Figma (33:37) — rộng 340, đệm 24, khe 16, tiêu đề 16/24 Medium
      CHỮ HOA (Inter, lớp nổi), mô tả 12/18, chân là 2 nút cỡ medium 40 (viền + chính); không có nút ✕ vì phiên đã hết, buộc chọn một trong hai. Viền 1px theo khuôn lớp nổi
      (không bóng, bo 8 vì nổi giữa màn); z 230 trên popup đăng nhập (220). ── */
-  /* 16/10/2026 (lô 4): cùng khuôn cho #confirmPop (xác nhận đăng xuất mọi thiết bị / xoá tài khoản). */
+  /* 16/10/2026 (lô 4): cùng khuôn cho #confirmPop — nay là hộp xác nhận của Theo dõi đơn (lô 6); hai thẻ "Đăng xuất khỏi mọi thiết bị" / "Xoá tài khoản" từng dùng nó đã BỎ 19/10/2026. */
   :is(#sessionPop, #confirmPop) .sess-card { position: absolute; left: 50%; top: 50%; width: min(340px, calc(100vw - 32px)); background: var(--general-background);
     border: 1px solid var(--general-border); box-shadow: none; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 16px;
     opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(.97); transition: opacity .22s ease, transform .22s cubic-bezier(.22,1,.36,1); }
@@ -1112,7 +1114,6 @@ window.RESP = (function () {
      không phải hành động kết. Cùng vai với "Quên mật khẩu?" ở màn đăng nhập. */
   .acc-card-link { text-decoration: underline; color: var(--general-primary); white-space: nowrap; transition: color .15s ease; }
   .acc-card-link:hover { color: var(--general-secondary-foreground); }
-  .acc-card-link.is-danger, .acc-card-link.is-danger:hover { color: var(--general-destructive); }   /* 16/10/2026 (lô 4): "Xoá" tài khoản */
   /* ── DỌN NHỊP TRANG TÀI KHOẢN (21/09/2026 — user: "cứ đang thiếu thiếu về UI") ──
      Đo trước khi sửa: thẻ thông tin 5 hàng chỉ cách nhau bằng khe 16 và KHÔNG có kẻ
      nào, trong khi mọi danh sách khác của site (giỏ · footer · menu · bộ lọc · chính
@@ -7958,6 +7959,30 @@ function plpProducts() {
   return all.filter(({ p }) => (p.dept === 'beauty') === beauty);
 }
 
+/* 19/10/2026 (user trả lời câu hỏi "Có cần hàng chip quick filter Làm đẹp ở mobile không?": "có cần hàng luôn") — HÀNG QUICK FILTER của PLP LÀM ĐẸP cho MOBILE, cùng bộ 5 chip và cùng đích với bản desktop (DK_QUICK_BEAUTY ở desktop.html):
+   Sữa tắm · Sữa dưỡng thể · Nước hoa · Kem dưỡng tay · Nước rửa tay (19/10 lần 2: nhãn = tên danh mục, user chốt "kem dưỡng tay"). Mỗi chip = [nhãn hiện ra, tên danh mục đích, crumbs]; crumbs[0] = 'Làm đẹp' để isBeautyPlp() vẫn đúng sau khi bấm.
+   CHỖ ĐẶT: lúc đầu (19/10) hàng đứng dưới tiêu đề, NGOÀI thanh dính nên cuộn đi cùng trang. 19/10 lần 3 (user trả lời câu "Muốn dính theo thanh lọc không?": "giống như thời trang nhé" — desktop thời trang để quick filter TRONG thanh dính) ĐẢO:
+   hàng nay là con ĐẦU của thanh lọc dính #plpFilterAnchor, nên thanh PLP Làm đẹp cao 132 = chip 36 + khe 8 + hàng đếm 36 + khe 8 + hàng Bộ lọc 36 + đệm dưới 8 (thanh thời trang vẫn 88). Vị trí lúc chưa cuộn y hệt trước (hàng y128, thanh 128 → 260),
+   chỉ khác là hàng không trôi mất khi cuộn; đổi lại thanh dính ăn thêm 44 px vùng nhìn (132 + header 48 = 180 / 812 — trước 136).
+   Chip = nút ghost small như desktop (h-9 = 36, đệm ngang 12, chữ 12/16 500, khe 8; chip trùng danh mục đang xem sáng text-foreground, còn lại text-muted-foreground); hàng cuộn ngang (cùng kiểu dải danh mục của trang hãng),
+   cao 36, khe tới hàng đếm 8 do gap-2 của thanh (không còn đệm dưới); lớp .plp-quick tràn hàng ra mép màn bằng lề âm (thanh có pl-4 pr-2) rồi trả đệm 16 hai đầu, nên hàng vẫn rộng 375 và chip đầu vẫn cách mép 16;
+   chip đang xem tự cuộn vào khung nhìn (wire). Cũng hiện ở lưới của hãng LÀM ĐẸP (isBeautyPlp). PLP thời trang / tìm kiếm / hãng thời trang KHÔNG có hàng này (desktop cũng dùng bộ riêng). */
+const PLP_QUICK_BEAUTY = [
+  ['Sữa tắm',       'Sữa tắm',       ['Làm đẹp', 'Tắm & dưỡng thể']],
+  ['Sữa dưỡng thể', 'Sữa dưỡng thể', ['Làm đẹp', 'Tắm & dưỡng thể']],
+  ['Nước hoa',      'Nước hoa',      ['Làm đẹp']],
+  ['Kem dưỡng tay', 'Kem dưỡng tay', ['Làm đẹp', 'Chăm sóc tay']],
+  ['Nước rửa tay',  'Nước rửa tay',  ['Làm đẹp', 'Chăm sóc tay']],
+];
+const plpQuickRowHTML = () => {
+  if (!isBeautyPlp()) return '';
+  const active = plpMode.type === 'category' ? (plpMode.title || '') : '';
+  return `
+    <div id="plpQuick" class="plp-quick drag-x flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0" role="group" aria-label="Danh mục nhanh">
+      ${PLP_QUICK_BEAUTY.map(([label, title, crumbs]) => `<button type="button" data-qf="${title}" data-qf-crumbs="${crumbs.join('|')}"${title === active ? ' aria-current="true"' : ''} class="t-single h-9 px-3 shrink-0 rounded-xs flex items-center font-medium ghost-hover press ${title === active ? 'text-foreground' : 'text-muted-foreground'}">${label}</button>`).join('')}
+    </div>`;
+};
+
 /* PLP dạng danh sách (category/search) */
 function screenPLPList() {
   const m = plpMode;
@@ -8026,8 +8051,10 @@ function screenPLPList() {
          Trước 03/09 hàng đếm là khối RỜI cao 48 nằm NGOÀI thanh dính (cuộn là
          trôi mất nút đổi mật độ), còn thanh lọc chỉ cao 52 và đệm ngang 16/16.
          Số đo nút theo bậc DS: Bộ lọc = action outline/small (h36, đệm ngang 12,
-         viền mực chính), Sắp xếp = ghost/small (h36, đệm 12, nhãn 12/16). -->
+         viền mực chính), Sắp xếp = ghost/small (h36, đệm 12, nhãn 12/16).
+         19/10/2026: PLP LÀM ĐẸP thêm hàng quick filter 36 làm con ĐẦU của chính thanh này (khe 8) ⇒ thanh 132 thay vì 88 (xem plpQuickRowHTML). -->
     <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex flex-col gap-2 pl-4 pr-2 pt-0 pb-2 backdrop-blur-[7.5px]">
+      ${plpQuickRowHTML()}
       <div class="flex items-center justify-between h-9">
         <p data-plp-count class="t-single text-foreground">${sortedProducts().length} sản phẩm</p>
         <div class="flex items-center">
@@ -8176,8 +8203,9 @@ const plpSkelCrumb = n => `
       ${skelLn(16, [52, 64, 72].slice(0, n).map(w => skelBar(w + 'px')).join(''), 16)}
     </div>`;
 const plpSkelBar = () => `
-    <!-- thanh lọc: hai hàng 36 khe 8 đệm 0/8 = 88 như thanh thật (không dính, không bấm) -->
+    <!-- thanh lọc: hai hàng 36 khe 8 đệm 0/8 = 88 như thanh thật (không dính, không bấm); PLP Làm đẹp có thêm hàng chip xương 36 + khe 8 ở ĐẦU thanh = 132 như thanh thật -->
     <div class="flex flex-col gap-2 pl-4 pr-2 pt-0 pb-2" aria-hidden="true">
+      ${plpSkelQuick()}
       <div class="flex items-center justify-between h-9">
         ${skelLn(16, skelBar('88px'))}
         <div class="flex items-center">
@@ -8188,6 +8216,12 @@ const plpSkelBar = () => `
         <div class="skel" style="width:98px;height:36px"></div>
         <div class="px-3">${skelLn(36, skelBar('64px'))}</div>
       </div>
+    </div>`;
+/* Hàng quick filter Làm đẹp (19/10/2026) — khung xương: 5 ô chip đúng số đo thật (74 · 114 · 83 · 116 · 103 × 36, khe 8, đệm 16 hai đầu; chip thứ tư là "Kem dưỡng tay" 116 từ 19/10 lần 2) để trang thật thay vào không tụt; PLP khác không có hàng này.
+   19/10 lần 3: nằm TRONG thanh xương (con đầu, khe 8 do gap-2) như hàng thật nằm trong thanh dính — xem plpSkelBar. */
+const plpSkelQuick = () => !isBeautyPlp() ? '' : `
+    <div class="plp-quick flex items-center gap-2 overflow-hidden shrink-0" aria-hidden="true">
+      ${[74, 114, 83, 116, 103].map(w => `<div class="skel shrink-0" style="width:${w}px;height:36px"></div>`).join('')}
     </div>`;
 const plpSkelGrid = () => {
   const one = plpGridCols === '1';
@@ -8617,6 +8651,7 @@ function screenPLP() {
          (xem chú thích dài ở screenPLPList): hàng đếm + đổi mật độ nay nằm TRONG
          thanh dính, không còn là khối rời cao 48 trôi mất khi cuộn. -->
     <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex flex-col gap-2 pl-4 pr-2 pt-0 pb-2 backdrop-blur-[7.5px]">
+      ${plpQuickRowHTML()}
       <div class="flex items-center justify-between h-9">
         <p data-plp-count class="t-single text-foreground">${sortedProducts().length} sản phẩm</p>
         <div class="flex items-center">
@@ -10269,6 +10304,9 @@ function screenACCOUNT(sk = false) {   // sk: khung xương THÂN TAB (mạng y�
       <button data-logout class="t-single underline text-foreground acc-logout shrink-0 press">Đăng xuất</button>
     </div>
 
+    <!-- 19/10/2026 (lần 3, user "có" cho câu "đồng bộ với desktop có gồm chân trang không?"): MOBILE bản thành viên có CHÂN TRANG như desktop. Hàng tab + thân được bọc MỘT khối riêng để hàng tab dính (sticky top-12)
+         chỉ dính trong khối này, không đè lên chân trang khi cuộn tới cuối. -->
+    <div>
     <!-- TABS ngang trên đầu (cuộn ngang) — lề 16, khe 24, kẻ về viền V2 #dfdfdf.
          Vạch đang-chọn nay do .acc-tab::after vẽ, không còn span riêng.
          28/09/2026 (lệnh user: "cái thanh bar ở account dùng background surface sticky nhé")
@@ -10289,6 +10327,9 @@ function screenACCOUNT(sk = false) {   // sk: khung xương THÂN TAB (mạng y�
     <div id="accBody" class="pt-6 pb-16">
       ${accountBody(sk)}
     </div>
+    </div>
+
+    ${footer()}
   </div>`;
 }
 
@@ -10541,8 +10582,6 @@ function accInfo() {
         ${accField('new2', 'Nhập lại mật khẩu mới', '', '', { type: 'password', auto: 'new-password' })}`,
         'save-pass', 'Lưu')
       : accCard([['Mật khẩu', null]], 'edit-pass')}
-
-      ${accEdit ? '' : accSecCards()}   ${/* 16/10/2026 (lô 4 · ACC-58): hai thẻ bảo mật CHỈ hiện ở chế độ xem, không hiện lúc đang mở form Sửa / Đổi mật khẩu / Đổi SĐT · email (tránh bày nút xoá tài khoản cạnh một form đang dở) */''}
 
       <!-- 21/09/2026 — THÊM TIÊU ĐỀ. Trước đó thẻ này là một hộp viền chỉ chứa
            đúng một ô tích, không nhãn — đứng cạnh 2 thẻ có nhãn rõ ràng thì nó đọc ra
@@ -10866,20 +10905,10 @@ function accInfoSkeleton() {
         ${ln(linkW)}
       </div>
     </div>`;
-  /* 16/10/2026 (lô 4 · ACC-58) — hai thẻ bảo mật mới: nhãn 20 + khe 8 + chú thích 2 dòng 16 (mobile) = thẻ 93, đúng thẻ thật. */
-  const sec = (labelW, notes, linkW) => `
-    <div class="acc-card">
-      <div class="acc-card-head">
-        <div class="acc-card-cols">${ln(labelW)}<div>${notes.map(w => skelLn(16, skelBar(w))).join('')}</div></div>
-        ${ln(linkW)}
-      </div>
-    </div>`;
   return `
     <div class="px-4 flex flex-col" data-acc-skeleton aria-busy="true" aria-hidden="true">
       ${card([84, 77, 155, 100, 199, 190], 27)}
       ${card([65], 27)}
-      ${sec(190, ['100%', '62%'], 61)}
-      ${sec(78, ['100%', '48%'], 27)}
     </div>
     <p class="skel-sr" role="status">Đang tải</p>`;
 }
@@ -11080,7 +11109,7 @@ function accAddressForm() {
       ${accField('astreet', 'Số nhà, tên đường', a.street || '', 'Ví dụ: 123 Đồng Khởi', { auto: 'street-address' })}
       <div class="pb-4">
         ${a.def || first
-          ? `<p class="t-multiline text-muted-foreground">Đây là địa chỉ mặc định của sổ.</p>`
+          ? `<p class="t-multiline text-muted-foreground">Địa chỉ mặc định</p>`
           : accCheck('addr-def-toggle', !!accDraft.def, 'Đặt làm địa chỉ mặc định')}
       </div>
       ${accFormBtns('save-addr', 'Lưu địa chỉ')}
@@ -11612,7 +11641,7 @@ const orderShipTimelineHTML = o => {
 
 /* 17/10/2026 (user: "cái chi tiết đơn hàng của khách check out as guest hiện layout như check out as member nhé" + "check out as guest thì không có điểm thưởng nhé") —
    MỘT bố cục cho cả hai: orderDetailHTML(o, guest). guest = false ⇒ màn Chi tiết đơn của THÀNH VIÊN (như trước). guest = true ⇒ BẢN KHÁCH = kết quả của màn Theo dõi đơn (khách chưa đăng nhập không vào được màn order, xem go()):
-   CÙNG các thẻ, CÙNG số đo; khác: KHÔNG có dải điểm tích luỹ (khách không có điểm thưởng) · nút lùi về ô tra cứu · có chân trang như mọi trang công khai · thêm cho khách (khối của lô 6, TRK-25 / TRK-26): hộp báo giao chậm / thất bại, thẻ vận chuyển (kem) trong thẻ Theo dõi,
+   CÙNG các thẻ, CÙNG số đo; khác: KHÔNG có dải điểm tích luỹ (khách không có điểm thưởng) · nút lùi về ô tra cứu · có chân trang như mọi trang công khai (19/10 lần 3: BẢN THÀNH VIÊN cũng có — đồng bộ desktop, khối đệm 40 trước chân trang) · thêm cho khách (khối của lô 6, TRK-25 / TRK-26): hộp báo giao chậm / thất bại, thẻ vận chuyển (kem) trong thẻ Theo dõi,
    thẻ phụ Lịch sử vận chuyển và nút Tra cứu đơn khác (khối "Cần hỗ trợ về đơn hàng?" ĐÃ GỠ 19/10). Nội dung đủ (hàng · giá · tổng tiền); thông tin của khách (SĐT · địa chỉ · hoá đơn) CHE khi khách chỉ GÕ mã ở ô tra cứu (19/10, xem trackMasked; KHÔNG có nút đăng nhập); luồng đặt hàng của chính khách và thành viên thấy đủ (stepper ngang thay bằng nút Theo dõi đơn hàng mở sheet tiến trình như thành viên). */
 function screenORDER() { return orderDetailHTML(ORDERS.find(x => x.id === currentOrder) || ORDERS[0], false); }
 function orderDetailHTML(o, guest) {
@@ -11723,7 +11752,7 @@ function orderDetailHTML(o, guest) {
       <div class="px-4 pt-6 pb-10"><button type="button" data-track-reset class="t-multiline w-full h-11 rounded-xs border border-border bg-background text-foreground btn-o press">Tra cứu đơn khác</button></div>` : '';
 
   return `
-  <div class="w-full min-h-screen bg-background${guest ? '' : ' pb-10'}"${guest ? ' data-scroller' : ''}>
+  <div class="w-full min-h-screen bg-background"${guest ? ' data-scroller' : ''}>
     <!-- 28/09/2026 (lượt "improve UI") — HEADER CHUNG thay thanh app bar riêng, cùng lý do màn Tài khoản (lệnh user: "vào account thì vẫn giữ cái header như mặc định"): chi tiết đơn là trang con của
          Tài khoản — vào đây mà mất logo, tìm kiếm, giỏ là lạc khỏi site. 01/10 tối (khung 1052:71145): lối lùi không còn là link chữ "‹ Đơn hàng" mà là NÚT MŨI TÊN đứng trước tiêu đề trong cùng một hàng, về đúng tab Đơn hàng. -->
     ${navBar()}
@@ -11808,16 +11837,16 @@ function orderDetailHTML(o, guest) {
       </div>${guestCta}
 
     </div>
-    <!-- 15/10/2026 (user: "cái nút sticky bên dưới bỏ ở mobile nhé") — THANH NÚT CHÍNH dính đáy (.ord-bar, từ 29/09) ĐÃ BỎ: đơn Chờ thanh toán chỉ còn MỘT nút "Thanh toán lại" trong thẻ Mã đơn (btnIn), như desktop. -->${guest ? footer() : ''}
+    <!-- 15/10/2026 (user: "cái nút sticky bên dưới bỏ ở mobile nhé") — THANH NÚT CHÍNH dính đáy (.ord-bar, từ 29/09) ĐÃ BỎ: đơn Chờ thanh toán chỉ còn MỘT nút "Thanh toán lại" trong thẻ Mã đơn (btnIn), như desktop. -->${guest ? '' : '<div class="h-10" aria-hidden="true"></div>'}${footer()}
   </div>`;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
    KHUNG XƯƠNG CHI TIẾT ĐƠN HÀNG (16/10/2026, lệnh user "tiến hành" sau câu "mấy cái skeleton làm hết chưa") — cùng cơ chế "Mạng yếu" của PLP · giỏ · PDP · Thanh toán · Tài khoản · Theo dõi đơn.
-   · screenOrderSkeleton — CẢ TRANG xương (đo 375 trên đơn đặt trước 1 món "Đang xử lý": navBar 48 · hàng tiêu đề 57 · thẻ đầu 278 · thẻ Theo dõi 96 · thẻ Sản phẩm 182 · tấm tổng 185 · đệm đáy 40 = 898):
+   · screenOrderSkeleton — CẢ TRANG xương (đo 375 trên đơn đặt trước 1 món "Đang xử lý": navBar 48 · hàng tiêu đề 57 · thẻ đầu 278 · thẻ Theo dõi 96 · thẻ Sản phẩm 182 · tấm tổng 185 · đệm đáy 40 = 898, chưa kể chân trang 880 từ 19/10):
      navBar + hàng tiêu đề (nút lùi về tab Đơn hàng + chữ "Chi tiết đơn hàng") là THẬT vì khung vỏ luôn có ngay; bốn thẻ là ô xám đúng bố cục thật, vẽ theo ĐƠN ĐANG MỞ (currentOrder) chỉ về SỐ ĐẾM — số dòng hàng · quà ·
      có / không mã vận đơn · nút Thanh toán lại · dải ghi chú · hàng điểm — nên cao bằng trang thật lúc đổ, không tụt. Không in chữ thật của đơn (khung xương không biết nội dung trước khi tải xong).
-     Không có chân trang (trang thật cũng không có). Mượn class THUẦN CSS của trang thật: `.ov-page` · `.ov-cards` · `.ov-card` · `.ov-hd` · `.ov-codes` · `.ov-rcv` · `.ov-addr` · `.ov-rows` · `.ov-row` · `.ov-awb` · `.ov-sum` · `.ov-sum-row` ·
+     Chân trang THẬT như trang thật (19/10 lần 3: thành viên cũng có chân trang; đệm đáy 40 nay là khối đệm h-10 trước chân trang). Mượn class THUẦN CSS của trang thật: `.ov-page` · `.ov-cards` · `.ov-card` · `.ov-hd` · `.ov-codes` · `.ov-rcv` · `.ov-addr` · `.ov-rows` · `.ov-row` · `.ov-awb` · `.ov-sum` · `.ov-sum-row` ·
      `.ov-points` · `.ov-divider` · `.bg-accent-0`; ô xám trên tấm tổng xám dùng `.skel-on`.
    · KHÔNG mang hook mà wire() nối ngoài nút lùi [data-atab] (vốn cần để thoát được lúc đang tải): không [data-ship-sheet] · [data-inv-sheet] · [data-repay] · [data-pdp] ….
    · ordSkelThenReal đổ screenORDER thật sau NET_WEAK_FIRST ms vào CHÍNH phần tử màn (token ordSkelTok). Đi vào từ danh sách đơn, từ cổng thanh toán (về chi tiết đơn) đều qua khung xương; Back không qua.
@@ -11884,7 +11913,7 @@ function screenOrderSkeleton(guest) {
         </div>` : '';
   const gCta = guest ? '<div class="px-4 pt-6 pb-10"><div class="skel" style="height:44px"></div></div>' : '';
   return `
-  <div class="w-full min-h-screen bg-background${guest ? '' : ' pb-10'}" ${guest ? 'data-scroller data-track-skeleton' : 'data-ord-skeleton'} aria-busy="true">
+  <div class="w-full min-h-screen bg-background" ${guest ? 'data-scroller data-track-skeleton' : 'data-ord-skeleton'} aria-busy="true">
     <p class="skel-sr" role="status">Đang tải</p>
     ${navBar()}
 
@@ -11936,7 +11965,7 @@ function screenOrderSkeleton(guest) {
           ${(cancel || guest) ? '' : `<div class="ov-points">${skelLn(20, skelBar('168px'))}${skelLn(20, skelBar('44px'))}</div>`}
         </div>${gHist}
       </div>${gCta}
-    </div>${guest ? footer() : ''}
+    </div>${guest ? '' : '<div class="h-10" aria-hidden="true"></div>'}${footer()}
   </div>`;
 }
 
@@ -13932,8 +13961,8 @@ function voucherTitle(v) {
 }
 
 /* 19/10/2026 (user: "không kiểm tra luôn mấy cái tra cứu, nhập mã đó luôn nha"): Kiểm lỗi nhập TẮT ⇒ gõ MÃ NÀO cũng nhận. Mã có trong kho thì dùng đúng ưu đãi của nó (bỏ qua hạn dùng · mức tối thiểu, xem voucherEligible);
-   mã lạ thì sinh ưu đãi TẠM "giảm 500,000đ" (nhóm Mã giảm giá, ẩn khỏi danh sách) để demo đi tiếp. Bật lại Kiểm lỗi nhập thì mã lạ không còn tra ra → tự rớt (valSimApply · pruneVouchers). */
-const voucherAdhoc = code => ({ code, group: 'promo', type: 'amount', amount: 500000, prog: 'MÃ GÕ TAY', hidden: true, adhoc: true });
+   mã lạ thì sinh ưu đãi TẠM "giảm 10%" trên tạm tính (nhóm Mã giảm giá, ẩn khỏi danh sách; 19/10 lần 2 user đồng ý đổi từ 500,000đ cố định sang 10% cho hợp mọi cỡ giỏ) để demo đi tiếp. Bật lại Kiểm lỗi nhập thì mã lạ không còn tra ra → tự rớt (valSimApply · pruneVouchers). */
+const voucherAdhoc = code => ({ code, group: 'promo', type: 'percent', pct: 10, prog: 'MÃ GÕ TAY', hidden: true, adhoc: true });
 const voucherByCode = code => VOUCHERS.find(v => v.code === code) || (code && valOff() ? voucherAdhoc(code) : undefined);
 /* Số sản phẩm ĐANG TICK (nhân số lượng) — điều kiện của nhóm "mua nhiều" */
 const cartSelectedQty = () => cartSelected().reduce((s, c) => s + (c.qty || 1), 0);
@@ -15691,7 +15720,8 @@ function authTabs(active) {
    nhập chứ không phải màn riêng, đúng bố cục brief. Cố ý không xác nhận email
    đó có tài khoản hay không (chữ "Nếu có tài khoản…") — tránh lộ email nào đã
    đăng ký. Mực/khung mượn nguyên khuôn banner đã có ở screenDONE (bg-accent-0);
-   dấu tích mượn đúng cách viewRegInfo báo "đã xác thực" (span.text-success). */
+   dấu tích mượn đúng cách viewRegInfo báo "đã xác thực" (span.text-success).
+   19/10/2026 (user: "ở tab đăng nhập bỏ cái chào mừng bạn trở lại"): BỎ dòng "Chào mừng bạn trở lại" đầu form — tab mở ra là vào thẳng ô Số điện thoại. */
 function viewLogin() {
   return `
   ${authTabs('login')}
@@ -15701,7 +15731,6 @@ function viewLogin() {
       <p class="t-multiline text-muted-foreground"><span class="text-success">✓</span> Nếu có tài khoản đăng ký với địa chỉ <b class="font-medium text-foreground">${forgotEmailSent}</b>, bạn sẽ nhận được email kèm theo đường link để đặt lại mật khẩu.</p>
     </div>` : ''}
     ${loginLocked ? authMsgHtml(LOGIN_LOCK_MSG) : ''}
-    <p class="t-multiline text-muted-foreground">Chào mừng bạn trở lại</p>
     <div class="flex flex-col gap-6">
       ${afield('Số điện thoại', 'type="tel" inputmode="tel" id="loginId"', 'Nhập số điện thoại')}
       ${afield('Mật khẩu', 'type="password"', 'Nhập mật khẩu',
@@ -15718,7 +15747,8 @@ function viewLogin() {
      · ô "Nhập mã OTP" (MỘT ô, 6 số, gợi ý mã SMS của điện thoại) ngay dưới;
      · nút Xác nhận → sang "Hoàn tất đăng ký".
    KHÔNG bê nguyên ảnh: bỏ ô chọn quốc gia (cờ + mũi tên) và dấu * bắt buộc — dự án không dùng (xem README 02/10, "không dấu sao").
-   View 'otp' (6 ô) chỉ còn cho Quên mật khẩu bằng SĐT. */
+   View 'otp' (6 ô) chỉ còn cho Quên mật khẩu bằng SĐT.
+   19/10/2026 (user: "ở tab đăng ký thì bỏ câu hãy sẵn sàng trải nghiệm …"): đoạn dẫn chỉ còn câu đầu "Để tận hưởng những ưu đãi độc quyền …"; câu "Hãy sẵn sàng trải nghiệm những đặc quyền …" BỎ khỏi tab Đăng ký và CẢ popup đăng nhập ở giỏ (khối "Chưa có tài khoản" chỉ còn tiêu đề; user: "popup đăng nhập ở giỏ cũng bỏ luôn câu đó"). */
 function viewRegister() {
   const sent = regOtpSent;
   return `
@@ -15726,7 +15756,6 @@ function viewRegister() {
   <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
     <div class="t-multiline flex flex-col gap-3" style="color:var(--unofficial-ghost-foreground)">
       <p>Để tận hưởng những ưu đãi độc quyền, Quý khách vui lòng sử dụng số điện thoại đã đăng ký chương trình Khách hàng thân thiết tại hệ thống cửa hàng DAFC khi mua sắm trực tuyến tại DAFC Online.</p>
-      <p>Hãy sẵn sàng trải nghiệm những đặc quyền mua sắm tuyệt vời chỉ dành riêng cho bạn!</p>
     </div>
     ${afield('Số điện thoại', `type="tel" inputmode="tel" id="regPhone" value="${authPhone.replace(/"/g, '&quot;')}"`, 'Nhập thông tin...', '', 'text-muted-foreground',
       `<button type="button" data-reg-send${sent ? ' disabled' : ''} class="btn-g fld-act text-foreground tracking-wide press">${sent ? 'Nhận lại mã (<span id="otpTimer">60</span>s)' : 'Gửi mã OTP'}</button>`)}
@@ -15843,7 +15872,7 @@ function viewRegSuccess() {
   </div>`;
 }
 
-/* ── 05 Reset Password (có thanh độ mạnh) ── */
+/* ── 05 Reset Password ── 19/10/2026 (user: "mật khẩu bỏ thanh đo độ mạnh yếu luôn"): BỎ thanh + dòng gợi ý độ mạnh (trước: "Độ mạnh mật khẩu:" + thanh 5 mức + gợi ý Yếu / Trung bình / Khá / Mạnh); còn đoạn luật "ít nhất 8 ký tự, chữ hoa, chữ thường và số". */
 function viewSetPass() {
   return `
   ${authNav('Đặt mật khẩu mới')}
@@ -15853,13 +15882,6 @@ function viewSetPass() {
     <div class="flex flex-col gap-5">
       ${afield('Mật khẩu mới', 'type="password" id="npass"', 'Nhập mật khẩu mới')}
       ${afield('Xác nhận mật khẩu mới', 'type="password"', 'Nhập lại mật khẩu mới')}
-    </div>
-    <div class="flex flex-col gap-2">
-      <p class="t-single text-muted-foreground">Độ mạnh mật khẩu:</p>
-      <div class="h-2 rounded-full bg-secondary overflow-hidden">
-        <div id="pwBar" class="h-full w-2/5 bg-warning rounded-full transition-all duration-300"></div>
-      </div>
-      <p id="pwHint" class="t-single text-muted-foreground">Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật</p>
     </div>
     ${abtn('Cập nhật mật khẩu', 'data-login-submit')}
     <button data-auth-go="login" class="t-multiline w-full h-11 rounded-xs border border-border bg-background text-foreground font-medium tracking-wide btn-o press">Huỷ</button>
@@ -19426,7 +19448,7 @@ let trackQuery = '', trackFound = null, trackErr = '';
 /* 19/10/2026 (user: "khách chỉ có mã đơn vào xem đơn thì sẽ che thông tin của khách nhé") — LUẬT CHE (thay phần "nội dung KHÔNG che" của 17/10):
    trackByCode = kết quả đến từ việc GÕ mã ở ô tra cứu (người chỉ có mã đơn, không có phiên đặt hàng / đăng nhập). Khi đó và CHƯA đăng nhập (trackMasked) thông tin của khách được che: SĐT chừa 3 số cuối · địa chỉ giữ hai đoạn cuối ·
    hoá đơn VAT chỉ còn LOẠI (hàng không mở sheet / ngăn kéo chi tiết). KHÔNG có dòng giải thích và KHÔNG có nút đăng nhập (19/10: user chọn phương án A bỏ nút, rồi bỏ luôn dòng "Kiểm tra email xác nhận để xem đầy đủ"): khách mua không tài khoản không có gì để đăng nhập, và đăng nhập / tạo tài khoản mới còn bỏ che được đơn của người khác (demo không kiểm chủ đơn). Tên người nhận · hàng · giá · tổng tiền vẫn hiện (luật "không tiền" của 16/09 đã bỏ từ 17/10).
-   Khách mở chi tiết đơn từ luồng ĐẶT HÀNG của chính mình (màn Hoàn tất · thẻ "Đơn … đã được đặt" · cổng thanh toán) và thành viên (ckAuth) thấy ĐỦ. Đặt false ở [data-track-open] · openOrderDetail, true ở [data-track-go] (gõ mã) · trackGearGo (đổi sang đơn mẫu). */
+   Khách mở chi tiết đơn từ luồng ĐẶT HÀNG của chính mình (màn Hoàn tất · thẻ "Đơn … đã được đặt" · cổng thanh toán) và thành viên (ckAuth) thấy ĐỦ. Đặt false ở [data-track-open] · openOrderDetail, true ở [data-track-go] (gõ mã) · trackGearGo (đổi sang đơn mẫu). 19/10 lần 3: THÀNH VIÊN gõ ĐÚNG mã đơn của mình ở [data-track-go] thì vào thẳng Chi tiết đơn (openOrderDetail) — không qua kết quả tra cứu. */
 let trackByCode = false;
 const trackMasked = () => !ckAuth && trackByCode;
 /* 01/10/2026 — đơn hỗn hợp tách hai đơn con nên mã có thể kèm hậu tố "-01" / "-02" (DAFC102990-01). Mã gốc không phải đơn: không tìm thấy. */
@@ -20336,8 +20358,8 @@ const I18N = {
   'Miễn phí vận chuyển cho đơn từ 20,000,000đ':'Free shipping on orders from 20,000,000đ', 'Chưa hỗ trợ giao hỏa tốc tới khu vực này':'Express delivery is not available for this area', 'DAFC chưa giao hàng tới khu vực này':'DAFC does not deliver to this area yet', 'DAFC chưa giao hàng tới khu vực của địa chỉ này. Hãy chọn địa chỉ khác.':'DAFC does not deliver to the area of this address yet. Please choose another address.', 'Theo quy tắc':'By rules', 'Có phí':'With fee', 'Ngoài vùng':'Out of area',
   /* 16/10/2026 — lô 5: Thanh toán (hết hàng lúc đặt · lý do thất bại · giỏ rỗng · bánh răng). */
   'Giỏ hàng của bạn đang trống':'Your shopping cart is empty', 'Còn hàng':'Available', 'Có sản phẩm vừa hết hàng':'An item has just gone out of stock', 'Sản phẩm trong đơn đã hết hàng':'The items in your order are out of stock', 'Thẻ của bạn đã hết hạn — vui lòng dùng thẻ khác. Tiền chưa bị trừ. Đơn':'Your card has expired — please use another card. Nothing has been charged. Order', 'Mã OTP không đúng hoặc đã hết hạn — vui lòng thử lại. Tiền chưa bị trừ. Đơn':'The OTP is incorrect or has expired — please try again. Nothing has been charged. Order', 'Giao dịch vượt hạn mức của thẻ — vui lòng dùng thẻ khác hoặc liên hệ ngân hàng. Tiền chưa bị trừ. Đơn':'The transaction exceeds your card limit — please use another card or contact your bank. Nothing has been charged. Order', 'Tài khoản không đủ số dư — vui lòng dùng thẻ khác. Tiền chưa bị trừ. Đơn':'Insufficient funds — please use another card. Nothing has been charged. Order', 'Hết hàng lúc đặt':'Out of stock at order', 'Lý do thất bại':'Failure reason', 'Chung':'Generic', 'Thẻ hết hạn':'Card expired', 'Sai OTP':'Wrong OTP', 'Hạn mức':'Over limit', 'Hết tiền':'No funds',
-  /* 16/10/2026 — lô 4: Tài khoản (đơn trống · điểm · địa chỉ đầy · đăng xuất mọi thiết bị · xoá tài khoản · bánh răng). */
-  'Đến giỏ hàng':'Go to your cart', 'Bạn chưa có đơn hàng nào':'You have no orders yet', 'Các đơn bạn đặt sẽ xuất hiện ở đây để bạn theo dõi.':'Orders you place will appear here so you can track them.', 'Chưa có giao dịch điểm':'No points activity yet', 'Mua sắm tại DAFC để tích điểm — mỗi 100.000 ₫ được 1 điểm.':'Shop at DAFC to earn points — every 100,000 ₫ earns 1 point.', 'Bạn chưa có điểm thưởng':'You have no reward points yet', 'Điểm thưởng sắp hết hạn':'Reward points expiring soon', 'Bạn đã lưu tối đa 10 địa chỉ. Hãy xoá bớt một địa chỉ để thêm địa chỉ mới.':'You have saved the maximum of 10 addresses. Delete one to add a new address.', 'Bạn đã lưu tối đa 10 địa chỉ':'You have saved the maximum of 10 addresses', 'Đăng xuất khỏi mọi thiết bị':'Sign out of all devices', 'Kết thúc phiên đăng nhập trên tất cả thiết bị, kể cả thiết bị này.':'End your sign-in on all devices, including this one.', 'Xoá tài khoản':'Delete account', 'Xoá vĩnh viễn tài khoản, điểm thưởng và lịch sử đơn hàng. Không thể khôi phục.':'Permanently delete your account, reward points and order history. This cannot be undone.', 'Bạn sẽ bị đăng xuất trên tất cả thiết bị, kể cả thiết bị này. Bạn cần đăng nhập lại để tiếp tục.':'You will be signed out on all devices, including this one. You will need to sign in again to continue.', 'Tài khoản, điểm thưởng và lịch sử đơn hàng sẽ bị xoá vĩnh viễn và không thể khôi phục. Các đơn đang xử lý hoặc đang giao vẫn được hoàn tất.':'Your account, reward points and order history will be permanently deleted and cannot be recovered. Orders being processed or delivered will still be completed.', 'Nhập mật khẩu để xác nhận':'Enter your password to confirm', 'Mật khẩu chưa đúng':'Incorrect password', 'Đã đăng xuất khỏi mọi thiết bị':'Signed out of all devices', 'Tài khoản đã được xoá':'Your account has been deleted', 'Đăng nhập để xem trong Tài khoản':'Sign in to see it in Account', 'Dữ liệu tài khoản':'Account data', 'Đầy đủ':'Full data', 'Khách mới':'New customer', 'Sắp hết hạn':'Expiring soon', '6 địa chỉ':'6 addresses', 'Đầy (10)':'Full (10)', 'Hạng thành viên':'Membership tier',
+  /* 16/10/2026 — lô 4: Tài khoản (đơn trống · điểm · địa chỉ đầy · bánh răng; hai thẻ bảo mật + hộp xác nhận của chúng đã bỏ 19/10/2026). */
+  'Đến giỏ hàng':'Go to your cart', 'Bạn chưa có đơn hàng nào':'You have no orders yet', 'Các đơn bạn đặt sẽ xuất hiện ở đây để bạn theo dõi.':'Orders you place will appear here so you can track them.', 'Chưa có giao dịch điểm':'No points activity yet', 'Mua sắm tại DAFC để tích điểm — mỗi 100.000 ₫ được 1 điểm.':'Shop at DAFC to earn points — every 100,000 ₫ earns 1 point.', 'Bạn chưa có điểm thưởng':'You have no reward points yet', 'Điểm thưởng sắp hết hạn':'Reward points expiring soon', 'Bạn đã lưu tối đa 10 địa chỉ. Hãy xoá bớt một địa chỉ để thêm địa chỉ mới.':'You have saved the maximum of 10 addresses. Delete one to add a new address.', 'Bạn đã lưu tối đa 10 địa chỉ':'You have saved the maximum of 10 addresses', 'Đăng nhập để xem trong Tài khoản':'Sign in to see it in Account', 'Dữ liệu tài khoản':'Account data', 'Đầy đủ':'Full data', 'Khách mới':'New customer', 'Sắp hết hạn':'Expiring soon', '6 địa chỉ':'6 addresses', 'Đầy (10)':'Full (10)', 'Hạng thành viên':'Membership tier',
   /* 16/10/2026 — lô 3: kiểm ô VAT · khoảng giá · phiếu mua hàng. */
   'Nhập địa chỉ':'Enter your address', 'Nhập email nhận hóa đơn VAT':'Enter the email for the VAT invoice', 'Nhập tên công ty':'Enter the company name', 'Nhập địa chỉ công ty':'Enter the company address', 'Nhập mã số thuế':'Enter the tax code', 'Mã số thuế gồm 10 hoặc 13 số':'Tax code must be 10 or 13 digits', 'Còn thiếu thông tin hóa đơn VAT':'Some VAT invoice details are missing', 'Giá “Từ” không được lớn hơn giá “Đến”':'The “From” price cannot be higher than the “To” price', 'Phiếu mua hàng không hợp lệ':'Invalid voucher', 'Phiếu mua hàng đã hết hạn':'This voucher has expired', 'Phiếu mua hàng đã được sử dụng':'This voucher has already been used', 'Phiếu mua hàng đã được áp dụng':'This voucher is already applied', 'Phiếu mua hàng':'Voucher', 'Hợp lệ':'Valid', 'Sai mã':'Wrong code', 'Hết hạn':'Expired', 'Đã dùng':'Used',
   'Thanh toán không thành công':'Payment failed', 'Phiên thanh toán đã hết hạn':'Payment session expired',
@@ -20434,7 +20456,7 @@ const I18N = {
 
   // ── Tài khoản / đăng nhập ──
   'Đăng nhập':'Sign in', 'Đăng ký':'Sign up', 'Đăng ký ngay':'Sign up now', 'Đăng xuất':'Sign out',
-  'Đăng nhập tài khoản':'Account sign-in', 'Chào mừng bạn trở lại':'Welcome back',
+  'Đăng nhập tài khoản':'Account sign-in',
   'Chưa có tài khoản?':'Don’t have an account?', 'Đã có tài khoản?':'Already have an account?',
   'Chưa có tài khoản':'Don’t have an account',
   'Xuất hoá đơn VAT':'VAT invoice', 'Không xuất hoá đơn':'No invoice',
@@ -20459,12 +20481,10 @@ const I18N = {
   'Đặt mật khẩu mới':'Set a new password', 'Mật khẩu mới':'New password', 'Nhập mật khẩu mới':'Enter new password',
   'Xác nhận mật khẩu mới':'Confirm new password', 'Nhập lại mật khẩu mới':'Re-enter new password',
   'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.':'Password must be at least 8 characters with uppercase, lowercase and a number.',
-  'Độ mạnh mật khẩu:':'Password strength:', 'Cập nhật mật khẩu':'Update password',
-  'Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật':'Medium — add a special character to strengthen it',
+  'Cập nhật mật khẩu':'Update password',
   'Đăng nhập thành công':'Signed in successfully', 'Đăng ký thành công':'Account created',
   'Chào mừng bạn đến với DAFC Online,':'Welcome to DAFC Online,',
   'Để tận hưởng những ưu đãi độc quyền, Quý khách vui lòng sử dụng số điện thoại đã đăng ký chương trình Khách hàng thân thiết tại hệ thống cửa hàng DAFC khi mua sắm trực tuyến tại DAFC Online.':'To enjoy exclusive privileges, please use the phone number registered with the DAFC loyalty program at our stores when shopping online at DAFC Online.',
-  'Hãy sẵn sàng trải nghiệm những đặc quyền mua sắm tuyệt vời chỉ dành riêng cho bạn!':'Get ready to enjoy wonderful shopping privileges reserved just for you!',
   'Nhập thông tin...':'Enter details...', 'Gửi mã OTP':'Send OTP code',
   'số điện thoại của bạn':'your phone number', 'thay đổi số điện thoại':'change phone number',
   'Nhận lại mã':'Resend code', 'Nhận lại mã (':'Resend code (',
@@ -20537,7 +20557,6 @@ const I18N = {
   'Duy trì hạng thành viên':'Maintain membership tier', 'Thăng hạng':'Upgrade to', 'Hạng cao nhất':'Highest tier', 'HẠNG THÀNH VIÊN':'MEMBERSHIP TIER', 'ĐIỀU KIỆN HẠNG':'TIER REQUIREMENTS', 'Địa chỉ mặc định':'Default address',
   'Xoá địa chỉ này?':'Delete this address?', 'Sửa địa chỉ':'Edit address',
   'Đặt làm địa chỉ mặc định':'Set as default address',
-  'Đây là địa chỉ mặc định của sổ.':'This is the default address in your book.',
   'Sổ địa chỉ đang trống. Thêm một địa chỉ để lần đặt hàng sau không phải nhập lại.':'Your address book is empty. Add one so you never have to type it again at checkout.',
   'Tỉnh / thành phố':'Province / city', 'Phường / xã':'Ward',
   'Đã thêm địa chỉ':'Address added', 'Đã lưu địa chỉ':'Address saved',
@@ -20796,6 +20815,7 @@ const I18N = {
   // ── Làm đẹp: cây danh mục 2 cấp (Filter - Beauty cate demo.xlsx) ──
   // EN = nguyên văn cột Category / Product Type trong file.
   'Tắm & dưỡng thể':'Bath & body', 'Sữa tắm':'Bath & shower gel',
+  'Danh mục nhanh':'Quick categories',   // 19/10/2026: nhãn nhóm của hàng quick filter Làm đẹp (mobile) cho trình đọc màn hình
   'Sữa tắm dạng refill':'Bath & shower gel refill', 'Chai Infinite':'Infinite bottle',
   'Sữa dưỡng thể':'Body lotion', 'Kem dưỡng thể (refill được)':'Body cream (refillable)',
   'Tẩy tế bào chết cơ thể':'Body scrub / body polisher', 'Dầu tắm & muối tắm':'Bathing oil / bath salts',
@@ -21463,7 +21483,6 @@ const I18N = {
   'Khi giới thiệu khách hàng mới':'When you refer a new client',
   'Khu vực áp dụng':'Where it applies',
   'Khu vực áp dụng giao hàng hỏa tốc: Chỉ áp dụng tại một số khu vực quận huyện tại Hồ Chí Minh và Hà Nội (Chi tiết xem tại đây).':'Express delivery area: available only in selected districts of Ho Chi Minh City and Ha Noi (see the details here).',
-  'Khá - Thêm ký tự đặc biệt để mạnh hơn':'Fair - add a special character to make it stronger',
   'Khách hàng có quay video xuyên suốt từ lúc mở kiện hàng còn nguyên vẹn cho tới khi trên tay sản phẩm thực tế.':'The customer has filmed the whole unboxing, from the sealed parcel to the item in hand.',
   'Khách hàng được hỗ trợ đổi sản phẩm theo các điều kiện quy định dưới đây:':'Customers may exchange an item under the conditions set out below:',
   'Khách nhận tại cửa hàng':'Collect in store',
@@ -21493,7 +21512,6 @@ const I18N = {
   'Phiên thanh toán chỉ có hiệu lực 15 phút. Tiền chưa bị trừ — thanh toán lại đơn':'The payment session is valid for 15 minutes only. Nothing has been charged — pay again for order',
   'Mã đơn gồm chữ DAFC và 6 chữ số, ví dụ DAFC103015.':'An order number is DAFC followed by 6 digits, for example DAFC103015.',
   'Mạ kim loại đồng mang phong cách vintage':'Vintage-style brass-plated hardware',
-  'Mạnh - Mật khẩu tốt':'Strong - a good password',
   'Mặt ngoài phối chi tiết kim loại':'Metal detail on the outside',
   'Mặt trong phối nhãn cờ in logo thương hiệu':'Inside flag label printed with the house logo',
   'Mặt trong đính con dấu phủ film cùng túi dẹp':'Film-covered stamp inside, with a flat pouch',
@@ -21675,7 +21693,6 @@ const I18N = {
   'Xếp ly dày tạo độ phồng':'Dense pleating for volume',
   'Yêu cầu bên thuê vận chuyển thanh toán đủ cước phí vận chuyển đúng thời hạn.':'Require the shipper to pay the full freight charge on time.',
   'Yêu cầu bên vận chuyển chuyên chở hàng hoá đến đúng địa điểm, thời điểm đã thỏa thuận.':'Require the carrier to deliver the goods to the agreed place at the agreed time.',
-  'Yếu - Cần ít nhất 8 ký tự':'Weak - at least 8 characters needed',
   'khả dụng (1 điểm = 1.000đ)':'available (1 point = 1,000đ)',   // 02/10/2026: vế sau của dòng "N điểm khả dụng (1 điểm = 1.000đ)" dưới ô nhập điểm (vế đầu "N điểm" đi luật số điểm có sẵn); thay khoá 'khả dụng cho order này' đã hết chỗ dùng
   'phiếu mua hàng':'gift voucher',
   'vẫn đang chờ thanh toán.':'is still awaiting payment.',
@@ -22393,7 +22410,7 @@ function setPickLabel(btn, value, placeholder) {
    KHÔNG đụng: kết cục "từ máy chủ" đã có công tắc riêng (Đăng nhập sai / khoá · Mã OTP sai / hết hạn · Phiếu mua hàng hết hạn / đã dùng · Hết hàng lúc đặt · Thanh toán thất bại · Ngoài vùng giao) và các chốt chặn nghiệp vụ
    (giỏ rỗng · số điện thoại / email đã có tài khoản · mã ưu đãi không tồn tại). Mọi chỗ kiểm đọc valOff(); đổi công tắc xoá luôn lỗi đang hiện trên màn (valSimApply).
    19/10/2026 (user: "không kiểm tra luôn mấy cái tra cứu, nhập mã đó luôn nha"): TẮT cũng bỏ kiểm ở TRA CỨU và NHẬP MÃ — tra cứu đơn hàng gõ gì / để trống cũng ra một đơn (trackAnyOrder); ô Mã giảm giá nhận mọi mã (kho: bỏ qua hạn dùng · mức tối thiểu ·
-   "đã áp dụng"; mã lạ: ưu đãi tạm 500,000đ — voucherAdhoc); ô Phiếu mua hàng không chặn mã trùng. Kết cục có công tắc riêng (pbhSim · loginSim · otpSim · oosSim …) GIỮ NGUYÊN. */
+   "đã áp dụng"; mã lạ: ưu đãi tạm 10% tạm tính — voucherAdhoc); ô Phiếu mua hàng không chặn mã trùng. Kết cục có công tắc riêng (pbhSim · loginSim · otpSim · oosSim …) GIỮ NGUYÊN. */
 let valSim = 'off';   // 'on' | 'off' — MẶC ĐỊNH 'off' (Tắt) từ 19/10/2026: muốn kiểm lỗi nhập thì bật công tắc
 const valOff = () => valSim === 'off';
 function valSimApply() {
@@ -23127,8 +23144,7 @@ function sessionClose() {
      "Sắp hết hạn" = hạn dùng đặt về hôm nay + 14 ngày.
    · ACC-22 (nửa còn lại) — sổ địa chỉ có TRẦN ADDR_MAX = 10 (ĐỀ XUẤT): đủ thì nút "Thêm địa chỉ mới" vô hiệu kèm một câu giải thích; ở checkout nút "+ Thêm địa chỉ mới" báo toast thay vì mở form;
      bánh răng "Đầy (10)" thêm 4 địa chỉ mẫu vào 6 địa chỉ có sẵn.
-   · ACC-58 — tab Thông tin thêm hai thẻ: "Đăng xuất khỏi mọi thiết bị" và "Xoá tài khoản" → hộp thoại xác nhận giữa màn (khuôn `modal-popup` như hộp hết phiên, #confirmPop); xoá tài khoản bắt nhập mật khẩu
-     (rỗng → "Nhập mật khẩu để xác nhận"; bánh răng Đăng nhập = "Sai mật khẩu" → "Mật khẩu chưa đúng"; còn lại qua). Xong: đăng xuất, toast, về trang chủ. Chưa có cổng "Mất mạng" cho hai nút xác nhận này. */
+   · ACC-58 — hai thẻ bảo mật "Đăng xuất khỏi mọi thiết bị" + "Xoá tài khoản" và hộp xác nhận (accConfirm) ĐÃ BỎ 19/10/2026 (user: "2 cái này bỏ ra nha"); #confirmPop + CSS .sess-* vẫn dùng cho hộp thoại của Theo dõi đơn (lô 6). */
 const ADDR_MAX = 10;
 const addrIsFull = () => ADDRESSES.length >= ADDR_MAX;
 const TIER_DEMO_SPEND = { member: 30000000, gold: 142500000, platinum: 420000000, diamond: 1150000000 };
@@ -23161,19 +23177,6 @@ const accEmptyHTML = (title, desc, cta) => `
       <p class="t-multiline text-muted-foreground">${desc}</p>
       ${cta ? `<button data-plp-home class="t-multiline h-12 px-5 rounded-xs border border-primary bg-background text-foreground btn-o press">${cta}</button>` : ''}
     </div>`;
-const accSecCard = (label, note, act, link, danger) => `
-    <div class="acc-card">
-      <div class="acc-card-head">
-        <div class="acc-card-cols">
-          <p class="t-lead min-w-0 truncate text-foreground">${label}</p>
-          <p class="t-single text-muted-foreground">${note}</p>
-        </div>
-        <button type="button" data-acc="${act}" class="t-lead acc-card-link${danger ? ' is-danger' : ''} press">${link}</button>
-      </div>
-    </div>`;
-const accSecCards = () =>
-  accSecCard('Đăng xuất khỏi mọi thiết bị', 'Kết thúc phiên đăng nhập trên tất cả thiết bị, kể cả thiết bị này.', 'logout-all', 'Đăng xuất') +
-  accSecCard('Xoá tài khoản', 'Xoá vĩnh viễn tài khoản, điểm thưởng và lịch sử đơn hàng. Không thể khôi phục.', 'del-acc', 'Xoá', true);
 function setMemberTier(id) { MEMBER_TIER = id; MEMBER_SPEND = TIER_DEMO_SPEND[id]; tierOpen = id; }
 function accDemoApply(part) {
   const cl = o => JSON.parse(JSON.stringify(o));
@@ -23192,48 +23195,6 @@ function accGearGo(tab, sub) {
   if (!ckAuth) { toast('Đăng nhập để xem trong Tài khoản'); return; }
   accountTab = tab; memberView = sub || ''; accResetForms();
   go('account', { force: true });
-}
-function accConfirm(kind) {
-  const del = kind === 'delete';
-  const old = document.getElementById('confirmPop'); if (old) old.remove();
-  document.body.insertAdjacentHTML('beforeend', `
-    <div id="confirmPop" class="fixed inset-0 z-[230] pointer-events-none" aria-hidden="true">
-      <div class="sess-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
-      <div class="sess-card" role="alertdialog" aria-modal="true" aria-labelledby="confTitle">
-        <p id="confTitle" class="sess-title t-overlay font-medium text-foreground">${del ? 'Xoá tài khoản' : 'Đăng xuất khỏi mọi thiết bị'}</p>
-        <p class="t-multiline text-secondary-foreground">${del ? 'Tài khoản, điểm thưởng và lịch sử đơn hàng sẽ bị xoá vĩnh viễn và không thể khôi phục. Các đơn đang xử lý hoặc đang giao vẫn được hoàn tất.' : 'Bạn sẽ bị đăng xuất trên tất cả thiết bị, kể cả thiết bị này. Bạn cần đăng nhập lại để tiếp tục.'}</p>
-        ${del ? `<div><div class="field-float"><input id="confPass" type="password" autocomplete="current-password" placeholder=" " class="t-multiline bg-background border rounded-xs px-2 text-foreground outline-none focus:border-primary transition-colors"><label for="confPass" class="text-muted-foreground">Mật khẩu</label></div></div>` : ''}
-        <div class="sess-foot">
-          <button type="button" data-conf="no" class="t-multiline h-10 px-4 rounded-xs border border-border font-medium text-foreground btn-o press flex items-center justify-center">Huỷ</button>
-          <button type="button" data-conf="ok" class="t-multiline h-10 px-4 rounded-xs ${del ? 'bg-destructive btn-d' : 'bg-primary btn-p'} text-primary-foreground font-medium press flex items-center justify-center">${del ? 'Xoá tài khoản' : 'Đăng xuất'}</button>
-        </div>
-      </div>
-    </div>`);
-  const pop = document.getElementById('confirmPop');
-  const close = () => { pop.classList.remove('open'); pop.setAttribute('aria-hidden', 'true'); unlockBodyScroll(); setTimeout(() => pop.remove(), 260); };
-  const ok = () => {
-    if (del) {
-      const inp = pop.querySelector('#confPass');
-      clearFieldErr(inp);
-      if (!inp.value && !valOff()) { setFieldErr(inp, 'Nhập mật khẩu để xác nhận'); inp.focus(); return; }
-      if (loginSim === 'wrong') { setFieldErr(inp, 'Mật khẩu chưa đúng'); inp.focus(); return; }
-    }
-    close();
-    ckAuth = false;
-    toast(del ? 'Tài khoản đã được xoá' : 'Đã đăng xuất khỏi mọi thiết bị');
-    go('home', { force: true });
-  };
-  pop.querySelector('[data-conf="no"]').addEventListener('click', close);
-  pop.querySelector('.sess-backdrop').addEventListener('click', close);
-  pop.querySelector('[data-conf="ok"]').addEventListener('click', ok);
-  if (del) {
-    const inp = pop.querySelector('#confPass');
-    inp.addEventListener('input', () => clearFieldErr(inp));
-    inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ok(); } });
-  }
-  localizeNew(pop);
-  requestAnimationFrame(() => { pop.classList.add('open'); pop.setAttribute('aria-hidden', 'false'); });
-  lockBodyScroll();
 }
 
 /* ══ LÔ 2 — XÁC THỰC (16/10/2026): AUT-12 · 13 · 18 · 20 · 23 · 35 · 39 + ACC-13 ═══════════════════════════════════════════════════════════
@@ -23784,9 +23745,6 @@ function wireAccount(root) {
     }
 
     /* ── Sổ địa chỉ ── */
-    /* ── Đăng xuất mọi thiết bị · Xoá tài khoản (16/10/2026, lô 4 · ACC-58) ── */
-    if (act === 'logout-all') { accConfirm('logout'); return; }
-    if (act === 'del-acc')    { accConfirm('delete'); return; }
     if (act === 'addr-new') {
       if (addrIsFull()) { toast('Bạn đã lưu tối đa 10 địa chỉ'); return; }   // 16/10/2026 (lô 4 · ACC-22)
       accResetForms(); addrEdit = 'new'; accDraft = { province: '', ward: '', def: false };
@@ -24000,6 +23958,7 @@ function wire(root) {
   root.querySelectorAll('[data-track-open]').forEach(el => {
     el.addEventListener('click', () => {
       const id = el.dataset.trackOpen;
+      if (ckAuth) { openOrderDetail(id); return; }   // 19/10/2026: cùng luật với link đáy ngăn kéo — thành viên về CHI TIẾT ĐƠN, chỉ khách mở kết quả tra cứu
       trackQuery = id;
       const r = trackLookup(id);
       trackFound = r.order || null;
@@ -24014,6 +23973,9 @@ function wire(root) {
       trackQuery = inp ? inp.value : '';
       const run = () => {
         const r = trackLookup(trackQuery);
+        /* 19/10/2026 (user: "nếu trùng thì đưa vào"): THÀNH VIÊN gõ ĐÚNG mã một đơn trong danh sách của mình → vào thẳng CHI TIẾT ĐƠN (cùng luật với link "Theo dõi vận đơn"). So mã gõ với mã đơn (không lấy kết quả thay thế của
+           Kiểm lỗi nhập TẮT: mã dở dang → đơn đầu khớp, mã lạ → đơn mẫu); mã lạ / dở dang vẫn ra kết quả tra cứu như khách. */
+        if (ckAuth && r.order && ORDERS.some(x => x.id === r.order.id) && String(trackQuery || '').trim().toUpperCase() === r.order.id.toUpperCase()) { openOrderDetail(r.order.id); return; }
         trackFound = r.order || null;
         trackErr = r.err || '';
         trackByCode = true;   // 19/10/2026: chỉ có mã đơn ⇒ che thông tin của khách (xem trackMasked)
@@ -24328,19 +24290,6 @@ function wire(root) {
       startCountdown();
       rBtn.addEventListener('click', () => { if (!rBtn.disabled) { otpFails = 0; toast('Đã gửi lại mã OTP'); startCountdown(); } });
     }
-  }
-
-  // Độ mạnh mật khẩu (view reset)
-  const npass = root.querySelector('#npass'), pwBar = root.querySelector('#pwBar'), pwHint = root.querySelector('#pwHint');
-  if (npass && pwBar) {
-    npass.addEventListener('input', () => {
-      const v = npass.value; let sc = 0;
-      if (v.length >= 8) sc++; if (/[A-Z]/.test(v) && /[a-z]/.test(v)) sc++; if (/[0-9]/.test(v)) sc++; if (/[^A-Za-z0-9]/.test(v)) sc++;
-      const pct = ['w-1/5','w-2/5','w-3/5','w-4/5','w-full'][sc];
-      const col = sc <= 1 ? 'bg-destructive' : sc <= 2 ? 'bg-warning' : sc <= 3 ? 'bg-warning' : 'bg-emerald-500';
-      pwBar.className = 'h-full ' + pct + ' ' + col + ' rounded-full transition-all duration-300';
-      pwHint.textContent = sc <= 1 ? 'Yếu - Cần ít nhất 8 ký tự' : sc <= 2 ? 'Trung bình - Thêm ký tự đặc biệt để tăng độ bảo mật' : sc <= 3 ? 'Khá - Thêm ký tự đặc biệt để mạnh hơn' : 'Mạnh - Mật khẩu tốt';
-    });
   }
 
   // Xác nhận OTP -> đăng ký: sang điền thông tin; quên mật khẩu: sang đặt mật khẩu mới
@@ -25413,6 +25362,18 @@ function wire(root) {
     apply();
     bToggle.addEventListener('click', () => { open = !open; apply(); });
   }
+
+  // quick filter Làm đẹp (mobile, 19/10/2026) -> PLP chế độ danh mục; chip ĐANG XEM (aria-current) chỉ cuộn khi bị che (cách mép khung nhìn < 16): nằm sẵn trong khung thì giữ hàng ở đầu
+  root.querySelectorAll('[data-qf]').forEach(b =>
+    b.addEventListener('click', () => goPlp({ type: 'category', title: b.dataset.qf, crumbs: (b.dataset.qfCrumbs || '').split('|').filter(Boolean) })));
+  const qfRow = root.querySelector('#plpQuick');
+  if (qfRow) requestAnimationFrame(() => {
+    const on = qfRow.querySelector('[aria-current]');
+    if (!on) return;
+    const rr = qfRow.getBoundingClientRect(), br = on.getBoundingClientRect();
+    if (br.right > rr.right - 16) qfRow.scrollLeft += br.right - rr.right + 16;
+    else if (br.left < rr.left + 16) qfRow.scrollLeft -= rr.left + 16 - br.left;
+  });
 
   // category cards -> PLP chế độ danh mục
   root.querySelectorAll('[data-cate]').forEach(b =>
@@ -27875,7 +27836,6 @@ document.body.insertAdjacentHTML('beforeend', `
         <div class="flex flex-col gap-6">
           <div class="flex flex-col gap-4">
             <p class="t-section-title text-foreground">Chưa có tài khoản</p>
-            <p class="t-multiline text-secondary-foreground">Hãy sẵn sàng trải nghiệm những đặc quyền mua sắm tuyệt vời chỉ dành riêng cho bạn!</p>
           </div>
           <div class="flex flex-col gap-3">
             <button id="lpRegister" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-medium btn-p press flex items-center justify-center">Tạo tài khoản</button>
@@ -28436,8 +28396,10 @@ document.body.insertAdjacentHTML('beforeend', `
     if (!e.target.closest('[data-shp-track]')) return;
     const id = curId;
     closeSH();
+    /* 19/10/2026 (user, câu hỏi "Thành viên bấm Theo dõi vận đơn nên ra bản tra cứu hay Chi tiết đơn?": "chi tiết đơn"): THÀNH VIÊN không sang bản tra cứu của khách (màn track) — về CHI TIẾT ĐƠN của chính đơn đó (openOrderDetail);
+       đứng sẵn ở Chi tiết đơn thì màn dựng lại từ đầu trang. KHÁCH vẫn mở kết quả tra cứu như cũ (trackByCode giữ nguyên cờ của lần vào). */
+    if (ckAuth) { openOrderDetail(id); return; }
     trackQuery = id;
-    if (ckAuth) trackByCode = false;   // 19/10/2026: thành viên là chủ đơn; khách đang xem kết quả gõ mã thì giữ nguyên cờ
     const r = trackLookup(id);
     trackFound = r.order || null;
     trackErr = r.err || '';
