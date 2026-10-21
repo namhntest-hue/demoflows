@@ -5203,6 +5203,22 @@ Lệnh user (trả lời câu hỏi lần 18): "dùng cái giống filter chip �
 - **Sửa doc**: `[doc] Search · mobile 375` "Vừa tìm kiếm (5 chip)" → "5 hàng, mỗi hàng có nút ✕" (code là hàng `search-row`). Báo cáo `_notes/FIGMA-SYNC-LUOT-139-2026-10-21.md`, sổ kê `_notes/figx/lot139-ledger-2026-10-21.json`.
 - **CHỜ user**: icon ✕ của `filter-chip` 12 px, code 16 px (chip PLP ở Figma hẹp hơn 4 px) — nâng 12 → 16? · 2 hàng thô ở khung cũ `1243:73566` (PROTECT).
 
+### Thẻ đơn mobile: dải ảnh CUỘN NGANG, lộ mép ảnh thứ 4 theo khung của user (21/10/2026, lần 20, CHỈ index.html + Figma)
+Lệnh user: link khung `order-card` `1124:84179` + "trong danh sách đơn hàng, hãy hiển thị theo thiết kế của tôi để đảm bảo khi có nhiều hơn 3 sản phẩm có thể thấy mấp mé 1 thẻ tiếp theo để biết mà scroll nhé".
+- **Khung**: dải ảnh FILL + cắt, ảnh 75 × 100 khe **2** (trước 8), khe tới cột tiền **8** (trước 16); thẻ -01 4 ảnh ⇒ dải 239 lộ **8px** ảnh thứ 4.
+- **Code**: CSS `.ord-card-body` / `.ord-thumbs` / `.ord-thumb` (cuộn ngang, ẩn thanh cuộn, ảnh > 3 món giữ 75, ≤ 3 món vẫn co đều khi hẹp); `orderThumbs` = mọi món, `orderThumbsBox` đeo `drag-x` khi > 3 món (kéo chuột); danh sách đơn con của Theo dõi đơn dùng chung. Đo 375: mép 7,3px (-01) / 8,0px (103048), kéo chuột + chặn click sau kéo, 31 màn 0 lỗi. Sao lưu `index.html.truoc-the-don-dai-anh-cuon-2026-10-21`.
+- **Dữ liệu mẫu**: bộ gốc tối đa 3 món ⇒ bánh răng **"Đơn hàng → Nhiều sản phẩm"** (-01 → 4 món, `DA000000103048` → 6 món, nước hoa 100ml, tổng cộng đúng). Mặc định không đổi.
+- **Figma lượt 140**: đồng bộ 3 khung do mình dựng (xương `1408:100769` + Theo dõi `1503:245674` / `1503:245951`: khe 2 / 8, ảnh 75, dải FILL cắt; cao khung không đổi); khung user `1124:84098` KHÔNG đụng; `spacing-snap.js` KEEP `product-thumbnails` (khe 2). Báo cáo `_notes/FIGMA-SYNC-LUOT-140-2026-10-21.md`, sổ kê `_notes/figx/lot140-ledger-2026-10-21.json`, ghi chú `_notes/ORDERS-LIST-CARD-2026-09-30.md` §19, case `ACC-61`.
+- **CHỜ user**: 11 thẻ còn lại ĐÃ ÁP (lần 21) · badge 28 (khung) ⇒ thẻ 200 ↔ code 24 ⇒ 196 · mặc định giữ công tắc hay thêm món thứ 4 vào -01 · cố định dải 239 để mép luôn 8px? · desktop có cần mép / cuộn?
+
+### Figma: 11 thẻ đơn còn lại · đối chiếu Search mobile · menu ĐÃ ĐĂNG NHẬP (21/10/2026, lần 21, CHỈ Figma — code không đổi)
+Lệnh user: "áp luôn 11 thẻ còn lại bên figma nhé" · "với trạng thái search của mobile đã sync đầy đủ chưa" · "rồi menu đã đăng nhập đã sync chưa sao tôi k thấy".
+- **11 thẻ đơn** khung user `1124:84098`: khe 2 / 8 + dải FILL cắt, 0 khác biệt cấu trúc so với thẻ user; cao khung không đổi.
+- **Search mobile**: đối chiếu 14 trạng thái (11 khung lớp tìm kiếm + PLP kết quả + PLP không kết quả + 2 khung Bộ lọc giới tính) — CHỮ khớp 100%; cao khớp (±1) trừ 2 chỗ −4 px do token spacing. Đã sửa tiêu đề khung PLP "không có kết quả" (2 dòng → cắt 1 dòng như code, 1 256 → 1 224). Chưa vẽ: gõ 1 ký tự · ký tự đặc biệt · EN.
+- **Menu đã đăng nhập**: trước đó CHƯA có khung. Thêm component `menu-account-row` + 4 khung (Men · Beauty · Women đã đăng nhập; Women khách — tab Nữ là mặc định của code mà Figma thiếu); 6 trạng thái drawer khớp code (chữ 0 khác biệt, cao 812). Sitemap "Drawer menu (mobile)" 9 → 14 khung.
+- Báo cáo `_notes/FIGMA-SYNC-LUOT-141-2026-10-21.md`, sổ kê `_notes/figx/lot141-ledger-2026-10-21.json`.
+- **CHỜ user**: mũi tên menu-row Figma 8,5 ↔ code 12 px · hai lệch 4 px do token · vẽ thêm trạng thái Search chưa có.
+
 ## Vấn đề tồn đọng / cần quyết định tiếp
 
 - ~~Ảnh sản phẩm thật từ CDN DAFC bị chặn~~ → **ĐÃ XONG cho mobile (07/08/2026)**: CDN `cdn.dafc.com.vn` truy cập được, đã tải ~80 ảnh thật về `assets/` (`pN-*.jpg`, `x*.jpg`, `b*.jpg`, `g2.jpg`) và thay toàn bộ placeholder trong `index.html`. Desktop.html cũng đã dùng bộ ảnh thật này từ 10/08/2026.
