@@ -362,6 +362,15 @@ window.RESP = (function () {
   /* ── Menu full-screen: nội dung trượt nhẹ khi đổi cấp/tab ── */
   @keyframes msIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
   .ms-view { animation: msIn .22s ease both; }
+  /* 21/10/2026 — HÀNG LỜI CHÀO "Chào, {tên}" ở đáy menu (chỉ khi ĐÃ đăng nhập), theo khung user vẽ tay
+     `Menu / mobile · drawer level 1 (Women) · signed in` 1573:140287 rồi user chốt: "hàng Chào là tôi demo
+     dùng font libre đó, tôi thấy ok, bạn cho áp dụng vào code luôn nhé".
+       · chữ = Libre Bodoni 14/20 · 400 · giãn chữ .5 = text style Figma `t-card-title` (cỡ 14/20 do `.t-lead`
+         trong markup cấp; ở đây CHỈ cấp mặt chữ + giãn chữ, như `.pc-brand` / `.hm-story-title`). Mặt chữ khoanh
+         `skin-li` như mọi dòng Libre khác;
+       · hàng KHÔNG có kẻ viền: khung của user có nét `border-subtle` ở đầu hàng nhưng user đã TẮT nó
+         (`strokes[0].visible = false`), nên hàng chỉ cao 60 = đệm 20 + dòng 20 + đệm 20. */
+  html.skin-mt.skin-li .ms-greet { font-family: var(--font-head); font-weight: 400; letter-spacing: .5px; }
 
   /* ── Inter cho PDP6 (thử nghiệm font) ── */
   .font-inter, .font-inter * { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
@@ -7534,6 +7543,12 @@ const money = n => n.toLocaleString('en-US').replace(/,/g, ',') + 'đ';
    mega "Thương hiệu" ở desktop; mỗi hãng bấm vào ra data-plp-brand -> trang của chính hãng, riêng Molton Brown ra HUB (BRAND_HUBS). */
 const MENU_BRANDS = ['A.P.C.','BALMAIN','Burberry','Christian Louboutin','DAFC','Dolce&Gabbana','Emporio Armani','FERRAGAMO','Gianvito Rossi','MCM','MessyWeekend','MISBHV','Molton Brown','Montblanc','Moschino','Moschino Jeans','MSGM','Palm Angels','PAUL&SHARK','Santoni','Stand Oil','Stefano Ricci','TUMI','Versace','Versace Jeans Couture','ZIMMERMANN'];
 const MENU_BRAND_SUB = { title:'Thương hiệu', all:'Tất cả thương hiệu', items:MENU_BRANDS, login:true };
+/* 21/10/2026 (lệnh user, kèm ảnh danh sách 26 hãng, gạch đỏ 6 hãng: "brands bên beauty chỉ có mấy cái mà tôi gạch đỏ phía trước thôi nhé"):
+   ngành LÀM ĐẸP có danh sách thương hiệu RIÊNG gồm 6 hãng — Christian Louboutin · Dolce&Gabbana · MCM · Molton Brown · Montblanc · Versace
+   (giữ đúng thứ tự chữ cái của MENU_BRANDS). Nam / Nữ vẫn dùng đủ 26 hãng. Dùng ở: menu cấp 2 "Thương hiệu" của Làm đẹp (MENU_DATA bên dưới)
+   + panel mega "Thương hiệu" khi dkDept = 'Làm đẹp'. Mỗi hãng vẫn bấm ra data-plp-brand như cũ. */
+const MENU_BEAUTY_BRANDS = ['Christian Louboutin','Dolce&Gabbana','MCM','Molton Brown','Montblanc','Versace'];
+const MENU_BEAUTY_BRAND_SUB = { title:'Thương hiệu', all:'Tất cả thương hiệu', items:MENU_BEAUTY_BRANDS, login:true };
 /* Nhóm "Bộ sưu tập mới" trong submenu Sản phẩm mới — DATA THẬT từ menu
    shop.dafc.com.vn (10/08/2026), dùng chung cho tab Nam & Nữ.
    {header} = tiêu đề nhóm (không bấm được), render riêng trong submenu. */
@@ -7635,7 +7650,7 @@ const MENU_DATA = {
      dịch (tên bộ sưu tập nước hoa giữ nguyên gốc) — bản dịch EN nằm ở I18N.
      ⚠ FILTER_CATS nhánh Làm đẹp (bộ lọc PLP) VẪN là cây cũ, chưa theo sheet này. */
   'Làm đẹp': { home:'Trang chủ làm đẹp', cats:[
-    ['Thương hiệu', MENU_BRAND_SUB],
+    ['Thương hiệu', MENU_BEAUTY_BRAND_SUB],
     ['Sản phẩm mới', null],
     ['Chăm sóc cơ thể & tóc', menuBeautySub('Chăm sóc cơ thể & tóc', 'Tất cả chăm sóc cơ thể & tóc', [
       ['Sữa tắm','Sữa tắm','Sữa tắm dạng refill','Chai Infinite','Sữa dưỡng thể','Kem dưỡng thể (refill được)','Tẩy tế bào chết cơ thể','Dầu tắm & muối tắm'],
@@ -27241,6 +27256,16 @@ document.body.insertAdjacentHTML('beforeend', `
       <span class="t-multiline flex-1 min-w-0 text-left font-medium text-foreground truncate">${label}</span>
       <span class="w-3 h-3 flex items-center justify-center shrink-0 [&_svg]:w-3 [&_svg]:h-3">${I.chevR('var(--general-muted-foreground)')}</span>
     </button>`;
+  /* 21/10/2026 — hàng LỜI CHÀO khi ĐÃ đăng nhập (user vẽ lại ở Figma 1573:140287, rồi chốt "áp dụng vào code luôn"):
+     cùng khuôn utilRow (icon 16 · khe 12 · chữ · chevron 12 · đệm 16/20) nhưng chữ là Libre Bodoni 14/20 (`.t-lead` + `.ms-greet`,
+     thay `t-multiline` 12/18 Inter · font-medium) ⇒ hàng cao 60 (trước 58), và KHÔNG còn vỏ py-1 ôm ngoài (xem chỗ gọi) ⇒ khối đáy
+     60 (trước 66). Không viền (user tắt nét viền trong khung). Không sửa utilRow: các hàng tiện ích khác giữ Inter 12/18. */
+  const greetRow = () => `
+    <button data-nav="account" class="w-full flex items-center gap-3 px-4 py-5 press">
+      <span class="w-4 h-4 flex items-center justify-center shrink-0 [&_svg]:w-4 [&_svg]:h-4">${I.user}</span>
+      <span class="ms-greet t-lead flex-1 min-w-0 text-left text-foreground truncate">Chào, ${PROFILE.name}</span>
+      <span class="w-3 h-3 flex items-center justify-center shrink-0 [&_svg]:w-3 [&_svg]:h-3">${I.chevR('var(--general-muted-foreground)')}</span>
+    </button>`;
   /* Cục tài khoản ở đáy menu (đổi 17/08/2026, yêu cầu user):
      · CHƯA đăng nhập -> tiêu đề mute "Tài khoản" + 2 NÚT cỡ Regular (h-9 theo
        component Button của Figma): "Đăng nhập" đặc, "Đăng ký" viền. Trước đó chỉ
@@ -27256,7 +27281,7 @@ document.body.insertAdjacentHTML('beforeend', `
      lại, nên khách sửa tên ở tab Thông tin thì lời chào đổi theo. Bản EN đi bằng luật
      trong I18N_RE (chuỗi có tên người nên không làm khoá tĩnh được). */
   const loginRow = () => ckAuth
-    ? utilRow(I.user, 'Chào, ' + PROFILE.name, 'data-nav="account"')
+    ? greetRow()
     : `
     <!-- 21/09/2026 (brief PDF trang 45: "Sign In / Register chung 1 CTA => Drive về
          cùng cái màn log in account") — gộp CẶP nút Đăng ký / Đăng nhập thành MỘT.
@@ -27398,7 +27423,7 @@ document.body.insertAdjacentHTML('beforeend', `
           ${d.cats.map(([label, sub], i) => row(label, sub ? `data-ms-sub="${i}"` : catAttrs(label, [menuTab]))).join('')}
         </div>
         <!-- Vùng tiện ích ghim đáy — tài khoản là TÍNH NĂNG, tách khỏi nhóm danh mục -->
-        <div class="shrink-0 py-1">
+        <div class="shrink-0${ckAuth ? '' : ' py-1'}">
           ${loginRow()}
         </div>` + langBar();
     wire();

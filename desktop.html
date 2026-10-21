@@ -9467,6 +9467,12 @@ const money = n => n.toLocaleString('en-US').replace(/,/g, ',') + 'đ';
    riêng Molton Brown ra HUB (BRAND_HUBS). */
 const MENU_BRANDS = ['A.P.C.','BALMAIN','Burberry','Christian Louboutin','DAFC','Dolce&Gabbana','Emporio Armani','FERRAGAMO','Gianvito Rossi','MCM','MessyWeekend','MISBHV','Molton Brown','Montblanc','Moschino','Moschino Jeans','MSGM','Palm Angels','PAUL&SHARK','Santoni','Stand Oil','Stefano Ricci','TUMI','Versace','Versace Jeans Couture','ZIMMERMANN'];
 const MENU_BRAND_SUB = { title:'Thương hiệu', all:'Tất cả thương hiệu', items:MENU_BRANDS, login:true };
+/* 21/10/2026 (lệnh user, kèm ảnh danh sách 26 hãng, gạch đỏ 6 hãng: "brands bên beauty chỉ có mấy cái mà tôi gạch đỏ phía trước thôi nhé"):
+   ngành LÀM ĐẸP có danh sách thương hiệu RIÊNG gồm 6 hãng — Christian Louboutin · Dolce&Gabbana · MCM · Molton Brown · Montblanc · Versace
+   (giữ đúng thứ tự chữ cái của MENU_BRANDS). Nam / Nữ vẫn dùng đủ 26 hãng. Dùng ở: menu cấp 2 "Thương hiệu" của Làm đẹp (MENU_DATA bên dưới)
+   + panel mega "Thương hiệu" khi dkDept = 'Làm đẹp'. Mỗi hãng vẫn bấm ra data-plp-brand như cũ. */
+const MENU_BEAUTY_BRANDS = ['Christian Louboutin','Dolce&Gabbana','MCM','Molton Brown','Montblanc','Versace'];
+const MENU_BEAUTY_BRAND_SUB = { title:'Thương hiệu', all:'Tất cả thương hiệu', items:MENU_BEAUTY_BRANDS, login:true };
 const MENU_NEW_COLLECTIONS = [
   { header: 'Bộ sưu tập mới' },
   'MCM: Meet the AW26',
@@ -9565,7 +9571,7 @@ const MENU_DATA = {
      dịch (tên bộ sưu tập nước hoa giữ nguyên gốc) — bản dịch EN nằm ở I18N.
      ⚠ FILTER_CATS nhánh Làm đẹp (bộ lọc PLP) VẪN là cây cũ, chưa theo sheet này. */
   'Làm đẹp': { home:'Trang chủ làm đẹp', cats:[
-    ['Thương hiệu', MENU_BRAND_SUB],
+    ['Thương hiệu', MENU_BEAUTY_BRAND_SUB],
     ['Sản phẩm mới', null],
     ['Chăm sóc cơ thể & tóc', menuBeautySub('Chăm sóc cơ thể & tóc', 'Tất cả chăm sóc cơ thể & tóc', [
       ['Sữa tắm','Sữa tắm','Sữa tắm dạng refill','Chai Infinite','Sữa dưỡng thể','Kem dưỡng thể (refill được)','Tẩy tế bào chết cơ thể','Dầu tắm & muối tắm'],
@@ -9765,6 +9771,10 @@ const DK_MEGA_FIXED = {
   'Làm đẹp|Dành cho nam': ['megamenu-mb-men-2.jpg', 'megamenu-mb-men-3.jpg'],
   'Làm đẹp|Hương thơm không gian': ['megamenu-mb-home-fragrance.jpg'],
   'Làm đẹp|Bộ sưu tập': ['megamenu-mb-collection-1.jpg', 'megamenu-mb-collection-2.jpg'],   // 08/10: Collection 1 + 2 (Drive, vuông 594/681 — cắt dọc 3:4 theo ô)
+  /* 21/10/2026 (user: "dồn thương hiệu thành 1 hàng, và dùng layout 2 hình của menu, và hình thứ 2 là hình này nhé"): panel "Thương hiệu" của Làm đẹp = 1 cột chữ + 2 hình dọc.
+     Hình 1 = ảnh Molton Brown có sẵn của trang chủ Làm đẹp (user chưa chỉ định — thay file khác thì đổi tên ở đây); hình 2 = ảnh sơn móng Christian Louboutin user gửi (399x501),
+     đặt tên theo VỊ TRÍ: megamenu-beauty-01-b.jpg (mục menu Làm đẹp số 1 = Thương hiệu, hậu tố -b = hình thứ 2). */
+  'Làm đẹp|Thương hiệu': ['home-beauty-category-02.jpg', 'megamenu-beauty-01-b.jpg'],
 };
 function dkMegaImages(item, ncols) {
   const k = `${dkDept}|${item.label}`;
@@ -9819,9 +9829,12 @@ function dkMegaPanel(item, id) {
        3 cột chữ = 4 cột, cộng ảnh thành 5, không vừa lưới 4 cột. Cột 1 mang
        luôn tiêu đề + "Tất cả thương hiệu" nên 2 cột sau phải `pt-6` cho thẳng
        hàng với dòng chữ đầu của cột 1. */
-    nc = 3;
-    const n = 3, split = [[], [], []];
-    MENU_BRANDS.forEach((b, i) => split[i % n].push(b));
+    /* 21/10/2026: Làm đẹp chỉ 6 hãng (MENU_BEAUTY_BRANDS) ⇒ dồn vào MỘT cột chữ như các panel Làm đẹp khác, ảnh = 2 hình dọc ở cột 3-4 (DK_MEGA_FIXED 'Làm đẹp|Thương hiệu');
+       Nam / Nữ giữ 26 hãng chia 3 cột + 1 hình. `nc` / `ncols` = số cột chữ (quyết định cách đặt ảnh, xem dkMegaImages). */
+    const n = dkDept === 'Làm đẹp' ? 1 : 3;
+    nc = n; ncols = n;
+    const split = Array.from({ length: n }, () => []);
+    (dkDept === 'Làm đẹp' ? MENU_BEAUTY_BRANDS : MENU_BRANDS).forEach((b, i) => split[i % n].push(b));
     const brandAttrs = b => `data-nav="plp" data-plp-brand="${b}"`;   // 02/09: mỗi hãng dẫn về trang của chính nó
     cols = `
       ${dkMegaCol('Thương hiệu', 'Tất cả thương hiệu', 'data-nav="plp"', split[0], brandAttrs)}
