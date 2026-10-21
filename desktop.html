@@ -16206,6 +16206,11 @@ function addToCart(d = {}) {
     });
   }
   syncCartBadge(true);
+  /* 21/10/2026 (user báo bug) — đang đứng ở màn GIỎ mà có món vào (thêm nhanh từ dải "Gợi ý cho bạn" của giỏ TRỐNG) thì vẽ LẠI màn.
+     Trước đây màn vẫn là "Giỏ hàng trống" dù chấm đếm đã lên 1, còn nút "Xem giỏ hàng" của tấm "Đã thêm" (go('cart')) bị chốt cùng-màn
+     nuốt — phải sang trang khác rồi quay lại mới thấy món. Về ĐẦU trang vì món mới đứng đầu giỏ (CART.unshift). Chỗ gọi khác (PDP) đứng
+     ở màn khác nên không chạm tới nhánh này. */
+  if (current === 'cart') { rerenderCart(null, true); scrollToTopUnderLock(); }
 }
 /* Chấm đếm nói theo CART chứ không tự `cartQty++` — một nguồn, hết cảnh số trên
    icon lệch số dòng trong giỏ. Giữ đúng nghĩa cũ = SỐ DÒNG (refreshCartCount
@@ -25430,6 +25435,12 @@ function unlockBodyScroll() {
     window.scrollTo(0, __scrollLockY);
   }
 }
+/* Đưa trang về ĐẦU (21/10/2026). Đang có lớp khoá cuộn (body fixed + top âm) thì window.scrollTo vô tác dụng: phải đổi cả toạ độ sẽ
+   khôi phục khi mở khoá (__scrollLockY) lẫn `top` đang áp. Không khoá thì cuộn thường. */
+function scrollToTopUnderLock() {
+  if (__scrollLockCount > 0) { __scrollLockY = 0; document.body.style.top = '0px'; }
+  else window.scrollTo(0, 0);
+}
 /* ── Chặn bấm 2 lần khi nút đang "loading" ──
    10 handler trước đây gán spinner vào innerHTML rồi setTimeout 700ms mà KHÔNG
    disabled, nên bấm 2 lần là chạy 2 lần (đặt 2 đơn, gửi 2 OTP...). Giờ state
@@ -28812,10 +28823,10 @@ function cartEmptyHTML() {
    mà refreshCartAll() không lo được vì nó chỉ cập nhật các con số.
    Cùng khuôn với rerenderCheckout()/rerenderLogin() đã có. KHÔNG dùng
    go('cart', {force:true}) vì lượt đó trả trang về đầu. */
-function rerenderCart(root) {
+function rerenderCart(root, toTop) {
   if (!root) root = document.querySelector('[data-screen="cart"]');
   if (!root || !root.querySelector('#cartList')) return;
-  const y = curScrollY();
+  const y = toTop ? 0 : curScrollY();   // toTop: vừa có món MỚI đứng đầu danh sách (addToCart) — đứng yên chỗ cũ là không thấy nó
   scrollCleanups.forEach(fn => fn());
   scrollCleanups = [];
   root.innerHTML = RENDER.cart();
