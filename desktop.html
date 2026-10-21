@@ -1365,6 +1365,9 @@ window.RESP = (function () {
   .tc-name-grp { display: flex; flex-direction: column; gap: 1px; }
   .tc-cap { font-size: 10px; line-height: 14px; letter-spacing: .5px; text-transform: uppercase; color: var(--tl); }
   .tc-name { font-family: var(--font-head); font-size: 32px; line-height: 40px; letter-spacing: .7px; color: var(--ts); }
+  /* 21/10/2026 (user nhìn Figma: "2 cái bộ chữ hạng member này cho màu giống nhau nhé, lấy cái màu ở dưới chi tiết làm chuẩn"): TÊN HẠNG ở thẻ hạng dùng ĐÚNG màu tên hạng của "Chi tiết hạng thành viên" (`.tier-hero` = --ta, mực nhấn)
+     thay vì --ts (mực chính): Gold #2a180f → #4f330a · Platinum #1c2226 → #3d4850 · Member #fff7f8 → #f6ccd3 · Diamond #fffaf7 → #ffe6dc. CHỈ tên hạng (`.tc-name-grp .tc-name`): thẻ Lịch sử điểm (`.ph-card`) cũng mượn `.tc-name` cho SỐ DƯ điểm nhưng đứng ngoài `.tc-name-grp` nên GIỮ --ts. */
+  .tc-name-grp .tc-name { color: var(--ta); }
   .tc-pts { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 120px; text-align: right; }   /* 09/10/2026 (desktop): width 120 → min-width 120 — dòng hạn điểm 10px một hàng rộng ~131, cột giãn theo thay vì tràn */
   .tc-pts .tc-cap { text-transform: none; }   /* 09/10/2026: "Điểm tích lũy" chữ thường như khung 1273:81953; .tc-cap của thẻ Tóm tắt (.ph-card) không nằm trong .tc-pts nên vẫn in hoa */
   .tc-pts-val { font-family: var(--font-head); font-size: 24px; line-height: 32px; letter-spacing: .5px; color: var(--ts); }
@@ -1386,7 +1389,9 @@ window.RESP = (function () {
   .faq-list { list-style: disc; padding-left: 18px; }
   .faq-list li + li { margin-top: 4px; }
   /* Desktop riêng: tên GOLD lớn đi gradient vàng của Figma (mobile để màu phẳng #d7be91). */
-  .tier-face-gold .tier-hero { background-image: linear-gradient(150deg, #7a5416, #3d290b); -webkit-background-clip: text; background-clip: text; color: transparent; }   /* 09/10/2026: nền Gold nay champagne SÁNG nên chữ gradient đảo từ vàng nhạt sang nâu đồng đậm (trước #e1cfb8 → #c7a67f) */
+  .tier-face-gold .tier-hero,
+  .tier-card.tier-face-gold .tc-name-grp .tc-name { background-image: linear-gradient(150deg, #7a5416, #3d290b); -webkit-background-clip: text; background-clip: text; color: transparent; }   /* 09/10/2026: nền Gold nay champagne SÁNG nên chữ gradient đảo từ vàng nhạt sang nâu đồng đậm (trước #e1cfb8 → #c7a67f) */
+  /* 21/10/2026: tên hạng GOLD ở THẺ hạng đi cùng gradient với tên GOLD ở Chi tiết hạng (user: hai chữ cùng màu, lấy màu ở Chi tiết làm chuẩn). */
   /* ── LỊCH SỬ ĐIỂM THƯỞNG (brief trang 57, 28/09/2026) ──
      Thẻ tóm tắt MẶC ÁO THẺ HẠNG (tier-card + tier-face-{hạng}): nền và mực lấy từ biến
      --tl / --ts của hạng — đúng ghi chú brief "màu chỗ này theo màu của hạng thành viên",
@@ -5582,10 +5587,6 @@ window.RESP = (function () {
      và KHÔNG chép dòng "nền trong suốt": thẻ ưu đãi nằm trên dải xám của cột tóm tắt, bỏ nền là lộ xám, thẻ đổi sắc chứ không đổi viền. Chuyển động viền 0,2s do .opt có sẵn. CHỈ DESKTOP: mobile không có hover thanh toán. */
   [data-screen="cart"] #rewardOpts .opt:not(.on):hover,
   #giftSheet .opt:not(.on):hover { border-color: var(--unofficial-border-5); }
-  /* 15/10/2026 — ô ưu đãi KHÔNG KHẢ DỤNG (giỏ không còn dòng nào dùng được ưu đãi đó): radio + tên mờ, con trỏ cấm, ô nhập điểm ẩn; dòng lý do .reward-off giữ mực mờ thường để còn đọc được. KHAI GIỐNG HỆT 2 FILE. */
-  [data-screen="cart"] #rewardOpts .opt.is-off > [data-reward] { cursor: not-allowed; }
-  [data-screen="cart"] #rewardOpts .opt.is-off > [data-reward] :is(.radio, .dk-reward-name) { opacity: .45; }
-  [data-screen="cart"] #rewardOpts .opt.is-off #pointsInputWrap { display: none; }
   /* ── 2 TITLE CỦA CỤM ƯU ĐÃI = NHÃN NHÓM (24/08/2026, port từ index.html) ────────
      Concept "title + nội dung" cho cả 2 khối ưu đãi: title lên bậc nhãn của bộ da
      (12/16 · 500 · HOA — cùng bậc nhãn footer/menu/bộ lọc), nội dung giữ họ nội dung.
@@ -14516,15 +14517,15 @@ const accFormBtns = (saveAct, saveLabel) => `
    value === null = CHỈ nhãn, không ":" (thẻ Mật khẩu, 25/09 user bỏ dãy chấm).
    ⚠ Nhãn phải là NÚT CHỮ RIÊNG, dấu ":" nằm ngoài: applyLang tra I18N khớp NGUYÊN
    chuỗi, dính "Họ và tên:" là bản EN hết dịch. */
-const accCardItem = (label, value, act = '') => `
-        <p class="t-lead min-w-0 truncate">${value === null ? `<span class="text-foreground">${label}</span>` : `<span class="text-foreground"><span>${label}</span>:</span> <span class="text-secondary-foreground">${value || '—'}</span>`}${act ? ` <button type="button" data-acc="${act}" class="t-single underline text-foreground press">Đổi</button>` : ''}</p>`;
+const accCardItem = (label, value) => `
+        <p class="t-lead min-w-0 truncate">${value === null ? `<span class="text-foreground">${label}</span>` : `<span class="text-foreground"><span>${label}</span>:</span> <span class="text-secondary-foreground">${value || '—'}</span>`}</p>`;
 
 /* Thẻ ĐÓNG. editAct rỗng = thẻ chỉ để đọc, không vẽ đường "Sửa".
    29/09/2026 — nhãn "Chỉnh sửa" + link nằm DƯỚI các dòng (khung user 734:52984, CSS .acc-info). */
 const accCard = (items, editAct = '', note = '') => `
     <div class="acc-card">
       <div class="acc-card-head">
-        <div class="acc-card-cols">${items.map(x => accCardItem(x[0], x[1], x[2])).join('')}</div>
+        <div class="acc-card-cols">${items.map(x => accCardItem(x[0], x[1])).join('')}</div>
         ${editAct ? `<button type="button" data-acc="${editAct}" class="t-lead acc-card-link press">Chỉnh sửa</button>` : ''}
       </div>
       ${note ? `<p class="t-single text-muted-foreground acc-card-note">${note}</p>` : ''}
@@ -14550,23 +14551,8 @@ const accCardOpen = (title, bodyHtml, saveAct, saveLabel) => `
         <button type="button" data-acc="${saveAct}" class="t-multiline w-[280px] h-12 mt-2 bg-primary text-primary-foreground btn-p press">${saveLabel}</button>
       </div>
     </div>`;
-/* ── ĐỔI SỐ ĐIỆN THOẠI / EMAIL (16/10/2026, ACC-13) ───────────────────────────────────────────────────────────────────────────────────────
-   Brief trang 47 khoá 4 mục (ngày sinh · giới tính · SĐT · email) — GIỮ nguyên ô khoá trong form Sửa; thêm đường RIÊNG, có xác thực: link "Đổi" ở hàng Số điện thoại / Email của thẻ Thông tin
-   bung thẻ "Đổi số điện thoại" / "Đổi email" thay chính thẻ đó (cùng khuôn accCardOpen như form Sửa / Đổi mật khẩu): bước 1 nhập giá trị mới + "Gửi mã OTP" → bước 2 nhập mã OTP + "Xác nhận"
-   → cập nhật PROFILE, toast. Mã OTP theo công tắc "Mã OTP" của bánh răng (xem otpSimPass). accEdit = 'phone' | 'email', accDraft = { step: 'new' | 'otp', value }. Việc này khách chốt có mở khoá không — demo cho xem trước. */
-function accChangeCard() {
-  const isPhone = accEdit === 'phone';
-  const title = isPhone ? 'Đổi số điện thoại' : 'Đổi email';
-  if ((accDraft.step || 'new') === 'new') return accCardOpen(title, `
-        <p class="t-multiline text-muted-foreground pb-4">${isPhone ? 'Chúng tôi sẽ gửi mã OTP tới số điện thoại mới để xác thực.' : 'Chúng tôi sẽ gửi mã OTP tới email mới để xác thực.'}</p>
-        ${isPhone ? accField('phone', 'Số điện thoại mới', '', '', { type: 'tel', mode: 'tel', auto: 'tel' }) : accField('email', 'Email mới', '', '', { type: 'email', mode: 'email', auto: 'email' })}`,
-    'chg-send', 'Gửi mã OTP');
-  return accCardOpen(title, `
-        <p class="t-multiline text-muted-foreground pb-4">Mã OTP đã được gửi tới <b class="font-medium text-foreground">${accDraft.value}</b></p>
-        ${accField('otp', 'Nhập mã OTP', '', '', { mode: 'numeric', auto: 'one-time-code' })}
-        <p class="t-single text-muted-foreground pb-4">Chưa nhận được mã? <button type="button" data-acc="chg-resend" class="text-foreground underline press">Nhận lại mã</button></p>`,
-    'chg-verify', 'Xác nhận');
-}
+/* 21/10/2026 (user: "bỏ tôi cái luồng đổi sđt với email nhé, quay về như lúc trước không cho đổi") — ĐÃ GỠ luồng ĐỔI SỐ ĐIỆN THOẠI / EMAIL (16/10/2026, ACC-13): hàm accChangeCard (thẻ 2 bước giá trị mới → OTP),
+   link "Đổi" ở hàng Số điện thoại / Email, các act chg-*, cổng mạng của 2 nút và các khoá EN riêng. Về đúng hiện trạng trước 16/10: Số điện thoại + Email CHỈ ĐỌC (khoá cả trong form Sửa, theo brief trang 47). */
 function accInfo() {
   return `
     <div class="flex flex-col acc-info">
@@ -14575,7 +14561,7 @@ function accInfo() {
            không có — chia theo "sửa được / không sửa được". Nay chia theo VIỆC: tất
            cả là thông tin định danh của một người nên đi chung một khung, phần nào
            khoá thì câu chú dưới khung nói rõ. */''}
-      ${(accEdit === 'phone' || accEdit === 'email') ? accChangeCard() : accEdit === 'info' ? accCardOpen('Cập nhật thông tin', `
+      ${accEdit === 'info' ? accCardOpen('Cập nhật thông tin', `
         ${/* 30/09/2026 (user: "đổi nút Cập nhật thành Lưu luôn nhé", sau khi nút form Đổi mật khẩu đã đổi "Lưu") — CHỈ nhãn nút;
              tiêu đề thẻ vẫn "Cập nhật thông tin". Hai nút lưu trong thẻ nay cùng một nhãn. EN cũ của nút là "Updated" (khoá
              'Cập nhật' thuộc dòng "Cập nhật <ngày>" ở trang chính sách), nay thành "Save". */''}
@@ -14595,8 +14581,8 @@ function accInfo() {
           ['Tên',           PROFILE.first],
           ['Ngày sinh',     PROFILE.dob],
           ['Giới tính',     PROFILE.gender],
-          ['Số điện thoại', PROFILE.phone, 'chg-phone'],
-          ['Email',         PROFILE.email, 'chg-email'],
+          ['Số điện thoại', PROFILE.phone],
+          ['Email',         PROFILE.email],
         ], 'edit-info')}
 
       ${accEdit === 'pass' ? accCardOpen('Đổi mật khẩu', `
@@ -16256,15 +16242,12 @@ let cartReward = 'points';       // 'member' | 'points'
    cùng biến/hàm). */
 let cartPointsUsed = REWARD_POINTS;
 let cartPtsPrevMax = -1;          // trần điểm của lượt tính trước — để biết trần vừa đi từ 0 lên lại
-/* 15/10/2026 (user: *"làm thêm mấy trạng thái không khả dụng khi dùng điểm và không khả dụng khi dùng ưu đãi thành viên"* + *"đơn có 1 sản phẩm đặt trước và các sản phẩm thường thì tách ra 2 đơn có 2 mã đơn"*)
-   — HÀNG ĐẶT TRƯỚC KHÔNG DÙNG ĐƯỢC ĐIỂM THƯỞNG LẪN ƯU ĐÃI THÀNH VIÊN (cùng luật "đặt trước không giảm giá" chốt 03/09). Một dòng giỏ có thể bị loại riêng khỏi từng ưu đãi
-   bằng cờ c.noPoints / c.noMember (mặc định: chỉ hàng đặt trước). rewardBase(kind) = tạm tính CHỈ GỒM các dòng đang tick còn dùng được ưu đãi đó — nền tính 10% (điểm) và 4% (thành viên). */
-const rewardAllowed = (c, kind) => !(c.preorder || (kind === 'points' ? c.noPoints : c.noMember));
-const rewardBase = kind => cartSelected().reduce((n, c) => rewardAllowed(c, kind) ? n + vndNum(c.now) * (c.qty || 1) : n, 0);
+/* 21/10/2026 (user: "bỏ cái edge case này nhé" — ảnh dòng giỏ hàng đặt trước ghi đỏ "Không khả dụng khi dùng điểm") — ĐÃ GỠ luật 15/10 "hàng đặt trước không dùng được điểm thưởng lẫn ưu đãi thành viên":
+   rewardAllowed · rewardBase · cờ c.noPoints / c.noMember · ghi chú đỏ trên dòng giỏ · hai ô ưu đãi mờ. Mọi dòng đang tick lại góp vào nền 10% (điểm) và 4% (thành viên) như trước 15/10, tức là cartSubtotal(). */
 function maxUsablePoints() {
-  return Math.min(REWARD_POINTS, Math.floor(rewardBase('points') * 0.10 / REWARD_POINT_VALUE));
+  return Math.min(REWARD_POINTS, Math.floor(cartSubtotal() * 0.10 / REWARD_POINT_VALUE));
 }
-/* 15/10/2026 — kẹp số điểm đang dùng theo trần MỚI, và NÂNG LẠI về trần khi trần vừa đi từ 0 lên (giỏ chỉ còn hàng đặt trước rồi tick lại món thường): trước đây số điểm bị kẹp xuống 0 rồi nằm 0 mãi, khách tick lại thì dòng "Điểm thưởng" biến mất mà không ai bỏ nó. Chỉ nâng khi số đang dùng là 0 VÀ trần lượt trước là 0 — khách tự gõ 0 lúc trần còn dương thì giữ nguyên. */
+/* 15/10/2026 — kẹp số điểm đang dùng theo trần MỚI, và NÂNG LẠI về trần khi trần vừa đi từ 0 lên (bỏ tick hết giỏ rồi tick lại một món): trước đây số điểm bị kẹp xuống 0 rồi nằm 0 mãi, khách tick lại thì dòng "Điểm thưởng" biến mất mà không ai bỏ nó. Chỉ nâng khi số đang dùng là 0 VÀ trần lượt trước là 0 — khách tự gõ 0 lúc trần còn dương thì giữ nguyên. */
 function syncPointsCap() {
   const maxPts = maxUsablePoints();
   if (cartPointsUsed > maxPts) cartPointsUsed = maxPts;
@@ -16356,40 +16339,6 @@ function cartRowNote(c) {
   if (c.priceWas)
     return `<p class="cart-note t-single text-foreground-alt pt-1">Giá đã thay đổi, trước là <span class="line-through">${c.priceWas}</span></p>`;
   return '';
-}
-/* 15/10/2026 — TRẠNG THÁI "KHÔNG KHẢ DỤNG" của một dòng giỏ theo ƯU ĐÃI THÀNH VIÊN ĐANG CHỌN (chỉ khi đã đăng nhập — khách chưa có khối ưu đãi). Hai câu, một theo ô đang chọn:
-     · đang chọn "Sử dụng điểm thưởng"  → dòng không dùng được điểm : "Không khả dụng khi dùng điểm"
-     · đang chọn "Giảm giá thành viên"  → dòng không dùng được ưu đãi: "Không khả dụng khi dùng ưu đãi thành viên"
-   Mực đỏ (destructive) như mọi dòng liên quan giảm tiền (user 15/10: "giảm giá và điểm thưởng đều màu đỏ"). Nằm ngay dưới ghi chú tồn kho / đổi giá, trong ô giữ chỗ .cart-rnote-slot để
-   refreshRewardNotes() thay tại chỗ khi đổi ô ưu đãi — KHÔNG dùng class .cart-note vì bộ đếm số lượng gỡ/dựng lại ĐÚNG phần tử đó (xem handler .qty-btn). Dòng hết hàng không có ghi chú này. */
-function cartRewardNote(c) {
-  if (!c || c.removed || c.stock === 0 || !ckAuth) return '';
-  if (rewardAllowed(c, cartReward)) return '';
-  return `<p class="cart-rnote t-single text-destructive pt-1">${cartReward === 'points' ? 'Không khả dụng khi dùng điểm' : 'Không khả dụng khi dùng ưu đãi thành viên'}</p>`;
-}
-/* 15/10/2026 — bật / tắt trạng thái KHÔNG KHẢ DỤNG của hai ô ưu đãi theo giỏ đang tick (xem opt() trong dafcRewards). */
-function refreshRewardOptions(root) {
-  const g = root && root.querySelector('#rewardOpts');
-  if (!g) return;
-  g.querySelectorAll('[data-reward-card]').forEach(card => {
-    const off = cartSubtotal() > 0 && rewardBase(card.dataset.rewardCard) === 0;
-    card.classList.toggle('is-off', off);
-    const why = card.querySelector('.reward-off');
-    if (why) why.classList.toggle('hidden', !off);
-    const btn = card.querySelector('[data-reward]');
-    if (btn) btn.setAttribute('aria-disabled', off ? 'true' : 'false');
-  });
-}
-function refreshRewardNotes(root) {
-  if (!root) return;
-  root.querySelectorAll('.cart-row[data-row]').forEach(row => {
-    const slot = row.querySelector('.cart-rnote-slot');
-    if (!slot) return;
-    const html = cartRewardNote(CART[+row.dataset.row]);
-    if (slot.innerHTML.trim() === html.trim()) return;
-    slot.innerHTML = html;
-    if (html) localizeNew(slot);
-  });
 }
 /* Điều kiện áp mã tính trên GIỎ HIỆN TẠI: bỏ tick / giảm số lượng là mã có thể
    rớt điều kiện — xem pruneVouchers(). */
@@ -16514,10 +16463,9 @@ function ckShipText() {
 }
 
 function rewardAmount(kind) {
-  /* 15/10/2026 — nền tính là rewardBase(kind), không còn là cả tạm tính: dòng hàng đặt trước không góp vào 4% / 10%. */
-  const base = rewardBase(kind);
-  if (kind === 'member') return Math.round(base * 0.04);
-  if (kind === 'points') return Math.min(cartPointsUsed * REWARD_POINT_VALUE, Math.round(base * 0.10));
+  const sub = cartSubtotal();
+  if (kind === 'member') return Math.round(sub * 0.04);
+  if (kind === 'points') return Math.min(cartPointsUsed * REWARD_POINT_VALUE, Math.round(sub * 0.10));
   return 0;
 }
 
@@ -16827,10 +16775,8 @@ function dafcRewards() {
      <button>. */
   const opt = (id, title, sub, extra) => {
     const on = cartReward === id;
-    /* 15/10/2026 — ô KHÔNG KHẢ DỤNG: giỏ đang tick không còn dòng nào dùng được ưu đãi này (vd chỉ còn hàng đặt trước) → .is-off (mờ, bấm không đổi) + dòng lý do .reward-off. refreshRewardOptions() cập nhật tại chỗ. */
-    const off = cartSubtotal() > 0 && rewardBase(id) === 0;
     return `
-    <div class="opt ${on ? 'on' : ''}${off ? ' is-off' : ''} border border-border bg-background rounded-xs" data-reward-card="${id}">
+    <div class="opt ${on ? 'on' : ''} border border-border bg-background rounded-xs" data-reward-card="${id}">
       <button class="w-full flex gap-2 items-start px-3 py-2 btn-o press text-left" data-reward="${id}">
         <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
           <span class="radio-dot text-primary-foreground flex items-center justify-center">${I.tick}</span>
@@ -16843,7 +16789,6 @@ function dafcRewards() {
         <span class="flex-1 min-w-0 flex flex-col gap-1">
           <span class="t-lead block dk-reward-name text-foreground-alt">${title}</span>
           ${sub ? `<span class="t-single block text-muted-foreground">${sub}</span>` : ''}
-          <span class="reward-off t-single block text-muted-foreground${off ? '' : ' hidden'}">Không khả dụng với sản phẩm đặt trước</span>
         </span>
       </button>
       ${extra || ''}
@@ -17218,7 +17163,6 @@ function screenCART() {
           <p class="t-single text-muted-foreground">${c.variant}</p>
           ${c.preorder ? `<p class="t-single text-foreground-alt pt-1">Nhận hàng dự kiến <span class="font-medium">${c.preorder}</span></p>` : ''}
           ${cartRowNote(c)}
-          <div class="cart-rnote-slot">${cartRewardNote(c)}</div>
         </div>
         <!-- giá + stepper ghim đáy ô — ĐẢO CHỖ 13/09/2026 theo brief (PDF trang 25,
              "Swap vị trí giá và số lượng"): số lượng giờ đứng TRƯỚC (trái), giá đứng
@@ -23050,7 +22994,7 @@ const I18N = {
      kiếm / dọn bộ lọc). Gõ nhầm một dấu là bản EN đổi nghĩa. Mã sẵn có đã theo đúng quy
      ước đó rồi, đừng "sửa chính tả" cho thống nhất. */
   'Hoàn tác':'Undo', 'Đã khôi phục sản phẩm':'Item restored', 'Chưa chọn sản phẩm nào':'No items selected',
-  'Phí vận chuyển (ước tính)':'Shipping (estimated)', 'Sản phẩm đã hết hàng':'Out of stock', 'Không khả dụng khi dùng điểm':'Not available when using points', 'Không khả dụng khi dùng ưu đãi thành viên':'Not available with member benefits', 'Không khả dụng với sản phẩm đặt trước':'Not available for pre-order items',
+  'Phí vận chuyển (ước tính)':'Shipping (estimated)', 'Sản phẩm đã hết hàng':'Out of stock',
   'Gợi ý cho bạn':'Recommended for you', 'Mã ưu đãi':'Promo code',
   'Sản phẩm không còn bán':'Product no longer available', 'Xem sản phẩm tương tự':'See similar products',
   'Đang chuyển tới cổng thanh toán':'Redirecting to payment gateway',
@@ -23092,16 +23036,6 @@ const I18N = {
   'Liên kết này đã dùng để đặt lại mật khẩu và không dùng được lần thứ hai. Vui lòng yêu cầu liên kết mới nếu bạn vẫn cần đặt lại.':'This link has already been used to reset your password and cannot be used twice. Please request a new link if you still need to reset it.',
   'Tài khoản của bạn đang bị khoá vì nhập sai nhiều lần. Vui lòng thử lại sau 15 phút hoặc liên hệ DAFC để được hỗ trợ.':'Your account is locked after too many incorrect attempts. Please try again in 15 minutes or contact DAFC for support.',
   'Liên hệ hỗ trợ':'Contact support', 'Về đăng nhập':'Back to sign in',
-  'Đổi':'Update', 'Đổi số điện thoại':'Change phone number', 'Đổi email':'Change email',
-  'Mã OTP đã được gửi tới':'An OTP has been sent to', 'Chưa nhận được mã?':"Didn't receive the code?",
-  'Số điện thoại mới':'New phone number', 'Email mới':'New email',
-  'Chúng tôi sẽ gửi mã OTP tới số điện thoại mới để xác thực.':'We will send an OTP to the new phone number to verify it.',
-  'Chúng tôi sẽ gửi mã OTP tới email mới để xác thực.':'We will send an OTP to the new email to verify it.',
-  'Vui lòng nhập số điện thoại mới':'Please enter the new phone number', 'Vui lòng nhập email mới':'Please enter the new email',
-  'Số điện thoại mới phải khác số hiện tại':'The new phone number must differ from the current one',
-  'Email mới phải khác email hiện tại':'The new email must differ from the current one',
-  'Vui lòng nhập mã OTP':'Please enter the OTP', 'Nhận lại mã':'Resend code',
-  'Đã cập nhật số điện thoại':'Phone number updated', 'Đã cập nhật email':'Email updated',
   /* 16/10/2026 — công tắc Kiểm lỗi nhập. */
   'Kiểm lỗi nhập':'Input validation', 'Bật':'On', 'Tắt':'Off', 'Kiểm lỗi nhập: Tắt':'Input validation: Off', 'Kiểm lỗi nhập: Bật':'Input validation: On',
   /* 16/10/2026 — lô 8: trần giỏ hàng. */
@@ -26012,8 +25946,6 @@ const NET_GATES = [
   ['[data-login-submit], #lpLogin, #apSubmit', 'Chưa đăng nhập được', NET_SUB, el => (el.id === 'lpLogin' || el.id === 'apSubmit') ? el : (el.closest('.flex.flex-col.px-4.pt-6') || el.parentElement), el => (el.id === 'lpLogin' || el.id === 'apSubmit') ? 'beforebegin' : 'afterbegin', ''],
   ['[data-reg-send], [data-auth-otp]', 'Chưa gửi được mã OTP', NET_SUB, el => el.closest('.flex.flex-col.px-4.pt-6') || el.parentElement, 'afterbegin', ''],
   ['[data-reg-verify], [data-auth-verify]', 'Chưa xác nhận được mã OTP', NET_SUB, el => el.closest('.flex.flex-col.px-4.pt-6') || el.parentElement, 'afterbegin', ''],
-  ['[data-acc="chg-send"]', 'Chưa gửi được mã OTP', NET_SUB, el => el, 'beforebegin', '16px 0 0'],
-  ['[data-acc="chg-verify"]', 'Chưa xác nhận được mã OTP', NET_SUB, el => el, 'beforebegin', '16px 0 0'],
   ['[data-reg-done]', 'Chưa tạo được tài khoản', 'Mất kết nối mạng. Tài khoản của bạn chưa được tạo.', el => el.closest('.flex.flex-col.px-4.pt-6') || el.parentElement, 'afterbegin', ''],
   ['[data-track-go]', 'Chưa tra cứu được đơn hàng', NET_SUB, el => el.parentElement, 'beforeend', ''],
   ['[data-conf="trk-ok"]', 'Chưa gửi được yêu cầu', 'Mất kết nối mạng. Yêu cầu của bạn chưa được gửi.', el => el.parentElement, 'beforebegin', ''],
@@ -26622,18 +26554,19 @@ function placeOrder(unpaid, payName) {
   const split = parts.length > 1;
   const giftOwner = pk => { let at = 0; parts.forEach((list, i) => { if (list.some(c => c.gift === pk)) at = i; }); return at; };   // món đặt trước thắng nếu một chương trình quà dính cả hai bên (như preGifts cũ)
   const subs = parts.map(list => list.reduce((n, c) => n + vndNum(c.now) * (c.qty || 1), 0));
-  /* Chia ưu đãi: ĐIỂM chia theo số điểm NGUYÊN (1 điểm = REWARD_POINT_VALUE ₫, không có "756,4 điểm"), phần giảm giá còn lại (mã · phiếu · hạng) chia riêng theo tỉ lệ tạm tính; phần dư dồn về đơn CUỐI. */
-  const orderMemVnd = (ckAuth && cartReward === 'member') ? Math.min(rewardAmount('member'), orderDisc) : 0;
+  /* Chia ưu đãi: ĐIỂM chia theo số điểm NGUYÊN (1 điểm = REWARD_POINT_VALUE ₫, không có "756,4 điểm"), phần giảm giá còn lại (mã · phiếu · hạng) chia riêng theo tỉ lệ tạm tính; phần dư dồn về đơn CUỐI.
+     21/10/2026 (user: "bỏ cái edge case này nhé"): hàng đặt trước KHÔNG còn bị loại khỏi điểm / ưu đãi thành viên nên cả điểm lẫn giảm giá chia theo tỉ lệ tạm tính cho MỌI đơn con (từ 15/10 điểm + giảm giá thành viên dồn hết về đơn -01). */
   const orderRestVnd = orderDisc - orderPtsVnd;
-  const orderCodeVnd = orderRestVnd - orderMemVnd;   // phần còn lại = mã giảm giá + phiếu mua hàng
-  const pts = parts.map((_, i) => i === 0 ? orderPtsVnd : 0), rest = [orderRestVnd];
-  if (split) {
-    /* 15/10/2026 — hàng đặt trước KHÔNG dùng được điểm lẫn ưu đãi thành viên (rewardAllowed): cả hai khoản này thuộc về đơn ĐẦU (-01), các đơn sau không có. Chỉ mã giảm giá / phiếu mua hàng còn chia theo tỉ lệ tạm tính. */
-    let left = orderRestVnd;
+  const pts = parts.map(() => 0), rest = parts.map(() => 0);
+  if (!split) { pts[0] = orderPtsVnd; rest[0] = orderRestVnd; }
+  else {
+    let ptsLeft = orderPtsVnd, restLeft = orderRestVnd;
     parts.forEach((_, i) => {
-      if (i === parts.length - 1) { rest[i] = left; return; }
-      rest[i] = (i === 0 ? orderMemVnd : 0) + Math.round(orderCodeVnd * subs[i] / (orderSub || 1));
-      left -= rest[i];
+      if (i === parts.length - 1) { pts[i] = ptsLeft; rest[i] = restLeft; return; }
+      const r = subs[i] / (orderSub || 1);
+      pts[i] = Math.round(orderPtsVnd / REWARD_POINT_VALUE * r) * REWARD_POINT_VALUE;
+      rest[i] = Math.round(orderRestVnd * r);
+      ptsLeft -= pts[i]; restLeft -= rest[i];
     });
   }
   const ids = split ? parts.map((_, i) => `${baseId}-${String(i + 1).padStart(2, '0')}`) : [baseId];
@@ -26815,33 +26748,7 @@ function wireAccount(root) {
        bấm "Sửa" thì câu hỏi xoá phải biến mất, không nằm lại ở hàng khác. */
     if (act === 'edit-info') { accResetForms(); accEdit = 'info'; accDraft.gender = PROFILE.gender; repaint(); return; }
     if (act === 'edit-pass') { accResetForms(); accEdit = 'pass'; repaint(); return; }
-    /* ── Đổi số điện thoại / email (ACC-13, 16/10/2026) — xem accChangeCard ── */
-    if (act === 'chg-phone' || act === 'chg-email') { accResetForms(); accEdit = act === 'chg-phone' ? 'phone' : 'email'; accDraft = { step: 'new', value: '' }; repaint(); return; }
-    if (act === 'chg-send') {
-      const isPhone = accEdit === 'phone', key = isPhone ? 'phone' : 'email', v = val(key), el = inp(key);
-      const cur = isPhone ? PROFILE.phone : PROFILE.email;
-      if (!valOff()) {   // 16/10/2026: Kiểm lỗi nhập TẮT
-      if (!v) { setFieldErr(el, isPhone ? 'Vui lòng nhập số điện thoại mới' : 'Vui lòng nhập email mới'); el.focus(); return; }
-      if (!FIELD_RULE[key][0](v)) { setFieldErr(el, FIELD_RULE[key][1]); el.focus(); return; }
-      if (isPhone ? phoneDigits(v) === phoneDigits(cur) : v.toLowerCase() === String(cur).toLowerCase()) { setFieldErr(el, isPhone ? 'Số điện thoại mới phải khác số hiện tại' : 'Email mới phải khác email hiện tại'); el.focus(); return; }
-      }
-      accDraft = { step: 'otp', value: v }; otpFails = 0; repaint(); toast('Đã gửi mã OTP');
-      return;
-    }
-    if (act === 'chg-resend') { otpFails = 0; toast('Đã gửi lại mã OTP'); return; }
-    if (act === 'chg-verify') {
-      const el = inp('otp'), v = val('otp').replace(/\D/g, '');
-      if (!valOff()) {   // 16/10/2026: Kiểm lỗi nhập TẮT
-      if (!v) { setFieldErr(el, 'Vui lòng nhập mã OTP'); el.focus(); return; }
-      if (v.length < 6) { setFieldErr(el, 'Vui lòng nhập đủ 6 số'); el.focus(); return; }
-      }
-      if (!otpSimPass(msg => { setFieldErr(el, msg); el.focus(); })) return;
-      const what = accEdit;
-      if (what === 'phone') PROFILE.phone = accDraft.value; else PROFILE.email = accDraft.value;
-      accResetForms(); repaint(); paintAccUser(root);
-      toast(what === 'phone' ? 'Đã cập nhật số điện thoại' : 'Đã cập nhật email');
-      return;
-    }
+    /* 21/10/2026 — ĐÃ GỠ các act chg-phone · chg-email · chg-send · chg-resend · chg-verify (luồng Đổi SĐT / email, ACC-13) theo lệnh user; số điện thoại và email chỉ đọc. */
     if (act === 'cancel')    { accResetForms(); repaint(); return; }
 
     /* ── Nhận bản tin ── */
@@ -28088,7 +27995,6 @@ function wire(root) {
     const pointsWrap = rewardGroup.querySelector('#pointsInputWrap');
     rewardGroup.querySelectorAll('[data-reward]').forEach(b => {
       b.addEventListener('click', () => {
-        if (b.closest('[data-reward-card]').classList.contains('is-off')) { toast('Không khả dụng với sản phẩm đặt trước'); return; }
         if (b.dataset.reward === cartReward) return;
         cartReward = b.dataset.reward;
         rewardGroup.querySelectorAll('[data-reward]').forEach(x => {
@@ -28834,9 +28740,6 @@ function refreshCartSummary(root) {
      nhãn cũng đổi theo giỏ (tick lại món là mã đủ điều kiện trở lại). */
   renderVoucherUI(root);
   if (dropped.length) toast(`Đã gỡ ${dropped.length} ưu đãi do đơn không còn đủ điều kiện`);
-  /* 15/10/2026 — ghi chú "không khả dụng" theo ô ưu đãi đang chọn đổi cùng lượt với khối tiền. */
-  refreshRewardNotes(root);
-  refreshRewardOptions(root);
   const dl = root.querySelector('#discountLines');
   /* discountLinesHTML() sinh chữ TIẾNG VIỆT nên phải dịch lại ngay sau khi dựng:
      hàm này giờ chạy sau mọi thao tác giỏ (trước đây chỉ chạy khi đổi mã/ưu đãi),
@@ -29573,7 +29476,7 @@ document.body.insertAdjacentHTML('beforeend', `
       </div>
       <div class="px-3 pb-2">
         <p class="t-multiline tracking-[0.12em] text-muted-foreground">Mã OTP</p>
-        <p class="t-single sp-note text-muted-foreground">Đăng ký, Quên mật khẩu, Đổi số điện thoại: kết quả khi nhập mã OTP.</p>
+        <p class="t-single sp-note text-muted-foreground">Đăng ký, Quên mật khẩu: kết quả khi nhập mã OTP.</p>
       </div>
       <div class="px-3 pb-3">
         <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Tình huống mã OTP">
