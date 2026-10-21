@@ -1329,9 +1329,10 @@ window.RESP = (function () {
      mũi tên 12. Vạch đáy 1px `border` NẰM TRONG đệm đáy 16 (stroke trong của Figma không cộng vào chiều cao) nên đệm đáy khai 15 + viền 1 → thẻ cao 196 (khung vẽ chấm: 192; bản chip kem: 200).
      Mã đơn chữ THƯỜNG 400 — khung mới đổi từ 500 sang Regular (desktop vẫn 500). Các thẻ KHÔNG cách nhau (khe 0) và thẻ đầu sát tiêu đề — đúng #accBody của khung (user 30/09: "theo khung
      của tôi hết"; trước đó giữ 24 vì tưởng là khe cấp danh sách). Vạch đáy mỗi thẻ + đệm 16 hai phía là khoảng ngăn; thẻ đầu sát tiêu đề nhờ `acc-head-flush` (xem accHead).
-     ẢNH: tối đa ORD_THUMB_SLOTS ô (xem orderThumbs), đơn nhiều món hơn thì chỉ hiện ảnh các món đầu, KHÔNG có ô "+N" (user 30/09). Ảnh 75 co ĐỀU (tới ~65) khi cột tiền
-     chiếm chỗ — 3 ảnh + khe = 241 mà phần còn lại chỉ ~225 — chứ không cắt mép ảnh cuối như khung nháp. Dưới 344px cột tiền rớt
-     xuống hàng riêng (nhãn và số tiền cùng một dòng, canh phải) để ảnh giữ đủ 75.
+     ẢNH — 21/10/2026 (user vẽ lại khung `order-card` 1124:84179: "khi có nhiều hơn 3 sản phẩm có thể thấy mấp mé 1 thẻ tiếp theo để biết mà scroll"): MỌI món đều có ảnh (hết cắt ở 3 ô của 30/09; vẫn KHÔNG có ô "+N"),
+     ảnh 75 × 100 khe 2; dải `.ord-thumbs` = phần còn lại cạnh cột tiền (khe 8: 343 − tiền ~96 − 8 ≈ 239) CUỘN NGANG, ẩn thanh cuộn. 3 ảnh + 2 khe = 229 nằm trọn trong dải, ảnh thứ 4 bắt đầu ở 231 nên lộ ~8px mép
+     (mép dài ngắn theo bề rộng cột tiền: tiền ngắn → lộ nhiều hơn). Ảnh GIỮ 75 khi đơn > 3 món (`:has(> .ord-thumb:nth-child(4))`), còn ≤ 3 món thì ảnh vẫn CO ĐỀU khi dải hẹp hơn 229 (khổ < 365) để không cắt mép ảnh như
+     khung nháp 30/09. Chuột kéo được nhờ `drag-x` (chỉ đeo khi đơn > 3 món, xem orderThumbsBox); cảm ứng dùng cuộn native. Dưới 344px cột tiền rớt xuống hàng riêng (nhãn và số tiền cùng một dòng, canh phải), dải rộng cả thẻ.
      CHỮ 500: `font-medium` là class chết dưới skin-mt (0,2,1) nên khai ngoại lệ có tên (số tiền, nhãn trạng thái). Cả thẻ là MỘT <button>. */
   .ord-list { display: flex; flex-direction: column; gap: 0; padding: 0 16px; }
   .acc-head-flush, .acc-head-flush .acc-sec-title { padding-bottom: 0; }
@@ -1347,9 +1348,11 @@ window.RESP = (function () {
   .ord-card-date { white-space: nowrap; color: var(--general-foreground); opacity: .8; }
   .ord-card-go { display: flex; flex-shrink: 0; color: var(--general-foreground); opacity: .8; }
   .ord-card-go svg { width: 12px; height: 12px; }
-  .ord-card-body { display: flex; align-items: center; gap: 16px; width: 100%; }
-  .ord-thumbs { flex: 1 1 0; min-width: 0; display: flex; gap: 8px; overflow: hidden; }
+  .ord-card-body { display: flex; align-items: center; gap: 8px; width: 100%; }
+  .ord-thumbs { flex: 1 1 0; min-width: 0; display: flex; gap: 2px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; -ms-overflow-style: none; }
+  .ord-thumbs::-webkit-scrollbar { display: none; }
   .ord-thumb { flex: 0 1 75px; min-width: 0; height: 100px; overflow: hidden; background: var(--general-secondary); }
+  .ord-thumbs:has(> .ord-thumb:nth-child(4)) > .ord-thumb { flex: none; width: 75px; }
   .ord-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
   .ord-card-total { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; white-space: nowrap; text-align: right; }
   .ord-card-total-l { color: var(--general-muted-foreground); }
@@ -1885,11 +1888,38 @@ window.RESP = (function () {
   @keyframes flyOut { to { transform: translate(var(--dx), var(--dy)) scale(.15); opacity: 0; border-radius: 50%; } }
   .fly { position: fixed; z-index: 999; pointer-events: none; object-fit: cover; animation: flyOut .75s cubic-bezier(.55,-0.05,.6,.32) forwards; }
 
-  /* ── Success check draw ── */
+  /* ── Biểu tượng trạng thái · BỘ C (21/10/2026, user: "dùng bộ C nhé" sau bảng 3 phương án icon Hoàn tất / Thất bại) ──
+     Nền tròn 80 xám + vật thể theo ngữ cảnh (túi = đã đặt · thẻ = thanh toán lỗi · đồng hồ = hết hạn) + huy hiệu Ø32 ở góc dưới phải (tick · X · "!"), viền trắng 3, tràn ra ngoài khối 7.
+     Dùng qua statusIcon(kind) ở 4 chỗ: màn Hoàn tất · "Đơn … đã được đặt" · thanh toán thất bại · hết hạn. Thay vòng tick Ø72 (#ring / #tick) và vòng Ø64 đỏ / xám cũ. */
   @keyframes draw { to { stroke-dashoffset: 0; } }
   @keyframes ringIn { from { transform: scale(.6); opacity: 0 } to { transform: scale(1); opacity: 1 } }
-  .screen.active #ring { animation: ringIn .5s cubic-bezier(.22,1,.36,1) both; }
-  .screen.active #tick { stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw .5s .35s ease forwards; }
+  @keyframes statusPop { 0% { transform: scale(0) } 65% { transform: scale(1.18) } 100% { transform: scale(1) } }
+  .status-icon { position: relative; display: grid; place-items: center; flex: none; width: 80px; height: 80px; --status-c: var(--general-primary); }
+  .status-icon.error { --status-c: var(--general-destructive); }
+  .status-icon.warning { --status-c: var(--general-warning); }
+  .status-icon-plate { display: grid; place-items: center; width: 80px; height: 80px; border-radius: 50%; background: var(--general-secondary); animation: ringIn .5s cubic-bezier(.22,1,.36,1) both; }
+  .status-icon-plate svg { display: block; animation: ringIn .5s .05s both; }
+  .status-icon.success .status-icon-plate svg { width: 38px; height: 38px; }
+  .status-icon.error .status-icon-plate svg { width: 40px; height: 30px; }
+  .status-icon.warning .status-icon-plate svg { width: 38px; height: 38px; }
+  .status-icon.notfound .status-icon-plate svg { width: 38px; height: 38px; }
+  .status-icon.maintenance { --status-c: var(--general-warning); }
+  .status-icon.maintenance .status-icon-plate svg { width: 38px; height: 38px; }
+  .status-icon-badge { position: absolute; right: -7px; bottom: -7px; box-sizing: content-box; display: grid; place-items: center; width: 32px; height: 32px; border: 3px solid var(--general-background); border-radius: 50%; background: var(--status-c); animation: statusPop .45s .3s cubic-bezier(.34,1.56,.64,1) both; }
+  .status-icon-badge svg { display: block; width: 20px; height: 20px; fill: none; stroke: var(--general-primary-foreground); stroke-width: 2.2; stroke-linecap: square; stroke-linejoin: miter; }
+  .status-draw { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: draw .42s cubic-bezier(.4,0,.2,1) var(--d, .4s) forwards; }
+  @media (prefers-reduced-motion: reduce) { .status-icon-plate, .status-icon-plate svg, .status-icon-badge { animation: none; } .status-draw { animation: none; stroke-dashoffset: 0; } }
+
+  /* ── 404: HAI Ô NỮ / NAM (21/10/2026, user: "thêm 2 ô Nữ Nam như trang thật nhé") ──
+     Bố cục lấy từ trang 404 thật của shop.dafc.com.vn (đo ở 375): hai ô ảnh XẾP DỌC, mỗi ô 343 × 247, khe 20, lề 16; nhãn ngành + nút "Mua ngay" canh giữa ở ĐÁY ô.
+     Chữ trên ảnh = chữ trắng + veil đen .46 như .hm-spot-veil của trang chủ (đặc phủ trọn khối chữ 140, dốc tới 240) — trang thật chỉ có bóng chữ, không đủ AA trên ảnh sáng.
+     Ảnh đứng chỗ = bản sao hero Ferragamo Nữ / Nam, tên THEO VỊ TRÍ (assets/notfound-{women,men}-mobile.jpg): thay file cùng tên là xong. Dựng bằng CSS thật vì bản tailwind.css dựng sẵn thiếu nhiều bậc. */
+  .gender-tiles { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; width: 100%; padding: 0 16px 64px; }
+  .gender-tile { position: relative; overflow: hidden; aspect-ratio: 343 / 247; background: var(--general-secondary); }
+  .gender-tile-photo { display: block; width: 100%; height: 100%; }
+  .gender-tile-veil { position: absolute; inset-inline: 0; bottom: 0; height: 240px; background: linear-gradient(to top, rgba(0, 0, 0, .46) 0, rgba(0, 0, 0, .46) 140px, transparent 240px); pointer-events: none; }
+  .gender-tile-copy { position: absolute; inset-inline: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px; pointer-events: none; }
+  .gender-tile-copy button { pointer-events: auto; }
 
   /* ── Confetti ── */
   @keyframes fall { to { transform: translateY(340px) rotate(540deg); opacity: 0; } }
@@ -7454,12 +7484,33 @@ const I = {
   atm:    `<svg width="20" height="20" viewBox="0 -0 24 24" fill="var(--general-primary)"><path d="m0,23h24v1H0v-1ZM24,7.546v1.454h-3v10h2v1H1v-1h2v-10H0v-1.454c0-1.145.636-2.173,1.659-2.684L10.775.308c.762-.415,1.687-.416,2.465.008l9.101,4.545c1.023.511,1.659,1.54,1.659,2.684ZM4,19h4v-10h-4v10Zm11-10h-6v10h6v-10Zm5,0h-4v10h4v-10Zm3-1.454c0-.763-.424-1.449-1.106-1.79L12.777,1.203c-.492-.269-1.063-.269-1.539-.008L2.106,5.756c-.683.341-1.106,1.026-1.106,1.79v.454h22v-.454Z"/></svg>`,
   gift:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="var(--general-primary)"><path d="m24,9.5c0-1.378-1.122-2.5-2.5-2.5h-5.42c2.226-1.149,3.92-3.239,3.92-6h-1c0,3.22-2.742,5.373-5.67,5.883.761-.884,1.67-2.275,1.67-3.883,0-1.654-1.346-3-3-3s-3,1.346-3,3c0,1.608.909,3,1.67,3.883-2.927-.51-5.67-2.663-5.67-5.883h-1c0,2.761,1.694,4.851,3.92,6H2.5c-1.378,0-2.5,1.122-2.5,2.5v3.5h2v11h20v-11h2v-3.5ZM12,1c1.103,0,2,.897,2,2,0,1.72-1.368,3.226-2,3.829-.632-.604-2-2.109-2-3.829,0-1.103.897-2,2-2ZM1,9.5c0-.827.673-1.5,1.5-1.5h9v4H1v-2.5Zm2,3.5h8.5v10H3v-10Zm18,10h-8.5v-10h8.5v10Zm2-11h-10.5v-4h9c.827,0,1.5.673,1.5,1.5v2.5Z"/></svg>`,
   shield: `<svg width="14" height="14" viewBox="2 0.01 20 23.96" fill="var(--general-muted-foreground)"><path d="M11.98,23.973l-.626-.313c-2.194-1.097-9.354-5.191-9.354-11.8V5.135c0-1.079,.687-2.032,1.708-2.372h0L12,.014l8.287,2.748c1.025,.34,1.713,1.293,1.713,2.373v6.726c0,7.499-7.172,10.967-9.37,11.852l-.65,.261ZM4.023,3.712c-.612,.203-1.023,.775-1.023,1.422v6.725c0,6.036,6.736,9.874,8.801,10.906l.224,.112,.232-.093c2.051-.825,8.743-4.053,8.743-10.924V5.134c0-.647-.413-1.22-1.028-1.424L12,1.067,4.023,3.712Z"/></svg>`,
+  /* 21/10/2026 — đồng hồ của biểu tượng "Phiên thanh toán đã hết hạn" (statusIcon 'warning'; trước vẽ thẳng trong screenPAY, màu xám): vòng + kim, fill primary như bag / card; cỡ do CSS. */
+  clock:  `<svg width="20" height="20" viewBox="0 0 24 24" fill="var(--general-primary)"><path d="M12,24C5.383,24,0,18.617,0,12S5.383,0,12,0s12,5.383,12,12-5.383,12-12,12ZM12,1C5.935,1,1,5.935,1,12s4.935,11,11,11,11-4.935,11-11S18.065,1,12,1Z"/><path d="M7.757,15.929 L7.243,15.071 L12.0,12.217 L12.0,5.0 L13.0,5.0 L13.0,12.783 L7.757,15.929Z"/></svg>`,
+  /* 21/10/2026 — đồng hồ cát của biểu tượng trạng thái 503 "Bảo trì" (statusIcon 'maintenance'): nét 1 thẳng cạnh, vẽ tay (bộ fi-ts đã trích không có); stroke theo primary như alert / ticket. */
+  hourglass: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--general-primary)" stroke-width="1" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="M6 2.5h12M6 21.5h12M7.5 2.5v5l4.5 4.5-4.5 4.5v5M16.5 2.5v5L12 12l4.5 4.5v5"/></svg>`,
   /* 16/10/2026 — icon cho hộp lỗi mạng + hộp thoại hết phiên: cùng nét mảnh 1px của bộ, màu theo currentColor. */
   alert:  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="11.5"/><path d="M12 6.5v8M12 17.3v1.2"/></svg>`,
   /* Vé ưu đãi — bộ icon của project là nét mảnh 1px nên vẽ bằng stroke thay vì
      silhouette tô đặc; đường đứt là mép xé của vé, đọc ra "voucher" ở 16px. */
   ticket: (c='var(--general-primary)')=>`<svg width="16" height="16" viewBox="-0.01 3 24.01 18" fill="${c}"><path d="M21.5,21H2.496C1.12,21-.002,19.881-.004,18.505c-.002-1.126-.003-2.429-.001-3.056v-.432l.429-.062c1.469-.21,2.576-1.48,2.576-2.955s-1.107-2.746-2.576-2.955l-.428-.061v-.433c-.004-.838,.004-3.053,.004-3.053,0-1.376,1.122-2.498,2.5-2.498H21.5c1.378,0,2.5,1.122,2.5,2.5v3.483l-.429,.062c-1.466,.212-2.571,1.482-2.571,2.955s1.105,2.743,2.571,2.955l.429,.062v3.483c0,1.378-1.122,2.5-2.5,2.5ZM.994,15.86c0,.69,0,1.726,.002,2.644,0,.825,.674,1.497,1.5,1.497H21.5c.827,0,1.5-.673,1.5-1.5v-2.642c-1.737-.45-3-2.039-3-3.858s1.263-3.408,3-3.858v-2.642c0-.827-.673-1.5-1.5-1.5H2.5c-.827,0-1.5,.673-1.5,1.5,0,.002-.006,1.652-.006,2.64,1.741,.448,3.006,2.037,3.006,3.86s-1.265,3.412-3.006,3.86Z"/></svg>`,
 };
+
+/* ════════════════════════════════════════════════════════════════
+   BIỂU TƯỢNG TRẠNG THÁI — BỘ C (21/10/2026, user: "dùng bộ C nhé" sau bảng 3 phương án; bảng: _notes/ICON-HOAN-TAT-THAT-BAI-PHUONG-AN-2026-10-20.html)
+   kind: 'success' (túi + huy hiệu đen tick) · 'error' (thẻ + huy hiệu đỏ X) · 'warning' (đồng hồ + huy hiệu vàng "!") · 'notfound' (kính lúp + huy hiệu đen "?" — trang 404) · 'maintenance' (đồng hồ cát + huy hiệu vàng "!" — trang 503).
+   Khối 80 × 80; huy hiệu tràn ra 7 ở góc dưới phải nên không đổi bố cục.
+   Dùng ở: screenDONE · screenCHECKOUT (ckPlaced) · screenPAY (thất bại · hết hạn) · screenNOTFOUND · screenMAINTENANCE. Vật thể lấy từ bộ I (bag · card · clock · search · hourglass), cỡ + màu + chuyển động ở khối CSS ".status-icon" (cạnh @keyframes draw).
+════════════════════════════════════════════════════════════════ */
+function statusIcon(kind) {
+  const glyph = { success: I.bag, error: I.card, notfound: I.search, maintenance: I.hourglass }[kind] || I.clock;
+  const draw = (len, d, path, attrs = '') => `<path class="status-draw" style="--len:${len};--d:${d}"${attrs} d="${path}"/>`;
+  const mark = {
+    success: draw(21, '.4s', 'M5.6 12.5l4.5 4.5 8.3-9.6'),
+    error: draw(16, '.4s', 'M6.9 6.9l10.2 10.2') + draw(16, '.52s', 'M17.1 6.9l-10.2 10.2'),
+    notfound: draw(22, '.4s', 'M9 9.2a3 3 0 1 1 4.7 2.5c-1 .7-1.7 1.3-1.7 2.8', ' stroke-linecap="butt" stroke-linejoin="round"') + '<path d="M12 17.6v.4"/>'
+  }[kind] || (draw(9, '.5s', 'M12 5.5v8') + '<path d="M12 18.4v.2"/>');
+  return `<span class="status-icon ${kind}" aria-hidden="true"><span class="status-icon-plate">${glyph}</span><span class="status-icon-badge"><svg viewBox="0 0 24 24">${mark}</svg></span></span>`;
+}
 
 /* ════════════════════════════════════════════════════════════════
    SHARED PARTIALS
@@ -10845,10 +10896,13 @@ const ordersNewestFirst = () => ORDERS.slice().sort((a, b) => dmyKey(a.date) < d
    Thẻ KHÔNG viền hai bên (chỉ kẻ đáy) nên không mất 34px ngang như thẻ viền đã thử rồi bỏ hôm 29/09 — dòng đầu có nguyên 343px.
    Số đo và lý do từng con số nằm ở khối CSS `.ord-card` (cạnh `.ord-status`). Cả thẻ là MỘT <button>; nhãn là <span> riêng để luật
    i18n khớp nguyên chuỗi ("Mã đơn", "Tổng tiền"), dấu ":" đứng ngoài span. */
-/* Hàng ảnh của thẻ đơn — tối đa ORD_THUMB_SLOTS ảnh, theo thứ tự món trong đơn. Đơn nhiều món hơn số ô thì CHỈ hiện ảnh các món đầu, KHÔNG có ô "+N"
-   (user 30/09: "nhiều món hơn cứ để vậy được rồi, không cần +N"; khung Figma cũng vẽ đơn 5 món với 4 ảnh và không có ô nào khác). 3 ô = số ảnh nhét vừa cạnh cột tiền ở 375. */
+/* Hàng ảnh của thẻ đơn — MỌI món trong đơn, theo thứ tự món (21/10/2026, user vẽ lại khung `order-card` 1124:84179: "khi có nhiều hơn 3 sản phẩm có thể thấy mấp mé 1 thẻ tiếp theo để biết mà scroll").
+   Trước đó (30/09: "nhiều món hơn cứ để vậy được rồi, không cần +N") chỉ hiện ORD_THUMB_SLOTS ảnh đầu; nay dải ảnh CUỘN NGANG và ảnh thứ ORD_THUMB_SLOTS + 1 lộ ~8px mép (số đo ở khối CSS `.ord-thumbs`).
+   Vẫn KHÔNG có ô "+N". ORD_THUMB_SLOTS = 3 = số ảnh nằm trọn cạnh cột tiền ở 375 (3 × 75 + 2 khe 2 = 229 ≤ dải 239); còn dùng cho khung xương (hiện thêm ảnh thứ 4 để thấy mép) và cho cờ `drag-x`.
+   orderThumbsBox: cờ `drag-x` (kéo bằng chuột — wire() quét `.drag-x` qua dragScroll) CHỈ đeo khi đơn > 3 món, đơn ≤ 3 món không có gì để cuộn thì không hiện con trỏ "nắm". */
 const ORD_THUMB_SLOTS = 3;
-const orderThumbs = o => (o.items || []).slice(0, ORD_THUMB_SLOTS).map(it => `<span class="ord-thumb"><img src="${A}${it.img}" alt=""></span>`).join('');
+const orderThumbs = o => (o.items || []).map(it => `<span class="ord-thumb"><img src="${A}${it.img}" alt=""></span>`).join('');
+const orderThumbsBox = o => `<span class="ord-thumbs${(o.items || []).length > ORD_THUMB_SLOTS ? ' drag-x' : ''}">${orderThumbs(o)}</span>`;
 function accOrders() {
   /* 16/10/2026 (lô 4 · ACC-37) — chưa có đơn nào: khối trống thay cho tab chỉ còn tiêu đề. */
   if (!ORDERS.length) return accEmptyHTML('Bạn chưa có đơn hàng nào', 'Các đơn bạn đặt sẽ xuất hiện ở đây để bạn theo dõi.', 'Tiếp tục mua sắm');
@@ -10867,7 +10921,7 @@ function accOrders() {
           ${statusTag(o, false, true)}
         </span>
         <span class="ord-card-body">
-          <span class="ord-thumbs">${orderThumbs(o)}</span>
+          ${orderThumbsBox(o)}
           <span class="ord-card-total t-lead"><span class="ord-card-total-l"><span>Tổng tiền</span>:</span><span class="ord-card-total-v">${o.total}</span></span>
         </span>
       </button>`).join('')}
@@ -12447,7 +12501,12 @@ function paintHmBlockUI() {
    hàng). Canh ĐÁY (`pos: '50% 100%'`) giữ đủ cả hai: lề trên 33 hàng, lề dưới 17 hàng. Ảnh giao mới đúng
    3:1 thì trả `pos` về '50% 50%'. */
 /* 28/09 chiều: ĐÃ THAY ảnh mới của khách 780x260 = đúng 3:1, không còn gì để cắt -> pos về 50% 50%. */
-const HM_PROMO = { img: 'home-promo-mobile.jpg', ratio: '3/1', pos: '50% 50%', alt: 'Final Clearance — giảm thêm 20%', cat: 'Khuyến mãi' };
+const HM_PROMO = { img: 'home-promo-mobile.jpg', ratio: '3/1', pos: '50% 50%', alt: 'The Autumn Edit — Shop now', cat: 'Khuyến mãi' };
+/* 21/10/2026 (user giao bộ "Update banner": Fashion + Beauty, mỗi bộ desktop 2000x250 · mobile 780x260 = đúng 8:1 / 3:1 nên KHÔNG đổi ô):
+   NAM + NỮ DÙNG CHUNG banner Fashion "The Autumn Edit" (đè `home-promo-mobile.jpg`; bản "Final Clearance" cũ lưu ở _notes/imgsize/thay-anh-2026-10-21/),
+   LÀM ĐẸP có banner RIÊNG "The Gifting Guide" = `home-beauty-promo-mobile.jpg` (tên theo VỊ TRÍ `home-{ngành}-…` như mọi ảnh Làm đẹp). Chữ nằm trong ảnh,
+   alt chép lại chữ trong ảnh nên không cần cặp VI/EN. Đích bấm giữ 'Khuyến mãi' (như bản cũ) — chưa có lệnh đổi. Ảnh đúng tỉ lệ nên `pos` 50% 50%. */
+const HM_PROMO_BEAUTY = { img: 'home-beauty-promo-mobile.jpg', ratio: '3/1', pos: '50% 50%', alt: 'The Gifting Guide — The Gift Shop Is Now Open', cat: 'Khuyến mãi' };
 
 /* HERO — 4 SLIDE CÓ VAI (06/09/2026, feedback khách: 1 ecom camp + 3 brand day).
    Ô ĐỔI TỪ 4/3 SANG 1/1 và đây là quyết định về NGUỒN chứ không phải thẩm mỹ: 4 slide cần
@@ -12526,9 +12585,10 @@ const HM_HERO_MS = 4000;
 /* Banner promo — rỗng khi công tắc TẮT. Full-bleed, cả tấm là một chỗ bấm, 0 chữ do code vẽ. */
 function hmPromo() {
   if (!HM_PROMO) return '';
+  const promo = (hmBeauty() && HM_PROMO_BEAUTY) || HM_PROMO;   // 21/10/2026: Làm đẹp banner riêng, Nam + Nữ chung bản Fashion
   return `
-    <a data-hm-cat="${HM_PROMO.cat}"${hmBeauty() ? ' data-hm-dept="Làm đẹp"' : ''} class="block w-full overflow-hidden bg-secondary cursor-pointer press" style="aspect-ratio:${HM_PROMO.ratio}">
-      <img src="${A}${HM_PROMO.img}" alt="${HM_PROMO.alt}" class="w-full h-full object-cover lazy" style="object-position:${HM_PROMO.pos || '50% 50%'}">
+    <a data-hm-cat="${promo.cat}"${hmBeauty() ? ' data-hm-dept="Làm đẹp"' : ''} class="block w-full overflow-hidden bg-secondary cursor-pointer press" style="aspect-ratio:${promo.ratio}">
+      <img src="${A}${promo.img}" alt="${promo.alt}" class="w-full h-full object-cover lazy" style="object-position:${promo.pos || '50% 50%'}">
     </a>`;
 }
 
@@ -15005,6 +15065,74 @@ function screenPDPGone() {
   </div>`;
 }
 
+/* HAI Ô NỮ / NAM của trang 404 (21/10/2026, user: "thêm 2 ô Nữ Nam như trang thật nhé") — cùng hai ô "Nữ" / "Nam" + "Mua ngay" của trang 404 thật.
+   Mỗi ô: ảnh (bấm được) + veil + khối chữ [nhãn ngành · nút "Mua ngay"] ở đáy. Ảnh VÀ nút trỏ cùng một đích nhưng là hai phần tử song song, KHÔNG lồng nút trong thẻ <a> (markup sai — cùng lệ ô spotlight của trang chủ).
+   Đích = PLP danh mục "Tất cả sản phẩm" của ngành đó (như "Xem tất cả" của khối danh mục trang chủ; trang thật trỏ /women · /men). Chữ Nữ / Nam / Mua ngay đã có cặp EN (Women · Men · Shop now).
+   Ảnh đứng chỗ (bản sao hero Ferragamo) — thay file cùng tên theo VỊ TRÍ khi có ảnh thật; object-position canh sẵn cho chủ thể nằm giữa ô. */
+function genderTiles() {
+  const tile = (dept, attrs, img, pos) => `
+      <div class="gender-tile">
+        <a ${attrs} class="gender-tile-photo cursor-pointer press"><img src="${A}${img}" alt="${dept}" class="w-full h-full object-cover lazy" style="object-position:${pos}"></a>
+        <span class="gender-tile-veil" aria-hidden="true"></span>
+        <div class="gender-tile-copy">
+          <h2 class="t-display-title font-medium text-primary-foreground">${dept}</h2>
+          <button ${attrs} class="t-lead h-12 px-8 w-fit rounded-xs border border-border bg-background text-foreground btn-o btn-oi press">Mua ngay</button>
+        </div>
+      </div>`;
+  return `
+    <div class="gender-tiles">
+      ${tile('Nữ', `data-hm-cat="${HM_ALL_TITLE}" data-hm-dept="Nữ"`, 'notfound-women-mobile.jpg', '37% 50%')}
+      ${tile('Nam', `data-hm-cat="${HM_ALL_TITLE}" data-hm-dept="Nam"`, 'notfound-men-mobile.jpg', '100% 50%')}
+    </div>`;
+}
+
+/* ── TRANG 404 — KHÔNG TÌM THẤY TRANG · TRANG 503 — BẢO TRÌ (21/10/2026, user: "tạo trang 404 với 503 luôn nhé") ──
+   404: chữ theo NỘI DUNG trang 404 thật của shop.dafc.com.vn ("Xin lỗi, trang bạn đang tìm kiếm không tồn tại"; trang thật có hai ô Nữ / Nam "Mua ngay" — 21/10 demo CŨNG có hai ô đó (user: "thêm 2 ô Nữ Nam như trang thật nhé"), giữ thêm hai nút Về trang chủ / Tiếp tục mua sắm ở khối chữ phía trên).
+   KHÁC screenPDPGone: đó là SẢN PHẨM không còn bán (đường dẫn sản phẩm cụ thể, có gợi ý cùng ngành); đây là MỌI đường dẫn không có màn — go() gặp tên màn lạ và hash #screen=… lạ lúc khởi động đều rơi vào đây (trước: ném lỗi / âm thầm về trang chủ).
+   503: trang bảo trì — header rút gọn chỉ có logo, KHÔNG chân trang (cả site đang tạm ngưng nên chân trang với menu không có nghĩa), nội dung canh giữa cả khung nhìn; mở bằng bánh răng "Trang lỗi hệ thống" hoặc #screen=maintenance; "Tải lại trang" quay 0,7 s rồi vẫn ở đây + dòng báo.
+   Cùng khuôn màn kết quả của cổng thanh toán: biểu tượng trạng thái (statusIcon) + dòng mã lỗi 12 + tiêu đề 24 + mô tả + nút. */
+function screenNOTFOUND() {
+  return `
+  <div class="w-full" data-scroller>
+    ${navBar()}
+    <div class="flex flex-col items-center justify-center gap-6 px-8 py-16 text-center">
+      ${statusIcon('notfound')}
+      <div class="flex flex-col gap-3">
+        <p class="t-multiline tracking-[0.12em] text-muted-foreground">404</p>
+        <h2 class="t-display-title font-medium text-foreground" style="text-wrap:balance">Xin lỗi, trang bạn đang tìm kiếm không tồn tại</h2>
+        <p class="t-multiline text-muted-foreground">Đường dẫn có thể đã thay đổi hoặc không còn tồn tại. Bạn có thể quay về trang chủ hoặc tiếp tục chọn mua theo ngành hàng.</p>
+      </div>
+      <div class="w-full flex flex-col gap-2.5">
+        <button data-nav="home" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-semibold btn-p press">Về trang chủ</button>
+        <button data-nav="plp" class="t-multiline w-full h-12 rounded-xs border border-border font-medium text-foreground btn-o press">Tiếp tục mua sắm</button>
+      </div>
+    </div>
+    ${genderTiles()}
+    ${footer()}
+  </div>`;
+}
+
+function screenMAINTENANCE() {
+  return `
+  <div class="w-full min-h-screen flex flex-col bg-background" data-scroller>
+    ${navBar({ logoOnly: true })}
+    <div class="flex-1 flex items-center justify-center">
+      <div class="w-full flex flex-col items-center gap-6 px-8 py-16 text-center">
+        ${statusIcon('maintenance')}
+        <div class="flex flex-col gap-3">
+          <p class="t-multiline tracking-[0.12em] text-muted-foreground">503</p>
+          <h2 class="t-display-title font-medium text-foreground" style="text-wrap:balance">Hệ thống đang bảo trì</h2>
+          <p class="t-multiline text-muted-foreground">DAFC Online đang được nâng cấp để phục vụ bạn tốt hơn. Vui lòng quay lại sau ít phút.</p>
+          <p class="t-multiline text-muted-foreground">Cần hỗ trợ gấp? Gọi hotline 19002666.</p>
+        </div>
+        <div class="w-full flex flex-col gap-2.5">
+          <button data-nav="maintenance" data-loading data-toast="Hệ thống vẫn đang bảo trì" class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-semibold btn-p press">Tải lại trang</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function screenCART() {
   // Tổng tiền: ưu đãi hội viên (chỉ khi đã đăng nhập) + mã giảm giá + N phiếu
   // mua hàng, chặn trần theo tạm tính — xem cartDiscountTotal()/cartTotalNow()
@@ -16365,7 +16493,7 @@ function screenCHECKOUT() {
   <div class="w-full" data-scroller>
     ${navBar({ logoOnly: true, back: true })}
     <div class="px-4 py-10 flex flex-col items-center text-center gap-3">
-      <div class="w-12 h-12 rounded-full border border-primary text-primary flex items-center justify-center">${I.tick}</div>
+      ${statusIcon('success')}
       <p class="text-[18px] font-medium leading-7 text-foreground" style="text-wrap:balance">Đơn ${ckOrderId} đã được đặt</p>
       <p class="t-multiline text-muted-foreground">${ckPlacedUnpaid() ? 'Đơn hàng đang chờ thanh toán. Bạn không cần đặt lại.' : 'Đơn hàng đang được xử lý. Bạn không cần đặt lại.'}</p>
       <div class="w-full flex flex-col gap-2 pt-2">
@@ -17071,6 +17199,7 @@ function screenDONE() {
      04/10/2026 (user: "header của trang thanh toán thành công là header mặc định luôn á, header của homepage") ⇒ header của màn này là
      navBar() MẶC ĐỊNH y như trang chủ (burger · tìm kiếm · logo · tài khoản · giỏ), không còn header rút gọn chỉ có logo giữa. */
   /* 19/10/2026 (lần 4, user dán nội dung trang Đặt hàng thành công của website: "Đặt hàng Thành Công · Đơn hàng #… · Cám ơn Quý khách đã lựa chọn mua sắm tại DAFC Online · Quý khách vui lòng truy cập địa chỉ email để kiểm tra chi tiết hóa đơn đặt hàng · <Tiếp tục mua sắm>"): CHỮ theo đúng bài dán — tiêu đề viết hoa chữ đầu "Thành Công", ĐOẠN cảm ơn tách thành HAI dòng (hai thẻ p liền nhau, không khe; text-wrap: balance để dòng thứ hai không mồ côi chữ "Online" ở mobile), "Cám ơn" · "Quý khách" · "DAFC Online" · "địa chỉ email" · "hóa" đúng chữ bài dán, không dấu chấm cuối. Mã đơn trong bài dán (#DA000000103094) chỉ là ví dụ của website: demo vẫn in mã ĐƠN VỪA ĐẶT (DAFC + 6 số, xem ckOrderId). Liên kết "Theo dõi đơn hàng" dưới nút: 20/10/2026 user chốt BỎ (xem chỗ đặt nút ở dưới). */
+  /* 21/10/2026 (user chọn bộ C: "dùng bộ C nhé"): vòng tick Ø72 cũ → biểu tượng túi + huy hiệu tick qua statusIcon('success') (khối 80; khung xương cũng 80). Chuyển động: nền + túi hiện .5 s, huy hiệu nảy rồi nét tick vẽ. Không pháo hoa (đã bỏ 05/10). */
   const oid = ckOrderId || 'DA000000102939';   // mã GỐC sinh lúc bấm Đặt hàng (placeOrder); đơn tách có thêm hậu tố -01 / -02 ở ckOrderIds
   /* Giỏ hỗn hợp tách hai đơn con (01/10/2026): màn này in MÃ GỐC đúng MỘT lần (03/10/2026 — mỗi đơn con một dòng bị user báo là "lặp lại
      mã đơn hàng 2 lần"), cùng mã gốc màn cổng thanh toán đang in; hai mã -01 / -02 xem ở Chi tiết đơn. */
@@ -17086,12 +17215,7 @@ function screenDONE() {
       ${navBar()}
       <div class="flex flex-col items-center gap-7 px-8 py-12">
         <div class="flex flex-col items-center gap-5 text-center">
-          <div id="ring" class="w-[72px] h-[72px] rounded-full flex items-center justify-center border-[1.5px] border-primary">
-            <svg width="38" height="38" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="9.5" stroke="var(--general-primary)" stroke-width="1.2"/>
-              <path id="tick" d="m7.5 12.3 3 3 6-6.4" stroke="var(--general-primary)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
+          ${statusIcon('success')}
           <div class="rise flex flex-col items-center gap-3">
             <h2 class="t-display-title font-medium text-foreground">Đặt hàng Thành Công</h2>
             <!-- 19/10/2026 (KHÁCH CHỐT: "màn thành công chỉ trả ra 1 đơn tổng") — đơn tách 2 · 3 đơn con vẫn chỉ in MỘT mã = mã tổng (như màn cổng thanh toán); các mã -01 / -02 / -03 xem ở danh sách đơn con khi tra cứu mã tổng. Đảo bản 15/10 (in từng mã đơn con có nhãn). -->
@@ -17116,8 +17240,8 @@ function screenDONE() {
 
 /* ═══════════════════════════════════════════════════════════════════════
    KHUNG XƯƠNG MÀN HOÀN TẤT (16/10/2026, lệnh user "tiến hành") — "Đặt hàng thành công" lúc "Mạng yếu": đặt xong (bấm Đặt hàng · cổng thanh toán trả về thành công) vào KHUNG XƯƠNG NET_WEAK_FIRST ms rồi mới ra màn thật
-     (vòng tick + nét tick vẽ ra lúc đó — như đang chờ máy chủ xác nhận đơn). navBar + chân trang THẬT; giữa là ô xám đúng bố cục thật: vòng 72 · tiêu đề 32 · mã đơn (19/10/2026: đơn tách cũng chỉ MỘT mã tổng) · hai câu cảm ơn
-     2 + 2 dòng · nút Tiếp tục mua sắm (20/10/2026: BỎ liên kết Theo dõi đơn hàng; lần 9: BỎ câu giải thích đơn tách). Không mang hook của màn thật (#ring · #tick · [data-nav]) — không có gì để bấm lúc chờ ngoài header / chân trang.
+     (biểu tượng túi + huy hiệu tick hiện ra lúc đó — như đang chờ máy chủ xác nhận đơn). navBar + chân trang THẬT; giữa là ô xám đúng bố cục thật: vòng 80 (21/10/2026: bộ C, trước 72) · tiêu đề 32 · mã đơn (19/10/2026: đơn tách cũng chỉ MỘT mã tổng) · hai câu cảm ơn
+     2 + 2 dòng · nút Tiếp tục mua sắm (20/10/2026: BỎ liên kết Theo dõi đơn hàng; lần 9: BỎ câu giải thích đơn tách). Không mang hook của màn thật (.status-icon · [data-nav]) — không có gì để bấm lúc chờ ngoài header / chân trang.
    ═══════════════════════════════════════════════════════════════════════ */
 let doneSkelTok = 0;
 function doneSkelThenReal(el) {
@@ -17136,10 +17260,10 @@ function screenDoneSkeleton() {
     <p class="skel-sr" role="status">Đang tải</p>
     <div class="relative z-20 bg-background">
       ${navBar()}
-      <!-- khối giữa: px-8 py-12 · [vòng 72 · khe 20 · tiêu đề 32 · khe 12 · mã đơn 20 (19/10/2026: đơn tách cũng chỉ MỘT mã tổng) · khe 12 · hai câu cảm ơn 2 + 2 dòng 18 (cân dòng, 19/10)] · khe 28 · [nút 44] (20/10/2026: bỏ liên kết Theo dõi đơn hàng và câu đơn tách) -->
+      <!-- khối giữa: px-8 py-12 · [vòng 80 · khe 20 · tiêu đề 32 · khe 12 · mã đơn 20 (19/10/2026: đơn tách cũng chỉ MỘT mã tổng) · khe 12 · hai câu cảm ơn 2 + 2 dòng 18 (cân dòng, 19/10)] · khe 28 · [nút 44] (20/10/2026: bỏ liên kết Theo dõi đơn hàng và câu đơn tách) -->
       <div class="flex flex-col items-center gap-7 px-8 py-12" aria-hidden="true">
         <div class="flex flex-col items-center gap-5 text-center w-full">
-          <div class="skel" style="width:72px;height:72px;border-radius:9999px"></div>
+          <div class="skel" style="width:80px;height:80px;border-radius:9999px"></div>
           <div class="flex flex-col items-center gap-3 w-full">
             ${skelLn(32, skelBar('220px', 24))}
             ${skelLn(20, skelBar('176px'))}
@@ -19633,7 +19757,7 @@ function trackSkelThenReal(el) {
 }
 /* 17/10/2026: khung xương kết quả = khung xương BẢN KHÁCH của chi tiết đơn (cùng bố cục với trang thật — xem screenOrderSkeleton(true)); trước đó là khung của bố cục cũ (tiêu đề · stepper ngang · lịch sử · hàng · giao đến · hỗ trợ · hai nút). */
 function screenTrackSkeleton() { return screenOrderSkeleton(true); }
-/* 19/10/2026: khung xương DANH SÁCH ĐƠN CON (trackGroupHTML) — navBar + hàng tiêu đề + chân trang THẬT; mỗi đơn con một thẻ xương mượn class thuần CSS của thẻ đơn (.ord-card…, như accOrdersSkeleton). Số ô theo dữ liệu nhóm: số đơn con · đơn đặt trước có thêm dòng ngày về · số ảnh = số món (≤ 3). 20/10/2026 lần 9: BỎ thẻ tóm tắt (và ô nút Thanh toán lại của nó) cùng trang thật. */
+/* 19/10/2026: khung xương DANH SÁCH ĐƠN CON (trackGroupHTML) — navBar + hàng tiêu đề + chân trang THẬT; mỗi đơn con một thẻ xương mượn class thuần CSS của thẻ đơn (.ord-card…, như accOrdersSkeleton). Số ô theo dữ liệu nhóm: số đơn con · đơn đặt trước có thêm dòng ngày về · số ảnh = số món (≤ 4: ảnh thứ 4 lộ mép như thẻ thật, 21/10/2026). 20/10/2026 lần 9: BỎ thẻ tóm tắt (và ô nút Thanh toán lại của nó) cùng trang thật. */
 function screenTrackGroupSkeleton() {
   const kids = orderKids(trackGroup);
   const card = o => `
@@ -19646,7 +19770,7 @@ function screenTrackGroupSkeleton() {
         <div class="flex items-center gap-2"><div class="skel" style="width:125px;height:24px"></div>${skelLn(20, skelBar('96px'))}</div>${orderPreItems(o).length ? skelLn(16, skelBar('170px')) : ''}
       </div>
       <div class="ord-card-body">
-        <div class="ord-thumbs">${'<div class="ord-thumb skel"></div>'.repeat(Math.max(1, Math.min(ORD_THUMB_SLOTS, o.items.length)))}</div>
+        <div class="ord-thumbs">${'<div class="ord-thumb skel"></div>'.repeat(Math.max(1, Math.min(ORD_THUMB_SLOTS + 1, o.items.length)))}</div>
         <div class="ord-card-total">${skelLn(20, skelBar('67px'))}${skelLn(20, skelBar('93px', 14))}</div>
       </div>
     </div>`;
@@ -19672,11 +19796,11 @@ function trackEntryView() {
          tiêu đề riêng cùng bậc .t-section-title với khối Đăng nhập bên dưới. Trước đây
          h1 của MÀN đứng luôn làm tiêu đề của khối đầu, nên hai khối đọc ra không ngang
          vai nhau — đúng lỗi bản desktop cũng mắc. Dải bg-accent-0 giữa 2 khối là cách
-         ngăn block của khổ 375, thay cho vạch dọc của desktop. -->
-    <div class="px-4 pt-6 pb-2">
-      <h1 class="t-display-title text-foreground">Theo dõi đơn hàng</h1>
-    </div>
-    <div class="flex flex-col gap-4 px-4 pb-8">
+         ngăn block của khổ 375, thay cho vạch dọc của desktop.
+         21/10/2026 (user: "tracking order bỏ cái title theo dõi đơn hàng ra nhé"): BỎ h1 "Theo dõi đơn hàng"
+         (khối pt-6 + 32 + pb-2) khỏi trang vào — khối Tra cứu nhận lại đệm trên 24 của khối tiêu đề cũ (pt-6),
+         nên chữ "Tra cứu đơn hàng" vẫn nằm đúng chỗ h1 đứng trước (y 72); trang cao 1 686 → 1 646. -->
+    <div class="flex flex-col gap-4 px-4 pt-6 pb-8">
       <p class="t-section-title text-foreground">Tra cứu đơn hàng</p>
       <p class="t-multiline text-secondary-foreground">Nhập mã đơn hàng và số điện thoại để theo dõi kiện hàng của bạn.</p>
       <div class="flex flex-col gap-6">
@@ -19726,7 +19850,7 @@ function trackGroupHTML() {
           <span class="t-single text-foreground-alt"><span>Nhận hàng dự kiến</span> <span class="font-medium">${orderEta(o)}</span></span>` : ''}
         </span>
         <span class="ord-card-body">
-          <span class="ord-thumbs">${orderThumbs(o)}</span>
+          ${orderThumbsBox(o)}
           <span class="ord-card-total t-lead"><span class="ord-card-total-l"><span>Tổng tiền</span>:</span><span class="ord-card-total-v">${o.total}</span></span>
         </span>
       </button>`;
@@ -19765,6 +19889,8 @@ const RENDER = {
   home: screenHOME,
   plp: screenPLP, search: screenSearch, pdp: screenPDP, pdp2: screenPDP2, pdp3: screenPDP3, pdp4: screenPDP4, pdp5: screenPDP5, pdp6: screenPDP6, account: screenACCOUNT, order: screenORDER, cart: screenCART, login: screenLOGIN,
   pdpGone: screenPDPGone,
+  /* 21/10/2026: trang 404 / 503 — xem khối cùng tên cạnh screenPDPGone. */
+  notfound: screenNOTFOUND, maintenance: screenMAINTENANCE,
   checkout: screenCHECKOUT, done: screenDONE, pay: screenPAY, track: screenTRACK,
   privacy: () => screenPOLICY('privacy'), terms: () => screenPOLICY('terms'), returns: () => screenPOLICY('returns'),
   dataprivacy: () => screenPOLICY('dataprivacy'),
@@ -20414,6 +20540,13 @@ const I18N = {
   /* 16/10/2026 — lô 3: kiểm ô VAT · khoảng giá · phiếu mua hàng. */
   'Nhập địa chỉ':'Enter your address', 'Nhập email nhận hóa đơn VAT':'Enter the email for the VAT invoice', 'Nhập tên công ty':'Enter the company name', 'Nhập địa chỉ công ty':'Enter the company address', 'Nhập mã số thuế':'Enter the tax code', 'Mã số thuế gồm 10 hoặc 13 số':'Tax code must be 10 or 13 digits', 'Còn thiếu thông tin hóa đơn VAT':'Some VAT invoice details are missing', 'Giá “Từ” không được lớn hơn giá “Đến”':'The “From” price cannot be higher than the “To” price', 'Phiếu mua hàng không hợp lệ':'Invalid voucher', 'Phiếu mua hàng đã hết hạn':'This voucher has expired', 'Phiếu mua hàng đã được sử dụng':'This voucher has already been used', 'Phiếu mua hàng đã được áp dụng':'This voucher is already applied', 'Phiếu mua hàng':'Voucher', 'Hợp lệ':'Valid', 'Sai mã':'Wrong code', 'Hết hạn':'Expired', 'Đã dùng':'Used',
   'Thanh toán không thành công':'Payment failed', 'Phiên thanh toán đã hết hạn':'Payment session expired',
+  /* 21/10/2026 — trang 404 / 503 (user: "tạo trang 404 với 503 luôn nhé"). Trang 404 thật của shop.dafc.com.vn chỉ có bản tiếng Việt (cả đường /en/), nên EN là bản TỰ DỊCH, chờ duyệt; đã soát 0 giá trị EN trùng khoá cũ (trùng là I18N_REV đảo sai). 'Về trang chủ' / 'Tiếp tục mua sắm' dùng lại khoá có sẵn. */
+  'Xin lỗi, trang bạn đang tìm kiếm không tồn tại':'Sorry, the page you are looking for does not exist',
+  'Đường dẫn có thể đã thay đổi hoặc không còn tồn tại. Bạn có thể quay về trang chủ hoặc tiếp tục chọn mua theo ngành hàng.':'The link may have changed or no longer exists. You can go back to the homepage or keep shopping by category.',
+  'Hệ thống đang bảo trì':'Our site is under maintenance',
+  'DAFC Online đang được nâng cấp để phục vụ bạn tốt hơn. Vui lòng quay lại sau ít phút.':'DAFC Online is being upgraded to serve you better. Please come back in a few minutes.',
+  'Cần hỗ trợ gấp? Gọi hotline 19002666.':'Need urgent help? Call our hotline 19002666.',
+  'Tải lại trang':'Reload page', 'Hệ thống vẫn đang bảo trì':'The system is still under maintenance',
   'Thử lại':'Try again', 'Chọn cách thanh toán khác':'Choose another payment method',
   'Đang xử lý…':'Processing…', 'Ghi chú đơn hàng':'Order note', 'Thanh toán khi nhận hàng':'Cash on delivery',
   'Tạo tài khoản':'Create an account',
@@ -22294,6 +22427,8 @@ function go(name, opts = {}) {
      ngành hàng — đứng ở `home` bấm "Nữ" thì tên màn không đổi nên chốt chặn dưới đây
      nuốt luôn lệnh, trang chủ không bao giờ vẽ lại theo ngành mới.
      Force thì KHÔNG đẩy vào history: đẩy là nút back đi từ home về chính home. */
+  /* 21/10/2026 (trang 404): tên màn không có trong RENDER (liên kết cũ, màn đã bỏ…) → trang 404 thay vì ném TypeError ở RENDER[name]() sau khi đã xoá viewport (trang trắng). hasOwnProperty như chốt ở khởi động: __proto__ / constructor cũng "truthy". */
+  if (!Object.prototype.hasOwnProperty.call(RENDER, name)) name = 'notfound';
   if (name === current && !opts.force) return;
   if (current && !opts.back && !opts.force) history.push(current);
   if (current) SCROLL_MEM[current] = curScrollY();   // phải chốt TRƯỚC khi xoá DOM
@@ -23204,12 +23339,45 @@ const ACC_SNAP = JSON.parse(JSON.stringify({ orders: ORDERS, points: POINTS_HIST
 const REWARD_POINTS_BASE = REWARD_POINTS, REWARD_EXPIRY_BASE = REWARD_EXPIRY;
 let accDemoData = 'full';        // 'full' | 'new' | 'expiring' — bánh răng "Dữ liệu tài khoản"
 let accDemoAddr = 'normal';      // 'normal' | 'full' — bánh răng "Sổ địa chỉ"
+let accDemoOrders = 'normal';    // 'normal' | 'many' — bánh răng "Đơn hàng" (21/10/2026): đơn có > 3 sản phẩm để thấy dải ảnh cuộn / lộ mép
 const addrDemoFull = () => JSON.parse(JSON.stringify(ACC_SNAP.addrs)).concat([
   { last: 'Lê',    first: 'Minh C',  phone: '0903 555 222', street: '31 Pasteur',    ward: 'Phường Bến Thành', province: 'TP. Hồ Chí Minh', def: false },
   { last: 'Phạm',  first: 'Thu D',   phone: '0987 321 654', street: '10 Hàng Bài',   ward: 'Phường Hoàn Kiếm', province: 'Hà Nội',          def: false },
   { last: 'Nguyễn', first: 'Văn A',  phone: '0909 123 456', street: '66 Trần Phú',   ward: 'Phường Hải Châu',  province: 'Đà Nẵng',         def: false },
   { last: 'Võ',    first: 'Hoài E',  phone: '0933 777 888', street: '5 Nguyễn Huệ',  ward: 'Phường Sài Gòn',   province: 'TP. Hồ Chí Minh', def: false },
 ]);
+/* 21/10/2026 (user: "khi có nhiều hơn 3 sản phẩm có thể thấy mấp mé 1 thẻ tiếp theo để biết mà scroll") — bộ đơn mẫu gốc KHÔNG có đơn nào quá 3 món nên không có gì để thấy. Công tắc bánh răng "Đơn hàng → Nhiều sản phẩm"
+   thêm món vào HAI đơn mẫu (bản sao từ ACC_SNAP, dữ liệu gốc không đổi): "-01" 3 → 4 món (đúng khung user vẽ: ảnh thứ 4 lộ mép) và DA000000103048 1 → 6 món (cuộn xa). Tổng tạm tính + tổng tiền cộng đúng giá món thêm
+   (phí giao · điểm · giảm giá giữ nguyên) nên trang chi tiết vẫn khớp. Món thêm lấy lần lượt từ ORD_MANY_POOL, bỏ món trùng mã hàng.
+   Món thêm là NƯỚC HOA 100ml (1,9 – 3,2 triệu) chứ không phải túi / giày: tổng tiền hai đơn vẫn 8 chữ số (< 100 triệu) nên cột tiền rộng ~96 như khung user (95.950.000 ₫) và dải ảnh còn ~239 ⇒ ảnh thứ 4 lộ ~8px đúng khung.
+   Tổng 9 chữ số (≥ 100 triệu) làm cột tiền rộng hơn ~4px nên mép chỉ còn ~4px — dải ảnh là phần còn lại (FILL) như khung, không cố định bề rộng. */
+const ORD_MANY_POOL = [
+  { img: 'b2.jpg', name: 'Nước hoa Eros Energy EDP 100ml', variant: '100ml', qty: 1, price: '2.895.000 ₫', sku: '190612' },
+  { img: 'b3.jpg', name: 'Nước hoa Dylan Blue Pour Homme EDT 100ml', variant: '100ml', qty: 1, price: '2.517.000 ₫', sku: '190618' },
+  { img: 'b6.jpg', name: 'Nước hoa Explorer Platinum EDP 100ml', variant: '100ml', qty: 1, price: '3.150.000 ₫', sku: '190624' },
+  { img: 'b7.jpg', name: 'Nước hoa Legend Blue EDP 100ml', variant: '100ml', qty: 1, price: '2.950.000 ₫', sku: '190631' },
+  { img: 'b8.jpg', name: 'Nước hoa Toy 2 Pearl EDP 100ml', variant: '100ml', qty: 1, price: '2.754.000 ₫', sku: '190637' },
+  { img: 'b1.jpg', name: 'Nước hoa Crystal Noir EDP', variant: '50ml', qty: 1, price: '1.890.000 ₫', sku: '190645' },
+];
+const ORD_MANY_TARGET = { 'DA000000103042-01': 4, 'DA000000103048': 6 };
+function ordersDemoMany() {
+  const orders = JSON.parse(JSON.stringify(ACC_SNAP.orders));
+  orders.forEach(o => {
+    const want = ORD_MANY_TARGET[o.id];
+    if (!want) return;
+    let add = 0;
+    for (const p of ORD_MANY_POOL) {
+      if (o.items.length >= want) break;
+      if (o.items.some(it => it.sku === p.sku)) continue;
+      o.items.push({ ...p });
+      add += priceNum(p.price) * p.qty;
+    }
+    o.sub = o.sub.replace(/[\d.]+/, (priceNum(o.sub) + add).toLocaleString('vi-VN'));
+    o.total = o.total.replace(/[\d.]+/, (priceNum(o.total) + add).toLocaleString('vi-VN'));
+  });
+  return orders;
+}
+const ordersDemoSet = () => accDemoData === 'new' ? [] : (accDemoOrders === 'many' ? ordersDemoMany() : JSON.parse(JSON.stringify(ACC_SNAP.orders)));
 const dmyOf = d => String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
 function rewardDaysLeft() {
   const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(REWARD_EXPIRY));
@@ -23233,10 +23401,12 @@ function setMemberTier(id) { MEMBER_TIER = id; MEMBER_SPEND = TIER_DEMO_SPEND[id
 function accDemoApply(part) {
   const cl = o => JSON.parse(JSON.stringify(o));
   if (part === 'data') {
-    ORDERS.splice(0, ORDERS.length, ...(accDemoData === 'new' ? [] : cl(ACC_SNAP.orders)));
+    ORDERS.splice(0, ORDERS.length, ...ordersDemoSet());
     POINTS_HISTORY.splice(0, POINTS_HISTORY.length, ...(accDemoData === 'new' ? [] : cl(ACC_SNAP.points)));
     REWARD_POINTS = accDemoData === 'new' ? 0 : REWARD_POINTS_BASE;
     REWARD_EXPIRY = accDemoData === 'expiring' ? dmyOf(new Date(Date.now() + 14 * 86400000)) : REWARD_EXPIRY_BASE;
+  } else if (part === 'orders') {
+    ORDERS.splice(0, ORDERS.length, ...ordersDemoSet());
   } else if (part === 'addr') {
     ADDRESSES.splice(0, ADDRESSES.length, ...(accDemoAddr === 'full' ? addrDemoFull() : cl(ACC_SNAP.addrs)));
     if (typeof ckAddr === 'number') ckAddr = Math.min(ckAddr, Math.max(0, ADDRESSES.length - 1));
@@ -23346,12 +23516,11 @@ function screenPAY() {
     ${footer()}
   </div>`;
 
+  /* 21/10/2026 (user chọn bộ C): thất bại = thẻ + huy hiệu đỏ X · hết hạn = đồng hồ + huy hiệu vàng "!" (statusIcon 'error' / 'warning', khối 80) — thay vòng viền đỏ / xám Ø64 cũ; cùng cỡ với biểu tượng màn Hoàn tất. 21/10/2026 (user: "24 cho đồng bộ nhé"): tiêu đề thất bại / hết hạn nâng 12 → 24 (t-display-title như màn Hoàn tất, chữ cân dòng; khe tiêu đề → mô tả 8 → 12); 21/10/2026 (user: "nâng 24 luôn nhé"): "Đang chuyển tới cổng thanh toán" (màn con quay) cũng 24 — cả họ cổng thanh toán cùng một cỡ tiêu đề. */
   if (payStage === 'fail') return shell(`
-    <div class="w-16 h-16 rounded-full border border-destructive flex items-center justify-center">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--general-destructive)"><path d="M12.707,12l11.146,11.146-.707,.707L12,12.707,.854,23.854l-.707-.707L11.293,12,.146,.854,.854,.146,12,11.293,23.146,.146l.707,.707L12.707,12Z"/></svg>
-    </div>
-    <div class="flex flex-col gap-2">
-      <p class="t-multiline font-medium text-foreground">Thanh toán không thành công</p>
+    ${statusIcon('error')}
+    <div class="flex flex-col gap-3">
+      <h2 class="t-display-title font-medium text-foreground" style="text-wrap:balance">Thanh toán không thành công</h2>
       <p class="t-multiline text-muted-foreground">${PAY_FAIL_WHY[payFailWhy] || PAY_FAIL_WHY.generic} Đơn <span class="font-medium text-foreground">${oid}</span> vẫn đang chờ thanh toán.</p>
     </div>
     <div class="w-full flex flex-col gap-2.5">
@@ -23360,11 +23529,9 @@ function screenPAY() {
     </div>`);
 
   if (payStage === 'timeout') return shell(`
-    <div class="w-16 h-16 rounded-full border border-border-3 flex items-center justify-center">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--general-muted-foreground)"><path d="M12,24C5.383,24,0,18.617,0,12S5.383,0,12,0s12,5.383,12,12-5.383,12-12,12ZM12,1C5.935,1,1,5.935,1,12s4.935,11,11,11,11-4.935,11-11S18.065,1,12,1Z"/><path d="M7.757,15.929 L7.243,15.071 L12.0,12.217 L12.0,5.0 L13.0,5.0 L13.0,12.783 L7.757,15.929Z"/></svg>
-    </div>
-    <div class="flex flex-col gap-2">
-      <p class="t-multiline font-medium text-foreground">Phiên thanh toán đã hết hạn</p>
+    ${statusIcon('warning')}
+    <div class="flex flex-col gap-3">
+      <h2 class="t-display-title font-medium text-foreground" style="text-wrap:balance">Phiên thanh toán đã hết hạn</h2>
       <p class="t-multiline text-muted-foreground">Phiên thanh toán chỉ có hiệu lực 15 phút. Tiền chưa bị trừ — thanh toán lại đơn <span class="font-medium text-foreground">${oid}</span>.</p>
     </div>
     <div class="w-full flex flex-col gap-2.5">
@@ -23375,8 +23542,8 @@ function screenPAY() {
   // payStage === 'redirect' (và #pay mở thẳng khi chưa có phiên): con quay. Kết cục do payResolve đọc sau 1,4 s — payEnter đặt hẹn giờ.
   return shell(`
     <div class="pay-spin" data-pay-redirect></div>
-    <div class="flex flex-col gap-2">
-      <p class="t-multiline font-medium text-foreground">Đang chuyển tới cổng thanh toán</p>
+    <div class="flex flex-col gap-3">
+      <h2 class="t-display-title font-medium text-foreground" style="text-wrap:balance">Đang chuyển tới cổng thanh toán</h2>
       <p class="t-multiline text-muted-foreground">Vui lòng không tắt trình duyệt cho tới khi thanh toán xong.</p>
     </div>`);
 }
@@ -26567,6 +26734,18 @@ document.body.insertAdjacentHTML('beforeend', `
         <button data-sim-session class="t-multiline w-full h-8 rounded-full bg-secondary text-foreground press">Hết phiên ngay</button>
       </div>
       <div class="h-px bg-border mx-3"></div>
+      <!-- TRANG LỖI HỆ THỐNG (21/10/2026, user "tạo trang 404 với 503 luôn nhé") — công cụ của người xem demo: MỞ thẳng trang 404 / 503 (không phải công tắc). Trang 404 còn tự hiện khi vào địa chỉ lạ (#screen=…). -->
+      <div class="px-3 pt-3 pb-2">
+        <p class="t-multiline tracking-[0.12em] text-muted-foreground">Trang lỗi hệ thống</p>
+        <p class="t-single sp-note text-muted-foreground">Bấm một nút để MỞ trang 404 (không tìm thấy trang) hoặc 503 (bảo trì).</p>
+      </div>
+      <div class="px-3 pb-3">
+        <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Mở trang lỗi hệ thống">
+          ${[['notfound','404 Không tìm thấy'],['maintenance','503 Bảo trì']].map(([id, label]) => `
+            <button data-sim-sys="${id}" class="t-multiline flex-1 h-8 rounded-full transition-colors press text-muted-foreground">${label}</button>`).join('')}
+        </div>
+      </div>
+      <div class="h-px bg-border mx-3"></div>
       <!-- TÌNH HUỐNG ĐĂNG NHẬP · MÃ OTP · LIÊN KẾT ĐẶT LẠI (16/10/2026, lô 2 "Cần bổ sung") — công cụ của người xem demo như "Tình huống thanh toán": chọn trước kết cục rồi làm thao tác; mặc định Thành công / Đúng nên luồng cũ không đổi. -->
       <div class="px-3 pt-3 pb-2">
         <p class="t-multiline tracking-[0.12em] text-muted-foreground">Đăng nhập</p>
@@ -26630,6 +26809,16 @@ document.body.insertAdjacentHTML('beforeend', `
         <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Dữ liệu tài khoản">
           ${[['full','Đầy đủ'],['new','Khách mới'],['expiring','Sắp hết hạn']].map(([id, label]) => `
             <button data-accdata="${id}" class="t-multiline accdataopt flex-1 h-8 rounded-full transition-colors press ${id === accDemoData ? 'bg-background text-foreground font-medium shadow-sm' : 'text-muted-foreground'}">${label}</button>`).join('')}
+        </div>
+      </div>
+      <div class="px-3 pb-2">
+        <p class="t-multiline tracking-[0.12em] text-muted-foreground">Đơn hàng</p>
+        <p class="t-single sp-note text-muted-foreground">Tài khoản → Đơn hàng (và Theo dõi đơn): thẻ đơn ≤ 3 sản phẩm hoặc nhiều hơn 3 (dải ảnh cuộn ngang, lộ mép ảnh kế tiếp).</p>
+      </div>
+      <div class="px-3 pb-3">
+        <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Đơn hàng">
+          ${[['normal','Bình thường'],['many','Nhiều sản phẩm']].map(([id, label]) => `
+            <button data-accorders="${id}" class="t-multiline accordersopt flex-1 h-8 rounded-full transition-colors press ${id === accDemoOrders ? 'bg-background text-foreground font-medium shadow-sm' : 'text-muted-foreground'}">${label}</button>`).join('')}
         </div>
       </div>
       <div class="px-3 pb-2">
@@ -26886,7 +27075,7 @@ document.body.insertAdjacentHTML('beforeend', `
   /* Hết phiên ngay (16/10/2026): đóng panel rồi mở hộp thoại, đợi panel khép xong (~0,26 s) cho người xem thấy hộp thoại, không phải hai lớp chồng nhau. */
   panel.querySelectorAll('[data-sim-session]').forEach(btn => btn.addEventListener('click', () => { closeP(); setTimeout(sessionExpire, 260); }));
   /* Lô 2 "Cần bổ sung" (16/10/2026): công tắc Tình huống đăng nhập / Mã OTP đổi biến toàn cục (loginSim / otpSim) và dọn bộ đếm; 3 nút "Liên kết đặt lại mật khẩu" MỞ trang tương ứng (không phải công tắc). */
-  [['data-loginsim', 'loginsim', v => { loginSim = v; loginFails = 0; loginLocked = false; authMsgClear(); }], ['data-otpsim', 'otpsim', v => { otpSim = v; otpFails = 0; }], ['data-pbhsim', 'pbhsim', v => { pbhSim = v; }], ['data-tiersim', 'tiersim', v => { setMemberTier(v); closeP(); setTimeout(() => accGearGo('member'), 260); }], ['data-accdata', 'accdata', v => { accDemoData = v; accDemoApply('data'); closeP(); setTimeout(() => (v === 'expiring' ? accGearGo('member', 'points') : accGearGo('orders')), 260); }], ['data-accaddr', 'accaddr', v => { accDemoAddr = v; accDemoApply('addr'); closeP(); setTimeout(() => accGearGo('address'), 260); }], ['data-oossim', 'oossim', v => { oosSim = v; }], ['data-failwhy', 'failwhy', v => { payFailWhy = v; if (current === 'pay' && payStage === 'fail') go('pay', { force: true }); }], ['data-shipsim', 'shipsim', v => { shipSim = v; const r = document.querySelector('[data-screen="checkout"]'); if (r) rerenderCheckout(r); }], ['data-tracksim', 'tracksim', v => { trackSim = v; closeP(); setTimeout(trackGearGo, 260); }], ['data-imgsim', 'imgsim', v => { imgSim = v; imgSimApply(); }], ['data-colorsim', 'colorsim', v => { colorSim = v; closeP(); setTimeout(colorSimApply, 260); }], ['data-cartsim', 'cartsim', v => { cartSim = v; closeP(); setTimeout(cartSimApply, 260); }], ['data-valsim', 'valsim', v => { valSim = v; closeP(); setTimeout(valSimApply, 260); }]].forEach(([attr, key, set]) => {
+  [['data-loginsim', 'loginsim', v => { loginSim = v; loginFails = 0; loginLocked = false; authMsgClear(); }], ['data-otpsim', 'otpsim', v => { otpSim = v; otpFails = 0; }], ['data-pbhsim', 'pbhsim', v => { pbhSim = v; }], ['data-tiersim', 'tiersim', v => { setMemberTier(v); closeP(); setTimeout(() => accGearGo('member'), 260); }], ['data-accdata', 'accdata', v => { accDemoData = v; accDemoApply('data'); closeP(); setTimeout(() => (v === 'expiring' ? accGearGo('member', 'points') : accGearGo('orders')), 260); }], ['data-accaddr', 'accaddr', v => { accDemoAddr = v; accDemoApply('addr'); closeP(); setTimeout(() => accGearGo('address'), 260); }], ['data-accorders', 'accorders', v => { accDemoOrders = v; accDemoApply('orders'); closeP(); setTimeout(() => accGearGo('orders'), 260); }], ['data-oossim', 'oossim', v => { oosSim = v; }], ['data-failwhy', 'failwhy', v => { payFailWhy = v; if (current === 'pay' && payStage === 'fail') go('pay', { force: true }); }], ['data-shipsim', 'shipsim', v => { shipSim = v; const r = document.querySelector('[data-screen="checkout"]'); if (r) rerenderCheckout(r); }], ['data-tracksim', 'tracksim', v => { trackSim = v; closeP(); setTimeout(trackGearGo, 260); }], ['data-imgsim', 'imgsim', v => { imgSim = v; imgSimApply(); }], ['data-colorsim', 'colorsim', v => { colorSim = v; closeP(); setTimeout(colorSimApply, 260); }], ['data-cartsim', 'cartsim', v => { cartSim = v; closeP(); setTimeout(cartSimApply, 260); }], ['data-valsim', 'valsim', v => { valSim = v; closeP(); setTimeout(valSimApply, 260); }]].forEach(([attr, key, set]) => {
     panel.querySelectorAll('[' + attr + ']').forEach(btn => btn.addEventListener('click', () => {
       set(btn.dataset[key]);
       panel.querySelectorAll('[' + attr + ']').forEach(x => {
@@ -26900,6 +27089,11 @@ document.body.insertAdjacentHTML('beforeend', `
     authLinkState = btn.dataset.simLink;
     closeP();
     setTimeout(() => { authView = 'linkexpired'; authViewIntent = true; go('login', { force: true }); }, 260);
+  }));
+  /* Trang lỗi hệ thống (21/10/2026): 2 nút MỞ trang 404 / 503 (không phải công tắc) — đóng panel rồi đi, đợi panel khép (~0,26 s) như nút "Liên kết đặt lại mật khẩu". */
+  panel.querySelectorAll('[data-sim-sys]').forEach(btn => btn.addEventListener('click', () => {
+    closeP();
+    setTimeout(() => go(btn.dataset.simSys), 260);
   }));
 
 
@@ -27124,9 +27318,14 @@ document.body.insertAdjacentHTML('beforeend', `
   /* Tab Nam/Nữ/Làm đẹp — 16/24 cho cả hai trạng thái, chỉ khác weight:
      active = medium + foreground + gạch primary, inactive = regular + muted.
      Khác tab màn Search ở chỗ inactive dùng regular (400) chứ không light
-     (300) — sửa tab Search thì đừng kéo theo chỗ này. */
+     (300) — sửa tab Search thì đừng kéo theo chỗ này.
+     20/10/2026 (user: "ở cái menu mobile ngay chỗ gender cho lại cái line nhé"): hàng tab CÓ LẠI
+     kẻ đáy 1px --general-border tràn mép (như trước 13/10: hàng 40 + kẻ = 41). CHỈ hàng này — hàng
+     danh mục, thanh quay lại, khối đăng nhập và thanh Ngôn ngữ vẫn KHÔNG kẻ (lệnh khách 13/10).
+     deptTabs dựng ở CẢ màn gốc lẫn màn con nên hai cấp cùng cao thêm 1px: chữ tiêu đề cấp 2 vẫn rơi
+     đúng y của hàng đầu cấp 1 (cùng 117), KHÔNG phải đổi đệm subBar / .ms-view. */
   const deptTabs = () => `
-    <div class="flex gap-2 px-4 shrink-0">
+    <div class="flex gap-2 px-4 shrink-0" style="border-bottom:1px solid var(--general-border)">
       ${['Nữ', 'Nam', 'Làm đẹp'].filter(t => MENU_DATA[t]).map(t => `
         <button class="t-single ms-tab h-10 px-2 press ${t === menuTab ? 'font-medium text-foreground' : 'font-normal text-muted-foreground'}" style="min-width:32px;white-space:nowrap;border-bottom:2px solid ${t === menuTab ? 'var(--tab-mark)' : 'transparent'}" data-mtab="${t}">${t}</button>`).join('')}
     </div>`;
@@ -28952,7 +29151,8 @@ if (!RESP.swapped) {
      mà key kế thừa từ Object.prototype (#screen=__proto__, =constructor) cũng
      "truthy" — lọt vào go() là ném lỗi giữa boot, trang trắng và mất luôn
      RESP.watch() bên dưới (hết chuyển bản khi kéo cửa sổ). */
-  const first = Object.prototype.hasOwnProperty.call(RENDER, st.screen) ? st.screen : 'home';
+  /* 21/10/2026 (trang 404): hash có screen= mà không phải màn nào → trang 404 (trước: âm thầm về trang chủ); không có screen= → trang chủ như cũ. */
+  const first = !st.screen ? 'home' : (Object.prototype.hasOwnProperty.call(RENDER, st.screen) ? st.screen : 'notfound');
   window.history.replaceState({ screen: first }, '');
   /* fromPopstate: chặn go() push thêm một entry TRÙNG với replaceState vừa rồi
      — nếu không, mỗi lần tải trang để lại 2 entry cùng state và cú bấm back
