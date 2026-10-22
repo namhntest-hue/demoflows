@@ -59,7 +59,7 @@ window.RESP = (function () {
       var p = [];
       if (screen && screen !== 'home') p.push('screen=' + encodeURIComponent(screen));
       if (lang && lang !== 'vi')      p.push('lang=' + encodeURIComponent(lang));
-      if (font && font !== 'montserrat') p.push('font=' + encodeURIComponent(font));
+      if (font) p.push('font=' + encodeURIComponent(font));   // 22/10/2026: bỏ `!== 'montserrat'` — Montserrat không còn là mặc định (mặc định = '' của bộ da), nó là ô "Montserrat · mọi trang" nên PHẢI mang qua bản kia
       if (theme && theme !== 'd')     p.push('theme=' + encodeURIComponent(theme));
       if (hm && hm !== 'new')         p.push('hm=' + encodeURIComponent(hm));
       if (ctx)                        p.push('ctx=' + encodeURIComponent(ctx));   // 04/10/2026: ngữ cảnh màn (hãng / hub / lọc ở PLP, chỉ số SP ở PDP) — xem navCarry()
@@ -26609,7 +26609,10 @@ document.body.insertAdjacentHTML('beforeend', menuSheet());
    chuyển bản sẽ trượt FONTS.find -> tự rơi về mặc định, vô hại. Cặp 'elegant' cũng
    vậy: cặp KHÔNG vào hash nên chỉ cần bỏ khỏi mảng. */
 const FONTS = [
-  ['montserrat', 'Montserrat', "'Montserrat', ui-sans-serif, system-ui, sans-serif"],
+  /* 22/10/2026 — nhãn thêm "· mọi trang" (lệnh user: *"trong mục setting, thêm lại cho tôi 1
+     option Montserrat all page nhé"*): chọn ô này là ĐỔI MẶT CHỮ CỦA CẢ APP — thân bài lẫn
+     tiêu đề (handler `[data-font]` đặt cả `--font-app` lẫn `--font-head`). Xem FONT_VISIBLE. */
+  ['montserrat', 'Montserrat · mọi trang', "'Montserrat', ui-sans-serif, system-ui, sans-serif"],
   ['inter',      'Inter',      "'Inter', ui-sans-serif, system-ui, sans-serif"],
   /* 25/08/2026 — **GỠ `manrope` khỏi danh sách font ĐƠN** (lệnh user: *"bộ tùy chọn
      font chữ sẽ bỏ font manrope"*). Family Manrope VẪN nạp trong thẻ <link> vì cặp
@@ -26620,7 +26623,9 @@ const FONTS = [
    không có phông ĐƠN nào được tích — ô thứ 5 của hàng `SKINS` để rỗng, và `currentPair`
    dưới đây giữ cặp. Đổi bộ da vào-trang thì sửa cả 2 biến. Xem ghi chú ở thẻ <html>.
    *("bộ da vào-trang" ≠ ô `['default', …, '']` của bảng SKINS — ô đó là bảng màu GỐC
-   của file, nay phải tự bật.)* */
+   của file, nay phải tự bật.)*
+   *(22/10/2026: 'montserrat' chỉ có mặt khi người xem demo bấm ô "Montserrat · mọi trang" —
+   xem FONT_VISIBLE; bấm lại ô Cặp font thì `applySkin` trả nó về ''.)* */
 let currentFont = '';
 /* ── CẶP FONT THỬ heading + body (24/08/2026, yêu cầu user) ──
    [id, tên cặp, tên heading, stack heading, tên body, stack body, ghi chú ngắn,
@@ -26969,13 +26974,16 @@ function applyTheme(id) {
    Muốn bật lại một bộ để thử: thêm id vào đúng danh sách dưới đây, không phải sửa bảng.
    · SKIN_VISIBLE  — chỉ `libre-inter` (bộ da khách đã chốt 03/09/2026).
    · THEME_VISIBLE — `d` (đen trắng) + `copper` (màu nhấn đồng DAFC). `dplus` ẩn.
-   · FONT_VISIBLE  — RỖNG: bộ da chốt chạy một CẶP font nên không có phông ĐƠN nào
-     đúng, để 2 dòng Montserrat/Inter ở đó chỉ mời người xem demo bấm nhầm. Danh sách
-     rỗng thì cả mục "Phông chữ" tự biến mất, không để lại tiêu đề trống.
+   · FONT_VISIBLE  — chỉ `montserrat` (22/10/2026, lệnh user: *"trong mục setting, thêm lại
+     cho tôi 1 option Montserrat all page nhé"*): ô "Montserrat · mọi trang" = đổi CẢ APP
+     sang Montserrat (thân bài + tiêu đề) để đặt cạnh cặp Libre Bodoni + Inter đang chạy.
+     Từ 21/09 danh sách này RỖNG vì bộ da chốt chạy một CẶP, hai dòng Montserrat / Inter ở
+     đó chỉ mời người xem bấm nhầm — nay CHỈ MỘT ô, có dòng ghi chú nói nó làm gì và về lại
+     bằng ô Cặp font. `inter` vẫn ẩn. Danh sách rỗng thì cả mục "Phông chữ" tự biến mất.
    · PAIR_VISIBLE  — chỉ `couture` = Libre Bodoni + Inter, đúng cặp đang chạy. */
 const SKIN_VISIBLE  = ['libre-inter'];
 const THEME_VISIBLE = ['d', 'copper'];
-const FONT_VISIBLE  = [];
+const FONT_VISIBLE  = ['montserrat'];
 const PAIR_VISIBLE  = ['couture'];
 const spShow = (rows, ids) => rows.filter(([id]) => ids.includes(id));
 
@@ -27282,6 +27290,7 @@ document.body.insertAdjacentHTML('beforeend', `
       <div class="h-px bg-border mx-3"></div>
       <div class="px-3 pt-3 pb-2">
         <p class="t-multiline tracking-[0.12em] text-muted-foreground">Phông chữ</p>
+        <p class="t-single sp-note text-muted-foreground">Mọi trang. Montserrat thay cả Inter lẫn Libre Bodoni; muốn về mặc định, chọn lại Cặp font bên dưới.</p>
       </div>
       <div id="fontList" class="pb-2">
         ${spShow(FONTS, FONT_VISIBLE).map(([id, label, stack]) => `
@@ -27448,10 +27457,16 @@ document.body.insertAdjacentHTML('beforeend', `
       currentFont = id;
       document.documentElement.style.setProperty('--font-app', f[2]);
       document.documentElement.classList.add('font-override');
-      /* chọn font ĐƠN là rời chế độ cặp: heading quay về cùng font body */
+      /* chọn font ĐƠN là rời chế độ cặp: heading đi cùng font body.
+         22/10/2026 — phải ĐẶT TƯỜNG MINH `--font-head` = font đơn, không được chỉ gỡ biến
+         inline: bộ da vào-trang (`skin-li`) tự khai `--font-head` = Libre Bodoni bằng CSS, gỡ
+         inline thì mọi tiêu đề vẫn Libre Bodoni và ô "Montserrat · mọi trang" chỉ đổi được thân
+         bài. (Bản cũ chạy đúng ở bộ da mặc định vì ở đó `--font-head` chưa khai nên
+         `var(--font-head, var(--font-app))` rơi về font body.) */
       currentPair = '';
       document.documentElement.classList.remove('font-pair');
-      ['--font-head', '--pair-adj', '--pair-head-ls', '--pair-head-lh']
+      document.documentElement.style.setProperty('--font-head', f[2]);
+      ['--pair-adj', '--pair-head-ls', '--pair-head-lh']
         .forEach(v => document.documentElement.style.removeProperty(v));
       panel.querySelectorAll('[data-font-pair] .fp-tick').forEach(t => t.classList.add('opacity-0'));
       panel.querySelectorAll('[data-font]').forEach(x =>
@@ -27463,7 +27478,15 @@ document.body.insertAdjacentHTML('beforeend', `
 
   panel.querySelectorAll('[data-font-pair]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const p = applyFontPair(btn.dataset.fontPair);
+      /* 22/10/2026 — cặp mà bộ da ĐANG CHẠY sẵn bằng CSS (ô thứ 7 của `SKINS`, chỉ tích không áp)
+         thì bấm vào = VỀ ĐÚNG bản của bộ da: `applySkin` gỡ mọi thứ ô "Montserrat · mọi trang"
+         đã đặt. Không gọi `applyFontPair` ở đây — nó đặt thêm `font-size-adjust` + `.font-pair`
+         (xem ghi chú ở bảng `SKINS`) nên "về" sẽ ra một bản KHÁC lúc mới mở trang. */
+      const id = btn.dataset.fontPair;
+      const own = SKINS.find(x => x[0] === currentSkin);
+      const native = !!own && own[6] === id;
+      if (native) applySkin(currentSkin);
+      const p = native ? FONT_PAIRS.find(x => x[0] === id) : applyFontPair(id);
       if (!p) return;
       closeP();
       toast('Cặp font: ' + p[1]);
@@ -29448,7 +29471,10 @@ if (!RESP.swapped) {
   if (f) {
     currentFont = f[0];
     document.documentElement.style.setProperty('--font-app', f[2]);
+    document.documentElement.style.setProperty('--font-head', f[2]);   // 22/10/2026: "mọi trang" = cả tiêu đề, y như lúc bấm ô — xem handler [data-font]
     document.documentElement.classList.add('font-override');
+    currentPair = '';   // font đơn đang bật thì không cặp nào được tích
+    document.querySelectorAll('#settingsPanel [data-font-pair] .fp-tick').forEach(t => t.classList.add('opacity-0'));
     document.querySelectorAll('#settingsPanel [data-font]').forEach(x =>
       x.querySelector('.fo-tick').classList.toggle('opacity-0', x.dataset.font !== f[0]));
   }
