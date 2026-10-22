@@ -1862,6 +1862,17 @@ window.RESP = (function () {
   .bh-tiles .hm-occ-scrim { height: 100px; background: linear-gradient(to top, rgba(0, 0, 0, .55) 0, rgba(0, 0, 0, .55) 68px, transparent 100%); }
   .bh-tiles .hm-occ-copy { left: 0; right: 0; bottom: 0; padding: 8px; gap: 4px; }
   .bh-tile-title { font-family: var(--font-head); font-size: 14px; line-height: 20px; font-weight: 400; }
+  /* 22/10/2026 (user, kèm hình minh hoạ: "cái chữ đọc thêm cho rút lên dòng trên như hình minh họa") — mô tả hãng ở trang thương hiệu (#brandDesc): nút "Xem thêm" nằm TRÊN DÒNG THỨ 3,
+     ngay sau dấu ba chấm, không còn đứng một hàng riêng bên dưới. Thuần CSS: ĐẦU đoạn có 2 phần tử float phải — .bd-fill (rộng 0, cao 2 dòng = 36) và nút #brandToggle (float + clear:right)
+     nên nút rơi xuống dòng 3, chữ chảy quanh nút (dòng 3 ngắn lại) và -webkit-line-clamp:3 đặt "…" ngay trước nút. Float nằm trong .bd-in (một khối thường, là con DUY NHẤT của -webkit-box).
+     Mở rộng (.is-open): hết clamp, miếng đệm ẩn, wire() dời nút về CUỐI đoạn thành "Thu gọn" nằm ngay sau chữ. 18 = line-height .t-multiline. Đoạn ≤ 3 dòng: wire() bỏ nút (xem wire). */
+  #brandDesc p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+  #brandDesc .bd-in { display: block; }
+  #brandDesc .bd-fill { float: right; width: 0; height: 36px; }
+  #brandDesc #brandToggle { float: right; clear: right; margin-left: 8px; }
+  #brandDesc.is-open p { display: block; -webkit-line-clamp: unset; overflow: visible; }
+  #brandDesc.is-open .bd-fill { display: none; }
+  #brandDesc.is-open #brandToggle { float: none; clear: none; margin-left: 8px; }
   /* HIGHLIGHTS + VỀ MOLTON BROWN (MOBILE theo bản desktop, lệnh user 05/10/2026 đêm: "xong áp dụng cho bản mobile luôn nhé"). Bản desktop theo KHUNG FIGMA CỦA USER (1178:123273): MỘT khối hai nửa — ảnh 50% | cột chữ + 3 thẻ SP —
      trên nền kem `copper-surface`. Ở 375 hai nửa không vừa nên XẾP DỌC (mình đề xuất từ lượt trước, user nhận): ảnh phủ ngang khối (tỉ lệ 5/4 = 696/559 của khung) → khối chữ (tiêu đề hai dòng · mô tả · "Mua ngay", đệm 16) →
      dải 3 thẻ SP TRƯỢT ngang (thẻ 150, khe 8 ⇒ vừa trọn HAI thẻ trong khối 343 rồi thẻ thứ ba ló 11 px gợi ý trượt — thẻ 170 của dải Bán chạy nhất làm thẻ thứ hai bị cắt dở ở mép khối). Khối nằm trong lề 16 như mọi khối; nền kem qua `html.skin-mt.skin-li` (cùng bộ da với token). Tên SP `truncate` của productCard. */
@@ -1932,6 +1943,111 @@ window.RESP = (function () {
   .gender-tile-veil { position: absolute; inset-inline: 0; bottom: 0; height: 240px; background: linear-gradient(to top, rgba(0, 0, 0, .46) 0, rgba(0, 0, 0, .46) 140px, transparent 240px); pointer-events: none; }
   .gender-tile-copy { position: absolute; inset-inline: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px; pointer-events: none; }
   .gender-tile-copy button { pointer-events: auto; }
+  /* Hai cây thân bài (VI / EN): bản site thật khác cấu trúc nên vẽ cả hai, CSS chọn cây theo html[data-lang] (applyLang đặt). display: contents để con của cây nằm thẳng trong cột flex của .blog-body / article. */
+  .blog-vi, .blog-en { display: contents; }
+  .blog-en { display: none; }
+  html[data-lang="en"] .blog-vi { display: none; }
+  html[data-lang="en"] .blog-en { display: contents; }
+  .blog-clamp-3, .blog-clamp-4, .blog-clamp-6 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+  .blog-clamp-3 { -webkit-line-clamp: 3; }
+  .blog-clamp-4 { -webkit-line-clamp: 4; }
+  .blog-clamp-6 { -webkit-line-clamp: 6; }
+
+  /* ── BLOG · MÀU TẠP CHÍ (22/10/2026) — KHAI GIỐNG HỆT ở 2 file ──
+     User: "trang blog hiện tại đang chưa đẹp mắt, hãy cho nó thêm màu để cảm giác nó magazine hơn bản hiện hữu của dafc". Bản đầu: nền trắng, ô ảnh xám #f5f5f5, chữ đen — không có mảng màu nào.
+     BẢNG MÀU = thang `pampas` (đồng DAFC) trong Figma Primitives, KHÔNG thêm màu mới: 50 #f5f2ed · 150 #eae4da · 200 #e0d7c8 · 300 #ccbca5 · 700 #81604d · 900 #564238 · 950 #2e211c (đọc từ file Figma 22/10). Khai MỘT chỗ ở .blog-root — đổi bảng màu = sửa 7 biến này. KHÔNG mượn `--cu-*`: biến đó chỉ có ở bộ da skin-li, trang Blog phải đúng màu ở mọi bộ da.
+     NHỊP MẢNG NỀN, tràn mép màn, nội dung vẫn trong khung 1440 (.blog-page):
+       danh sách: kem (tên trang + tab) → ĐỒNG ĐẬM 950 (bài mới nhất) → cát 150 (lưới thẻ trắng) → kem (chân trang);
+       bài: cát 150 (đầu bài, kéo xuống nửa trên ảnh) → trắng (thân bài) → ĐỒNG ĐẬM (khối cửa hàng) → trắng (chia sẻ) → cát 150 (bài liên quan) → kem (chân trang).
+     CHUYÊN MỤC = nhãn chữ thường 12/16 · 400 (luật §1.1: 500 chỉ đi với chữ HOA), mỗi mục MỘT tông: thương hiệu = đồng 700 + chữ trắng (5,7:1) · xu hướng = đồng đậm 950 + chữ kem (14:1) · tin tức = cát 300 + chữ 950 (8,4:1). Trên mảng tối nhãn đổi hết sang cát 300 (nhãn 950 sẽ tan vào nền).
+     CHỮ MỜ: khai lại --general-muted-foreground ngay trên từng mảng (kem #666 5,1:1 · cát #404040 · thẻ trắng #666) — không đẻ mực thứ tư. Mảng tối đảo 3 biến mực sang kem / cát để class text-* trong markup tự đổi theo. */
+  .blog-root {
+    --bl-paper: #f5f2ed; --bl-band: #eae4da; --bl-sand: #e0d7c8; --bl-line: #ccbca5;
+    --bl-copper: #81604d; --bl-bronze: #564238; --bl-espresso: #2e211c;
+  }
+  .blog-band { width: 100%; }
+  .blog-band--paper { background: var(--bl-paper); --general-muted-foreground: #666666; }
+  .blog-band--band { background: var(--bl-band); --general-muted-foreground: #404040; }
+  .blog-band--dark { background: var(--bl-espresso); color: var(--bl-paper); --general-foreground: var(--bl-paper); --general-secondary-foreground: var(--bl-sand); --general-muted-foreground: var(--bl-line); }
+  .blog-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .blog-kicker { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; font-weight: 400; background: var(--bl-line); color: var(--bl-espresso); }
+  .blog-kicker[data-bcat="brand"] { background: var(--bl-copper); color: #ffffff; }
+  .blog-kicker[data-bcat="trend"] { background: var(--bl-espresso); color: var(--bl-paper); }
+  .blog-kicker[data-bcat="news"] { background: var(--bl-line); color: var(--bl-espresso); }
+  .blog-band--dark .blog-kicker { background: var(--bl-line); color: var(--bl-espresso); }
+  .blog-chip { display: inline-flex; align-items: center; flex-shrink: 0; white-space: nowrap; border: 1px solid var(--bl-line); background: transparent; color: #404040; transition: background .18s ease, border-color .18s ease, color .18s ease; }
+  .blog-chip:hover { background: var(--bl-band); }
+  .blog-chip[aria-current] { background: var(--bl-espresso); border-color: var(--bl-espresso); color: var(--bl-paper); }
+  .blog-chip:focus-visible { outline: 2px solid var(--bl-copper); outline-offset: 2px; }
+  /* Nhãn mục kiểu đầu trang tạp chí: chữ + kẻ mảnh chạy hết bề ngang. */
+  .blog-label { display: flex; align-items: center; gap: 16px; }
+  .blog-label::after { content: ""; flex: 1; height: 1px; background: currentColor; opacity: .45; }
+  .blog-cta-btn { display: flex; align-items: center; width: fit-content; height: 40px; padding: 0 24px; border: 1px solid var(--bl-line); color: var(--bl-paper); font-weight: 500; transition: background .18s ease, color .18s ease; }
+  .blog-feature:hover .blog-cta-btn { background: var(--bl-paper); color: var(--bl-espresso); }
+  .blog-feature-photo, .blog-card-photo, .blog-fig, .blog-hero { overflow: hidden; background: var(--bl-sand); }
+  .blog-feature-photo img, .blog-card-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .blog-hero img, .blog-fig img { display: block; width: 100%; height: auto; }
+  /* Thẻ trắng trên mảng cát: ảnh sát mép trên, khối chữ có đệm riêng (ảnh KHÔNG thụt như bản trắng cũ). */
+  .blog-card { display: flex; flex-direction: column; min-width: 0; background: #ffffff; --general-muted-foreground: #666666; }
+  .blog-card-body { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  .blog-card-title { transition: color .18s ease; }
+  .blog-card:hover .blog-card-title { color: var(--bl-copper); }
+  .blog-grid { display: grid; }
+  /* Chân trang nối thẳng mảng cuối (hook .bg-secondary.mt-4 của footer() có khe 16 hở nền trắng giữa hai mảng màu). */
+  .blog-root > .bg-secondary.mt-4 { margin-top: 0; }
+  /* Đầu bài: mảng cát kéo xuống NỬA TRÊN của ảnh đại diện (ảnh "trồi" ra khỏi mảng, như bìa tạp chí). */
+  .blog-hero-wrap { background: linear-gradient(to bottom, var(--bl-band) 0, var(--bl-band) 50%, transparent 50%); }
+  .blog-excerpt { color: var(--bl-copper); }
+  .blog-excerpt::before { content: ""; display: block; width: 48px; height: 2px; margin-bottom: 20px; background: var(--bl-copper); }
+  /* Chữ cái đầu bài (drop cap) = chữ TRANG TRÍ như wordmark, không phải bậc chữ của thang; p mở flow-root để float không tràn xuống khối sau. */
+  .blog-body :is(.blog-vi, .blog-en) > p:first-of-type { display: flow-root; }
+  .blog-body :is(.blog-vi, .blog-en) > p:first-of-type::first-letter { float: left; font-family: var(--font-head); font-weight: 400; color: var(--bl-copper); }
+  .blog-h { font-family: var(--font-head); font-weight: 400; }
+  .blog-h::before { content: ""; display: block; width: 32px; height: 2px; margin-bottom: 12px; background: var(--bl-copper); }
+  .blog-q { margin: 0; padding: 20px 24px 24px; background: var(--bl-paper); border-left: 3px solid var(--bl-copper); color: var(--bl-bronze); }
+  .blog-q::before { content: "\201C"; display: block; height: 20px; font-family: var(--font-head); font-size: 48px; line-height: 40px; color: var(--bl-line); }
+  .blog-gal { display: grid; gap: 8px; }
+  .blog-gal-1 { grid-template-columns: minmax(0, 1fr); }
+  .blog-gal-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Ảnh đi cặp: ô 4:3 cắt đều cho hai ảnh cùng hàng khỏi lệch cao; ảnh lẻ ở cuối trải hai cột (16:9). Ảnh đứng một mình giữ tỉ lệ gốc. */
+  .blog-gal-2 .blog-fig { aspect-ratio: 4 / 3; }
+  .blog-gal-2 .blog-fig img { height: 100%; object-fit: cover; }
+  .blog-gal-2 > .blog-fig:last-child:nth-child(odd) { grid-column: 1 / -1; aspect-ratio: 16 / 9; }
+  /* Khối "hệ thống cửa hàng": mảng đồng đậm tràn mép (cuối bài), chữ kem / cát do biến mực của .blog-band--dark. */
+  .blog-store { display: flex; flex-direction: column; gap: 16px; text-align: center; }
+  .blog-store-cols { display: grid; gap: 24px; }
+  .blog-store-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .blog-share { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 16px; border-top: 1px solid var(--bl-line); }
+
+  /* ── BLOG + BLOG DETAIL (22/10/2026) — BẢN MOBILE ──
+     Layout theo trang TIN TỨC của site thật (dafc.com.vn/vi/tin-tuc: MỘT cột thẻ, ảnh dọc 1 : 1,4) vẽ bằng UI của demo + MÀU TẠP CHÍ (khối trên). Dựng bằng CSS thật vì tailwind.css dựng sẵn thiếu nhiều bậc (aspect · line-clamp…).
+     Số đo bám các khuôn đã chốt: lề 16, khe thẻ 24, nút cao 48, chip cao 40. Cỡ chữ do class thang chữ trong markup cấp; tên trang 32/40 (cùng bậc .blog-h1 bản desktop); mặt Libre do rule skin-li của .t-* và p.hm-story-title. */
+  .blog-head { display: flex; flex-direction: column; gap: 8px; padding: 8px 16px 16px; }
+  .blog-h1-xl { font-size: 32px; line-height: 40px; }
+  .blog-tabs { gap: 8px; padding: 0 16px 24px; }
+  .blog-chip { height: 40px; padding: 0 16px; }
+  .blog-lead-band { padding: 32px 0 48px; }
+  .blog-lead-band .blog-label { padding: 0 16px 20px; }
+  .blog-feature { display: flex; flex-direction: column; gap: 20px; width: 100%; padding: 0 16px; }
+  .blog-feature-photo { aspect-ratio: 6 / 7; }
+  .blog-feature-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .blog-grid-band { padding: 40px 0 56px; }
+  .blog-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; padding: 0 16px; }
+  .blog-card-photo { aspect-ratio: 5 / 7; }
+  .blog-card-body { padding: 16px 16px 20px; }
+  .blog-more { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px 16px 0; }
+  .blog-more button { background: #ffffff; }
+  .blog-title { display: flex; flex-direction: column; gap: 12px; padding: 8px 16px 32px; }
+  .blog-hero-wrap { padding: 0 16px; }
+  .blog-excerpt { padding: 32px 16px 0; }
+  .blog-body { display: flex; flex-direction: column; gap: 16px; padding: 24px 16px 0; }
+  .blog-body :is(.blog-vi, .blog-en) > p:first-of-type::first-letter { font-size: 52px; line-height: 42px; padding: 4px 8px 0 0; }
+  .blog-h { padding-top: 16px; }
+  .blog-q { padding: 16px 20px 20px; }
+  .blog-storeband { margin-top: 48px; padding: 48px 16px; }
+  .blog-store-cols { grid-template-columns: minmax(0, 1fr); }
+  .blog-cta { display: flex; flex-direction: column; gap: 24px; padding: 32px 16px 48px; }
+  .blog-rel { padding: 8px 0 24px; }
 
   /* ── Confetti ── */
   @keyframes fall { to { transform: translateY(340px) rotate(540deg); opacity: 0; } }
@@ -3099,7 +3215,10 @@ window.RESP = (function () {
      nhóm này vẫn đúng 2 selector dưới, không có gì phải thêm bớt. */
   html.skin-mt [data-screen="cart"] div:has(> #cartTotal) > span {
     font-weight: 500;
-    text-transform: uppercase;
+    /* 22/10/2026 (user: "đơn giá ở 2 ngôn ngữ đều là đ viết thường nhé, không viết Đ"): ĐỔI uppercase → none. "Số tiền cũng ăn hoa: toàn chữ số nên vô hại"
+       (ghi chú trên) chỉ đúng khi số tiền chưa có hậu tố "đ" — hoa biến "186,057,000đ" thành "186,057,000Đ" ở CẢ 2 NGÔN NGỮ. Nhãn "Tổng cộng" đã chữ thường từ
+       14/09 (rule :first-child ngay dưới) nên rule này chỉ còn tác động lên đúng số tiền. Giá luôn viết thường: đừng thêm lại uppercase cho phần tử chứa giá. */
+    text-transform: none;
     /* 15/09/2026: 16 -> 20 theo bậc .t-lead mới của hàng tổng (xem hook .ck-total
        bên dưới). TÁCH khỏi nhánh #pbhAcc cùng lượt: trigger phiếu mua hàng vẫn ở
        .t-multiline 12/18 nên phải giữ nhịp 16 của nó, không đi theo 20. */
@@ -5828,6 +5947,7 @@ window.RESP = (function () {
   </div>
 </div>
 
+<script src="blog-data.js?v=20261022"></script>
 <script>
 /* ════════════════════════════════════════════════════════════════
    DATA
@@ -6886,7 +7006,7 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
 
 const BRANDS = ['Versace','Versace Jeans Couture','Burberry','Balmain','Dolce&Gabbana','Ferragamo','MCM','TUMI'];
 
-// Category cards — ảnh vuông 1:1 (150×150) theo PLP-Mobile-02-ByBrand
+// Category cards — ảnh vuông 1:1 theo PLP-Mobile-02-ByBrand (150×150; 22/10/2026 thu về 109×109 ở trang thương hiệu, xem brandCatStrip)
 const CATEGORIES = [
   { img:'p1-0.jpg',    label:'Quần áo'   },
   { img:'p4-v1.jpg',   label:'Giày dép'  },
@@ -8338,20 +8458,19 @@ function plpBrandSkeleton() {
     ${navBar()}
     ${plpSkelCrumb(H ? 3 : 2)}
     ${(B.hero && !H) ? `<div class="skel w-full" style="aspect-ratio:390/217" aria-hidden="true"></div>` : ''}
-    <!-- logo: h-11 (bar 26) · mô tả: py-2 + 3 dòng 18 + pt-1 + dòng "Xem thêm" 18 = 92 -->
+    <!-- logo: h-11 (bar 26) · mô tả: py-2 + 3 dòng 18 = 70 (22/10/2026: nút "Xem thêm" nằm TRÊN dòng 3, không còn hàng riêng 22) -->
     <div class="flex flex-col" aria-hidden="true">
       <div class="flex items-center h-11 px-4 py-2">${B.logo ? skelBar('149px', 26) : skelBar('120px', 20)}</div>
       ${B.desc ? `
       <div class="px-4 py-2">
         <div>${skelLn(18, skelBar('100%'))}${skelLn(18, skelBar('96%'))}${skelLn(18, skelBar('64%'))}</div>
-        <div class="flex justify-end pt-1">${skelLn(18, skelBar('64px'))}</div>
       </div>` : ''}
     </div>
-    <!-- dải danh mục: py-2 + [ô 150 + nhãn h-10] + pb-1 = 210 -->
+    <!-- dải danh mục: py-2 + [ô 109 + nhãn h-10] + pb-1 = 169 (22/10/2026: ô 150 → 109, 4 ô vì khổ 390 thấy 3,2) -->
     ${catsOn ? `
     <div class="py-2" aria-hidden="true">
       <div class="flex gap-2 overflow-hidden px-4 pb-1">
-        ${B.cats.slice(0, 3).map(() => `<div class="shrink-0 w-[150px] flex flex-col"><div class="skel w-full aspect-square"></div><div class="flex flex-col px-1 py-2 h-10 justify-center">${skelLn(16, skelBar('72%'))}</div></div>`).join('')}
+        ${B.cats.slice(0, 4).map(() => `<div class="shrink-0 flex flex-col" style="width:109px"><div class="skel w-full aspect-square"></div><div class="flex flex-col px-1 py-2 h-10 justify-center">${skelLn(16, skelBar('72%'))}</div></div>`).join('')}
       </div>
     </div>` : ''}
     ${plpSkelBar()}
@@ -8434,22 +8553,27 @@ function plpHubSkeleton() {
   </div>`;
 }
 
-/* Dải danh mục 150×150 của trang thương hiệu. Tách khỏi template của screenPLP
+/* Dải danh mục của trang thương hiệu — ô VUÔNG 109×109 (22/10/2026: trước là 150×150). Tách khỏi template của screenPLP
    vì từ 02/09 nó có thể RỖNG: hãng chưa có data thì KHÔNG dựng dải, thay vì để
-   lại một băng trống cao 200px. */
+   lại một băng trống cao 200px.
+   22/10/2026 (user: "các block cate ở bản mobile đang khá to, cho cate nhỏ lại sao cho một màn 390 thấy được 3,2 cate vuông"):
+   ô 150 → 109 để khổ 390 thấy 3 ô trọn + 0,2 ô thứ tư (lề trái 16 + 3 × 109 + 3 khe 8 = 367 ⇒ lòi 23 px = 0,21 ô); khe 8 và nhãn h-10 giữ nguyên.
+   Bề rộng khai INLINE vì tailwind.css dựng sẵn — gõ w-[109px] là class chết. Khổ 375 thấy 3,07 ô (vẫn lòi một mép báo trượt được). */
 function brandCatStrip(cats) {
   if (!cats || !cats.length) return '';
   return `
-    <!-- ── Category cards 150×150 (1:1) ── -->
+    <!-- ── Category cards 109×109 (1:1) ── -->
     <div class="py-2 reveal">
       <div class="drag-x flex gap-2 overflow-x-auto no-scrollbar px-4 pb-1">
         ${cats.map(c => `
-          <button class="shrink-0 w-[150px] flex flex-col press group text-left" data-cate="${c.go || c.label}">
+          <button class="shrink-0 flex flex-col press group text-left" style="width:109px" data-cate="${c.go || c.label}">
             <div class="w-full aspect-square overflow-hidden bg-secondary">
               <img src="${A}${c.img}" alt="${c.label}" class="w-full h-full object-cover lazy">
             </div>
-            <div class="flex flex-col gap-0.5 px-1 py-2 h-10 justify-center">
-              <p class="t-single font-medium text-foreground truncate">${c.label}</p>
+            <!-- Nhãn: ô 109 chỉ còn 101 px chữ nên nhãn dài ("Trang sức thời trang") xuống TỐI ĐA 2 dòng thay vì cắt ba chấm; hộp cao TỐI THIỂU 40 như cũ
+                 (nhãn 1 dòng vẫn đúng 40, nhãn 2 dòng cao 48). Khai inline vì line-clamp / min-h-10 chưa chắc có trong tailwind.css dựng sẵn. -->
+            <div class="flex flex-col gap-0.5 px-1 py-2 justify-center" style="min-height:40px">
+              <p class="t-single font-medium text-foreground" style="display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden">${c.label}</p>
             </div>
           </button>`).join('')}
       </div>
@@ -8727,13 +8851,10 @@ function screenPLP() {
           : `<p class="text-[18px] font-medium leading-7 text-foreground">${B.name}</p>`}
       </div>
       ${B.desc ? `
+      <!-- 22/10/2026 (user, kèm hình minh hoạ): nút Xem thêm RÚT LÊN dòng cuối (dòng 3) của đoạn, ngay sau dấu ba chấm — không còn hàng riêng. Cách làm + lý do ở CSS #brandDesc (gần .bh-tile-title);
+           thứ tự trong .bd-in PHẢI là: miếng đệm, nút, rồi chữ (float chỉ rơi đúng dòng khi đứng TRƯỚC chữ). Nút đổi nhãn Xem thêm / Thu gọn và dời chỗ ở wire(). -->
       <div id="brandDesc" class="px-4 py-2">
-        <p class="t-multiline text-foreground">
-          ${B.desc}
-        </p>
-        <div class="flex justify-end pt-1">
-          <button id="brandToggle" class="t-multiline text-foreground underline press">Xem thêm</button>
-        </div>
+        <p class="t-multiline text-foreground"><span class="bd-in"><span class="bd-fill" aria-hidden="true"></span><button id="brandToggle" class="t-multiline text-foreground underline press" aria-expanded="false">Xem thêm</button>${B.desc}</span></p>
       </div>` : ''}
     </div>
 
@@ -13413,6 +13534,57 @@ const HM_STORIES_BEAUTY = [
 ];
 const hmStoryList = () => (hmBeauty() ? HM_STORIES_BEAUTY : HM_STORIES);
 
+/* ── BLOG — HÀM DÙNG CHUNG (22/10/2026) ────────────────────────────────────────────────────────────────────────────────────────
+   Dữ liệu bài THẬT nằm ở blog-data.js (BLOG_CATS · BLOG_POSTS · BLOG_I18N), nạp bằng <script src> TRƯỚC script chính — xem đầu file đó.
+   Khai GIỐNG HỆT ở index.html và desktop.html. Màn: screenBLOG (danh sách) + screenBLOGDETAIL (bài), dựng ngay trước screenCART. */
+const BLOG_STEP = 6;   // "Xem thêm" của site thật (nút #load) cũng đổ 6 bài một lần
+const blogEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const blogPost = id => BLOG_POSTS.find(p => p.id === id) || null;
+const blogLatest = (n = 5) => BLOG_POSTS.slice(0, n);
+const blogCatLabel = k => (BLOG_CATS.find(c => c[0] === k) || [k, k])[1];
+let blogCur = '';     // bài đang mở ở màn blogDetail (như pdpIdx / currentOrder)
+let blogCat = '';     // mục đang lọc ở màn blog ('' = Tất cả) — nhớ qua điều hướng như plpSort
+let blogShown = 0;    // số bài đã đổ THÊM bằng "Xem thêm" (0 = mới vào)
+const blogList = () => (blogCat ? BLOG_POSTS.filter(p => p.cats.includes(blogCat)) : BLOG_POSTS);
+/* Bài liên quan: cùng chuyên mục trước, rồi tới bài mới nhất còn lại; không gồm chính nó. */
+const blogRelated = (post, n = 3) => [...BLOG_POSTS.filter(p => p.id !== post.id && p.cats.some(c => post.cats.includes(c))), ...BLOG_POSTS.filter(p => p.id !== post.id && !p.cats.some(c => post.cats.includes(c)))].slice(0, n);
+/* Ảnh dẫn THẲNG từ dafc.com.vn (user chọn không tải về, 22/10/2026): `m` = [rộng, cao, [[bề rộng, url]…]] của blog-data.js. Cho cả srcset để trình duyệt chọn bậc; width/height giữ tỉ lệ khi chưa tải xong.
+   referrerpolicy no-referrer: không gửi địa chỉ trang demo cho site gốc. class lazy = nền mờ dần khi ảnh về (wireLazy), ảnh lỗi thì ô xám. */
+function blogImg(m, { sizes = '100vw', cls = '', alt = '', eager = false } = {}) {
+  const [w, h, set] = m;
+  const best = (set.find(x => x[0] >= 768) || set[set.length - 1])[1];
+  return `<img src="${best}"${set.length > 1 ? ` srcset="${set.map(([sw, u]) => `${u} ${sw}w`).join(', ')}" sizes="${sizes}"` : ''}${w && h ? ` width="${w}" height="${h}"` : ''} alt="${blogEsc(alt)}" referrerpolicy="no-referrer"${eager ? '' : ' loading="lazy"'} class="lazy ${cls}">`;
+}
+/* Thân bài của MỘT ngôn ngữ. Bản VI và EN của site khác cấu trúc nên KHÔNG ghép từng đoạn: vẽ cả hai cây, CSS chỉ cho hiện cây khớp ngôn ngữ (html[data-lang], do applyLang đặt). data-i18n-skip: bộ dịch theo khoá không đụng vào chữ nguyên văn của bài. */
+const blogTwin = fn => `<div class="blog-vi" data-i18n-skip>${fn('vi')}</div><div class="blog-en" data-i18n-skip>${fn('en')}</div>`;
+function blogBodyHTML(p, lang, d) {
+  const alt = p.title[lang === 'en' ? 1 : 0];
+  return p[lang].body.map(([t, x]) => {
+    if (t === 'h') return `<h2 class="blog-h ${d ? 't-display-title' : 't-section-title'} font-light">${blogEsc(x)}</h2>`;
+    if (t === 'q') return `<blockquote class="blog-q ${d ? 't-section-title' : 't-lead'} font-light">${blogEsc(x)}</blockquote>`;
+    if (t === 'g') return `<div class="blog-gal blog-gal-${Math.min(x.length, 2)}">${x.map(m => `<figure class="blog-fig">${blogImg(m, { sizes: d ? '(min-width: 1024px) 480px, 50vw' : '50vw', alt })}</figure>`).join('')}</div>`;
+    return `<p class="${d ? 'blog-p' : 't-lead'} font-light text-secondary-foreground">${blogEsc(x)}</p>`;
+  }).join('');
+}
+/* Khối "hệ thống cửa hàng" cuối mỗi bài của site thật: dòng mở · mỗi thành phố một cột (tên cửa hàng, địa chỉ, ĐT) · dòng nhà phân phối. */
+function blogStoreHTML(p, lang) {
+  const s = p[lang].store;
+  if (!s) return '';
+  const [lead, cities, foot] = s;
+  return `
+      <section class="blog-store">
+        ${lead ? `<p class="t-lead text-foreground">${blogEsc(lead)}</p>` : ''}
+        <div class="blog-store-cols">
+          ${cities.map(([city, lines]) => `
+          <div class="blog-store-col">
+            ${city ? `<h3 class="t-block-title font-medium text-foreground">${blogEsc(city)}</h3>` : ''}
+            ${lines.map(l => `<p class="t-multiline text-secondary-foreground">${blogEsc(l)}</p>`).join('')}
+          </div>`).join('')}
+        </div>
+        ${foot ? `<p class="t-multiline text-muted-foreground">${blogEsc(foot)}</p>` : ''}
+      </section>`;
+}
+
 function hmStories() {
   /* ĐẦU MỤC CANH GIỮA (07/09/2026, lệnh user: *"phần hiển thị title canh giữa sẽ tương tự
      block items trên đó bạn đã làm nhưng k có CTA"*) — dùng lại đúng tham số `eyebrow` của
@@ -13427,9 +13599,10 @@ function hmStories() {
      ĐÍCH ĐÃ CHỐT (tối 28/09, user: *"đi đến trang blog chung nhé, chưa làm trang đó"*): nút dẫn tới
      TRANG BLOG CHUNG (danh sách mọi bài). Trang đó CHƯA làm nên vẫn giữ data-toast tới khi dựng.
      NHÃN NHỎ = 'Blog' (chính chữ user gọi), DÒNG TRƯNG BÀY = tiêu đề khối đã có. Không đẻ
-     chuỗi mới, và 'Blog' viết y nhau ở 2 ngôn ngữ nên KHÔNG cần khoá i18n. */
+     chuỗi mới, và 'Blog' viết y nhau ở 2 ngôn ngữ nên KHÔNG cần khoá i18n.
+     ⚠ 22/10/2026 (user: "ở trang chủ vẫn phải giữ nguyên các hình ảnh và tin tức như ban đầu, chỉ khi vô xem tất cả thì mới kéo dữ liệu thực từ dafc"): 5 thẻ GIỮ NGUYÊN như trước (HM_STORIES · HM_STORIES_BEAUTY, ảnh local, đích PLP danh mục / hãng); CHỈ nút "Xem tất cả" đổi từ toast sang trang Blog (data-nav="blog") — trang Blog mới là nơi dùng bài THẬT của dafc.com.vn (blog-data.js). Trước đó (cùng ngày) nhánh thời trang từng đổi sang 5 bài thật mới nhất — đã trả lại. */
   return hmSec('Điểm tin nổi bật',
-    hmLink('Xem tất cả', 'data-toast="Xem tất cả bài viết"'),
+    hmLink('Xem tất cả', 'data-nav="blog"'),
     `<div class="hm-stories drag-x overflow-x-auto no-scrollbar px-4">
         ${hmStoryList().map(([img, pos, eyebrow, title, cat, dept, brand]) => `
         <button ${brand ? `data-hm-brand="${brand}"` : `data-hm-cat="${cat}"${dept ? ` data-hm-dept="${dept}"` : ''}`} class="hm-story flex flex-col gap-2 press group text-left">
@@ -15107,6 +15280,143 @@ function screenMAINTENANCE() {
       </div>
     </div>
   </div>`;
+}
+
+/* ── TRANG BLOG (danh sách) + BLOG DETAIL (bài viết) — BẢN MOBILE (22/10/2026) ──
+   User: "cái blog dựa trên layout của trang hiện tại và dùng UI mới của chúng ta … thay bằng nội dung bài thật trên đó luôn nhé". Layout lấy của https://www.dafc.com.vn/vi/tin-tuc/ (đọc 22/10), vẽ bằng UI của demo (chữ thường, Libre cho tiêu đề, nút vuông viền, không chữ hoa ngoài nút).
+   DANH SÁCH (site thật: "TIN TỨC · CẬP NHẬT GẦN NHẤT" → bài mới nhất to → lưới thẻ → "XEM THÊM"): breadcrumb → "Blog" → hàng tab 3 chuyên mục của site (Câu chuyện thương hiệu · Xu hướng & Phong cách · Tin tức & Sự kiện) →
+   nhãn "Cập nhật gần nhất" → BÀI MỚI NHẤT (ảnh 6:7 + ngày + tiêu đề + tóm tắt + "Tiếp tục đọc") → thẻ MỘT cột (ảnh dọc 5:7 ≈ 1:1.4 như site, tiêu đề, ngày) → "Xem thêm" đổ thêm 6 bài.
+   BÀI (site thật: ảnh đại diện → tóm tắt → thân bài → khối cửa hàng): breadcrumb → chuyên mục · ngày → tiêu đề → ảnh đại diện → tóm tắt → thân bài (đoạn · tiêu đề mục · trích dẫn · ảnh liền nhau xếp 2 cột) → khối "hệ thống cửa hàng" (thành phố / địa chỉ / ĐT) → nút "Xem thương hiệu" (chỉ khi hãng có trong MENU_BRANDS) + chia sẻ → "Bài viết liên quan".
+   Chữ + ảnh là NGUYÊN VĂN site thật (blog-data.js). Mở bài từ bài liên quan: đang đứng ở blogDetail nên go() phải có force (tên màn không đổi), không đẩy history — Back về danh sách (history chỉ lưu TÊN màn, cùng giới hạn pdpIdx của PDP). */
+const blogBrandAttrs = p => (MENU_BRANDS.includes(p.brand) ? `data-hm-brand="${p.brand}"` : '');
+
+function blogCrumbs(items) {
+  const dot = '<span class="w-4 h-4 shrink-0 flex items-center justify-center"><span class="w-[3px] h-[3px] rounded-full bg-muted-foreground"></span></span>';
+  return `
+    <div class="t-single flex gap-1 items-center px-4 py-2 text-muted-foreground">
+      ${items.map(([t, to], i) => `${i ? dot : ''}${to
+        ? `<button data-nav="${to}" class="press shrink-0">${t}</button>`
+        : `<span class="min-w-0 truncate text-foreground">${blogEsc(t)}</span>`}`).join('')}
+    </div>`;
+}
+
+/* MÀU TẠP CHÍ (22/10/2026): mỗi khối đứng trong một MẢNG NỀN (.blog-band — kem · cát · đồng đậm); nhãn chuyên mục = blogKicker (tông theo mục, xem khối CSS "BLOG · MÀU TẠP CHÍ"); thẻ trắng trên mảng cát. Không thêm chuỗi chữ nào (mọi nhãn đã có khoá i18n). */
+const blogKicker = p => `<span class="blog-kicker t-single" data-bcat="${p.cats[0]}">${blogCatLabel(p.cats[0])}</span>`;
+
+function blogFeature(p) {
+  return `
+    <button data-blog="${p.id}" class="blog-feature press group text-left">
+      <div class="blog-feature-photo">${blogImg(p.img, { sizes: '(max-width: 767px) 100vw, 480px', cls: 'transition-transform duration-500 group-hover:scale-[1.04]', alt: p.title[0], eager: true })}</div>
+      <div class="blog-feature-copy">
+        <div class="blog-meta">${blogKicker(p)}<span class="t-single text-muted-foreground">${p.date}</span></div>
+        <p class="t-display-title hm-story-title font-light text-foreground">${blogEsc(p.title[0])}</p>
+        <p class="t-multiline blog-clamp-4 text-secondary-foreground">${blogEsc(p.excerpt[0])}</p>
+        <span class="blog-cta-btn t-multiline">Tiếp tục đọc</span>
+      </div>
+    </button>`;
+}
+
+const blogCard = (p, extra = '') => `
+      <button data-blog="${p.id}" class="blog-card ${extra} press group text-left">
+        <div class="blog-card-photo">${blogImg(p.img, { sizes: '(max-width: 767px) 343px, 450px', cls: 'transition-transform duration-500 group-hover:scale-[1.04]', alt: p.title[0] })}</div>
+        <div class="blog-card-body">
+          <div class="blog-meta">${blogKicker(p)}<span class="t-single text-muted-foreground">${p.date}</span></div>
+          <p class="blog-card-title t-section-title hm-story-title blog-clamp-3 text-foreground">${blogEsc(p.title[0])}</p>
+        </div>
+      </button>`;
+
+function screenBLOG() {
+  const list = blogList();
+  const [lead, ...rest] = list;
+  const shown = Math.min(rest.length, BLOG_STEP + blogShown);
+  const left = rest.length - shown;
+  return `
+  <div class="w-full blog-root" data-scroller>
+    ${navBar()}
+    <section class="blog-band blog-band--paper">
+      ${blogCrumbs([['Trang chủ', 'home'], ['Blog', '']])}
+      <div class="blog-head rise">
+        <h1 class="blog-h1-xl t-display-title font-light text-foreground">Blog</h1>
+      </div>
+      <div data-tabs-center="blog" class="blog-tabs drag-x flex overflow-x-auto no-scrollbar rise">
+        ${['', ...BLOG_CATS.map(c => c[0])].map(c => `<button data-blog-cat="${c}"${c === blogCat ? ' aria-current="true"' : ''} class="t-lead blog-chip press">${c ? blogCatLabel(c) : 'Tất cả'}</button>`).join('')}
+      </div>
+    </section>
+    ${lead ? `
+    <section class="blog-band blog-band--dark blog-lead-band">
+      <p class="blog-label t-single text-muted-foreground">Cập nhật gần nhất</p>
+      ${blogFeature(lead)}
+    </section>` : ''}
+    ${shown ? `
+    <section class="blog-band blog-band--band blog-grid-band">
+      <div class="blog-grid">${rest.slice(0, shown).map(p => blogCard(p)).join('')}</div>
+      ${rest.length > BLOG_STEP ? `
+      <div class="blog-more">
+        <p class="t-single text-muted-foreground">Đang xem ${shown + 1} / ${list.length} bài viết</p>
+        ${left > 0 ? `<button data-blog-more class="t-multiline h-12 px-8 rounded-xs border border-border font-medium text-foreground btn-o press">Xem thêm</button>` : ''}
+      </div>` : ''}
+    </section>` : ''}
+    ${footer()}
+  </div>`;
+}
+
+function screenBLOGDETAIL() {
+  const p = blogPost(blogCur);
+  const brand = blogBrandAttrs(p);
+  const hasStore = !!(p.vi.store || p.en.store);
+  return `
+  <div class="w-full blog-root" data-scroller>
+    ${navBar()}
+    <article>
+      <section class="blog-band blog-band--band">
+        ${blogCrumbs([['Trang chủ', 'home'], ['Blog', 'blog'], [p.title[0], '']])}
+        <header class="blog-title rise">
+          <div class="blog-meta">${blogKicker(p)}<span class="t-single text-muted-foreground">${p.date}</span></div>
+          <h1 class="t-display-title font-light text-foreground" style="text-wrap:balance">${blogEsc(p.title[0])}</h1>
+        </header>
+      </section>
+      <div class="blog-hero-wrap"><div class="blog-hero">${blogImg(p.img, { sizes: '100vw', alt: p.title[0], eager: true })}</div></div>
+      <p class="blog-excerpt t-section-title font-light">${blogEsc(p.excerpt[0])}</p>
+      <div class="blog-body">${blogTwin(l => blogBodyHTML(p, l, false))}</div>
+      ${hasStore ? `<section class="blog-band blog-band--dark blog-storeband">${blogTwin(l => blogStoreHTML(p, l))}</section>` : ''}
+      <div class="blog-cta">
+        ${brand ? `<button ${brand} class="t-multiline w-full h-12 rounded-xs bg-primary text-primary-foreground font-semibold btn-p press">Xem thương hiệu</button>` : ''}
+        <div class="blog-share">
+          <p class="t-single text-muted-foreground">Chia sẻ</p>
+          <div class="flex items-center gap-4">
+            <button data-toast="Chia sẻ qua Facebook" aria-label="Facebook" class="press">${I.fb}</button>
+            <button data-toast="Chia sẻ qua Zalo" aria-label="Zalo" class="press">${I.zalo}</button>
+            <button data-toast="Đã sao chép liên kết" class="t-single text-foreground underline underline-offset-2 press">Sao chép liên kết</button>
+          </div>
+        </div>
+      </div>
+    </article>
+    <section class="blog-band blog-band--band blog-rel">
+      ${hmSec('Bài viết liên quan', '', `<div class="hm-stories drag-x overflow-x-auto no-scrollbar px-4">
+        ${blogRelated(p, 4).map(r => blogCard(r, 'hm-story')).join('')}
+      </div>`)}
+    </section>
+    ${footer()}
+  </div>`;
+}
+
+/* Nối nút của 2 trang Blog + thẻ Blog trang chủ. Bài mở từ bài (liên quan) cần `force` — xem ghi chú đầu khối. */
+function wireBlog(root) {
+  root.querySelectorAll('[data-blog]').forEach(el => el.addEventListener('click', e => {
+    e.stopPropagation();
+    blogCur = el.dataset.blog;
+    go('blogDetail', current === 'blogDetail' ? { force: true } : {});
+  }));
+  root.querySelectorAll('[data-blog-cat]').forEach(el => el.addEventListener('click', e => {
+    e.stopPropagation();
+    blogCat = el.dataset.blogCat; blogShown = 0;
+    go('blog', { force: true, back: true });
+  }));
+  root.querySelectorAll('[data-blog-more]').forEach(el => el.addEventListener('click', e => {
+    e.stopPropagation();
+    blogShown += BLOG_STEP;
+    go('blog', { force: true, back: true });
+  }));
 }
 
 function screenCART() {
@@ -19866,6 +20176,8 @@ const RENDER = {
   pdpGone: screenPDPGone,
   /* 21/10/2026: trang 404 / 503 — xem khối cùng tên cạnh screenPDPGone. */
   notfound: screenNOTFOUND, maintenance: screenMAINTENANCE,
+  /* 22/10/2026: trang Blog + bài viết — xem khối "TRANG BLOG" trước screenCART. blogDetail với id lạ (hash / ngữ cảnh hỏng) → trang 404. */
+  blog: screenBLOG, blogDetail: () => (blogPost(blogCur) ? screenBLOGDETAIL() : screenNOTFOUND()),
   checkout: screenCHECKOUT, done: screenDONE, pay: screenPAY, track: screenTRACK,
   privacy: () => screenPOLICY('privacy'), terms: () => screenPOLICY('terms'), returns: () => screenPOLICY('returns'),
   dataprivacy: () => screenPOLICY('dataprivacy'),
@@ -20181,6 +20493,9 @@ let scrollCleanups = [];          // gỡ listener khi đổi màn
 let LANG = 'vi';
 
 const I18N = {
+  /* 22/10/2026 — trang Blog + Blog detail. Tiêu đề · tóm tắt · tên chuyên mục của 19 bài THẬT đi bằng BLOG_I18N (blog-data.js, bản EN chính thức của site); THÂN BÀI không qua bảng này (hai cây DOM vi / en — xem blogTwin). Các chuỗi khung trang ở dòng dưới; 'Blog' viết y nhau ở 2 ngôn ngữ; dòng đếm bài đi bằng luật regex (I18N_RE). */
+  ...BLOG_I18N,
+  'Tất cả':'All', 'Cập nhật gần nhất':'Latest updates', 'Tiếp tục đọc':'Continue reading', 'Xem thương hiệu':'View brand', 'Bài viết liên quan':'Related articles', 'Chia sẻ':'Share', 'Chia sẻ qua Facebook':'Share via Facebook', 'Chia sẻ qua Zalo':'Share via Zalo', 'Sao chép liên kết':'Copy link', 'Đã sao chép liên kết':'Link copied',
   /* 10/10/2026 — bịt 3 chỗ trống EN mà Bảng 5 'Nội dung VI–EN' còn báo thiếu.
      Dòng GPĐKKD đầy đủ nằm ở chân trang desktop; dòng ưu đãi PDP lệch khoá vì dấu
      '— ' in kèm trong cùng text node; câu OTP là nhánh chưa có số điện thoại. */
@@ -22058,6 +22373,8 @@ const I18N = {
 
 // Luật cho chuỗi động
 const I18N_RE = [
+  /* 22/10/2026 — trang Blog: dòng đếm bài của nút "Xem thêm". Chiều ngược ở I18N_REV_RE. */
+  [/^Đang xem (\d+) \/ (\d+) bài viết$/, 'Showing $1 of $2 articles'],
   /* Màn Tài khoản (05/09/2026) — 2 chuỗi có SỐ nên phải đi bằng luật, không phải khoá
      tĩnh: in số vào khoá thì đổi số một cái là chết dịch. */
   [/^(\S+ \*\*\* \d+) · Hạng Vàng$/, '$1 · Gold tier'],
@@ -22176,6 +22493,8 @@ const I18N_RE = [
    'Keep your tier by spending $1 VND between $2 and $3.'],
 ];
 const I18N_REV_RE = [
+  /* 22/10/2026 — chiều ngược của luật trang Blog bên I18N_RE. */
+  [/^Showing (\d+) of (\d+) articles$/, 'Đang xem $1 / $2 bài viết'],
   /* Màn Tài khoản (05/09/2026) — chiều ngược của 2 luật cùng tên bên I18N_RE. */
   [/^(\S+ \*\*\* \d+) · Gold tier$/, '$1 · Hạng Vàng'],
   [/^≈ (.+) in value$/, '≈ $1 giá trị quy đổi'],
@@ -22268,6 +22587,8 @@ function tr(t, to) {
 
 function applyLang(root, to) {
   if (!root) return;
+  /* 22/10/2026: html[data-lang] cho CSS chọn cây thân bài Blog (.blog-vi / .blog-en) — bản VI và EN của site khác cấu trúc nên không dịch từng đoạn. Đặt ở MỌI lần gọi (gọi lại cùng giá trị là vô hại). */
+  document.documentElement.setAttribute('data-lang', to);
   /* [data-i18n-skip] = wordmark giữ nguyên ở MỌI ngôn ngữ (badge "Pre-order"…).
      Phải chặn ở đây vì dịch ngược EN→VN tra I18N_REV theo text node: badge
      "Pre-order" trùng chuỗi với nút "Đặt trước" đã dịch nên bị kéo theo. */
@@ -24611,6 +24932,7 @@ function wire(root) {
   wireProductCards(root);
   wireHeroDots(root);
   wireHomeNav(root);
+  wireBlog(root);   // 22/10/2026: thẻ Blog (data-blog) + tab chuyên mục + Xem thêm của trang Blog
 
   // add to cart -> bay ảnh vào giỏ rồi mở sheet xác nhận (thay toast + tự chuyển giỏ)
   root.querySelectorAll('[data-add]').forEach(btn => {
@@ -25569,18 +25891,38 @@ function wire(root) {
   // brand description expand / collapse
   const bToggle = root.querySelector('#brandToggle');
   if (bToggle) {
-    const para = root.querySelector('#brandDesc p');
-    let open = false;
-    const apply = () => {
-      para.style.display = '-webkit-box';
-      para.style.webkitBoxOrient = 'vertical';
-      para.style.overflow = 'hidden';
-      para.style.webkitLineClamp = open ? 'unset' : '3';
-      bToggle.textContent = open ? 'Thu gọn' : 'Xem thêm';
-      localizeNew(bToggle);   // EN mode: gán động xong phải dịch lại, không thì bấm 1 lần là nút quay về tiếng Việt
+    /* 22/10/2026: nút "Xem thêm" nằm TRÊN DÒNG 3 của đoạn (float, xem CSS #brandDesc) — kẹp (clamp) + vị trí nút do CSS lo, ở đây chỉ còn: đổi nhãn, DỜI nút giữa ĐẦU đoạn (đang thu) và CUỐI đoạn (đang mở),
+       và bỏ nút khi đoạn ngắn. */
+    const box = root.querySelector('#brandDesc');
+    const inner = box.querySelector('.bd-in');
+    const fill = box.querySelector('.bd-fill');
+    // Số dòng của đoạn khi trải hết bề ngang, không float / không kẹp: đo trên bản sao ẩn.
+    const fullLines = () => {
+      const c = inner.cloneNode(true);
+      c.querySelectorAll('.bd-fill, #brandToggle').forEach(x => x.remove());
+      c.style.cssText = 'position:absolute;visibility:hidden;left:0;top:0;width:' + inner.getBoundingClientRect().width + 'px';
+      box.appendChild(c);
+      const n = Math.round(c.getBoundingClientRect().height / 18);
+      c.remove();
+      return n;
     };
-    apply();
-    bToggle.addEventListener('click', () => { open = !open; apply(); });
+    if (fullLines() <= 3) {
+      // Đoạn ≤ 3 dòng: không có gì để "Xem thêm" — bỏ nút + miếng đệm và KHÔNG kẹp (nút float sẽ rơi xuống dòng 3 trống nếu để lại).
+      box.classList.add('is-open');
+      bToggle.remove(); fill.remove();
+    } else {
+      let open = false;
+      const apply = () => {
+        box.classList.toggle('is-open', open);
+        if (open) inner.append(bToggle);                          // mở: nút ngay sau chữ cuối
+        else { inner.prepend(bToggle); inner.prepend(fill); }     // thu: [miếng đệm][nút][chữ] để nút float xuống dòng 3
+        bToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        bToggle.textContent = open ? 'Thu gọn' : 'Xem thêm';
+        localizeNew(bToggle);   // EN mode: gán động xong phải dịch lại, không thì bấm 1 lần là nút quay về tiếng Việt
+      };
+      apply();
+      bToggle.addEventListener('click', () => { open = !open; apply(); });
+    }
   }
 
   // quick filter Làm đẹp (mobile, 19/10/2026) -> PLP chế độ danh mục; chip ĐANG XEM (aria-current) chỉ cuộn khi bị che (cách mép khung nhìn < 16): nằm sẵn trong khung thì giữ hàng ở đầu
@@ -29032,6 +29374,8 @@ function navCarry() {
   try {
     if (current === 'plp') return JSON.stringify({ m: plpMode, f: plpFilters });
     if (current === 'pdp') return JSON.stringify({ i: pdpIdx });
+    if (current === 'blog') return JSON.stringify({ c: blogCat });          // 22/10/2026: chuyên mục Blog đang lọc
+    if (current === 'blogDetail') return JSON.stringify({ b: blogCur });   // 22/10/2026: bài đang mở
   } catch (e) { /* không đóng gói được thì thôi, bản kia dựng mặc định */ }
   return '';
 }
@@ -29039,6 +29383,8 @@ function navRestore(screen, raw) {
   try {
     const o = JSON.parse(raw);
     if (!o || typeof o !== 'object') return;
+    if (screen === 'blog') { if (typeof o.c === 'string' && BLOG_CATS.some(c => c[0] === o.c)) blogCat = o.c; return; }
+    if (screen === 'blogDetail') { if (typeof o.b === 'string' && blogPost(o.b)) blogCur = o.b; return; }
     if (screen === 'pdp') {
       const i = +o.i;
       if (Number.isInteger(i) && PRODUCTS[i]) pdpIdx = i;
