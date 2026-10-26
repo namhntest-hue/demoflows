@@ -368,10 +368,11 @@ window.RESP = (function () {
      dùng font libre đó, tôi thấy ok, bạn cho áp dụng vào code luôn nhé".
        · chữ = Libre Bodoni 14/20 · 400 · giãn chữ .5 = text style Figma `t-card-title` (cỡ 14/20 do `.t-lead`
          trong markup cấp; ở đây CHỈ cấp mặt chữ + giãn chữ, như `.pc-brand` / `.hm-story-title`). Mặt chữ khoanh
-         `skin-li` như mọi dòng Libre khác;
+         `skin-li` như mọi dòng Libre khác. 26/10/2026: độ đậm + giãn chữ nay đọc token của bộ "Libre 14" (500 · 1px,
+         khai ở khối `html.skin-mt.skin-li` gần `--font-head`);
        · hàng KHÔNG có kẻ viền: khung của user có nét `border-subtle` ở đầu hàng nhưng user đã TẮT nó
          (`strokes[0].visible = false`), nên hàng chỉ cao 60 = đệm 20 + dòng 20 + đệm 20. */
-  html.skin-mt.skin-li .ms-greet { font-family: var(--font-head); font-weight: 400; letter-spacing: .5px; }
+  html.skin-mt.skin-li .ms-greet { font-family: var(--font-head); font-weight: var(--li14-weight); letter-spacing: var(--li14-ls); }
 
   /* ── Inter cho PDP6 (thử nghiệm font) ── */
   .font-inter, .font-inter * { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
@@ -872,7 +873,7 @@ window.RESP = (function () {
   /* Mat chu Libre 14/20 cho con so. Markup lay `.t-lead` cho dung CO; MAT CHU khai o day
      vi thang chu KHONG CO bac Libre 14/20 (`t-card-title` chi la ten text style ben
      Figma; `.t-lead` la 14/20 nhung Inter). Bac Libre thu TU — xem FONT-LIBRE-INTER. */
-  html.skin-mt.skin-li .ck-step-no { font-family: var(--font-head); }
+  html.skin-mt.skin-li .ck-step-no { font-family: var(--font-head); font-weight: var(--li14-weight); letter-spacing: var(--li14-ls); }   /* 26/10/2026: bộ Libre 14 — xem token --li14-* */
   /* "Nhấn màu": thẻ đang chọn THÊM nền nhạt. Khoanh trong [data-screen="checkout"]
      vì .opt còn dùng ở giỏ hàng (thẻ quà, thẻ địa chỉ) — mấy chỗ đó bản vẽ chốt nền
      trắng cả 2 trạng thái, không kéo theo. */
@@ -3715,6 +3716,28 @@ window.RESP = (function () {
     --font-head: 'Libre Bodoni', ui-serif, Georgia, serif;
   }
   html.skin-mt.skin-li body { font-family: var(--font-app); }
+  /* ── BỘ TYPO "LIBRE 14" (26/10/2026) ──────────────────────────────────────────────────────────────────────────
+     Lệnh user: *"sửa bộ typo ở font 14 libre lại letter spacing = 1px và weight là medium. áp dụng cho 2 phiên bản"*.
+     "Bộ typo Libre 14" = MỌI chữ Libre Bodoni cỡ 14/20 (text style Figma `t-card-title`): trước 400 · giãn chữ 0,5px,
+     nay **500 (Medium) · giãn chữ 1px**. Hai số đứng ở HAI TOKEN dưới đây — muốn chỉnh lại thì sửa đúng hai dòng này.
+     Hook mang bậc này (mỗi hook đọc 2 token, KHÔNG khai số riêng):
+       · `.pc-brand` 14/20 — tên hãng ở thẻ SP · hàng gợi ý · Tìm kiếm · mini cart · tóm tắt Thanh toán · Chi tiết đơn…
+         (brand ở PDP là 24/32 — rule riêng ở mục 3 khai 400 · 0,5px, KHÔNG đổi);
+       · `.cart-brand` (tên hãng hàng giỏ) · `p.hm-story-title.t-lead` (tiêu đề thẻ blog ở trang chủ + hub; ở trang Blog cùng class
+         `.hm-story-title` nhưng cỡ 18 / 24 / 32 nên KHÔNG nằm trong bộ) · `.ck-step-no` (số bước Thanh toán);
+       · `.ms-greet` (lời chào "Chào, {tên}" ở drawer menu — chỉ có ở index.html) · `.bh-tile-title` (tiêu đề ô hub — desktop).
+     Lệch luật có tên: STYLE-RULES §1.1 (500 chữ thường = ngoại lệ ghi danh thứ mười một) và §1.4 (tracking một giá trị 0,5px).
+     KHAI GIỐNG HỆT ở desktop.html. */
+  html.skin-mt.skin-li {
+    --li14-weight: 500;
+    --li14-ls: 1px;
+  }
+  /* Ô "Montserrat · mọi trang" ở bánh răng (và mọi chế độ thử phông đặt class font-override) chỉ đổi MẶT CHỮ: chữ ở hook trên khi đó
+     không còn là Libre nên trả hai số về 400 · 0,5px như mọi chữ khác — chế độ thử không được lây số riêng của bậc Libre. */
+  html.skin-mt.skin-li.font-override {
+    --li14-weight: 400;
+    --li14-ls: 0.5px;
+  }
 
   /* 2 — TẦNG TRƯNG BÀY: **MỘT BẬC DUY NHẤT 24/32**, Libre Bodoni, gác ≥2dppx.
      Hai chốt user 25/08 gộp lại thành một bậc:
@@ -4233,7 +4256,7 @@ window.RESP = (function () {
      ".cart-brand" là class riêng, không phải ".pc-brand": ".pc-brand" còn kéo
      theo cỡ 14/20 dành cho PDP, mà hàng giỏ vẫn giữ nguyên cỡ t-multiline 12/18
      — brief chỉ xin đổi MẶT CHỮ, không xin đổi cỡ. */
-  html.skin-mt.skin-li [data-screen="cart"] .cart-row .cart-brand { font-family: var(--font-head); }
+  html.skin-mt.skin-li [data-screen="cart"] .cart-row .cart-brand { font-family: var(--font-head); font-weight: var(--li14-weight); letter-spacing: var(--li14-ls); }   /* 26/10/2026: bộ Libre 14 — xem token --li14-* */
   /* "Giá bold lên" (brief cùng trang) — `.font-medium` có sẵn trong markup giá bị
      khối "Mọi độ đậm về 400" ở trên quét phẳng, nên phải là NGOẠI LỆ CÓ TÊN riêng
      giống `.pc-brand`/`.t-overlay`, không thể chỉ thêm/đổi utility. Trần của hệ là
@@ -4267,7 +4290,7 @@ window.RESP = (function () {
      14/09/2026, ngay sau đó — user chỉ thêm: "PDP và PLP giá đã giảm màu đỏ
      cũng đồng bộ font weight", tức `#pdpPrice` (giá chính PDP) cũng gắn thêm
      `.pc-price` (xem chỗ gọi) — chú thích đầy đủ ở desktop.html, cùng khối. */
-  html.skin-mt.skin-li .pc-brand { font-family: var(--font-head); }
+  html.skin-mt.skin-li .pc-brand { font-family: var(--font-head); font-weight: var(--li14-weight); letter-spacing: var(--li14-ls); }   /* 26/10/2026: bộ Libre 14 (500 · 1px) — xem token --li14-*; brand PDP 24/32 khai riêng ở mục 3, rule đó (0,4,1) thắng dòng này nên PDP giữ 400 · 0,5px */
   /* 15/10/2026 — user: *"cũng nên đồng bộ cái brand name dùng libre hết nhé"*. MỌI dòng TÊN HÃNG của một món
      hàng nay cùng một khuôn Libre Bodoni 14/20 · 400 · thường: thẻ SP + hàng gợi ý + tìm kiếm + PDP (hook này),
      hàng giỏ (`.cart-brand`), mini cart desktop, TÓM TẮT Thanh toán, CHI TIẾT ĐƠN và tấm "Đã thêm vào giỏ hàng" mobile
@@ -5041,6 +5064,9 @@ window.RESP = (function () {
      ⚠ Lớp thử `html.hm-chuan` (chỉ bật ở tab Nữ, desktop) vẫn ép dòng này về 12/18 —
      tab Nam giữ 14/20. Mặt chữ thì cả hai tab đều Libre sau lượt này. */
   html.skin-mt.skin-li p.hm-story-title { font-family: var(--font-head); }
+  /* 26/10/2026: bộ Libre 14 — CHỈ biến thể 14/20 (`.t-lead`). Trang Blog dùng cùng `.hm-story-title` ở cỡ 18 / 24 / 32 nên không dính. */
+  html.skin-mt.skin-li p.hm-story-title.t-lead { font-weight: var(--li14-weight); letter-spacing: var(--li14-ls); }
+  html.skin-mt.skin-li .bh-tile-title { font-weight: var(--li14-weight); letter-spacing: var(--li14-ls); }   /* 26/10/2026: bộ Libre 14 (ô hub 14/20) */
   /* 20/09/2026 — tiêu đề khối ưu đãi DAFC trong panel tóm tắt giỏ: cùng bậc
      t-card-title (Libre Bodoni 14/20) với tiêu đề thẻ ngay trên. Cỡ chữ do .t-lead
      trong markup cấp, ở đây CHỈ đổi mặt chữ. Giống hệt desktop.html. */
@@ -8460,12 +8486,12 @@ const plpSkelCrumb = n => `
     <div class="flex items-center px-4 py-2" aria-hidden="true">
       ${skelLn(16, [52, 64, 72].slice(0, n).map(w => skelBar(w + 'px')).join(''), 16)}
     </div>`;
-/* 26/10/2026: tham số count = false bỏ hàng đầu (thanh số đếm + hai ô đổi cột) — dùng cho trang HÃNG, nơi thanh thật không còn hàng đó: hãng thời trang chỉ còn hàng Bộ lọc với đệm trên 8 (thanh 52), hãng Làm đẹp còn hàng chip + hàng Bộ lọc (thanh 88, pt-0). */
+/* 26/10/2026: tham số count = false bỏ hàng đầu (thanh số đếm + hai ô đổi cột) — dùng cho trang HÃNG, nơi thanh thật không còn hàng đó: hãng thời trang chỉ còn hàng Bộ lọc (thanh 44, pt-0 như khung Figma của user), hãng Làm đẹp còn hàng chip + hàng Bộ lọc (thanh 88). */
 const plpSkelBar = ({ count = true } = {}) => {
   const quick = plpSkelQuick();
   return `
     <!-- thanh lọc: hai hàng 36 khe 8 đệm 0/8 = 88 như thanh thật (không dính, không bấm); PLP Làm đẹp có thêm hàng chip xương 36 + khe 8 ở ĐẦU thanh = 132 như thanh thật -->
-    <div class="flex flex-col gap-2 pl-4 pr-2 ${!count && !quick ? 'pt-2' : 'pt-0'} pb-2" aria-hidden="true">
+    <div class="flex flex-col gap-2 pl-4 pr-2 pt-0 pb-2" aria-hidden="true">
       ${quick}
       ${count ? `<div class="flex items-center justify-between h-9">
         ${skelLn(16, skelBar('88px'))}
@@ -8508,18 +8534,19 @@ function plpBrandSkeleton() {
     ${navBar()}
     ${plpSkelCrumb(H ? 3 : 2)}
     ${(B.hero && !H) ? `<div class="skel w-full" style="aspect-ratio:390/217" aria-hidden="true"></div>` : ''}
-    <!-- logo: h-11 (bar 26) · mô tả: py-2 + 2 dòng 18 = 52 (22/10/2026: nút "Xem thêm" nằm TRÊN dòng cuối, không còn hàng riêng 22; 26/10/2026: thu gọn 2 dòng, trước 3 dòng = 70) -->
-    <div class="flex flex-col" aria-hidden="true">
-      <div class="flex items-center h-11 px-4 py-2">${B.logo ? skelBar('149px', 26) : skelBar('120px', 20)}</div>
+    <!-- khối logo + mô tả = khối thật (26/10/2026, theo brand-intro của khung Figma user): đệm trên 12 + logo 26 (hoặc tên chữ — dưới skin-li là tiêu đề 24/32 nên 32) · khe 8 · mô tả py-2 + 2 dòng 18 = 52
+         (22/10/2026: nút "Xem thêm" nằm TRÊN dòng cuối, không còn hàng riêng 22; 26/10/2026: thu gọn 2 dòng, trước 3 dòng = 70); hãng không mô tả: đệm dưới 8 -->
+    <div class="flex flex-col gap-2 pt-3 ${B.desc ? '' : 'pb-2'}" aria-hidden="true">
+      <div class="flex items-center px-4">${B.logo ? skelBar('149px', 26) : skelLn(32, skelBar('120px', 20))}</div>
       ${B.desc ? `
       <div class="px-4 py-2">
         <div>${skelLn(18, skelBar('100%'))}${skelLn(18, skelBar('64%'))}</div>
       </div>` : ''}
     </div>
-    <!-- dải danh mục: py-2 + [ô 109 + nhãn h-10] + pb-1 = 169 (22/10/2026: ô 150 → 109, 4 ô vì khổ 390 thấy 3,2) -->
+    <!-- dải danh mục: [ô 109 + nhãn h-10] + pb-2 (26/10/2026: bỏ py-2 + pb-1 theo product-rail-track của khung Figma user — trên 0, dưới 8; 22/10/2026: ô 150 → 109, 4 ô vì khổ 390 thấy 3,2) -->
     ${catsOn ? `
-    <div class="py-2" aria-hidden="true">
-      <div class="flex gap-2 overflow-hidden px-4 pb-1">
+    <div class="pb-2" aria-hidden="true">
+      <div class="flex gap-2 overflow-hidden px-4">
         ${B.cats.slice(0, 4).map(() => `<div class="shrink-0 flex flex-col" style="width:109px"><div class="skel w-full aspect-square"></div><div class="flex flex-col px-1 py-2 h-10 justify-center">${skelLn(16, skelBar('72%'))}</div></div>`).join('')}
       </div>
     </div>` : ''}
@@ -8609,13 +8636,17 @@ function plpHubSkeleton() {
    lại một băng trống cao 200px.
    22/10/2026 (user: "các block cate ở bản mobile đang khá to, cho cate nhỏ lại sao cho một màn 390 thấy được 3,2 cate vuông"):
    ô 150 → 109 để khổ 390 thấy 3 ô trọn + 0,2 ô thứ tư (lề trái 16 + 3 × 109 + 3 khe 8 = 367 ⇒ lòi 23 px = 0,21 ô); khe 8 và nhãn h-10 giữ nguyên.
-   Bề rộng khai INLINE vì tailwind.css dựng sẵn — gõ w-[109px] là class chết. Khổ 375 thấy 3,07 ô (vẫn lòi một mép báo trượt được). */
+   Bề rộng khai INLINE vì tailwind.css dựng sẵn — gõ w-[109px] là class chết. Khổ 375 thấy 3,07 ô (vẫn lòi một mép báo trượt được).
+   26/10/2026 (user gửi khung Figma Brand / mobile 375 = 1306:71702: "thu gọn spacing lại như figma tôi"): đệm ngoài dải theo product-rail-track của khung — trên 0, dưới 8
+   (trước py-2 + pb-1 ở hàng ô ⇒ trên 8, dưới 8 + 4); kích thước ô vẫn 109 (khung Figma còn ô 150 cũ, user chưa vẽ lại). Dải cao = ô + 8. */
 function brandCatStrip(cats) {
   if (!cats || !cats.length) return '';
   return `
-    <!-- ── Category cards 109×109 (1:1) ── -->
-    <div class="py-2 reveal">
-      <div class="drag-x flex gap-2 overflow-x-auto no-scrollbar px-4 pb-1">
+    <!-- ── Category cards 109×109 (1:1) ──
+         26/10/2026 (khung Figma Brand / mobile 375 của user, product-rail-track): KHÔNG đệm trên, đệm dưới 8, hàng ô không còn pb-1 —
+         trước py-2 + pb-1 (dải cao hơn 12). -->
+    <div class="pb-2 reveal">
+      <div class="drag-x flex gap-2 overflow-x-auto no-scrollbar px-4">
         ${cats.map(c => `
           <button class="shrink-0 flex flex-col press group text-left" style="width:109px" data-cate="${c.go || c.label}">
             <div class="w-full aspect-square overflow-hidden bg-secondary">
@@ -8855,9 +8886,6 @@ function screenPLP() {
      — SP#1 là hàng pre-order, để "New" ở PLP thì bấm vào PDP lại thấy
      "Pre-order", 2 nơi nói 2 chuyện (yêu cầu user 17/08/2026). */
   const card = (p, i) => productCard(p, i, { badge: p.preorder ? 'Pre-order' : '', pillBadges: pcCollectionBadges(i) });
-  /* 26/10/2026: hàng chip Làm đẹp (nếu có) là con ĐẦU của thanh lọc, giữ pt-0 như PLP Làm đẹp; hãng thời trang không có nó nên con đầu là nút Bộ lọc có viền —
-     để pt-0 thì lúc thanh dính dưới header nút sát mép header, nên đệm trên 8 (thanh 44 → 52). */
-  const quickRow = plpQuickRowHTML();
 
   return `
   <div class="w-full" data-scroller>
@@ -8895,11 +8923,14 @@ function screenPLP() {
       <img src="${A}${B.hero}" alt="${B.name}" class="w-full h-full object-cover lazy" style="object-position:${B.pos || '50% 18%'}">
     </div>` : ''}
 
-    <!-- ── Brand block: logo + description + Thu gọn ── -->
-    <div class="flex flex-col reveal">
-      <div class="flex items-center h-11 px-4 py-2">
+    <!-- ── Brand block: logo + description + Thu gọn ──
+         26/10/2026 (user gửi khung Figma Brand / mobile 375 = 1306:71702, bảo "thu gọn spacing lại như figma tôi", phần nội dung giữ như code):
+         theo component brand-intro của khung — đệm trên 12 → logo 26 (KHÔNG còn hộp cao 44 canh giữa logo) → khe 8 → khối mô tả (py-2).
+         Hãng không có mô tả thì thêm đệm dưới 8 (chỗ của đệm dưới khối mô tả) để logo không dính sát dải danh mục — dải nay không còn đệm trên. -->
+    <div class="flex flex-col gap-2 pt-3 ${B.desc ? '' : 'pb-2'} reveal">
+      <div class="flex items-center px-4">
         <!-- Hãng chưa có wordmark thì chạy TÊN bằng chữ, cùng cỡ tiêu đề trang,
-             chứ không để trống một hàng 44px không nội dung. -->
+             chứ không để trống một hàng không nội dung. -->
         ${B.logo
           ? `<img src="${A}${B.logo}" alt="${B.name}" class="h-[26px] w-[149px] object-contain object-left lazy">`
           : `<p class="text-[18px] font-medium leading-7 text-foreground">${B.name}</p>`}
@@ -8920,8 +8951,8 @@ function screenPLP() {
          số "N sản phẩm" + hai nút đổi cột (2 / 1) — chỉ còn hàng Bộ lọc · Sắp xếp. Màn danh mục / tìm kiếm GIỮ hàng đó. Không còn nút đổi cột
          nên lưới trang hãng LUÔN 2 cột, không theo plpGridCols (biến nhớ lựa chọn của màn danh mục — nếu theo nó, khách chọn 1 cột ở danh mục
          rồi vào trang hãng sẽ kẹt ở 1 cột mà không có nút nào để đổi). Số đếm cập nhật (updatePlpCount) và nút đổi cột (wire) đều tự bỏ qua khi phần tử vắng. -->
-    <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex flex-col gap-2 pl-4 pr-2 ${quickRow ? 'pt-0' : 'pt-2'} pb-2 backdrop-blur-[7.5px]">
-      ${quickRow}
+    <div id="plpFilterAnchor" class="filterbar glass-95 sticky top-[48px] z-40 flex flex-col gap-2 pl-4 pr-2 pt-0 pb-2 backdrop-blur-[7.5px]">
+      ${plpQuickRowHTML()}
       <div class="flex items-center justify-between h-9">
         <button data-sheet="filter" class="t-multiline flex items-center gap-2 px-3 h-9 shrink-0 whitespace-nowrap rounded-xs border border-primary bg-background text-foreground btn-o press">${I.sliders} Bộ lọc</button>
         <div class="relative">
@@ -26635,6 +26666,11 @@ const FONTS = [
      tiêu đề (handler `[data-font]` đặt cả `--font-app` lẫn `--font-head`). Xem FONT_VISIBLE. */
   ['montserrat', 'Montserrat · mọi trang', "'Montserrat', ui-sans-serif, system-ui, sans-serif"],
   ['inter',      'Inter',      "'Inter', ui-sans-serif, system-ui, sans-serif"],
+  /* 26/10/2026 — THÊM ô "Fraunces · thay Libre Bodoni" (lệnh user: *"ở cái option font bản code, thêm option thay
+     libre thành Fraunces nhé"*). Phần tử thứ 4 = 'head': ô CHỈ đổi tầng trưng bày — mọi chữ đang là Libre Bodoni
+     (14/20 · 16/24 · 18/24 · 24/32…) thành Fraunces; thân bài Inter + mọi thứ khác GIỮ NGUYÊN bộ da. Khác ô Montserrat
+     (đổi cả app). Xem `applySingleFont`. Fraunces đã nạp sẵn trong thẻ <link> (Fraunces:wght@400;500, có subset vietnamese). */
+  ['fraunces',   'Fraunces · thay Libre Bodoni', "'Fraunces', ui-serif, Georgia, serif", 'head'],
   /* 25/08/2026 — **GỠ `manrope` khỏi danh sách font ĐƠN** (lệnh user: *"bộ tùy chọn
      font chữ sẽ bỏ font manrope"*). Family Manrope VẪN nạp trong thẻ <link> vì cặp
      `modern` (Fraunces + Manrope) còn dùng nó làm thân bài — muốn gỡ hẳn khỏi trang
@@ -26905,6 +26941,31 @@ function applyFontPair(id) {
   return p;
 }
 
+/* Áp MỘT font ĐƠN của bảng FONTS — bấm ô ở nhóm "Phông chữ" VÀ khôi phục từ hash (chuyển bản mobile ↔ desktop) cùng đi qua đây
+   để hai đường không lệch nhau. Trả về hàng FONTS; null nếu id lạ.
+   · hàng 3 phần tử (ô "Montserrat · mọi trang", 22/10): đổi CẢ APP — `--font-app` + `--font-head` + class `font-override`;
+   · hàng có phần tử thứ 4 = 'head' (ô "Fraunces · thay Libre Bodoni", 26/10): CHỈ đổi tầng trưng bày — đặt `--font-head`, GỠ
+     `--font-app` + `font-override` để thân bài Inter và mọi chữ khác y nguyên bộ da. Tầng Libre của skin-li đi HẾT qua
+     `var(--font-head)` (đã đếm: không chỗ nào khai thẳng tên Libre Bodoni ngoài 3 token) nên đổi MỘT biến là thay Libre ở MỌI bậc;
+     KHÔNG dùng `.font-pair` — nó thêm `font-size-adjust` và ép h1–h3 (xem ghi chú ở bảng SKINS).
+   `--font-head` phải ĐẶT TƯỜNG MINH (không chỉ gỡ biến inline): skin-li tự khai nó bằng CSS. Về mặc định = `applySkin` gỡ sạch. */
+function applySingleFont(id) {
+  const f = FONTS.find(x => x[0] === id);
+  if (!f) return null;
+  const html = document.documentElement, headOnly = f[3] === 'head';
+  currentFont = f[0];
+  currentPair = '';   // font đơn đang bật thì không cặp nào được tích
+  html.classList.remove('font-pair');
+  ['--pair-adj', '--pair-head-ls', '--pair-head-lh'].forEach(v => html.style.removeProperty(v));
+  html.style.setProperty('--font-head', f[2]);
+  if (headOnly) { html.style.removeProperty('--font-app'); html.classList.remove('font-override'); }
+  else { html.style.setProperty('--font-app', f[2]); html.classList.add('font-override'); }
+  document.querySelectorAll('#settingsPanel [data-font-pair] .fp-tick').forEach(t => t.classList.add('opacity-0'));
+  document.querySelectorAll('#settingsPanel [data-font]').forEach(x =>
+    x.querySelector('.fo-tick').classList.toggle('opacity-0', x.dataset.font !== f[0]));
+  return f;
+}
+
 let currentSkin = 'libre-inter';   // khớp class `skin-mt skin-li` đặt sẵn trên thẻ <html>
 /* Cùng khuôn applyTheme: gỡ mọi class skin rồi gắn class của skin đích. */
 function applySkin(id) {
@@ -27001,10 +27062,12 @@ function applyTheme(id) {
      Từ 21/09 danh sách này RỖNG vì bộ da chốt chạy một CẶP, hai dòng Montserrat / Inter ở
      đó chỉ mời người xem bấm nhầm — nay CHỈ MỘT ô, có dòng ghi chú nói nó làm gì và về lại
      bằng ô Cặp font. `inter` vẫn ẩn. Danh sách rỗng thì cả mục "Phông chữ" tự biến mất.
+     26/10/2026 thêm `fraunces` (lệnh user: *"ở cái option font bản code, thêm option thay libre thành Fraunces nhé"*): ô
+     "Fraunces · thay Libre Bodoni" CHỈ thay tầng Libre, giữ Inter — xem `applySingleFont`. Nay 2 ô.
    · PAIR_VISIBLE  — chỉ `couture` = Libre Bodoni + Inter, đúng cặp đang chạy. */
 const SKIN_VISIBLE  = ['libre-inter'];
 const THEME_VISIBLE = ['d', 'copper'];
-const FONT_VISIBLE  = ['montserrat'];
+const FONT_VISIBLE  = ['montserrat', 'fraunces'];
 const PAIR_VISIBLE  = ['couture'];
 const spShow = (rows, ids) => rows.filter(([id]) => ids.includes(id));
 
@@ -27311,7 +27374,7 @@ document.body.insertAdjacentHTML('beforeend', `
       <div class="h-px bg-border mx-3"></div>
       <div class="px-3 pt-3 pb-2">
         <p class="t-multiline tracking-[0.12em] text-muted-foreground">Phông chữ</p>
-        <p class="t-single sp-note text-muted-foreground">Mọi trang. Montserrat thay cả Inter lẫn Libre Bodoni; muốn về mặc định, chọn lại Cặp font bên dưới.</p>
+        <p class="t-single sp-note text-muted-foreground">Mọi trang. Montserrat thay cả Inter lẫn Libre Bodoni; Fraunces chỉ thay Libre Bodoni (Inter giữ). Về mặc định: chọn lại Cặp font bên dưới.</p>
       </div>
       <div id="fontList" class="pb-2">
         ${spShow(FONTS, FONT_VISIBLE).map(([id, label, stack]) => `
@@ -27473,26 +27536,9 @@ document.body.insertAdjacentHTML('beforeend', `
 
   panel.querySelectorAll('[data-font]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const id = btn.dataset.font;
-      const f = FONTS.find(x => x[0] === id);
+      /* chọn font ĐƠN là rời chế độ cặp; cách áp (cả app hay chỉ tầng trưng bày) + lý do đặt `--font-head` tường minh: xem applySingleFont. */
+      const f = applySingleFont(btn.dataset.font);
       if (!f) return;
-      currentFont = id;
-      document.documentElement.style.setProperty('--font-app', f[2]);
-      document.documentElement.classList.add('font-override');
-      /* chọn font ĐƠN là rời chế độ cặp: heading đi cùng font body.
-         22/10/2026 — phải ĐẶT TƯỜNG MINH `--font-head` = font đơn, không được chỉ gỡ biến
-         inline: bộ da vào-trang (`skin-li`) tự khai `--font-head` = Libre Bodoni bằng CSS, gỡ
-         inline thì mọi tiêu đề vẫn Libre Bodoni và ô "Montserrat · mọi trang" chỉ đổi được thân
-         bài. (Bản cũ chạy đúng ở bộ da mặc định vì ở đó `--font-head` chưa khai nên
-         `var(--font-head, var(--font-app))` rơi về font body.) */
-      currentPair = '';
-      document.documentElement.classList.remove('font-pair');
-      document.documentElement.style.setProperty('--font-head', f[2]);
-      ['--pair-adj', '--pair-head-ls', '--pair-head-lh']
-        .forEach(v => document.documentElement.style.removeProperty(v));
-      panel.querySelectorAll('[data-font-pair] .fp-tick').forEach(t => t.classList.add('opacity-0'));
-      panel.querySelectorAll('[data-font]').forEach(x =>
-        x.querySelector('.fo-tick').classList.toggle('opacity-0', x.dataset.font !== id));
       closeP();
       toast('Phông chữ: ' + f[1]);
     });
@@ -29489,17 +29535,7 @@ if (!RESP.swapped) {
   /* 04/10/2026 — ngữ cảnh màn (hãng + hub/lưới + bộ lọc ở PLP · chỉ số SP ở PDP) đi qua hash; phải đặt TRƯỚC go(first) bên dưới. */
   if (st.ctx) navRestore(st.screen, st.ctx);
 
-  const f = FONTS.find(x => x[0] === st.font);
-  if (f) {
-    currentFont = f[0];
-    document.documentElement.style.setProperty('--font-app', f[2]);
-    document.documentElement.style.setProperty('--font-head', f[2]);   // 22/10/2026: "mọi trang" = cả tiêu đề, y như lúc bấm ô — xem handler [data-font]
-    document.documentElement.classList.add('font-override');
-    currentPair = '';   // font đơn đang bật thì không cặp nào được tích
-    document.querySelectorAll('#settingsPanel [data-font-pair] .fp-tick').forEach(t => t.classList.add('opacity-0'));
-    document.querySelectorAll('#settingsPanel [data-font]').forEach(x =>
-      x.querySelector('.fo-tick').classList.toggle('opacity-0', x.dataset.font !== f[0]));
-  }
+  applySingleFont(st.font);   // 26/10/2026: chung đường với lúc bấm ô (id lạ / rỗng → không làm gì) — xem applySingleFont
 
   /* hasOwnProperty chứ không phải RENDER[...] trực tiếp: hash là dữ liệu ngoài,
      mà key kế thừa từ Object.prototype (#screen=__proto__, =constructor) cũng
