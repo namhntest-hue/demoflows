@@ -2204,6 +2204,20 @@ window.RESP = (function () {
      Đây là token VIỀN dùng làm mặt — lệch §2.2 (chỉ có 2 mặt), ghi danh ở đây;
      phạm vi đúng một badge. */
   .badge-inline { background: var(--general-border); }
+  /* 24/10/2026 (user, khung Figma 821:174744 — chip "Đặt trước" vẽ lại; rồi "làm luôn desktop theo figma"):
+     MẶT XÁM → MẶT ĐEN 60% CHỮ TRẮNG, đúng component `badge` kind=inline của Figma:
+     nền = biến `overlay` (đen 60% — code `--unofficial-backdrop` = rgba(0,0,0,.6) ở skin-mt),
+     chữ = `primary-foreground`, Inter 400 12/16, giãn chữ 0,5 (đã có ở `.t-single`), bo 0.
+     Đo trên nền trắng của trang: chip hiện #666666, chữ trắng 5,74:1.
+     CHỈ bộ da skin-mt (mặc định, nơi mọi bản vẽ của user nhắm tới); skin-mp / skin-mk
+     đóng băng nên giữ mặt xám dòng trên. Chỉ cần ghi đè MÀU: markup vẫn mang
+     `text-foreground font-medium` — utility (0,1,0) thua rule này (0,2,1), còn font-medium
+     đã chết ở skin-mt nên chữ vẫn 400. Rule mặt kem của theme-cu (mục 5 ở khối theme-cu bên
+     dưới) đã GỠ cùng lượt: chip tối nằm được cả trên trắng lẫn kem.
+     Hình học KHÔNG đổi ở thẻ / giỏ / tìm kiếm / mini cart (đệm ngang 4 · cao 16 · khe 6 như
+     Figma của chúng); chỉ dòng tiêu đề PDP desktop đệm ngang 2 (62 × 16 · khe 4, đúng khung
+     Figma PDP desktop) — xem chỗ dựng ở màn PDP. Khai giống index.html. */
+  html.skin-mt .badge-inline { background: var(--unofficial-backdrop); color: var(--general-primary-foreground); }
 
   /* ── Size / swatch chips ── */
   .chip { transition: border-color .18s ease, background .18s ease, color .18s ease; }
@@ -3514,15 +3528,18 @@ window.RESP = (function () {
      CHỮ HOA (Inter, lớp nổi), mô tả 12/18, chân là 2 nút cỡ medium 40 (viền + chính); không có nút ✕ vì phiên đã hết, buộc chọn một trong hai. Viền 1px theo khuôn lớp nổi
      (không bóng, bo 8 vì nổi giữa màn); z 230 trên popup đăng nhập (220). ── */
   /* 16/10/2026 (lô 4): cùng khuôn cho #confirmPop — nay là hộp xác nhận của Theo dõi đơn (lô 6); hai thẻ "Đăng xuất khỏi mọi thiết bị" / "Xoá tài khoản" từng dùng nó đã BỎ 19/10/2026. */
-  :is(#sessionPop, #confirmPop) .sess-card { position: absolute; left: 50%; top: 50%; width: min(340px, calc(100vw - 32px)); background: var(--general-background);
+  /* 23/10/2026: thêm #mailPop — popup "Gửi email thành công" của Quên mật khẩu (forgotMailOpen) dùng đúng khuôn hộp thoại này. */
+  :is(#sessionPop, #confirmPop, #mailPop) .sess-card { position: absolute; left: 50%; top: 50%; width: min(340px, calc(100vw - 32px)); background: var(--general-background);
     border: 1px solid var(--general-border); box-shadow: none; border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 16px;
     opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(.97); transition: opacity .22s ease, transform .22s cubic-bezier(.22,1,.36,1); }
-  :is(#sessionPop, #confirmPop).open { pointer-events: auto; }
-  :is(#sessionPop, #confirmPop).open .sess-backdrop { opacity: 1; }
-  :is(#sessionPop, #confirmPop).open .sess-card { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  :is(#sessionPop, #confirmPop) .sess-title { text-transform: uppercase; }
-  :is(#sessionPop, #confirmPop) .sess-foot { display: flex; gap: 8px; }
-  :is(#sessionPop, #confirmPop) .sess-foot > button { flex: 1; min-width: 0; }
+  :is(#sessionPop, #confirmPop, #mailPop).open { pointer-events: auto; }
+  :is(#sessionPop, #confirmPop, #mailPop).open .sess-backdrop { opacity: 1; }
+  :is(#sessionPop, #confirmPop, #mailPop).open .sess-card { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  :is(#sessionPop, #confirmPop, #mailPop) .sess-title { text-transform: uppercase; }
+  :is(#sessionPop, #confirmPop, #mailPop) .sess-foot { display: flex; gap: 8px; }
+  :is(#sessionPop, #confirmPop, #mailPop) .sess-foot > button { flex: 1; min-width: 0; }
+  /* 23/10/2026: lớp `z-[230]` trong markup của 3 hộp thoại KHÔNG có trong tailwind.css dựng sẵn (chỉ có tới z-[220]) nên z-index tính ra `auto` — header + nút bánh răng nằm TRÊN lớp phủ, không bị tối đi. Khai thẳng 230 ở đây (đúng ý chú thích đầu khối: trên popup đăng nhập 220; toast 200 thấp hơn nhưng không hiện cùng lúc với hộp thoại). */
+  :is(#sessionPop, #confirmPop, #mailPop) { z-index: 230; }
 
 
 
@@ -4738,6 +4755,13 @@ window.RESP = (function () {
      `.t-overlay.t-overlay` (xem đầu file, mục "THANG CHU"), vì rule đó khai SAU
      nếu chỉ so bằng thứ tự sẽ thua. */
   html.skin-mt .pc-price.pc-price { font-weight: 500; }
+  /* 24/10/2026 — user: *"cái số % giảm ở các thẻ sản phẩm hiện tại đang dùng font weight 400, giờ nâng lên label nhé"*, rồi *"ở mọi nơi luôn nhé"*.
+     MỌI CHIP % GIẢM GIÁ của sản phẩm nâng 400 -> 500 (text style `t-label-single` 12/16 của Figma), cùng độ đậm với giá hiện tại `.pc-price` đứng cạnh: thẻ sản phẩm (productCard ·
+     hàng Tìm kiếm · dkLookPrice) + màn PDP + hàng giỏ + Chi tiết đơn + tấm "Đã thêm vào giỏ" (#ccOff) + tấm thêm nhanh. `font-medium` trong markup chip là class CHẾT dưới skin-mt (đo 400)
+     nên phải là ngoại lệ CÓ TÊN: hook `.pc-off` gắn ở TỪNG chip; nhân đôi class cho (0,3,1) thắng khối "mọi độ đậm về 400" (0,2,1) — cùng mẹo `.pc-price.pc-price`. Chỉ đổi ĐỘ ĐẬM: cỡ
+     (12/16 ở thẻ · giỏ · Chi tiết đơn, 12/18 ở PDP), mực đỏ và nền chip của skin-li giữ nguyên. 500 chữ thường = ngoại lệ ghi danh thứ MƯỜI của §1.1 STYLE-RULES (chip chỉ có số và dấu %,
+     không có chữ để viết hoa — cùng lý do ngoại lệ thứ hai). Chip % MỚI ⇒ gắn `pc-off`. KHAI GIỐNG HỆT ở index.html và desktop.html. */
+  html.skin-mt .pc-off.pc-off { font-weight: 500; }
 
   /* ── 5. MẶT CHỮ — SANS, KHÔNG CÒN SERIF ──
      20/08/2026, user chốt: *"ở skin mp giờ sẽ k dùng font lora nữa nhé, dùng mặc
@@ -7743,6 +7767,7 @@ window.RESP = (function () {
   html.skin-mt.theme-cu #toastAct { color: var(--cu-signature); }
 
   /* 5 — CHIP "ĐẶT TRƯỚC" (`.badge-inline`) VỀ MẶT KEM (22/09, đợt rà "các page còn lại").
+     ⚠ ĐÃ GỠ 24/10/2026 — chip nay là mặt đen 60% chữ trắng ở mọi theme, xem cuối khối.
      Lệnh user: *"các vùng nhấn màu xám thì cho nhấn tầm 50-100 đồng bộ thôi đừng nhấn
      đậm quá nhé"*.
 
@@ -7767,7 +7792,10 @@ window.RESP = (function () {
      ý "đừng nhấn đậm quá". Chữ vẫn đen nên nhãn không mất. Muốn chip đậm bằng cũ
      thì dùng `pampas/100` (1,18) — vẫn trong khoảng 50-100 user chốt, nhưng chênh
      lệch với bậc 50 chỉ 0,06 nên gần như không thấy bằng mắt. */
-  html.skin-mt.theme-cu .badge-inline { background: var(--cu-surface); }
+  /* 24/10/2026: rule `html.skin-mt.theme-cu .badge-inline { background: var(--cu-surface) }` ĐÃ GỠ —
+     chip "Đặt trước" vẽ lại thành mặt đen 60% chữ trắng (Figma 821:174744, xem
+     `html.skin-mt .badge-inline` ở khối badge đầu file). Để mặt kem ở lại thì chữ trắng
+     trên kem biến mất (rule này nặng 0,3,1 nên thắng cả rule mới). */
 
   /* ── GIỮ BĂNG TIÊU ĐỀ PANEL TÓM TẮT KHI BẬT THEME (23/09/2026) ──
      Ở bộ da, băng và thân panel đi hai token XÁM khác nhau (`--general-secondary`
@@ -8909,7 +8937,7 @@ function productCard(p, i, { w = '', badge = '', noColors = false, pillBadges = 
         <p class="t-multiline pc-price whitespace-nowrap font-medium ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
         ${(tight && !p.was && !p.off) ? '' : `<div class="flex gap-1 items-center">
           <p class="t-single whitespace-nowrap text-muted-foreground line-through ${p.was ? '' : 'invisible'}">${p.was || '&nbsp;'}</p>
-          ${p.off ? `<span class="t-single bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${p.off}</span>` : ''}
+          ${p.off ? `<span class="t-single pc-off bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${p.off}</span>` : ''}
         </div>`}
       </div>`}
       ${(!noColors && p.colors && p.colors.length) ? `
@@ -9621,11 +9649,16 @@ const MENU_NEW_COLLECTIONS = [
    còn lại là chuỗi (bấm ra PLP danh mục). Mobile đọc thẳng danh sách này (tiêu đề nhóm xen giữa),
    desktop cắt theo header thành các cột mega panel (splitByHeader). Nhãn là khoá i18n VI->EN.
    Sheet có vài lỗi gõ đã sửa khi vào code: Chrisitan->Christian, Mochino->Moschino, Mấu->Mẫu,
-   New Arrvial->New arrivals, Treding->Trending, doanh nghiêp->doanh nghiệp, Măt->Mắt. */
+   New Arrvial->New arrivals, Treding->Trending, doanh nghiêp->doanh nghiệp, Măt->Mắt.
+   26/10/2026 (user, kèm ảnh khoanh cột Khám phá có mũi tên sang trái: "ở menu desktop, swap vị trí của
+   khám phá và thương hiệu nổi bật"): BẢN DESKTOP ĐỔI THỨ TỰ NHÓM thành Danh mục · KHÁM PHÁ · THƯƠNG HIỆU
+   NỔI BẬT (cột 2 ↔ cột 3; ảnh vẫn cột 4). Đổi ngay ở dữ liệu nên cả mega panel lẫn danh sách trượt `.ms-view`
+   của file này cùng đúng thứ tự. Cùng ngày user bảo "mobile đổi luôn nhé" ⇒ `index.html` đổi y hệt (màn con cấp 2
+   của drawer đọc thẳng thứ tự này). Hai file có MENU_DATA riêng — đổi một file nhớ đổi file kia. */
 const menuFashionSub = (title, all, cats, brands, discover) => ({ title, all, items:[
   { header:'Danh mục' }, ...cats,
-  { header:'Thương hiệu nổi bật' }, ...brands.map(brand => ({ brand })),
   { header:'Khám phá' }, ...discover,
+  { header:'Thương hiệu nổi bật' }, ...brands.map(brand => ({ brand })),
 ] });
 /* Làm đẹp: mỗi nhóm là danh sách [tiêu đề cột, ...mục] -> {header} + mục */
 const menuBeautySub = (title, all, cols) => ({ title, all,
@@ -9982,8 +10015,9 @@ function dkMegaPanel(item, id) {
         sub.items, it => dkCatAttrs(it, ['Làm đẹp', sub.title]))
     ).join('');
   } else if (item.sub || item.cat) {
-    /* 29/09/2026 — MỘT NGÀNH MỘT PANEL, cột cắt theo {header} trong data: Danh mục · Thương hiệu
-       nổi bật · Khám phá (thời trang) hoặc các cột của sheet Beauty. Trước đây danh mục thời
+    /* 29/09/2026 — MỘT NGÀNH MỘT PANEL, cột cắt theo {header} trong data (thứ tự cột = thứ tự nhóm
+       trong data; thời trang: Danh mục · Khám phá · Thương hiệu nổi bật từ 26/10, xem
+       menuFashionSub) hoặc các cột của sheet Beauty. Trước đây danh mục thời
        trang dựng 2 cột Nam + Nữ; nay hàng ngành ở trên đã chọn giới tính nên chỉ vẽ ngành đang
        sáng (dkDept). Panel được dựng lại mỗi lần header dựng (bấm ngành là dựng lại trang). */
     const dept = item.sub ? item.dept : (dkDept === 'Nữ' ? 'Nữ' : 'Nam');
@@ -11665,7 +11699,7 @@ function searchProductRowHTML({ p, i }, tag = 'li', cls = 'search-prow mx-4') {
             <span class="search-pprice flex items-center gap-2 pt-1 mt-auto">
               <span class="t-multiline pc-price whitespace-nowrap font-medium ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</span>
               ${p.was ? `<span class="t-single whitespace-nowrap text-muted-foreground line-through">${p.was}</span>` : ''}
-              ${p.off ? `<span class="t-single bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${p.off}</span>` : ''}
+              ${p.off ? `<span class="t-single pc-off bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${p.off}</span>` : ''}
             </span>
           </span>
         </button>
@@ -12290,7 +12324,7 @@ function dkLookPrice(p) {
   return `
             <div class="flex gap-1 items-center">
               <p class="t-multiline pc-price whitespace-nowrap font-medium ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
-              ${p.off ? `<span class="t-single bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${p.off}</span>` : ''}
+              ${p.off ? `<span class="t-single pc-off bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${p.off}</span>` : ''}
             </div>
             ${p.was ? `<p class="t-single whitespace-nowrap text-muted-foreground line-through">${p.was}</p>` : ''}`;
 }
@@ -12432,10 +12466,14 @@ function dkScreenPDP(kind) {
              PDP thành ra lệch nhất giữa các màn. -->
         <h1 class="t-display-title pc-brand font-medium text-foreground">${P.brand}</h1>
               <!-- Badge Pre-order ĐỨNG TRƯỚC TÊN, cùng hàng — đúng khuôn thẻ PLP
-                   27/08 (.badge-inline nền token viền, nhãn dịch được 'Đặt trước').
-                   28/08 dời từ ô ảnh đầu gallery xuống đây theo lệnh user. -->
-              <div class="flex items-center gap-1.5 min-w-0">
-                ${P.preorder ? `<span class="t-single badge-inline px-1 font-medium text-foreground shrink-0">Đặt trước</span>` : ''}
+                   27/08 (.badge-inline, nhãn dịch được 'Đặt trước').
+                   28/08 dời từ ô ảnh đầu gallery xuống đây theo lệnh user.
+                   24/10 (user, "làm luôn desktop theo figma"): ở DÒNG TIÊU ĐỀ PDP desktop chip
+                   đệm ngang 2 (px-0.5), cao 16, rộng khoảng 61; khe tới tên 4 (gap-1) — đúng
+                   khung Figma PDP desktop (62 × 16, đệm 0/2/0/2, khe 4). Hàng vẫn cao 20 nhờ
+                   tên 14/20, chip canh giữa. Thẻ, giỏ, tìm kiếm giữ đệm ngang 4 · khe 6. -->
+              <div class="flex items-center gap-1 min-w-0">
+                ${P.preorder ? `<span class="t-single badge-inline px-0.5 font-medium text-foreground shrink-0">Đặt trước</span>` : ''}
                 <!-- 17/09/2026 — TÊN SP lên 14/20 (.t-multiline 12/18 -> .t-lead), theo khung
                      Figma user vừa chỉnh (343:54291). CHỈ desktop: khung PDP mobile user để
                      nguyên 12/18. Xem ghi chú lệch thang chữ 2 file ở cuối khối này. -->
@@ -12463,7 +12501,7 @@ function dkScreenPDP(kind) {
               ${(P.was || P.off) ? `
               <div class="flex items-center gap-1.5">
                 ${P.was ? `<p class="t-multiline text-muted-foreground line-through">${P.was}</p>` : ''}
-                ${P.off ? `<span class="t-multiline bg-destructive-subtle rounded-xs px-1 py-0.5 text-destructive">${P.off}</span>` : ''}
+                ${P.off ? `<span class="t-multiline pc-off bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive">${P.off}</span>` : ''}
               </div>` : ''}
             </div>
           </div>
@@ -15879,7 +15917,7 @@ function orderDetailHTML(o, guest) {
                 <div class="flex flex-col items-end text-right">
                   ${sale ? `
                   <div class="flex gap-1 items-center">
-                    <span class="t-single bg-destructive-subtle rounded-xs px-1 py-0.5 text-destructive shrink-0">${p.off}</span>
+                    <span class="t-single pc-off bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${p.off}</span>
                     ${p.was ? `<p class="t-single text-muted-foreground line-through">${vndDot(vndNum(p.was) * q)}</p>` : ''}
                   </div>` : ''}
                   <p class="t-lead pc-price ${sale ? 'text-destructive' : 'text-foreground'}">${vndDot(orderLineTotal(it))}</p>
@@ -17527,7 +17565,7 @@ function screenCART() {
                  đọc từ trái sang nên gặp con số KHÔNG còn hiệu lực trước rồi mới biết
                  vì sao nó bị gạch. Đảo lại thì lý do (giảm bao nhiêu) đứng trước hệ quả. -->
             <div class="flex gap-1 items-center">
-              ${c.off ? `<span class="t-single bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${c.off}</span>` : ''}
+              ${c.off ? `<span class="t-single pc-off bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${c.off}</span>` : ''}
               ${c.was ? `<p class="t-single text-muted-foreground line-through">${c.was}</p>` : ''}
             </div>` : ''}
             <!-- 21/09/2026 — giá phải trả lên .t-lead 14/20 (Figma 543:20989: text style
@@ -18331,13 +18369,12 @@ function ckStepBusy(root, fresh) {
    OTP → Xác thực OTP → Hoàn tất đăng ký (điền thông tin).
    ⚠ 06/10/2026 (user, kèm ảnh tham chiếu): bước "Xác thực OTP" của ĐĂNG KÝ nay nằm CHUNG TRANG
    với bước nhập SĐT — ô SĐT có nút Gửi mã OTP ngay trong ô, ô Nhập mã OTP ngay dưới (xem
-   viewRegister). Không còn qua view 'otp'; view 'otp' (6 ô) chỉ còn cho QUÊN MẬT KHẨU bằng SĐT.
+   viewRegister). Không còn qua view 'otp'. 23/10/2026: view 'otp' (6 ô) ĐÃ GỠ hẳn — Quên mật khẩu nay CHỈ bằng email (xem viewForgot · viewResetPw).
 ════════════════════════════════════════════════════════════════ */
 let authView = 'login';
 let authViewIntent = false;
 let authPhone = '';
-let authFlow = 'register';   // luồng đang dùng OTP: 'register' (SĐT → OTP → điền thông tin) | 'forgot' (SĐT → OTP → đặt lại mật khẩu)
-let forgotEmailSent = '';    // khác rỗng = vừa quên mật khẩu bằng EMAIL (brief trang 23, Opt2) — viewLogin() vẽ banner xanh; dọn ở [data-auth-go]
+/* 23/10/2026 (user: "cái quên mật khẩu sẽ lấy lại mật khẩu bằng email nhé"): ĐÃ GỠ biến authFlow (luồng OTP của Quên mật khẩu bằng SĐT) và forgotEmailSent (banner xanh Opt2 trên màn Đăng nhập) — thay bằng popup #mailPop (forgotMailOpen) + trang đặt lại 'resetpw'. */
 let regOtpSent = false;      // ĐĂNG KÝ bằng SĐT (một trang, 06/10/2026): đã bấm "Gửi mã OTP" trong ô SĐT — nút đổi sang "Nhận lại mã (60s)", ô Nhập mã OTP ngay dưới mới có mã để Xác nhận. Dọn bằng resetRegOtp() ở [data-auth-go] · go('login') · sau khi xác nhận
 let regOtpIv = null;         // bộ đếm ngược 60s của nút Nhận lại mã (một trang đăng ký)
 const resetRegOtp = () => { regOtpSent = false; clearInterval(regOtpIv); regOtpIv = null; };
@@ -18429,18 +18466,13 @@ function authTabs(active) {
   </div>`;
 }
 /* ── 01 Login ── */
-/* Banner xanh Opt2 của Quên mật khẩu (brief trang 23) — xem chú thích đầy đủ ở
-   bản mobile (index.html, cùng hàm).
+/* 23/10/2026: banner xanh Opt2 của Quên mật khẩu ĐÃ GỠ — xem chú thích ở bản mobile (index.html, cùng hàm).
    19/10/2026 (user: "ở tab đăng nhập bỏ cái chào mừng bạn trở lại"): BỎ dòng "Chào mừng bạn trở lại" đầu form — tab mở ra là vào thẳng ô Số điện thoại.
    20/10/2026 (user: "cái đăng nhập đăng ký điều chỉnh lại khoảng cách giữa trường nhập và nút cho đồng bộ 24px theo đăng ký"): khe giữa các khối của form (hộp báo · cụm ô · nút Đăng nhập) 32 → 24 (gap-8 → gap-6) — cùng khe 24 của tab Đăng ký và khung Figma sign in 422:8022; nút Đăng nhập vẫn cao 44. */
 function viewLogin() {
   return `
   ${authTabs('login')}
   <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
-    ${forgotEmailSent ? `
-    <div class="rounded-xs bg-accent-0 px-4 py-3">
-      <p class="t-multiline text-muted-foreground"><span class="text-success">✓</span> Nếu có tài khoản đăng ký với địa chỉ <b class="font-medium text-foreground">${forgotEmailSent}</b>, bạn sẽ nhận được email kèm theo đường link để đặt lại mật khẩu.</p>
-    </div>` : ''}
     ${loginLocked ? authMsgHtml(LOGIN_LOCK_MSG) : ''}
     <div class="flex flex-col gap-6">
       ${afield('Số điện thoại', 'type="tel" inputmode="tel" id="loginId"', 'Nhập số điện thoại')}
@@ -18457,7 +18489,7 @@ function viewLogin() {
      · ô "Nhập mã OTP" (MỘT ô, 6 số, gợi ý mã SMS của điện thoại) ngay dưới;
      · nút Xác nhận → sang "Hoàn tất đăng ký".
    KHÔNG bê nguyên ảnh: bỏ ô chọn quốc gia (cờ + mũi tên) và dấu * bắt buộc — dự án không dùng (xem README 02/10, "không dấu sao").
-   View 'otp' (6 ô) chỉ còn cho Quên mật khẩu bằng SĐT.
+   View 'otp' (6 ô) ĐÃ GỠ 23/10/2026 (Quên mật khẩu nay chỉ bằng email).
    19/10/2026 (user: "ở tab đăng ký thì bỏ câu hãy sẵn sàng trải nghiệm …"): đoạn dẫn chỉ còn câu đầu "Để tận hưởng những ưu đãi độc quyền …"; câu "Hãy sẵn sàng trải nghiệm những đặc quyền …" BỎ khỏi tab Đăng ký và CẢ popup đăng nhập ở giỏ (khối "Chưa có tài khoản" chỉ còn tiêu đề; user: "popup đăng nhập ở giỏ cũng bỏ luôn câu đó"). */
 function viewRegister() {
   const sent = regOtpSent;
@@ -18473,45 +18505,24 @@ function viewRegister() {
     ${abtn('Xác nhận', 'data-reg-verify', 'h-10')}
   </div>`;
 }
-/* ── 03 Forgot Password (PDF brief trang 23) ── xem chú thích đầy đủ ở bản
-   mobile (index.html, cùng hàm) — nhận cả SĐT lẫn email, nhánh Opt1/Opt2 nằm
-   trong handler [data-auth-otp] dùng chung. */
+/* ── 03 Forgot Password ── 23/10/2026 (user: "cái quên mật khẩu sẽ lấy lại mật khẩu bằng email nhé · sau khi nhập … thì hiện cái popup thông báo gửi mail thành công"):
+   Quên mật khẩu CHỈ còn bằng EMAIL. Brief trang 23 từng cho hai lối (SĐT → OTP 6 ô → "Đặt mật khẩu mới" · email → banner xanh trên màn Đăng nhập) — ĐÃ GỠ cả hai
+   (view 'otp' · 'setpass', biến authFlow, banner forgotEmailSent). Còn MỘT ô Email + nút "Gửi email" + nút "Huỷ" (đúng chữ + khoá I18N của mọi nút huỷ khác).
+   Bấm gửi ([data-forgot-send]): kiểm email (chỉ khi "Kiểm lỗi nhập" BẬT) → quay 0,7 s → popup #mailPop "Gửi email thành công" (forgotMailOpen). Câu trong popup vẫn KHÔNG xác nhận
+   email có tài khoản hay không ("Nếu có tài khoản…" — chống dò email, chốt 13/09). Liên kết trong email mở trang 'resetpw' (viewResetPw); demo mở bằng bánh răng → Liên kết đặt lại mật khẩu → Hợp lệ. */
 function viewForgot() {
   return `
   <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
     <h2 class="t-display-title font-light text-foreground">Quên mật khẩu</h2>
-    <p class="t-multiline text-muted-foreground">Nhập số điện thoại hoặc email đã đăng ký. Chúng tôi sẽ gửi mã OTP để xác thực.</p>
-    ${afield('Số điện thoại hoặc Email', `type="text" id="regPhone" value="${authPhone.replace(/"/g, '&quot;')}"`, 'Nhập số điện thoại hoặc email')}
+    <p class="t-multiline text-muted-foreground">Nhập email đã đăng ký. Chúng tôi sẽ gửi liên kết để bạn đặt lại mật khẩu.</p>
+    ${afield('Email', 'type="email" inputmode="email" autocomplete="email" id="forgotEmail"', 'Nhập email')}
     <div class="flex flex-col gap-3">
-      ${abtn('Gửi mã xác thực', 'data-auth-otp')}
+      ${abtn('Gửi email', 'data-forgot-send')}
       <button data-auth-go="login" class="t-multiline w-full h-11 rounded-xs border border-border bg-background text-foreground font-medium tracking-wide btn-o press">Huỷ</button>
     </div>
   </div>`;
 }
-/* ── 04 OTP Verify (Figma 3354:47931) ── */
-function viewOtp() {
-  return `
-  <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
-    <h2 class="t-display-title font-light text-foreground">Xác thực OTP</h2>
-    <p class="t-multiline" style="color:var(--unofficial-ghost-foreground)">Mã xác thực đã được gửi đến ${authPhone ? `<b class="font-medium text-foreground">${authPhone}</b>` : 'số điện thoại của bạn'}<br>Hoặc <button data-otp-change class="underline underline-offset-2 press">thay đổi số điện thoại</button></p>
-    <!-- Bọc thêm 1 lớp để dòng lỗi nằm SÁT hàng ô (gap-2 = 8px). Để nó làm con
-         trực tiếp của cột gap-6 thì lỗi rơi cách hàng ô 24px, đọc ra là chú
-         thích của khối dưới chứ không phải lỗi của ô. -->
-    <div class="flex flex-col gap-2">
-      <div class="flex gap-2 justify-center" id="otpRow">
-        ${[0,1,2,3,4,5].map(i => `<input inputmode="numeric" maxlength="1" data-otp="${i}" class="otp-cell w-[52px] h-[52px] text-center text-[18px] leading-7 font-medium border border-border-3 rounded-xs outline-none focus:border-primary transition-colors">`).join('')}
-      </div>
-    </div>
-    <div class="flex flex-col gap-4">
-      ${abtn('Xác nhận', 'data-auth-verify', 'h-10')}
-      <button id="otpResend" class="t-multiline w-full h-10 rounded-xs bg-secondary border border-border font-medium text-foreground btn-s press" disabled>Nhận lại mã (<span id="otpTimer">60</span>s)</button>
-    </div>
-    <div class="flex items-center justify-center gap-1">
-      <span class="t-multiline text-muted-foreground">Đã có tài khoản?</span>
-      <button data-auth-go="login" class="t-multiline font-medium text-foreground press">Đăng nhập</button>
-    </div>
-  </div>`;
-}
+
 /* ── 04b Hoàn tất đăng ký — điền thông tin sau khi xác thực OTP ──
    Theo brief khách (PDF "UI UX Feedback - Designer" trang 21, "Account – Register
    account", có ghi "Desktop adapt consistent với mobile"): thêm Tên/Họ TÁCH RIÊNG +
@@ -18552,18 +18563,20 @@ function viewRegSuccess() {
     ${abtn('Tiếp tục mua sắm', 'data-reg-continue', 'h-10')}
   </div>`;
 }
-/* ── 05 Reset Password ── 19/10/2026 (user: "mật khẩu bỏ thanh đo độ mạnh yếu luôn"): BỎ thanh + dòng gợi ý độ mạnh (trước: "Độ mạnh mật khẩu:" + thanh 5 mức + gợi ý Yếu / Trung bình / Khá / Mạnh); còn đoạn luật "ít nhất 8 ký tự, chữ hoa, chữ thường và số". */
-function viewSetPass() {
+/* ── 05 Đặt lại mật khẩu — trang MỞ TỪ LIÊN KẾT TRONG EMAIL (23/10/2026) ──
+   Lệnh user: "khi bấm vào link email sẽ hiện ra trang Quên mật khẩu · [nhập mật khẩu mới] · [nhập lại mật khẩu mới] · nút Đặt lại mật khẩu" — đúng bấy nhiêu thứ: tiêu đề, hai ô, một nút
+   (không đoạn luật mật khẩu, không nút Huỷ: vào từ email nên không có "bước trước" để huỷ về). Thay hẳn view 'setpass' ("Đặt mật khẩu mới" sau OTP) đã gỡ cùng nhánh SĐT.
+   Luật ô như đổi mật khẩu ở Tài khoản (≥ 8 ký tự, chữ + số; nhập lại phải khớp) — chỉ khi "Kiểm lỗi nhập" BẬT ([data-reset-submit]). Xong → về tab Đăng nhập + toast (không tự đăng nhập).
+   19/10/2026 (user: "mật khẩu bỏ thanh đo độ mạnh yếu luôn"): trang này cũng KHÔNG có thanh độ mạnh. */
+function viewResetPw() {
   return `
   <div class="flex flex-col gap-6 px-4 pt-6 pb-10">
-    <h2 class="t-display-title font-light text-foreground">Đặt mật khẩu mới</h2>
-    <p class="t-multiline text-muted-foreground">Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.</p>
+    <h2 class="t-display-title font-light text-foreground">Quên mật khẩu</h2>
     <div class="flex flex-col gap-5">
-      ${afield('Mật khẩu mới', 'type="password" id="npass"', 'Nhập mật khẩu mới')}
-      ${afield('Xác nhận mật khẩu mới', 'type="password"', 'Nhập lại mật khẩu mới')}
+      ${afield('Nhập mật khẩu mới', 'type="password" id="rpNew" autocomplete="new-password"', 'Nhập mật khẩu mới')}
+      ${afield('Nhập lại mật khẩu mới', 'type="password" id="rpNew2" autocomplete="new-password"', 'Nhập lại mật khẩu mới')}
     </div>
-    ${abtn('Cập nhật mật khẩu', 'data-login-submit')}
-    <button data-auth-go="login" class="t-multiline w-full h-11 rounded-xs border border-border bg-background text-foreground font-medium tracking-wide btn-o press">Huỷ</button>
+    ${abtn('Đặt lại mật khẩu', 'data-reset-submit')}
   </div>`;
 }
 
@@ -18581,7 +18594,7 @@ function viewLinkExpired() {
   </div>`;
 }
 
-const AUTH_VIEWS = { login: viewLogin, register: viewRegister, otp: viewOtp, reginfo: viewRegInfo, regsuccess: viewRegSuccess, setpass: viewSetPass, forgot: viewForgot, linkexpired: viewLinkExpired };
+const AUTH_VIEWS = { login: viewLogin, register: viewRegister, reginfo: viewRegInfo, regsuccess: viewRegSuccess, resetpw: viewResetPw, forgot: viewForgot, linkexpired: viewLinkExpired };
 
 /* Khung chung cho 6 màn xác thực (login · register · otp · reginfo · setpass ·
    forgot) — đổi ở đây là đổi cả 6.
@@ -23534,6 +23547,12 @@ const I18N = {
   'Nếu có tài khoản đăng ký với địa chỉ':'If there’s an account registered with',
   ', bạn sẽ nhận được email kèm theo đường link để đặt lại mật khẩu.':', you’ll receive an email with a link to reset your password.',
   'Vui lòng nhập đủ 6 số':'Please enter all 6 digits',
+  /* 23/10/2026 — Quên mật khẩu bằng EMAIL: popup + trang đặt lại. */
+  'Nhập email đã đăng ký. Chúng tôi sẽ gửi liên kết để bạn đặt lại mật khẩu.':'Enter your registered email. We’ll send you a link to reset your password.',
+  'Gửi email':'Send email', 'Gửi email thành công':'Email sent', 'email của bạn':'your email',
+  'Đặt lại mật khẩu thành công':'Password reset successfully',
+  'Chưa gửi được email':'Couldn’t send the email', 'Mất kết nối mạng. Email chưa được gửi.':'No network connection. The email wasn’t sent.',
+  'Chưa đặt lại được mật khẩu':'Couldn’t reset your password',
 
   // ── Trang tài khoản ──
   'Tài khoản':'Account', 'Thông tin':'Profile', 'Đơn hàng':'Orders', 'Địa chỉ':'Address',
@@ -25940,22 +25959,7 @@ function setFieldErr(inp, msg) {
   const p = document.getElementById(eid);
   if (p) localizeNew(p);
 }
-/* 6 ô OTP không có ô nào là "ô chính" để gắn lỗi: setFieldErr chèn <p> vào
-   `afterend` của phần tử truyền vào, mà afterend của một ô thì rơi vào GIỮA hàng
-   flex. Nên truyền CẢ HÀNG `#otpRow` — <p> rơi ngay dưới hàng, đúng chỗ; lớp
-   `.fld-err` bám vào div không viền nên vô hình, không hại gì.
-   Tô đỏ 6 ô phải làm riêng, và gỡ khi gõ lại. */
-function otpErr(root, msg) {
-  const row = root.querySelector('#otpRow');
-  if (!row) return;
-  const cells = [...row.querySelectorAll('.otp-cell')];
-  if (!msg) { clearFieldErr(row); cells.forEach(c => c.classList.remove('fld-err')); return; }
-  setFieldErr(row, msg);
-  cells.forEach(c => {
-    c.classList.add('fld-err');
-    c.addEventListener('input', () => otpErr(root, ''), { once: true });
-  });
-}
+/* otpErr(root, msg) — lỗi của 6 ô OTP — ĐÃ GỠ 23/10/2026 cùng view 'otp' (Quên mật khẩu chỉ còn bằng email). */
 function validatePickup(root) {
   if (valOff()) { root.querySelectorAll('.fld-err').forEach(clearFieldErr); return true; }   // 16/10/2026: Kiểm lỗi nhập TẮT
   const get = k => root.querySelector(`[data-ckf="${k}"]`);
@@ -26296,8 +26300,10 @@ const NET_GATES = [
   ['[data-acc="addr-del-yes"]', 'Chưa xoá được địa chỉ', 'Mất kết nối mạng. Địa chỉ vẫn còn trong sổ.', el => el.closest('.acc-addr-card, .border.border-border.rounded-xs.p-4') || el.parentElement, 'afterend', ''],
   ['[data-acc="addr-def"]', 'Chưa đặt được địa chỉ mặc định', 'Mất kết nối mạng. Địa chỉ mặc định vẫn như cũ.', el => el.closest('.acc-addr-card, .border.border-border.rounded-xs.p-4') || el.parentElement, 'afterend', ''],
   ['[data-login-submit], #lpLogin, #apSubmit', 'Chưa đăng nhập được', NET_SUB, el => (el.id === 'lpLogin' || el.id === 'apSubmit') ? el : (el.closest('.flex.flex-col.px-4.pt-6') || el.parentElement), el => (el.id === 'lpLogin' || el.id === 'apSubmit') ? 'beforebegin' : 'afterbegin', ''],
-  ['[data-reg-send], [data-auth-otp]', 'Chưa gửi được mã OTP', NET_SUB, el => el.closest('.flex.flex-col.px-4.pt-6') || el.parentElement, 'afterbegin', ''],
-  ['[data-reg-verify], [data-auth-verify]', 'Chưa xác nhận được mã OTP', NET_SUB, el => el.closest('.flex.flex-col.px-4.pt-6') || el.parentElement, 'afterbegin', ''],
+  ['[data-reg-send]', 'Chưa gửi được mã OTP', NET_SUB, el => el.closest('.flex.flex-col.px-4.pt-6') || el.parentElement, 'afterbegin', ''],
+  ['[data-reg-verify]', 'Chưa xác nhận được mã OTP', NET_SUB, el => el.closest('.flex.flex-col.px-4.pt-6') || el.parentElement, 'afterbegin', ''],
+  ['[data-forgot-send]', 'Chưa gửi được email', 'Mất kết nối mạng. Email chưa được gửi.', el => el.closest('.flex.flex-col.px-4.pt-6') || el.parentElement, 'afterbegin', ''],
+  ['[data-reset-submit]', 'Chưa đặt lại được mật khẩu', 'Mất kết nối mạng. Mật khẩu của bạn vẫn như cũ.', el => el.closest('.flex.flex-col.px-4.pt-6') || el.parentElement, 'afterbegin', ''],
   ['[data-reg-done]', 'Chưa tạo được tài khoản', 'Mất kết nối mạng. Tài khoản của bạn chưa được tạo.', el => el.closest('.flex.flex-col.px-4.pt-6') || el.parentElement, 'afterbegin', ''],
   ['[data-track-go]', 'Chưa tra cứu được đơn hàng', NET_SUB, el => el.parentElement, 'beforeend', ''],
   ['[data-conf="trk-ok"]', 'Chưa gửi được yêu cầu', 'Mất kết nối mạng. Yêu cầu của bạn chưa được gửi.', el => el.parentElement, 'beforebegin', ''],
@@ -26593,6 +26599,52 @@ function sessionClose() {
   unlockBodyScroll();
 }
 
+/* ── POPUP "GỬI EMAIL THÀNH CÔNG" của Quên mật khẩu (23/10/2026) ──
+   Khuôn modal-popup như #sessionPop / #confirmPop: hộp giữa màn rộng 340, đệm 24, khe 16, tiêu đề 16/24 Medium CHỮ HOA, mô tả 12/18, chân 2 nút (viền + chính). Dựng LÚC CẦN (lần đầu gọi);
+   câu mô tả dựng lại mỗi lượt để đúng email vừa nhập — địa chỉ đặt bằng textContent (không chèn HTML); không có email (Kiểm lỗi nhập TẮT) thì ghi "email của bạn".
+   "Đóng" ở lại trang Quên mật khẩu (gửi lại / đổi email); "Về đăng nhập" sang tab Đăng nhập; chạm nền hoặc Esc = Đóng. Câu KHÔNG xác nhận email có tài khoản hay không (chống dò email). */
+function forgotMailOpen(email) {
+  let pop = document.getElementById('mailPop');
+  if (!pop) {
+    document.body.insertAdjacentHTML('beforeend', `
+    <div id="mailPop" class="fixed inset-0 z-[230] pointer-events-none" aria-hidden="true">
+      <div class="sess-backdrop absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-300"></div>
+      <div class="sess-card" role="alertdialog" aria-modal="true" aria-labelledby="mailTitle">
+        <p id="mailTitle" class="sess-title t-overlay font-medium text-foreground">Gửi email thành công</p>
+        <p id="mailBody" class="t-multiline text-secondary-foreground"></p>
+        <div class="sess-foot">
+          <button type="button" data-mail="close" class="t-multiline h-10 px-4 rounded-xs border border-border font-medium text-foreground btn-o press flex items-center justify-center">Đóng</button>
+          <button type="button" data-mail="login" class="t-multiline h-10 px-4 rounded-xs bg-primary text-primary-foreground font-medium btn-p press flex items-center justify-center">Về đăng nhập</button>
+        </div>
+      </div>
+    </div>`);
+    pop = document.getElementById('mailPop');
+    pop.querySelector('.sess-backdrop').addEventListener('click', forgotMailClose);
+    pop.querySelector('[data-mail="close"]').addEventListener('click', forgotMailClose);
+    pop.querySelector('[data-mail="login"]').addEventListener('click', () => {
+      forgotMailClose();
+      authView = 'login'; authViewIntent = true;
+      if (current === 'login') rerenderLogin(); else go('login', { force: true });
+    });
+  }
+  const body = pop.querySelector('#mailBody');
+  body.innerHTML = 'Nếu có tài khoản đăng ký với địa chỉ <b class="font-medium text-foreground"></b>, bạn sẽ nhận được email kèm theo đường link để đặt lại mật khẩu.';
+  body.querySelector('b').textContent = email || 'email của bạn';
+  localizeNew(pop);
+  if (!pop.classList.contains('open')) lockBodyScroll();
+  pop.classList.add('open'); pop.setAttribute('aria-hidden', 'false');
+  pop._onKey = e => { if (e.key === 'Escape') forgotMailClose(); };
+  document.addEventListener('keydown', pop._onKey);
+  const go2 = pop.querySelector('[data-mail="login"]'); if (go2) go2.focus({ preventScroll: true });
+}
+function forgotMailClose() {
+  const pop = document.getElementById('mailPop');
+  if (!pop || !pop.classList.contains('open')) return;
+  pop.classList.remove('open'); pop.setAttribute('aria-hidden', 'true');
+  if (pop._onKey) { document.removeEventListener('keydown', pop._onKey); pop._onKey = null; }
+  unlockBodyScroll();
+}
+
 /* ══ LÔ 4 — TÀI KHOẢN (16/10/2026): ACC-22 (nửa trần số địa chỉ) · ACC-26 · ACC-29 · ACC-37 · ACC-58 ═══════════════════════════════════════════════
    Lệnh user: đọc dòng "Cần bổ sung" ở trang thống kê rồi tạo luôn. Cách làm như các lô trước: trạng thái KHÔNG bật bằng lệnh console mà bằng BÁNH RĂNG (3 nhóm mới: Hạng thành viên · Dữ liệu tài khoản · Sổ địa chỉ);
    mặc định là bộ dữ liệu cũ nên luồng demo hiện có KHÔNG đổi.
@@ -26692,7 +26744,7 @@ document.addEventListener('click', e => {
   e.preventDefault();
   const to = g.dataset.msgGo;
   if (to === 'lp-forgot') { const f = document.getElementById('lpForgot'); if (f) f.click(); return; }
-  authView = to; authViewIntent = true; forgotEmailSent = ''; resetRegOtp();
+  authView = to; authViewIntent = true; resetRegOtp();
   if (window.__closeAP) window.__closeAP();   // desktop: tấm Đăng nhập rê chuột từ icon Tài khoản
   if (current === 'login') rerenderLogin(); else go('login', { force: true });
 });
@@ -26731,7 +26783,7 @@ function otpSimPass(showErr, onRetry) {
   showErr(`Mã không đúng. Bạn còn ${OTP_MAX_TRY - otpFails} lần nhập.`);
   return false;
 }
-/* Trang "liên kết đặt lại mật khẩu không dùng được" (AUT-39): 3 ca — hết hạn · đã dùng · tài khoản bị khoá. Mở từ bánh răng (nhánh email của Quên mật khẩu dừng ở khung xanh, chưa có thư thật). */
+/* Trang "liên kết đặt lại mật khẩu không dùng được" (AUT-39): 3 ca — hết hạn · đã dùng · tài khoản bị khoá. Mở từ bánh răng (chưa có thư thật; nút "Hợp lệ" cùng nhóm mở trang đặt lại mật khẩu). */
 const LINK_STATES = {
   expired: ['Liên kết đã hết hạn', 'Liên kết đặt lại mật khẩu chỉ có hiệu lực trong 15 phút. Vui lòng yêu cầu liên kết mới.', 'Gửi lại liên kết', 'forgot'],
   used:    ['Liên kết đã được sử dụng', 'Liên kết này đã dùng để đặt lại mật khẩu và không dùng được lần thứ hai. Vui lòng yêu cầu liên kết mới nếu bạn vẫn cần đặt lại.', 'Gửi lại liên kết', 'forgot'],
@@ -27668,40 +27720,60 @@ function wire(root) {
      Muốn trả lại lối cho 2 view kia thì thêm 1 nút chữ ở cuối form, ĐỪNG dựng
      lại thanh header — đó chính là thứ vừa bỏ. */
 
-  // ── AUTH: chuyển view ── (mọi cú bấm tab/link đều dọn banner Opt2 của trang 23)
+  // ── AUTH: chuyển view ──
   root.querySelectorAll('[data-auth-go]').forEach(btn => {
-    btn.addEventListener('click', () => { authView = btn.dataset.authGo; forgotEmailSent = ''; resetRegOtp(); rerenderLogin(); });
+    btn.addEventListener('click', () => { authView = btn.dataset.authGo; resetRegOtp(); rerenderLogin(); });
   });
 
-  /* Nhận OTP / Quên mật khẩu — xem chú thích đầy đủ ở bản mobile (index.html,
-     cùng hook): #regPhone giờ nhận cả SĐT lẫn email; ở màn Quên mật khẩu, gõ
-     dạng email thì rẽ Opt2 (không gửi OTP, quay về Đăng nhập kèm banner). */
-  root.querySelectorAll('[data-auth-otp]').forEach(btn => {
+  /* Quên mật khẩu bằng EMAIL (23/10/2026, user: "sau khi nhập … thì hiện cái popup thông báo gửi mail thành công"): kiểm email (trống / sai khuôn — chỉ khi "Kiểm lỗi nhập" BẬT, như mọi ô khác)
+     → quay nút 0,7 s → popup #mailPop (forgotMailOpen). Mất mạng: cổng NET_GATES `[data-forgot-send]` nuốt cú bấm. Enter trong ô = bấm nút. */
+  root.querySelectorAll('[data-forgot-send]').forEach(btn => {
+    const inp = root.querySelector('#forgotEmail');
+    if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); btn.click(); } });
     btn.addEventListener('click', () => {
-      const inp = root.querySelector('#regPhone');
-      const val = inp && inp.value.trim() ? inp.value.trim() : '';
-      const isForgot = authView === 'forgot';
-      if (!val && !valOff()) {
-        if (inp) { setFieldErr(inp, isForgot ? 'Vui lòng nhập số điện thoại hoặc email' : 'Vui lòng nhập số điện thoại'); inp.focus(); }
-        return;
+      const val = inp ? inp.value.trim() : '';
+      if (!valOff() && inp) {
+        if (!val) { setFieldErr(inp, 'Vui lòng nhập email'); inp.focus(); return; }
+        if (!FIELD_RULE.email[0](val)) { setFieldErr(inp, FIELD_RULE.email[1]); inp.focus(); return; }
       }
       if (inp) clearFieldErr(inp);
-      if (isForgot && FIELD_RULE.email[0](val)) {
-        forgotEmailSent = val;
-        authView = 'login';
-        rerenderLogin();
-        return;
-      }
-      authPhone = val;
-      authFlow = isForgot ? 'forgot' : 'register';
+      if (btnBusy(btn)) return;
+      const html = btn.innerHTML;
       btn.innerHTML = spinnerSVG();
-      setTimeout(() => { authView = 'otp'; rerenderLogin(); toast('Đã gửi mã OTP'); }, 700);
+      setTimeout(() => { btn.innerHTML = html; btnDone(btn); forgotMailOpen(val); }, 700);
     });
   });
 
-  /* Gõ lại vào ô SĐT thì xoá lỗi ngay — không thì lỗi nằm lì tới lần bấm sau.
+  /* Đặt lại mật khẩu (trang mở từ liên kết trong email, 23/10/2026): luật như đổi mật khẩu ở Tài khoản — ≥ 8 ký tự, gồm chữ + số; nhập lại phải khớp — chỉ khi "Kiểm lỗi nhập" BẬT.
+     Xong: mở khoá đăng nhập đang tạm khoá (nếu có; "Đặt lại mật khẩu" là lối thoát của hộp khoá), về tab Đăng nhập + toast (KHÔNG tự đăng nhập). Enter ở ô nhập lại = bấm nút. */
+  root.querySelectorAll('[data-reset-submit]').forEach(btn => {
+    const p1 = root.querySelector('#rpNew'), p2 = root.querySelector('#rpNew2');
+    if (p2) p2.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); btn.click(); } });
+    btn.addEventListener('click', () => {
+      [p1, p2].forEach(el => el && clearFieldErr(el));
+      if (!valOff() && p1 && p2) {
+        let first = null;
+        const bad = (el, msg) => { setFieldErr(el, msg); first = first || el; };
+        if (!(p1.value.length >= 8 && /[a-zA-Z]/.test(p1.value) && /\d/.test(p1.value))) bad(p1, 'Mật khẩu cần tối thiểu 8 ký tự, gồm cả chữ và số');
+        if (!p2.value) bad(p2, 'Vui lòng nhập lại mật khẩu');
+        else if (p2.value !== p1.value) bad(p2, 'Hai lần nhập chưa khớp');
+        if (first) { first.focus(); return; }
+      }
+      if (btnBusy(btn)) return;
+      const html = btn.innerHTML;
+      btn.innerHTML = spinnerSVG();
+      setTimeout(() => {
+        btn.innerHTML = html; btnDone(btn);
+        loginLocked = false; loginFails = 0;
+        authView = 'login'; authViewIntent = true;
+        rerenderLogin(); toast('Đặt lại mật khẩu thành công');
+      }, 700);
+    });
+  });
+
+  /* Gõ lại vào ô thì xoá lỗi ngay — không thì lỗi nằm lì tới lần bấm sau.
      Cùng lối với ô checkout ([data-ckf]) đã làm. */
-  root.querySelectorAll('#regPhone, #loginId').forEach(inp =>
+  root.querySelectorAll('#regPhone, #loginId, #forgotEmail, #rpNew, #rpNew2').forEach(inp =>
     inp.addEventListener('input', () => clearFieldErr(inp)));
 
   /* ── ĐĂNG KÝ bằng SĐT — MỘT TRANG (06/10/2026, user kèm ảnh tham chiếu) ──
@@ -27741,7 +27813,7 @@ function wire(root) {
       /* 16/10/2026 (AUT-20) — số của thành viên demo ⇒ không gửi mã, báo "đã có tài khoản" kèm lối sang Đăng nhập. */
       if (phoneDigits(val) === phoneDigits(PROFILE.phone)) { setFieldErr(phoneEl, 'Số điện thoại này đã có tài khoản. <button type="button" data-msg-go="login" class="text-foreground underline press">Đăng nhập</button>'); phoneEl.focus(); return; }
       clearFieldErr(phoneEl);
-      authPhone = val; authFlow = 'register';
+      authPhone = val;
       regSend.disabled = true; regSend.innerHTML = spinnerSVG();
       setTimeout(() => {
         if (phoneEl.value.trim() !== val) { idleSend(); return; }   // vừa sửa số trong lúc quay: không coi là đã gửi
@@ -27763,57 +27835,13 @@ function wire(root) {
       clearFieldErr(otpEl);
       /* 16/10/2026 (AUT-18) — kết cục mã theo công tắc "Mã OTP"; sai / hết hạn thì mở lại nút Nhận lại mã ngay. */
       if (!otpSimPass(msg => { setFieldErr(otpEl, msg); otpEl.focus(); }, () => { stopTimer(); regSend.disabled = false; regSend.textContent = 'Nhận lại mã'; localizeNew(regSend); })) return;
-      authPhone = val; authFlow = 'register';
+      authPhone = val;
       btn.innerHTML = spinnerSVG();
       setTimeout(() => { resetRegOtp(); authView = 'reginfo'; rerenderLogin(); }, 700);
     }));
   }
 
-  // Đổi SĐT từ màn OTP -> quay lại màn nhập SĐT của luồng
-  root.querySelectorAll('[data-otp-change]').forEach(btn => {
-    btn.addEventListener('click', () => { authView = authFlow; rerenderLogin(); });
-  });
-
-  // Ô OTP: tự nhảy ô kế + nút "Nhận lại mã (60s)" đếm ngược
-  const otpCells = [...root.querySelectorAll('[data-otp]')];
-  if (otpCells.length) {
-    otpCells[0].focus();
-    otpCells.forEach((c, i) => {
-      c.addEventListener('input', () => {
-        c.value = c.value.replace(/[^0-9]/g, '').slice(0, 1);
-        if (c.value && i < otpCells.length - 1) otpCells[i + 1].focus();
-      });
-      c.addEventListener('keydown', e => { if (e.key === 'Backspace' && !c.value && i > 0) otpCells[i - 1].focus(); });
-    });
-    const rBtn = root.querySelector('#otpResend');
-    if (rBtn) {
-      const startCountdown = () => {
-        rBtn.disabled = true;
-        rBtn.innerHTML = 'Nhận lại mã (<span id="otpTimer">60</span>s)';
-        localizeNew(rBtn);
-        let t = 60; const tEl = rBtn.querySelector('#otpTimer');
-        const iv = setInterval(() => {
-          t--; if (tEl) tEl.textContent = t;
-          if (t <= 0) { clearInterval(iv); rBtn.disabled = false; rBtn.textContent = 'Nhận lại mã'; localizeNew(rBtn); }
-        }, 1000);
-      };
-      startCountdown();
-      rBtn.addEventListener('click', () => { if (!rBtn.disabled) { otpFails = 0; toast('Đã gửi lại mã OTP'); startCountdown(); } });
-    }
-  }
-
-  // Xác nhận OTP -> đăng ký: sang điền thông tin; quên mật khẩu: sang đặt mật khẩu mới
-  root.querySelectorAll('[data-auth-verify]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const code = otpCells.map(c => c.value).join('');
-      if (code.length < 6 && !valOff()) { otpErr(root, 'Vui lòng nhập đủ 6 số'); return; }   // 16/10/2026: Kiểm lỗi nhập TẮT
-      otpErr(root, '');
-      /* 16/10/2026 (AUT-35) — kết cục mã theo công tắc "Mã OTP" (cùng luật với đăng ký); mở lại nút Nhận lại mã ngay. */
-      if (!otpSimPass(msg => otpErr(root, msg), () => { const rb = root.querySelector('#otpResend'); if (rb) { rb.disabled = false; rb.textContent = 'Nhận lại mã'; localizeNew(rb); } })) return;
-      btn.innerHTML = spinnerSVG();
-      setTimeout(() => { authView = authFlow === 'register' ? 'reginfo' : 'setpass'; rerenderLogin(); }, 700);
-    });
-  });
+  /* 23/10/2026: ĐÃ GỠ khối 6 ô OTP của Quên mật khẩu bằng SĐT ([data-otp-change] · ô [data-otp] · nút Nhận lại mã · [data-auth-verify]) — Quên mật khẩu chỉ còn bằng email. */
 
   // Hoàn tất đăng ký (sau OTP): tạo tài khoản -> đăng nhập luôn, quay về màn gọi
   root.querySelectorAll('[data-reg-done]').forEach(btn => {
@@ -29839,7 +29867,7 @@ document.body.insertAdjacentHTML('beforeend', `
       </div>
       <div class="px-3 pb-2">
         <p class="t-multiline tracking-[0.12em] text-muted-foreground">Mã OTP</p>
-        <p class="t-single sp-note text-muted-foreground">Đăng ký, Quên mật khẩu: kết quả khi nhập mã OTP.</p>
+        <p class="t-single sp-note text-muted-foreground">Đăng ký: kết quả khi nhập mã OTP.</p>
       </div>
       <div class="px-3 pb-3">
         <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Tình huống mã OTP">
@@ -29849,11 +29877,11 @@ document.body.insertAdjacentHTML('beforeend', `
       </div>
       <div class="px-3 pb-2">
         <p class="t-multiline tracking-[0.12em] text-muted-foreground">Liên kết đặt lại mật khẩu</p>
-        <p class="t-single sp-note text-muted-foreground">Bấm một nút để MỞ trang liên kết đặt lại mật khẩu ở tình huống đó.</p>
+        <p class="t-single sp-note text-muted-foreground">Bấm để MỞ trang từ liên kết trong email: Hợp lệ = đặt mật khẩu mới; còn lại = báo lỗi.</p>
       </div>
       <div class="px-3 pb-3">
         <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Mở trang liên kết đặt lại mật khẩu">
-          ${[['expired','Hết hạn'],['used','Đã dùng'],['locked','Bị khoá']].map(([id, label]) => `
+          ${[['valid','Hợp lệ'],['expired','Hết hạn'],['used','Đã dùng'],['locked','Bị khoá']].map(([id, label]) => `
             <button data-sim-link="${id}" class="t-multiline flex-1 h-8 rounded-full transition-colors press text-muted-foreground">${label}</button>`).join('')}
         </div>
       </div>
@@ -30157,9 +30185,10 @@ document.body.insertAdjacentHTML('beforeend', `
     }));
   });
   panel.querySelectorAll('[data-sim-link]').forEach(btn => btn.addEventListener('click', () => {
-    authLinkState = btn.dataset.simLink;
+    const st = btn.dataset.simLink;   // 'valid' (23/10/2026) = trang đặt lại mật khẩu mở từ liên kết email còn dùng được; 3 nút kia = trang báo liên kết không dùng được
+    if (st !== 'valid') authLinkState = st;
     closeP();
-    setTimeout(() => { authView = 'linkexpired'; authViewIntent = true; go('login', { force: true }); }, 260);
+    setTimeout(() => { authView = st === 'valid' ? 'resetpw' : 'linkexpired'; authViewIntent = true; go('login', { force: true }); }, 260);
   }));
   /* Trang lỗi hệ thống (21/10/2026): 2 nút MỞ trang 404 / 503 (không phải công tắc) — đóng panel rồi đi, đợi panel khép (~0,26 s) như nút "Liên kết đặt lại mật khẩu". */
   panel.querySelectorAll('[data-sim-sys]').forEach(btn => btn.addEventListener('click', () => {
@@ -30842,7 +30871,7 @@ function quickAddBody(p, idx, sel = 0) {
       </div>
       <div class="flex gap-1.5 items-center">
         <p class="t-single font-medium ${p.off ? 'text-destructive' : 'text-foreground'}">${p.price}</p>
-        ${p.off ? `<span class="t-multiline bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${p.off}</span>` : ''}
+        ${p.off ? `<span class="t-multiline pc-off bg-destructive-subtle rounded-xs px-1 py-0.5 font-medium text-destructive shrink-0">${p.off}</span>` : ''}
         ${p.was ? `<p class="t-multiline text-muted-foreground line-through">${p.was}</p>` : ''}
       </div>
     </div>
