@@ -5464,6 +5464,34 @@ Lệnh user (kèm ảnh dòng giỏ hàng đặt trước ghi đỏ "Không kh�
 - **Menu Làm đẹp › Thương hiệu**: dựng cặp khung mới (desktop `1658:141363` — 1 cột 6 hãng + 2 hình dọc; mobile drawer `1658:141515`).
 - **Chưa / hỏi**: ~~đệm trên khối giới thiệu khung user 16 ↔ code 12~~ → ĐÃ chỉnh code lên 16 cùng ngày (27/10, `pt-3` → `pt-4` ở trang hãng mobile + khung xương, theo component `brand-intro` của user; xem `_notes/BRAND-PLP-MOBILE-SPACING-THEO-FIGMA-2026-10-26.md` mục 5) · khung user vẫn ô 150 · Bảng 4 (Sheets) · khung Ferragamo thô chưa là instance `brand-intro`.
 
+### Trang hãng MOBILE: dải danh mục co theo màn — MỌI khổ thấy 3,3 ô (27/10/2026, lần 53, CHỈ index.html — Figma CHƯA)
+- **User** (kèm ảnh khổ 375): "cái block shortcut icon của listing brand ở màn 375 cho hiển thị 3,3 hình luôn nhé". Sao lưu `_notes/sao-luu/index.html.truoc-brand-cat-3-3-2026-10-27`; ghi chú `_notes/BRAND-PLP-DAI-DANH-MUC-109-2026-10-22.md` mục 6.
+- **Làm**: `brandCatStrip` + khung xương `plpBrandSkeleton` — ô `width:109px` → `width:min(150px,calc((100% - 8px) / 3.3))` (lề 16 + 3 ô + 3 khe 8 + 0,3 ô = màn ⇒ w = (màn − 40) / 3,3; `%` theo hộp nội dung dải nên không cần `100vw`; trần 150 cho màn ≥ ~535). Khe 8 · lề 16 · nhãn 2 dòng giữ.
+- **Đo** (pane): 375 → ô 101,5 / 3,30 ô (trước 109 / 3,07) · 390 → 106,05 / 3,30 · 360 → 96,97 / 3,30 · 600 → 150 (trần); Versace · Ferragamo · Dolce&Gabbana · Zimmermann đều 3,30, không cuộn ngang trang; hub Molton Brown không đụng; khung xương 4 ô 3,30; console sạch.
+- **Còn** (→ Figma ĐÃ sync ở lần 54, lượt 163): biến thể `category-tile` `platform=mobile-109` + 12 ô ở 4 khung hãng còn 109 (khung user `1306:71702` còn 150) — sync khi user bảo · `desktop.html` KHÔNG đổi.
+
+### Figma: dải danh mục trang hãng mobile thấy 3,3 ô — component + 5 dải + khung xương (27/10/2026, lần 54, Figma lượt 163 — CHỈ Figma, code đã theo ở lần 53)
+- **User**: "sync figma luôn nhé" (sau lần 53). Báo cáo `_notes/FIGMA-SYNC-LUOT-163-2026-10-27.md`; sổ `_notes/figx/lot163-ledger-2026-10-27.json`. Đối chiếu: sau lượt 162 chỉ `index.html` đổi (dải 3,3 ô) ⇒ hết code chưa vào Figma.
+- **Component `category-tile`** (`821:191504`): biến thể `mobile-109` → **`mobile-3-3`**, 109×149 → **101,52×141,52** (ảnh 101,52, nhãn 93,52); 12 instance cũ tự theo; mô tả bộ + `[doc] PLP` viết lại.
+- **Dải trang hãng** (Versace · Men · PLP brand · Ferragamo W / M + **khung user `Brand / mobile 375`**): thêm ô 4 (nhân bản ô 3; chữ + ảnh theo ô 4 của khung desktop cùng hãng / giới) ⇒ ô 4 bắt đầu x 344,56, thấy 0,30 ô; dải 149,52; khung user: 3 ô 150 → `mobile-3-3` (nhãn + ảnh giữ) ⇒ 5339 → 5291,55. **Khung xương**: 4 ô 101,52×141,52, dải 149,52.
+- **Đo**: 6 dải đều 4 × 101,52, ô 4 thấy 0,300; quét 41 359 instance ở `screens` 0 ô 109 còn sót; 2 section 0 chồng lấn. Không đụng `Brand / mobile 376` (bản sao khung user, x 25056 — ô 150) · Archive · desktop.
+- **Còn hỏi**: `Brand / mobile 376` nháp hay xoá · nhãn 2 dòng cho `category-tile` (code dải Versace 157,52 ↔ Figma 149,52).
+
+### Trang hãng MOBILE: nhãn shortcut 1 dòng · tên "Trang sức" · HIỆN LẠI số đếm + grid (27/10/2026, lần 55, CHỈ index.html — Figma khung user đã vẽ)
+- **User** (link khung `page-main` `1306:71704`): "update lại như thiết kế nhé, mục Trang sức... sửa tên thành trang sức thôi. limit shortcut 1 dòng, nhiều hơn 1 dòng sẽ .... và cho hiện lại grid nhé". Sao lưu `_notes/sao-luu/index.html.truoc-brand-grid-nhan-1-dong-2026-10-27`; ghi chú `_notes/BRAND-PLP-NHAN-1-DONG-HIEN-LAI-GRID-2026-10-27.md` (bảng Figma ↔ code).
+- **Làm**: nhãn ô shortcut `brandCatStrip` đúng 1 dòng + ba chấm, không đệm ngang, `pt-2` + 16 + `pb-2` (ô 101,58 × 133,57; dải 141,57 ≈ Figma 142) · Versace Nam + Nữ "Trang sức thời trang" → "Trang sức" · thanh lọc trang hãng có lại hàng "N sản phẩm" + 2 nút đổi cột (88) và lưới theo `plpGridCols` · khung xương `plpBrandSkeleton` khớp (đỉnh lưới 652,2 = thật 652,3).
+- **Không đổi**: `desktop.html` (vẫn "Trang sức thời trang") · thứ tự ô (Figma đảo Trang sức ↔ Thắt lưng) · Figma 4 khung hãng khác + khung xương chưa sync.
+
+### Figma: trang hãng MOBILE — nhãn shortcut 1 dòng · "Trang sức" · hiện lại số đếm + grid (27/10/2026, lần 56, Figma lượt 165 — CHỈ Figma, code đã theo ở lần 55)
+- **User**: "Sync 4 khung Figma trang hãng còn lại … và khung xương theo khung Brand / mobile 375 của tôi". Báo cáo `_notes/FIGMA-SYNC-LUOT-165-2026-10-27.md`.
+- **Làm** (vá tại chỗ): `category-tile` `mobile-3-3` nhãn cắt 1 dòng bằng `textTruncation ENDING` + `maxLines 1` · "Trang sức thời trang" → "Trang sức" (Versace Men, brand mode) · 4 `filter-bar` hiện lại hàng đếm + đổi cột (45 → 89) · khung xương trang hãng: thanh lọc → instance `filter-bar kind=skeleton` 89, ô shortcut xương 133,52, dải 141,52. Khung hãng 5283 → 5327 / 1729 → 1773, xương 3163 → 3200; 0 chồng lấn.
+- **Không đổi**: khung user `1306:71702` + bản sao `…376` · desktop · thứ tự ô.
+
+### Bộ Quên mật khẩu MOBILE: bỏ mũi tên back · thêm dòng "Chưa có tài khoản? Đăng ký" (27/10/2026, lần 57, CHỈ index.html — Figma CHƯA)
+- **User**: "cái bộ quên mật khẩu với otp, bỏ cái mũi tên back về đi, bên dưới button thì thêm cái dòng kiểu chưa có tài khoản thì đăng ký". Ghi chú `_notes/QUEN-MK-BO-BACK-DONG-DANG-KY-2026-10-27.md`; sao lưu `_notes/sao-luu/index.html.truoc-quen-mk-bo-back-dong-dang-ky-2026-10-27`.
+- **Làm**: `viewForgot` · `viewResetPw` · `viewLinkExpired` bỏ `authNav()`; helper `authSignupLine()` thêm dòng canh giữa dưới cụm nút (khe 24), "Đăng ký" → tab Đăng ký (`data-auth-go="register"`); EN sẵn. Hoàn tất đăng ký / Đăng ký thành công giữ nút back.
+- **Không đổi**: `desktop.html` (đã không có mũi tên từ 19/08) · Figma (mobile forgot / reset / reset link + 2 ảnh Đợt 2 lệch).
+
 ## Vấn đề tồn đọng / cần quyết định tiếp
 
 - ~~Ảnh sản phẩm thật từ CDN DAFC bị chặn~~ → **ĐÃ XONG cho mobile (07/08/2026)**: CDN `cdn.dafc.com.vn` truy cập được, đã tải ~80 ảnh thật về `assets/` (`pN-*.jpg`, `x*.jpg`, `b*.jpg`, `g2.jpg`) và thay toàn bộ placeholder trong `index.html`. Desktop.html cũng đã dùng bộ ảnh thật này từ 10/08/2026.
