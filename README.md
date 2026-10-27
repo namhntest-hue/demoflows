@@ -5451,6 +5451,19 @@ Lệnh user (kèm ảnh dòng giỏ hàng đặt trước ghi đỏ "Không kh�
 - **Câu 2**: `icon/ts/sort-alt` (138:6672) dời (6745, 8611) → (7053, 8616) — ra khỏi góc khung 512 `fi-ts-arrows-alt 1`, cùng hàng với icon bên cạnh; section `icons` 0 chồng lấn.
 - **Câu 3**: bỏ ", see 15/09/2026" trong tên `control` · `label` · `select-trigger` (DEPRECATED). Quét 866 component / bộ: 0 tên còn ngày; 0 script phụ thuộc tên cũ.
 
+### Figma: khoảng cách giữa các khối trang chủ → 6 khung Home còn lại (27/10/2026, lần 51, Figma lượt 161 — CHỈ Figma, code đã theo từ lượt trước)
+- **User**: "sync cái kích thước update đó các homepage còn lại và cả figma luôn nhé" — sau khi code theo khung Men của user (xem mục TRANG CHỦ, 27/10). Ghi chú `_notes/FIGMA-SYNC-LUOT-161-2026-10-27.md`; sổ hoàn tác `_notes/figx/home-spacing-ledger-2026-10-27.json`.
+- **Làm**: 6 khung (Nữ · Men Sale rail · Làm đẹp × mobile / desktop) đổi 21 thuộc tính auto layout về số + biến buộc của khung Men: mobile `page-main` khe 64 → 56 · 2 `stack` 40 → 32 (`spacing/8`) · `box` đầu đệm dưới 0 → 24 (`spacing/6`); desktop `box` 96 → 64 · 2 `stack` 64 → 32. Cao: mobile −24 mỗi khung · desktop −160. Đọc lại 8 khung (cả khung Men): cùng thuộc tính, cùng biến; khoảng cách hiệu dụng mobile 32 / 56…, desktop 64 mọi chỗ.
+- **Không đụng**: khung Men (của user) · 3 bản sao rời ở trái section (`1649:150525` · `…150908` · `…151291`) · `[doc]` · Archive. Không chạy `__compFix` / `spacing-snap` (không dựng lại khung; 32 · 24 · 64 là token, 56 thuộc nhóm không đụng).
+- **Còn mở**: dải đầu khung Nữ mobile — 3 thẻ instance CAO CỐ ĐỊNH 300,7 mà ruột tràn 24 (hàng giá gạch bị track cắt), có từ trước.
+
+### Figma: sync phần code còn lại — menu · giá "đ" · popup đăng nhập mobile · trang hãng mobile · menu Làm đẹp › Thương hiệu (27/10/2026, lần 52, Figma lượt 162 — CHỈ Figma)
+- **User**: "sync figma luôn phần còn lại nhé" (sau lượt 161). Ghi chú `_notes/FIGMA-SYNC-LUOT-162-2026-10-27.md`; sổ hoàn tác `_notes/figx/lot162-ledger-2026-10-27.json`.
+- **Menu**: hoán hộp KHÁM PHÁ lên trước THƯƠNG HIỆU NỔI BẬT ở 12 khung desktop sống (3 khung Archive không đụng) + dựng nhóm KHÁM PHÁ (5 hàng) ở drawer mobile `Clothing` (khung cũ chỉ có nhãn rơi vãi). **Giá**: 40 nút "…Đ" → "…đ" (side-panel + 2 section giỏ), quét lại 0 sót. **Popup đăng nhập mobile**: bỏ icon quà + nền `copper-surface` như khung desktop của user.
+- **Trang hãng mobile** (Versace · Men, PLP brand, Ferragamo × 2 + khung xương): khe khối 0, đệm trên khối giới thiệu 16 (số khung user), dải ô đệm dưới 8 + HUG, ẩn hàng đếm / đổi cột, mô tả 2 dòng + nút "Xem thêm" inline theo component user vừa sửa (khe −36 + gradient); ô 150 → 109 bằng BIẾN THỂ MỚI `platform=mobile-109` của `category-tile` (resize lớp lồng trong instance không ăn). Khung của user `1306:71702` không đụng.
+- **Menu Làm đẹp › Thương hiệu**: dựng cặp khung mới (desktop `1658:141363` — 1 cột 6 hãng + 2 hình dọc; mobile drawer `1658:141515`).
+- **Chưa / hỏi**: ~~đệm trên khối giới thiệu khung user 16 ↔ code 12~~ → ĐÃ chỉnh code lên 16 cùng ngày (27/10, `pt-3` → `pt-4` ở trang hãng mobile + khung xương, theo component `brand-intro` của user; xem `_notes/BRAND-PLP-MOBILE-SPACING-THEO-FIGMA-2026-10-26.md` mục 5) · khung user vẫn ô 150 · Bảng 4 (Sheets) · khung Ferragamo thô chưa là instance `brand-intro`.
+
 ## Vấn đề tồn đọng / cần quyết định tiếp
 
 - ~~Ảnh sản phẩm thật từ CDN DAFC bị chặn~~ → **ĐÃ XONG cho mobile (07/08/2026)**: CDN `cdn.dafc.com.vn` truy cập được, đã tải ~80 ảnh thật về `assets/` (`pN-*.jpg`, `x*.jpg`, `b*.jpg`, `g2.jpg`) và thay toàn bộ placeholder trong `index.html`. Desktop.html cũng đã dùng bộ ảnh thật này từ 10/08/2026.
