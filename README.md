@@ -56,6 +56,8 @@ Hướng: **"hàng hoá trước, kể chuyện sau"** — ngay sau hero là lư
 
 Chi tiết + 3 lỗ của phần cũ bị phơi ra + 7 mục cần chốt: **`HOMEPAGE-DAFC-2026-09-04.md`**.
 
+**27/10/2026 — nhịp dọc giữa các khối theo Figma user sửa (CẢ 2 BẢN, CHỈ trang chủ):** mobile hero → khối đầu 40 → 32, đáy nội dung khối trên → tiêu đề khối dưới 56 đồng đều (trước 40 sau dải Hàng mới về, 64 chỗ còn lại; khối Hàng mới về trả đệm dưới 24); desktop 96 → 64 (khớp nhịp hero → khối đầu vốn 64). Làm bằng 2 móc riêng — `.hm-home` (mobile, `.hm-home > .mt-10 { margin-top: 32px }`) và `.hm-sections` (desktop, bỏ `padding-bottom` mỗi khối, khối cuối giữ 32) — nên hub thương hiệu + chi tiết blog (cùng `hmSec`) KHÔNG đổi. Chi tiết: **`_notes/HOME-KHOANG-CACH-KHOI-2026-10-27.md`**.
+
 ## Data 3 thương hiệu + trang thương hiệu chạy bằng data (02/09/2026, CẢ 2 BẢN)
 
 Kéo thêm **24 SKU thật** từ `shop.dafc.com.vn`: **12 Dolce&Gabbana + 12 Zimmermann** (index 24–47

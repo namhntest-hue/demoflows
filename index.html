@@ -5292,6 +5292,18 @@ window.RESP = (function () {
      `Home / mobile 375 · Men`): băng TRÀN MÉP 375 (bỏ px-4 ở markup), ảnh 375×134. */
   .hm-signup-photo { aspect-ratio: 375 / 134; }
 
+  /* ══ NHỊP DỌC GIỮA CÁC KHỐI TRANG CHỦ — THEO FIGMA USER SỬA (27/10/2026) ══════════════════════
+     Lệnh user: *"tôi vừa update lại khoảng cách cho trang home page … khoảng cách giữa các block với nhau"*.
+     Đọc cây khung `Home / mobile 375 · Men` 844:41273 (so với bản sao còn nguyên khuôn cũ, 422 nút, chỉ 4 thuộc tính lệch):
+       khe giữa các khối trong mỗi stack 40 → 32 · khe giữa 2 stack (đáy dải theo mùa → Blog) 64 → 56 ·
+       khối Hàng mới về đệm dưới 0 → 24 (node 847:44376).
+     Hệ quả đo được: đáy hero → khối đầu 40 → 32; từ đáy NỘI DUNG khối trên → tiêu đề khối dưới = 24 + 32 = 56 ĐỒNG ĐỀU
+     (trước là 40 sau dải Hàng mới về, 64 ở mọi chỗ còn lại).
+     ⚠ `.mt-8` KHÔNG có trong tailwind.css dựng sẵn (xem ghi chú ở băng đăng ký) nên khai bằng CSS thật; chọn theo
+     `.hm-home > .mt-10` (đặc hiệu 0,2,0 thắng `.mt-10` 0,1,0) để CHỈ trang chủ đổi — hmSec / hmInsta còn dùng ở hub
+     thương hiệu và chi tiết blog, ở đó mt-10 (40) giữ nguyên. USP · băng đăng ký · chân trang không mang mt-10 nên không đổi. */
+  .hm-home > .mt-10 { margin-top: 32px; }
+
   .hm-occ-band { background: var(--unofficial-accent-0); }
   /* 14/10/2026: dải trượt thành LƯỚI một dòng cột (grid-auto-flow: column, cột 264) có 2 hàng — hàng 2 (auto) là khối chữ CHUNG của mọi ô nên cao bằng khối chữ dài nhất
      trong CẢ dải (kể cả ô chưa cuộn tới); xem `.hm-occ-item`. Ô vẫn 264×352, khe 4, cuộn ngang như cũ. */
@@ -12640,7 +12652,11 @@ function hmSecHead(title, right = '', tag = 'h2', eyebrow = '', center = false, 
 
 /* `flush` (29/09/2026, lệnh user kèm Figma 847:44376: *"update lại cái spacing bottom của block này theo
    thiết kế tôi"*): khối KHÔNG đệm dưới (bỏ pb-6 = 24). Chỉ dải Hàng mới về / Khuyến mãi truyền true;
-   mọi khối khác giữ pb-6. Bỏ hẳn class chứ không thêm pb-0 — pb-0 không có trong tailwind.css dựng sẵn. */
+   mọi khối khác giữ pb-6. Bỏ hẳn class chứ không thêm pb-0 — pb-0 không có trong tailwind.css dựng sẵn.
+   ⚠ 27/10/2026: HIỆN KHÔNG CHỖ NÀO TRUYỀN true — user đặt lại đệm dưới 24 cho khối Hàng mới về trong Figma
+   (xem hmFeatured). GIỮ tham số như `center` / `left` (biến thể có thật, gỡ rồi thêm lại là công cốc).
+   Nhịp dọc khuôn này là mt-10 + pb-6 = 64 (hub thương hiệu, chi tiết blog); riêng TRANG CHỦ đi 32 + 24 = 56
+   nhờ rule `.hm-home > .mt-10` (27/10/2026). */
 function hmSec(title, right, body, tag = 'h2', eyebrow = '', center = false, flush = false) {
   return `
     <div class="flex flex-col gap-4 mt-10${flush ? '' : ' pb-6'} reveal">
@@ -12898,7 +12914,10 @@ function hmRail(list, opts = {}, flush = false) {
    quick add, thẻ ôm sát (cờ tight chỉ bỏ hàng giá gạch khi thẻ KHÔNG giảm giá nên thẻ Khuyến mãi vẫn đủ
    giá gạch + chip %). Tag 'h1' giữ nguyên cho cả hai vì đây vẫn là tiêu đề chính của trang.
    ĐỆM DƯỚI = 0 (29/09/2026, theo Figma 847:44376): khối bỏ pb-6 (24) và dải bỏ pb-1 (4), từ đáy thẻ tới
-   khối kế tiếp còn đúng khe 40 của mt-10 (trước là 68). Khối cao 404,7 = đầu mục 80 + khe 16 + thẻ 308,7. */
+   khối kế tiếp còn đúng khe 40 của mt-10 (trước là 68). Khối cao 404,7 = đầu mục 80 + khe 16 + thẻ 308,7.
+   ⚠ ĐẢO 27/10/2026 (user sửa khung `Home / mobile 375 · Men` 844:41273, node chính 847:44376 đặt lại đệm dưới 24):
+   khối TRẢ LẠI pb-6 như mọi khối khác — hmSec gọi `flush = false` ở đây; dải `hmRail(..., true)` bên trong vẫn
+   không pb-1 (nội dung khối vẫn 398,7). Đáy thẻ → tiêu đề khối kế = 24 + 32 = 56, đồng đều với các khối còn lại. */
 function hmFeatured(news, sales) {
   const sale = hmBlock === 'sale';
   const bp = hmBeauty() && !sale;   // 14/10/2026: Làm đẹp, trạng thái 'new' → "Bán chạy nhất / BST Black Pepper" (xem HM_NEW_LINE_BEAUTY)
@@ -12907,7 +12926,7 @@ function hmFeatured(news, sales) {
   return hmSec(sale ? HM_SALE_TITLE : (bp ? HM_NEW_LINE_BEAUTY : HM_NEW_LINE),
     hmLink('Xem tất cả', sale ? 'data-hm-cat="Khuyến mãi"' : (bp ? 'data-hm-brand="Molton Brown"' : 'data-hm-cat="Sản phẩm mới"')),
     hmRail(list, { noName: false, noQuick: true, tight: true }, true),
-    'h1', sale ? 'Khuyến mãi' : (bp ? HM_NEW_EYEBROW_BEAUTY : 'Hàng mới về'), false, true);
+    'h1', sale ? 'Khuyến mãi' : (bp ? HM_NEW_EYEBROW_BEAUTY : 'Hàng mới về'), false, false);
 }
 
 /* ── 6 Ô DANH MỤC ──────────────────────────────────────────────────────────────
@@ -13926,8 +13945,10 @@ function screenHOME() {
      này — công tắc chung HM_SHOW.quickAdd vẫn bật cho các dải khác của trang chủ. */
   const news  = hmNew().filter(({ p }) => !p.off && !p.was);
   const sales = hmSale();
+  /* `hm-home` (27/10/2026): móc riêng của TRANG CHỦ cho nhịp dọc giữa các khối — xem rule `.hm-home > .mt-10`
+     trong khối CSS `.hm-*`. hmSec / hmInsta còn dùng ở hub thương hiệu + chi tiết blog nên KHÔNG đổi mt-10 chung. */
   return `
-  <div class="w-full" data-scroller>
+  <div class="w-full hm-home" data-scroller>
     <!-- promo banner slider — ở bản mobile thanh này do TỪNG SCREEN dựng (không nằm
          trong navBar như bản desktop), nên chép đúng khối của screenPLP. -->
     <div class="h-8 bg-primary overflow-hidden relative">
