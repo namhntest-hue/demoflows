@@ -1383,6 +1383,44 @@ window.RESP = (function () {
     .ord-card-total { flex-direction: row; gap: 4px; margin-left: auto; }
   }
 
+  /* 02/11/2026 (user, kèm ảnh danh sách đơn không ảnh: "mobile quay về dạng hiển thị không hình ảnh như hình đính kèm · đồng thời thêm tab switch giữa đơn online và offline") — DANH SÁCH ĐƠN MOBILE
+     (tab Đơn hàng) = THẺ NHÃN–GIÁ TRỊ, KHÔNG ẢNH. ĐẢO thẻ kẻ đáy có dải ảnh của 30/09 + 21/10 (`.ord-card` ngay trên — KHÔNG xoá: danh sách đơn con của màn Theo dõi đơn còn dùng). Số đo đọc từ ảnh user dán (khổ ≈ 1:1):
+       thẻ        viền 1px `--general-border` BỐN PHÍA, vuông góc, đệm 16; các thẻ cách nhau 16, lề trang 16
+       hàng đầu   [Mã đơn hàng (12/16 mờ) ········ #mã (14/20 · 500)] cao 20 + đệm đáy 8 + kẻ 1px + khe 8
+       thân       Ngày đặt · Số SP · Tổng tiền (500) · Trạng thái (BADGE, xem `.ord-status.is-badge`) — mỗi hàng nhãn trái ····· giá trị phải, hàng cao ≥ 20, khe 8
+       chân       khe 12 + kẻ 1px + đệm 8 + "Xem chi tiết" (14/20) GẠCH CHÂN canh phải
+     Ảnh có HAI kẻ ngang: dưới hàng đầu (cả 3 thẻ) và trên "Xem chi tiết" (thẻ 2 + 3; thẻ 1 mất kẻ này, coi là sót của cú chụp) — làm đủ cả hai cho mọi thẻ. Cả thẻ là MỘT <button>, "Xem chi tiết" là <span> gạch chân (button lồng button là HTML sai).
+     LƯỢT 3 cùng ngày (user: "bản mobile cũng áp dụng bỏ nút xem chi tiết và có mũi tên ở mã đơn hàng nhé"): BỎ chân thẻ ("Xem chi tiết" + kẻ trên) — thẻ cao 220 → 179 (1 + 16 + 29 + 8 + 20·3 + 8·3 + 24 + 16 + 1; hàng "Cửa hàng" +28); MÃ ĐƠN HÀNG gạch chân + mũi tên › 12 (`.ol-code-link` · `.ol-go`), cả thẻ vẫn là MỘT <button>.
+     CHỮ 500: `font-medium` là class chết dưới skin-mt nên khai ngoại lệ có tên (`.ol-v.is-strong`, `.ol-store`).
+     ĐƠN OFFLINE (hoá đơn mua tại cửa hàng) dùng CÙNG thẻ; TÊN CỬA HÀNG có 3 phương án (bánh răng → "Đơn offline"): `row` thêm hàng "Cửa hàng" (mặc định) · `title` tên cửa hàng làm TIÊU ĐỀ thẻ (`.ol-head.is-store`) · `group` nhóm theo cửa hàng, mỗi nhóm một tiêu đề (`.ol-grp`).
+     LƯỢT 5 cùng ngày (user: "Không đếm số lượng đơn onl và off · ở đơn onl cũng hiện cột cửa hàng và ghi DAFC Online · bản mobile bỏ số lượng sp"): thẻ ĐƠN ONLINE cũng có hàng "Cửa hàng" = "DAFC Online" (`ONLINE_STORE`); BỎ hàng "Số SP" ở MỌI thẻ ⇒ thân = Cửa hàng · Ngày · Tổng tiền · Trạng thái, thẻ vẫn 179 (online +28 −28; offline `row` 207 → 179; `title` / `group` 179 → 151).
+     TAB SWITCH Online | Offline (`.ord-ch`) mượn nguyên khuôn `.acc-tab` + vạch 2px của `.auth-tabs`: 2 cột đều nhau, cao 44, chữ 14/20, KHÔNG số đếm (user 02/11 lượt 5). */
+  .ol-list { display: flex; flex-direction: column; gap: 16px; padding: 0 16px; }
+  .ol-card { display: block; width: 100%; padding: 16px; border: 1px solid var(--general-border); background: transparent; text-align: left; }
+  .ol-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 20px; }
+  .ol-row + .ol-row { margin-top: 8px; }
+  .ol-head { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--general-border); flex-wrap: wrap; row-gap: 4px; }
+  .ol-head + .ol-row { margin-top: 0; }
+  .ol-k { flex: none; color: var(--general-muted-foreground); }
+  .ol-v { min-width: 0; text-align: right; color: var(--general-foreground); overflow-wrap: anywhere; }
+  .ol-v.is-strong, .ol-store, html.skin-mt .ol-v.is-strong, html.skin-mt .ol-store { font-weight: 500; }
+  .ol-head.is-store { flex-wrap: wrap; row-gap: 0; }
+  .ol-head.is-store .ol-store { flex: 1 1 auto; min-width: 0; color: var(--general-foreground); text-align: left; }
+  .ol-head.is-store .ol-code { flex: none; color: var(--general-muted-foreground); }
+  /* Mã đơn hàng = lối vào chi tiết (không còn chân thẻ): gạch chân (offset 2) + mũi tên › 12 ngay sau mã, ở cả hàng đầu thường lẫn hàng đầu "tên cửa hàng". */
+  .ol-code-link { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .ol-head .ol-v.ol-code-link { margin-left: auto; }   /* hết chỗ (320, mã đơn con -01) thì mã xuống dòng riêng, vẫn canh phải */
+  .ol-code-t { text-decoration: underline; text-underline-offset: 2px; }
+  .ol-go { display: inline-flex; flex: none; }
+  .ol-go svg { width: 12px; height: 12px; }
+  .ol-grp + .ol-grp { margin-top: 24px; }
+  .ol-grp-h { display: flex; flex-direction: column; gap: 2px; padding: 0 16px 12px; }
+  .ol-grp-h .ol-store { color: var(--general-foreground); }
+  .ol-grp-h .ol-addr { color: var(--general-muted-foreground); }
+  .ord-ch { display: grid; grid-template-columns: 1fr 1fr; margin: 0 16px 16px; border-bottom: 1px solid var(--general-border); }
+  .ord-ch .acc-tab { height: 44px; text-align: center; }
+  .ord-ch .acc-tab::after { top: auto; left: 0; right: 0; bottom: 0; width: auto; height: 2px; }
+
   /* Nút ✕ "Đã huỷ" của stepper ngang ở màn tra cứu (trackResultView) mượn hình học nút 24 + cỡ biểu tượng 10 của `.ship-tl-node`. (Bản 28/09 của sheet từng có lưới 3 cột `.ship-tl-row` — ngày giờ | ray | tên —
      gỡ 01/10/2026 khi sheet đổi sang timeline dọc theo khung `timeline` của user, xem khối `.ov-vt`.) */
   .ship-tl-node { position: relative; z-index: 1; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
@@ -10699,7 +10737,7 @@ function accountBody(sk = false) {   // sk: thân tab = khung xương (đầu ta
     <div class="pt-4">${accHead('Lịch sử điểm thưởng')}</div>
     ${body}`;
   return `
-    ${accHead(label, '', accountTab === 'orders' ? 'acc-head-flush' : 'pb-4')}
+    ${accHead(label, '', 'pb-4')}
     ${body}`;
 }
 
@@ -11060,6 +11098,46 @@ const ORDERS = [
   },
 ];
 let currentOrder = 'DA000000102938';
+/* 02/11/2026 (user: "thêm tab switch giữa đơn online và offline" + "cho tôi phương án hiển thị tên cửa hàng cho danh sách của đơn offline") — ĐƠN OFFLINE = hoá đơn mua TẠI CỬA HÀNG DAFC, gắn với thành viên qua số điện thoại đã đăng ký
+   (điểm vẫn cộng: FAQ "Cách tích luỹ điểm" — giao dịch tại hệ thống cửa hàng DAFC và DAFC Online). Khác đơn online: KHÔNG địa chỉ giao · vận đơn · tiến trình · nút Thanh toán lại; có `store` (tên cửa hàng — địa chỉ ở OFFLINE_STORE_ADDR) và `channel: 'offline'`.
+   Trạng thái dùng chung bộ nhãn + tone (Hoàn tất = 'muted' → xanh · Đã trả hàng = 'cancel' → xám). Mã hoá đơn dạng HD + yymmdd + 4 số (DỮ LIỆU MẪU). 5 đơn / 4 cửa hàng, "Versace Rex" có 2 đơn để thấy phương án "Nhóm theo cửa hàng".
+   `ordersChannel` = tab đang mở của tab Đơn hàng ('online' | 'offline') — nhớ khi vào / ra Chi tiết đơn. `offStoreMode` = phương án hiển thị TÊN CỬA HÀNG ở danh sách đơn offline: 'row' (thêm hàng / cột "Cửa hàng", mặc định) · 'title' (tên cửa hàng làm tiêu đề thẻ / gộp vào cột mã) · 'group' (nhóm theo cửa hàng) — đổi bằng bánh răng → "Đơn offline". */
+const OFFLINE_ORDERS = [
+  { id: 'HD2610240318', channel: 'offline', store: 'Versace Rex', status: 'Hoàn tất', tone: 'muted', date: '24/10/2026',
+    items: [
+      { img: 'p5-0.jpg',  name: 'Giày loafer da Manu', variant: '40 · Black', qty: 1, price: '35.248.000 ₫', sku: '190277' },
+      { img: 'p10-0.jpg', name: 'Thắt lưng da mặt khóa tròn 3.5 cm', variant: '95 · Black', qty: 1, price: '17.575.000 ₫', sku: '190530' },
+    ],
+    sub: '52.823.000 ₫', discount: '0 ₫', total: '52.823.000 ₫', payment: 'Thẻ tín dụng · **** 4829', log: ['24/10/2026 15:42'] },
+  { id: 'HD2610110207', channel: 'offline', store: 'Versace Taka', status: 'Hoàn tất', tone: 'muted', date: '11/10/2026',
+    items: [ { img: 'p2-0.jpg', name: 'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant: 'Onesize', qty: 1, price: '15.611.000 ₫', sku: '190162' } ],
+    sub: '15.611.000 ₫', discount: '0 ₫', total: '15.611.000 ₫', payment: 'Tiền mặt', log: ['11/10/2026 11:20'] },
+  { id: 'HD2609260411', channel: 'offline', store: 'Versace Rex', status: 'Hoàn tất', tone: 'muted', date: '26/09/2026',
+    items: [
+      { img: 'b2.jpg', name: 'Nước hoa Eros Energy EDP 100ml', variant: '100ml', qty: 2, price: '2.895.000 ₫', sku: '190612' },
+      { img: 'b3.jpg', name: 'Nước hoa Dylan Blue Pour Homme EDT 100ml', variant: '100ml', qty: 1, price: '2.517.000 ₫', sku: '190618' },
+    ],
+    sub: '8.307.000 ₫', discount: '0 ₫', total: '8.307.000 ₫', payment: 'Ví MoMo', log: ['26/09/2026 19:05'] },
+  { id: 'HD2608140126', channel: 'offline', store: 'Montblanc Saigon Centre', status: 'Đã trả hàng', tone: 'cancel', date: '14/08/2026',
+    items: [ { img: 'b6.jpg', name: 'Nước hoa Explorer Platinum EDP 100ml', variant: '100ml', qty: 1, price: '3.150.000 ₫', sku: '190624' } ],
+    sub: '3.150.000 ₫', discount: '0 ₫', total: '3.150.000 ₫', payment: 'Thẻ tín dụng · **** 4829', log: ['14/08/2026 16:30'] },
+  { id: 'HD2606020093', channel: 'offline', store: 'Versace Tràng Tiền', status: 'Hoàn tất', tone: 'muted', date: '02/06/2026',
+    items: [ { img: 'p6-0.jpg', name: 'Giày thể thao da lộn Greca Court', variant: '41 · Bianco', qty: 1, price: '27.393.000 ₫', sku: '190309' } ],
+    sub: '27.393.000 ₫', discount: '0 ₫', total: '27.393.000 ₫', payment: 'Thẻ tín dụng · **** 4829', log: ['02/06/2026 10:15'] },
+];
+let ordersChannel = 'online';
+let offStoreMode = 'row';
+const orderById = id => ORDERS.find(x => x.id === id) || OFFLINE_ORDERS.find(x => x.id === id);
+/* 02/11/2026 (user: "đừng ghi DAFC taka mà ghi kiểu Versace Taka hay Saigon …, ghi tên cửa hàng ra") — TÊN CỬA HÀNG của đơn offline = TÊN CỬA HÀNG THẬT theo cách danh sách cửa hàng dafc.com.vn gọi (thương hiệu + trung tâm thương mại),
+   KHÔNG còn "DAFC + địa danh". Tên + địa chỉ dưới đây là DỮ LIỆU MẪU (địa chỉ viết theo danh sách cửa hàng của dafc.com.vn; "Versace Taka" là tên user gợi ý (chưa có trong danh sách thật); cửa hàng THEO TỪNG THƯƠNG HIỆU — đơn Saigon Centre là "Montblanc Saigon Centre" (Montblanc có ở Saigon Centre) với món Montblanc). Muốn đổi tên: sửa `store` trong
+   OFFLINE_ORDERS và thêm / sửa dòng ở đây. Không dùng DAFC_STORES (danh sách NHẬN HÀNG tại cửa hàng của Thanh toán, vẫn "DAFC …"). */
+const OFFLINE_STORE_ADDR = {
+  'Versace Rex': 'TTTM Rex Arcade, 141 Nguyễn Huệ, Phường Sài Gòn',
+  'Versace Taka': 'TTTM Takashimaya, 92-94 Nam Kỳ Khởi Nghĩa, Phường Sài Gòn',
+  'Montblanc Saigon Centre': 'TTTM Saigon Centre, Tầng Trệt, 65-67 Lê Lợi, Phường Sài Gòn',
+  'Versace Tràng Tiền': 'TTTM Tràng Tiền Plaza, Tầng 1, 24 Hai Bà Trưng, Phường Cửa Nam',
+};
+const offlineStoreAddr = name => OFFLINE_STORE_ADDR[name] || '';
 /* 29/09/2026 — "bây giờ" dạng dd/mm/yyyy hh:mm (+ phut phút) cho ĐƠN VỪA ĐẶT. Trước đó đơn mới ghi
    cứng 11/08/2026 (cả `date` lẫn `log`); từ khi danh sách đơn hiện NGÀY ĐẶT, đơn vừa đặt nằm trên
    cùng mà mang ngày CŨ HƠN các đơn tháng 9 bên dưới. Ngày thật của máy luôn ≥ ngày mẫu lớn nhất
@@ -11154,28 +11232,57 @@ const ordersNewestFirst = () => ORDERS.slice().sort((a, b) => dmyKey(a.date) < d
 const ORD_THUMB_SLOTS = 3;
 const orderThumbs = o => (o.items || []).map(it => `<span class="ord-thumb"><img src="${A}${it.img}" alt=""></span>`).join('');
 const orderThumbsBox = o => `<span class="ord-thumbs${(o.items || []).length > ORD_THUMB_SLOTS ? ' drag-x' : ''}">${orderThumbs(o)}</span>`;
-function accOrders() {
-  /* 16/10/2026 (lô 4 · ACC-37) — chưa có đơn nào: khối trống thay cho tab chỉ còn tiêu đề. */
-  if (!ORDERS.length) return accEmptyHTML('Bạn chưa có đơn hàng nào', 'Các đơn bạn đặt sẽ xuất hiện ở đây để bạn theo dõi.', 'Tiếp tục mua sắm');
+/* 02/11/2026 (user, kèm ảnh: "mobile quay về dạng hiển thị không hình ảnh như hình đính kèm · đồng thời thêm tab switch giữa đơn online và offline") — DANH SÁCH ĐƠN MOBILE = THẺ NHÃN–GIÁ TRỊ KHÔNG ẢNH + TAB Online | Offline.
+   ĐẢO thẻ có dải ảnh (30/09 · 21/10): `orderThumbs` / `orderThumbsBox` / `.ord-card*` GIỮ NGUYÊN vì danh sách đơn con của màn Theo dõi đơn (trackGroupHTML) còn dùng. Số đo + lý do ở khối CSS `.ol-card`.
+     Mã đơn hàng                      #DA000000103051 ›    (mã gạch chân + mũi tên — lối vào chi tiết)
+     ───────────────────────────────────────────────
+     Cửa hàng                              DAFC Online
+     Ngày                                    27/09/2026
+     Tổng tiền                             90.132.000 ₫
+     Trạng thái                      [Chờ thanh toán]
+   NHÃN ĐỒNG BỘ online ↔ offline (02/11/2026, user: "đồng bộ tên như sau: Mã đơn hàng · Ngày"): MỌI thẻ ghi "Mã đơn hàng" và "Ngày" (trước: offline "Mã hoá đơn" · "Ngày mua", online "Ngày đặt").
+   ĐƠN OFFLINE dùng cùng thẻ; TÊN CỬA HÀNG theo `offStoreMode`: 'row' thêm hàng "Cửa hàng" · 'title' tên cửa hàng thay hàng đầu (mã hoá đơn dồn sang phải) · 'group' nhóm theo cửa hàng, mỗi nhóm một tiêu đề (tên + địa chỉ). Nhãn tiếng Việt là text node RIÊNG
+   (span) để luật i18n khớp nguyên chuỗi. Sắp theo NGÀY giảm dần (ordersNewestFirst / offlineNewestFirst). Cả thẻ là một <button data-order> — wire() nối click sang Chi tiết đơn (offline mở offlineDetailHTML). */
+/* 02/11/2026 lượt 5 (user: "ở đơn onl cũng hiện cái cột cửa hàng luôn và ghi DAFC Online"): đơn ONLINE không có `store` riêng — danh sách ghi kênh bán "DAFC Online" ở hàng / cột Cửa hàng (đơn offline ghi tên cửa hàng theo thương hiệu). KHAI GIỐNG desktop.html. */
+const ONLINE_STORE = 'DAFC Online';
+const offlineNewestFirst = () => OFFLINE_ORDERS.slice().sort((a, b) => dmyKey(a.date) < dmyKey(b.date) ? 1 : dmyKey(a.date) > dmyKey(b.date) ? -1 : 0);
+const olRow = (k, v, strong) => `<span class="ol-row"><span class="ol-k t-single">${k}</span><span class="ol-v t-lead${strong ? ' is-strong' : ''}">${v}</span></span>`;
+/* 02/11/2026 (user: "bản mobile cũng áp dụng bỏ nút xem chi tiết và có mũi tên ở mã đơn hàng nhé") — thẻ KHÔNG còn chân "Xem chi tiết": MÃ ĐƠN HÀNG gạch chân + mũi tên › 12 ngay sau (`olGo`) báo "bấm được"; cả thẻ là một <button data-order>. */
+const olGo = `<span class="ol-go" aria-hidden="true">${I.chevR('currentColor')}</span>`;
+function olCardHTML(o, mode) {
+  const off = o.channel === 'offline';
+  const head = off && mode === 'title'
+    ? `<span class="ol-row ol-head is-store"><span class="ol-store t-lead">${o.store}</span><span class="ol-code ol-code-link t-lead"><span class="ol-code-t">#${o.id}</span>${olGo}</span></span>`
+    : `<span class="ol-row ol-head"><span class="ol-k t-single">Mã đơn hàng</span><span class="ol-v ol-code-link t-lead is-strong"><span class="ol-code-t">#${o.id}</span>${olGo}</span></span>`;
   return `
-    <div class="ord-list">
-      ${ordersNewestFirst().map(o => `
-      <button type="button" data-order="${o.id}" class="ord-card press">
-        <span class="ord-card-meta">
-          <span class="ord-card-top">
-            <span class="ord-card-ids">
-              <span class="ord-card-code t-lead"><span>Mã đơn</span> <span>#${o.id}</span></span>
-              <span class="ord-card-date t-lead">${o.date}</span>
-            </span>
-            <span class="ord-card-go" aria-hidden="true">${I.chevR('currentColor')}</span>
-          </span>
-          ${statusTag(o, false, true)}
-        </span>
-        <span class="ord-card-body">
-          ${orderThumbsBox(o)}
-          <span class="ord-card-total t-lead"><span class="ord-card-total-l"><span>Tổng tiền</span>:</span><span class="ord-card-total-v">${o.total}</span></span>
-        </span>
-      </button>`).join('')}
+      <button type="button" data-order="${o.id}" class="ol-card press">
+        ${head}${!off || mode === 'row' ? olRow('Cửa hàng', o.store || ONLINE_STORE) : ''}${olRow('Ngày', o.date)}${olRow('Tổng tiền', o.total, true)}
+        <span class="ol-row"><span class="ol-k t-single">Trạng thái</span>${statusTag(o, false, true)}</span>
+      </button>`;
+}
+/* Tab switch Online | Offline (đầu thân tab Đơn hàng): nút `data-ordch` — wire() đổi `ordersChannel` rồi vẽ lại #accBody. KHÔNG số đếm (user 02/11 lượt 5: "Không đếm số lượng đơn onl và off"). */
+const ordChTabsHTML = () => `
+    <div class="ord-ch" role="tablist" aria-label="Loại đơn hàng">${[['online', 'Đơn online'], ['offline', 'Đơn offline']].map(([id, label]) => `
+      <button type="button" role="tab" data-ordch="${id}" aria-selected="${id === ordersChannel}"${id === ordersChannel ? ' aria-current="true"' : ''} class="t-lead acc-tab press"><span>${label}</span></button>`).join('')}
+    </div>`;
+function accOrders() {
+  const off = ordersChannel === 'offline', list = off ? OFFLINE_ORDERS : ORDERS;
+  /* 16/10/2026 (lô 4 · ACC-37) — chưa có đơn nào: khối trống thay cho tab chỉ còn tiêu đề. 02/11/2026: tab Online | Offline vẫn hiện để đổi qua lại; mỗi tab có câu trống riêng. */
+  if (!list.length) return ordChTabsHTML() + (off
+    ? accEmptyHTML('Bạn chưa có hoá đơn mua tại cửa hàng', 'Hoá đơn mua tại cửa hàng DAFC (theo số điện thoại thành viên) sẽ xuất hiện ở đây.', '')
+    : accEmptyHTML('Bạn chưa có đơn hàng nào', 'Các đơn bạn đặt sẽ xuất hiện ở đây để bạn theo dõi.', 'Tiếp tục mua sắm'));
+  if (off && offStoreMode === 'group') {
+    const groups = [];
+    offlineNewestFirst().forEach(o => { let g = groups.find(x => x.store === o.store); if (!g) groups.push(g = { store: o.store, list: [] }); g.list.push(o); });
+    return ordChTabsHTML() + groups.map(g => `
+    <section class="ol-grp">
+      <div class="ol-grp-h"><span class="ol-store t-lead">${g.store}</span><span class="ol-addr t-single">${offlineStoreAddr(g.store)}</span></div>
+      <div class="ol-list">${g.list.map(o => olCardHTML(o, 'group')).join('')}
+      </div>
+    </section>`).join('');
+  }
+  return ordChTabsHTML() + `
+    <div class="ol-list">${(off ? offlineNewestFirst() : ordersNewestFirst()).map(o => olCardHTML(o, offStoreMode)).join('')}
     </div>`;
 }
 
@@ -11192,22 +11299,28 @@ function accOrders() {
      Token `accSkelTok`: bấm tab khác / rời màn giữa chừng thì lượt đổ cũ bị bỏ (không đè lên tab mới). Đầu tab (tiêu đề · nút "Thêm địa chỉ mới" của desktop · link lùi ở lịch sử điểm) giữ THẬT và bấm được ngay cả khi thân đang là xương.
    ═══════════════════════════════════════════════════════════════════════ */
 function accOrdersSkeleton() {
+  /* 02/11/2026: thẻ xương theo THẺ NHÃN–GIÁ TRỊ KHÔNG ẢNH (olCardHTML) — cùng class `.ol-card` · `.ol-row` · `.ol-head` nên khổ + kẻ do CSS cấp: thẻ 343 × 179 (viền 1 + đệm 16; hàng đầu 20 + 8 + kẻ 1 + khe 8 = 37 ·
+     3 hàng 20 + badge 24, khe 8 = 100; KHÔNG còn chân thẻ — 02/11 lượt 3), khe 16. Hàng "Cửa hàng" (đơn online luôn có; đơn offline ở phương án row) 28 — lượt 5 (02/11) BỎ hàng "Số SP" nên thẻ 179 = viền 1 + đệm 16 + hàng đầu 37 + 4 hàng (3 × 20 + badge 24, khe 8) + đệm 16 + viền 1; tab Online | Offline ở TRÊN là THẬT (bấm đổi qua lại được lúc đang tải). */
+  const off = ordersChannel === 'offline';
+  const row = (kw, vw, vh = 14) => `<div class="ol-row">${skelLn(16, skelBar(kw + 'px'))}${skelLn(vh === 24 ? 24 : 20, skelBar(vw + 'px', vh))}</div>`;
   const card = `
-    <div class="ord-card">
-      <div class="ord-card-meta">
-        <div class="ord-card-top">
-          <div class="ord-card-ids">${skelLn(20, skelBar('155px'))}${skelLn(20, skelBar('84px'))}</div>
-          <div class="skel" style="width:12px;height:12px;border-radius:2px;flex:none"></div>
-        </div>
-        <div class="skel" style="width:125px;height:24px"></div>
-      </div>
-      <div class="ord-card-body">
-        <div class="ord-thumbs">${'<div class="ord-thumb skel"></div>'.repeat(3)}</div>
-        <div class="ord-card-total">${skelLn(20, skelBar('67px'))}${skelLn(20, skelBar('93px', 14))}</div>
-      </div>
+    <div class="ol-card">
+      <div class="ol-row ol-head">${skelLn(16, skelBar('84px'))}${skelLn(20, skelBar('128px', 14))}</div>
+      ${!off || offStoreMode === 'row' ? row(56, 124) : ''}${row(56, 80)}${row(64, 96)}${row(68, 118, 24)}
     </div>`;
-  return `
-    <div class="ord-list" data-acc-skeleton aria-busy="true" aria-hidden="true">${card.repeat(5)}</div>
+  /* `group`: số thẻ mỗi nhóm + tiêu đề nhóm xương (20 + 2 + 16, đệm đáy 12) theo DỮ LIỆU đơn offline — chỉ về SỐ ĐẾM, không in tên. */
+  if (off && offStoreMode === 'group') {
+    const groups = [];
+    offlineNewestFirst().forEach(o => { let g = groups.find(x => x.store === o.store); if (!g) groups.push(g = { store: o.store, n: 0 }); g.n++; });
+    return ordChTabsHTML() + groups.map(g => `
+    <section class="ol-grp" aria-hidden="true">
+      <div class="ol-grp-h">${skelLn(20, skelBar('136px', 14))}<div>${Array.from({ length: Math.max(1, Math.ceil(offlineStoreAddr(g.store).length / 52)) }, (_, k, aN = Math.max(1, Math.ceil(offlineStoreAddr(g.store).length / 52))) => skelLn(16, skelBar(aN > 1 && k === aN - 1 ? '58%' : '96%'))).join('')}</div></div>
+      <div class="ol-list" data-acc-skeleton aria-busy="true">${card.repeat(g.n)}</div>
+    </section>`).join('') + '<p class="skel-sr" role="status">Đang tải</p>';
+  }
+  const n = off ? Math.min(5, OFFLINE_ORDERS.length) : 5;
+  return ordChTabsHTML() + `
+    <div class="ol-list" data-acc-skeleton aria-busy="true" aria-hidden="true">${card.repeat(n || 3)}</div>
     <p class="skel-sr" role="status">Đang tải</p>`;
 }
 
@@ -11967,7 +12080,90 @@ const orderShipTimelineHTML = o => {
    MỘT bố cục cho cả hai: orderDetailHTML(o, guest). guest = false ⇒ màn Chi tiết đơn của THÀNH VIÊN (như trước). guest = true ⇒ BẢN KHÁCH = kết quả của màn Theo dõi đơn (khách chưa đăng nhập không vào được màn order, xem go()):
    CÙNG các thẻ, CÙNG số đo; khác: KHÔNG có dải điểm tích luỹ (khách không có điểm thưởng) · nút lùi về ô tra cứu · có chân trang như mọi trang công khai (19/10 lần 3: BẢN THÀNH VIÊN cũng có — đồng bộ desktop, khối đệm 40 trước chân trang) · thêm cho khách (khối của lô 6, TRK-25 / TRK-26): hộp báo giao chậm / thất bại, thẻ vận chuyển (kem) trong thẻ Theo dõi,
    thẻ phụ Lịch sử vận chuyển và nút Tra cứu đơn khác (khối "Cần hỗ trợ về đơn hàng?" ĐÃ GỠ 19/10). Nội dung đủ (hàng · giá · tổng tiền); thông tin của khách (SĐT · địa chỉ · hoá đơn) CHE khi khách chỉ GÕ mã ở ô tra cứu (19/10, xem trackMasked; KHÔNG có nút đăng nhập); luồng đặt hàng của chính khách và thành viên thấy đủ (stepper ngang thay bằng nút Theo dõi đơn hàng mở sheet tiến trình như thành viên). */
-function screenORDER() { return orderDetailHTML(ORDERS.find(x => x.id === currentOrder) || ORDERS[0], false); }
+function screenORDER() {
+  const o = orderById(currentOrder) || ORDERS[0];
+  return o.channel === 'offline' ? offlineDetailHTML(o) : orderDetailHTML(o, false);
+}
+/* 02/11/2026 — CHI TIẾT ĐƠN OFFLINE (hoá đơn mua tại cửa hàng) — cùng vỏ + class `.ov-*` của chi tiết đơn online nhưng gọn: thẻ đầu [mã hoá đơn · nhãn · ngày giờ mua → kẻ → cửa hàng (tên · địa chỉ) → kẻ → hình thức mua · thanh toán],
+   thẻ Sản phẩm, tấm tổng (tạm tính · giảm giá · tổng · điểm tích luỹ). KHÔNG thẻ Theo dõi đơn hàng · phí vận chuyển · nút Thanh toán lại (hàng đã nhận tại quầy). Nút lùi về tab Đơn hàng — `ordersChannel` còn 'offline' nên rơi đúng tab Offline. */
+function offlineDetailHTML(o) {
+  const st = { name: o.store, addr: offlineStoreAddr(o.store) };
+  const disc = o.discount || '0 ₫', neg = disc !== '0 ₫', pct = orderDiscPct(o);
+  const sumRow = (label, value, cls = '') => `
+          <div class="ov-sum-row t-single ${cls}"><span>${label}</span><span>${value}</span></div>`;
+  const itemRow = it => {
+    const p = orderItemP(it), pa = orderPdpAttr(it), cp = pa ? ' cursor-pointer press' : '';
+    return `
+        <div class="flex gap-3">
+          <div class="w-[72px] h-[96px] bg-secondary overflow-hidden shrink-0${cp}"${pa}>
+            <img src="${A}${it.img}" class="w-full h-full object-cover" alt="${it.name}">
+          </div>
+          <div class="flex-1 min-w-0 flex flex-col">
+            ${p.brand ? `<span class="t-lead pc-brand font-medium text-foreground">${p.brand}</span>` : ''}
+            <span class="t-multiline w-full min-w-0 text-foreground line-clamp-2${cp}"${pa}>${it.name}</span>
+            <span class="t-single text-muted-foreground mt-1">${it.variant}</span>
+            ${it.sku ? `<span class="t-single text-muted-foreground">Mã sản phẩm: <span>${it.sku}</span></span>` : ''}
+            <div class="flex items-end justify-between gap-2 mt-auto pt-2">
+              <span class="t-single text-muted-foreground">SL: ${it.qty}</span>
+              <p class="t-multiline pc-price whitespace-nowrap text-foreground">${vndDot(orderLineTotal(it))}</p>
+            </div>
+          </div>
+        </div>`;
+  };
+  return `
+  <div class="w-full min-h-screen bg-background">
+    ${navBar()}
+    <div class="ov-page">
+      <div class="ov-titlebar">
+        <button type="button" data-atab="orders" aria-label="Đơn hàng" class="ov-backbtn press">${I.chevL}</button>
+        <h1 class="t-section-title text-foreground">Chi tiết đơn hàng</h1>
+      </div>
+
+      <div class="ov-cards">
+        <div class="ov-card is-head">
+          <div class="ov-hd">
+            <div class="ov-codes">
+              <span class="ov-code">${o.id}</span>
+              ${statusTag(o, false, true)}
+            </div>
+            <span class="t-single ov-date">${orderPlaced(o)}</span>
+          </div>
+          <div class="ov-divider"></div>
+          <div class="ov-rcv">
+            <p class="t-lead ov-ttl text-foreground">Cửa hàng</p>
+            <div class="ov-addr">
+              <span class="t-single ov-name">${st.name}</span>
+              ${st.addr ? `<span class="t-single ov-sub">${st.addr}</span>` : ''}
+            </div>
+          </div>
+          <div class="ov-divider"></div>
+          <div class="ov-rows">
+            <div class="ov-row"><span class="t-single ov-k">Hình thức mua hàng</span><span class="t-single ov-v">Mua tại cửa hàng</span></div>
+            <div class="ov-row"><span class="t-single ov-k">Phương thức thanh toán</span><span class="t-single ov-v">${orderPayName(o)}</span></div>
+          </div>
+        </div>
+
+        <div class="ov-card">
+          <p class="t-lead ov-ttl text-foreground">Sản phẩm (${o.items.length})</p>
+          ${o.items.map(itemRow).join('')}
+        </div>
+
+        <div class="ov-sum">
+          ${sumRow('Tạm tính', o.sub)}
+          ${sumRow(pct ? `<span>Giảm giá</span> <span>(${pct}%)</span>` : 'Giảm giá', disc, neg ? 'is-neg' : '')}
+          <div class="ov-divider"></div>
+          <div class="ov-sum-row ov-sum-total">
+            <span class="ov-total-l"><span class="t-lead ov-total">Tổng thanh toán</span><span class="t-single ov-vat">(Bao gồm VAT)</span></span>
+            <span class="t-lead ov-total">${o.total}</span>
+          </div>
+          ${o.tone === 'cancel' ? '' : `
+          <div class="ov-points t-single"><span>Điểm tích luỹ</span><span class="t-lead ov-pts">+${orderPoints(o).toLocaleString('vi-VN')}</span></div>`}
+        </div>
+      </div>
+    </div>
+    <div class="h-10" aria-hidden="true"></div>${footer()}
+  </div>`;
+}
 function orderDetailHTML(o, guest) {
   const gMask = guest && trackMasked();   /* 19/10/2026: khách chỉ GÕ mã ⇒ che thông tin của khách (SĐT · địa chỉ · hoá đơn) */
   const gPh = gMask && !trackPhoneOk;   /* 20/10/2026: SĐT + hàng hoá đơn chỉ che khi CHƯA gõ đúng số đăng ký; địa chỉ và email trong hoá đơn che luôn */
@@ -12185,12 +12381,13 @@ function ordSkelThenReal(el) {
 }
 /* 17/10/2026: screenOrderSkeleton(guest) — guest = true là khung xương của BẢN KHÁCH (kết quả Theo dõi đơn, đơn = trackFound): không dải điểm, thêm ô cho thẻ vận chuyển · hai thẻ phụ · nút Tra cứu đơn khác + chân trang. */
 function screenOrderSkeleton(guest) {
-  const o = guest ? (trackFound || ORDERS[0]) : (ORDERS.find(x => x.id === currentOrder) || ORDERS[0]);
+  const o = guest ? (trackFound || ORDERS[0]) : (orderById(currentOrder) || ORDERS[0]);
+  const off = !guest && o.channel === 'offline';   // 02/11/2026: hoá đơn mua tại cửa hàng — không thẻ Theo dõi · không dải ghi chú · 2 hàng thông tin · không hàng phí vận chuyển (xem offlineDetailHTML)
   const act = orderActions(o).primary, awb = orderAwbs(o).length > 0, cancel = o.tone === 'cancel';
   const plain = t => String(t || '').replace(/<[^>]*>/g, '');
   /* số dòng ước theo độ dài chữ: ~50 ký tự một dòng 12/18 ở cột 311 (thẻ có dải ghi chú) · ~55 ở cột 343 · tên hàng ~40 ở cột 259 */
   const lines = (t, per) => Math.max(1, Math.ceil(plain(t).length / per));
-  const noteLines = orderNoteLines(o);
+  const noteLines = off ? [] : orderNoteLines(o);
   const addr = o.address || {};
   const gMask = guest && trackMasked();   // 19/10/2026: địa chỉ che ngắn hơn (KHÔNG còn dòng giải thích · nút Đăng nhập: user bỏ 19/10)
   const addrN = lines(gMask ? trackMaskLine(addr.line) : addr.line, 55);
@@ -12254,15 +12451,15 @@ function screenOrderSkeleton(guest) {
             <div class="ov-addr">${skelLn(16, skelBar('110px'))}${Array.from({ length: addrN }, (_, k) => skelLn(16, skelBar(k === addrN - 1 && addrN > 1 ? '48%' : '96%'))).join('')}${addr.phone ? skelLn(16, skelBar('96px')) : ''}</div>
           </div>
           <div class="ov-divider"></div>
-          <div class="ov-rows">${[[150, 110], [140, 128], [138, 96]].map(([a, b]) => `<div class="ov-row">${skelLn(16, skelBar(a + 'px'))}${skelLn(16, skelBar(b + 'px'))}</div>`).join('')}</div>
+          <div class="ov-rows">${(off ? [[150, 110], [140, 128]] : [[150, 110], [140, 128], [138, 96]]).map(([a, b]) => `<div class="ov-row">${skelLn(16, skelBar(a + 'px'))}${skelLn(16, skelBar(b + 'px'))}</div>`).join('')}</div>
         </div>
-
+${off ? '' : `
         <!-- thẻ Theo dõi đơn hàng: tiêu đề 20 · (hàng Mã vận đơn 24) · nút 36; khe 8 → 96 (có mã vận đơn 128) -->
         <div class="ov-card is-track" aria-hidden="true">
           ${skelLn(20, skelBar('130px', 14))}
           ${awb ? `<div class="ov-awb">${skelLn(16, skelBar('84px'))}${skelLn(16, skelBar('120px'))}</div>` : ''}
           <div class="skel" style="height:36px"></div>
-        </div>
+        </div>`}
 
         <!-- thẻ Sản phẩm: tiêu đề 20 · mỗi hàng (ảnh 72 x 96 + cột chữ) · quà cùng khuôn; khe 12 -->
         <div class="ov-card" aria-hidden="true">
@@ -12272,7 +12469,7 @@ function screenOrderSkeleton(guest) {
 
         <!-- tấm tổng xám: đệm 16 · 3 hàng 16 (+ hàng điểm đã dùng) · kẻ · Tổng thanh toán 36 · hàng điểm tích luỹ 28 (đơn huỷ không có); khe 8 -->
         <div class="ov-sum skel-on" aria-hidden="true">
-          ${sumRow(76, 88)}${sumRow(70, 72)}${sumRow(104, 64)}${o.pointsUsed ? sumRow(92, 80) : ''}
+          ${sumRow(76, 88)}${sumRow(70, 72)}${off ? '' : sumRow(104, 64)}${o.pointsUsed ? sumRow(92, 80) : ''}
           <div class="ov-divider"></div>
           <div class="ov-sum-row ov-sum-total"><div class="ov-total-l">${skelLn(20, skelBar('118px'))}${skelLn(20, skelBar('84px'))}</div>${skelLn(20, skelBar('96px'))}</div>
           ${(cancel || guest) ? '' : `<div class="ov-points">${skelLn(20, skelBar('168px'))}${skelLn(20, skelBar('44px'))}</div>`}
@@ -21641,6 +21838,15 @@ const I18N = {
   /* 30/09/2026 — thẻ đơn (Figma 975:82500) đọc "Mã đơn #DAFC…": nhãn ngắn MỚI 'Mã đơn' → 'Order' (chưa khoá nào mang EN 'Order'
      nên I18N_REV không đảo sai; ra "Order #DAFC…"). 'Tổng tiền' đã có ở dòng trên. */
   'Mã đơn':'Order',
+  /* 02/11/2026 — danh sách đơn: tab Online | Offline, thẻ không ảnh, đơn offline (hoá đơn mua tại cửa hàng) + chi tiết. 'Mã đơn hàng' · 'Ngày đặt' · 'Tổng tiền' · 'Trạng thái' · 'Xem chi tiết' · 'Cửa hàng' đã có khoá. EN không trùng giá trị khoá nào (đã soát — I18N_REV). */
+  'Đơn online':'Online orders', 'Đơn offline':'In-store orders', 'Ngày':'Date', 'Tiền mặt':'Cash', 'Đã trả hàng':'Returned',
+  'Mua tại cửa hàng':'Purchased in store', 'Hình thức mua hàng':'Purchase type',
+  'Versace Tràng Tiền':'Versace Trang Tien',
+  'TTTM Rex Arcade, 141 Nguyễn Huệ, Phường Sài Gòn':'Rex Arcade, 141 Nguyen Hue, Sai Gon Ward',
+  'TTTM Takashimaya, 92-94 Nam Kỳ Khởi Nghĩa, Phường Sài Gòn':'Takashimaya, 92-94 Nam Ky Khoi Nghia, Sai Gon Ward',
+  'TTTM Saigon Centre, Tầng Trệt, 65-67 Lê Lợi, Phường Sài Gòn':'Saigon Centre, Ground Floor, 65-67 Le Loi, Sai Gon Ward',
+  'TTTM Tràng Tiền Plaza, Tầng 1, 24 Hai Bà Trưng, Phường Cửa Nam':'Trang Tien Plaza, 1st Floor, 24 Hai Ba Trung, Cua Nam Ward',
+  'Bạn chưa có hoá đơn mua tại cửa hàng':'You have no in-store purchases yet', 'Hoá đơn mua tại cửa hàng DAFC (theo số điện thoại thành viên) sẽ xuất hiện ở đây.':'In-store purchases at DAFC (linked to your member phone number) will appear here.',
   /* 29/09/2026 — rà UX chi tiết đơn (trạng thái từng đợt, hộp huỷ đơn, hạn thanh toán, đơn huỷ vì sao). Đã soát
      từng khoá (chưa có) và từng giá trị EN (không trùng giá trị của khoá khác — trùng là I18N_REV đảo sai). */
   'Trạng thái đơn hàng':'Order status',
@@ -23750,7 +23956,7 @@ function forgotMailClose() {
 const ADDR_MAX = 10;
 const addrIsFull = () => ADDRESSES.length >= ADDR_MAX;
 const TIER_DEMO_SPEND = { member: 30000000, gold: 142500000, platinum: 420000000, diamond: 1150000000 };
-const ACC_SNAP = JSON.parse(JSON.stringify({ orders: ORDERS, points: POINTS_HISTORY, addrs: ADDRESSES }));
+const ACC_SNAP = JSON.parse(JSON.stringify({ orders: ORDERS, offline: OFFLINE_ORDERS, points: POINTS_HISTORY, addrs: ADDRESSES }));
 const REWARD_POINTS_BASE = REWARD_POINTS, REWARD_EXPIRY_BASE = REWARD_EXPIRY;
 let accDemoData = 'full';        // 'full' | 'new' | 'expiring' — bánh răng "Dữ liệu tài khoản"
 let accDemoAddr = 'normal';      // 'normal' | 'full' — bánh răng "Sổ địa chỉ"
@@ -23817,6 +24023,7 @@ function accDemoApply(part) {
   const cl = o => JSON.parse(JSON.stringify(o));
   if (part === 'data') {
     ORDERS.splice(0, ORDERS.length, ...ordersDemoSet());
+    OFFLINE_ORDERS.splice(0, OFFLINE_ORDERS.length, ...(accDemoData === 'new' ? [] : cl(ACC_SNAP.offline)));   // 02/11/2026: "Khách mới" cũng không có hoá đơn mua tại cửa hàng
     POINTS_HISTORY.splice(0, POINTS_HISTORY.length, ...(accDemoData === 'new' ? [] : cl(ACC_SNAP.points)));
     REWARD_POINTS = accDemoData === 'new' ? 0 : REWARD_POINTS_BASE;
     REWARD_EXPIRY = accDemoData === 'expiring' ? dmyOf(new Date(Date.now() + 14 * 86400000)) : REWARD_EXPIRY_BASE;
@@ -24728,6 +24935,18 @@ function wire(root) {
       /* 19/10/2026: thành viên bấm thẻ "Đơn … đã được đặt" khi đơn vừa đặt đã tách ≥ 2 đơn con → DANH SÁCH đơn con (như nút "Theo dõi đơn hàng" ở màn Hoàn tất), không rơi vào đơn con đầu. */
       if (btn.dataset.order === '0' && orderKids(orderBaseId(ORDERS[0])).length > 1) { const b = orderBaseId(ORDERS[0]); trackQuery = b; trackGroup = b; trackFound = null; trackErr = ''; trackByCode = false; go('track', { force: true, noSkel: true }); return; }
       currentOrder = btn.dataset.order; go('order');
+    });
+  });
+
+  /* 02/11/2026 — TAB SWITCH Online | Offline của tab Đơn hàng: đổi `ordersChannel` rồi vẽ lại thân tab (tiêu đề + tab + danh sách) — mạng yếu thì xương NET_WEAK_GRID ms như bấm tab Tài khoản. Tra #accBody từ DOCUMENT (wire() có thể được gọi với root = chính #accBody, xem ghi chú ở nút Lịch sử điểm). Không cuộn về đầu trang: tab nằm sát đầu thân. */
+  root.querySelectorAll('[data-ordch]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.ordch === ordersChannel) return;
+      ordersChannel = btn.dataset.ordch;
+      const host = document.querySelector('#accBody');
+      if (!host) return;
+      if (accSkelFirst()) { host.innerHTML = accountBody(true); localizeNew(host); wire(host); accSkelSwap(host, NET_WEAK_GRID); }
+      else { host.innerHTML = accountBody(); wire(host); localizeNew(host); }
     });
   });
 
@@ -27237,12 +27456,23 @@ document.body.insertAdjacentHTML('beforeend', `
       </div>
       <div class="px-3 pb-2">
         <p class="t-multiline tracking-[0.12em] text-muted-foreground">Đơn hàng</p>
-        <p class="t-single sp-note text-muted-foreground">Tài khoản → Đơn hàng (và Theo dõi đơn): đơn nhiều hơn 3 sản phẩm thì dải ảnh cuộn ngang, lộ mép ảnh kế tiếp.</p>
+        <p class="t-single sp-note text-muted-foreground">Đơn nhiều sản phẩm: ở Theo dõi đơn (danh sách đơn con) dải ảnh cuộn ngang, lộ mép ảnh kế tiếp; tab Đơn hàng không còn hiện số sản phẩm.</p>
       </div>
       <div class="px-3 pb-3">
         <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Đơn hàng">
           ${[['normal','Bình thường'],['many','Nhiều sản phẩm']].map(([id, label]) => `
             <button data-accorders="${id}" class="t-multiline accordersopt flex-1 h-8 rounded-full transition-colors press ${id === accDemoOrders ? 'bg-background text-foreground font-medium shadow-sm' : 'text-muted-foreground'}">${label}</button>`).join('')}
+        </div>
+      </div>
+      <!-- ĐƠN OFFLINE (02/11/2026, user: "cho tôi phương án hiển thị tên cửa hàng cho danh sách của đơn offline") — 3 phương án đặt TÊN CỬA HÀNG ở danh sách đơn offline; bấm xong tự mở tab Đơn hàng → Đơn offline (cần đăng nhập). Mặc định "Thêm hàng". -->
+      <div class="px-3 pb-2">
+        <p class="t-multiline tracking-[0.12em] text-muted-foreground">Đơn offline</p>
+        <p class="t-single sp-note text-muted-foreground">Tài khoản → Đơn hàng → Đơn offline: tên cửa hàng đặt ở đâu — thêm một hàng · làm tiêu đề thẻ · nhóm theo cửa hàng.</p>
+      </div>
+      <div class="px-3 pb-3">
+        <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Tên cửa hàng ở đơn offline">
+          ${[['row','Thêm hàng'],['title','Tiêu đề'],['group','Nhóm']].map(([id, label]) => `
+            <button data-offstore="${id}" class="t-multiline offstoreopt flex-1 h-8 rounded-full transition-colors press ${id === offStoreMode ? 'bg-background text-foreground font-medium shadow-sm' : 'text-muted-foreground'}">${label}</button>`).join('')}
         </div>
       </div>
       <div class="px-3 pb-2">
@@ -27500,7 +27730,7 @@ document.body.insertAdjacentHTML('beforeend', `
   /* Hết phiên ngay (16/10/2026): đóng panel rồi mở hộp thoại, đợi panel khép xong (~0,26 s) cho người xem thấy hộp thoại, không phải hai lớp chồng nhau. */
   panel.querySelectorAll('[data-sim-session]').forEach(btn => btn.addEventListener('click', () => { closeP(); setTimeout(sessionExpire, 260); }));
   /* Lô 2 "Cần bổ sung" (16/10/2026): công tắc Tình huống đăng nhập / Mã OTP đổi biến toàn cục (loginSim / otpSim) và dọn bộ đếm; 3 nút "Liên kết đặt lại mật khẩu" MỞ trang tương ứng (không phải công tắc). */
-  [['data-loginsim', 'loginsim', v => { loginSim = v; loginFails = 0; loginLocked = false; authMsgClear(); }], ['data-otpsim', 'otpsim', v => { otpSim = v; otpFails = 0; }], ['data-pbhsim', 'pbhsim', v => { pbhSim = v; }], ['data-tiersim', 'tiersim', v => { setMemberTier(v); closeP(); setTimeout(() => accGearGo('member'), 260); }], ['data-accdata', 'accdata', v => { accDemoData = v; accDemoApply('data'); closeP(); setTimeout(() => (v === 'expiring' ? accGearGo('member', 'points') : accGearGo('orders')), 260); }], ['data-accaddr', 'accaddr', v => { accDemoAddr = v; accDemoApply('addr'); closeP(); setTimeout(() => accGearGo('address'), 260); }], ['data-accorders', 'accorders', v => { accDemoOrders = v; accDemoApply('orders'); closeP(); setTimeout(() => accGearGo('orders'), 260); }], ['data-oossim', 'oossim', v => { oosSim = v; }], ['data-failwhy', 'failwhy', v => { payFailWhy = v; if (current === 'pay' && payStage === 'fail') go('pay', { force: true }); }], ['data-shipsim', 'shipsim', v => { shipSim = v; const r = document.querySelector('[data-screen="checkout"]'); if (r) rerenderCheckout(r); }], ['data-tracksim', 'tracksim', v => { trackSim = v; closeP(); setTimeout(trackGearGo, 260); }], ['data-imgsim', 'imgsim', v => { imgSim = v; imgSimApply(); }], ['data-colorsim', 'colorsim', v => { colorSim = v; closeP(); setTimeout(colorSimApply, 260); }], ['data-cartsim', 'cartsim', v => { cartSim = v; closeP(); setTimeout(cartSimApply, 260); }], ['data-valsim', 'valsim', v => { valSim = v; closeP(); setTimeout(valSimApply, 260); }]].forEach(([attr, key, set]) => {
+  [['data-loginsim', 'loginsim', v => { loginSim = v; loginFails = 0; loginLocked = false; authMsgClear(); }], ['data-otpsim', 'otpsim', v => { otpSim = v; otpFails = 0; }], ['data-pbhsim', 'pbhsim', v => { pbhSim = v; }], ['data-tiersim', 'tiersim', v => { setMemberTier(v); closeP(); setTimeout(() => accGearGo('member'), 260); }], ['data-accdata', 'accdata', v => { accDemoData = v; accDemoApply('data'); closeP(); setTimeout(() => (v === 'expiring' ? accGearGo('member', 'points') : accGearGo('orders')), 260); }], ['data-accaddr', 'accaddr', v => { accDemoAddr = v; accDemoApply('addr'); closeP(); setTimeout(() => accGearGo('address'), 260); }], ['data-accorders', 'accorders', v => { accDemoOrders = v; accDemoApply('orders'); closeP(); setTimeout(() => accGearGo('orders'), 260); }], ['data-offstore', 'offstore', v => { offStoreMode = v; ordersChannel = 'offline'; closeP(); setTimeout(() => accGearGo('orders'), 260); }],['data-oossim', 'oossim', v => { oosSim = v; }], ['data-failwhy', 'failwhy', v => { payFailWhy = v; if (current === 'pay' && payStage === 'fail') go('pay', { force: true }); }], ['data-shipsim', 'shipsim', v => { shipSim = v; const r = document.querySelector('[data-screen="checkout"]'); if (r) rerenderCheckout(r); }], ['data-tracksim', 'tracksim', v => { trackSim = v; closeP(); setTimeout(trackGearGo, 260); }], ['data-imgsim', 'imgsim', v => { imgSim = v; imgSimApply(); }], ['data-colorsim', 'colorsim', v => { colorSim = v; closeP(); setTimeout(colorSimApply, 260); }], ['data-cartsim', 'cartsim', v => { cartSim = v; closeP(); setTimeout(cartSimApply, 260); }], ['data-valsim', 'valsim', v => { valSim = v; closeP(); setTimeout(valSimApply, 260); }]].forEach(([attr, key, set]) => {
     panel.querySelectorAll('[' + attr + ']').forEach(btn => btn.addEventListener('click', () => {
       set(btn.dataset[key]);
       panel.querySelectorAll('[' + attr + ']').forEach(x => {
