@@ -5545,6 +5545,56 @@ Lệnh user (kèm ảnh dòng giỏ hàng đặt trước ghi đỏ "Không kh�
 - **Figma (lượt 168 lần 7)**: bản chia tab đã đồng bộ — xoá `số đếm` ở 4 biến thể `tab` channel; bảng Online 5 cột `order-table-row` "DAFC Online" (xoá `order-table-row-online`); thẻ mobile ẩn `qty`, Online hiện `store`; `[doc]` viết lại (`_notes/FIGMA-SYNC-LUOT-168-2026-11-02.md` §8). User tự sửa Figma giữa hai lượt (GIỮ): đệm thẻ mobile 16 → 8 (master `order-card-text`), nhãn đầu cột bảng 12/16 → 14/20 (`t-label-lead`).
 - **Còn mở**: port hai chỉnh Figma của user (đệm thẻ 8 · nhãn đầu cột 14/20) sang code không? (code đang 16 · 12/16) · lệch PA B mobile (thẻ tên dài 171 vs xương 151) · bản gộp Figma còn cần giữ không · Bảng 5 VI–EN chưa cập nhật.
 
+### Figma: bảng so sánh 5 phông bản TIẾNG VIỆT `cp- VI` — nhân bản bản EN hiện tại + dịch ngược (03/11/2026, lần 65, Figma lượt 169 — CHỈ Figma, không đổi code)
+- **User** (link `cp- ENG` `1650:151880`): "tạo thêm bảng tiếng việt cho tôi nhé"; sau đó gửi đoạn Versace tiếng Việt — đúng đoạn đã dùng (đối chiếu từng ký tự: khớp). Ghi chú `_notes/FIGMA-CP-VI-BANG-SO-SANH-5-FONT-2026-11-03.md`; sổ `_notes/figx/lot169-cp-vi-ledger.json`.
+- **Làm**: nhân bản bản EN HIỆN TẠI của user (đã chỉnh gọn so với lượt 167: rail 120 cao · PDP cắt còn 1.034 · khung typo y 1.345 · khung 3165 × 2331) ⇒ khung mới `cp- VI` `1720:132160` đặt ngay DƯỚI `cp- ENG` (x 26.940, y −10.381, cách 460). Dịch ngược bằng bảng EN → VI của sổ lượt 167 (39 chuỗi) + cụm `Official Proposal` → `Tờ trình` (thay đúng cụm, giữ list đánh số đoạn 1); chữ user tự viết (`3.Libre Bodoni (Prefer & Proposed)` · `%MD Filled` · `%MD (Prefered )`…), giá, size, ngày, tên hãng, `New Season` / `La Vacanza` / `New Collection` GIỮ.
+- **Bộ typo**: 5 khung `Bộ typo · <phông>` (Lớn 24/32 `t-display-title` · Vừa 18/24 `t-section-title` · Nhỏ 14/20 +1 `t-card-title`); chữ mẫu = đoạn Versace tiếng Việt (Lớn câu 1 · Vừa câu 1–2 · Nhỏ cả đoạn); nhãn tầng `Lớn / Vừa / Nhỏ`, `cách chữ +1`. Cao 791 · 811 · 831 · 843 · 811; `cp- VI` nới 3165 × 2363 (lề đáy 175 như `cp- ENG`).
+- **Kiểm**: 0 chuỗi tiếng Anh còn lại; cùng cấu trúc 2.107 cặp nút với bản EN; không khung / instance nào đổi cao hay y (ngoài khung typo); 0 chữ tràn thêm so với bản EN; 15 mẫu typo = đúng nguyên văn đoạn user (447 ký tự); ảnh Libre Bodoni · Times New Roman · Fraunces · toàn khung — dấu tiếng Việt đúng.
+- **Không đụng**: `cp- ENG`; `cp` (khung VI cũ — PDP dài, chưa có bộ typo, còn đảo phông cột 2 / 5).
+- **Còn mở**: giá giữ dấu chấm `72.557.000 ₫` · khung `cp` cũ giữ hay xoá · nhãn `Prefer & Proposed` / `Prefered` là chữ của user nên để nguyên (dịch không?).
+
+### Tab Đơn online | Đơn offline = TOGGLE phân đoạn (03/11/2026, lần 66, CẢ 2 FILE + Figma lượt 168 lần 8)
+- **User**: "cái tabs đùng dạng toggle đi nhé" — đọc "dùng" (gõ nhầm "đùng"). Ghi chú `_notes/ORDERLIST-BANG-THE-TAB-OFFLINE-2026-11-02.md` §12; sao lưu `_notes/sao-luu/{index,desktop}.html.truoc-tab-dang-toggle-2026-11-03`.
+- **Code**: `ordChTabsHTML` dùng nguyên khuôn `segToggle` / `segBtnClass` của Thanh toán — rãnh xám `bg-secondary` đệm 2, mục đang chọn nổi (nền trắng + bóng nhẹ), hai nửa đều cao 40 ⇒ khối 44, chữ 12/18; mobile lề 0 16 16, desktop toàn bề ngang 826 cách bảng 24; `aria-pressed`; bỏ tab gạch chân (CSS `.ord-ch .acc-tab…` gỡ).
+- **Figma** (bản chia tab): linh kiện MỚI `seg-item` + `seg-toggle` (section `tab`, vùng phải `[doc] Tabs`, + `[doc] Toggle`); 4 khung thay thanh tab bằng `seg-toggle`; gỡ `tab` / `tab-row` kind=channel và hoàn lại cỡ / vị trí hai bộ (`FIGMA-SYNC-LUOT-168-2026-11-02.md` §9).
+- **Kiểm** (Chrome ẩn + CDP): bấm đổi tab đúng (12 ⇄ 5 hàng, `aria-pressed`, mở chi tiết), khung xương cùng vị trí, 320 / 768 / 1024 / 1440 không tràn ngang, 0 lỗi JS.
+- **Bẫy**: không tự gán `innerHTML` rồi thử bấm (mất `wire()`); class `text-[14px]` của `segBtnClass` là class chết ⇒ toggle đọc ra 12/18 như Thanh toán.
+- **Còn hỏi**: chữ toggle 12/18 hay 14/20 · desktop toàn bề ngang hay gọn · port đệm thẻ mobile 8 + nhãn đầu cột 14/20 (user sửa ở Figma) sang code? · bản gộp Figma còn giữ không.
+
+### BỎ MŨI TÊN › ở mã đơn hàng, GIỮ gạch chân chữ — trang danh sách đơn (03/11/2026, lần 67, CẢ 2 FILE + Figma lượt 168 lần 9)
+- **User**: "chốt là bỏ mũi tên > nhé. giữ underline text như hiện tại cho trang listing order vừa rồi". Ghi chú `_notes/ORDERLIST-BANG-THE-TAB-OFFLINE-2026-11-02.md` §13; sao lưu `_notes/sao-luu/{index,desktop}.html.truoc-bo-mui-ten-ma-don-2026-11-03`.
+- **Code**: gỡ `olGo` + CSS `.ol-go*`; hàng bảng (desktop) và thẻ (mobile) chỉ còn mã gạch chân (offset 2) — lối vào chi tiết = chữ gạch chân + nền rê cả hàng; cột bảng giữ nguyên.
+- **Figma**: gỡ `go` khỏi `order-table-row` + `order-card-text` (34 hàng + 29 thẻ theo), sửa mô tả + 2 `[doc]` (`FIGMA-SYNC-LUOT-168-2026-11-02.md` §10). User đã tự sắp lại bảng so sánh (khung một hàng ngang, `[doc]` ra cấp trang, khung mobile cắt cao) — GIỮ.
+- **Kiểm** (Chrome ẩn + CDP): 0 svg trong hàng / thẻ ở mọi phương án, gạch chân còn, 0 mã bị cắt, khung xương = thật, 0 tràn ngang, 0 lỗi JS.
+- **Còn mở**: cột Mã 184 dư ~16 sau khi bỏ mũi tên (thu lại?) · đệm thẻ mobile 8 + nhãn đầu cột 14/20 của Figma chưa vào code.
+
+### Figma: TẠM ẨN mọi khung `[doc]` (03/11/2026, lần 68, CHỈ Figma, không đổi code)
+- **User**: "tạm ẩn hết các mục [doc] trong figma cho tôi nhé". File Test agent: 67 nút tên bắt đầu `[doc]` (components 41 · screens 25 · Foundations Typography 1) đặt `visible = false` — không xoá, không dời; 41 do mình ẩn, 26 vốn đã ẩn từ trước. Sổ + cách hiện lại: `_notes/figx/doc-an-2026-11-03.json`.
+- **Bẫy**: 2 `[doc]` nằm lồng trong khung `Frozen 2026-08-26` (section Frozen shadcn) — đi bộ SECTION bỏ sót, quét sâu mới thấy; plugin Desktop Bridge mất ~10 phút mới nối vào Test agent (chỉ thấy Playground / Hasaki) — phải đóng cửa sổ plugin cũ rồi chạy lại.
+- **Còn mở**: hiện lại khi user bảo ("hiện lại [doc]" ⇒ bật CHỈ 41 nút trong `restoreIds`).
+
+### Figma: ô SĐT có nút trong ô (`field-float has-act`) — ráp thành component, sửa lỗi nhãn đè giá trị (05/11/2026, lần 69, Figma lượt 170, CHỈ Figma)
+- **User** gửi node `1433:122907`: "cái này chưa được làm component hay sao mà bị lỗi hiển thị trên figma". Ghi chú `_notes/figx/README.md` lượt 170 · sổ `_notes/figx/lot170-ledger-2026-11-05.json` · công cụ MỚI `_notes/figx/has-act-fix.js`.
+- **Nguyên nhân**: `asm.js` không có luật cho `field-float has-act` ⇒ khung thô, nhãn nổi 10px đè giá trị 12px. **Đã ráp 4 khung** (đăng ký · "phone already registered" + "OTP wrong" × mobile + desktop) thành khung bọc `field-float has-act` = instance `field` + instance `action` (ghost / medium, ABSOLUTE MAX/CENTER; `_disabled` khi đếm ngược "NHẬN LẠI MÃ (58S)"); ô lỗi viền đỏ = biến `destructive` trên instance; cỡ khung giữ nguyên.
+- **Còn mở**: luật `has-act` chưa nằm trong `asm.js` (chỉ ghi chú + công cụ riêng — sau mỗi lượt sync đăng ký phải chạy `__hasActFix`); bộ `field` chưa có kind cho textarea (ô Ghi chú Thanh toán vẫn khung thô nhưng hiển thị đúng).
+
+### Toast "Mực đen vuông" (PA B) — code 2 file + Figma bộ `toast` 8 biến thể (06/11/2026, lần 70, Figma lượt 171)
+- **User** chọn PA B sau bản xem thử `_notes/TOAST-DE-XUAT-STYLE-2026-11-06.html`: toast = mực đen ĐẶC, vuông, không bóng, không blur (thay pill 9999 + `shadow-lg` + đen 95% blur). Ghi chú đủ số đo: `_notes/TOAST-DE-XUAT-STYLE-2026-11-06.md` §6; STYLE-RULES §2.2 (vai thứ 5 của mặt tối) + §3.3.
+- **Code** (`index.html` + `desktop.html`, chỉ `skin-mt`): hộp cao ≥ 48 (mobile 343 × 48 lề 16; desktop ôm chữ 320–480; VỊ TRÍ ĐÃ ĐỔI lên đỉnh dưới header — xem lần 71), icon 16 + khe 12, chữ 12/18, câu dài xuống dòng (hết tràn −53 px), nút "Hoàn tác" trọn chiều cao 88 × 48 + vạch 1px. `toast(msg, act?, kind?)`: 4 loại **ok · info · warn · err** = 4 icon fi-ts (check · info · triangle-warning · circle-xmark), đã gắn loại cho từng chỗ gọi (ok 32 mẫu · warn 13 · err 4 · còn lại info); `data-toast-kind`; 3 s (5 s có nút), thoát 150 ms, rê chuột / focus tạm dừng; `role="status"` / `"alert"`. skin-mp / skin-mk giữ pill cũ.
+- **Figma**: component `toast` → bộ 8 biến thể `kind` × `action` (`1753:153836`, section `messages`) + 3 icon mới `icon/ts/info` · `triangle-warning` · `circle-xmark`; property `label` · `actionLabel` · `showIcon`. Chi tiết + bẫy: `_notes/figx/README.md` lượt 171.
+- **Vị trí thật (Figma lượt 172, cùng ngày)**: section `Toast — mobile 375 + desktop 1440` (`1753:153864`) với 4 khung giỏ — warn "Chỉ còn 5 sản phẩm" và ok + undo "Đã xóa sản phẩm" × mobile / desktop (vị trí lúc đó là đáy 88 / 48 — ĐÃ ĐỔI lên đỉnh, xem lần 71); nền là bản sao khung giỏ gốc. **User KHÔNG dùng thẻ có ảnh (PA D) — đừng đề xuất lại.** Đã xem bằng mắt cả 4 khung (06/11); bản xem thử HTML giữ làm tham chiếu.
+
+### Toast: ĐỔI VỊ TRÍ lên đỉnh — mobile dưới header · desktop góc phải trên dưới header, khoá khung 1440 (06/11/2026, lần 71, Figma lượt 173)
+- **User**: "vị trí của desktop sẽ nằm top right bên dưới header. limit tại khung 1440 · mobile nằm trên top vị trí dưới header luôn" — thay neo đáy 88 / 48. Ghi chú đủ: `_notes/TOAST-DE-XUAT-STYLE-2026-11-06.md` §8; sổ `_notes/figx/lot173-ledger-2026-11-06.json`; STYLE-RULES §2.2 sửa theo.
+- **Code** (`index.html` + `desktop.html`, chỉ `skin-mt`): mobile lề 16 ngay dưới header; desktop mép phải = lề nội dung 48 của khung 1440 (màn 1920 ⇒ cách mép màn 288); `top` = đáy `.navbar` hiện tại + 12 do `toastTop()` đo mỗi lần hiện (mobile 92 trang chủ chưa cuộn · 60 khi header ghim · 12 khi header khuất; desktop 173 → 141); vào / thoát trượt dọc từ trên.
+- **Figma**: 4 khung `Toast / …` dời toast lên (mobile (16, 60) · desktop (1072, 173), constraints trên); mô tả bộ `toast` thêm câu Vị trí. Lề phải 48 và khe 12 là mình tự chọn (đổi được).
+
+### Toast: STICKY THEO HEADER — bám đáy header khi cuộn, không còn trơ trọi (06/11/2026, lần 72, Figma lượt 174)
+- **User**: "cho nó sticky theo cái header á, để việc scroll lên xuống nó k bị trơ trọi. có thể tham khảo mytheresa". Lỗi cũ: toast chỉ đo đáy header MỘT lần lúc hiện nên cuộn thì header dịch còn toast đứng yên. Ghi chú đủ: `_notes/TOAST-DE-XUAT-STYLE-2026-11-06.md` §9; sổ `_notes/figx/lot174-ledger-2026-11-06.json`.
+- **Code** (`index.html` + `desktop.html`, chỉ `skin-mt`): `toastFollow()` cập nhật `--toast-top` mỗi khung hình (rAF) khi cuộn / đổi cỡ màn, chỉ lúc toast đang hiện ⇒ top = đáy `.navbar` đang thấy + 12 (desktop 173 → 141, mobile trang chủ / PLP 92 → 60; header Thanh toán không ghim cuộn khuất ⇒ toast dừng ở lề 12 sát đỉnh). Đã đo từng bước cuộn ở 375 / 1440 / 1920.
+- **Mytheresa**: Browser pane bị chặn, Chrome thật vào được `/int/en/women`; header họ ghim cố định (thanh trên 32 luôn hiện, header chính 50 ghim `top: 32` sau khi cuộn, cuộn lên không ẩn) ⇒ lấy nguyên tắc "bám header ghim", không chép style.
+- **Figma**: mô tả bộ `toast` + ghi chú `ghi-chu-sticky` đầu section demo; khung demo giữ trạng thái chưa cuộn.
+
 ## Vấn đề tồn đọng / cần quyết định tiếp
 
 - ~~Ảnh sản phẩm thật từ CDN DAFC bị chặn~~ → **ĐÃ XONG cho mobile (07/08/2026)**: CDN `cdn.dafc.com.vn` truy cập được, đã tải ~80 ảnh thật về `assets/` (`pN-*.jpg`, `x*.jpg`, `b*.jpg`, `g2.jpg`) và thay toàn bộ placeholder trong `index.html`. Desktop.html cũng đã dùng bộ ảnh thật này từ 10/08/2026.
