@@ -5595,6 +5595,14 @@ Lệnh user (kèm ảnh dòng giỏ hàng đặt trước ghi đỏ "Không kh�
 - **Mytheresa**: Browser pane bị chặn, Chrome thật vào được `/int/en/women`; header họ ghim cố định (thanh trên 32 luôn hiện, header chính 50 ghim `top: 32` sau khi cuộn, cuộn lên không ẩn) ⇒ lấy nguyên tắc "bám header ghim", không chép style.
 - **Figma**: mô tả bộ `toast` + ghi chú `ghi-chu-sticky` đầu section demo; khung demo giữ trạng thái chưa cuộn.
 
+### Toast: vẽ KHUNG Figma trạng thái chưa cuộn / đã cuộn, header ghim (06/11/2026, lần 73, Figma lượt 175)
+- **User**: "vẽ vào figma nhé" (trả lời câu hỏi cuối lần 72). Section `Toast — mobile 375 + desktop 1440` (`1753:153864`) nới 2100 → 4100, thêm 4 khung trên TRANG CHỦ Nữ (bản sao): chưa cuộn (mobile toast 90 · desktop 173) và đã cuộn tới chân trang với header ghim (mobile 60 · desktop 141; header ghim = bản sao instance `page-header-*` ABSOLUTE, desktop ẩn thanh khuyến mãi ⇒ 129).
+- Ghi chú đủ + lệch nhỏ Figma ↔ code (thanh khuyến mãi mobile 30 so với 32 ⇒ 90 so với 92): `_notes/TOAST-DE-XUAT-STYLE-2026-11-06.md` §10; sổ `_notes/figx/lot175-ledger-2026-11-06.json`. Đã xem bằng mắt cả 4 khung.
+
+### Ảnh thay thế = LOGO DAFC cho ảnh sản phẩm lỗi (06/11/2026, lần 74, Figma lượt 176)
+- **User**: "dùng cái logo của DAFC để làm cái placeholder image cho hình sản phẩm nhé". `.img-ph` (mặt phủ khi `imgFailMark` bắt lỗi tải ảnh; xem bằng bánh răng "Ảnh sản phẩm › Lỗi tải") nay vẽ `assets/logo.png` ở giữa — rộng 50% khung kẹp 28–140, mờ 30%, khung cạnh ngắn < 56 chỉ còn nền xám — thay chữ "Không tải được ảnh". CẢ 2 FILE; vẽ bằng nền CSS (không `<img>`, không `mask-image`). Ghi chú đủ số đo: `_notes/ANH-THAY-THE-LOGO-DAFC-2026-11-06.md`; sổ `_notes/figx/lot176-ledger-2026-11-06.json`.
+- **Figma**: component `img-placeholder` (`1758:156792`, section `states`, property `showLogo`) + thay 69 khung thô `img-ph` ở 4 khung ảnh lỗi bằng 69 instance (kích thước giữ nguyên); 2 `[doc]` (ẩn) viết lại; đã xem bằng mắt 4 khung. **Chưa làm**: logo cho trạng thái đang tải (khung xương).
+
 ## Vấn đề tồn đọng / cần quyết định tiếp
 
 - ~~Ảnh sản phẩm thật từ CDN DAFC bị chặn~~ → **ĐÃ XONG cho mobile (07/08/2026)**: CDN `cdn.dafc.com.vn` truy cập được, đã tải ~80 ảnh thật về `assets/` (`pN-*.jpg`, `x*.jpg`, `b*.jpg`, `g2.jpg`) và thay toàn bộ placeholder trong `index.html`. Desktop.html cũng đã dùng bộ ảnh thật này từ 10/08/2026.

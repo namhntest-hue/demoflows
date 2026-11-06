@@ -684,13 +684,19 @@ window.RESP = (function () {
   /* ── LÔ 7 (16/10/2026) — BÀN PHÍM · TIẾP CẬN · ẢNH LỖI ──────────────────────────────────────────────────────────────────────────────────────
      · .sr-only — chữ CHỈ cho trình đọc màn hình (cùng luật `.skel-sr`): thẻ h1 ẩn của trang hãng / danh sách chưa có tiêu đề chính trên màn.
      · .sg-active — hàng gợi ý tìm kiếm đang chọn bằng phím ↑ ↓ (nền secondary, cùng mặt với hover của hàng).
-     · img.img-fail / .img-ph — ẢNH THAY THẾ: ảnh lỗi bị ẩn (mất luôn ký hiệu ảnh vỡ + chữ alt của trình duyệt), một mặt phủ nền secondary + chữ mực phụ 12/16
-       "Không tải được ảnh" (chỉ khung cao từ 160) phủ đúng khung ảnh; không nhận chuột để thẻ vẫn bấm được.
+     · img.img-fail / .img-ph — ẢNH THAY THẾ: ảnh lỗi bị ẩn (mất luôn ký hiệu ảnh vỡ + chữ alt của trình duyệt), một mặt phủ nền secondary + LOGO DAFC (từ 06/11/2026 — trước đó là chữ mực phụ 12/16
+       "Không tải được ảnh" chỉ ở khung cao từ 160; xem khối `.img-ph::before` ngay dưới) phủ đúng khung ảnh; không nhận chuột để thẻ vẫn bấm được.
      · #lowStock — chữ cam "Chỉ còn 01 sản phẩm" (PDP-49): #d97706 chỉ đạt 3,19 : 1 trên nền trắng → #8a6100 (5,5 : 1) — CÙNG màu của khung Figma `product-options`. Chấm ● bên trái vẫn bg-warning. */
   .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .search-suggest.sg-active, .sg-active { background: var(--general-secondary); }
   img.img-fail { visibility: hidden !important; }
   .img-ph { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; padding: 8px; background: var(--general-secondary); color: var(--general-muted-foreground); text-align: center; pointer-events: none; }
+  /* ẢNH THAY THẾ = LOGO DAFC (06/11/2026, user: "dùng cái logo của DAFC để làm cái placeholder image cho hình sản phẩm"): thay chữ "Không tải được ảnh". Logo `assets/logo.png` (chữ DAFC
+     đen, 256 × 55) làm NỀN của ::before — KHÔNG dùng <img> (khỏi dính listener `error` của imgFailMark, khỏi bị bánh răng "Lỗi tải" bẻ src) và KHÔNG dùng mask-image (Chrome chặn khi mở
+     bằng file://). Rộng 50% khung kẹp 28–140, mờ 30%: đen 30% trên mặt xám ra ≈ #a9a9a9, đủ thấy mà không tranh với ảnh thật. Khung có cạnh ngắn < 56 (thumb 40–48 ở tìm kiếm / dòng đơn)
+     gắn `.is-tiny` (imgFailMark) ⇒ chỉ còn mặt xám, không logo. Nhãn đọc màn hình vẫn là alt của ảnh hoặc "Không tải được ảnh" (aria-label của .img-ph). */
+  .img-ph::before { content: ''; flex: none; width: clamp(28px, 50%, 140px); aspect-ratio: 256 / 55; background: url(assets/logo.png) center / contain no-repeat; opacity: .3; }
+  .img-ph.is-tiny::before { display: none; }
   #lowStock { color: #8a6100; }
   /* ── THEO DÕI ĐƠN · LÔ 6 (16/10/2026) ─────────────────────────────────────────────────────────────────────────────────────────────
      · .trk-time  — giờ dưới nhãn chặng của stepper (mobile hai dòng ngày / giờ, desktop một dòng), mực phụ 12/16, cách nhãn 2.
@@ -26720,7 +26726,7 @@ document.addEventListener('click', e => {
      PDP mobile role=heading aria-level=1 (KHÔNG đổi thẻ: rule bộ da bám `p.pc-brand.text-[18px]`); trang hãng / danh sách thiếu h1 thì thêm h1.sr-only.
    · SRC-20 — sgKeyNav: ↓ / ↑ chọn gợi ý (vòng qua ô nhập), Enter chọn hàng đang sáng (không có thì tìm đúng chữ đang gõ như cũ), Esc bỏ chọn; ô nhập mang role=combobox + aria-activedescendant. Mobile: Esc khi hết chọn thì xoá chữ,
      rỗng rồi thì lùi khỏi màn. Desktop: Esc đóng tấm như cũ (gỡ chọn trước).
-   · ẢNH LỖI (PLP-60 · PDP-54) — imgFailMark: lỗi tải ở BẤT KỲ <img> nào (listener `error` capture ở document) ⇒ ẩn ảnh + chèn mặt phủ `.img-ph` (nền secondary + "Không tải được ảnh" nếu khung cao từ 160). Bánh răng nhóm "Ảnh sản phẩm"
+   · ẢNH LỖI (PLP-60 · PDP-54) — imgFailMark: lỗi tải ở BẤT KỲ <img> nào (listener `error` capture ở document) ⇒ ẩn ảnh + chèn mặt phủ `.img-ph` (nền secondary + LOGO DAFC nếu cạnh ngắn của khung ≥ 56 — từ 06/11/2026; trước đó là chữ "Không tải được ảnh" khi khung cao từ 160). Bánh răng nhóm "Ảnh sản phẩm"
      (Bình thường · Lỗi tải): "Lỗi tải" đổi src mọi ảnh `assets/…` sang một tệp không tồn tại (đang có sẵn + ảnh dựng sau, qua MutationObserver) để xem đúng trạng thái; "Bình thường" trả src cũ. */
 const ESC_SKIP = new Set(['sessionPop', 'cookieGate']);
 function escLayerTop() {
@@ -26848,7 +26854,9 @@ function imgFailMark(img) {
   if (h < 24 && w > 0) { par.style.minHeight = Math.round(w * 4 / 3) + 'px'; par.dataset.imgMin = '1'; }
   const ph = document.createElement('span');
   ph.className = 'img-ph'; ph.setAttribute('role', 'img'); ph.setAttribute('aria-label', img.alt || IMG_PH_LABEL);
-  if (Math.max(h, par.clientHeight) >= 160 || (h < 24 && w * 4 / 3 >= 160)) ph.innerHTML = `<span class="t-single">${IMG_PH_LABEL}</span>`;
+  /* 06/11/2026 — ảnh thay thế là LOGO DAFC vẽ bằng CSS (`.img-ph::before`), không còn chữ. Khung có cạnh ngắn < 56 (thumb 40–48) chỉ còn mặt xám. */
+  const phH = (h < 24 && w > 0) ? Math.round(w * 4 / 3) : Math.max(h, par.clientHeight);
+  if (Math.min(w, phH) < 56) ph.classList.add('is-tiny');
   img.insertAdjacentElement('afterend', ph);
   localizeNew(ph);
 }
@@ -30432,10 +30440,10 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>
       </div>
       <div class="h-px bg-border mx-3"></div>
-      <!-- ẢNH SẢN PHẨM (16/10/2026, lô 7 "Cần bổ sung" · PLP-60 · PDP-54) — công cụ của người xem demo: "Lỗi tải" đổi src mọi ảnh sản phẩm sang một tệp không tồn tại để xem ảnh thay thế (nền secondary + "Không tải được ảnh"); "Bình thường" trả lại. -->
+      <!-- ẢNH SẢN PHẨM (16/10/2026, lô 7 "Cần bổ sung" · PLP-60 · PDP-54) — công cụ của người xem demo: "Lỗi tải" đổi src mọi ảnh sản phẩm sang một tệp không tồn tại để xem ảnh thay thế (nền secondary + logo DAFC, từ 06/11/2026); "Bình thường" trả lại. -->
       <div class="px-3 pt-3 pb-2">
         <p class="t-multiline tracking-[0.12em] text-muted-foreground">Ảnh sản phẩm</p>
-        <p class="t-single sp-note text-muted-foreground">Mọi trang có ảnh sản phẩm: Lỗi tải = hiện ảnh thay thế “Không tải được ảnh”.</p>
+        <p class="t-single sp-note text-muted-foreground">Mọi trang có ảnh sản phẩm: Lỗi tải = hiện ảnh thay thế (logo DAFC trên nền xám).</p>
       </div>
       <div class="px-3 pb-3">
         <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Ảnh sản phẩm">
