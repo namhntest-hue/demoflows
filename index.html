@@ -297,6 +297,13 @@ window.RESP = (function () {
   .skel { position: relative; overflow: hidden; background: var(--general-secondary); }
   .skel::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%);
     background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent); animation: shimmer 1.4s infinite; }
+  /* KHUNG XƯƠNG ẢNH SẢN PHẨM = LOGO DAFC TRẮNG (06/11/2026, user "có" sau câu "dùng luôn logo cho lúc ảnh đang tải"; "chuyển sang logo màu trắng thay vì màu đen nha"; "cho nó màu nền secondary đi. màu kia đậm quá"): ô xám là ẢNH SẢN PHẨM
+     (thẻ PLP · thẻ Highlights của trang hãng · thẻ gợi ý PDP · thumb dòng giỏ / chi tiết đơn / thanh toán · các ô gallery PDP) thêm class `.skel-ph` ⇒ logo trắng `assets/logo-white.png` ĐẶC 100% chính giữa ô, CÙNG công thức với `.img-ph::before` (ảnh lỗi, xem dưới):
+     rộng 50% phần ruột (đệm 8) kẹp 28–140, nên ô xám → ảnh lỗi → ảnh thật không nhảy cỡ logo. Nền ô ảnh GIỮ nền `.skel` (secondary #f5f5f5; trên mặt xám / kem `.skel-on .skel` ra #e6e6e6) — đã thử #e6e6e6 cho mọi ô ảnh nhưng user thấy ĐẬM QUÁ;
+     chữ trắng trên #f5f5f5 mờ (chênh 10/255). Sóng sáng `.skel::after` (trắng) chạy phủ lên logo trắng nên không lộ. KHÔNG áp cho ô xám không phải ảnh sản phẩm (banner · tile danh mục · tile bộ sưu tập · ảnh giới thiệu hãng · chữ · nút · chấm).
+     Khung nào cạnh ngắn < 56 thì KHÔNG gắn `.skel-ph` (mặt xám trơn), cùng ngưỡng `.is-tiny` của ảnh lỗi. */
+  .skel-ph { display: flex; align-items: center; justify-content: center; padding: 8px; }
+  .skel-ph::before { content: ''; flex: none; width: clamp(28px, 50%, 140px); aspect-ratio: 256 / 55; background: url(assets/logo-white.png) center / contain no-repeat; }
 
   /* ── KHUNG XƯƠNG TRANG DANH SÁCH (PLP) — 15/10/2026 (lệnh user: "tạo biến thể skeleton cho các thành phần của trang plp và một trang plp skeleton khi mạng yếu") ──
      MỘT khuôn cho mọi chỗ vẽ ô xám của PLP (vào trang khi bật "Mạng yếu" · Xem thêm · đổi lọc / sắp xếp), thay chuỗi HTML tự chép ở nhiều nơi.
@@ -1082,18 +1089,19 @@ window.RESP = (function () {
   /* ── LÔ 7 (16/10/2026) — BÀN PHÍM · TIẾP CẬN · ẢNH LỖI ──────────────────────────────────────────────────────────────────────────────────────
      · .sr-only — chữ CHỈ cho trình đọc màn hình (cùng luật `.skel-sr`): thẻ h1 ẩn của trang hãng / danh sách chưa có tiêu đề chính trên màn.
      · .sg-active — hàng gợi ý tìm kiếm đang chọn bằng phím ↑ ↓ (nền secondary, cùng mặt với hover của hàng).
-     · img.img-fail / .img-ph — ẢNH THAY THẾ: ảnh lỗi bị ẩn (mất luôn ký hiệu ảnh vỡ + chữ alt của trình duyệt), một mặt phủ nền secondary + LOGO DAFC (từ 06/11/2026 — trước đó là chữ mực phụ 12/16
+     · img.img-fail / .img-ph — ẢNH THAY THẾ: ảnh lỗi bị ẩn (mất luôn ký hiệu ảnh vỡ + chữ alt của trình duyệt), một mặt phủ nền secondary + LOGO DAFC TRẮNG (từ 06/11/2026 — trước đó là chữ mực phụ 12/16
        "Không tải được ảnh" chỉ ở khung cao từ 160; xem khối `.img-ph::before` ngay dưới) phủ đúng khung ảnh; không nhận chuột để thẻ vẫn bấm được.
      · #lowStock — chữ cam "Chỉ còn 01 sản phẩm" (PDP-49): #d97706 chỉ đạt 3,19 : 1 trên nền trắng → #8a6100 (5,5 : 1) — CÙNG màu của khung Figma `product-options`. Chấm ● bên trái vẫn bg-warning. */
   .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .search-suggest.sg-active, .sg-active { background: var(--general-secondary); }
   img.img-fail { visibility: hidden !important; }
   .img-ph { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; padding: 8px; background: var(--general-secondary); color: var(--general-muted-foreground); text-align: center; pointer-events: none; }
-  /* ẢNH THAY THẾ = LOGO DAFC (06/11/2026, user: "dùng cái logo của DAFC để làm cái placeholder image cho hình sản phẩm"): thay chữ "Không tải được ảnh". Logo `assets/logo.png` (chữ DAFC
-     đen, 256 × 55) làm NỀN của ::before — KHÔNG dùng <img> (khỏi dính listener `error` của imgFailMark, khỏi bị bánh răng "Lỗi tải" bẻ src) và KHÔNG dùng mask-image (Chrome chặn khi mở
-     bằng file://). Rộng 50% khung kẹp 28–140, mờ 30%: đen 30% trên mặt xám ra ≈ #a9a9a9, đủ thấy mà không tranh với ảnh thật. Khung có cạnh ngắn < 56 (thumb 40–48 ở tìm kiếm / dòng đơn)
-     gắn `.is-tiny` (imgFailMark) ⇒ chỉ còn mặt xám, không logo. Nhãn đọc màn hình vẫn là alt của ảnh hoặc "Không tải được ảnh" (aria-label của .img-ph). */
-  .img-ph::before { content: ''; flex: none; width: clamp(28px, 50%, 140px); aspect-ratio: 256 / 55; background: url(assets/logo.png) center / contain no-repeat; opacity: .3; }
+  /* ẢNH THAY THẾ = LOGO DAFC TRẮNG (06/11/2026, user: "dùng cái logo của DAFC để làm cái placeholder image cho hình sản phẩm" → "chuyển sang logo màu trắng thay vì màu đen nha" → "cho nó màu nền secondary đi. màu kia đậm quá"):
+     thay chữ "Không tải được ảnh". Logo `assets/logo-white.png` (chữ DAFC trắng, 256 × 55 — cùng hình `logo.png`, chỉ đổi màu) làm NỀN của ::before — KHÔNG dùng <img> (khỏi dính listener `error` của imgFailMark, khỏi bị bánh răng "Lỗi tải" bẻ src)
+     và KHÔNG dùng mask-image (Chrome chặn khi mở bằng file://). Rộng 50% khung kẹp 28–140, ĐẶC 100% (trước đó đen mờ 30%). Mặt phủ GIỮ `secondary` #f5f5f5 theo chốt của user: đã thử nền `border-subtle` #e6e6e6 cho chữ trắng rõ hơn (ΔL* 8,2) nhưng user thấy ĐẬM QUÁ;
+     trên #f5f5f5 chữ trắng chỉ chênh 10/255 (ΔL* 3,5) — mờ, là cái giá của nền nhạt (muốn rõ hơn: nền #e6e6e6 hoặc chữ xám). Khung có cạnh ngắn < 56 (thumb 40–48 ở tìm kiếm / dòng đơn) gắn `.is-tiny` (imgFailMark) ⇒ chỉ còn mặt xám, không logo.
+     Nhãn đọc màn hình vẫn là alt của ảnh hoặc "Không tải được ảnh" (aria-label của .img-ph). */
+  .img-ph::before { content: ''; flex: none; width: clamp(28px, 50%, 140px); aspect-ratio: 256 / 55; background: url(assets/logo-white.png) center / contain no-repeat; }
   .img-ph.is-tiny::before { display: none; }
   #lowStock { color: #8a6100; }
   /* ── THEO DÕI ĐƠN · LÔ 6 (16/10/2026) ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -8466,10 +8474,9 @@ function screenPLPList() {
       <button id="showMore" class="t-multiline h-12 px-5 border border-primary text-foreground btn-o press flex items-center gap-2">Xem thêm</button>
     </div>
 
-    <!-- PLP-18 (16/10/2026, lô 8): cuối DANH SÁCH DÀI (nhiều hơn một lượt 24 và đã nối hết) — dòng "đã xem hết" + link "Về đầu trang". syncShowMore bật / tắt. -->
+    <!-- PLP-18 (16/10/2026, lô 8): cuối DANH SÁCH DÀI (nhiều hơn một lượt 24 và đã nối hết) — dòng "đã xem hết"; link "Về đầu trang" ĐÃ BỎ 12/11/2026 (user khoanh đỏ; nút nổi #topFab vẫn có). syncShowMore bật / tắt. -->
     <div id="plpEnd" class="hidden flex-col items-center gap-2 px-4 pb-8 text-center">
       <p data-plp-end-n class="t-single text-muted-foreground">Bạn đã xem hết 0 sản phẩm</p>
-      <button type="button" data-plp-top class="t-multiline underline text-foreground press">Về đầu trang</button>
     </div>
 
     ${camKetSection()}` : `
@@ -8501,7 +8508,7 @@ const skelLn = (lh, inner, gap = 0) => `<div class="skel-ln" style="--lh:${lh}px
 function plpSkelCard() {
   return `
   <div class="skel-card" data-skel-card aria-hidden="true">
-    <div class="skel skel-img"></div>
+    <div class="skel skel-ph skel-img"></div>
     <div class="skel-info">
       <div class="flex flex-col gap-0.5 pb-2">${skelLn(20, skelBar('42%'))}${skelLn(18, skelBar('86%'))}</div>
       <div class="flex flex-col pb-2">${skelLn(18, skelBar('34%'))}${skelLn(20, skelBar('24%', 10))}</div>
@@ -8651,7 +8658,7 @@ function plpHubSkeleton() {
   /* thẻ trong khối Highlights: 160 × 287,3 = ảnh 189/252 (213,3) + khối chữ 74 (24/10/2026: thẻ SP đệm trên / dưới 4 thay 8 ⇒ 82 → 74) */
   const hlCard = () => `
           <div class="bg-card flex flex-col shrink-0" style="width:160px">
-            <div class="skel w-full" style="aspect-ratio:189/252"></div>
+            <div class="skel skel-ph w-full" style="aspect-ratio:189/252"></div>
             <div class="flex flex-col px-1 py-1" style="height:74px">${skelLn(18, skelBar('80%'))}${skelLn(18, skelBar('34%'))}</div>
           </div>`;
   const story = () => `
@@ -9083,10 +9090,9 @@ function screenPLP() {
       <button id="showMore" class="t-multiline h-12 px-5 border border-primary text-foreground btn-o press flex items-center gap-2">Xem thêm</button>
     </div>
 
-    <!-- PLP-18 (16/10/2026, lô 8): cuối DANH SÁCH DÀI (nhiều hơn một lượt 24 và đã nối hết) — dòng "đã xem hết" + link "Về đầu trang". syncShowMore bật / tắt. -->
+    <!-- PLP-18 (16/10/2026, lô 8): cuối DANH SÁCH DÀI (nhiều hơn một lượt 24 và đã nối hết) — dòng "đã xem hết"; link "Về đầu trang" ĐÃ BỎ 12/11/2026 (user khoanh đỏ; nút nổi #topFab vẫn có). syncShowMore bật / tắt. -->
     <div id="plpEnd" class="hidden flex-col items-center gap-2 px-4 pb-8 text-center">
       <p data-plp-end-n class="t-single text-muted-foreground">Bạn đã xem hết 0 sản phẩm</p>
-      <button type="button" data-plp-top class="t-multiline underline text-foreground press">Về đầu trang</button>
     </div>
 
     ${footer()}
@@ -9473,7 +9479,7 @@ function searchSuggestHTML() {
   return `
   <section class="flex flex-col py-4">
     ${brands.length ? head('Thương hiệu') + `<ul>${brands.map(b => row(keep(highlightMatch(b, q)), `data-brand="${SEARCH_ESC(b)}"`)).join('')}</ul>` : ''}
-    ${cats.length ? head('Danh mục') + `<ul>${cats.map(c => row(keep(`${highlightMatch(catLabel(c.label), q)} (${c.n})`), `data-suggest="${SEARCH_ESC(c.label)}"`)).join('')}</ul>` : ''}
+    ${cats.length ? head('Danh mục') + `<ul>${cats.map(c => row(keep(highlightMatch(catLabel(c.label), q)), `data-suggest="${SEARCH_ESC(c.label)}"`)).join('')}</ul>` : ''}
   </section>`;
 }
 
@@ -9509,7 +9515,7 @@ function searchProductRowHTML({ p, i }, tag = 'li', cls = 'search-prow mx-4') {
    "Đặt trước" đứng trước như thẻ; giá .pc-price (đỏ khi giảm) + giá gạch + chip % như thẻ PLP. Kẻ ngăn giữa hàng thụt 16 (li mang mx-4, rule
    .search-prow + .search-prow) như #ccList. Lệnh user 06/10 lượt 7: "sản phẩm gợi ý là hình sản phẩm luôn nhé, xếp dọc giống cái mini cart cho
    bản mobile" — thay dải thẻ ngang 170 của lượt 6. Theo từ khoá ≤ 10 hàng (trước 09/10 chiều: 5); GÕ SAI thì sản phẩm "gần với gợi ý" (searchRelated) cũng ≤ 10 hàng (lượt 14, 09/10/2026; none = không block),
-   rồi chip "Danh mục liên quan" XẾP CUỐI pane (07/10/2026, thứ tự user chốt). Tiêu đề + liên kết "Xem tất cả (N)" (= Enter với cụm tương ứng; không có cụm thì không có liên kết). Trả { key, html } —
+   rồi chip "Danh mục liên quan" XẾP CUỐI pane (07/10/2026, thứ tự user chốt). Tiêu đề (liên kết "Xem tất cả (N)" ĐÃ BỎ 12/11/2026 — user khoanh đỏ; Enter vẫn xem tất cả). Trả { key, html } —
    renderSearchSug() bỏ qua khi khoá không đổi để ảnh không nhấp nháy. Bấm hàng → PDP qua wireProductCards (data-product). */
 function searchSugProductsHTML() {
   const q = searchQuery.trim();
@@ -9525,7 +9531,6 @@ function searchSugProductsHTML() {
   <section class="flex flex-col py-4">
     <div class="flex items-center justify-between gap-2 px-4 py-2">
       <h2 class="t-single text-muted-foreground">Sản phẩm gợi ý</h2>
-      ${more ? hmLink(`Xem tất cả (${prods.length})`, `data-suggest="${SEARCH_ESC(more)}"`) : ''}
     </div>
     <ul class="flex flex-col">${list.map(it => searchProductRowHTML(it)).join('')}</ul>
   </section>${cats.length ? `
@@ -12432,7 +12437,7 @@ function screenOrderSkeleton(guest) {
     const p = orderItemP(it), sale = !it.preorder && p.off && p.was;
     return `
         <div class="flex gap-3">
-          <div class="skel shrink-0" style="width:72px;height:96px"></div>
+          <div class="skel skel-ph shrink-0" style="width:72px;height:96px"></div>
           <div class="flex-1 min-w-0 flex flex-col">
             ${p.brand ? skelLn(20, skelBar('84px', 14)) : ''}
             <div>${Array.from({ length: Math.min(2, lines(it.name, 40)) }, (_, k) => skelLn(18, skelBar(k ? '52%' : '88%'))).join('')}</div>
@@ -12448,7 +12453,7 @@ function screenOrderSkeleton(guest) {
   };
   const gift = ({ g }) => `
         <div class="flex gap-3">
-          <div class="skel shrink-0" style="width:72px;height:96px"></div>
+          <div class="skel skel-ph shrink-0" style="width:72px;height:96px"></div>
           <div class="flex-1 min-w-0 flex flex-col">
             ${skelLn(20, skelBar('64px', 14))}
             <div>${Array.from({ length: Math.min(2, lines(g.name, 40)) }, (_, k) => skelLn(18, skelBar(k ? '46%' : '84%'))).join('')}</div>
@@ -16023,7 +16028,7 @@ function cartSkelRow() {
   return `
   <div class="skel-crow flex gap-2 px-4 py-4">
     <div class="w-4 shrink-0 flex items-center">${cartSkelChk()}</div>
-    <div class="skel shrink-0" style="width:100px;height:133px"></div>
+    <div class="skel skel-ph shrink-0" style="width:100px;height:133px"></div>
     <div class="flex-1 min-w-0 flex flex-col justify-between">
       <div class="flex flex-col">
         <div class="pb-2">${skelLn(20, skelBar('44%'))}${skelLn(18, skelBar('88%'))}</div>
@@ -16124,7 +16129,7 @@ function pdpSkelCard() {
   /* nền THẺ trắng (.bg-card như thẻ thật — trên băng kem thẻ thật là ô trắng); ruột thẻ cao NHẤT dải (giá + hàng giá gạch kèm chip 20 = 110): thẻ thật trong dải bị kéo bằng thẻ đang giảm giá */
   return `
   <div class="bg-card flex flex-col">
-    <div class="skel w-full" style="aspect-ratio:189/252"></div>
+    <div class="skel skel-ph w-full" style="aspect-ratio:189/252"></div>
     <div class="flex flex-col px-1 py-1">
       <div class="flex flex-col gap-0.5 pb-2">${skelLn(20, skelBar('42%'))}${skelLn(18, skelBar('86%'))}</div>
       <div class="flex flex-col pb-2">${skelLn(18, skelBar('34%'))}${skelLn(20, skelBar('24%', 10))}</div>
@@ -16148,7 +16153,7 @@ function screenPDPSkeleton() {
 
     <!-- ảnh: ô xám 375 × 520 + chấm trang (1 dài 24 + 4 ngắn 16, khe 4, cách đáy 12) -->
     <div class="relative w-full" style="height:520px" aria-hidden="true">
-      <div class="skel w-full h-full"></div>
+      <div class="skel skel-ph w-full h-full"></div>
       <div class="skel-on absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
         <div class="skel" style="width:24px;height:4px;border-radius:9999px"></div>
         ${'<div class="skel" style="width:16px;height:4px;border-radius:9999px"></div>'.repeat(4)}
@@ -18267,7 +18272,7 @@ function syncShowMore(root) {
   if (!sm) return;
   const total = sortedProducts().length, done = plpShownCount(root) >= total;
   sm.parentElement.classList.toggle('hidden', done);
-  /* PLP-18 (lô 8): danh sách DÀI (hơn một lượt) đã nối hết ⇒ dòng "đã xem hết" + "Về đầu trang". */
+  /* PLP-18 (lô 8): danh sách DÀI (hơn một lượt) đã nối hết ⇒ dòng "đã xem hết" (link "Về đầu trang" ĐÃ BỎ 12/11/2026). */
   const end = (root || document).querySelector('#plpEnd');
   if (end) {
     end.classList.toggle('hidden', !(done && total > PLP_PER_PAGE));
@@ -18275,7 +18280,6 @@ function syncShowMore(root) {
     const n = end.querySelector('[data-plp-end-n]'); if (n) n.textContent = `Bạn đã xem hết ${total} sản phẩm`;
   }
 }
-document.addEventListener('click', e => { if (e.target.closest && e.target.closest('[data-plp-top]')) window.scrollTo({ top: 0, behavior: 'smooth' }); });
 /* Zimmermann đánh số theo BẢNG RIÊNG CỦA HÃNG (0 = XS · 1 = S · 2 = M · 3 = L ·
    4 = XL). Bộ facet lấy từ Excel của khách chỉ có nhóm chữ, nên không nối hai hệ
    thì 11 sản phẩm Zimmermann không bao giờ khớp một ô size nào. Giữ CẢ token gốc
@@ -20473,6 +20477,42 @@ function trackGroupHTML() {
   </div>`;
 }
 
+/* ── TRANG VÀO PRIVATE SALE "VIP DAY EOSS" (11/11/2026, user: "redesign lại theo style của chúng ta" → chốt PA B "Thiệp mời"; "nội dung cứ theo đúng như web hiện tại") ──
+   Nguồn: https://shop.dafc.com.vn/vip-day-eoss. CHỮ GIỮ NGUYÊN VĂN trang thật (kể cả nhãn "Mật khẩu" dù câu hướng dẫn gọi là "mã truy cập", và hotline 1900 6666) — chỉ đổi hình thức:
+   băng kem --cu-surface canh giữa [tiêu đề Libre 24/32 chữ thường (trang thật viết HOA; luật Libre của mình không viết hoa) · vạch 32 --cu-signature · câu giới thiệu + ngày, chữ --cu-ink] → khối thao tác nền trắng [câu hướng dẫn · ô nhãn nổi · nút đen · hotline].
+   Bấm "Truy cập": khách chưa đăng nhập → màn Đăng nhập; thành viên → PLP (cách hiểu của mình, CHƯA xác nhận). Mở bằng bánh răng "Private sale" hoặc #screen=vipday. */
+function screenVIPDAY() {
+  /* 11/11/2026 lần 2 (user: khung Figma 1774:132054 "đây là ui final bản desktop, hãy adapt bản mobile") — THEO KHUNG USER VẼ LẠI, thay bố cục "băng kem + cột form" lần 1:
+     desktop = nền xám accent, đệm 64 / 24, THẺ 1200 = ảnh 600 (assets/vipday-hero.jpg, cover) | hộp trắng 95% 600 đệm 32 khe 24 canh giữa: tiêu đề Libre 24/32 · vạch 176 --cu-signature · câu giới thiệu + ngày Inter 16/24 500 --cu-ink ·
+     ô Mật khẩu · nút 48 · ba dòng 12/18 canh giữa THỨ TỰ MỚI: câu hướng dẫn · câu "Hoặc liên hệ…" (muted) · Hotline (foreground).
+     mobile (mình adapt, CHƯA xác nhận) = ảnh tràn ngang tỉ lệ 600:481 ở trên, hộp nội dung y hệt ở dưới (đệm 24 / 16, nền trắng, không nền xám). */
+  return `
+  <div class="w-full min-h-screen bg-background" data-scroller>
+    ${navBar()}
+    <div class="relative w-full" style="aspect-ratio:600/481">
+      <img src="assets/vipday-hero.jpg" alt="" class="absolute inset-0 w-full h-full" style="object-fit:cover">
+    </div>
+    <div class="flex flex-col items-center gap-6 px-4 pt-6 pb-10 text-center">
+        <h1 class="t-display-title text-foreground w-full">Welcome to Members Event</h1>
+        <span aria-hidden="true" class="shrink-0" style="width:176px;height:1px;background:var(--cu-signature)"></span>
+        <div class="t-overlay w-full flex flex-col gap-2" style="color:var(--cu-ink)">
+          <p style="text-wrap:balance">Không gian mua sắm độc quyền dành riêng cho khách VIP của DAFC</p>
+          <p>Duy nhất 12/11 – 15/11</p>
+        </div>
+        <div class="w-full flex flex-col gap-6 text-left">
+          ${afield('Mật khẩu', 'type="password" id="vipPass" autocomplete="off"', 'Nhập mật khẩu')}
+          ${abtn('Truy cập', `data-nav="${ckAuth ? 'plp' : 'login'}"`)}
+          <div class="flex flex-col gap-2 text-center">
+            <p class="t-multiline text-muted-foreground">Vui lòng nhập mã truy cập được gửi qua tin nhắn và đăng nhập tài khoản thành viên DAFC để tiếp tục trải nghiệm mua sắm độc quyền.</p>
+            <p class="t-multiline text-muted-foreground">Hoặc liên hệ đội ngũ chăm sóc khách hàng DAFC để được hỗ trợ truy cập chương trình.</p>
+            <p class="t-multiline text-foreground">Hotline: 1900 6666</p>
+          </div>
+        </div>
+    </div>
+    ${footer()}
+  </div>`;
+}
+
 function screenTRACK() {
   /* 17/10/2026: KẾT QUẢ tra cứu = BẢN KHÁCH của chi tiết đơn (orderDetailHTML(o, true): tự mang navBar + chân trang); chưa có kết quả thì ô tra cứu như cũ.
      19/10/2026: mã TỔNG của đơn tách (trackGroup) mà chưa mở đơn con nào ⇒ DANH SÁCH ĐƠN CON. */
@@ -20496,6 +20536,7 @@ const RENDER = {
   pdpGone: screenPDPGone,
   /* 21/10/2026: trang 404 / 503 — xem khối cùng tên cạnh screenPDPGone. */
   notfound: screenNOTFOUND, maintenance: screenMAINTENANCE,
+  vipday: screenVIPDAY,   // 11/11/2026: trang vào private sale VIP Day EOSS — xem khối trước screenTRACK
   /* 22/10/2026: trang Blog + bài viết — xem khối "TRANG BLOG" trước screenCART. blogDetail với id lạ (hash / ngữ cảnh hỏng) → trang 404. */
   blog: screenBLOG, blogDetail: () => (blogPost(blogCur) ? screenBLOGDETAIL() : screenNOTFOUND()),
   checkout: screenCHECKOUT, done: screenDONE, pay: screenPAY, track: screenTRACK,
@@ -22761,7 +22802,6 @@ const I18N_RE = [
   [/^Kết quả tìm kiếm của “(.+)”$/,   'Search results for “$1”'],
   /* 06/10/2026 — màn Search mobile: không có kết quả / xem tất cả / sửa lỗi gõ (chiều ngược ở I18N_REV_RE). */
   [/^Không tìm thấy kết quả cho “(.+)”$/, 'No results for “$1”'],
-  [/^Xem tất cả \((\d+)\)$/,            'See all ($1)'],
   [/^Có phải bạn muốn tìm “(.+)”\?$/,  'Did you mean “$1”?'],
   [/^Không tìm thấy kết quả phù hợp với "(.+)"$/, 'No results found for "$1"'],
   [/^Xoá "(.+)" khỏi lịch sử$/,       'Remove "$1" from history'],
@@ -22855,7 +22895,6 @@ const I18N_REV_RE = [
   [/^Searching for "(.+)"$/,          'Đang tìm "$1"'],
   [/^Search results for “(.+)”$/,     'Kết quả tìm kiếm của “$1”'],
   [/^No results for “(.+)”$/,          'Không tìm thấy kết quả cho “$1”'],
-  [/^See all \((\d+)\)$/,               'Xem tất cả ($1)'],
   [/^Did you mean “(.+)”\?$/,          'Có phải bạn muốn tìm “$1”?'],
   [/^No results found for "(.+)"$/,   'Không tìm thấy kết quả phù hợp với "$1"'],
   [/^Remove "(.+)" from history$/,    'Xoá "$1" khỏi lịch sử'],
@@ -23732,7 +23771,7 @@ document.addEventListener('click', e => {
      PDP mobile role=heading aria-level=1 (KHÔNG đổi thẻ: rule bộ da bám `p.pc-brand.text-[18px]`); trang hãng / danh sách thiếu h1 thì thêm h1.sr-only.
    · SRC-20 — sgKeyNav: ↓ / ↑ chọn gợi ý (vòng qua ô nhập), Enter chọn hàng đang sáng (không có thì tìm đúng chữ đang gõ như cũ), Esc bỏ chọn; ô nhập mang role=combobox + aria-activedescendant. Mobile: Esc khi hết chọn thì xoá chữ,
      rỗng rồi thì lùi khỏi màn. Desktop: Esc đóng tấm như cũ (gỡ chọn trước).
-   · ẢNH LỖI (PLP-60 · PDP-54) — imgFailMark: lỗi tải ở BẤT KỲ <img> nào (listener `error` capture ở document) ⇒ ẩn ảnh + chèn mặt phủ `.img-ph` (nền secondary + LOGO DAFC nếu cạnh ngắn của khung ≥ 56 — từ 06/11/2026; trước đó là chữ "Không tải được ảnh" khi khung cao từ 160). Bánh răng nhóm "Ảnh sản phẩm"
+   · ẢNH LỖI (PLP-60 · PDP-54) — imgFailMark: lỗi tải ở BẤT KỲ <img> nào (listener `error` capture ở document) ⇒ ẩn ảnh + chèn mặt phủ `.img-ph` (nền secondary + LOGO DAFC TRẮNG nếu cạnh ngắn của khung ≥ 56 — từ 06/11/2026; trước đó là chữ "Không tải được ảnh" khi khung cao từ 160, rồi logo đen mờ 30%). Bánh răng nhóm "Ảnh sản phẩm"
      (Bình thường · Lỗi tải): "Lỗi tải" đổi src mọi ảnh `assets/…` sang một tệp không tồn tại (đang có sẵn + ảnh dựng sau, qua MutationObserver) để xem đúng trạng thái; "Bình thường" trả src cũ. */
 const ESC_SKIP = new Set(['sessionPop', 'cookieGate']);
 function escLayerTop() {
@@ -27504,6 +27543,15 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>
       </div>
       <div class="h-px bg-border mx-3"></div>
+      <!-- PRIVATE SALE (11/11/2026) — MỞ thẳng trang vào VIP Day EOSS (không phải công tắc); dùng chung handler data-sim-sys. -->
+      <div class="px-3 pt-3 pb-2">
+        <p class="t-multiline tracking-[0.12em] text-muted-foreground">Private sale</p>
+        <p class="t-single sp-note text-muted-foreground">Bấm để MỞ trang vào VIP Day EOSS (nhập mật khẩu sự kiện). Bấm Truy cập: khách ra màn Đăng nhập, thành viên vào danh sách sản phẩm.</p>
+      </div>
+      <div class="px-3 pb-3">
+        <button data-sim-sys="vipday" class="t-multiline w-full h-8 rounded-full bg-secondary text-foreground press">Mở trang VIP Day</button>
+      </div>
+      <div class="h-px bg-border mx-3"></div>
       <!-- TÌNH HUỐNG ĐĂNG NHẬP · MÃ OTP · LIÊN KẾT ĐẶT LẠI (16/10/2026, lô 2 "Cần bổ sung") — công cụ của người xem demo như "Tình huống thanh toán": chọn trước kết cục rồi làm thao tác; mặc định Thành công / Đúng nên luồng cũ không đổi. -->
       <div class="px-3 pt-3 pb-2">
         <p class="t-multiline tracking-[0.12em] text-muted-foreground">Đăng nhập</p>
@@ -27647,10 +27695,10 @@ document.body.insertAdjacentHTML('beforeend', `
         </div>
       </div>
       <div class="h-px bg-border mx-3"></div>
-      <!-- ẢNH SẢN PHẨM (16/10/2026, lô 7 "Cần bổ sung" · PLP-60 · PDP-54) — công cụ của người xem demo: "Lỗi tải" đổi src mọi ảnh sản phẩm sang một tệp không tồn tại để xem ảnh thay thế (nền secondary + logo DAFC, từ 06/11/2026); "Bình thường" trả lại. -->
+      <!-- ẢNH SẢN PHẨM (16/10/2026, lô 7 "Cần bổ sung" · PLP-60 · PDP-54) — công cụ của người xem demo: "Lỗi tải" đổi src mọi ảnh sản phẩm sang một tệp không tồn tại để xem ảnh thay thế (nền secondary + logo DAFC trắng, từ 06/11/2026); "Bình thường" trả lại. -->
       <div class="px-3 pt-3 pb-2">
         <p class="t-multiline tracking-[0.12em] text-muted-foreground">Ảnh sản phẩm</p>
-        <p class="t-single sp-note text-muted-foreground">Mọi trang có ảnh sản phẩm: Lỗi tải = hiện ảnh thay thế (logo DAFC trên nền xám).</p>
+        <p class="t-single sp-note text-muted-foreground">Mọi trang có ảnh sản phẩm: Lỗi tải = hiện ảnh thay thế (logo DAFC trắng trên nền xám).</p>
       </div>
       <div class="px-3 pb-3">
         <div class="flex p-0.5 rounded-full bg-secondary" role="group" aria-label="Ảnh sản phẩm">
