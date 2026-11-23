@@ -1617,6 +1617,8 @@ window.RESP = (function () {
   .ck-ship-row > .ck-ship-name { flex: 1 1 auto; min-width: 0; }
   .ck-ship-row > .ck-ship-fee  { flex: 0 0 auto; }
   .ck-ship-row > span { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--general-foreground); }
+  /* 23/11/2026 — dòng "Dự kiến giao hàng…" mới DÀI hơn (hỏa tốc 47 ký tự) nên ở thẻ 343 rớt xuống 2 dòng và mồ côi "16:00": cân dòng cho đều (trình duyệt cũ bỏ qua, chữ vẫn xuống dòng bình thường). */
+  #shipOpts [data-opt] .flex-1 > .t-multiline, #shipDoneEta { text-wrap: balance; }
   /* 02/10/2026 (lệnh user: "bổ sung dòng … bên dưới nút đặt hàng") — câu đồng ý điều khoản dưới nút Đặt hàng.
      "ĐẶT HÀNG" hoa đúng như user gõ và đúng như nhãn nút; chữ gõ trong mã vẫn là "Đặt hàng" (cũng là khoá i18n của
      nút) nên hoa bằng class có tên này, KHÔNG gõ hoa vào chuỗi. Ngoại lệ chữ hoa có chủ đích: câu nhắc lại nhãn
@@ -1758,6 +1760,8 @@ window.RESP = (function () {
   /* 15/10/2026 (user: "áp dụng cho cả desktop nhé" sau khi vẽ lại khung Figma MOBILE bước VAT) — khung ô nhập chứa CẢ dòng ghi chú VAT ở đầu khung: nền secondary
      (#f5f5f5), KHÔNG viền (khung mobile của user ẨN nét viền), đệm 12 đều bốn phía — cùng số với mobile. */
   #vatFieldRows { padding: 12px; }
+  /* 23/11/2026 (user: "làm đậm nhãn Lưu ý luôn nhé") — nhãn "Lưu ý:" của dòng chú VAT in đậm = Medium 500 (file nội dung của user in đậm nhãn; thang chữ của dự án chỉ có 400 / 500). Phần còn lại của dòng giữ 400. */
+  .vat-note-k { font-weight: 500; }
   /* 16/10/2026 (user gửi 2 ảnh trang gốc: "bố cục … với các hàng ngang, hàng dọc") — các ô hoá đơn VAT xếp LƯỚI 2 CỘT (khe ngang 16 = khe dọc py-2 + py-2); ô mang `.vat-wide` chiếm CẢ HÀNG
      (Địa chỉ · Địa chỉ email của Cá nhân). `align-items: start` để dòng báo lỗi dưới một ô không kéo cao ô hàng xóm. Mobile KHÔNG có rule này (index.html) nên các ô xếp dọc. */
   .vat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; align-items: start; }
@@ -2783,6 +2787,9 @@ window.RESP = (function () {
      `collapsible` stroke #d3d3d3 còn `dk-sum-total` stroke #e6e6e6 — hai kẻ khác
      sắc CÓ CHỦ Ý: một kẻ chia TRONG cụm tiền, một kẻ ngăn cụm phụ với hành động chính). */
   .dk-sum-acc { border-top: 1px solid var(--general-border); padding-top: 12px; }
+  /* 20/11/2026 (user: "cái #rewardOpts của tôi có margin 12 trên dưới lận hãy update lại nhé", component side-panel 641:76692 bản desktop): hàng ưu đãi DAFC Rewards đệm trên/dưới 8 → 12 (markup py-3), y như bản mobile (03/10/2026).
+     Lựa chọn "Sử dụng điểm thưởng" ĐANG CHỌN (có ô nhập ngay dưới) giữ đệm DƯỚI hàng radio 8 (component: 40 = 12 + 20 + 8). Đo: hàng thành viên 38 → 46, hàng điểm đang chọn 122 → 126, #rewardOpts 168 → 180, dải rewards 237 → 249 = số đo Figma. */
+  #rewardOpts .opt:has(> #pointsInputWrap:not(.hidden)) > button { padding-bottom: 8px; }
   /* 14/09/2026 — CHECKOUT ĐI CÙNG HƯỚNG (lệnh user: "dùng kích thước này áp vào
      2 cái block trong checkout luôn", ngay sau lượt hẹp cột giỏ ở trên). Trang
      Thanh toán CÙNG cơ chế: hàng flex + cột trái flex-1 + cột phải
@@ -6754,6 +6761,31 @@ window.RESP = (function () {
   .hm-signup-photo { position: relative; height: auto; aspect-ratio: auto; }
   .hm-signup-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .hm-signup-card { justify-self: center; align-self: center; width: 100%; max-width: 720px; padding: 72px 64px; }
+  /* ══ BĂNG CHIA ĐÔI: ẢNH CỬA HÀNG + ẢNH MEMBERS EVENT (23/11/2026) ═══════════════════════════
+     Lệnh user, 2 lượt cùng ngày — lượt 1: *"ở homepage có phần đăng ký nhận thông tin, sẽ bỏ block đăng ký đó,
+     thay bằng cái hình tôi đính kèm (member event nhé)"* (kèm ảnh khung Figma Home desktop + ảnh `Members Event`);
+     mình đọc thành THAY CẢ BĂNG bằng một ảnh. Lượt 2 (đính chính): *"không phải, ý tôi là bỏ mỗi cái đăng ký thôi,
+     còn cái hình bên kia vẫn giữ lại / là chia đôi thành 2 hình, 1 hình cửa hàng như hiện tại và 1 hình như hình
+     tôi mới gửi ghép lại với nhau"*. ⇒ băng GIỮ nguyên lưới 2 nửa "LẦN 4" ở trên: nửa TRÁI vẫn là ảnh cửa hàng
+     (link `login`), nửa PHẢI từ tấm chữ đăng ký → ảnh Members Event. `.hm-signup-card` và `hmSignup()` nghỉ hưu
+     (giữ làm tư liệu, nay không còn ai gọi).
+     HAI ẢNH CÙNG KHỔ 1536×625 (`home-newsletter-montblanc-desktop.jpg` và `home-members-event-desktop.png`) ⇒ mỗi ô
+     nhận `aspect-ratio: 1536 / 625`, băng cao THEO TỈ LỆ ẢNH và không ảnh nào bị cắt ở mọi khổ (băng cũ cao theo tấm
+     chữ nên đứng yên 290 và ảnh cửa hàng bị cắt dọc ở màn rộng). Ở khổ 1440 (lòng 1425 vì thanh cuộn 15) mỗi nửa
+     712,5 × 290 — đúng chiều cao 290 của băng cũ, nên khe tới USP và footer (24 / 24) không đổi.
+     Ô phải dùng luôn class `.hm-signup-photo` (ảnh tuyệt đối phủ kín ô, `object-fit: cover`) và có nền #F7F3DE = ĐÚNG
+     màu nền của ảnh (đo 915 755 / 960 000 điểm một màu, bốn mép đều một màu) để làm tròn nửa điểm ảnh ở mép ô không
+     lộ khe. Khổ < 1024 vẫn XẾP DỌC như băng cũ (media query bên dưới): mỗi ảnh một hàng rộng hết bề ngang; tỉ lệ
+     `1536 / 625` thắng `358 / 140` của khuôn cũ nhờ đặc hiệu (0,3,0 so với 0,1,0). */
+  .hm-signup-band.hm-members-band .hm-signup-photo { aspect-ratio: 1536 / 625; }
+  .hm-members-event { background: #f7f3de; }
+  /* Nền cả BĂNG cũng #F7F3DE: ở lòng 1425 (màn 1440 có thanh cuộn) mỗi nửa 712,5 nên Chrome làm tròn lệch một cột
+     điểm ảnh giữa hai ô, cột đó lộ nền băng (đo: 290 điểm màu #F5F2ED trước khi thêm rule này) — cùng màu ô phải thì
+     vô hình. Dòng thứ hai để thắng rule nền của skin-mt.skin-li (`html.skin-mt.skin-li :is(… .hm-signup-band …)` —
+     `:is()` lấy đặc hiệu của vế nặng nhất `.bg-secondary.mt-4` ⇒ 0,4,1, và rule đó đứng SAU rule này): thêm `body`
+     cho 0,4,2 — cùng 0,4,1 thì thua vì thứ tự. */
+  .hm-signup-band.hm-members-band,
+  html.skin-mt.skin-li body .hm-signup-band.hm-members-band { background: #f7f3de; }
 
   /* ══ NHỊP DỌC GIỮA CÁC KHỐI TRANG CHỦ — THEO FIGMA USER SỬA (27/10/2026) ══════════════════════
      Lệnh user: *"tôi vừa update lại khoảng cách cho trang home page … khoảng cách giữa các block với nhau"*.
@@ -14410,6 +14442,34 @@ function hmSignup() {
         </div>`;
 }
 
+/* ── MEMBERS EVENT — BĂNG CHIA ĐÔI THAY Ô ĐĂNG KÝ (23/11/2026) ───────────────────────────────────
+   Lệnh user: *"bỏ mỗi cái đăng ký thôi, còn cái hình bên kia vẫn giữ lại / là chia đôi thành 2 hình, 1 hình cửa hàng
+   như hiện tại và 1 hình như hình tôi mới gửi ghép lại với nhau"* (lượt đầu cùng ngày mình thay CẢ băng bằng một ảnh —
+   sai ý). `screenHOME()` gọi hàm này thay cho `hmSignup()`; hàm cũ (ảnh trái + tấm chữ đăng ký phải) CÒN NGUYÊN làm
+   tư liệu, gọi lại một dòng là có ô đăng ký trở lại. `nlDoneSheet` (ngăn kéo xác nhận đăng ký) và bộ bắt
+   `data-nl-submit` ở cuối file cũng ở lại: chúng tìm nút theo `.hm-signup-card` / `.hm-signup-band`, không có ô đăng
+   ký thì không có gì chạy.
+   NỬA TRÁI = đúng ảnh + đúng link của `hmSignup()`: ảnh cửa hàng Montblanc `home-newsletter-montblanc-desktop.jpg`,
+   `data-nav="login"`, `aria-label="Đặc quyền thành viên DAFC"`, alt rỗng vì <a> đã có aria-label — sao chép nguyên
+   markup; đổi ảnh cửa hàng thì đổi ở ĐÂY (hmSignup đã nghỉ hưu).
+   NỬA PHẢI = ảnh Members Event `home-members-event-desktop.png` 1536×625 (user gửi nguyên, chỉ bỏ kênh alpha — 255 ở
+   mọi điểm — và nén lại 73 → 46 KB, từng điểm ảnh giữ nguyên). Chữ trong ảnh là tiếng Việt cố định nên bản EN cũng hiện
+   đúng ảnh này; `alt` ghi đủ nội dung cho trình đọc màn hình. KHÔNG bấm được (user chưa chỉ trang đích).
+   Hai ảnh cùng 1536×625 → CSS ở khối "BĂNG CHIA ĐÔI" (aspect-ratio mỗi ô). `.lazy` (hiện dần khi tải xong) như ảnh
+   băng cũ — KHÔNG thêm `loading="lazy"` native: ảnh native-lazy ở trang nền / pane ẩn không bao giờ tải (đã gặp khi kiểm). */
+function hmMembersEvent() {
+  return `
+      <div class="hm-signup-band hm-members-band reveal">
+          <a data-nav="login" class="hm-signup-photo" aria-label="Đặc quyền thành viên DAFC">
+            <img src="${A}home-newsletter-montblanc-desktop.jpg" alt="" class="w-full h-full object-cover lazy">
+          </a>
+          <div class="hm-signup-photo hm-members-event">
+            <img src="${A}home-members-event-desktop.png" width="1536" height="625" class="lazy"
+                 alt="Members Event — ưu đãi lên đến 20% dành cho khách hàng thành viên, thời gian 23/10 – 25/10/2026. Ưu đãi đổi điểm theo hạng thẻ thành viên: Member 10%, Gold 15%, Platinum 20%, Diamond 20%.">
+          </div>
+      </div>`;
+}
+
 /* ── MÀN ────────────────────────────────────────────────────────────────────────
    Bọc y hệt mọi screen khác: `data-scroller` rồi `navBar()` rồi khung `max-w-[1440px]`
    rồi `footer()` NGOÀI khung (footer tự có `bg-secondary` full-bleed + khung 1440 riêng).
@@ -14515,10 +14575,13 @@ function screenHOME() {
            Ra ngoài thì KHÔNG mất gì: cả hmUsp() lẫn hmSignup() đã TỰ mang khung
            max-w-[1440px] mx-auto px-6 bên trong, nên nội dung vẫn đúng 1440 như mọi
            mục; chỉ mảng màu là tràn. Các mục khác thì KHÔNG ra ngoài được — chúng dựa vào
-           khung của trang chủ, không tự có. -->
+           khung của trang chủ, không tự có.
+           23/11/2026 (lệnh user): Ô ĐĂNG KÝ (nửa phải của băng) đã đổi thành ảnh MEMBERS EVENT, nửa
+           trái vẫn là ảnh cửa hàng — chỗ của hmSignup() nay là hmMembersEvent(). Lý do "ngoài khung"
+           giữ nguyên: băng vẫn TRÀN mép như mảng màu của USP và footer. -->
     ${hmUsp()}
 
-    ${hmSignup()}
+    ${hmMembersEvent()}
     ${footer()}
   </div>`;
 }
@@ -15161,7 +15224,7 @@ const ORDERS = [
       { img: 'p8-0.jpg', name: 'Túi da Lou mini', variant: 'Onesize · Black', qty: 2, price: '45.066.000 ₫', sku: '190348' },
     ],
     sub: '90.132.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '90.132.000 ₫',
-    payment: 'Thanh toán qua cổng Payoo', method: 'Giao hàng tiêu chuẩn',
+    payment: 'Thanh toán qua cổng Payoo', method: 'Giao hàng Tiêu Chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 1, log: ['27/09/2026 15:26'],
   },
@@ -15171,7 +15234,7 @@ const ORDERS = [
       { img: 'p3-0.jpg', name: 'Túi đeo vai da Emblème', variant: 'Onesize · Verde Menta', qty: 1, price: '50.957.000 ₫', sku: '190215' },
     ],
     sub: '50.957.000 ₫', ship: 'Miễn phí', discount: '0 ₫', pointsUsed: 500, total: '50.457.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng Tiêu Chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 2, log: ['20/09/2026 10:22', '20/09/2026 11:39'],
   },
@@ -15181,7 +15244,7 @@ const ORDERS = [
       { img: 'p1-0.jpg', name: 'Đầm lụa mini Broken Jewels', variant: '38 · Broken Jewels', qty: 1, price: '72.557.000 ₫', preorder: PRODUCTS[0].preorder, sku: '190101' },
     ],
     sub: '72.557.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '72.557.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng Tiêu Chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 2, log: ['05/09/2026 10:22', '05/09/2026 10:41'],
   },
@@ -15191,7 +15254,7 @@ const ORDERS = [
       { img: 'p2-0.jpg', name: 'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant: 'Onesize', qty: 1, price: '15.611.000 ₫', sku: '190162' },
     ],
     sub: '15.611.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '15.611.000 ₫',
-    payment: 'Chuyển khoản / QR code', method: 'Giao hàng tiêu chuẩn',
+    payment: 'Chuyển khoản / QR code', method: 'Giao hàng Tiêu Chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 3, log: ['28/08/2026 20:05', '28/08/2026 20:40', '30/08/2026 14:12'],
     ships: { std: { awb: 'TKN284951', eta: '04/09/2026' } },
@@ -15202,7 +15265,7 @@ const ORDERS = [
       { img: 'p1-0.jpg', name: 'Đầm lụa mini Broken Jewels', variant: '38 · Broken Jewels', qty: 1, price: '72.557.000 ₫', preorder: PRODUCTS[0].preorder, sku: '190101' },
     ],
     sub: '72.557.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '72.557.000 ₫',
-    payment: 'Chuyển khoản / QR code', method: 'Giao hàng tiêu chuẩn',
+    payment: 'Chuyển khoản / QR code', method: 'Giao hàng Tiêu Chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 2, log: ['28/08/2026 20:05', '28/08/2026 20:40'],
   },
@@ -15221,7 +15284,7 @@ const ORDERS = [
       { pk: 'tier150', key: 'scarf' },
     ],
     sub: '95.925.000 ₫', ship: '25.000 ₫', discount: '0 ₫', total: '95.950.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng hỏa tốc',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng Hỏa Tốc',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 3, log: ['06/09/2026 15:26', '06/09/2026 15:58', '07/09/2026 17:21'],
     ships: { fast: { awb: 'TKN284960', done: '08/09/2026' }, std: { awb: 'TKN284972', eta: '12/09/2026' } },
@@ -15236,7 +15299,7 @@ const ORDERS = [
       { pk: 'dressBundle', key: 'edt' },
     ],
     sub: '72.557.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '72.557.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng Tiêu Chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 2, log: ['06/09/2026 15:26', '06/09/2026 15:58'],
     vat: { type: 'company', company: 'Công ty TNHH Thời Trang ABC', address: '25 Nguyễn Huệ, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh', tax: '0312345678', buyer: PROFILE.name, email: 'ketoan@abcfashion.vn' },
@@ -15248,7 +15311,7 @@ const ORDERS = [
       { img: 'p10-0.jpg', name: 'Thắt lưng da mặt khóa tròn 3.5 cm', variant: '95 · Black', qty: 1, price: '17.575.000 ₫', sku: '190530' },
     ],
     sub: '52.823.000 ₫', ship: 'Miễn phí', discount: '− 2.113.000 ₫', total: '50.710.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng Tiêu Chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 3, log: ['02/08/2026 10:22', '02/08/2026 11:38', '03/08/2026 17:21'],
     ships: { std: { awb: 'TKN284917', eta: '12/08/2026' } },
@@ -15258,7 +15321,7 @@ const ORDERS = [
     id: 'DA000000102801', status: 'Hoàn tất', tone: 'muted', date: '10/07/2026',
     items: [ { img: 'p8-0.jpg', name: 'Túi da Lou mini', variant: 'Onesize · Black', qty: 1, price: '45.066.000 ₫', sku: '190348' } ],
     sub: '45.066.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '45.066.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng hỏa tốc',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng Hỏa Tốc',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'45 Lê Lợi, P. Bến Thành, Quận 1, TP. Hồ Chí Minh' },
     steps: 4, log: ['10/07/2026 09:02', '10/07/2026 09:40', '11/07/2026 08:15', '12/07/2026 17:55'],
     ships: { std: { awb: 'TKN284790' } },
@@ -15268,7 +15331,7 @@ const ORDERS = [
     id: 'DA000000102720', status: 'Đã huỷ', tone: 'cancel', date: '01/07/2026',
     items: [ { img: 'p6-0.jpg', name: 'Giày thể thao da lộn Greca Court', variant: '41 · Bianco', qty: 1, price: '27.393.000 ₫', sku: '190309' } ],
     sub: '27.393.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '27.393.000 ₫',
-    payment: 'Thanh toán qua cổng Payoo', method: 'Giao hàng tiêu chuẩn',
+    payment: 'Thanh toán qua cổng Payoo', method: 'Giao hàng Tiêu Chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 1, log: ['01/07/2026 14:03'], cancelAt: '01/07/2026 14:33', cancelWhy: 'expired',
   },
@@ -15277,7 +15340,7 @@ const ORDERS = [
     id: 'DA000000102580', status: 'Đã huỷ', tone: 'cancel', date: '28/06/2026',
     items: [ { img: 'p10-0.jpg', name: 'Thắt lưng da mặt khóa tròn 3.5 cm', variant: '95 · Black', qty: 1, price: '17.575.000 ₫', sku: '190530' } ],
     sub: '17.575.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '17.575.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng Tiêu Chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 2, log: ['28/06/2026 10:12', '28/06/2026 10:13'], cancelAt: '29/06/2026 09:45', cancelWhy: 'dafc', cancelReason: 'Sản phẩm đã hết hàng',
   },
@@ -15286,7 +15349,7 @@ const ORDERS = [
     id: 'DA000000102520', status: 'Đã huỷ', tone: 'cancel', date: '25/06/2026',
     items: [ { img: 'p5-0.jpg', name: 'Giày loafer da Manu', variant: '41 · Black', qty: 1, price: '35.248.000 ₫', sku: '190277' } ],
     sub: '35.248.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '35.248.000 ₫',
-    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng tiêu chuẩn',
+    payment: 'Thẻ tín dụng · **** 4829', method: 'Giao hàng Tiêu Chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 3, log: ['25/06/2026 18:20', '25/06/2026 18:41', '26/06/2026 09:10'], cancelAt: '28/06/2026 14:25', cancelWhy: 'dafc', cancelReason: 'Giao hàng không thành công',
   },
@@ -15294,7 +15357,7 @@ const ORDERS = [
     id: 'DA000000102455', status: 'Hoàn tất', tone: 'muted', date: '22/06/2026',
     items: [ { img: 'p2-0.jpg', name: 'Khăn lụa in họa tiết Broken Jewels 90x90cm', variant: 'Onesize', qty: 1, price: '15.611.000 ₫', sku: '190162' } ],
     sub: '15.611.000 ₫', ship: 'Miễn phí', discount: '0 ₫', total: '15.611.000 ₫',
-    payment: 'Ví MoMo', method: 'Giao hàng tiêu chuẩn',
+    payment: 'Ví MoMo', method: 'Giao hàng Tiêu Chuẩn',
     address: { last: 'Nguyễn', first: 'Văn A', phone: '0909 123 456', line:'123 Đồng Khởi, P. Bến Nghé, Quận 1, TP. Hồ Chí Minh' },
     steps: 4, log: ['22/06/2026 21:14', '22/06/2026 21:30', '23/06/2026 10:05', '25/06/2026 16:48'],
     ships: { std: { awb: 'TKN284655' } },
@@ -17466,7 +17529,8 @@ function dafcRewards() {
     const on = cartReward === id;
     return `
     <div class="opt ${on ? 'on' : ''} border border-border bg-background rounded-xs" data-reward-card="${id}">
-      <button class="w-full flex gap-2 items-start px-3 py-2 btn-o press text-left" data-reward="${id}">
+      <!-- 20/11/2026 (user: "cái #rewardOpts của tôi có margin 12 trên dưới lận hãy update lại nhé", component side-panel 641:76692 bản desktop): đệm trên/dưới hàng lựa chọn py-2 (8) → py-3 (12), GIỐNG bản mobile (03/10/2026); chữ vẫn t-lead 14/20 + radio mt-0.5 (đúng khung: radio y 14). Ô đang chọn có ô nhập ngay dưới thì đệm DƯỚI về 8 — rule #rewardOpts .opt:has(…) ở CSS. -->
+      <button class="w-full flex gap-2 items-start px-3 py-3 btn-o press text-left" data-reward="${id}">
         <span class="radio ${on ? 'on' : ''} w-4 h-4 mt-0.5 rounded-full border border-border-3 flex items-center justify-center shrink-0">
           <span class="radio-dot text-primary-foreground flex items-center justify-center">${I.tick}</span>
         </span>
@@ -19106,8 +19170,13 @@ function screenLOGIN() {
    theo đúng chữ của user: "Giao hàng tiêu chuẩn" / "Giao hàng hỏa tốc". DỮ LIỆU DEMO: ngày cố định, không
    tính theo ngày hôm nay. Tên đi vào 4 chỗ — thẻ chọn, tóm tắt bước đã xong, bản ghi đơn (placeOrder) và các
    đơn mẫu trong ORDERS — nên đổi tên là đổi cả 4. KHAI GIỐNG index.html. */
-const SHIP_NAME_STD = 'Giao hàng tiêu chuẩn', SHIP_NAME_FAST = 'Giao hàng hỏa tốc';
-const SHIP_ETA_STD = 'Dự kiến giao hàng từ 14/07 - 18/07', SHIP_ETA_FAST = 'Dự kiến giao hàng trước 18:00 ngày 14/07';
+/* 23/11/2026 (lệnh user: "Update nội dung ở phương thức vận chuyển") — tên và dòng dự kiến THEO ĐÚNG CHỮ user gõ (viết hoa chữ đầu như user):
+   "Giao hàng Tiêu Chuẩn" · "Dự kiến giao hàng từ 02 – 05 ngày tùy khu vực" / "Giao hàng Hỏa Tốc" · "Dự kiến giao hàng trong ngày nếu đặt trước 16:00"
+   (không còn ngày cố định 14/07 - 18/07 hay mốc 18:00). Tên đi vào: thẻ chọn · tóm tắt bước đã xong · placeOrder · 13 đơn mẫu ORDERS (viết chữ thẳng, khai TRƯỚC hằng)
+   · dòng Phương thức giao hàng của Chi tiết đơn · Theo dõi đơn (`service`). Trang Chính sách vận chuyển GIỮ "Giao hàng tiêu chuẩn" / "Giao hàng hỏa tốc trong ngày"
+   (nội dung của site gốc). KHAI GIỐNG desktop.html. */
+const SHIP_NAME_STD = 'Giao hàng Tiêu Chuẩn', SHIP_NAME_FAST = 'Giao hàng Hỏa Tốc';
+const SHIP_ETA_STD = 'Dự kiến giao hàng từ 02 – 05 ngày tùy khu vực', SHIP_ETA_FAST = 'Dự kiến giao hàng trong ngày nếu đặt trước 16:00';
 
 /* Rich radio: label + mô tả phụ */
 /* Figma "Rich Radio Group": thẻ p12 r2 viền 1px — #e5e5e5 thường, #262626 khi
@@ -19226,10 +19295,13 @@ const vatFieldSets = {
    (2) ĐẦU khung xám là đoạn dẫn 2 câu, ngắt dòng sau câu đầu ("Hóa đơn VAT chỉ được xuất trong ngày mua hàng." / "Quý khách có nhu cầu xuất hóa đơn vui lòng cung cấp đầy đủ thông tin bên dưới."),
        desktop 14/20 (t-lead), đệm dưới 8 (cùng nhịp với ô: chữ cuối đoạn → mép trên ô đầu = 16);
    (3) dòng chú NGOÀI khung (#vatNote): 14/20 (t-lead) "Lưu ý: Giá trị hóa đơn VAT bao gồm tổng giá trị đơn hàng và phí vận chuyển" (khung desktop của user gõ lại: "Lưu ý", G hoa, bỏ dấu chấm cuối; khung mobile của user giữ "Chú ý: …" có dấu chấm).
-   Cá nhân làm y như Công ty (cùng đoạn dẫn, cùng dòng chú). */
+   Cá nhân làm y như Công ty (cùng đoạn dẫn, cùng dòng chú).
+   23/11/2026 (user: "ở xuất hóa đơn cập nhật lại nội dung cho cả cá nhân và công ty", kèm ảnh nội dung VI + EN) — đoạn dẫn = "Yêu cầu xuất hóa đơn chỉ được tiếp nhận trong ngày mua hàng." / "Quý khách vui lòng cung cấp và kiểm tra chính xác thông tin xuất hóa đơn VAT trước khi đặt hàng" (câu 2 KHÔNG dấu chấm — đúng chữ user gõ);
+   dòng chú = "Lưu ý: Hóa đơn VAT bao gồm giá trị hàng hóa, phí vận chuyển và thông tin quà tặng (nếu có)". Hai chỗ này DÙNG CHUNG Cá nhân + Công ty (cùng hàm vatFieldRows / #vatNote) nên đổi một lần là đổi cả hai; nhãn "Lưu ý:" ĐÃ làm đậm (Medium 500) theo lệnh 23/11 — span `.vat-note-k`, i18n dùng khoá 'Lưu ý:' có sẵn + khoá riêng cho phần còn lại.
+   */
 function vatFieldRows(type) {
   const intro = `
-    <p class="vat-intro t-lead text-secondary-foreground pb-2">Hóa đơn VAT chỉ được xuất trong ngày mua hàng.<br>Quý khách có nhu cầu xuất hóa đơn vui lòng cung cấp đầy đủ thông tin bên dưới.</p>`;
+    <p class="vat-intro t-lead text-secondary-foreground pb-2">Yêu cầu xuất hóa đơn chỉ được tiếp nhận trong ngày mua hàng.<br>Quý khách vui lòng cung cấp và kiểm tra chính xác thông tin xuất hóa đơn VAT trước khi đặt hàng</p>`;
   return intro + `
     <div class="vat-grid">` + vatFieldSets[type].map(([lb, ph, im, rule, wide], i) => `
       <div class="py-2${wide ? ' vat-wide' : ''}">
@@ -19949,14 +20021,16 @@ function screenCHECKOUT() {
     <div class="px-4 pt-10 pb-10">
       <button class="t-multiline ck-next w-[280px] h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="2">Xác nhận &amp; tiếp tục</button>
     </div>`;
+  /* 23/11/2026 (user, kèm khung Figma 1149:101551: "khi chọn xong phương thức thì vẫn hiển thị riêng như vậy… áp dụng cho cả mobile") — ghi chú pre-order ở TÓM TẮT bước ĐÃ XONG cũng đứng RIÊNG
+     (nền accent / kem, y như lúc đang chọn) NGAY TRÊN hộp tóm tắt, khe 16 như `#shipOpts`; không còn nằm trần trong hộp (ĐẢO quyết định 19/09 ở chú thích trên). Dùng lại `preNoteBox` — một chuỗi chữ, không chép đôi. */
   const s1done = `
-    <div class="px-4 pb-6">
+    <div class="px-4 pb-6 flex flex-col gap-4">
+      ${preNoteBox}
       <div class="border border-border-1 rounded-xs p-3 flex flex-col gap-2">
         <p id="shipDoneLabel" class="t-multiline font-medium text-foreground">${SHIP_NAME_STD}</p>
         <!-- 02/10/2026 — id mới: dòng dự kiến nay ĐỔI THEO phương thức (tiêu chuẩn / hỏa tốc có hai câu khác nhau),
              handler chọn phương thức ghi lại textContent của nó cùng với tên. -->
         <p id="shipDoneEta" class="t-multiline text-foreground">${SHIP_ETA_STD}</p>
-        ${preNote}
       </div>
     </div>`;
   /* ── Section 2: Thanh toán ── */
@@ -20031,7 +20105,7 @@ function screenCHECKOUT() {
            accent-0, KHÔNG viền (khung mobile của user ẨN nét viền), đệm 12 (CSS #vatFieldRows), ô nhập chỉ còn đệm dọc — xem vatFieldRows(). -->
       <div id="vatFieldRows" class="bg-secondary rounded-xs">${vatMode === 'none' ? '' : vatFieldRows(vatMode)}</div>
       <!-- 16/10/2026 (user: "thay bằng Chú ý: giá trị hóa đơn … nằm bên ngoài khung xám như hình") — dòng chú NGOÀI khung, ngay dưới khung xám (khe gap-4); ẩn khi chọn Không xuất hoá đơn (handler [data-vat-mode] đổi class hidden). -->
-      <p id="vatNote" class="vat-note t-lead text-secondary-foreground${vatMode === 'none' ? ' hidden' : ''}">Lưu ý: Giá trị hóa đơn VAT bao gồm tổng giá trị đơn hàng và phí vận chuyển</p>
+      <p id="vatNote" class="vat-note t-lead text-secondary-foreground${vatMode === 'none' ? ' hidden' : ''}"><span class="vat-note-k">Lưu ý:</span> Hóa đơn VAT bao gồm giá trị hàng hóa, phí vận chuyển và thông tin quà tặng (nếu có)</p>
       <button class="t-multiline ck-next ck-next-gap w-[280px] h-14 rounded-xs bg-primary text-primary-foreground btn-p press flex items-center justify-center" data-next="${ckMode === 'pickup' ? 2 : 3}" data-require="vat">Xác nhận</button>
     </div>`;
   const sVatDone = `
@@ -23174,7 +23248,7 @@ function screenCARRIER() {
   const dayV = T.done ? carrierWhen(T.tDone)
     : T.failed ? trackAdd(eta + ' 00:00', 24).split(' ')[0]
     : (eta || '—') + (trackSim === 'late' ? ' <span class="ct-late">Quá hạn</span>' : '');
-  const service = multi ? (p.key === 'fast' ? 'Giao hàng hỏa tốc' : 'Giao hàng tiêu chuẩn') : (o.method || 'Giao hàng tiêu chuẩn');
+  const service = multi ? (p.key === 'fast' ? 'Giao hàng Hỏa Tốc' : 'Giao hàng Tiêu Chuẩn') : (o.method || 'Giao hàng Tiêu Chuẩn');
   const cod = /nhận hàng/i.test(o.payment || '') ? (multi ? '—' : o.total) : '0 ₫';
   const badge = T.done ? ['Giao hàng thành công', ' is-ok'] : T.failed ? ['Giao hàng không thành công', ' is-bad'] : ['Đang giao hàng', ''];
   const row = (kk, v) => `<div class="ct-row"><span class="${tx} ct-k">${kk}</span><span class="${tx} ct-v">${v}</span></div>`;
@@ -24245,7 +24319,10 @@ const I18N = {
   /* 02/10/2026 — tên phương thức vận chuyển đổi: "Giao hàng thông thường" / "Giao hàng nhanh" → "Giao hàng tiêu chuẩn"
      (khoá đã có ở trang Chính sách vận chuyển) / "Giao hàng hỏa tốc" (khoá mới, viết hoa chữ đầu mỗi từ như khoá
      "Giao hàng hỏa tốc trong ngày" — EN theo site chính thức). Hai khoá cũ gỡ vì không còn chỗ dùng. */
-  'Giao hàng hỏa tốc':'Express Delivery', 'Xem tất cả địa chỉ':'View all addresses', 'Sổ địa chỉ':'Address book', 'Thẻ tín dụng/Ghi nợ':'Credit / debit card',
+  /* 23/11/2026 — tên phương thức viết hoa chữ đầu như user gõ: "Giao hàng Tiêu Chuẩn" / "Giao hàng Hỏa Tốc". Khoá cũ 'Giao hàng hỏa tốc' gỡ (hết chỗ dùng);
+     khoá 'Giao hàng tiêu chuẩn' GIỮ cho trang Chính sách vận chuyển. EN của hai tên mới viết thường chữ sau ('Standard delivery' / 'Express delivery') để KHÔNG
+     trùng giá trị EN với tiêu đề chính sách 'Standard Delivery' (trùng giá trị là I18N_REV đảo nhầm một trong hai khi đổi EN → VI). */
+  'Giao hàng Hỏa Tốc':'Express delivery', 'Giao hàng Tiêu Chuẩn':'Standard delivery', 'Xem tất cả địa chỉ':'View all addresses', 'Sổ địa chỉ':'Address book', 'Thẻ tín dụng/Ghi nợ':'Credit / debit card',
   'Chuyển khoản / QR code':'Bank transfer / QR code', 'Thẻ tín dụng · **** 4829':'Credit card · **** 4829', 'Thẻ tín dụng':'Credit card',
   /* 02/10/2026 — dòng CTKM DEMO dưới "Thẻ tín dụng/Ghi nợ" ở bước Thanh toán; dấu * là của câu quảng cáo. */
   'Giảm 5% tối đa 2.000.000 với VISA Techcombank*':'5% off, up to 2,000,000 with VISA Techcombank*',
@@ -24261,17 +24338,20 @@ const I18N = {
   'Thông tin VAT':'VAT information', 'Thông tin xuất hóa đơn':'Invoice information', 'Loại hoá đơn':'Invoice type', 'Đơn hàng này không xuất hoá đơn VAT.':'No VAT invoice was requested for this order.',
   'Nhập Tên công ty':'Enter company name', 'Nhập Địa chỉ công ty':'Enter company address',
   'Nhập Mã số thuế':'Enter tax code', 'Nhập Email nhận hóa đơn VAT':'Enter email for VAT invoice',
-  'Lưu ý: Giá trị hóa đơn VAT bao gồm tổng giá trị đơn hàng và phí vận chuyển':'Notice: VAT invoice value including the total amount of bill and shipping fee.',   // 16/10/2026 (thay câu "Hóa đơn VAT chỉ xuất trong ngày…" đã bỏ; EN = bản của site chính thức theo luật 24/09)
-  'Hóa đơn VAT chỉ được xuất trong ngày mua hàng.':'VAT invoices can only be issued on the day of purchase.',
-  'Quý khách có nhu cầu xuất hóa đơn vui lòng cung cấp đầy đủ thông tin bên dưới.':'If you need a VAT invoice, please provide all the information below.',
+  /* 23/11/2026 (user: "ở xuất hóa đơn cập nhật lại nội dung cho cả cá nhân và công ty") — đoạn dẫn 2 câu + dòng Lưu ý của form hoá đơn VAT; EN = bản user gửi kèm. Ba khoá cũ ("Hóa đơn VAT chỉ được xuất…" · "Quý khách có nhu cầu…" · "Chú ý / Lưu ý: giá trị hóa đơn VAT bao gồm tổng giá trị đơn hàng…") hết chỗ dùng nên gỡ. */
+  'Yêu cầu xuất hóa đơn chỉ được tiếp nhận trong ngày mua hàng.':'VAT invoices must be requested on the date of purchase.',
+  'Quý khách vui lòng cung cấp và kiểm tra chính xác thông tin xuất hóa đơn VAT trước khi đặt hàng':'Please ensure that all billing information is accurate and complete before placing your order.',
+  /* nhãn "Lưu ý:" là một mảnh chữ riêng (đậm) — dùng lại khoá có sẵn 'Lưu ý:' → 'Note:'; phần còn lại có khoá riêng (applyLang giữ dấu cách đầu mảnh). */
+  'Hóa đơn VAT bao gồm giá trị hàng hóa, phí vận chuyển và thông tin quà tặng (nếu có)':'The VAT invoice covers the total value of purchased items and shipping fees, with gift items (if applicable) also indicated.',
   'Họ':'Last name', 'Tên':'First name', 'Nhập họ':'Enter last name', 'Nhập tên':'Enter first name',
   'Số nhà, tên đường':'House number, street', 
   'Chọn tỉnh / thành phố':'Select province / city', 'Chọn phường / xã':'Select ward',
   'Lưu địa chỉ':'Save address',
   /* 02/10/2026 — hai dòng dự kiến giao hàng RIÊNG cho từng phương thức (thay chuỗi chung "Thời gian nhận hàng dự kiến
      từ ngày 14/07 đến ngày 18/07"). */
-  'Dự kiến giao hàng từ 14/07 - 18/07':'Estimated delivery from 14/07 - 18/07',
-  'Dự kiến giao hàng trước 18:00 ngày 14/07':'Estimated delivery before 18:00 on 14/07',
+  /* 23/11/2026 — hai dòng dự kiến MỚI (thay hai câu có ngày cố định 14/07 - 18/07 / 18:00 — khoá cũ gỡ vì hết chỗ dùng). */
+  'Dự kiến giao hàng từ 02 – 05 ngày tùy khu vực':'Estimated delivery in 2 – 5 days depending on the area',
+  'Dự kiến giao hàng trong ngày nếu đặt trước 16:00':'Estimated same-day delivery if ordered before 16:00',
   /* 02/10/2026 — dòng đồng ý điều khoản dưới nút Đặt hàng + ghi chú VAT cạnh "Tổng cộng". Câu đồng ý tách thành
      các mảnh chữ để hai cụm "Điều khoản sử dụng" / "Chính sách bảo mật" vẫn là liên kết; mảnh nào cũng giữ khoảng
      trắng đầu/cuối GIỐNG bản Việt (applyLang giữ nguyên khoảng trắng của nút chữ), nên bản EN viết là
